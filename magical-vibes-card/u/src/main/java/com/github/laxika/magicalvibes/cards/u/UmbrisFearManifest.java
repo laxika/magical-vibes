@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInExile;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopUntilLandOfTargetOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,7 +27,7 @@ public class UmbrisFearManifest extends Card {
 
     public UmbrisFearManifest() {
         CardsInExile opponentCardsInExile = new CardsInExile(null, CountScope.OPPONENTS);
-        addStaticEffect(new DynamicStaticBoostEffect(opponentCardsInExile, opponentCardsInExile, GrantScope.SELF));
+        addStaticEffect(new DynamicStaticBoostEffect(opponentCardsInExile, opponentCardsInExile, Subjects.source()));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),

@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -34,11 +34,11 @@ public class ScaleUp extends Card {
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new GrantColorUntilEndOfTurnEffect(CardColor.GREEN),
-                new GrantColorUntilEndOfTurnEffect(CardColor.GREEN, GrantScope.OWN_CREATURES)));
+                new GrantColorUntilEndOfTurnEffect(CardColor.GREEN, Subjects.creaturesYouControl())));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.WURM),
-                new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.WURM, GrantScope.OWN_CREATURES)));
+                new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.WURM, Subjects.creaturesYouControl())));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new SetBasePowerToughnessEffect(6, 4),

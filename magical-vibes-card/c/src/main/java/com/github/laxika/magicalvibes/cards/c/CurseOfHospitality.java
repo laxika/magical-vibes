@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingEnchantedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ public class CurseOfHospitality extends Card {
     public CurseOfHospitality() {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE,
-                GrantScope.ALL_CREATURES,
+                Subjects.otherCreatures(),
                 new PermanentIsAttackingEnchantedPlayerPredicate()));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionUntilEndOfTurnEffect());

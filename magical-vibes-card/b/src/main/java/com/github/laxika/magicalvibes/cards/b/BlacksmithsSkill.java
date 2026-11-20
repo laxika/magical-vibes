@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,7 +22,7 @@ public class BlacksmithsSkill extends Card {
     public BlacksmithsSkill() {
         target(TargetFilters.permanent())
                 .addSpellEffect(new GrantKeywordEffect(
-                        Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.TARGET))
+                        Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), Subjects.target()))
                 .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -31,6 +30,6 @@ public class GastalThrillseeker extends Card {
                         new GainLifeEffect(1));
 
         addStaticEffect(new ConditionalEffect(new MaxSpeed(),
-                new GrantKeywordEffect(Set.of(Keyword.DEATHTOUCH, Keyword.HASTE), GrantScope.SELF)));
+                new GrantKeywordEffect(Set.of(Keyword.DEATHTOUCH, Keyword.HASTE), Subjects.source())));
     }
 }

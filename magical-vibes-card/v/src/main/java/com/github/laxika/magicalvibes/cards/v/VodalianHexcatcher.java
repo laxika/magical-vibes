@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
@@ -22,7 +22,7 @@ public class VodalianHexcatcher extends Card {
 
     public VodalianHexcatcher() {
         // Other Merfolk you control get +1/+1.
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)));
 
         // Sacrifice a Merfolk: Counter target noncreature spell unless its controller pays {1}.

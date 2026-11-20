@@ -26,7 +26,7 @@ public class GrantEffectEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantEffectEffect) effect;
-        if (support.namesBeyondSource(context, StaticEffectSupport.withAllPermanentsIncludingSource(grant.scope()),
+        if (support.namesBeyondSource(context, grant.subject(),
                 grant.filter())) {
             CardEffect granted = bindToSource(grant.effect(), context.source());
             if (granted != null) {

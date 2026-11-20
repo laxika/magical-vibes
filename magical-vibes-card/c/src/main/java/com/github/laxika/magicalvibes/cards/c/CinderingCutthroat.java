@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "BLB", collectorNumber = "208")
@@ -26,7 +26,7 @@ public class CinderingCutthroat extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B/R}",
-                List.of(new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.MENACE, Subjects.source())),
                 "{1}{B/R}: This creature gains menace until end of turn."
         ));
     }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -32,10 +32,10 @@ public class ArashinForemost extends Card {
         target(new PermanentPredicateTargetFilter(anotherWarriorYouControl,
                 "Target must be another Warrior creature you control"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET,
+                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target(),
                                 anotherWarriorYouControl))
                 .addTrigger(Triggers.attacks(),
-                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET,
+                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target(),
                                 anotherWarriorYouControl));
     }
 }

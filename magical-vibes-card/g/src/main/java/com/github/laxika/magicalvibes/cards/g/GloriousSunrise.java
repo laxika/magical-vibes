@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -35,7 +35,7 @@ public class GloriousSunrise extends Card {
                         "Creatures you control get +1/+1 and gain trample until end of turn.",
                         List.of(
                                 new BoostAllOwnCreaturesEffect(1, 1),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES))),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target land gains \"{T}: Add {G}{G}{G}\" until end of turn.",
                         new GrantActivatedAbilityEffect(
@@ -44,7 +44,7 @@ public class GloriousSunrise extends Card {
                                         null,
                                         List.of(new AwardManaEffect(ManaColor.GREEN, 3)),
                                         "{T}: Add {G}{G}{G}."),
-                                GrantScope.TARGET,
+                                Subjects.target(),
                                 null,
                                 Duration.UNTIL_END_OF_TURN),
                         TargetFilters.land()),

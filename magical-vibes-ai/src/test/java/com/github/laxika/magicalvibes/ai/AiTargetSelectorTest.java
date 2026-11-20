@@ -81,7 +81,6 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
@@ -1920,7 +1919,7 @@ class AiTargetSelectorTest {
             harness.addToBattlefield(human, new LlanowarElves());
 
             ActivatedAbility ability = new ActivatedAbility(false, null,
-                    List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),
+                    List.of(new GrantKeywordEffect(Keyword.FLYING, Subjects.target())),
                     "Target creature gains flying until end of turn.");
 
             UUID target = targetSelector.chooseAbilityTarget(gd, ability, aiPlayer.getId(), source);

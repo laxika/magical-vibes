@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -39,12 +39,12 @@ public class MagmaSliver extends Card {
 
         addStaticEffect(new GrantActivatedAbilityEffect(
                 boostAbility,
-                GrantScope.ALL_CREATURES,
+                Subjects.otherCreatures(),
                 sliver
         ));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 boostAbility,
-                GrantScope.SELF,
+                Subjects.source(),
                 sliver
         ));
     }

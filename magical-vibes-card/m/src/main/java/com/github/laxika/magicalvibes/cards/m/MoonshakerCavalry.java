@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,6 +22,6 @@ public class MoonshakerCavalry extends Card {
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new BoostAllOwnCreaturesEffect(creaturesYouControl, creaturesYouControl),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.creaturesYouControl()));
     }
 }

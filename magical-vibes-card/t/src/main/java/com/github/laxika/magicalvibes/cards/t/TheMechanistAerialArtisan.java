@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -34,7 +34,7 @@ public class TheMechanistAerialArtisan extends Card {
                 null,
                 List.of(new AnimatePermanentsEffect(
                         3, 1, List.of(CardSubtype.CONSTRUCT), Set.of(Keyword.FLYING), null,
-                        Set.of(CardType.ARTIFACT), GrantScope.TARGET, Duration.UNTIL_END_OF_TURN)),
+                        Set.of(CardType.ARTIFACT), Subjects.target(), Duration.UNTIL_END_OF_TURN)),
                 "{T}: Until end of turn, target artifact token you control becomes a 3/1 Construct artifact creature with flying.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

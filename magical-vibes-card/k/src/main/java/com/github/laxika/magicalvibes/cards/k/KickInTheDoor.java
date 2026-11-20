@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -20,7 +20,7 @@ public class KickInTheDoor extends Card {
     public KickInTheDoor() {
         target(TargetFilters.creature())
                 .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.target()))
                 .addSpellEffect(new MakeCreatureBlockableOnlyByFilterThisTurnEffect(
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.WALL)),
                         "non-Wall creatures"))

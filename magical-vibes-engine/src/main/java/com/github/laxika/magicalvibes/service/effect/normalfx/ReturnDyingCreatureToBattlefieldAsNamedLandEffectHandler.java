@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldAsNamedLandEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -68,16 +68,16 @@ public class ReturnDyingCreatureToBattlefieldAsNamedLandEffectHandler
 
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, controllerId,
-                new SetNameEffect(returnEffect.landName(), GrantScope.TARGET),
+                new SetNameEffect(returnEffect.landName(), Subjects.target()),
                 permanent.getId(), null, null, Duration.PERMANENT, 0));
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, controllerId,
-                new SetCardTypesEffect(Set.of(CardType.LAND), GrantScope.TARGET),
+                new SetCardTypesEffect(Set.of(CardType.LAND), Subjects.target()),
                 permanent.getId(), null, null, Duration.PERMANENT, 0));
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, controllerId,
                 new GrantActivatedAbilityEffect(
-                        ManaAbilities.tapFor(ManaColor.COLORLESS), GrantScope.TARGET),
+                        ManaAbilities.tapFor(ManaColor.COLORLESS), Subjects.target()),
                 permanent.getId(), null, null, Duration.PERMANENT, 0));
 
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);

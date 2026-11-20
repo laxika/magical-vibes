@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -27,12 +27,12 @@ public class BarbedSliver extends Card {
 
         addStaticEffect(new GrantActivatedAbilityEffect(
                 barbedAbility,
-                GrantScope.ALL_CREATURES,
+                Subjects.otherCreatures(),
                 sliver
         ));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 barbedAbility,
-                GrantScope.SELF,
+                Subjects.source(),
                 sliver
         ));
     }

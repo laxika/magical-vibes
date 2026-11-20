@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingAlonePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -39,9 +39,9 @@ public class ViperCruelConspirator extends Card {
                 "{B}",
                 List.of(new ChooseOneForTargetCreatureEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption("It gains deathtouch",
-                                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target())),
                         new ChooseOneEffect.ChooseOneOption("It gains lifelink",
-                                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET))))),
+                                new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target()))))),
                 "{B}: Target creature that's attacking alone gains your choice of deathtouch or lifelink until end of turn.",
                 targetFilter));
     }

@@ -6,16 +6,16 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BNG", collectorNumber = "88")
 public class ArchetypeOfAggression extends Card {
 
     public ArchetypeOfAggression() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
-        addStaticEffect(new RemoveKeywordEffect(Keyword.TRAMPLE, GrantScope.OPPONENT_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl()));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYourOpponentsControl()));
         addStaticEffect(new GrantEffectEffect(
-                new CantHaveOrGainKeywordEffect(Keyword.TRAMPLE), GrantScope.OPPONENT_CREATURES));
+                new CantHaveOrGainKeywordEffect(Keyword.TRAMPLE), Subjects.creaturesYourOpponentsControl()));
     }
 }

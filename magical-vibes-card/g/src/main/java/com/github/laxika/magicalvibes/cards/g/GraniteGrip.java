@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -19,6 +19,6 @@ public class GraniteGrip extends Card {
         target(TargetFilters.creature()).addStaticEffect(new AttachedBoostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), CountScope.CONTROLLER),
                 new Fixed(0),
-                GrantScope.ENCHANTED_CREATURE));
+                Subjects.attachedCreature()));
     }
 }

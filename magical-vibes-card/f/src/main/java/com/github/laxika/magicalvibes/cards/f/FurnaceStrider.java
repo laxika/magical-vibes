@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -26,7 +26,7 @@ public class FurnaceStrider extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.OIL),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target())
                 ),
                 "Remove an oil counter from this creature: Target creature you control gains haste until end of turn.",
                 new ControlledPermanentPredicateTargetFilter(

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,7 +29,7 @@ public class MysticMight extends Card {
                         "{T}: Target creature gets +2/+2 until end of turn.",
                         TargetFilters.creature()
                 ),
-                GrantScope.ENCHANTED_PERMANENT
+                Subjects.attached()
         ));
     }
 }

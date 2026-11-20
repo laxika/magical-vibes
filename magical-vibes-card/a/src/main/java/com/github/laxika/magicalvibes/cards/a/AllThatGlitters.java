@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -32,6 +32,6 @@ public class AllThatGlitters extends Card {
         target(TargetFilters.creature()).addStaticEffect(new AttachedBoostEffect(
                 artifactsAndEnchantmentsYouControl,
                 artifactsAndEnchantmentsYouControl,
-                GrantScope.ENCHANTED_CREATURE));
+                Subjects.attachedCreature()));
     }
 }

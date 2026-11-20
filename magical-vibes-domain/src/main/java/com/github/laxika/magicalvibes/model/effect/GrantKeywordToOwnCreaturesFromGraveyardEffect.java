@@ -21,8 +21,8 @@ public record GrantKeywordToOwnCreaturesFromGraveyardEffect(Set<Keyword> keyword
     }
 
     @Override
-    public GrantScope scope() {
-        return GrantScope.ALL_OWN_CREATURES;
+    public PermanentSubject subject() {
+        return Subjects.creaturesYouControl();
     }
 
     @Override

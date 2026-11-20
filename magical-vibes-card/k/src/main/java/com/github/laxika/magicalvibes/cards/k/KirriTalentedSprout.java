@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -23,7 +23,7 @@ import java.util.Set;
 public class KirriTalentedSprout extends Card {
 
     public KirriTalentedSprout() {
-        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 0, Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.PLANT, CardSubtype.TREEFOLK))));
 
         addTrigger(Triggers.postcombatMainPhase(ActivePlayer.YOU), ReturnCardFromGraveyardEffect.builder()

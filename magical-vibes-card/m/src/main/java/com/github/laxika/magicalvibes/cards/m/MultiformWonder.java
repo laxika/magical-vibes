@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,13 +30,13 @@ public class MultiformWonder extends Card {
                         new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Flying",
-                                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                                        new GrantKeywordEffect(Keyword.FLYING, Subjects.source())),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Vigilance",
-                                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)),
+                                        new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source())),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Lifelink",
-                                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF))))),
+                                        new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source()))))),
                 "Pay {E}: This creature gains your choice of flying, vigilance, or lifelink until end of turn."
         ).withActivationCondition(new ControllerEnergyAtLeast(1),
                 "You need at least one energy counter to activate this ability."));

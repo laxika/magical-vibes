@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -54,6 +54,6 @@ public class SurgicalSuiteHospitalRoom extends Card {
                                 new TriggeredAbility(Triggers.youAttack(),
                                 PutCounterOnTargetPermanentEffect.withTargetRestriction(
                                         CounterType.PLUS_ONE_PLUS_ONE, 1, attackingCreature)),
-                                GrantScope.SELF)));
+                                Subjects.source())));
     }
 }

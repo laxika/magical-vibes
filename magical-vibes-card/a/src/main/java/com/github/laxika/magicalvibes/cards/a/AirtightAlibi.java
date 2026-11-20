@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeSuspectedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnsuspectEffect;
@@ -22,9 +21,9 @@ public class AirtightAlibi extends Card {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new UntapPermanentsEffect(Subjects.attached()),
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ENCHANTED_CREATURE),
-                        new UnsuspectEffect(GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                        new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.attachedCreature()),
+                        new UnsuspectEffect(Subjects.attachedCreature()))
+                .addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()))
                 .addStaticEffect(new AttachedPermanentRestrictionEffect(new CantBecomeSuspectedEffect()));
     }
 }

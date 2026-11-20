@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.condition.TreasureManaSpentToActivate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public class ForswornPaladin extends Card {
                         new BoostTargetCreatureEffect(2, 0),
                         new ConditionalEffect(
                                 new TreasureManaSpentToActivate(),
-                                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET))),
+                                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target()))),
                 "{2}{B}: Target creature gets +2/+0 until end of turn. If mana from a Treasure was spent to activate this ability, that creature also gains deathtouch until end of turn.",
                 TargetFilters.creature()));
     }

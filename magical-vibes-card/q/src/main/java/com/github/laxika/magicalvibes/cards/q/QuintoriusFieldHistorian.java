@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -21,7 +21,7 @@ import java.util.Set;
 public class QuintoriusFieldHistorian extends Card {
 
     public QuintoriusFieldHistorian() {
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)));
 
         addTrigger(new TriggerCondition(Triggers.leavesGraveyard(null, ObjectRelation.YOU_OWN)),

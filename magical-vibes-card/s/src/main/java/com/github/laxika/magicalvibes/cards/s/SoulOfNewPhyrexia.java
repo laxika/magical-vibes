@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "231")
@@ -24,7 +24,7 @@ public class SoulOfNewPhyrexia extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}",
-                List.of(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_PERMANENTS)),
+                List.of(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.permanentsYouControl())),
                 "{5}: Permanents you control gain indestructible until end of turn."
         ));
 
@@ -34,7 +34,7 @@ public class SoulOfNewPhyrexia extends Card {
                 "{5}",
                 List.of(
                         new ExileSelfFromGraveyardCost(),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_PERMANENTS)
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.permanentsYouControl())
                 ),
                 "{5}, Exile this card from your graveyard: Permanents you control gain indestructible until end of turn."
         ));

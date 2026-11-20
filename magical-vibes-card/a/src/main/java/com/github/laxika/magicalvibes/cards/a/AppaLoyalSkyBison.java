@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AirbendTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -34,7 +34,7 @@ public class AppaLoyalSkyBison extends Card {
         ChooseOneEffect modes = new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature you control gains flying until end of turn",
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target()),
                         TargetFilters.creatureYouControl()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Airbend another target nonland permanent you control",

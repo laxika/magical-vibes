@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -24,7 +24,7 @@ public class NightmareLash extends Card {
         PermanentCount swampsYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.CONTROLLER);
         addStaticEffect(new AttachedBoostEffect(
-                swampsYouControl, swampsYouControl, GrantScope.EQUIPPED_CREATURE));
+                swampsYouControl, swampsYouControl, Subjects.attachedCreature()));
 
         // Equip—Pay 3 life.
         addActivatedAbility(new ActivatedAbility(

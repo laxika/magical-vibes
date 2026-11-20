@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardsThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -35,7 +34,7 @@ public class TheRoyalScions extends Card {
                 +1,
                 List.of(
                         new BoostTargetCreatureEffect(2, 0),
-                        new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE), GrantScope.TARGET)
+                        new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE), Subjects.target())
                 ),
                 "+1: Target creature gets +2/+0 and gains first strike and trample until end of turn.",
                 TargetFilters.creature()

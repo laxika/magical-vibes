@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesType
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.SpellFilter;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -53,11 +53,11 @@ class TextChangeTransformerTest {
     @Test
     @DisplayName("A color word replacement rewrites a granted color")
     void colorReplacementRewritesGrantedColor() {
-        GrantColorEffect grant = new GrantColorEffect(CardColor.BLACK, GrantScope.ENCHANTED_CREATURE, true);
+        GrantColorEffect grant = new GrantColorEffect(CardColor.BLACK, Subjects.attachedCreature(), true);
 
         CardEffect result = TextChangeTransformer.transform(grant, List.of(BLACK_TO_BLUE));
 
-        assertThat(result).isEqualTo(new GrantColorEffect(CardColor.BLUE, GrantScope.ENCHANTED_CREATURE, true));
+        assertThat(result).isEqualTo(new GrantColorEffect(CardColor.BLUE, Subjects.attachedCreature(), true));
     }
 
     @Test
@@ -65,12 +65,12 @@ class TextChangeTransformerTest {
     void colorReplacementPreservesGrantedColorFilter() {
         PermanentHasSubtypePredicate filter = new PermanentHasSubtypePredicate(CardSubtype.GOBLIN);
         GrantColorEffect grant = new GrantColorEffect(
-                CardColor.BLACK, GrantScope.ALL_CREATURES, false, filter);
+                CardColor.BLACK, Subjects.otherCreatures(), false, filter);
 
         CardEffect result = TextChangeTransformer.transform(grant, List.of(BLACK_TO_BLUE));
 
         assertThat(result).isEqualTo(new GrantColorEffect(
-                CardColor.BLUE, GrantScope.ALL_CREATURES, false, filter));
+                CardColor.BLUE, Subjects.otherCreatures(), false, filter));
     }
 
     @Test
@@ -78,7 +78,7 @@ class TextChangeTransformerTest {
     void landTypeReplacementRewritesLandwalk() {
         PermanentHasAnySubtypePredicate filter = new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN));
         StaticBoostEffect boost = new StaticBoostEffect(1, 1, Set.of(Keyword.MOUNTAINWALK),
-                GrantScope.ALL_CREATURES, filter);
+                Subjects.otherCreatures(), filter);
 
         CardEffect result = TextChangeTransformer.transform(boost, List.of(MOUNTAIN_TO_ISLAND));
 
@@ -102,7 +102,7 @@ class TextChangeTransformerTest {
     @Test
     @DisplayName("A land type replacement rewrites a basic land type predicate inside a filter")
     void landTypeReplacementRewritesFilterPredicate() {
-        GrantKeywordEffect grant = new GrantKeywordEffect(Set.of(Keyword.FEAR), GrantScope.ALL_CREATURES,
+        GrantKeywordEffect grant = new GrantKeywordEffect(Set.of(Keyword.FEAR), Subjects.otherCreatures(),
                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), Duration.UNTIL_END_OF_TURN, null);
 
         CardEffect result = TextChangeTransformer.transform(grant, List.of(MOUNTAIN_TO_ISLAND));
@@ -115,7 +115,7 @@ class TextChangeTransformerTest {
     @DisplayName("Replacements compose in application order")
     void replacementsComposeInOrder() {
         StaticBoostEffect boost = new StaticBoostEffect(1, 1, Set.of(Keyword.MOUNTAINWALK),
-                GrantScope.ALL_CREATURES, null);
+                Subjects.otherCreatures(), null);
 
         CardEffect result = TextChangeTransformer.transform(boost, List.of(
                 MOUNTAIN_TO_ISLAND, new TextReplacement("Island", "Forest")));
@@ -127,7 +127,7 @@ class TextChangeTransformerTest {
     @DisplayName("A replacement that matches nothing returns the same effect instance")
     void nonMatchingReplacementPreservesIdentity() {
         StaticBoostEffect boost = new StaticBoostEffect(1, 1, Set.of(Keyword.MOUNTAINWALK),
-                GrantScope.ALL_CREATURES, new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN)));
+                Subjects.otherCreatures(), new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN)));
 
         assertThat(TextChangeTransformer.transform(boost, List.of(
                 new TextReplacement("Swamp", "Forest"), BLACK_TO_BLUE))).isSameAs(boost);
@@ -137,7 +137,7 @@ class TextChangeTransformerTest {
     @DisplayName("A color word replacement recurses into a granted effect")
     void colorReplacementRecursesIntoGrantedEffect() {
         GrantEffectEffect grant = new GrantEffectEffect(
-                new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)), GrantScope.OWN_CREATURES);
+                new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)), Subjects.otherCreaturesYouControl());
 
         CardEffect result = TextChangeTransformer.transform(grant, List.of(BLACK_TO_BLUE));
 

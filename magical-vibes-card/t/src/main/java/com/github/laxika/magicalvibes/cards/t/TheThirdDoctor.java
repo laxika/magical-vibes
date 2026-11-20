@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -33,7 +33,7 @@ public class TheThirdDoctor extends Card {
                         new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),
                 CountScope.CONTROLLER);
 
-        addStaticEffect(new DynamicStaticBoostEffect(noncreatureTokens, noncreatureTokens, GrantScope.SELF));
+        addStaticEffect(new DynamicStaticBoostEffect(noncreatureTokens, noncreatureTokens, Subjects.source()));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a Clue token", CreateTokenEffect.ofClueToken(1)),

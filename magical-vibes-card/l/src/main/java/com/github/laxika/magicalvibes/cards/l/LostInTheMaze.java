@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -29,7 +28,7 @@ public class LostInTheMaze extends Card {
                                 CounterType.STUN, 1,
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate())));
 
-        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.creaturesYouControl(),
                         new PermanentIsTappedPredicate()));
     }
 }

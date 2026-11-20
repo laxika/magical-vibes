@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -37,7 +37,7 @@ public class LiaraOfTheFlamingFist extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}{W}",
-                List.of(new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.DOUBLE_TEAM), GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.DOUBLE_TEAM), Subjects.target())),
                 "{1}{R}{W}: Another target nontoken creature you control gains first strike and double team until end of turn."
                         + " Activate only as a sorcery and only once.",
                 new ControlledPermanentPredicateTargetFilter(

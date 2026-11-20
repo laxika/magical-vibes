@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "THB", collectorNumber = "273")
@@ -17,9 +17,9 @@ public class SunlitHoplite extends Card {
 
     public SunlitHoplite() {
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ELSPETH)),
-                new StaticBoostEffect(1, 0, GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Subjects.source())));
     }
 }

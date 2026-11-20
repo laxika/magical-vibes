@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnFrontEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndPutMilledCreaturesOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -38,7 +38,7 @@ public class TheGrandEvolution extends Card {
                                 List.of(new SourceFightsTargetCreatureEffect()),
                                 "{1}: This creature fights target creature you don't control.",
                                 TargetFilters.creatureAnOpponentControls()),
-                        GrantScope.OWN_CREATURES,
+                        Subjects.otherCreaturesYouControl(),
                         null,
                         Duration.UNTIL_END_OF_TURN),
                 new ExileSelfAndReturnFrontEffect()));

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -31,7 +31,7 @@ public class ZurEternalSchemer extends Card {
         ));
         addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK, Keyword.HEXPROOF),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 enchantmentCreature));
 
         PermanentPredicate nonAuraEnchantment = new PermanentAllOfPredicate(List.of(
@@ -44,7 +44,7 @@ public class ZurEternalSchemer extends Card {
                 List.of(new AnimatePermanentsEffect(
                         new TargetManaValue(), new TargetManaValue(),
                         List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, Duration.PERMANENT, null
+                        Subjects.target(), Duration.PERMANENT, null
                 )),
                 "{1}{W}: Target non-Aura enchantment you control becomes a creature in addition to its other types and has base power and base toughness each equal to its mana value.",
                 new ControlledPermanentPredicateTargetFilter(

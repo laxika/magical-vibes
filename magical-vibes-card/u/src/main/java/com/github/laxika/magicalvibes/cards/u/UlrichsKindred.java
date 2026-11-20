@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -25,7 +25,7 @@ public class UlrichsKindred extends Card {
         // {3}{G}: Target attacking Wolf or Werewolf gains indestructible until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 false, "{3}{G}",
-                List.of(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target())),
                 "{3}{G}: Target attacking Wolf or Werewolf gains indestructible until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,6 +25,6 @@ public class ChargingHooligan extends Card {
                 new Fixed(0)),
                 new ConditionalEffect(
                 new HasAttacker(new PermanentHasSubtypePredicate(CardSubtype.RAT)),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
     }
 }

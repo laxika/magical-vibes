@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatedPermanentsAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class StormforgedArmor extends Card {
                 SequenceEffect.of(
                         new ConjureCardToBattlefieldEffect("DRK", "57"),
                         new MakeCreatedPermanentsAttackingEffect(true))),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

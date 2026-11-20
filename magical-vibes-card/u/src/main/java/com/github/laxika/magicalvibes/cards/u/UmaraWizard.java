@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -26,7 +26,7 @@ public class UmaraWizard extends Card {
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY),
                                 new CardSubtypePredicate(CardSubtype.WIZARD)))),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source()));
     }
 
     @Override

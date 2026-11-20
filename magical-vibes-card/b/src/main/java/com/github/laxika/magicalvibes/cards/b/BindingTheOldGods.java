@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -52,6 +52,6 @@ public class BindingTheOldGods extends Card {
                         LibrarySearchDestination.BATTLEFIELD_TAPPED));
 
         addTrigger(Triggers.chapter(3),
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.creaturesYouControl()));
     }
 }

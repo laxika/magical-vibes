@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "FIN", collectorNumber = "122")
@@ -22,7 +22,7 @@ public class Tonberry extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.STUN, new Fixed(1)));
         addStaticEffect(new ConditionalEffect(
                 new ControllerTurn(),
-                new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.DEATHTOUCH), GrantScope.SELF)
+                new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.DEATHTOUCH), Subjects.source())
         ));
     }
 }

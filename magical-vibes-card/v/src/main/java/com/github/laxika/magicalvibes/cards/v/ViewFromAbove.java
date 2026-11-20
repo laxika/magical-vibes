@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -19,7 +19,7 @@ public class ViewFromAbove extends Card {
 
     public ViewFromAbove() {
         // Target creature gains flying until end of turn.
-        addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, new PermanentIsCreaturePredicate()));
+        addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.target(), new PermanentIsCreaturePredicate()));
         // If you control a white permanent, return View from Above to its owner's hand.
         addSpellEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.WHITE))),

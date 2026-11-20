@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,13 +24,13 @@ public class WingrattleScarecrow extends Card {
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentColorInPredicate(Set.of(CardColor.BLUE))))),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
 
         // This creature has persist as long as you control a black creature.
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentColorInPredicate(Set.of(CardColor.BLACK))))),
-                new GrantKeywordEffect(Keyword.PERSIST, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.PERSIST, Subjects.source())));
     }
 }

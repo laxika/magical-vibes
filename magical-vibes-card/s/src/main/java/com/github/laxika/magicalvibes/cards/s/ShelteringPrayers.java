@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentCountAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -19,7 +19,7 @@ public class ShelteringPrayers extends Card {
     public ShelteringPrayers() {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.SHROUD,
-                GrantScope.ALL_LANDS,
+                Subjects.otherLands(),
                 new PermanentAllOfPredicate(List.of(
                         new PermanentHasSupertypePredicate(CardSupertype.BASIC),
                         new PermanentControllerControlsPermanentCountAtMostPredicate(

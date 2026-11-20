@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,7 +25,7 @@ import java.util.Set;
 public class InfantryShield extends Card {
 
     public InfantryShield() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.attacks(),
                         SequenceEffect.of(
@@ -33,7 +33,7 @@ public class InfantryShield extends Card {
                                         CardColor.RED, null, List.of(CardSubtype.WARRIOR), Set.of(), Set.of(),
                                         true, false, List.of(), List.of(), false, false, false, 0, Set.of()),
                                 new SacrificeCreatedPermanentsAtEndStepEffect())),
-                        GrantScope.EQUIPPED_CREATURE));
+                        Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

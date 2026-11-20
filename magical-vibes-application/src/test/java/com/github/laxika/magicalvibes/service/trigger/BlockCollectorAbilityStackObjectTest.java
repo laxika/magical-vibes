@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 
@@ -18,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesE
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeAllUnblockedCreaturesAttackingControllerBlockedBySourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -221,7 +221,7 @@ class BlockCollectorAbilityStackObjectTest extends BaseCardTest {
     void grantedBecomesBlockedAbilityIsOneStackObject() {
         Card card = watcher("Drilled Raider");
         card.addStaticEffect(new GrantTriggeredAbilityEffect(drawAndGain(Triggers.becomesBlocked()),
-                GrantScope.ALL_OWN_CREATURES));
+                Subjects.creaturesYouControl()));
         attacking(card);
         addCreatureReady(player2, new GrizzlyBears());
 
@@ -298,7 +298,7 @@ class BlockCollectorAbilityStackObjectTest extends BaseCardTest {
     void grantedAttacksUnblockedAbilityIsOneStackObject() {
         Card card = watcher("Drilled Prowler");
         card.addStaticEffect(new GrantTriggeredAbilityEffect(drawAndGain(Triggers.attacksUnblocked()),
-                GrantScope.ALL_OWN_CREATURES));
+                Subjects.creaturesYouControl()));
         attacking(card);
 
         declareBlockers();

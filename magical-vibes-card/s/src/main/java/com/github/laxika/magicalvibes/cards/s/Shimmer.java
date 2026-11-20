@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 
 @CardRegistration(set = "MIR", collectorNumber = "92")
@@ -15,6 +15,6 @@ public class Shimmer extends Card {
     public Shimmer() {
         addStaticEffect(new ChooseBasicLandTypeOnEnterEffect(CardSubtype.landTypes()));
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.PHASING, GrantScope.ALL_LANDS, new PermanentHasSourceChosenSubtypePredicate()));
+                Keyword.PHASING, Subjects.otherLands(), new PermanentHasSourceChosenSubtypePredicate()));
     }
 }

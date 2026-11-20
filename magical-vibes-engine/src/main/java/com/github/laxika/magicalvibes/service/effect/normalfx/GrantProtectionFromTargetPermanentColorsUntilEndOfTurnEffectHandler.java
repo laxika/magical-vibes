@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -10,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromTargetPermanentColorsUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +48,7 @@ public class GrantProtectionFromTargetPermanentColorsUntilEndOfTurnEffectHandler
             if (!gameQueryService.isCreature(gameData, permanent)) {
                 continue;
             }
-            gameData.addEffectOnPermanent(entry, new ProtectionFromColorsEffect(colors, GrantScope.TARGET),
+            gameData.addEffectOnPermanent(entry, new ProtectionFromColorsEffect(colors, Subjects.target()),
                     permanent.getId(), Duration.UNTIL_END_OF_TURN);
             gameLogService.append(gameData, GameLog.builder()
                     .card(permanent.getCard())

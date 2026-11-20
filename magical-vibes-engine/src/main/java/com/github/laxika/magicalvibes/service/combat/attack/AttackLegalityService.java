@@ -42,7 +42,6 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCanAttackAsT
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadStatusEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
@@ -849,10 +848,9 @@ public class AttackLegalityService {
      * creature asked about is one.
      */
     private boolean namesCreature(GameData gameData, Permanent source, UUID sourceControllerId,
-                                  UUID creatureControllerId, Permanent creature, GrantScope scope,
+                                  UUID creatureControllerId, Permanent creature, PermanentSubject subject,
                                   Class<? extends PlayerSubject> players) {
-        return scope != null
-                && scope.subject() instanceof PermanentSubject.ControlledBy set
+        return subject instanceof PermanentSubject.ControlledBy set
                 && players.isInstance(set.players())
                 && gameQueryService.staticSubjectNames(gameData, source, sourceControllerId, creatureControllerId,
                 creature, set, SubjectResolutionService.StaticReads.knownCreature());
@@ -874,7 +872,7 @@ public class AttackLegalityService {
                 || gameQueryService.hasLostPrintedAbilities(gameData, creature)
                 ? List.of() : creature.getCard().getStaticEffects();
         for (CardEffect effect : printedEffects) {
-            if (effect instanceof MustAttackEffect mustAttack && mustAttack.scope() == null) {
+            if (effect instanceof MustAttackEffect mustAttack && mustAttack.subject() == null) {
                 count[0]++;
             } else if (effect instanceof ConditionalEffect conditional
                     && conditional.wrapped() instanceof MustAttackEffect
@@ -895,7 +893,7 @@ public class AttackLegalityService {
             }
         }
         count[0] += (int) grantedEffects.stream()
-                .filter(effect -> effect instanceof MustAttackEffect mustAttack && mustAttack.scope() == null)
+                .filter(effect -> effect instanceof MustAttackEffect mustAttack && mustAttack.subject() == null)
                 .count();
 
         for (FloatingContinuousEffect requirement
@@ -910,7 +908,7 @@ public class AttackLegalityService {
             if (permanent.isAttached()
                     && permanent.getAttachedTo().equals(creature.getId())) {
                 count[0] += (int) permanent.getCard().getStaticEffects().stream()
-                        .filter(e -> e instanceof MustAttackEffect mae && mae.scope() == null)
+                        .filter(e -> e instanceof MustAttackEffect mae && mae.subject() == null)
                         .count();
             }
             // "Creatures you control attack each combat if able" (e.g. Hellraiser Goblin). A source that has
@@ -921,7 +919,7 @@ public class AttackLegalityService {
                         .getStaticEffects().stream()
                         .filter(e -> e instanceof MustAttackEffect mae
                                 && namesCreature(gameData, permanent, playerId, creatureControllerId, creature,
-                                mae.scope(), PlayerSubject.You.class))
+                                mae.subject(), PlayerSubject.You.class))
                         .count();
                 if (imposed > 0 && !gameQueryService.hasLostPrintedAbilities(gameData, permanent)) {
                     count[0] += imposed;
@@ -933,7 +931,7 @@ public class AttackLegalityService {
                 count[0] += (int) permanent.getCard().getStaticEffects().stream()
                         .filter(e -> e instanceof MustAttackEffect mae
                                 && namesCreature(gameData, permanent, playerId, creatureControllerId, creature,
-                                mae.scope(), PlayerSubject.EnchantedPlayer.class))
+                                mae.subject(), PlayerSubject.EnchantedPlayer.class))
                         .count();
             }
             // Global "matching creatures attack each combat if able" (e.g. Goblin Assault). The

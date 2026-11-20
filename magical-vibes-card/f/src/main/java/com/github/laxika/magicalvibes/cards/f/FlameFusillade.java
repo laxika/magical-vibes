@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "RAV", collectorNumber = "123")
@@ -21,7 +21,7 @@ public class FlameFusillade extends Card {
                         List.of(new DealDamageToAnyTargetEffect(1)),
                         "{T}: This permanent deals 1 damage to any target."
                 ),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 null,
                 Duration.UNTIL_END_OF_TURN
         ));

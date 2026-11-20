@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -31,7 +30,7 @@ public class CaptivatingCrew extends Card {
                 List.of(
                         new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(Subjects.target()),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target())),
                 "{3}{R}: Gain control of target creature an opponent controls until end of turn. Untap that creature. It gains haste until end of turn. Activate only as a sorcery.",
                 TargetFilters.creatureAnOpponentControls(),
                 null, null,

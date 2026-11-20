@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfAllMatchingPermanentsWithTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +25,7 @@ public class TwistAllegiance extends Card {
                 .addSpellEffect(new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(), creature)))
                 .addSpellEffect(new UntapPermanentsEffect(
                         Subjects.controlledBy(Subjects.targetPlayerDeclaredElsewhere(), creature)))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET_PLAYERS_CREATURES));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.otherCreaturesYouControl()))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesTargetPlayerControls()));
     }
 }

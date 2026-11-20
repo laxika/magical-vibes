@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -22,6 +22,6 @@ public class RevelationOfPower extends Card {
                 .addSpellEffect(new BoostTargetCreatureEffect(2, 2))
                 .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentHasCountersPredicate(CounterType.ANY)),
-                        new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.LIFELINK), GrantScope.TARGET)));
+                        new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.LIFELINK), Subjects.target())));
     }
 }

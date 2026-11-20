@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -32,7 +31,7 @@ public class T45PowerArmor extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(2));
 
         // Equipped creature gets +3/+3 and doesn't untap during its controller's untap step.
-        addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 3, Subjects.attachedCreature()));
         addStaticEffect(DoesntUntapEffect.enchanted());
 
         // At the beginning of your upkeep, you may pay one energy counter. If you do, untap

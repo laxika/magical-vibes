@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -37,9 +37,9 @@ public class KolvoriGodOfKinship extends Card {
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)
                 )));
         addStaticEffect(new ConditionalEffect(legendaryCreatureThreshold,
-                new StaticBoostEffect(4, 2, GrantScope.SELF)));
+                new StaticBoostEffect(4, 2, Subjects.source())));
         addStaticEffect(new ConditionalEffect(legendaryCreatureThreshold,
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(true, "{1}{G}", List.of(
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(6,

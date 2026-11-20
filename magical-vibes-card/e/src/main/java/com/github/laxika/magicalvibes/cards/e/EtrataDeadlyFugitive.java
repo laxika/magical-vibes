@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CloakTopCardOfDamagedPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceUpOrExileAndMayCastEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
@@ -29,7 +29,7 @@ public class EtrataDeadlyFugitive extends Card {
                         List.of(new TurnSourceFaceUpOrExileAndMayCastEffect()),
                         "{2}{U}{B}: Turn this creature face up. If you can't, exile it, then you may cast the exiled card without paying its mana cost."
                 ),
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentIsFaceDownPredicate()
         ));
 

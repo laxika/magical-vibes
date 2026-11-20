@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,7 +32,7 @@ public class IizukaTheRuthless extends Card {
                                 false),
                         new GrantKeywordEffect(
                                 Keyword.DOUBLE_STRIKE,
-                                GrantScope.ALL_OWN_CREATURES,
+                                Subjects.creaturesYouControl(),
                                 new PermanentHasSubtypePredicate(CardSubtype.SAMURAI))),
                 "{2}{R}, Sacrifice a Samurai: Samurai creatures you control gain double strike until end of turn."
         ));

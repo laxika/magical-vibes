@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +23,7 @@ public class WoodlurkerMimic extends Card {
                         .withFilter(new CardAllOfPredicate(List.of(
                                 new CardColorPredicate(CardColor.BLACK),
                                 new CardColorPredicate(CardColor.GREEN)))),
-                new SetBasePowerToughnessEffect(4, 5, GrantScope.SELF),
-                new GrantKeywordEffect(Keyword.WITHER, GrantScope.SELF));
+                new SetBasePowerToughnessEffect(4, 5, Subjects.source()),
+                new GrantKeywordEffect(Keyword.WITHER, Subjects.source()));
     }
 }

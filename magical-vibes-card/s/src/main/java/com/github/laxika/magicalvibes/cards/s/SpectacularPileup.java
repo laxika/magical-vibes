@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,7 +20,7 @@ public class SpectacularPileup extends Card {
         var creatureOrVehicle = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
-        addSpellEffect(new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_PERMANENTS, creatureOrVehicle));
+        addSpellEffect(new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.allPermanents(), creatureOrVehicle));
         addSpellEffect(new DestroyAllPermanentsEffect(creatureOrVehicle));
         addCycling("{2}");
     }

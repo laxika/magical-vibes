@@ -7,15 +7,15 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "INV", collectorNumber = "162")
 public class SavageOffensive extends Card {
 
     public SavageOffensive() {
         addStaticEffect(new KickerEffect("{G}"));
-        addSpellEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.otherCreaturesYouControl()));
         addSpellEffect(new ConditionalEffect(new Kicked(), new BoostAllOwnCreaturesEffect(1, 1)));
     }
 }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,6 +24,6 @@ public class CommandersAuthority extends Card {
         target(TargetFilters.creature()).addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                 new CreateTokenEffect(
                         "Human", 1, 1, CardColor.WHITE, List.of(CardSubtype.HUMAN),
-                        Set.<Keyword>of(), Set.<CardType>of())), GrantScope.ENCHANTED_CREATURE));
+                        Set.<Keyword>of(), Set.<CardType>of())), Subjects.attachedCreature()));
     }
 }

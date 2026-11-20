@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,6 +23,6 @@ public class ChitteringHost extends Card {
         var otherOwnCreatures = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new BoostAllOwnCreaturesEffect(1, 0, otherOwnCreatures),
-                new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES, otherOwnCreatures));
+                new GrantKeywordEffect(Keyword.MENACE, Subjects.otherCreaturesYouControl(), otherOwnCreatures));
     }
 }

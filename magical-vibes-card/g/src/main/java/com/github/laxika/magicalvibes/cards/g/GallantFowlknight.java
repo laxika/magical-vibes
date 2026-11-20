@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,6 +20,6 @@ public class GallantFowlknight extends Card {
         var kithkin = new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.KITHKIN));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new BoostAllOwnCreaturesEffect(1, 0),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES, kithkin));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.creaturesYouControl(), kithkin));
     }
 }

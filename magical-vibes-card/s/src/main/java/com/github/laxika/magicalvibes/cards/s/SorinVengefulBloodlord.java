@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,11 +33,11 @@ public class SorinVengefulBloodlord extends Card {
     public SorinVengefulBloodlord() {
         addStaticEffect(new ConditionalEffect(
                 new ControllerTurn(),
-                new GrantKeywordEffect(Set.of(Keyword.LIFELINK), GrantScope.OWN_PERMANENTS,
+                new GrantKeywordEffect(Set.of(Keyword.LIFELINK), Subjects.permanentsYouControl(),
                         CREATURE_OR_PLANESWALKER)));
         addStaticEffect(new ConditionalEffect(
                 new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 +2,

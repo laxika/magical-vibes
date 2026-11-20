@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,12 +26,12 @@ public class SummonersGrimoire extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new LivingWeaponEffect(new CreateTokenEffect("Hero", 1, 1, null,
                         List.of(CardSubtype.HERO), Set.of(), Set.of())));
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.SHAMAN, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.SHAMAN, Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.attacks(),
                 new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature")
                         .withEnterTappedAndAttackingIf(new CardTypePredicate(CardType.ENCHANTMENT))),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

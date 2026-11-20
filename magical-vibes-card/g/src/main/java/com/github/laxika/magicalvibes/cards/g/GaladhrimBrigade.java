@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class GaladhrimBrigade extends Card {
                 new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{1}{G}")));
 
         // Other Elves you control get +1/+1.
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.ELF)));
     }
 }

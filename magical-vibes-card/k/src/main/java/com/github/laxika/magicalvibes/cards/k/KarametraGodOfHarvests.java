@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -31,7 +31,7 @@ public class KarametraGodOfHarvests extends Card {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorsAtLeast(
                         Set.of(ManaColor.GREEN, ManaColor.WHITE), 7)),
-                new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF)));
+                new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, Subjects.source())));
         addTrigger(Triggers.youCastSpell().withFilter(new CardTypePredicate(CardType.CREATURE)),
                 new MayEffect(new SearchLibraryEffect(
                         new CardAnyOfPredicate(List.of(

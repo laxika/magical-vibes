@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentAtEndStepIfAttackedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ME1", collectorNumber = "114")
@@ -27,7 +27,7 @@ public class Berserk extends Card {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.BEFORE_COMBAT_DAMAGE);
 
         target(TargetFilters.creature())
-                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()))
                 .addSpellEffect(new BoostTargetCreatureEffect(new TargetPower(), new Fixed(0)))
                 .addSpellEffect(new DestroyTargetPermanentAtEndStepIfAttackedEffect());
     }

@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -25,7 +25,7 @@ public class KangeeAerieKeeper extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
                 new PutCountersOnSelfEffect(CounterType.FEATHER, new XValue()));
-        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(), GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(), Subjects.otherCreatures(),
                 new PermanentHasSubtypePredicate(CardSubtype.BIRD), CounterType.FEATHER));
     }
 }

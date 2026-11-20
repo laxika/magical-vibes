@@ -7,12 +7,12 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,9 +28,9 @@ import java.util.Set;
 public class SwordOfLightAndShadow extends Card {
 
     public SwordOfLightAndShadow() {
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()));
         addStaticEffect(new ProtectionFromColorsEffect(
-                Set.of(CardColor.WHITE, CardColor.BLACK), GrantScope.EQUIPPED_CREATURE));
+                Set.of(CardColor.WHITE, CardColor.BLACK), Subjects.attachedCreature()));
         // One ability: if the chosen graveyard target is illegal on resolution it does nothing at all,
         // including the life gain (CR 608.2b).
         addTrigger(Triggers.equippedCreatureDealsCombatDamageToPlayer(),

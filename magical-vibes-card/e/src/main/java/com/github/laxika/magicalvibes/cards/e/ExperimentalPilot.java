@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndSaddleEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -46,6 +46,6 @@ public class ExperimentalPilot extends Card {
         ));
 
         addStaticEffect(new GrantEffectEffect(
-                new PowerBoostForCrewAndSaddleEffect(2, true), GrantScope.SELF));
+                new PowerBoostForCrewAndSaddleEffect(2, true), Subjects.source()));
     }
 }

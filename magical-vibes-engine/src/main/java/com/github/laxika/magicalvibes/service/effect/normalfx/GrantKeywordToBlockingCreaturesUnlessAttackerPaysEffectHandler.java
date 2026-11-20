@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToBlockingCreaturesUnlessAttackerPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -100,7 +100,7 @@ public class GrantKeywordToBlockingCreaturesUnlessAttackerPaysEffectHandler impl
             return;
         }
         Set<Keyword> keywords = Set.of(effect.keyword());
-        GrantKeywordEffect grant = new GrantKeywordEffect(keywords, GrantScope.TARGET);
+        GrantKeywordEffect grant = new GrantKeywordEffect(keywords, Subjects.target());
         for (Permanent blocker : List.copyOf(battlefield)) {
             if (!gameQueryService.isCreature(gameData, blocker)
                     || !blocker.isBlocking()

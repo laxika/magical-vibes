@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -25,7 +25,7 @@ public class KyodaiSoulOfKamigawa extends Card {
         PermanentPredicate another = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
         target(new PermanentPredicateTargetFilter(another, "Target must be another permanent"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new GrantKeywordEffect(
-                        Set.of(Keyword.INDESTRUCTIBLE), GrantScope.TARGET, another,
+                        Set.of(Keyword.INDESTRUCTIBLE), Subjects.target(), another,
                         Duration.WHILE_SOURCE_ON_BATTLEFIELD, null));
 
         addActivatedAbility(new ActivatedAbility(

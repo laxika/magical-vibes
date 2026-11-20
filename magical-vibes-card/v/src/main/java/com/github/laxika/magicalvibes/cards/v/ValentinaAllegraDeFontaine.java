@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -21,7 +21,7 @@ public class ValentinaAllegraDeFontaine extends Card {
     public ValentinaAllegraDeFontaine() {
         addStaticEffect(new GrantSubtypeEffect(
                 CardSubtype.HERO,
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 false,
                 new PermanentHasSubtypePredicate(CardSubtype.VILLAIN)));
 

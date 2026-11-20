@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,7 +17,7 @@ public class HardCover extends Card {
 
     public HardCover() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(0, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(0, 2, Subjects.attachedCreature()))
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 true,
@@ -26,7 +25,7 @@ public class HardCover extends Card {
                                 List.of(new DrawCardEffect(1), new DiscardEffect(1, Subjects.you())),
                                 "{T}: Draw a card, then discard a card."
                         ),
-                        GrantScope.ENCHANTED_CREATURE
+                        Subjects.attachedCreature()
                 ));
     }
 }

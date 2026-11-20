@@ -13,7 +13,7 @@ import java.util.Set;
 
 /**
  * Makes one or more permanents become creatures with the given power and toughness.
- * Parameterised by {@link GrantScope} (which permanents), {@link Duration} (how long),
+ * Parameterised by {@link PermanentSubject} (which permanents), {@link Duration} (how long),
  * and the granted subtypes/keywords/colour/card-types.
  *
  * <p>{@code becomesCreature} is {@code false} only for {@link #vehicles}, which sets the
@@ -21,22 +21,22 @@ import java.util.Set;
  *
  * <p>Scopes used by this effect:
  * <ul>
- *   <li>{@link GrantScope#SELF} — the source permanent (manlands, Crew, Chimeric Staff/Mass,
+ *   <li>{@link Subjects#source()} — the source permanent (manlands, Crew, Chimeric Staff/Mass,
  *       Warden of the Wall). Until end of turn. A {@code null} power/toughness means "use the
  *       source's printed power/toughness" (Crew on Vehicles).</li>
- *   <li>{@link GrantScope#TARGET} — a target permanent, with {@link Duration#PERMANENT}
+ *   <li>{@link Subjects#target()} — a target permanent, with {@link Duration#PERMANENT}
  *       (Tezzeret, Waker of the Wilds), {@link Duration#WHILE_SOURCE_ON_BATTLEFIELD}
  *       (Awakener Druid), or {@link Duration#WHILE_SOURCE_REMAINS_TAPPED} (The Blackstaff
  *       of Waterdeep).</li>
- *   <li>{@link GrantScope#ENCHANTED_PERMANENT} — the permanent the source Aura is attached to,
+ *   <li>{@link Subjects#attached()} — the permanent the source Aura is attached to,
  *       re-derived at resolution and without targeting (the Genju cycle).</li>
- *   <li>{@link GrantScope#OWN_LANDS} — all lands you control (Sylvan Awakening) until end of turn
+ *   <li>{@link Subjects#landsYouControl()} — all lands you control (Sylvan Awakening) until end of turn
  *       or until your next turn.</li>
- *   <li>{@link GrantScope#TARGET_PLAYERS_LANDS} — all lands the targeted player controls until
+ *   <li>{@link Subjects#landsTargetPlayerControls()} — all lands the targeted player controls until
  *       end of turn.</li>
- *   <li>{@link GrantScope#OWN_PERMANENTS} — all permanents you control matching {@link #filter}
+ *   <li>{@link Subjects#permanentsYouControl()} — all permanents you control matching {@link #filter}
  *       (The Antiquities War III) until end of turn.</li>
- *   <li>{@link GrantScope#TOKENS_CREATED_THIS_RESOLUTION} — the tokens created earlier in the same
+ *   <li>{@link Subjects#createdThisResolution()} — the tokens created earlier in the same
  *       resolution, with {@link Duration#PERMANENT} ("create a Lander token. It becomes a 2/1
  *       artifact creature and gains flying" — Vv'viza, Orbital Overseer).</li>
  * </ul>
@@ -44,7 +44,7 @@ import java.util.Set;
 public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughness,
                                       List<CardSubtype> grantedSubtypes, Set<Keyword> grantedKeywords,
                                       CardColor animatedColor, Set<CardType> grantedCardTypes,
-                                      GrantScope scope, Duration duration,
+                                      PermanentSubject subject, Duration duration,
                                       PermanentPredicate filter, Set<CardColor> animatedColors,
                                       boolean cardTypeOverriding,
                                       boolean dynamicPowerToughness,
@@ -58,11 +58,11 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
     public AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughness,
                                    List<CardSubtype> grantedSubtypes, Set<Keyword> grantedKeywords,
                                    CardColor animatedColor, Set<CardType> grantedCardTypes,
-                                   GrantScope scope, Duration duration,
+                                   PermanentSubject subject, Duration duration,
                                    PermanentPredicate filter, Set<CardColor> animatedColors,
                                    boolean cardTypeOverriding, boolean dynamicPowerToughness) {
         this(power, toughness, grantedSubtypes, grantedKeywords, animatedColor, grantedCardTypes,
-                scope, duration, filter, animatedColors, cardTypeOverriding, dynamicPowerToughness, true);
+                subject, duration, filter, animatedColors, cardTypeOverriding, dynamicPowerToughness, true);
     }
 
     /**
@@ -74,26 +74,26 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
     public static AnimatePermanentsEffect vehicles(int power, int toughness, Set<Keyword> grantedKeywords,
                                                    PermanentPredicate filter) {
         return new AnimatePermanentsEffect(new Fixed(power), new Fixed(toughness), List.of(CardSubtype.VEHICLE),
-                grantedKeywords, null, Set.of(), GrantScope.OWN_PERMANENTS, Duration.UNTIL_END_OF_TURN,
+                grantedKeywords, null, Set.of(), Subjects.permanentsYouControl(), Duration.UNTIL_END_OF_TURN,
                 filter, Set.of(), false, false, false);
     }
 
     public AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughness,
                                    List<CardSubtype> grantedSubtypes, Set<Keyword> grantedKeywords,
                                    CardColor animatedColor, Set<CardType> grantedCardTypes,
-                                   GrantScope scope, Duration duration,
+                                   PermanentSubject subject, Duration duration,
                                    PermanentPredicate filter, Set<CardColor> animatedColors) {
         this(power, toughness, grantedSubtypes, grantedKeywords, animatedColor, grantedCardTypes,
-                scope, duration, filter, animatedColors, false, false);
+                subject, duration, filter, animatedColors, false, false);
     }
 
     public AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughness,
                                    List<CardSubtype> grantedSubtypes, Set<Keyword> grantedKeywords,
                                    CardColor animatedColor, Set<CardType> grantedCardTypes,
-                                   GrantScope scope, Duration duration,
+                                   PermanentSubject subject, Duration duration,
                                    PermanentPredicate filter) {
         this(power, toughness, grantedSubtypes, grantedKeywords, animatedColor, grantedCardTypes,
-                scope, duration, filter, Set.of(), false, false);
+                subject, duration, filter, Set.of(), false, false);
     }
 
     /**
@@ -105,17 +105,17 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
     public AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughness,
                                    List<CardSubtype> grantedSubtypes, Set<Keyword> grantedKeywords,
                                    CardColor animatedColor, Set<CardType> grantedCardTypes,
-                                   GrantScope scope, Duration duration,
+                                   PermanentSubject subject, Duration duration,
                                    PermanentPredicate filter, boolean cardTypeOverriding) {
         this(power, toughness, grantedSubtypes, grantedKeywords, animatedColor, grantedCardTypes,
-                scope, duration, filter, Set.of(), cardTypeOverriding, false);
+                subject, duration, filter, Set.of(), cardTypeOverriding, false);
     }
 
     /** Self-targeting, until end of turn (manlands). */
     public AnimatePermanentsEffect(int power, int toughness, List<CardSubtype> grantedSubtypes,
                                    Set<Keyword> grantedKeywords, CardColor animatedColor) {
         this(new Fixed(power), new Fixed(toughness), grantedSubtypes, grantedKeywords, animatedColor,
-                Set.of(), GrantScope.SELF, Duration.UNTIL_END_OF_TURN, null, Set.of(), false, false);
+                Set.of(), Subjects.source(), Duration.UNTIL_END_OF_TURN, null, Set.of(), false, false);
     }
 
     /** Self-targeting, until end of turn, with granted card types (e.g. Inkmoth Nexus). */
@@ -123,22 +123,22 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
                                    Set<Keyword> grantedKeywords, CardColor animatedColor,
                                    Set<CardType> grantedCardTypes) {
         this(new Fixed(power), new Fixed(toughness), grantedSubtypes, grantedKeywords, animatedColor,
-                grantedCardTypes, GrantScope.SELF, Duration.UNTIL_END_OF_TURN, null, Set.of(), false, false);
+                grantedCardTypes, Subjects.source(), Duration.UNTIL_END_OF_TURN, null, Set.of(), false, false);
     }
 
     /** Self-targeting, until end of turn, no colour (e.g. Warden of the Wall, Rusted Relic, Glint Hawk Idol). */
     public AnimatePermanentsEffect(int power, int toughness, List<CardSubtype> grantedSubtypes,
                                    Set<Keyword> grantedKeywords) {
         this(new Fixed(power), new Fixed(toughness), grantedSubtypes, grantedKeywords, null,
-                Set.of(), GrantScope.SELF, Duration.UNTIL_END_OF_TURN, null, Set.of(), false, false);
+                Set.of(), Subjects.source(), Duration.UNTIL_END_OF_TURN, null, Set.of(), false, false);
     }
 
     /** Fully-specified fixed-P/T form (Sylvan Awakening own-lands, Awakener Druid while-source, Tezzeret/Waker target). */
     public AnimatePermanentsEffect(int power, int toughness, List<CardSubtype> grantedSubtypes,
                                    Set<Keyword> grantedKeywords, CardColor animatedColor,
-                                   Set<CardType> grantedCardTypes, GrantScope scope, Duration duration) {
+                                   Set<CardType> grantedCardTypes, PermanentSubject subject, Duration duration) {
         this(new Fixed(power), new Fixed(toughness), grantedSubtypes, grantedKeywords, animatedColor,
-                grantedCardTypes, scope, duration, null, Set.of(), false, false);
+                grantedCardTypes, subject, duration, null, Set.of(), false, false);
     }
 
     /**
@@ -148,7 +148,7 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
      */
     public static AnimatePermanentsEffect crew() {
         return new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
-                Set.of(CardType.CREATURE, CardType.ARTIFACT), GrantScope.SELF, Duration.UNTIL_END_OF_TURN, null, Set.of(), false, false);
+                Set.of(CardType.CREATURE, CardType.ARTIFACT), Subjects.source(), Duration.UNTIL_END_OF_TURN, null, Set.of(), false, false);
     }
 
     /** Self-targeting animation with a fixed set of colors. */
@@ -157,7 +157,7 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
                                                                Set<Keyword> grantedKeywords,
                                                                Set<CardColor> animatedColors) {
         return new AnimatePermanentsEffect(new Fixed(power), new Fixed(toughness), grantedSubtypes,
-                grantedKeywords, null, Set.of(), GrantScope.SELF, Duration.UNTIL_END_OF_TURN,
+                grantedKeywords, null, Set.of(), Subjects.source(), Duration.UNTIL_END_OF_TURN,
                 null, animatedColors, false, false);
     }
 
@@ -166,27 +166,28 @@ public record AnimatePermanentsEffect(DynamicAmount power, DynamicAmount toughne
             DynamicAmount power, DynamicAmount toughness, List<CardSubtype> grantedSubtypes,
             Set<Keyword> grantedKeywords, Set<CardColor> animatedColors) {
         return new AnimatePermanentsEffect(power, toughness, grantedSubtypes, grantedKeywords,
-                null, Set.of(), GrantScope.SELF, Duration.UNTIL_END_OF_TURN,
+                null, Set.of(), Subjects.source(), Duration.UNTIL_END_OF_TURN,
                 null, animatedColors, false, true);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return switch (scope) {
-            case TARGET -> TargetSpec.benign(TargetPredicates.permanent(), filter);
-            case TARGET_PLAYERS_LANDS -> TargetSpec.benign(TargetPredicates.player());
-            case SELF -> new TargetSpec(null, false, null, true, 1);
+        return switch (subject) {
+            case PermanentSubject.Target ignored -> TargetSpec.benign(TargetPredicates.permanent(), filter);
+            case PermanentSubject.ControlledBy set when set.declaresPlayerTarget() ->
+                    TargetSpec.benign(TargetPredicates.player());
+            case PermanentSubject.Source ignored -> new TargetSpec(null, false, null, true, 1);
             default -> TargetSpec.NONE;
         };
     }
 
     /**
-     * The ENCHANTED_PERMANENT scope animates the Aura's attached permanent, so an activation whose
+     * The ENCHANTED_PERMANENT subject animates the Aura's attached permanent, so an activation whose
      * source is that Aura captures the attached permanent at activation time (before the Aura can
      * leave the battlefield in response).
      */
     @Override
     public boolean resolvesAgainstAttachedPermanent() {
-        return scope == GrantScope.ENCHANTED_PERMANENT;
+        return Subjects.attached().equals(subject);
     }
 }

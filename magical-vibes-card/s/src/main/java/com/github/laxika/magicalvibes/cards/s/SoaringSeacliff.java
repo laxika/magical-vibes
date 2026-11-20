@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +22,7 @@ public class SoaringSeacliff extends Card {
 
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target()));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));
     }

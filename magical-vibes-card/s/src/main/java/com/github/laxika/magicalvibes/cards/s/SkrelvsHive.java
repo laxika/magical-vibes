@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -54,7 +54,7 @@ public class SkrelvsHive extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new OpponentPoisoned(3),
-                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES,
+                new GrantKeywordEffect(Keyword.LIFELINK, Subjects.otherCreaturesYouControl(),
                         new PermanentHasKeywordPredicate(Keyword.TOXIC))));
     }
 }

@@ -26,7 +26,7 @@ public class SetBasePowerToughnessStaticSelfEffectHandler implements StaticEffec
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var setPT = (SetBasePowerToughnessEffect) effect;
-        boolean applies = support.names(context, setPT.scope().subject(), setPT.filter());
+        boolean applies = support.names(context, setPT.subject(), setPT.filter());
         if (applies) {
             accumulator.setBasePTOverride(setPT.power(), setPT.toughness());
         }

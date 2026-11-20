@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +14,7 @@ public class LionHeart extends Card {
 
     public LionHeart() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(2));
-        addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 1, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

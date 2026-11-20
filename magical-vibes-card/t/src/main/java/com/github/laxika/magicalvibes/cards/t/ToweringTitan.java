@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.TotalToughnessOfControlledCreatures;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,7 +32,7 @@ public class ToweringTitan extends Card {
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentHasKeywordPredicate(Keyword.DEFENDER))),
                                 "a creature with defender", false),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_CREATURES_INCLUDING_SELF)),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.allCreatures())),
                 "Sacrifice a creature with defender: All creatures gain trample until end of turn."
         ));
     }

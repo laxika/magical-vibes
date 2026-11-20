@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -44,7 +44,7 @@ public class PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffectHandl
         if (result == null) return;
 
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-        gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+        gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
                 result.permanent().getId(), Duration.PERMANENT);
         if (((PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect) effect).exileIfItWouldLeave()) {
             result.permanent().setExileIfLeavesBattlefield(true);

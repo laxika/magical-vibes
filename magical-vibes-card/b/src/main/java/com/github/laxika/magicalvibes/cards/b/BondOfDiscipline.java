@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,6 +21,6 @@ public class BondOfDiscipline extends Card {
                 Subjects.controlledBy(Subjects.eachPlayer(),
                         new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))))));
-        addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.otherCreaturesYouControl()));
     }
 }

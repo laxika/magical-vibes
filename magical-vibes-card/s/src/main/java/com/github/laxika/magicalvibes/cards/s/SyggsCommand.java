@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -43,7 +42,7 @@ public class SyggsCommand extends Card {
                         merfolkYouControl),
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures target player controls gain lifelink until end of turn",
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET_PLAYERS_CREATURES),
+                        new GrantKeywordEffect(Keyword.LIFELINK, Subjects.creaturesTargetPlayerControls()),
                         anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player draws a card",

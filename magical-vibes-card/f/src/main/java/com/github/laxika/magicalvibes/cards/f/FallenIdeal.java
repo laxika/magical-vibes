@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,7 +26,7 @@ public class FallenIdeal extends Card {
 
     public FallenIdeal() {
         target(TargetFilters.creature())
-                .addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.attachedCreature()))
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 false,
@@ -34,7 +34,7 @@ public class FallenIdeal extends Card {
                                 List.of(new SacrificeCreatureCost(), new BoostSelfEffect(2, 1)),
                                 "Sacrifice a creature: This creature gets +2/+1 until end of turn."
                         ),
-                        GrantScope.ENCHANTED_CREATURE
+                        Subjects.attachedCreature()
                 ));
 
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS),

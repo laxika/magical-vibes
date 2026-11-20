@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,7 +27,7 @@ public class QuicksmithSpy extends Card {
                         List.of(new DrawCardEffect()),
                         "{T}: Draw a card."
                 ),
-                GrantScope.TARGET,
+                Subjects.target(),
                 null,
                 Duration.WHILE_SOURCE_ON_BATTLEFIELD
         ));

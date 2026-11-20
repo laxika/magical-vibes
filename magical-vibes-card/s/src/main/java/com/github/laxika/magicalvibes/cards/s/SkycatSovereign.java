@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,7 +29,7 @@ public class SkycatSovereign extends Card {
                         new PermanentHasKeywordPredicate(Keyword.FLYING)
                 )), CountScope.CONTROLLER, true);
         addStaticEffect(new DynamicStaticBoostEffect(
-                otherFlyingCreatures, otherFlyingCreatures, GrantScope.SELF));
+                otherFlyingCreatures, otherFlyingCreatures, Subjects.source()));
 
         addActivatedAbility(new ActivatedAbility(
                 false, "{2}{W}{U}",

@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,7 +35,7 @@ public class KickoffCelebrations extends Card {
                         new SacrificeSelfCost(),
                         new GrantKeywordEffect(
                                 Keyword.HASTE,
-                                GrantScope.OWN_PERMANENTS,
+                                Subjects.permanentsYouControl(),
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)

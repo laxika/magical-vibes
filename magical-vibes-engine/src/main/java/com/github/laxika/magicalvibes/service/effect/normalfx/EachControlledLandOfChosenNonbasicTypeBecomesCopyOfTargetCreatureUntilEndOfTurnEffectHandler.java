@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -104,7 +104,7 @@ public class EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUn
                     permanent, preCopyCard, Duration.UNTIL_END_OF_TURN);
             // "And gains haste" is not part of the copy (CR 707.9a): a layer-6 grant after it (CR 613.1f).
             gameData.addEffectOnPermanent(entry.getCard().getName(), permanent.getId(), controllerId,
-                    new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), permanent.getId(),
+                    new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), permanent.getId(),
                     Duration.UNTIL_END_OF_TURN);
         }
 

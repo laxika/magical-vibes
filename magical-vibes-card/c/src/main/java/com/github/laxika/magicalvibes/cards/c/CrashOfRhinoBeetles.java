@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "CMM", collectorNumber = "279")
@@ -15,6 +15,6 @@ public class CrashOfRhinoBeetles extends Card {
     public CrashOfRhinoBeetles() {
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(10, new PermanentIsLandPredicate()),
-                new StaticBoostEffect(10, 10, GrantScope.SELF)));
+                new StaticBoostEffect(10, 10, Subjects.source())));
     }
 }

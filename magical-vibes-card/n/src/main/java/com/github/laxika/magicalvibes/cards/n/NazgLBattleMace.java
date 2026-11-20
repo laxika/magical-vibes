@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -23,17 +22,17 @@ public class NazgLBattleMace extends Card {
 
     public NazgLBattleMace() {
         addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.DEATHTOUCH),
-                        GrantScope.EQUIPPED_CREATURE));
+                        Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.attacks(),
                 new SacrificePermanentsEffect(
                         1, new PermanentTruePredicate(), Subjects.defendingPlayer())),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
 
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.sacrificed(Triggers.NONTOKEN, ObjectRelation.OPPONENT_CONTROLS),
                 new StealDyingOpponentPermanentUnlessPaysLifeEffect(3)),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
 
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

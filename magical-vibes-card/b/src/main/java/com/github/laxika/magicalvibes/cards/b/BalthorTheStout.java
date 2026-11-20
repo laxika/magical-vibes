@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,7 +21,7 @@ import java.util.List;
 public class BalthorTheStout extends Card {
 
     public BalthorTheStout() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreatures(),
                 new PermanentHasSubtypePredicate(CardSubtype.BARBARIAN)));
 
         PermanentPredicate targetFilter = new PermanentAllOfPredicate(List.of(

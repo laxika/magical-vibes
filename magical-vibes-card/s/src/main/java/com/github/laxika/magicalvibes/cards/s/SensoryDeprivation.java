@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ISD", collectorNumber = "74")
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class SensoryDeprivation extends Card {
 
     public SensoryDeprivation() {
-        target(TargetFilters.creature()).addStaticEffect(new StaticBoostEffect(-3, 0, GrantScope.ENCHANTED_CREATURE));
+        target(TargetFilters.creature()).addStaticEffect(new StaticBoostEffect(-3, 0, Subjects.attachedCreature()));
     }
 }

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryControlledByPredicate;
@@ -36,7 +36,7 @@ public class NaruMehaMasterWizard extends Card {
         // Other Wizards you control get +1/+1.
         addStaticEffect(new StaticBoostEffect(
                 1, 1,
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.WIZARD))
         ));
     }

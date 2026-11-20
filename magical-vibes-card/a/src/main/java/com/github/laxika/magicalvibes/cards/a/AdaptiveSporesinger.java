@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -25,7 +25,7 @@ public class AdaptiveSporesinger extends Card {
         TargetFilter creature = TargetFilters.creature();
         CardEffect boostAndVigilance = SequenceEffect.of(
                 new BoostTargetCreatureEffect(2, 2),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET)
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target())
         );
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(

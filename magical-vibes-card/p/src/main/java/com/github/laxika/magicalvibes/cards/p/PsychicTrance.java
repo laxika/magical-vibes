@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class PsychicTrance extends Card {
                         List.of(new CounterSpellEffect()),
                         "{T}: Counter target spell."
                 ),
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.WIZARD),
                 Duration.UNTIL_END_OF_TURN
         ));

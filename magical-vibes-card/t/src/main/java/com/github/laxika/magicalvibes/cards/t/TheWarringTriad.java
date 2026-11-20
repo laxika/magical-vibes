@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -25,7 +25,7 @@ public class TheWarringTriad extends Card {
     public TheWarringTriad() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new GraveyardCardThreshold(8, null)),
-                new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF)));
+                new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

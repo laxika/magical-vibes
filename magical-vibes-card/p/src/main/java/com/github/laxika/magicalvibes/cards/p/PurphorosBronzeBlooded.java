@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -30,8 +30,8 @@ public class PurphorosBronzeBlooded extends Card {
     public PurphorosBronzeBlooded() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorAtLeast(ManaColor.RED, 5)),
-                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
+                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), Subjects.source())));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.otherCreaturesYouControl()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

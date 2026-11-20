@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.OpponentsDealtCombatDamageBySourceNameOrSubtypeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -27,7 +26,7 @@ public class EstinienVarlineau extends Card {
     public EstinienVarlineau() {
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source()));
 
         var qualifyingCombatDamage = new OpponentsDealtCombatDamageBySourceNameOrSubtypeThisTurn(
                 "Estinien Varlineau", CardSubtype.DRAGON);

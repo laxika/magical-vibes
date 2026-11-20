@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "JUD", collectorNumber = "108")
@@ -13,7 +13,7 @@ public class CanopyClaws extends Card {
 
     public CanopyClaws() {
         target(TargetFilters.creature())
-                .addSpellEffect(new RemoveKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+                .addSpellEffect(new RemoveKeywordEffect(Keyword.FLYING, Subjects.target()));
         addCastingOption(new FlashbackCast("{G}"));
     }
 }

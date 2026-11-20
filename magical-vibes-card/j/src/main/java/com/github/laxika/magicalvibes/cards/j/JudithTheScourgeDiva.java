@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -24,7 +24,7 @@ public class JudithTheScourgeDiva extends Card {
             DEATH_DAMAGE;
 
     public JudithTheScourgeDiva() {
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.otherCreaturesYouControl()));
         addTrigger(Triggers.creatureDies(
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                         ObjectRelation.YOU_CONTROL),

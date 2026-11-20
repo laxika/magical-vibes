@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -67,11 +66,11 @@ public class GylwainCastingDirector extends Card {
                 false,
                 List.of(
                         StaticAbility.of(SequenceEffect.of(
-                        new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
+                        new StaticBoostEffect(1, 1, Subjects.attachedCreature()),
                         new GrantTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                                 new CounterUnlessPaysEffect(1)),
-                                GrantScope.ENCHANTED_CREATURE)))),
+                                Subjects.attachedCreature())))),
                 List.of(),
                 false,
                 false,
@@ -96,11 +95,11 @@ public class GylwainCastingDirector extends Card {
                 false,
                 List.of(
                         StaticAbility.of(SequenceEffect.of(
-                        new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
+                        new StaticBoostEffect(1, 1, Subjects.attachedCreature()),
                         new GrantTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.attacks(),
                                 new ScryEffect(1)),
-                                GrantScope.ENCHANTED_CREATURE)))),
+                                Subjects.attachedCreature())))),
                 List.of(),
                 false,
                 false,
@@ -125,8 +124,8 @@ public class GylwainCastingDirector extends Card {
                 false,
                 List.of(
                         StaticAbility.of(SequenceEffect.of(
-                        new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE)))),
+                        new StaticBoostEffect(1, 1, Subjects.attachedCreature()),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.attachedCreature())))),
                 List.of(),
                 false,
                 false,

@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,12 +26,12 @@ public class ThiefsKnife extends Card {
                 new LivingWeaponEffect(new CreateTokenEffect("Hero", 1, 1, null,
                         List.of(CardSubtype.HERO), Set.of(), Set.of())));
 
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                         new DrawCardEffect(1)),
-                        GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.ROGUE, GrantScope.EQUIPPED_CREATURE));
+                        Subjects.attachedCreature()));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.ROGUE, Subjects.attachedCreature()));
 
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerCreatureSpellsCantBeCounteredThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -19,7 +19,7 @@ import java.util.List;
 public class DomriAnarchOfBolas extends Card {
 
     public DomriAnarchOfBolas() {
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.creaturesYouControl()));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

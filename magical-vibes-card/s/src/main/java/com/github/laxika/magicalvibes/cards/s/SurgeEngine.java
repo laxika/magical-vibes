@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfBasePowerToughnessIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfCantBeBlockedIndefinitelyEffect;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.condition.SourceHasColor;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "BRO", collectorNumber = "81")
@@ -24,7 +24,7 @@ public class SurgeEngine extends Card {
     public SurgeEngine() {
         addActivatedAbility(new ActivatedAbility(false, "{U}",
                 List.of(
-                        new RemoveKeywordEffect(Keyword.DEFENDER, GrantScope.SELF, Duration.PERMANENT),
+                        new RemoveKeywordEffect(Keyword.DEFENDER, Subjects.source(), Duration.PERMANENT),
                         new SetSelfCantBeBlockedIndefinitelyEffect()),
                 "{U}: This creature loses defender and gains \"This creature can't be blocked.\""));
         addActivatedAbility(new ActivatedAbility(false, "{2}{U}",

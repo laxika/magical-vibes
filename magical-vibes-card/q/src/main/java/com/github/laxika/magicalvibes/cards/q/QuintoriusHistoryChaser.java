@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -50,7 +49,7 @@ public class QuintoriusHistoryChaser extends Card {
                 -4,
                 List.of(new GrantKeywordEffect(
                         Set.of(Keyword.DOUBLE_STRIKE, Keyword.VIGILANCE),
-                        GrantScope.OWN_CREATURES,
+                        Subjects.otherCreaturesYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.SPIRIT))),
                 "−4: Spirits you control gain double strike and vigilance until end of turn."
         ));

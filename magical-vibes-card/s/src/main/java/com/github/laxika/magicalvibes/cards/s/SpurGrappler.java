@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -23,6 +23,6 @@ public class SpurGrappler extends Card {
                         new PermanentIsLandPredicate(),
                         new PermanentNotPredicate(new PermanentIsTappedPredicate())
                 )))),
-                new StaticBoostEffect(2, 1, GrantScope.SELF)));
+                new StaticBoostEffect(2, 1, Subjects.source())));
     }
 }

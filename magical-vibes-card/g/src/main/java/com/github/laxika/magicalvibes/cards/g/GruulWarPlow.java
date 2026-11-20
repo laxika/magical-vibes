@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class GruulWarPlow extends Card {
 
     public GruulWarPlow() {
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES, new PermanentIsCreaturePredicate()));
+                Keyword.TRAMPLE, Subjects.creaturesYouControl(), new PermanentIsCreaturePredicate()));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{R}{G}",

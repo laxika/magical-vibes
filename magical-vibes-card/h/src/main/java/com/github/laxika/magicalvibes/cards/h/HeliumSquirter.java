@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToEnteringCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -42,7 +42,7 @@ public class HeliumSquirter extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.FLYING, Subjects.target())),
                 "{1}: Target creature with a +1/+1 counter on it gains flying until end of turn.",
                 new PermanentPredicateTargetFilter(creatureWithCounter,
                         "Target must be a creature with a +1/+1 counter")));

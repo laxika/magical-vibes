@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -33,7 +33,7 @@ public class VihaanGoldwaker extends Card {
     public VihaanGoldwaker() {
         // Other outlaws you control have vigilance and haste.
         addStaticEffect(new StaticBoostEffect(0, 0,
-                Set.of(Keyword.VIGILANCE, Keyword.HASTE), GrantScope.OWN_CREATURES,
+                Set.of(Keyword.VIGILANCE, Keyword.HASTE), Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES)));
 
         // At the beginning of combat on your turn, you may have Treasures you control become
@@ -45,7 +45,7 @@ public class VihaanGoldwaker extends Card {
                         Set.of(),
                         null,
                         Set.of(CardType.ARTIFACT),
-                        GrantScope.OWN_PERMANENTS,
+                        Subjects.permanentsYouControl(),
                         Duration.UNTIL_END_OF_TURN,
                         new PermanentHasSubtypePredicate(CardSubtype.TREASURE)),
                 "Have Treasures you control become 3/3 Construct Assassin artifact creatures?"));

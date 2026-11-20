@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,7 +19,7 @@ public class ThornscapeApprentice extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{R}",
-                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target())),
                 "{R}, {T}: Target creature gains first strike until end of turn.",
                 TargetFilters.creature()
         ));

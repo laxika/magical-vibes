@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MRD", collectorNumber = "168")
 @CardRegistration(set = "C16", collectorNumber = "251")
@@ -15,7 +15,7 @@ public class EmpyrialPlate extends Card {
     public EmpyrialPlate() {
         CardsInHand hand = new CardsInHand(CountScope.CONTROLLER);
         addStaticEffect(new AttachedBoostEffect(
-                hand, hand, GrantScope.EQUIPPED_CREATURE));
+                hand, hand, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

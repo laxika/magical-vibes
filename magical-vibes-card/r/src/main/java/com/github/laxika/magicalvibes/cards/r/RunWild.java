@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -25,10 +25,10 @@ public class RunWild extends Card {
         );
 
         target(TargetFilters.creature())
-                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()))
                 .addSpellEffect(new GrantActivatedAbilityEffect(
                         regenerationAbility,
-                        GrantScope.TARGET,
+                        Subjects.target(),
                         null,
                         Duration.UNTIL_END_OF_TURN
                 ));

@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -25,7 +25,7 @@ public class SunSpiderNimbleWebber extends Card {
     public SunSpiderNimbleWebber() {
         // During your turn, Sun-Spider has flying.
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
 
         // When Sun-Spider enters, search your library for an Aura or Equipment card, reveal it,
         // put it into your hand, then shuffle.

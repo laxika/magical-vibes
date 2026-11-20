@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -21,7 +21,7 @@ import java.util.List;
 public class InventorsGoggles extends Card {
 
     public InventorsGoggles() {
-        addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 2, Subjects.attachedCreature()));
 
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(

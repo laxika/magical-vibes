@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -21,7 +21,7 @@ public class MerrowReejerey extends Card {
 
     public MerrowReejerey() {
         // Other Merfolk creatures you control get +1/+1.
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MERFOLK))));
 
         // Whenever you cast a Merfolk spell, you may tap or untap target permanent.

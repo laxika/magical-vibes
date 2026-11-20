@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class HedgeTroll extends Card {
         // This creature gets +1/+1 as long as you control a Plains.
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.PLAINS)),
-                new StaticBoostEffect(1, 1, GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Subjects.source())));
 
         // {W}: Regenerate this creature.
         addActivatedAbility(new ActivatedAbility(

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class SachiDaughterOfSeshiro extends Card {
 
     public SachiDaughterOfSeshiro() {
         // "Other" — OWN_CREATURES excludes the source.
-        addStaticEffect(new StaticBoostEffect(0, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(0, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.SNAKE)));
 
         // Shamans you control includes Sachi and noncreature permanents with the subtype.
@@ -32,7 +32,7 @@ public class SachiDaughterOfSeshiro extends Card {
                 new ActivatedAbility(true, null,
                         List.of(new AwardManaEffect(ManaColor.GREEN, 2)),
                         "{T}: Add {G}{G}."),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.SHAMAN)));
     }
 }

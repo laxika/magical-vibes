@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.AddOnePlusOneCountersToModula
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -40,7 +40,7 @@ public class ZabazTheGlimmerwasp extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{W}",
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.FLYING, Subjects.source())),
                 "{W}: Zabaz gains flying until end of turn."));
     }
 }

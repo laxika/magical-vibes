@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -22,13 +22,13 @@ import java.util.Set;
 public class ParagonOfNewDawns extends Card {
 
     public ParagonOfNewDawns() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{W}",
-                List.of(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target())),
                 "{W}, {T}: Another target white creature you control gains vigilance until end of turn.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

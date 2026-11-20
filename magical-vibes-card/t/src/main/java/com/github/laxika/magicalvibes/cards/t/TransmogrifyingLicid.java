@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LicidBecomeAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class TransmogrifyingLicid extends Card {
                         + " creature. Attach it to target creature. You may pay {1} to end this effect.",
                 TargetFilters.creature()
         ));
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
-        addStaticEffect(new GrantCardTypeEffect(CardType.ARTIFACT, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
+        addStaticEffect(new GrantCardTypeEffect(CardType.ARTIFACT, Subjects.attachedCreature()));
     }
 }

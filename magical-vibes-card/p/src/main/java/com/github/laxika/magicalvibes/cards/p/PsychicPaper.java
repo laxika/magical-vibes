@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEff
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetChosenNameAndCreatureTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "WHO", collectorNumber = "181")
@@ -27,11 +27,11 @@ public class PsychicPaper extends Card {
                 new ChooseCardNameAtResolutionEffect(CardType.CREATURE),
                 new ChooseSubtypeForSourceEffect())));
 
-        addStaticEffect(new SetChosenNameAndCreatureTypeEffect(GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.WARD, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new SetChosenNameAndCreatureTypeEffect(Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.WARD, Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                        new CounterUnlessPaysEffect(1)), GrantScope.EQUIPPED_CREATURE));
+                        new CounterUnlessPaysEffect(1)), Subjects.attachedCreature()));
         addStaticEffect(new CantBeBlockedEffect());
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));

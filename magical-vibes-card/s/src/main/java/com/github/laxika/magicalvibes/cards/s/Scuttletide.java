@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public class Scuttletide extends Card {
         ));
         addStaticEffect(new ConditionalEffect(
                 new Delirium(),
-                new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+                new StaticBoostEffect(1, 1, Subjects.creaturesYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.CRAB))));
     }
 }

@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,7 +20,7 @@ public class TalonsOfWildwood extends Card {
 
     public TalonsOfWildwood() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), Subjects.attachedCreature()));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,

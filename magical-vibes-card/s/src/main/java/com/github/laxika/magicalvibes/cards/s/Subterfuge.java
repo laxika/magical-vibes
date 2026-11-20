@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class Subterfuge extends Card {
     public Subterfuge() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target()),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                                 new DrawCardEffect(new EventValue()))));

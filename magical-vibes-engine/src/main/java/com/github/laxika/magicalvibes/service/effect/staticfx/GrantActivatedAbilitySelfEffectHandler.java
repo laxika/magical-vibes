@@ -34,7 +34,7 @@ public class GrantActivatedAbilitySelfEffectHandler implements StaticEffectHandl
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantActivatedAbilityEffect) effect;
-        boolean applies = support.names(context, grant.scope().subject(), grant.filter());
+        boolean applies = support.names(context, grant.subject(), grant.filter());
         if (applies) {
             accumulator.addActivatedAbility(grant.ability().withGrantSource(context.sourceId()));
         }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -45,9 +45,7 @@ public class TargetCreatureDealsDamageToControllerEffectHandler implements Norma
             return;
         }
         // The target as it is, else as it last existed: the ids of the ones that left too.
-        List<UUID> sourceIds = targetEffect.scope() == GrantScope.TOKENS_CREATED_THIS_RESOLUTION
-                ? List.copyOf(entry.getCreatedPermanentIds())
-                : subjectResolutionService.permanentIds(gameData, entry, effect, targetEffect.scope().subject());
+        List<UUID> sourceIds = subjectResolutionService.permanentIds(gameData, entry, effect, targetEffect.subject());
         for (UUID sourceId : sourceIds) {
             Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
             if (source != null) {
@@ -73,7 +71,7 @@ public class TargetCreatureDealsDamageToControllerEffectHandler implements Norma
      */
     private void dealToEachOpponent(GameData gameData, StackEntry entry,
                                     TargetCreatureDealsDamageToControllerEffect targetEffect) {
-        Permanent source = subjectResolutionService.permanent(gameData, entry, targetEffect, GrantScope.TARGET.subject());
+        Permanent source = subjectResolutionService.permanent(gameData, entry, targetEffect, Subjects.target());
         if (source == null || gameQueryService.findPermanentController(gameData, source.getId()) == null) {
             return;
         }

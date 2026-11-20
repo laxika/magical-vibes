@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "203")
@@ -27,6 +27,6 @@ public class DauntlessDourbark extends Card {
         // Has trample as long as you control another Treefolk.
         addStaticEffect(new ConditionalEffect(
                 new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.TREEFOLK)),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
     }
 }

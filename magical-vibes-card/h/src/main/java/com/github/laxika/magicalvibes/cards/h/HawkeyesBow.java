@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,8 +18,8 @@ import java.util.List;
 public class HawkeyesBow extends Card {
 
     public HawkeyesBow() {
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.REACH, Subjects.attachedCreature()));
 
         addTrigger(List.of(
                         Triggers.permanentYouControlBecomesTapped()

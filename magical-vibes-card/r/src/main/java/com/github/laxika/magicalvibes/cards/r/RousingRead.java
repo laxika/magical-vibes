@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -22,6 +21,6 @@ public class RousingRead extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new DrawCardEffect(2),
                         new DiscardEffect(1, Subjects.you()))
-                .addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING), GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING), Subjects.attachedCreature()));
     }
 }

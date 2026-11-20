@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -37,6 +37,6 @@ public class BottomlessPoolLockerRoom extends Card {
                         new TriggeredAbility(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                                 TriggerOptions.ONE_OR_MORE,
                                 new DrawCardEffect(1)),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

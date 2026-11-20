@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -35,6 +35,6 @@ public class LifecraftAwakening extends Card {
                         new AnimatePermanentsEffect(
                                 0, 0,
                                 List.of(CardSubtype.CONSTRUCT), Set.of(),
-                                null, Set.of(), GrantScope.TARGET, Duration.PERMANENT)));
+                                null, Set.of(), Subjects.target(), Duration.PERMANENT)));
     }
 }

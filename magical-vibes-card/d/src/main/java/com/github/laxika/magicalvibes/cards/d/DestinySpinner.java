@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -38,7 +38,7 @@ public class DestinySpinner extends Card {
                         EnumSet.of(Keyword.TRAMPLE, Keyword.HASTE),
                         null,
                         EnumSet.noneOf(CardType.class),
-                        GrantScope.TARGET,
+                        Subjects.target(),
                         Duration.UNTIL_END_OF_TURN,
                         null)),
                 "{3}{G}: Target land you control becomes an X/X Elemental creature with trample and haste until end of turn, where X is the number of enchantments you control. It's still a land.",

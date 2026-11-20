@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -20,10 +20,10 @@ public class TattooWard extends Card {
 
     public TattooWard() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()))
                 .addStaticEffect(new GrantEffectEffect(
                         new ProtectionFromCardTypesEffect(Set.of(CardType.ENCHANTMENT)),
-                        GrantScope.ENCHANTED_CREATURE));
+                        Subjects.attachedCreature()));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,

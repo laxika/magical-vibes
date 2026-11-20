@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsNoPermanen
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -25,7 +24,7 @@ public class RanklePitilessTrickster extends Card {
     public RanklePitilessTrickster() {
         addStaticEffect(new ConditionalEffect(
                 new OpponentControlsNoPermanent(new PermanentIsCreaturePredicate()),
-                new GrantKeywordEffect(Set.of(Keyword.HASTE, Keyword.LIFELINK), GrantScope.SELF)));
+                new GrantKeywordEffect(Set.of(Keyword.HASTE, Keyword.LIFELINK), Subjects.source())));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayPayLifeEffect(
                 1,

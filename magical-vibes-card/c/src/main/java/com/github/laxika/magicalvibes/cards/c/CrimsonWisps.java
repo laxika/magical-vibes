@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SHM", collectorNumber = "88")
@@ -16,7 +16,7 @@ public class CrimsonWisps extends Card {
     public CrimsonWisps() {
         // Target creature becomes red and gains haste until end of turn. Draw a card.
         target(TargetFilters.creature()).addSpellEffect(new GrantColorUntilEndOfTurnEffect(CardColor.RED))
-          .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
+          .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.target()))
           .addSpellEffect(new DrawCardEffect());
     }
 }

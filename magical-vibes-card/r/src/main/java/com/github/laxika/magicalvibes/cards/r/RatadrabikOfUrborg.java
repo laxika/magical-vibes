@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -55,7 +55,7 @@ public class RatadrabikOfUrborg extends Card {
 
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.VIGILANCE,
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
         addTrigger(Triggers.creatureDies(
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),

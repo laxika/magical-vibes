@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,7 +29,7 @@ public class FaithUnbroken extends Card {
                 )),
                 "Target must be a creature you control"
         ))
-                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()));
 
         // When this Aura enters, exile target creature an opponent controls until this Aura leaves.
         target(TargetFilters.creatureAnOpponentControls())

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -17,13 +17,13 @@ import java.util.List;
 public class SamutTyrantSmasher extends Card {
 
     public SamutTyrantSmasher() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl()));
 
         addActivatedAbility(new ActivatedAbility(
                 -1,
                 List.of(
                         new BoostTargetCreatureEffect(2, 1),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
                         new ScryEffect(1)
                 ),
                 "-1: Target creature gets +2/+1 and gains haste until end of turn. Scry 1.",

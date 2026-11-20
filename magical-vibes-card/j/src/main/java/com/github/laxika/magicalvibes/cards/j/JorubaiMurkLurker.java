@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,9 +21,9 @@ public class JorubaiMurkLurker extends Card {
     public JorubaiMurkLurker() {
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.SWAMP)),
-                new StaticBoostEffect(1, 1, GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Subjects.source())));
         addActivatedAbility(new ActivatedAbility(false, "{1}{B}",
-                List.of(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target())),
                 "{1}{B}: Target creature gains lifelink until end of turn.",
                 TargetFilters.creature()));
     }

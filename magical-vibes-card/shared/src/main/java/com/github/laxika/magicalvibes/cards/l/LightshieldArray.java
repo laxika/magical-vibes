@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,7 +35,7 @@ public class LightshieldArray extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         new GrantKeywordEffect(
-                                Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.OWN_CREATURES)),
+                                Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), Subjects.otherCreaturesYouControl())),
                 "Sacrifice this enchantment: Creatures you control gain hexproof and indestructible until end of turn."
         ));
     }

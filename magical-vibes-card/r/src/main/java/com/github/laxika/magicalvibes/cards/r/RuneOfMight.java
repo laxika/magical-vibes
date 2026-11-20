@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureOfEnchan
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -26,7 +26,7 @@ public class RuneOfMight extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentIsCreaturePredicate(),
-                        new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), GrantScope.ENCHANTED_CREATURE),
+                        new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), Subjects.attachedCreature()),
                         null
                 ))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(

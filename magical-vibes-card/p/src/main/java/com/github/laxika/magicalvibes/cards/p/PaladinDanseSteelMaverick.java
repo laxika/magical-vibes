@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -26,7 +26,7 @@ public class PaladinDanseSteelMaverick extends Card {
                         new ExileSelfCost(),
                         new GrantKeywordEffect(
                                 Keyword.INDESTRUCTIBLE,
-                                GrantScope.ALL_OWN_CREATURES,
+                                Subjects.creaturesYouControl(),
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsArtifactPredicate(),
                                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN)

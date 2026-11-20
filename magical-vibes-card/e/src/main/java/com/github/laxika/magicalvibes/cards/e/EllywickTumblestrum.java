@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -47,11 +47,11 @@ public class EllywickTumblestrum extends Card {
                 -7,
                 List.of(new CreateEmblemEffect(List.of(
                         new StaticBoostEffect(0, 0, Set.of(Keyword.TRAMPLE, Keyword.HASTE),
-                                GrantScope.OWN_CREATURES),
+                                Subjects.otherCreaturesYouControl()),
                         new DynamicStaticBoostEffect(
                                 new Scaled(completedDungeons, 2),
                                 new Scaled(completedDungeons, 2),
-                                GrantScope.OWN_CREATURES)), EMBLEM_TEXT)),
+                                Subjects.otherCreaturesYouControl())), EMBLEM_TEXT)),
                 "−7: You get an emblem with \"" + EMBLEM_TEXT + "\"."));
     }
 }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -26,6 +25,6 @@ public class DisturbingConversion extends Card {
                 .addStaticEffect(new AttachedBoostEffect(
                         new Scaled(attachedControllersGraveyard, -1),
                         new Fixed(0),
-                        GrantScope.ENCHANTED_CREATURE));
+                        Subjects.attachedCreature()));
     }
 }

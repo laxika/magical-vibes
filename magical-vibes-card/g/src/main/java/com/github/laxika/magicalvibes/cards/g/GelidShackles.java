@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantActivateAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class GelidShackles extends Card {
                 false,
                 "{S}",
                 List.of(new GrantKeywordEffect(
-                        Keyword.DEFENDER, GrantScope.ENCHANTED_CREATURE, Duration.UNTIL_END_OF_TURN)),
+                        Keyword.DEFENDER, Subjects.attachedCreature(), Duration.UNTIL_END_OF_TURN)),
                 "{S}: Enchanted creature gains defender until end of turn."));
     }
 }

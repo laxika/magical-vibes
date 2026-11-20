@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -80,7 +79,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             if (controlApplied && e.grantedSubtype() != null) {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
-                        entry.getControllerId(), new GrantSubtypeEffect(e.grantedSubtype(), GrantScope.TARGET),
+                        entry.getControllerId(), new GrantSubtypeEffect(e.grantedSubtype(), Subjects.target()),
                         targetId, null, null, Duration.PERMANENT, 0));
 
                 gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" becomes a " + e.grantedSubtype().getDisplayName() + " in addition to its other types.").build());

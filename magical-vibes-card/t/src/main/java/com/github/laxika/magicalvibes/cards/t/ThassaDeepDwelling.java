@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -33,7 +32,7 @@ public class ThassaDeepDwelling extends Card {
     public ThassaDeepDwelling() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorAtLeast(ManaColor.BLUE, 5)),
-                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
+                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), Subjects.source())));
 
         PermanentPredicateTargetFilter anotherCreatureYouControl = new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

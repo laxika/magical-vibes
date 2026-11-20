@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,7 +28,7 @@ public class InquisitorialRosette extends Card {
                         List.of(CardSubtype.ASTARTES, CardSubtype.WARRIOR),
                         Set.of(Keyword.VIGILANCE), true, false).withAttackingUntapped(),
                 new GrantKeywordEffect(
-                        Keyword.MENACE, GrantScope.ALL_CREATURES, new PermanentIsAttackingPredicate())
+                        Keyword.MENACE, Subjects.allCreatures(), new PermanentIsAttackingPredicate())
         ));
 
         // Equip {3}

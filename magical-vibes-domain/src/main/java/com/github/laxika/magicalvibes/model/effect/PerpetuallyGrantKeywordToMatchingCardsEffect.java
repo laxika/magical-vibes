@@ -36,8 +36,8 @@ public record PerpetuallyGrantKeywordToMatchingCardsEffect(
     }
 
     @Override
-    public GrantScope scope() {
-        return GrantScope.OWN_CREATURES;
+    public PermanentSubject subject() {
+        return Subjects.otherCreaturesYouControl();
     }
 
     @Override

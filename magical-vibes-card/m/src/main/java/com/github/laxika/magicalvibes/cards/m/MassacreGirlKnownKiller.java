@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtMostPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class MassacreGirlKnownKiller extends Card {
 
     public MassacreGirlKnownKiller() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.WITHER, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.WITHER, Subjects.creaturesYouControl()));
         addTrigger(Triggers.creatureDies(new PermanentToughnessAtMostPredicate(0), ObjectRelation.OPPONENT_CONTROLS),
                 new DrawCardEffect(1));
     }

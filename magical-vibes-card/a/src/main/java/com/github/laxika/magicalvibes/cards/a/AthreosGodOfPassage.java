@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerHandUnlessTargetPaysLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -30,7 +30,7 @@ public class AthreosGodOfPassage extends Card {
     public AthreosGodOfPassage() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorsAtLeast(Set.of(ManaColor.WHITE, ManaColor.BLACK), 7)),
-                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
+                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), Subjects.source())));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"

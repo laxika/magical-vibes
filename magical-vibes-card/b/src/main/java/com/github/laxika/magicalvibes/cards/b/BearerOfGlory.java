@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "TDM", collectorNumber = "4")
@@ -17,7 +17,7 @@ public class BearerOfGlory extends Card {
 
     public BearerOfGlory() {
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{W}",

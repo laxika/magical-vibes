@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -29,7 +29,7 @@ public class GrandArchitect extends Card {
     public GrandArchitect() {
         // Ability 1: Other blue creatures you control get +1/+1
         addStaticEffect(new StaticBoostEffect(1, 1, Set.of(),
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentColorInPredicate(Set.of(CardColor.BLUE))));
 
         // Ability 2: {U}: Target artifact creature becomes blue until end of turn

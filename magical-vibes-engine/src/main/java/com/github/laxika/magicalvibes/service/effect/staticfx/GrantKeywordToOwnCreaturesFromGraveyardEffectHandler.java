@@ -33,7 +33,7 @@ public class GrantKeywordToOwnCreaturesFromGraveyardEffectHandler implements Sta
                 || !conditionEvaluationService.isMet(context.gameData(), grant.condition(), conditionContext)) {
             return;
         }
-        if (support.namesBeyondSource(context, grant.scope().subject(), grant.filter())) {
+        if (support.namesBeyondSource(context, grant.subject(), grant.filter())) {
             accumulator.addKeywords(grant.keywords());
         }
     }

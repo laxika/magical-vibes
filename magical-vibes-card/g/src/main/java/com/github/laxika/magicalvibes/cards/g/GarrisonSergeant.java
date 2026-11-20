@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "GRN", collectorNumber = "172")
@@ -16,6 +16,6 @@ public class GarrisonSergeant extends Card {
     public GarrisonSergeant() {
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.GATE)),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.source())));
     }
 }

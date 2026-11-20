@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnDyingCreatureUnderControlEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ public class MarchesaTheBlackRose extends Card {
 
     public MarchesaTheBlackRose() {
         // Other creatures you control have dethrone.
-        addStaticEffect(new GrantKeywordEffect(Keyword.DETHRONE, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DETHRONE, Subjects.otherCreaturesYouControl()));
 
         // Whenever a creature you control with a +1/+1 counter on it dies, return that card to the
         // battlefield under your control at the beginning of the next end step.

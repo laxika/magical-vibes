@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class Plaxmanta extends Card {
 
     public Plaxmanta() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ALL_OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.SHROUD, Subjects.creaturesYouControl()));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ConditionalEffect(
                 new NotCondition(new ColorSpentToCast(ManaColor.GREEN)), new SacrificeSelfEffect()));
     }

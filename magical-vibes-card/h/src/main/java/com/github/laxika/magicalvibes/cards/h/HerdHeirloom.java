@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -41,7 +41,7 @@ public class HerdHeirloom extends Card {
                 true,
                 null,
                 List.of(
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                                 new DrawCardEffect(1)))

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -17,12 +16,12 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class CementShoes extends Card {
 
     public CementShoes() {
-        addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 3, Subjects.attachedCreature()));
         addStaticEffect(DoesntUntapEffect.enchanted());
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU),
                 new TapPermanentsEffect(Subjects.source())),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

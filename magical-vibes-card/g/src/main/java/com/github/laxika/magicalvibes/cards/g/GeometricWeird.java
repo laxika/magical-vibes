@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.amount.GreatestStackSourceCountThisTurn;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ public class GeometricWeird extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 new MayEffect(
                         new SetBasePowerToughnessToAmountEffect(
-                                stackSourceCount, stackSourceCount, GrantScope.SELF),
+                                stackSourceCount, stackSourceCount, Subjects.source()),
                         "Have Geometric Weird's base power and toughness become equal to the greatest number "
                                 + "of spells and abilities from different sources that were on the stack "
                                 + "simultaneously this turn?"));

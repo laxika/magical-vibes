@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,6 +29,6 @@ public class WartimeProtestors extends Card {
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
                         PutCounterOnTargetPermanentEffect.onTriggeringPermanent(CounterType.PLUS_ONE_PLUS_ONE, 1),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TRIGGERING_PERMANENT)));
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.triggering())));
     }
 }

@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -45,7 +45,7 @@ public class TheGirlInTheFireplace extends Card {
                 List.of(CardSubtype.HORSE), Set.of(), Set.of(),
                 List.of(
                         StaticAbility.of(new GrantKeywordEffect(
-                        Keyword.HORSEMANSHIP, GrantScope.ALL_OWN_CREATURES,
+                        Keyword.HORSEMANSHIP, Subjects.creaturesYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.DOCTOR))))));
 
         addTrigger(Triggers.chapter(3), new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(

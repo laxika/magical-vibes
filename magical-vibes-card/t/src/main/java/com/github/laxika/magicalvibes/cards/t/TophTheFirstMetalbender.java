@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -21,7 +21,7 @@ public class TophTheFirstMetalbender extends Card {
     public TophTheFirstMetalbender() {
         addStaticEffect(new GrantCardTypeEffect(
                 CardType.LAND,
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentNotPredicate(new PermanentIsTokenPredicate())

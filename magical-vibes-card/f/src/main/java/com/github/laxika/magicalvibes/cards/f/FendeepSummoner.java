@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -24,7 +24,7 @@ public class FendeepSummoner extends Card {
                 null, // no mana cost
                 List.of(new AnimatePermanentsEffect(
                         3, 5, List.of(CardSubtype.TREEFOLK, CardSubtype.WARRIOR), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN)),
+                        Subjects.target(), Duration.UNTIL_END_OF_TURN)),
                 "{T}: Up to two target Swamps each become 3/5 Treefolk Warrior creatures "
                         + "in addition to their other types until end of turn.",
                 List.of(

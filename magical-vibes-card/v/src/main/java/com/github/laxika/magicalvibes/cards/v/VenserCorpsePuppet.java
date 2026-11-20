@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -48,7 +48,7 @@ public class VenserCorpsePuppet extends Card {
                         new ConditionalEffect(new NotCondition(new ControlsPermanent(HOLLOW_SENTINEL)), hollowSentinel)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target artifact creature you control gains flying and lifelink until end of turn",
-                        new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.LIFELINK), GrantScope.TARGET,
+                        new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.LIFELINK), Subjects.target(),
                                 ARTIFACT_CREATURE_YOU_CONTROL),
                         new PermanentPredicateTargetFilter(
                                 ARTIFACT_CREATURE_YOU_CONTROL,

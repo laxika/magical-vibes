@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -37,8 +37,8 @@ public class DrMadisonLi extends Card {
                 List.of(
                         new PayEnergyCost(1),
                         new BoostTargetCreatureEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target())
                 ),
                 "{T}, Pay {E}: Target creature gets +1/+0 and gains trample and haste until end of turn.",
                 TargetFilters.creature()

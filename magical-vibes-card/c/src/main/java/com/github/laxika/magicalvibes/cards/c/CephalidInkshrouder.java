@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "36")
@@ -20,7 +20,7 @@ public class CephalidInkshrouder extends Card {
                 null,
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new GrantKeywordEffect(Keyword.SHROUD, GrantScope.SELF),
+                        new GrantKeywordEffect(Keyword.SHROUD, Subjects.source()),
                         new MakeCreatureUnblockableEffect(true)),
                 "Discard a card: This creature gains shroud until end of turn and can't be blocked this turn."
         ));

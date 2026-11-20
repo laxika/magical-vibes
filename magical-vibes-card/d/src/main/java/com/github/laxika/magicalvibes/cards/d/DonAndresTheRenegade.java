@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -30,9 +30,9 @@ public class DonAndresTheRenegade extends Card {
 
         addStaticEffect(new StaticBoostEffect(
                 2, 2, Set.of(Keyword.MENACE, Keyword.DEATHTOUCH),
-                GrantScope.ALL_OWN_CREATURES, controlledButNotOwned));
+                Subjects.creaturesYouControl(), controlledButNotOwned));
         addStaticEffect(new GrantSubtypeEffect(
-                CardSubtype.PIRATE, GrantScope.ALL_OWN_CREATURES, false, controlledButNotOwned));
+                CardSubtype.PIRATE, Subjects.creaturesYouControl(), false, controlledButNotOwned));
 
         addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardAllOfPredicate(List.of(

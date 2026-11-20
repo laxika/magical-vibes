@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DoubleLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class TheWindCrystal extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}{W}{W}",
-                List.of(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.LIFELINK), GrantScope.ALL_OWN_CREATURES)),
+                List.of(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.LIFELINK), Subjects.creaturesYouControl())),
                 "{4}{W}{W}, {T}: Creatures you control gain flying and lifelink until end of turn."
         ));
     }

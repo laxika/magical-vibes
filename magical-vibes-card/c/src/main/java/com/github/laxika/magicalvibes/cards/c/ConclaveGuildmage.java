@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -21,7 +21,7 @@ public class ConclaveGuildmage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{G}",
-                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES)),
+                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl())),
                 "{G}, {T}: Creatures you control gain trample until end of turn."
         ));
 

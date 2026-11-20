@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -31,21 +32,21 @@ public class SetBasePowerToughnessToAmountEffectHandler implements NormalEffectH
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         SetBasePowerToughnessToAmountEffect setPT = (SetBasePowerToughnessToAmountEffect) effect;
-        if (setPT.scope() == GrantScope.TARGET) {
+        if (setPT.subject() instanceof PermanentSubject.Target) {
             // One-shot "target creature becomes X/Y until end of turn" with amounts read from the spell
             // (Fractalize: base power and toughness each equal to X plus 1).
             AmountContext spellContext = AmountContext.forStackEntry(entry, null);
             int power = amountEvaluationService.evaluate(gameData, setPT.power(), spellContext);
             int toughness = amountEvaluationService.evaluate(gameData, setPT.toughness(), spellContext);
             setBasePowerToughnessEffectHandler.resolve(gameData, entry,
-                    new SetBasePowerToughnessEffect(power, toughness, GrantScope.TARGET,
+                    new SetBasePowerToughnessEffect(power, toughness, Subjects.target(),
                             Duration.UNTIL_END_OF_TURN));
             return;
         }
-        if (setPT.scope() != GrantScope.SELF) {
+        if (!(setPT.subject() instanceof PermanentSubject.Source)) {
             return;
         }
-        Permanent source = subjectResolutionService.permanent(gameData, entry, effect, setPT.scope().subject());
+        Permanent source = subjectResolutionService.permanent(gameData, entry, effect, setPT.subject());
         if (source == null) {
             return;
         }
@@ -53,7 +54,7 @@ public class SetBasePowerToughnessToAmountEffectHandler implements NormalEffectH
         int power = amountEvaluationService.evaluate(gameData, setPT.power(), amountContext);
         int toughness = amountEvaluationService.evaluate(gameData, setPT.toughness(), amountContext);
         setBasePowerToughnessEffectHandler.resolve(gameData, entry,
-                new SetBasePowerToughnessEffect(power, toughness, GrantScope.SELF,
+                new SetBasePowerToughnessEffect(power, toughness, Subjects.source(),
                         Duration.PERMANENT));
     }
 }

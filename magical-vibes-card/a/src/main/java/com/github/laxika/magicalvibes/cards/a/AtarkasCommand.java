@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
@@ -39,7 +38,7 @@ public class AtarkasCommand extends Card {
                         "Creatures you control get +1/+1 and gain reach until end of turn",
                         List.of(
                                 new BoostAllOwnCreaturesEffect(1, 1),
-                                new GrantKeywordEffect(Keyword.REACH, GrantScope.OWN_CREATURES)))
+                                new GrantKeywordEffect(Keyword.REACH, Subjects.otherCreaturesYouControl())))
         ), 2));
     }
 }

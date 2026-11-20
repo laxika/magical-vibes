@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,7 +28,7 @@ public class SavageBeating extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control gain double strike until end of turn",
-                        new GrantKeywordEffect(Set.of(Keyword.DOUBLE_STRIKE), GrantScope.OWN_CREATURES)),
+                        new GrantKeywordEffect(Set.of(Keyword.DOUBLE_STRIKE), Subjects.otherCreaturesYouControl())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Untap all creatures you control. After this phase, there is an additional combat phase",
                         List.of(

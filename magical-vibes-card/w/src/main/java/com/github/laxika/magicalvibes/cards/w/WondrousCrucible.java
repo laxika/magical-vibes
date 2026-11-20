@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -23,10 +22,10 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class WondrousCrucible extends Card {
 
     public WondrousCrucible() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.WARD, GrantScope.OWN_PERMANENTS));
+        addStaticEffect(new GrantKeywordEffect(Keyword.WARD, Subjects.otherPermanentsYouControl()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(2)), GrantScope.OWN_PERMANENTS));
+                new CounterUnlessPaysEffect(2)), Subjects.permanentsYouControl()));
         addTrigger(Triggers.endStep(ActivePlayer.YOU), SequenceEffect.of(
                 new MillEffect(2, Subjects.you()),
                 new ExileRandomCardFromGraveyardAndMayCastCopyEffect(

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -22,7 +22,7 @@ public class ChimericStaff extends Card {
                 "{X}",
                 List.of(new AnimatePermanentsEffect(new XValue(), new XValue(),
                         List.of(CardSubtype.CONSTRUCT), Set.of(), null, Set.of(),
-                        GrantScope.SELF, Duration.UNTIL_END_OF_TURN, null)),
+                        Subjects.source(), Duration.UNTIL_END_OF_TURN, null)),
                 "{X}: Chimeric Staff becomes an X/X Construct artifact creature until end of turn."
         ));
     }

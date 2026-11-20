@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -34,7 +34,7 @@ public class GoldspanDragon extends Card {
         );
         addStaticEffect(new GrantActivatedAbilityEffect(
                 treasureManaAbility,
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.TREASURE)
         ));
     }

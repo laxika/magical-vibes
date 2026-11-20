@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnChosenPermanentEffect;
@@ -49,6 +48,6 @@ public class ExperimentalLabStaffRoom extends Card {
                                                 new PutCounterOnTargetPermanentEffect(
                                                         Subjects.triggering(),
                                                         CounterType.PLUS_ONE_PLUS_ONE))))),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

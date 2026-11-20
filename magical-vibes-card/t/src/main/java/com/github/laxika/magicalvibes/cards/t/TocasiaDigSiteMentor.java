@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -21,10 +21,10 @@ import java.util.List;
 public class TocasiaDigSiteMentor extends Card {
 
     public TocasiaDigSiteMentor() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl()));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null, List.of(new SurveilEffect(1)), "{T}: Surveil 1."),
-                GrantScope.ALL_OWN_CREATURES));
+                Subjects.creaturesYouControl()));
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,
                 "{2}{G}{G}{W}{W}{U}{U}",

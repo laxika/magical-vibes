@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "20")
@@ -22,7 +22,7 @@ public class HundredHandedOne extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{3}{W}{W}{W}", List.of(new MonstrosityEffect(3)),
                 "{3}{W}{W}{W}: Monstrosity 3."));
         addStaticEffect(new ConditionalEffect(monstrous,
-                new GrantKeywordEffect(Keyword.REACH, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.REACH, Subjects.source())));
         addStaticEffect(new ConditionalEffect(monstrous,
                 new GrantAdditionalBlockEffect(99)));
     }

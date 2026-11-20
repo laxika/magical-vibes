@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -38,7 +38,7 @@ public class OriginOfTheHulk extends Card {
         // Chapter III: Target creature you control gets +3/+3 and gains trample until end of turn.
         addTrigger(Triggers.chapter(3),
                 new BoostTargetCreatureEffect(3, 3),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));
         setSagaChapterTargetFilter(3, Set.of(TargetFilters.creatureYouControl()));
         setSagaChapterTargetRequired(3);
     }

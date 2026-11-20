@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -30,7 +30,7 @@ public class SimicCharm extends Card {
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Permanents you control gain hexproof until end of turn",
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS)),
+                        new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.permanentsYouControl())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature to its owner's hand",
                         ReturnToHandEffect.target(),

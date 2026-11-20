@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -32,21 +32,21 @@ public class GemcutterBuccaneer extends Card {
 
         PermanentPredicate treasure = new PermanentHasSubtypePredicate(CardSubtype.TREASURE);
 
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.EQUIPMENT, GrantScope.OWN_PERMANENTS, false, treasure));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.EQUIPMENT, Subjects.permanentsYouControl(), false, treasure));
         addStaticEffect(new GrantEffectEffect(
-                        new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE),
-                        GrantScope.OWN_PERMANENTS,
+                        new StaticBoostEffect(2, 0, Subjects.attachedCreature()),
+                        Subjects.permanentsYouControl(),
                         treasure));
         addStaticEffect(new GrantActivatedAbilityEffect(
                         new EquipActivatedAbility(
                                 "{1}",
                                 new PermanentHasSubtypePredicate(CardSubtype.PIRATE),
                                 "Target must be a Pirate you control"),
-                        GrantScope.OWN_PERMANENTS,
+                        Subjects.permanentsYouControl(),
                         treasure));
         addStaticEffect(new GrantActivatedAbilityEffect(
                         new EquipActivatedAbility("{3}"),
-                        GrantScope.OWN_PERMANENTS,
+                        Subjects.permanentsYouControl(),
                         treasure));
     }
 }

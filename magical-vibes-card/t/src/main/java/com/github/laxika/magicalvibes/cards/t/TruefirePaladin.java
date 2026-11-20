@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "202")
@@ -25,7 +25,7 @@ public class TruefirePaladin extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}{W}",
-                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())),
                 "{R}{W}: This creature gains first strike until end of turn."
         ));
     }

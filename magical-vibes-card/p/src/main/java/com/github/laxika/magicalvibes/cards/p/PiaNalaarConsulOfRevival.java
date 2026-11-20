@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,7 +25,7 @@ import java.util.Set;
 public class PiaNalaarConsulOfRevival extends Card {
 
     public PiaNalaarConsulOfRevival() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.THOPTER)));
 
         CardEffect createThopter = new CreateTokenEffect("Thopter", 1, 1, null,

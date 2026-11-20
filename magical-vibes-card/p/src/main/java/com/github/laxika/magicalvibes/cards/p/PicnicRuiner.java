@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -27,7 +27,7 @@ public class PicnicRuiner extends Card {
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentPowerAtLeastPredicate(4))))),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.source()));
     }
 
     @Override

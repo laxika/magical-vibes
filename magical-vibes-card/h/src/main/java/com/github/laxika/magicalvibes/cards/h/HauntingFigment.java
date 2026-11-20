@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTur
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -21,6 +21,6 @@ public class HauntingFigment extends Card {
                 new ControllerCastSpellThisTurn(new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY)))),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
     }
 }

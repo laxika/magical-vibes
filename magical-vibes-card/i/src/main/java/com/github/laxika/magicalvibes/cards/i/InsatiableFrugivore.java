@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenMayExileCardsAndRepeatEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeXPermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -33,7 +33,7 @@ public class InsatiableFrugivore extends Card {
                 List.of(
                         new SacrificeXPermanentsCost(new PermanentHasSubtypePredicate(CardSubtype.FOOD)),
                         new BoostAllOwnCreaturesEffect(new XValue(), new Fixed(0)),
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.MENACE, Subjects.creaturesYouControl())
                 ),
                 "{3}{B}, Sacrifice X Foods: Creatures you control get +X/+0 and gain menace until end of turn."
         ).withXValue());

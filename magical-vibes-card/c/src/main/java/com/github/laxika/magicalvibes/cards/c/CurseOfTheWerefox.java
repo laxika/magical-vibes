@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -48,8 +48,8 @@ public class CurseOfTheWerefox extends Card {
                 false,
                 List.of(
                         StaticAbility.of(SequenceEffect.of(
-                        new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE)))),
+                        new StaticBoostEffect(1, 1, Subjects.attachedCreature()),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.attachedCreature())))),
                 List.of(),
                 false,
                 false,

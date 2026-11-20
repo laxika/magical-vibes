@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainAbilitiesOfLastChosenExiledCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import org.springframework.stereotype.Component;
@@ -46,7 +46,7 @@ public class GainAbilitiesOfLastChosenExiledCardSelfEffectHandler implements Sta
 
         for (TriggeredAbility ability : chosenCard.getTriggeredAbilities()) {
 
-            accumulator.addGrantedEffect(new GrantTriggeredAbilityEffect(ability, GrantScope.SELF));
+            accumulator.addGrantedEffect(new GrantTriggeredAbilityEffect(ability, Subjects.source()));
 
         }
     }

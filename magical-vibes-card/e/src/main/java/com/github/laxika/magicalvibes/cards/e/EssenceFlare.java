@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -18,7 +17,7 @@ public class EssenceFlare extends Card {
     public EssenceFlare() {
         target(TargetFilters.creature())
                 // Enchanted creature gets +2/+0.
-                .addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(2, 0, Subjects.attachedCreature()))
 
                 // At the beginning of the upkeep of enchanted creature's controller,
                 // put a -0/-1 counter on that creature.

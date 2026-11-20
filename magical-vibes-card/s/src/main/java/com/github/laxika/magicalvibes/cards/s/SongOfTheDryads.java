@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesOnlyLandEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SLD", collectorNumber = "2027")
@@ -20,6 +20,6 @@ public class SongOfTheDryads extends Card {
         target(TargetFilters.permanent())
                 .addStaticEffect(new EnchantedPermanentBecomesOnlyLandEffect())
                 .addStaticEffect(new EnchantedPermanentBecomesTypeEffect(CardSubtype.FOREST))
-                .addStaticEffect(new BecomeColorlessEffect(GrantScope.ENCHANTED_PERMANENT));
+                .addStaticEffect(new BecomeColorlessEffect(Subjects.attached()));
     }
 }

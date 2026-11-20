@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.condition.EnchantedCreatureDidntAtta
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -32,7 +31,7 @@ public class Aggression extends Card {
                 "Target must be a creature that isn't a Wall"))
                 // Enchanted creature has first strike and trample.
                 .addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE),
-                                GrantScope.ENCHANTED_CREATURE))
+                                Subjects.attachedCreature()))
                 // At the beginning of the end step of enchanted creature's controller,
                 // destroy that creature if it didn't attack this turn.
                 .addTrigger(Triggers.endStep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),

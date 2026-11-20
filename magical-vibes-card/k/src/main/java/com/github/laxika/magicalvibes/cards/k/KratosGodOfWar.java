@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -22,7 +21,7 @@ import java.util.List;
 public class KratosGodOfWar extends Card {
 
     public KratosGodOfWar() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_CREATURES_INCLUDING_SELF));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.allCreatures()));
         addTrigger(Triggers.endStep(ActivePlayer.ANY), new DealDamageToPlayersEffect(
                 new PermanentCount(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),

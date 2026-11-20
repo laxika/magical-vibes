@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "RIX", collectorNumber = "27")
@@ -16,6 +16,6 @@ public class SunCrestedPterodon extends Card {
     public SunCrestedPterodon() {
         addStaticEffect(new ConditionalEffect(
                 new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source())));
     }
 }

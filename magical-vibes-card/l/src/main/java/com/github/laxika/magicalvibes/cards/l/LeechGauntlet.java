@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -24,8 +24,8 @@ import java.util.List;
 public class LeechGauntlet extends Card {
 
     public LeechGauntlet() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF,
+        addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.attachedCreature()));
+        addStaticEffect(new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, Subjects.source(),
                 Duration.WHILE_ATTACHED));
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(

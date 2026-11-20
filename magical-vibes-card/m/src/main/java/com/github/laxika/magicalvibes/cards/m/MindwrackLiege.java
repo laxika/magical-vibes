@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -24,11 +24,11 @@ public class MindwrackLiege extends Card {
 
     public MindwrackLiege() {
         // Other blue creatures you control get +1/+1. (OWN_CREATURES scope excludes the source itself.)
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentColorInPredicate(Set.of(CardColor.BLUE))));
 
         // Other red creatures you control get +1/+1.
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentColorInPredicate(Set.of(CardColor.RED))));
 
         // {U/R}{U/R}{U/R}{U/R}: You may put a blue or red creature card from your hand onto the battlefield.

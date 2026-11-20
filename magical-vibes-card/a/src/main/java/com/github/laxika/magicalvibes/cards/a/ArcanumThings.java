@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EquipmentSwapEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "MB2", collectorNumber = "272")
@@ -16,7 +16,7 @@ import java.util.List;
 public class ArcanumThings extends Card {
 
     public ArcanumThings() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AlternativeCostForSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -20,7 +20,7 @@ import java.util.List;
 public class TannukSteadfastSecond extends Card {
 
     public TannukSteadfastSecond() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.otherCreaturesYouControl()));
 
         CardPredicate artifactOrRedCreature = new CardAnyOfPredicate(List.of(
                 new CardTypePredicate(CardType.ARTIFACT),

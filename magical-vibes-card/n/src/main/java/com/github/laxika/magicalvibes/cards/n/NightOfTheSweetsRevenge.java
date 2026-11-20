@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,7 +31,7 @@ public class NightOfTheSweetsRevenge extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), foodToken());
         addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapFor(ManaColor.GREEN),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.FOOD)
         ));
         addActivatedAbility(new ActivatedAbility(

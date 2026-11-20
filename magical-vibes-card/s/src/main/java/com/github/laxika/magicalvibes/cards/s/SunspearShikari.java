@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SOM", collectorNumber = "23")
 @CardRegistration(set = "MM2", collectorNumber = "35")
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class SunspearShikari extends Card {
 
     public SunspearShikari() {
-        addStaticEffect(new ConditionalEffect(new Equipped(), new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
-        addStaticEffect(new ConditionalEffect(new Equipped(), new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new Equipped(), new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())));
+        addStaticEffect(new ConditionalEffect(new Equipped(), new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source())));
     }
 }

@@ -1,6 +1,12 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceOrPairedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicate;
@@ -19,6 +25,7 @@ public final class Subjects {
     private static final PermanentSubject TARGET = new PermanentSubject.Target(null);
     private static final PermanentSubject ALL_TARGETS = new PermanentSubject.AllTargets();
     private static final PermanentSubject ATTACHED = new PermanentSubject.Attached();
+    private static final PermanentSubject ATTACHED_CREATURE = new PermanentSubject.Attached(true);
     private static final PermanentSubject ATTACHED_OR_SOURCE = new PermanentSubject.AttachedOrSource();
     private static final PermanentSubject ATTACHED_AT_TRIGGER = new PermanentSubject.AttachedAtTrigger();
     private static final PermanentSubject TRIGGERING = new PermanentSubject.Triggering();
@@ -31,6 +38,9 @@ public final class Subjects {
     private static final PermanentSubject GRANTER = new PermanentSubject.Granter(null);
     private static final PermanentSubject RETURNED_THIS_RESOLUTION = new PermanentSubject.ReturnedThisResolution();
     private static final PermanentSubject EXILED_THIS_RESOLUTION = new PermanentSubject.ExiledThisResolution();
+    private static final PermanentSubject TRIGGERING_ATTACKERS = new PermanentSubject.TriggeringAttackers();
+    private static final PermanentSubject TRIGGERING_SPELL_TARGETS = new PermanentSubject.TriggeringSpellTargets();
+    private static final PermanentSubject CREATED_THIS_RESOLUTION = new PermanentSubject.CreatedThisResolution();
 
     private static final PlayerSubject YOU = new PlayerSubject.You();
     private static final PlayerSubject TARGET_PLAYER = new PlayerSubject.TargetPlayer(null, true);
@@ -46,6 +56,47 @@ public final class Subjects {
     private static final PlayerSubject ACCEPTED_PLAYERS = new PlayerSubject.AcceptedPlayers();
     private static final PlayerSubject PLAYERS_DEALT_DAMAGE = new PlayerSubject.PlayersDealtDamage();
     private static final PlayerSubject SUBGAME_WINNERS = new PlayerSubject.SubgameWinners();
+
+    private static final PermanentPredicate CREATURE = new PermanentIsCreaturePredicate();
+    private static final PermanentPredicate LAND = new PermanentIsLandPredicate();
+    private static final PermanentPredicate NOT_SOURCE =
+            new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate());
+    private static final PermanentPredicate TAPPED = new PermanentIsTappedPredicate();
+
+    private static final PermanentSubject SOURCE_AND_PAIRED =
+            new PermanentSubject.ControlledBy(EACH_PLAYER, new PermanentIsSourceOrPairedPredicate());
+    private static final PermanentSubject CREATURES_YOU_CONTROL = new PermanentSubject.ControlledBy(YOU, CREATURE);
+    private static final PermanentSubject OTHER_CREATURES_YOU_CONTROL =
+            new PermanentSubject.ControlledBy(YOU, allOfPredicates(NOT_SOURCE, CREATURE));
+    private static final PermanentSubject OTHER_TAPPED_CREATURES_YOU_CONTROL =
+            new PermanentSubject.ControlledBy(YOU, allOfPredicates(TAPPED, NOT_SOURCE, CREATURE));
+    private static final PermanentSubject OTHER_UNTAPPED_CREATURES_YOU_CONTROL =
+            new PermanentSubject.ControlledBy(YOU,
+                    allOfPredicates(new PermanentNotPredicate(TAPPED), NOT_SOURCE, CREATURE));
+    private static final PermanentSubject CREATURES_YOUR_OPPONENTS_CONTROL =
+            new PermanentSubject.ControlledBy(EACH_OPPONENT, CREATURE);
+    private static final PermanentSubject PERMANENTS_YOU_CONTROL =
+            new PermanentSubject.ControlledBy(YOU, new PermanentTruePredicate());
+    private static final PermanentSubject OTHER_PERMANENTS_YOU_CONTROL =
+            new PermanentSubject.ControlledBy(YOU, NOT_SOURCE);
+    private static final PermanentSubject CREATURES_TARGET_PLAYER_CONTROLS =
+            new PermanentSubject.ControlledBy(TARGET_PLAYER, CREATURE);
+    private static final PermanentSubject LANDS_TARGET_PLAYER_CONTROLS =
+            new PermanentSubject.ControlledBy(TARGET_PLAYER, LAND);
+    private static final PermanentSubject ALL_CREATURES = new PermanentSubject.ControlledBy(EACH_PLAYER, CREATURE);
+    private static final PermanentSubject OTHER_CREATURES =
+            new PermanentSubject.ControlledBy(EACH_PLAYER, allOfPredicates(NOT_SOURCE, CREATURE));
+    private static final PermanentSubject ALL_PERMANENTS =
+            new PermanentSubject.ControlledBy(EACH_PLAYER, new PermanentTruePredicate());
+    private static final PermanentSubject OTHER_PERMANENTS = new PermanentSubject.ControlledBy(EACH_PLAYER, NOT_SOURCE);
+    private static final PermanentSubject CREATURES_ENCHANTED_PLAYER_CONTROLS =
+            new PermanentSubject.ControlledBy(ENCHANTED_PLAYER, CREATURE);
+    private static final PermanentSubject LANDS_YOU_CONTROL = new PermanentSubject.ControlledBy(YOU, LAND);
+    private static final PermanentSubject LANDS_YOUR_OPPONENTS_CONTROL =
+            new PermanentSubject.ControlledBy(EACH_OPPONENT, LAND);
+    private static final PermanentSubject ALL_LANDS = new PermanentSubject.ControlledBy(EACH_PLAYER, LAND);
+    private static final PermanentSubject OTHER_LANDS =
+            new PermanentSubject.ControlledBy(EACH_PLAYER, allOfPredicates(NOT_SOURCE, LAND));
 
     private Subjects() {
     }
@@ -70,9 +121,17 @@ public final class Subjects {
         return ALL_TARGETS;
     }
 
-    /** "Enchanted creature", "equipped creature". */
+    /** "Enchanted permanent": what the source Aura or Equipment is attached to, whatever it is. */
     public static PermanentSubject attached() {
         return ATTACHED;
+    }
+
+    /**
+     * "Enchanted creature", "equipped creature": what the source Aura or Equipment is attached to, which a resolving
+     * effect names only while it is a creature.
+     */
+    public static PermanentSubject attachedCreature() {
+        return ATTACHED_CREATURE;
     }
 
     /** "This creature ... If it's an Aura, enchanted creature ... instead": the host while attached, else the source. */
@@ -136,6 +195,132 @@ public final class Subjects {
         return EXILED_THIS_RESOLUTION;
     }
 
+    /** "They", "those creatures" in a "whenever you attack" ability: the attackers the trigger event recorded. */
+    public static PermanentSubject triggeringAttackers() {
+        return TRIGGERING_ATTACKERS;
+    }
+
+    /**
+     * "Those creatures": the targets of the spell the trigger event was about, else, with no triggering spell, the
+     * effect's own targets (declared by the card, not by this subject).
+     */
+    public static PermanentSubject triggeringSpellTargets() {
+        return TRIGGERING_SPELL_TARGETS;
+    }
+
+    /** "Those tokens": the permanents an earlier step of the same resolution created. */
+    public static PermanentSubject createdThisResolution() {
+        return CREATED_THIS_RESOLUTION;
+    }
+
+    /** "Each other creature banded with it": the other attacking creatures in {@code permanent}'s band. */
+    public static PermanentSubject bandmatesOf(PermanentSubject permanent) {
+        return new PermanentSubject.BandmatesOf(permanent);
+    }
+
+    /** "Target creature and each other creature that shares a color with it". */
+    public static PermanentSubject withCreaturesSharingAColor(PermanentSubject permanent) {
+        return new PermanentSubject.WithCreaturesSharingAColor(permanent);
+    }
+
+    /**
+     * "This creature and the creature it's paired with" (soulbond, CR 702.95): the source and its pair, judged as a
+     * set.
+     */
+    public static PermanentSubject sourceAndPaired() {
+        return SOURCE_AND_PAIRED;
+    }
+
+    /** "Creatures you control", the source included. */
+    public static PermanentSubject creaturesYouControl() {
+        return CREATURES_YOU_CONTROL;
+    }
+
+    /** "Other creatures you control". */
+    public static PermanentSubject otherCreaturesYouControl() {
+        return OTHER_CREATURES_YOU_CONTROL;
+    }
+
+    /** "Other tapped creatures you control". */
+    public static PermanentSubject otherTappedCreaturesYouControl() {
+        return OTHER_TAPPED_CREATURES_YOU_CONTROL;
+    }
+
+    /** "Other untapped creatures you control". */
+    public static PermanentSubject otherUntappedCreaturesYouControl() {
+        return OTHER_UNTAPPED_CREATURES_YOU_CONTROL;
+    }
+
+    /** "Creatures your opponents control". */
+    public static PermanentSubject creaturesYourOpponentsControl() {
+        return CREATURES_YOUR_OPPONENTS_CONTROL;
+    }
+
+    /** "Permanents you control", the source included. */
+    public static PermanentSubject permanentsYouControl() {
+        return PERMANENTS_YOU_CONTROL;
+    }
+
+    /** "Other permanents you control". */
+    public static PermanentSubject otherPermanentsYouControl() {
+        return OTHER_PERMANENTS_YOU_CONTROL;
+    }
+
+    /** "Creatures target player controls"; declares the player target. */
+    public static PermanentSubject creaturesTargetPlayerControls() {
+        return CREATURES_TARGET_PLAYER_CONTROLS;
+    }
+
+    /** "Lands target player controls"; declares the player target. */
+    public static PermanentSubject landsTargetPlayerControls() {
+        return LANDS_TARGET_PLAYER_CONTROLS;
+    }
+
+    /** "All creatures", the source included. */
+    public static PermanentSubject allCreatures() {
+        return ALL_CREATURES;
+    }
+
+    /** "All other creatures", every player's. */
+    public static PermanentSubject otherCreatures() {
+        return OTHER_CREATURES;
+    }
+
+    /** "All permanents", the source included. */
+    public static PermanentSubject allPermanents() {
+        return ALL_PERMANENTS;
+    }
+
+    /** "All other permanents", every player's. */
+    public static PermanentSubject otherPermanents() {
+        return OTHER_PERMANENTS;
+    }
+
+    /** "Creatures enchanted player controls". */
+    public static PermanentSubject creaturesEnchantedPlayerControls() {
+        return CREATURES_ENCHANTED_PLAYER_CONTROLS;
+    }
+
+    /** "Lands you control". */
+    public static PermanentSubject landsYouControl() {
+        return LANDS_YOU_CONTROL;
+    }
+
+    /** "Lands your opponents control". */
+    public static PermanentSubject landsYourOpponentsControl() {
+        return LANDS_YOUR_OPPONENTS_CONTROL;
+    }
+
+    /** "All lands", the source included. */
+    public static PermanentSubject allLands() {
+        return ALL_LANDS;
+    }
+
+    /** "All other lands", every player's. */
+    public static PermanentSubject otherLands() {
+        return OTHER_LANDS;
+    }
+
     /** "This Equipment" in an ability it grants: the permanent that granted the resolving ability. */
     public static PermanentSubject granter() {
         return GRANTER;
@@ -180,6 +365,10 @@ public final class Subjects {
                     new PermanentSubject.AttachmentsOf(attachmentsOf.permanents(), and(attachmentsOf.filter(), filter));
             default -> throw new IllegalArgumentException("Only a set is narrowed by a filter: " + set);
         };
+    }
+
+    private static PermanentPredicate allOfPredicates(PermanentPredicate... predicates) {
+        return new PermanentAllOfPredicate(List.of(predicates));
     }
 
     private static PermanentPredicate and(PermanentPredicate base, PermanentPredicate filter) {

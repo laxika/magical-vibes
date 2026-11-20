@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "225")
@@ -19,7 +19,7 @@ public class LocthwainGargoyle extends Card {
                 "{4}",
                 List.of(
                         new BoostSelfEffect(2, 0),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.source())
                 ),
                 "{4}: This creature gets +2/+0 and gains flying until end of turn."
         ));

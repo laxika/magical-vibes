@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -31,7 +31,7 @@ public class CamelliaTheSeedmiser extends Card {
     public CamelliaTheSeedmiser() {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.MENACE,
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL)));
 
         addTrigger(new TriggerCondition(Triggers.sacrificed(

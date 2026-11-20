@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -22,7 +21,7 @@ public class SupernaturalRescue extends Card {
 
         // Enchant creature you control. Enchanted creature gets +1/+2.
         target(TargetFilters.creatureYouControl())
-                .addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 2, Subjects.attachedCreature()));
 
         // When you cast this spell, tap up to two target creatures you don't control.
         target(TargetFilters.creatureAnOpponentControls(), 0, 2)

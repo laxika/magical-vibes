@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesDamagedPlayerControlsUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,9 +29,9 @@ import java.util.Set;
 public class KomainuBattleArmor extends Card {
 
     public KomainuBattleArmor() {
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, Subjects.attachedCreature()));
+        addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), Subjects.source(),
                 Duration.WHILE_ATTACHED));
 
         // "Whenever this creature or equipped creature deals combat damage to a player": one ability of two

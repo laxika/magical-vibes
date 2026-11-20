@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CastCreatureSpellsWithSneakFr
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -51,10 +50,10 @@ public class NinjaTeen extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceClassLevelAtLeast(2),
-                new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES)));
+                new StaticBoostEffect(1, 0, Subjects.otherCreaturesYouControl())));
         addStaticEffect(new ConditionalEffect(
                 new SourceClassLevelAtLeast(2),
-                new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.MENACE, Subjects.otherCreaturesYouControl())));
         addStaticEffect(new ConditionalEffect(
                 new SourceClassLevelAtLeast(3),
                 new CastCreatureSpellsWithSneakFromGraveyardEffect("{3}{B}")));

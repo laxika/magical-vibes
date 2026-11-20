@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +20,7 @@ public class QuietusSpike extends Card {
 
     public QuietusSpike() {
         // Static: equipped creature has deathtouch
-        addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.attachedCreature()));
 
         // Triggered: whenever equipped creature deals combat damage to a player,
         // that player loses half their life, rounded up

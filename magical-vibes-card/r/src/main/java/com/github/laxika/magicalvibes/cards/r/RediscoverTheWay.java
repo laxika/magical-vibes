@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -37,7 +37,7 @@ public class RediscoverTheWay extends Card {
         addTrigger(Triggers.chapter(3),
                 RegisterDelayedControllerSpellCastTriggerEffect.thisTurn(
                         NONCREATURE_SPELL, List.of(new GrantKeywordEffect(
-                                Keyword.DOUBLE_STRIKE, GrantScope.TARGET, CREATURE_YOU_CONTROL)))
+                                Keyword.DOUBLE_STRIKE, Subjects.target(), CREATURE_YOU_CONTROL)))
                 .withTargetFilter(new PermanentPredicateTargetFilter(
                                 CREATURE_YOU_CONTROL, "Target must be a creature you control")));
     }

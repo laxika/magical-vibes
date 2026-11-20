@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,11 +24,11 @@ public class EldraziConscription extends Card {
     public EldraziConscription() {
         target(TargetFilters.creature())
                 .addStaticEffect(new StaticBoostEffect(
-                        10, 10, Set.of(Keyword.TRAMPLE), GrantScope.ENCHANTED_CREATURE))
+                        10, 10, Set.of(Keyword.TRAMPLE), Subjects.attachedCreature()))
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.attacks(),
                         new SacrificePermanentsEffect(
                                 2, new PermanentTruePredicate(), Subjects.defendingPlayer())),
-                        GrantScope.ENCHANTED_CREATURE));
+                        Subjects.attachedCreature()));
     }
 }

@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -25,7 +25,7 @@ public class GisaTheHellraiser extends Card {
         // Ward—{2}, Pay 2 life.
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2, 2));
 
-        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.MENACE), GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.MENACE), Subjects.creaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SKELETON, CardSubtype.ZOMBIE))));
 
         addTrigger(Triggers.youCommitCrime(),

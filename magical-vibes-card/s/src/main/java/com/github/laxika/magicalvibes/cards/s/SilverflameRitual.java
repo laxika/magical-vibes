@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "ELD", collectorNumber = "30")
@@ -20,6 +20,6 @@ public class SilverflameRitual extends Card {
                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
         addSpellEffect(new ConditionalEffect(
                 new ColorSpentToCast(ManaColor.WHITE, 3),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.otherCreaturesYouControl())));
     }
 }

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,11 +21,11 @@ public class BearUmbra extends Card {
 
     public BearUmbra() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()))
                 .addStaticEffect(new TotemArmorEffect())
                 .addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.attacks(),
                         new UntapPermanentsEffect(
                         Subjects.controlledBy(Subjects.you(),
-                                new PermanentIsLandPredicate()))), GrantScope.ENCHANTED_CREATURE));
+                                new PermanentIsLandPredicate()))), Subjects.attachedCreature()));
     }
 }

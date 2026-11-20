@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCards
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M21", collectorNumber = "81")
 public class TomeAnima extends Card {
@@ -14,6 +14,6 @@ public class TomeAnima extends Card {
     public TomeAnima() {
         addStaticEffect(new ConditionalEffect(
                 new ControllerDrewAtLeastCardsThisTurn(2),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
     }
 }

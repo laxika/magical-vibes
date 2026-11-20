@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -22,7 +22,7 @@ public class BurningPalmEfreet extends Card {
                 "{1}{R}{R}",
                 List.of(
                         new DealDamageToTargetCreatureEffect(2),
-                        new RemoveKeywordEffect(Keyword.FLYING, GrantScope.TARGET)
+                        new RemoveKeywordEffect(Keyword.FLYING, Subjects.target())
                 ),
                 "{1}{R}{R}: Burning Palm Efreet deals 2 damage to target creature with flying and that creature loses flying until end of turn.",
                 new PermanentPredicateTargetFilter(

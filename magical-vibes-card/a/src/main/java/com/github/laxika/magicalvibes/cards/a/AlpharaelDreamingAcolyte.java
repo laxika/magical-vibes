@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,6 +21,6 @@ public class AlpharaelDreamingAcolyte extends Card {
                 new DrawCardEffect(2),
                 new DiscardEffect(2, Subjects.you(), CardType.ARTIFACT));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())));
     }
 }

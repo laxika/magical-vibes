@@ -14,10 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -46,7 +46,7 @@ public class OyaminartokPolarWerebear extends Card {
     public OyaminartokPolarWerebear() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new SourceHasDealtDamage()),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source())));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), CreateTokenEffect.ofFoodToken(1));
 
         addActivatedAbility(new ActivatedAbility(

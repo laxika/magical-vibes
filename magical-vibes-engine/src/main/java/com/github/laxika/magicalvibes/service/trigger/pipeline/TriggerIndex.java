@@ -364,7 +364,7 @@ public class TriggerIndex {
             if (!(staticEffect instanceof ConditionalEffect conditional)
                     || !(conditional.condition() instanceof ControlsPermanent controls)
                     || !(conditional.wrapped() instanceof GrantTriggeredAbilityEffect grant)
-                    || !(grant.scope().subject() instanceof PermanentSubject.Source)
+                    || !(grant.subject() instanceof PermanentSubject.Source)
                     || !(grant.grantedAbility() instanceof TriggeredAbility ability)
                     || granted.contains(ability)
                     || ability.conditions().stream().noneMatch(c -> c.trigger() instanceof ZoneChangeTrigger)) {

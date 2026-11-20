@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "196")
@@ -19,12 +19,12 @@ public class GemhideSliver extends Card {
 
         addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(),
-                GrantScope.ALL_CREATURES,
+                Subjects.otherCreatures(),
                 sliver
         ));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(),
-                GrantScope.SELF,
+                Subjects.source(),
                 sliver
         ));
     }

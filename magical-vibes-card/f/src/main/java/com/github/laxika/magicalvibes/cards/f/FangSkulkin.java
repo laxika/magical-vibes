@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,7 +22,7 @@ public class FangSkulkin extends Card {
         // {2}: Target black creature gains wither until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 false, "{2}",
-                List.of(new GrantKeywordEffect(Keyword.WITHER, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.WITHER, Subjects.target())),
                 "{2}: Target black creature gains wither until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

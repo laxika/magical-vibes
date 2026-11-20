@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,6 +26,6 @@ public class HuntingGrounds extends Card {
                                         new PutCardToBattlefieldEffect(
                                                 new CardTypePredicate(CardType.CREATURE), "creature"),
                                         "Put a creature card from your hand onto the battlefield?")),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

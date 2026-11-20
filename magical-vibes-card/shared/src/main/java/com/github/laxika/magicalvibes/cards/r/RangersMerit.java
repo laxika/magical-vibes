@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.Set;
@@ -17,7 +17,7 @@ public class RangersMerit extends Card {
     public RangersMerit() {
         addSpellEffect(new PutCounterOnEachControlledPermanentEffect(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentHasSubtypePredicate(CardSubtype.BEAR)));
-        addSpellEffect(new GrantKeywordEffect(Set.of(Keyword.TRAMPLE), GrantScope.OWN_PERMANENTS,
+        addSpellEffect(new GrantKeywordEffect(Set.of(Keyword.TRAMPLE), Subjects.permanentsYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.BEAR)));
     }
 }

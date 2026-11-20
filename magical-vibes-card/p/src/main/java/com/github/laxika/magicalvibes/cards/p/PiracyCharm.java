@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -24,7 +23,7 @@ public class PiracyCharm extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gains islandwalk until end of turn",
-                        new GrantKeywordEffect(Keyword.ISLANDWALK, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.ISLANDWALK, Subjects.target()),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gets +2/-1 until end of turn",

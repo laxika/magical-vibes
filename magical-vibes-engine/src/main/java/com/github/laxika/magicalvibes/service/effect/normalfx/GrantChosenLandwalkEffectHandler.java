@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenLandwalkEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -31,12 +32,12 @@ public class GrantChosenLandwalkEffectHandler implements NormalEffectHandlerBean
         // A self-grant still makes its choice when the creature has left (the ability resolves; the
         // grant then has nothing to affect). A targeted grant whose target is gone does not resolve.
         UUID recipientId;
-        if (e.scope() == GrantScope.SELF) {
-            recipientId = subjectResolutionService.permanentIds(gameData, entry, effect, GrantScope.SELF.subject())
+        if (e.subject() instanceof PermanentSubject.Source) {
+            recipientId = subjectResolutionService.permanentIds(gameData, entry, effect, Subjects.source())
                     .stream().findFirst().orElse(null);
         } else {
             Permanent recipient = subjectResolutionService.permanent(gameData, entry, effect,
-                    GrantScope.TARGET.subject());
+                    Subjects.target());
             if (recipient == null) {
                 return;
             }

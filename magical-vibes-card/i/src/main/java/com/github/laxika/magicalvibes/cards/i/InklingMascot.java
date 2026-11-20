@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -26,7 +26,7 @@ public class InklingMascot extends Card {
                                 new CardTypePredicate(CardType.INSTANT),
                                 new CardTypePredicate(CardType.SORCERY))))
                         .withStackEntryFilter(new StackEntryTargetsPermanentPredicate(new PermanentIsCreaturePredicate())),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF),
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source()),
                 new SurveilEffect(1));
     }
 }

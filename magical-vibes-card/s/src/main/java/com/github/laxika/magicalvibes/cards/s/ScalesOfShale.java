@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,7 +21,7 @@ public class ScalesOfShale extends Card {
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.LIZARD), CountScope.CONTROLLER)));
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(2, 0))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target()))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()));
     }
 }

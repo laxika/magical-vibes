@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -31,7 +31,7 @@ public class Martyrdom extends Card {
 
         target(TargetFilters.creatureYouControl()).addSpellEffect(new GrantActivatedAbilityEffect(
                 grantedAbility,
-                GrantScope.TARGET,
+                Subjects.target(),
                 null,
                 Duration.UNTIL_END_OF_TURN
         ));

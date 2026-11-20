@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -26,7 +26,7 @@ public class AlelaArtfulProvocateur extends Card {
 
     public AlelaArtfulProvocateur() {
         // Other creatures you control with flying get +1/+0.
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.otherCreaturesYouControl(),
                 new PermanentHasKeywordPredicate(Keyword.FLYING)));
 
         // Whenever you cast an artifact or enchantment spell, create a 1/1 blue Faerie creature

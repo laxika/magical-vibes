@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -32,7 +32,7 @@ public class MuYanlingSkyDancer extends Card {
                 false, null,
                 List.of(
                         new BoostTargetCreatureEffect(-2, 0, Duration.UNTIL_YOUR_NEXT_TURN),
-                        new RemoveKeywordEffect(Keyword.FLYING, GrantScope.TARGET,
+                        new RemoveKeywordEffect(Keyword.FLYING, Subjects.target(),
                                 Duration.UNTIL_YOUR_NEXT_TURN)),
                 "+2: Until your next turn, up to one target creature gets -2/-0 and loses flying.",
                 null, +2, null, null,
@@ -54,7 +54,7 @@ public class MuYanlingSkyDancer extends Card {
                                         true, null,
                                         List.of(new DrawCardEffect(1)),
                                         "{T}: Draw a card."),
-                                GrantScope.OWN_PERMANENTS,
+                                Subjects.permanentsYouControl(),
                                 new PermanentHasSubtypePredicate(CardSubtype.ISLAND))),
                         EMBLEM_TEXT)),
                 "-8: You get an emblem with \"" + EMBLEM_TEXT + "\""));

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,7 +28,7 @@ public class MidnightCharm extends Card {
                         creatureTarget),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gains first strike until end of turn",
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target()),
                         creatureTarget),
                 new ChooseOneEffect.ChooseOneOption(
                         "Tap target creature",

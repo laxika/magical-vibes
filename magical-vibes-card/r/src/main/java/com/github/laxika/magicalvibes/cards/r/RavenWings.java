@@ -6,17 +6,17 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "KHM", collectorNumber = "243")
 public class RavenWings extends Card {
 
     public RavenWings() {
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.BIRD, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.attachedCreature()));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.BIRD, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

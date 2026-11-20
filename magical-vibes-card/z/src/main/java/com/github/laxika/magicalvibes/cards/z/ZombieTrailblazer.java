@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -34,7 +34,7 @@ public class ZombieTrailblazer extends Card {
                 null,
                 List.of(
                         new TapCreatureCost(new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)),
-                        new GrantKeywordEffect(Keyword.SWAMPWALK, GrantScope.TARGET)),
+                        new GrantKeywordEffect(Keyword.SWAMPWALK, Subjects.target())),
                 "Tap an untapped Zombie you control: Target creature gains swampwalk until end of turn.",
                 TargetFilters.creature()
         ));

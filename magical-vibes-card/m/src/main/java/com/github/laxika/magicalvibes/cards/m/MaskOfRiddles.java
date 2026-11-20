@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ARB", collectorNumber = "25")
@@ -16,7 +16,7 @@ public class MaskOfRiddles extends Card {
 
     public MaskOfRiddles() {
         // Static: equipped creature has fear
-        addStaticEffect(new GrantKeywordEffect(Keyword.FEAR, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FEAR, Subjects.attachedCreature()));
 
         // Triggered: whenever equipped creature deals combat damage to a player, you may draw a card
         addTrigger(Triggers.dealsCombatDamageToPlayer(),

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -13,6 +13,6 @@ public class Indestructibility extends Card {
 
     public Indestructibility() {
         target(TargetFilters.permanent())
-                .addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_PERMANENT));
+                .addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.attached()));
     }
 }

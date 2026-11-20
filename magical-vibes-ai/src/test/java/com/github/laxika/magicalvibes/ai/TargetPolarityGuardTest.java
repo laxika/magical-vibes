@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTopUntilNonlandDealManaV
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentMayPlayWithOpponentTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilOpponentBecomesMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetAttackingCreatureBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
@@ -181,7 +180,7 @@ class TargetPolarityGuardTest {
                 new GrantSubtypeToTargetCreatureEffect(CardSubtype.TREASURE), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL);
         assertThat(classifier.classify(gd,
-                new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.TARGET), aiPlayerId))
+                new SetCardTypesEffect(Set.of(CardType.ARTIFACT), Subjects.target()), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL);
         assertThat(classifier.classify(gd,
                 new ShuffleTargetPermanentIntoLibraryThenDiscoverEffect(), aiPlayerId))
@@ -207,9 +206,9 @@ class TargetPolarityGuardTest {
         assertThat(classifier.classify(gd,
                 new TapAndPreventCombatDamageByTargetAndBlockersEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.NEUTRAL);
-        assertThat(classifier.classify(gd, new SuspectEffect(GrantScope.TARGET), aiPlayerId))
+        assertThat(classifier.classify(gd, new SuspectEffect(Subjects.target()), aiPlayerId))
                 .isEqualTo(TargetPolarity.NEUTRAL);
-        assertThat(classifier.classify(gd, new SuspectEffect(GrantScope.SELF), aiPlayerId))
+        assertThat(classifier.classify(gd, new SuspectEffect(Subjects.source()), aiPlayerId))
                 .isNull();
     }
 

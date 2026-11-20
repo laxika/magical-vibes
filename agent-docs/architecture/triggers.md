@@ -268,7 +268,7 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
   N damage to it" (`DealDamageToTargetCreatureEffect(Subjects.triggering(), n)`), graft, Agent's Toolkit, soulbond, "it connives", endure,
   Madame Null, Mana
   Echoes, Eldrazi Mimic and the graveyard Auras and Equipment that return attached to "that creature" read the entry's
-  triggering permanent (`onTriggeringPermanent`, `Subjects.triggering()`, `GrantScope.TRIGGERING_PERMANENT`,
+  triggering permanent (`onTriggeringPermanent`, `Subjects.triggering()`, `Subjects.triggering()`,
   `ofTriggeringPermanent()`); the entering creature is recorded (Archon of Redemption, Hamletback Goliath, Cream of the
   Crop), never bound in.
 - Additional enter abilities on token copies are separate abilities with their own targets (CR 603.3).
@@ -306,9 +306,9 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
   and event condition. "Attacks for the first time each turn" is `ONCE_EACH_TURN` by the attack count.
 - Attack record: attacked target, defending player, attacker count as X, declared attackers' snapshots, "that creature"
   / "that player" non-targeting. "Whenever you attack" records its attackers (the band's for `EACH_BAND`; "they gain …"
-  is `GrantScope.DECLARED_ATTACKERS`); a filtered `youAttack()` records the matching ones as triggering permanents and
+  is `Subjects.triggeringAttackers()`); a filtered `youAttack()` records the matching ones as triggering permanents and
   attacking snapshots (`TotalPowerOfControlledCreatures.declaredAttackers`,
-  `BoostAllOwnCreaturesEffect.forDeclaredAttackers`, `GrantScope.TARGETS`).
+  `BoostAllOwnCreaturesEffect.forDeclaredAttackers`, `Subjects.target()`).
 - Block record (`BlockTriggers`): the creature on the other side as triggering permanent (id, controller, last-known
   copy) and non-targeting `targetId`, with its power and toughness as it triggered; an Aura or Equipment keeps the
   attached creature as triggering permanent and the other as `targetId`. A declared target (Elite Javelineer) is
@@ -818,7 +818,7 @@ card's. Delayed graveyard returns use `CardIdSetPredicate` with entry versions.
 - About a departing permanent it records the card it became (CR 400.7) and the controller it left with
   (`triggeringPermanentControllerId`, CR 603.10a); "dies under your control" (Desperate Measures) is judged on that
   controller (`TriggerMatcher.lastKnownMatches`, CR 603.10a). "It" is the event's object, never the source: Okoye's
-  `GrantScope.TRIGGERING_PERMANENT`, Basri's `PutCounterOnTargetPermanentEffect`, The Sea Devils'
+  `Subjects.triggering()`, Basri's `PutCounterOnTargetPermanentEffect`, The Sea Devils'
   `byTriggeringPermanent`, an unblocked attacker's `UntapPermanentsEffect(Subjects.triggering())`, `AssignNoCombatDamageEffect` /
   `RemoveTargetFromCombatEffect` `.ofTriggeringPermanent()` (Gaze of Pain still chooses its target on the stack).
 - Damage families read them via `delayedWatching` of the dealer, for "a creature you control deals combat damage to a

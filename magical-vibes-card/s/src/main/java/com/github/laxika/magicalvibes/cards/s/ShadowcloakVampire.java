@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "M15", collectorNumber = "113")
@@ -17,7 +17,7 @@ public class ShadowcloakVampire extends Card {
         // Pay 2 life: Shadowcloak Vampire gains flying until end of turn.
         addActivatedAbility(new ActivatedAbility(false, null,
                 List.of(new PayLifeCost(2),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.source())),
                 "Pay 2 life: Shadowcloak Vampire gains flying until end of turn."));
     }
 }

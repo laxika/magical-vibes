@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -33,6 +33,6 @@ public class CustodyBattle extends Card {
                                 true))
                         .withTargetFilter(new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent")),
-                        GrantScope.ENCHANTED_CREATURE));
+                        Subjects.attachedCreature()));
     }
 }

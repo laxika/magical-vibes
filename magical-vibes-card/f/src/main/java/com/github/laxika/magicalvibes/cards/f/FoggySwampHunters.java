@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "TLA", collectorNumber = "101")
@@ -16,7 +16,7 @@ public class FoggySwampHunters extends Card {
     public FoggySwampHunters() {
         addStaticEffect(new ConditionalEffect(
                 new ControllerDrewAtLeastCardsThisTurn(2),
-                new StaticBoostEffect(0, 0, Set.of(Keyword.LIFELINK, Keyword.MENACE), GrantScope.SELF)
+                new StaticBoostEffect(0, 0, Set.of(Keyword.LIFELINK, Keyword.MENACE), Subjects.source())
         ));
     }
 }

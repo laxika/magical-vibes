@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastTwoOrMoreSpe
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -24,6 +24,6 @@ public class LyseHext extends Card {
                 noncreatureSpell, 1, CostModificationScope.SELF));
         addStaticEffect(new ConditionalEffect(
                 new ControllerCastTwoOrMoreSpellsThisTurn(noncreatureSpell),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.source())));
     }
 }

@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.EnchantedByAtLeastAuras;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -20,17 +20,17 @@ public class TimberPaladin extends Card {
 
     public TimberPaladin() {
         addStaticEffect(new ConditionalEffect(
-                exactlyAuras(1), new SetBasePowerToughnessEffect(3, 3, GrantScope.SELF)));
+                exactlyAuras(1), new SetBasePowerToughnessEffect(3, 3, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
-                exactlyAuras(2), new SetBasePowerToughnessEffect(5, 5, GrantScope.SELF)));
+                exactlyAuras(2), new SetBasePowerToughnessEffect(5, 5, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
-                exactlyAuras(2), new GrantKeywordEffect(Set.of(Keyword.VIGILANCE), GrantScope.SELF)));
-        addStaticEffect(new ConditionalEffect(
-                new EnchantedByAtLeastAuras(3),
-                new SetBasePowerToughnessEffect(10, 10, GrantScope.SELF)));
+                exactlyAuras(2), new GrantKeywordEffect(Set.of(Keyword.VIGILANCE), Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new EnchantedByAtLeastAuras(3),
-                new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE), GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(10, 10, Subjects.source())));
+        addStaticEffect(new ConditionalEffect(
+                new EnchantedByAtLeastAuras(3),
+                new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE), Subjects.source())));
     }
 
     private static AllOf exactlyAuras(int count) {

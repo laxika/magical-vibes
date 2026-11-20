@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -38,28 +38,28 @@ public class Dragonshift extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{3}{U}{U}{R}{R}"))));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
-                new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.UNTIL_END_OF_TURN),
-                new LosesAllAbilitiesEffect(GrantScope.OWN_CREATURES, Duration.UNTIL_END_OF_TURN)));
+                new LosesAllAbilitiesEffect(Subjects.target(), Duration.UNTIL_END_OF_TURN),
+                new LosesAllAbilitiesEffect(Subjects.creaturesYouControl(), Duration.UNTIL_END_OF_TURN)));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new GrantColorUntilEndOfTurnEffect(CardColor.BLUE),
-                new GrantColorUntilEndOfTurnEffect(CardColor.BLUE, GrantScope.OWN_CREATURES)));
+                new GrantColorUntilEndOfTurnEffect(CardColor.BLUE, Subjects.creaturesYouControl())));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
-                new GrantColorUntilEndOfTurnEffect(CardColor.RED, true, GrantScope.TARGET, false),
-                new GrantColorUntilEndOfTurnEffect(CardColor.RED, true, GrantScope.OWN_CREATURES, false)));
+                new GrantColorUntilEndOfTurnEffect(CardColor.RED, true, Subjects.target(), false),
+                new GrantColorUntilEndOfTurnEffect(CardColor.RED, true, Subjects.creaturesYouControl(), false)));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.DRAGON),
-                new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.DRAGON, GrantScope.OWN_CREATURES)));
+                new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.DRAGON, Subjects.creaturesYouControl())));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new SetBasePowerToughnessEffect(4, 4),
                 new SetAllOwnCreaturesBasePowerToughnessEffect(4, 4)));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.target()),
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.otherCreaturesYouControl())));
         target(TargetFilters.creatureYouControl());
     }
 }

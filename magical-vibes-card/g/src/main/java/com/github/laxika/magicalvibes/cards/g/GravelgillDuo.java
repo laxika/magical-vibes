@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,6 +20,6 @@ public class GravelgillDuo extends Card {
 
         // Whenever you cast a black spell, this creature gains fear until end of turn.
         addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLACK)),
-                new GrantKeywordEffect(Keyword.FEAR, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.FEAR, Subjects.source()));
     }
 }

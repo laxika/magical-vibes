@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,6 +15,6 @@ public class OrdruunVeteran extends Card {
     public OrdruunVeteran() {
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.source()));
     }
 }

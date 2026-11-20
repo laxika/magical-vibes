@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GraveyardsAtLeast;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +19,7 @@ public class MastersCouncillors extends Card {
     public MastersCouncillors() {
         GraveyardsAtLeast sevenCardGraveyards = new GraveyardsAtLeast(7);
         addStaticEffect(new DynamicStaticBoostEffect(
-                new Scaled(sevenCardGraveyards, 2), new Fixed(0), GrantScope.SELF));
+                new Scaled(sevenCardGraveyards, 2), new Fixed(0), Subjects.source()));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),

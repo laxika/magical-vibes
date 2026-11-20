@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenSubtypeToOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -25,14 +25,14 @@ public class RukarumelBiologist extends Card {
 
         addStaticEffect(new GrantChosenSubtypeToOwnCreaturesEffect(
                 true,
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentNotPredicate(new PermanentIsTokenPredicate()),
                         new PermanentHasSubtypePredicate(CardSubtype.SLIVER)
                 ))));
         addStaticEffect(new GrantChosenSubtypeToOwnCreaturesEffect(
                 false,
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
 
         addActivatedAbility(new ActivatedAbility(

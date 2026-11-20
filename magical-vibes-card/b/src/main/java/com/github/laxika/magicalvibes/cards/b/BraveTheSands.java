@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "KTK", collectorNumber = "5")
 @CardRegistration(set = "C16", collectorNumber = "60")
@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class BraveTheSands extends Card {
 
     public BraveTheSands() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.otherCreaturesYouControl()));
         addStaticEffect(new GrantAdditionalBlockEffect(1));
     }
 }

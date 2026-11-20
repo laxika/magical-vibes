@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,6 +27,6 @@ public class ThranduilsCompany extends Card {
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target()));
     }
 }

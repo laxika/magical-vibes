@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,13 +20,13 @@ public class FavorOfTheOverbeing extends Card {
                 // As long as enchanted creature is green, it gets +1/+1 and has vigilance.
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.GREEN)),
-                        new StaticBoostEffect(1, 1, Set.of(Keyword.VIGILANCE), GrantScope.ENCHANTED_CREATURE),
+                        new StaticBoostEffect(1, 1, Set.of(Keyword.VIGILANCE), Subjects.attachedCreature()),
                         null
                 ))
                 // As long as enchanted creature is blue, it gets +1/+1 and has flying.
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.BLUE)),
-                        new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING), GrantScope.ENCHANTED_CREATURE),
+                        new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING), Subjects.attachedCreature()),
                         null
                 ));
     }

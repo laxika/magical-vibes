@@ -27,7 +27,7 @@ public class LosesAllNonManaAbilitiesSelfEffectHandler implements StaticEffectHa
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var loses = (LosesAllNonManaAbilitiesEffect) effect;
-        if (support.names(context, loses.scope().subject(), loses.filter())) {
+        if (support.names(context, loses.subject(), loses.filter())) {
             accumulator.setLosesAllNonManaAbilities(true);
         }
     }

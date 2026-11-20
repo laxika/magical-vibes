@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,11 +32,11 @@ import java.util.Set;
 public class BladeOfTheOni extends Card {
 
     public BladeOfTheOni() {
-        addStaticEffect(new SetBasePowerToughnessEffect(5, 5, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantColorEffect(CardColor.BLACK, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.DEMON, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF,
+        addStaticEffect(new SetBasePowerToughnessEffect(5, 5, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, Subjects.attachedCreature()));
+        addStaticEffect(new GrantColorEffect(CardColor.BLACK, Subjects.attachedCreature()));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.DEMON, Subjects.attachedCreature()));
+        addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), Subjects.source(),
                 Duration.WHILE_ATTACHED));
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(

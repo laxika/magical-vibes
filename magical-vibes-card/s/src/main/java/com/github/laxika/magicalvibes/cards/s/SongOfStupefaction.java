@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -38,6 +37,6 @@ public class SongOfStupefaction extends Card {
                 .addStaticEffect(new AttachedBoostEffect(
                         new Scaled(permanentCardsInGraveyard, -1),
                         new Fixed(0),
-                        GrantScope.ENCHANTED_PERMANENT));
+                        Subjects.attached()));
     }
 }

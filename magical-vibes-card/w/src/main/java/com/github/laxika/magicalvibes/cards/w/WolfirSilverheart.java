@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPairedPredicate;
@@ -44,6 +44,6 @@ public class WolfirSilverheart extends Card {
         // As long as this creature is paired with another creature, each of those creatures gets +4/+4.
         addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
-                new StaticBoostEffect(4, 4, GrantScope.SELF_AND_PAIRED)));
+                new StaticBoostEffect(4, 4, Subjects.sourceAndPaired())));
     }
 }

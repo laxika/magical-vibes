@@ -27,7 +27,7 @@ public class LosesAllAbilitiesSelfEffectHandler implements StaticEffectHandlerBe
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var loses = (LosesAllAbilitiesEffect) effect;
-        boolean applies = support.names(context, loses.scope().subject(), loses.filter());
+        boolean applies = support.names(context, loses.subject(), loses.filter());
         if (applies) {
             accumulator.setLosesAllAbilities(true);
         }

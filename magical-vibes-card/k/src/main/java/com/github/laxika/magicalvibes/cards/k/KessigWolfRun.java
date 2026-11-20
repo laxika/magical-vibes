@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -34,7 +34,7 @@ public class KessigWolfRun extends Card {
                 "{X}{R}{G}",
                 List.of(
                         new BoostTargetCreatureEffect(new XValue(), new Fixed(0)),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())
                 ),
                 "{X}{R}{G}, {T}: Target creature gets +X/+0 and gains trample until end of turn.",
                 TargetFilters.creature()

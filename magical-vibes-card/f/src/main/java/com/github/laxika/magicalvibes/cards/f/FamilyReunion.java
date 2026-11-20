@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "13")
@@ -20,7 +20,7 @@ public class FamilyReunion extends Card {
                         new BoostAllOwnCreaturesEffect(1, 1)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control gain hexproof until end of turn",
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_CREATURES))
+                        new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.otherCreaturesYouControl()))
         )));
     }
 }

@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -25,7 +25,7 @@ public class ErebossTitan extends Card {
         // As long as your opponents control no creatures, this creature has indestructible.
         addStaticEffect(new ConditionalEffect(
                         new NotCondition(new OpponentControlsPermanent(new PermanentIsCreaturePredicate())),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
 
         // Whenever a creature card leaves an opponent's graveyard, you may discard a card.
         // If you do, return this card from your graveyard to your hand. The ability functions

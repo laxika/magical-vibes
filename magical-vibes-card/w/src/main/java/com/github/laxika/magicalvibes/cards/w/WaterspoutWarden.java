@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,6 +18,6 @@ public class WaterspoutWarden extends Card {
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new AnotherPermanentEnteredThisTurn(new CardTypePredicate(CardType.CREATURE))),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source()));
     }
 }

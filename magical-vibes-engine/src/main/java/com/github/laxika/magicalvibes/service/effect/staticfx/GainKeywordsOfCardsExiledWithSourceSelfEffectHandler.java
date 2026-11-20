@@ -50,7 +50,7 @@ public class GainKeywordsOfCardsExiledWithSourceSelfEffectHandler implements Sta
             }
             for (CardEffect staticEffect : card.getStaticEffects()) {
                 if (includesProtection && staticEffect instanceof ProtectionGrantingEffect protection
-                        && protection.protectionScope() == null) {
+                        && protection.protectionSubject() == null) {
                     accumulator.addGrantedEffect(staticEffect);
                 }
             }

@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -47,6 +47,6 @@ public class TorrentOfSouls extends Card {
                         new BoostAllCreaturesEffect(2, 0, EachPermanentScope.TARGET_PLAYER)))
                 .addSpellEffect(new ConditionalEffect(
                         new ColorSpentToCast(ManaColor.RED),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET_PLAYERS_CREATURES)));
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesTargetPlayerControls())));
     }
 }

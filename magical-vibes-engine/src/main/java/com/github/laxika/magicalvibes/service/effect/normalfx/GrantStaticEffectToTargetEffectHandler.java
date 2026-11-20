@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -59,7 +59,7 @@ public class GrantStaticEffectToTargetEffectHandler implements NormalEffectHandl
                     entry.getCard().getName(),
                     null,
                     entry.getControllerId(),
-                    new GrantEffectEffect(grant.staticEffect(), GrantScope.TARGET, durationFilter),
+                    new GrantEffectEffect(grant.staticEffect(), Subjects.target(), durationFilter),
                     target.getId(),
                     null,
                     durationFilter,

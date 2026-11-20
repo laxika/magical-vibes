@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,9 +22,9 @@ public class InfinityFormula extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new AttachSourceEquipmentToTargetCreatureEffect());
 
         // Equipped creature gets +1/+2 and has "Whenever this creature attacks, you gain 2 life."
-        addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 2, Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                new TriggeredAbility(Triggers.attacks(), new GainLifeEffect(2)), GrantScope.EQUIPPED_CREATURE));
+                new TriggeredAbility(Triggers.attacks(), new GainLifeEffect(2)), Subjects.attachedCreature()));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

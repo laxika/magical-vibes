@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -38,7 +37,7 @@ public class BasriTomorrowsChampion extends Card {
 
         addTrigger(Triggers.youCycleThisCard(), new GrantKeywordEffect(
                 Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.CAT)));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,

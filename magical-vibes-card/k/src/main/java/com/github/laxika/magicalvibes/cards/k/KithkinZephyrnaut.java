@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KinshipEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,7 +21,7 @@ public class KithkinZephyrnaut extends Card {
         // gets +2/+2 and gains flying and vigilance until end of turn.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new KinshipEffect(List.of(
                 new BoostSelfEffect(2, 2),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF))));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source()),
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source()))));
     }
 }

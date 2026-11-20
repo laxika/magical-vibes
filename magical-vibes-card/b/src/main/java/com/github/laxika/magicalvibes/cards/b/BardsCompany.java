@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -29,7 +28,7 @@ public class BardsCompany extends Card {
 
     public BardsCompany() {
         setFlashCastCondition(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl()));
 
         CardEffect recruit = SequenceEffect.of(
                 new DrawCardEffect(1),

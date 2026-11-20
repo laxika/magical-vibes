@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,7 +24,7 @@ public class Authority extends Card {
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()));
 
         // Creatures you control gain vigilance until end of turn.
-        addSpellEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.otherCreaturesYouControl()));
 
         // Aftermath cost equals this half's mana cost; exile after leaving the stack.
         addCastingOption(new FlashbackCast("{1}{W}"));

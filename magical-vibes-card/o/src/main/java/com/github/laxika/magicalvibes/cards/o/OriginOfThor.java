@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
@@ -31,7 +30,7 @@ public class OriginOfThor extends Card {
                         null, List.of(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)))
                 .withTargetFilter(creatureYouControl));
 
-        addTrigger(Triggers.chapter(3), new TargetCreatureDealsDamageToControllerEffect(new SourcePower(), GrantScope.TARGET, Subjects.eachOpponent()));
+        addTrigger(Triggers.chapter(3), new TargetCreatureDealsDamageToControllerEffect(new SourcePower(), Subjects.target(), Subjects.eachOpponent()));
         setSagaChapterTargetFilter(3, Set.of(creatureYouControl));
     }
 }

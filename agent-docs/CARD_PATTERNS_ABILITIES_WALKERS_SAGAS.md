@@ -73,7 +73,7 @@ All paths relative to `cards/`.
 | Tap to +1/+1 counters on controlled filtered permanents | `s/SteelOverseer.java` | `(true, null, PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, PermanentAllOfPredicate(artifact+creature)))` — no target, affects all matching permanents you control |
 | Regenerate (self) | `d/DrudgeSkeletons.java` | `(false, "{B}", RegenerateEffect, false)` |
 | Regenerate (target creature) | `a/Asceticism.java` | `RegenerateEffect(true)` + PermanentPredicateTargetFilter |
-| Static effect grant (own creatures) | `a/Asceticism.java` | `GrantEffectEffect(TargetingRestrictionEffect.hexproof(), GrantScope.OWN_CREATURES)` |
+| Static effect grant (own creatures) | `a/Asceticism.java` | `GrantEffectEffect(TargetingRestrictionEffect.hexproof(), Subjects.otherCreaturesYouControl())` |
 | Create token | `d/DragonRoost.java` | CreateTokenEffect |
 | Mill target | `m/Millstone.java` | `(true, "{2}", MillEffect(2, TARGET_PLAYER), true)` |
 | Reveal until basic land (to hand, rest GY) | `h/HermitDruid.java` | `(true, "{G}", RevealUntilBasicLandToHandRestToGraveyardEffect)` — nonbasics do not stop |

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +23,7 @@ public class WindZendikon extends Card {
                 .addStaticEffect(new EnchantedPermanentBecomesCreatureEffect(
                         2, 2, CardColor.BLUE, List.of(CardSubtype.ELEMENTAL)))
                 .addStaticEffect(new GrantKeywordEffect(
-                        Keyword.FLYING, GrantScope.ENCHANTED_PERMANENT));
+                        Keyword.FLYING, Subjects.attached()));
 
         addTrigger(Triggers.creatureDies(ObjectRelation.ENCHANTED),
                 new ReturnEnchantedCreatureToOwnerHandOnDeathEffect());

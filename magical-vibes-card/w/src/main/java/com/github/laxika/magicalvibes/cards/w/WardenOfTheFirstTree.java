@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCreatureTypeWithBasePow
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "FRF", collectorNumber = "143")
@@ -31,8 +31,8 @@ public class WardenOfTheFirstTree extends Card {
                         SequenceEffect.of(
                                 new BecomeCreatureTypeWithBasePowerToughnessEffect(null, null, CardSubtype.SPIRIT,
                                         CardSubtype.WARRIOR, false, false, null),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF, Duration.PERMANENT),
-                                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF, Duration.PERMANENT)))),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source(), Duration.PERMANENT),
+                                new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source(), Duration.PERMANENT)))),
                 "{2}{W/B}{W/B}: If this creature is a Warrior, it becomes a Human Spirit Warrior with trample and lifelink."));
 
         addActivatedAbility(new ActivatedAbility(false, "{3}{W/B}{W/B}{W/B}",

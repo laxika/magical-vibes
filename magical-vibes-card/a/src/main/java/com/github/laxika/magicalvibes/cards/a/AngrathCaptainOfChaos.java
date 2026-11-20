@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,7 +29,7 @@ import java.util.Set;
 public class AngrathCaptainOfChaos extends Card {
 
     public AngrathCaptainOfChaos() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, Subjects.creaturesYouControl()));
 
         PermanentPredicate army = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

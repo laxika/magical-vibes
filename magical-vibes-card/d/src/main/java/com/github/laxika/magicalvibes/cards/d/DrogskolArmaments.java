@@ -2,15 +2,15 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 public class DrogskolArmaments extends Card {
 
     public DrogskolArmaments() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()));
         addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }
 }

@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,7 +23,7 @@ public class SentryOak extends Card {
                 new MayEffect(
                         new ClashEffect(SequenceEffect.of(
                                 new BoostSelfEffect(2, 0),
-                                new RemoveKeywordEffect(Keyword.DEFENDER, GrantScope.SELF))),
+                                new RemoveKeywordEffect(Keyword.DEFENDER, Subjects.source()))),
                         "Clash with an opponent?"));
     }
 }

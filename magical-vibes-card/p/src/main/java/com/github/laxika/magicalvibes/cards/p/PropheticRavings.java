@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class PropheticRavings extends Card {
 
     public PropheticRavings() {
         target(TargetFilters.creature())
-                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.attachedCreature()))
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 true,
@@ -26,7 +26,7 @@ public class PropheticRavings extends Card {
                                 List.of(new DiscardCardTypeCost(null, null), new DrawCardEffect(1)),
                                 "{T}, Discard a card: Draw a card."
                         ),
-                        GrantScope.ENCHANTED_CREATURE
+                        Subjects.attachedCreature()
                 ));
     }
 }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -23,6 +23,6 @@ public class SkyshroudElite extends Card {
                 new OpponentControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.BASIC))))),
-                new StaticBoostEffect(1, 2, GrantScope.SELF)));
+                new StaticBoostEffect(1, 2, Subjects.source())));
     }
 }

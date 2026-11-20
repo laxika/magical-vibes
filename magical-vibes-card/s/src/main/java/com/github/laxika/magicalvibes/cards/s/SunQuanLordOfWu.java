@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "PTK", collectorNumber = "56")
 @CardRegistration(set = "V11", collectorNumber = "12")
@@ -15,6 +15,6 @@ public class SunQuanLordOfWu extends Card {
 
     public SunQuanLordOfWu() {
         // Creatures you control have horsemanship (including Sun Quan himself).
-        addStaticEffect(new GrantKeywordEffect(Keyword.HORSEMANSHIP, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HORSEMANSHIP, Subjects.creaturesYouControl()));
     }
 }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class RavensRun extends Card {
 
     public RavensRun() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.WITHER, GrantScope.ALL_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.WITHER, Subjects.otherCreatures()));
 
         // One ability of three target groups: "target creature", "another target creature", "a third target
         // creature".

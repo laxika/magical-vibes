@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerReturnsCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -23,7 +23,7 @@ import java.util.List;
 public class BalthorTheDefiled extends Card {
 
     public BalthorTheDefiled() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.allCreatures(),
                 new PermanentHasSubtypePredicate(CardSubtype.MINION)));
 
         addActivatedAbility(new ActivatedAbility(

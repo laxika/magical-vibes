@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -39,7 +39,7 @@ public class AjaniCallerOfThePride extends Card {
         // −3: Target creature gains flying and double strike until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 -3,
-                List.of(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.DOUBLE_STRIKE), GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.DOUBLE_STRIKE), Subjects.target())),
                 "−3: Target creature gains flying and double strike until end of turn.",
                 TargetFilters.creature()
         ));

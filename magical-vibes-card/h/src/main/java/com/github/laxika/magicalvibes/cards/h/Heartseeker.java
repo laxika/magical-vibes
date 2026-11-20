@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -17,7 +17,7 @@ import java.util.List;
 public class Heartseeker extends Card {
 
     public Heartseeker() {
-        addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 1, Subjects.attachedCreature()));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
@@ -26,7 +26,7 @@ public class Heartseeker extends Card {
                         "{T}, Unattach Heartseeker: Destroy target creature.",
                         TargetFilters.creature()
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
         addActivatedAbility(new EquipActivatedAbility("{5}"));
     }

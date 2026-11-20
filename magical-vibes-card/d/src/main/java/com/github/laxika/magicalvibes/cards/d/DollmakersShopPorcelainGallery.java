@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -52,13 +52,13 @@ public class DollmakersShopPorcelainGallery extends Card {
                                 TriggerOptions.DEFAULT.withEventCondition(
                                         new MinimumMatchingAttackers(1, nonToyCreature)),
                                 toyToken),
-                        GrantScope.SELF)));
+                        Subjects.source())));
 
         PermanentCount creaturesYouControl = new PermanentCount(
                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
                 new SetBasePowerToughnessToAmountEffect(
-                        creaturesYouControl, creaturesYouControl, GrantScope.ALL_OWN_CREATURES)));
+                        creaturesYouControl, creaturesYouControl, Subjects.creaturesYouControl())));
     }
 }

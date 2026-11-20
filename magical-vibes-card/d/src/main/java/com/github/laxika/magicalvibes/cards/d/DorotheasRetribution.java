@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatedPermanentsAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,7 +31,7 @@ public class DorotheasRetribution extends Card {
                                         List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of(),
                                         true, false, List.of(), List.of(), false, false, false, 0, Set.of()),
                                 new SacrificeCreatedPermanentsAtEndOfCombatEffect())),
-                        GrantScope.ENCHANTED_CREATURE));
+                        Subjects.attachedCreature()));
         addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }
 }

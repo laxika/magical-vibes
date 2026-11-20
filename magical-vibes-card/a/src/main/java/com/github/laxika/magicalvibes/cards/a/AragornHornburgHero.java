@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RenownEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -25,11 +24,11 @@ public class AragornHornburgHero extends Card {
         var attacking = new PermanentIsAttackingPredicate();
 
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES, attacking));
+                Keyword.FIRST_STRIKE, Subjects.creaturesYouControl(), attacking));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                 TriggerOptions.DEFAULT.withInterveningIf(new NotCondition(new SourceIsRenowned())),
-                new RenownEffect(1)), GrantScope.ALL_OWN_CREATURES, attacking));
+                new RenownEffect(1)), Subjects.creaturesYouControl(), attacking));
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentIsRenownedPredicate()),

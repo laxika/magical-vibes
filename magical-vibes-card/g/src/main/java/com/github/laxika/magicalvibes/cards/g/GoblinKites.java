@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,7 +24,7 @@ public class GoblinKites extends Card {
                 false,
                 "{R}",
                 List.of(
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target()),
                         new SacrificeTargetPermanentAtEndStepEffect(true)
                 ),
                 "{R}: Target creature you control with toughness 2 or less gains flying until end of turn. "

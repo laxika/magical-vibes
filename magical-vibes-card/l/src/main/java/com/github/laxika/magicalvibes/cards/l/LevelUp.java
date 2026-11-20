@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -29,6 +28,6 @@ public class LevelUp extends Card {
                         SequenceEffect.of(
                                 new DoublePlusOneCountersOnTargetCreatureEffect(Subjects.source()),
                                 new ConditionalEffect(new SourcePowerAtLeast(10), new DrawCardEffect(1)))),
-                        GrantScope.ENCHANTED_CREATURE));
+                        Subjects.attachedCreature()));
     }
 }

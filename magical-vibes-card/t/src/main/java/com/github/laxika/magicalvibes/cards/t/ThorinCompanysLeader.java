@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,7 +24,7 @@ public class ThorinCompanysLeader extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{10}",
-                List.of(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.ALL_OWN_CREATURES)),
+                List.of(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.creaturesYouControl())),
                 "{10}: Creatures you control gain double strike until end of turn."
         ));
     }

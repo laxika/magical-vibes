@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -120,7 +120,7 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                     permanent.setFaceDownAsCloaked();
                 }
                 if (seek.grantSubtype() != null) {
-                    gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(seek.grantSubtype(), GrantScope.TARGET),
+                    gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(seek.grantSubtype(), Subjects.target()),
                             permanent.getId(), Duration.PERMANENT);
                 }
                 battlefieldEntryService.putPermanentOntoBattlefield(

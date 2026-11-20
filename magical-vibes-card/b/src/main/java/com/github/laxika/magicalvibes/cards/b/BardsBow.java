@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,9 +24,9 @@ public class BardsBow extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new LivingWeaponEffect(new CreateTokenEffect("Hero", 1, 1, null,
                         List.of(CardSubtype.HERO), Set.of(), Set.of())));
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.BARD, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.REACH, Subjects.attachedCreature()));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.BARD, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{6}"));
     }
 }

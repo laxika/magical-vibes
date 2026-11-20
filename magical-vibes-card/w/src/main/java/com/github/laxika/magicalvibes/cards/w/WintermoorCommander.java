@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -35,6 +35,6 @@ public class WintermoorCommander extends Card {
                 )),
                 "Target must be another Knight you control"
         )).addTrigger(Triggers.attacks(),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()));
     }
 }

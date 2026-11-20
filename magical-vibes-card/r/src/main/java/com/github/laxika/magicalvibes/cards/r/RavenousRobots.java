@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,7 +28,7 @@ public class RavenousRobots extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{R}",
-                List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES,
+                List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl(),
                         new PermanentIsTokenPredicate())),
                 "{R}, {T}: Creature tokens you control gain haste until end of turn."
         ));

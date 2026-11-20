@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +25,7 @@ public class SturdyHatchling extends Card {
 
         // {G/U}: This creature gains shroud until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{G/U}",
-                List.of(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.SHROUD, Subjects.source())),
                 "{G/U}: This creature gains shroud until end of turn."));
 
         // Whenever you cast a green spell, remove a -1/-1 counter from this creature.

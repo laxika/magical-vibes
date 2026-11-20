@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,7 +28,7 @@ public class SyrGingerTheMealEnder extends Card {
     public SyrGingerTheMealEnder() {
         addStaticEffect(new ConditionalEffect(
                 new OpponentControlsPermanent(new PermanentIsPlaneswalkerPredicate()),
-                new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HEXPROOF, Keyword.HASTE), GrantScope.SELF)));
+                new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HEXPROOF, Keyword.HASTE), Subjects.source())));
 
         addTrigger(Triggers.dies(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(new PutCountersOnSourceEffect(1, 1, 1), new ScryEffect(1)));

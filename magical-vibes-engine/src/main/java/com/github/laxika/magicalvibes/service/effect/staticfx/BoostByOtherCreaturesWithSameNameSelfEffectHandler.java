@@ -30,7 +30,7 @@ public class BoostByOtherCreaturesWithSameNameSelfEffectHandler implements Stati
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostByOtherCreaturesWithSameNameEffect) effect;
-        if (boost.scope() != null) {
+        if (boost.subject() != null) {
             return;
         }
         String sourceName = sameNameCheckName(context.source());

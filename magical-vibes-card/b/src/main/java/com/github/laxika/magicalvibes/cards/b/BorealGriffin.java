@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "2")
@@ -14,7 +14,7 @@ public class BorealGriffin extends Card {
 
     public BorealGriffin() {
         addActivatedAbility(new ActivatedAbility(false, "{S}",
-                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())),
                 "{S}: This creature gains first strike until end of turn."));
     }
 }

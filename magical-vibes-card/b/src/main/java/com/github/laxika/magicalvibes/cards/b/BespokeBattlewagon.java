@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -53,7 +52,7 @@ public class BespokeBattlewagon extends Card {
                 List.of(
                         new PayEnergyCost(4),
                         new SetCardTypesUntilEndOfTurnEffect(
-                                Set.of(CardType.ARTIFACT, CardType.CREATURE), GrantScope.SELF)
+                                Set.of(CardType.ARTIFACT, CardType.CREATURE), Subjects.source())
                 ),
                 "Pay {E}{E}{E}{E}: This Vehicle becomes an artifact creature until end of turn."
         ).withActivationCondition(new ControllerEnergyAtLeast(4),

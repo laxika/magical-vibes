@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M12", collectorNumber = "219")
 @CardRegistration(set = "FDN", collectorNumber = "258")
@@ -44,8 +44,8 @@ public class SwiftfootBoots extends Card {
 
     public SwiftfootBoots() {
         // Equipped creature has hexproof and haste
-        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.attachedCreature()));
 
         // Equip {1}
         addActivatedAbility(new EquipActivatedAbility("{1}"));

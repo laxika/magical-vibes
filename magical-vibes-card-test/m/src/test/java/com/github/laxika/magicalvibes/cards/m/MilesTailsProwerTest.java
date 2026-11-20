@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -102,7 +102,7 @@ class MilesTailsProwerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         Permanent vehicle = findPermanent(player1, "Reckoner Bankbuster");
-        gd.addEffectOnPermanent("Test", null, player1.getId(), new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
+        gd.addEffectOnPermanent("Test", null, player1.getId(), new GrantKeywordEffect(Keyword.FLYING, Subjects.target()),
                 vehicle.getId(), Duration.UNTIL_END_OF_TURN);
         harness.setHand(player1, List.of(new Disenchant()));
         harness.addMana(player1, ManaColor.WHITE, 1);

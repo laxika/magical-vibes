@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -29,7 +29,7 @@ public class CranialPlating extends Card {
         PermanentCount artifactsYouControl =
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
         addStaticEffect(new AttachedBoostEffect(
-                artifactsYouControl, new Fixed(0), GrantScope.EQUIPPED_CREATURE));
+                artifactsYouControl, new Fixed(0), Subjects.attachedCreature()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

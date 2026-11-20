@@ -996,7 +996,7 @@ public class StackEntry {
      * Ids of permanents (tokens) created by effects earlier in <em>this</em> resolution. Populated
      * by the token-creation handlers and read back by a later effect on the same entry that acts on
      * "those tokens" — e.g. Gilt-Leaf Ambush grants deathtouch on a clash win to the tokens it just
-     * created via {@code GrantScope.TOKENS_CREATED_THIS_RESOLUTION}.
+     * created via {@code Subjects.createdThisResolution()}.
      */
     private final List<UUID> createdPermanentIds = new ArrayList<>();
 

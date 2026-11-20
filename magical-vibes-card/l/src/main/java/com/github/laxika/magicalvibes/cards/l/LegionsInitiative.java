@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -20,9 +20,9 @@ import java.util.Set;
 public class LegionsInitiative extends Card {
 
     public LegionsInitiative() {
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.otherCreaturesYouControl(),
                 new PermanentColorInPredicate(Set.of(CardColor.RED))));
-        addStaticEffect(new StaticBoostEffect(0, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(0, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))));
 
         addActivatedAbility(new ActivatedAbility(

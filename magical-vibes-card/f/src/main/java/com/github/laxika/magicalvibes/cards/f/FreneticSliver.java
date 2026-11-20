@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -35,12 +35,12 @@ public class FreneticSliver extends Card {
 
         addStaticEffect(new GrantActivatedAbilityEffect(
                 ability,
-                GrantScope.ALL_CREATURES,
+                Subjects.otherCreatures(),
                 sliver
         ));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 ability,
-                GrantScope.SELF,
+                Subjects.source(),
                 sliver
         ));
     }

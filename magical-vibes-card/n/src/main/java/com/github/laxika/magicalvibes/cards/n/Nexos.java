@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -28,7 +28,7 @@ public class Nexos extends Card {
         );
         addStaticEffect(new GrantActivatedAbilityEffect(
                 basicLandManaAbility,
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.BASIC)))));

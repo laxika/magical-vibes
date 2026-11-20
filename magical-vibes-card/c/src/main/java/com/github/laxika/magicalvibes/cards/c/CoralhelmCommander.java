@@ -12,11 +12,11 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
@@ -35,21 +35,21 @@ public class CoralhelmCommander extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addStaticEffect(new RemoveKeywordEffect(Keyword.FLYING, GrantScope.SELF));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.FLYING, Subjects.source()));
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(2, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(4, CounterType.LEVEL)))),
-                new SetBasePowerToughnessEffect(3, 3, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(3, 3, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(4, 4, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.LEVEL),
-                new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+                new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MERFOLK)))));
     }
 }

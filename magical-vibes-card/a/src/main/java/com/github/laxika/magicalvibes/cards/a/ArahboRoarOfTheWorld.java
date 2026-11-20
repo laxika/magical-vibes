@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -56,7 +56,7 @@ public class ArahboRoarOfTheWorld extends Card {
                 new MayPayManaEffect(
                         "{1}{G}{W}",
                         SequenceEffect.of(
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()),
                                 new BoostTargetCreatureEffect(new TargetPower(), new TargetPower())),
                         "Pay {1}{G}{W} to give it trample and +X/+X until end of turn?"));
     }

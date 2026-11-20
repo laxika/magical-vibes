@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.Set;
@@ -24,7 +24,7 @@ public class EarnestFellowship extends Card {
     private GrantEffectEffect protectionFromOwnColor(CardColor color) {
         return new GrantEffectEffect(
                 new ProtectionFromColorsEffect(Set.of(color)),
-                GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                Subjects.allCreatures(),
                 new PermanentColorInPredicate(Set.of(color)));
     }
 }

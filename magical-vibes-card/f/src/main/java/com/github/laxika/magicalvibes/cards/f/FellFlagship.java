@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -21,7 +20,7 @@ public class FellFlagship extends Card {
 
     public FellFlagship() {
         // Pirates you control get +1/+0.
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.creaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.PIRATE))));
 
         // Whenever Fell Flagship deals combat damage to a player, that player discards a card.

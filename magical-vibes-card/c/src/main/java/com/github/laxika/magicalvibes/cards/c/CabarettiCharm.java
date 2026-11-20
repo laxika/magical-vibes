@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -39,7 +39,7 @@ public class CabarettiCharm extends Card {
                         "Creatures you control get +1/+1 and gain trample until end of turn",
                         List.of(
                                 new BoostAllOwnCreaturesEffect(1, 1),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES))),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create two 1/1 green and white Citizen creature tokens",
                         new CreateTokenEffect(2, "Citizen", 1, 1, CardColor.GREEN,

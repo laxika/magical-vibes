@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsModalSpellPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,7 +29,7 @@ public class RikuOfManyPaths extends Card {
                         new ExileTopCardsMayPlayUntilNextTurnEffect(1)),
                 new ChooseOneOption("Put a +1/+1 counter on Riku of Many Paths. It gains trample until end of turn",
                         List.of(new PutCountersOnSourceEffect(1, 1, 1),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF))),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source()))),
                 new ChooseOneOption("Create a 1/1 blue Bird creature token with flying",
                         new CreateTokenEffect(1, "Bird", 1, 1, CardColor.BLUE,
                                 List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of())));

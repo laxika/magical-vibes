@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -35,7 +34,7 @@ public class DarkLeoShredder extends Card {
         var attackingNinjas = new PermanentAllOfPredicate(List.of(
                 new PermanentIsAttackingPredicate(),
                 new PermanentHasSubtypePredicate(CardSubtype.NINJA)));
-        addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES, attackingNinjas));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.creaturesYouControl(), attackingNinjas));
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
                 new CreateTokenEffect("Ninja", 1, 1, CardColor.BLACK,

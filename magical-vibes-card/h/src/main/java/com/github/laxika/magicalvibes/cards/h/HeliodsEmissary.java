@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -27,7 +26,7 @@ public class HeliodsEmissary extends Card {
         setAttackTriggerOwnedByAura(true);
 
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(3, 3, Subjects.attachedCreature()))
                 .addTrigger(Triggers.attacks(), new TapPermanentsEffect(
                         Subjects.target(),
                         new PermanentAllOfPredicate(List.of(

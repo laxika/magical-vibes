@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimateReturnedPermanentIfSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -27,6 +27,6 @@ public class TuneUp extends Card {
         addSpellEffect(new AnimateReturnedPermanentIfSubtypeEffect(
                 CardSubtype.VEHICLE,
                 new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, Duration.PERMANENT, null)));
+                        Subjects.target(), Duration.PERMANENT, null)));
     }
 }

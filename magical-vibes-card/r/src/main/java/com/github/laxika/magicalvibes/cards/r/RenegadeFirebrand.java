@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -23,6 +23,6 @@ public class RenegadeFirebrand extends Card {
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsPlaneswalkerPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.CHANDRA)))),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.FIRST_STRIKE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.FIRST_STRIKE), Subjects.source())));
     }
 }

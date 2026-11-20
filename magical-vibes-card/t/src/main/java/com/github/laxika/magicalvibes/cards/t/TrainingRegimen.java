@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -18,7 +18,7 @@ public class TrainingRegimen extends Card {
     public TrainingRegimen() {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE,
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)
         ));
 

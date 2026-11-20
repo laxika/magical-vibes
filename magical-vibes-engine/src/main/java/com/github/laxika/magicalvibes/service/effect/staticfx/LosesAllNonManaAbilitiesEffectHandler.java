@@ -21,7 +21,7 @@ public class LosesAllNonManaAbilitiesEffectHandler implements StaticEffectHandle
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var loses = (LosesAllNonManaAbilitiesEffect) effect;
-        boolean matches = support.namesBeyondSource(context, loses.scope().subject(), loses.filter());
+        boolean matches = support.namesBeyondSource(context, loses.subject(), loses.filter());
         if (matches) {
             accumulator.setLosesAllNonManaAbilities(true);
         }

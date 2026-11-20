@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "GRN", collectorNumber = "201")
@@ -20,7 +20,7 @@ public class SwarmGuildmage extends Card {
                 "{4}{B}",
                 List.of(
                         new BoostAllOwnCreaturesEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.MENACE, Subjects.creaturesYouControl())
                 ),
                 "{4}{B}, {T}: Creatures you control get +1/+0 and gain menace until end of turn."
         ));

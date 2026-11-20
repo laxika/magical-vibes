@@ -6,18 +6,20 @@ package com.github.laxika.magicalvibes.model.effect;
  * is a floating effect on the target until end of turn, summed by {@code GameData.additionalBlocksThisTurn}.
  * Used by Act of Heroism.
  *
- * <p>With {@link GrantScope#SELF} the grant applies to the source permanent instead of a target,
+ * <p>With {@link Subjects#source()} the grant applies to the source permanent instead of a target,
  * for self-pumping activated abilities such as Mounted Archers' {@code {W}}.
  */
-public record GrantAdditionalBlockToTargetUntilEndOfTurnEffect(int additionalBlocks, GrantScope scope)
+public record GrantAdditionalBlockToTargetUntilEndOfTurnEffect(int additionalBlocks, PermanentSubject subject)
         implements CardEffect {
 
     public GrantAdditionalBlockToTargetUntilEndOfTurnEffect(int additionalBlocks) {
-        this(additionalBlocks, GrantScope.TARGET);
+        this(additionalBlocks, Subjects.target());
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return scope == GrantScope.TARGET ? TargetSpec.benign(TargetPredicates.creature()) : TargetSpec.NONE;
+        return subject instanceof PermanentSubject.Target
+                ? TargetSpec.benign(TargetPredicates.creature())
+                : TargetSpec.NONE;
     }
 }

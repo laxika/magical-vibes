@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -31,7 +31,7 @@ public class MiglozMazeCrusher extends Card {
                 "{1}",
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.OIL),
-                        new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.MENACE), GrantScope.SELF)
+                        new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.MENACE), Subjects.source())
                 ),
                 "{1}, Remove an oil counter from Migloz: It gains vigilance and menace until end of turn."
         ));

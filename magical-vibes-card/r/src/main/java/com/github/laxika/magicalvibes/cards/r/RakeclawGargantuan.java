@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -20,7 +20,7 @@ public class RakeclawGargantuan extends Card {
     public RakeclawGargantuan() {
         addActivatedAbility(new ActivatedAbility(
                 false, "{1}",
-                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target())),
                 "{1}: Target creature with power 5 or greater gains first strike until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

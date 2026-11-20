@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "JOU", collectorNumber = "104")
@@ -18,6 +18,6 @@ public class MogissWarhound extends Card {
         addStaticEffect(new MustAttackEffect());
 
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()));
     }
 }

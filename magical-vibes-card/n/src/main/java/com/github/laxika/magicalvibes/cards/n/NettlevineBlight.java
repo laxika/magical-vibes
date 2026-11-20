@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedPermanentAndReattachSourceAuraEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -32,6 +32,6 @@ public class NettlevineBlight extends Card {
                 .addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(
                         Triggers.endStep(ActivePlayer.YOU),
                         new SacrificeEnchantedPermanentAndReattachSourceAuraEffect()),
-                        GrantScope.ENCHANTED_PERMANENT));
+                        Subjects.attached()));
     }
 }

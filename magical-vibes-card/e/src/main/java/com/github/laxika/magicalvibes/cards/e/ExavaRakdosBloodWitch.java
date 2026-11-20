@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CantBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
@@ -32,7 +32,7 @@ public class ExavaRakdosBloodWitch extends Card {
                 "it has no +1/+1 counters on it"));
         addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.HASTE),
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 }

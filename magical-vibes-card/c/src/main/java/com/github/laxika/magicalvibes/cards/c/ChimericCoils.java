@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -23,7 +23,7 @@ public class ChimericCoils extends Card {
                 List.of(
                         new AnimatePermanentsEffect(new XValue(), new XValue(),
                                 List.of(CardSubtype.CONSTRUCT), Set.of(), null, Set.of(),
-                                GrantScope.SELF, Duration.PERMANENT, null),
+                                Subjects.source(), Duration.PERMANENT, null),
                         new SacrificeSelfAtEndStepEffect()),
                 "{X}{1}: This artifact becomes an X/X Construct artifact creature. Sacrifice it at the beginning of the next end step."
         ));

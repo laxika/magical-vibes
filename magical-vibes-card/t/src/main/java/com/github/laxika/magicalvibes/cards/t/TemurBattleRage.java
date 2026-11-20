@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -24,12 +24,12 @@ public class TemurBattleRage extends Card {
 
     public TemurBattleRage() {
         target(TargetFilters.creature())
-                .addSpellEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()))
                 .addSpellEffect(new ConditionalEffect(
                         new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentPowerAtLeastPredicate(4)
                         ))),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)));
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())));
     }
 }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,8 +20,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class NukaNukeLauncher extends Card {
 
     public NukaNukeLauncher() {
-        addStaticEffect(new StaticBoostEffect(3, 0, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 0, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.INTIMIDATE, Subjects.attachedCreature()));
         addTrigger(Triggers.attacks(),
                 RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect.untilWatchedPlayersNextTurn(
                         new TriggeredAbility(Triggers.playerCastsSpell()

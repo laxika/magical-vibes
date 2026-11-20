@@ -3,11 +3,11 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "SOM", collectorNumber = "121")
@@ -16,6 +16,6 @@ public class EzurisBrigade extends Card {
     public EzurisBrigade() {
         // Metalcraft — As long as you control three or more artifacts, this creature gets +4/+4 and has trample.
         addStaticEffect(new ConditionalEffect(new Metalcraft(), 
-                new StaticBoostEffect(4, 4, Set.of(Keyword.TRAMPLE), GrantScope.SELF)));
+                new StaticBoostEffect(4, 4, Set.of(Keyword.TRAMPLE), Subjects.source())));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -34,8 +33,8 @@ public class CartoucheOfZeal extends Card {
                 )),
                 "Target must be a creature you control"
         ))
-                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.attachedCreature()));
 
         // When this Aura enters, target creature can't block this turn.
         target(TargetFilters.creature())

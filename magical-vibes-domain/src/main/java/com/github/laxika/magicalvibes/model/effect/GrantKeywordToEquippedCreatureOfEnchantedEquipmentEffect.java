@@ -16,8 +16,8 @@ public record GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect(Set<Keywo
     }
 
     @Override
-    public GrantScope scope() {
-        return GrantScope.ENCHANTED_CREATURE;
+    public PermanentSubject subject() {
+        return Subjects.attachedCreature();
     }
 
     @Override

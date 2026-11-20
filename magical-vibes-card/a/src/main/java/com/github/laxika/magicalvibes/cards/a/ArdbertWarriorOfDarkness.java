@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -30,12 +30,12 @@ public class ArdbertWarriorOfDarkness extends Card {
         // They gain vigilance until end of turn.
         addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.WHITE)),
                 new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, legendaryCreature),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES, legendaryCreature));
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl(), legendaryCreature));
 
         // Whenever you cast a black spell, put a +1/+1 counter on each legendary creature you control.
         // They gain menace until end of turn.
         addTrigger(Triggers.youCastSpell().withFilter(new CardColorPredicate(CardColor.BLACK)),
                 new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, legendaryCreature),
-                new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES, legendaryCreature));
+                new GrantKeywordEffect(Keyword.MENACE, Subjects.creaturesYouControl(), legendaryCreature));
     }
 }

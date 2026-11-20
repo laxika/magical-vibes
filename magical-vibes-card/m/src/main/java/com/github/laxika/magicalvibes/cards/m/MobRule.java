@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -42,7 +41,7 @@ public class MobRule extends Card {
         return new ChooseOneEffect.ChooseOneOption(label, List.of(
                 new GainControlOfAllPermanentsMatchingEffect(filter, Duration.UNTIL_END_OF_TURN,
                         new UntapPermanentsEffect(Subjects.target()),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target()))
         ));
     }
 }

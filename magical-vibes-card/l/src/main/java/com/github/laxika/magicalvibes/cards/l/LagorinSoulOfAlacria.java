@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -33,7 +33,7 @@ public class LagorinSoulOfAlacria extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SaddleCost(1), new BecomeSaddledUntilEndOfTurnEffect(GrantScope.SELF)),
+                List.of(new SaddleCost(1), new BecomeSaddledUntilEndOfTurnEffect(Subjects.source())),
                 "Saddle 1",
                 ActivationTimingRestriction.SORCERY_SPEED));
     }

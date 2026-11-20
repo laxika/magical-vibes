@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -24,6 +24,6 @@ public class FenStalker extends Card {
                         new PermanentIsLandPredicate(),
                         new PermanentNotPredicate(new PermanentIsTappedPredicate())
                 )))),
-                new GrantKeywordEffect(Keyword.FEAR, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FEAR, Subjects.source())));
     }
 }

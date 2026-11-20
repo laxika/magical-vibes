@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -27,7 +27,7 @@ public class WardenOfTheInnerSky extends Card {
     public WardenOfTheInnerSky() {
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.ANY),
-                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE), GrantScope.SELF)));
+                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE), Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

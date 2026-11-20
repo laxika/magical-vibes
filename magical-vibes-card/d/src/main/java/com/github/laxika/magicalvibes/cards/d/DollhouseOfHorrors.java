@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfImprintedCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public class DollhouseOfHorrors extends Card {
                 0,
                 0,
                 true,
-                List.of(new DynamicStaticBoostEffect(constructs, constructs, GrantScope.SELF)),
+                List.of(new DynamicStaticBoostEffect(constructs, constructs, Subjects.source())),
                 false);
 
         addActivatedAbility(new ActivatedAbility(

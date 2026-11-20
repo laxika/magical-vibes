@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,6 +19,6 @@ public class DidactEcho extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(4, new CardIsPermanentPredicate()),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
     }
 }

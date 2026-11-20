@@ -26,7 +26,7 @@ public class GrantColorSelfEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantColorEffect) effect;
-        boolean matches = support.names(context, grant.scope().subject(), grant.filter());
+        boolean matches = support.names(context, grant.subject(), grant.filter());
         if (matches) {
             accumulator.addGrantedColor(grant.color());
             if (grant.overriding()) {

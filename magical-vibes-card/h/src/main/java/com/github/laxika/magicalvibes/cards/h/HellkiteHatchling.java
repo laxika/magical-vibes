@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.DevouredCreature;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "CON", collectorNumber = "111")
 @CardRegistration(set = "PC2", collectorNumber = "95")
@@ -20,7 +20,7 @@ public class HellkiteHatchling extends Card {
         addStaticEffect(new DevourEffect(1));
 
         // This creature has flying and trample if it devoured a creature.
-        addStaticEffect(new ConditionalEffect(new DevouredCreature(), new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
-        addStaticEffect(new ConditionalEffect(new DevouredCreature(), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new DevouredCreature(), new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
+        addStaticEffect(new ConditionalEffect(new DevouredCreature(), new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
     }
 }

@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -22,12 +22,12 @@ public class SwimmerInNightmares extends Card {
     public SwimmerInNightmares() {
         addStaticEffect(new ConditionalEffect(
                 new AnyGraveyardAtLeast(10),
-                new StaticBoostEffect(3, 0, GrantScope.SELF)));
+                new StaticBoostEffect(3, 0, Subjects.source())));
 
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsPlaneswalkerPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.ASHIOK)))),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
     }
 }

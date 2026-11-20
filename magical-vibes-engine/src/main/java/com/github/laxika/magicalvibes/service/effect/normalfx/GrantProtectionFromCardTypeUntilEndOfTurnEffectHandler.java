@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -39,7 +39,7 @@ public class GrantProtectionFromCardTypeUntilEndOfTurnEffectHandler implements N
         }
 
         gameData.addEffectOnPermanent(entry,
-                new GrantEffectEffect(new ProtectionFromCardTypesEffect(Set.of(e.cardType())), GrantScope.TARGET),
+                new GrantEffectEffect(new ProtectionFromCardTypesEffect(Set.of(e.cardType())), Subjects.target()),
                 target.getId(), Duration.UNTIL_END_OF_TURN);
 
         String typeName = e.cardType().getDisplayName().toLowerCase() + "s";

@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -38,7 +38,7 @@ public class ArwenMortalQueen extends Card {
                 "{1}",
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.INDESTRUCTIBLE),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new PutCounterOnTargetPermanentEffect(CounterType.LIFELINK),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),

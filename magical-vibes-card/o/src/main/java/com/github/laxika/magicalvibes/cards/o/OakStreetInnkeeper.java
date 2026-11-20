@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 
 @CardRegistration(set = "RTR", collectorNumber = "131")
@@ -15,7 +15,7 @@ public class OakStreetInnkeeper extends Card {
     public OakStreetInnkeeper() {
         addStaticEffect(new ConditionalEffect(
                 new NotControllerTurn(),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ALL_OWN_CREATURES,
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.creaturesYouControl(),
                         new PermanentIsTappedPredicate())));
     }
 }

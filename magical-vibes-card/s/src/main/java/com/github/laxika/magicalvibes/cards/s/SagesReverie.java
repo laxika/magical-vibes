@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,6 +26,6 @@ public class SagesReverie extends Card {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(aurasAttachedToCreatures))
                 .addStaticEffect(new AttachedBoostEffect(
-                        aurasAttachedToCreatures, aurasAttachedToCreatures, GrantScope.ENCHANTED_CREATURE));
+                        aurasAttachedToCreatures, aurasAttachedToCreatures, Subjects.attachedCreature()));
     }
 }

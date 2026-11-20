@@ -3,14 +3,14 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ORI", collectorNumber = "242")
 public class VeteransSidearm extends Card {
 
     public VeteransSidearm() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 }

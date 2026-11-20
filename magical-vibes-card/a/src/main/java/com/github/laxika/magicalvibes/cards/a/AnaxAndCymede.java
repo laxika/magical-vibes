@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +17,6 @@ public class AnaxAndCymede extends Card {
     public AnaxAndCymede() {
         addTrigger(Triggers.youCastSpell().withStackEntryFilter(new StackEntryTargetsSourcePredicate()),
                 new BoostAllOwnCreaturesEffect(1, 1),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl()));
     }
 }

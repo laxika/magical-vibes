@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DKA", collectorNumber = "130")
 public class VillageSurvivors extends Card {
 
     public VillageSurvivors() {
         // Fateful hour — As long as you have 5 or less life, other creatures you control have vigilance.
-        addStaticEffect(new ConditionalEffect(new ControllerLifeAtMost(5), new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES)));
+        addStaticEffect(new ConditionalEffect(new ControllerLifeAtMost(5), new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.otherCreaturesYouControl())));
     }
 }

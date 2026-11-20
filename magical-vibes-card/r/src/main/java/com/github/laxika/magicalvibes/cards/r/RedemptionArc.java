@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GoadEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -20,7 +19,7 @@ public class RedemptionArc extends Card {
 
     public RedemptionArc() {
         target(TargetFilters.creature())
-                .addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.attachedCreature()))
                 .addStaticEffect(new GoadEquippedCreatureEffect());
 
         addActivatedAbility(new ActivatedAbility(

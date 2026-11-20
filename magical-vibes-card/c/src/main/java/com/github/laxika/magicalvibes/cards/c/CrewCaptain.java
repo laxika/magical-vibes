@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SNC", collectorNumber = "180")
 public class CrewCaptain extends Card {
 
     public CrewCaptain() {
         addStaticEffect(new ConditionalEffect(new SourceEnteredBattlefieldThisTurn(),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
     }
 }

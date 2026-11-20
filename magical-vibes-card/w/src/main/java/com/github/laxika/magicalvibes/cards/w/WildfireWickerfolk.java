@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "DSK", collectorNumber = "239")
@@ -16,6 +16,6 @@ public class WildfireWickerfolk extends Card {
     public WildfireWickerfolk() {
         addStaticEffect(new ConditionalEffect(
                 new Delirium(),
-                new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), Subjects.source())));
     }
 }

@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSacrificeSourceWhenTargetLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSacrificeTargetWhenSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -31,7 +31,7 @@ public class PhantasmalMount extends Card {
                 null,
                 List.of(
                         new BoostTargetCreatureEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target()),
                         new RegisterDelayedSacrificeTargetWhenSourceLeavesEffect(),
                         new RegisterDelayedSacrificeSourceWhenTargetLeavesEffect()
                 ),

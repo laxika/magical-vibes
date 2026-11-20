@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -17,7 +17,7 @@ import java.util.List;
 public class HealersHeaddress extends Card {
 
     public HealersHeaddress() {
-        addStaticEffect(new StaticBoostEffect(0, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(0, 2, Subjects.attachedCreature()));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
@@ -25,7 +25,7 @@ public class HealersHeaddress extends Card {
                         List.of(PreventDamageEffect.nextToTarget(1)),
                         "{T}: Prevent the next 1 damage that would be dealt to any target this turn."
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
 
         addActivatedAbility(new ActivatedAbility(

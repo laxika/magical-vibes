@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,7 +21,7 @@ public class KrosanGroundshaker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{G}",
-                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())),
                 "{G}: Target Beast creature gains trample until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -74,7 +74,7 @@ public class PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffect
 
         Permanent permanent = new Permanent(targetCard);
         permanent.setEnteredFromGraveyardOwnerId(entry.getControllerId());
-        gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+        gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
                     permanent.getId(), Duration.UNTIL_END_OF_TURN);
         Set<CardType> enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, targetPlayerId, permanent, enterTappedTypes);

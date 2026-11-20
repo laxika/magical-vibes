@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -24,6 +24,6 @@ public class SongOfTotentanz extends Card {
                 new XValue(), "Rat", 1, 1, CardColor.BLACK,
                 List.of(CardSubtype.RAT), Set.of(), Set.of())
                 .withTokenEffects(List.of(StaticAbility.of(new CantBlockEffect()))));
-        addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl()));
     }
 }

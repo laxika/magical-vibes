@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ZNR", collectorNumber = "101")
@@ -16,7 +16,7 @@ public class ExpeditionSkulker extends Card {
     public ExpeditionSkulker() {
         addStaticEffect(new ConditionalEffect(
                 new ControlsOtherPermanentCount(1, new PermanentHasSubtypePredicate(CardSubtype.ROGUE)),
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())
         ));
     }
 }

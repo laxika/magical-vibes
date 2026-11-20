@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.GoadEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -25,11 +25,11 @@ public class EyeOfNidhogg extends Card {
 
     public EyeOfNidhogg() {
         target(TargetFilters.creature())
-                .addStaticEffect(new SetBasePowerToughnessEffect(4, 2, GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantColorEffect(CardColor.BLACK, GrantScope.ENCHANTED_CREATURE, true))
-                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.DRAGON, GrantScope.ENCHANTED_CREATURE, true))
-                .addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new SetBasePowerToughnessEffect(4, 2, Subjects.attachedCreature()))
+                .addStaticEffect(new GrantColorEffect(CardColor.BLACK, Subjects.attachedCreature(), true))
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.DRAGON, Subjects.attachedCreature(), true))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.attachedCreature()))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.attachedCreature()))
                 .addStaticEffect(new GoadEquippedCreatureEffect())
                 .addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS),
                         ReturnCardFromGraveyardEffect.builder()

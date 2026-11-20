@@ -16,10 +16,10 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryAndConjureDuplicatesInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeSarevokEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -77,12 +77,12 @@ public class SarevokTheUsurper extends Card {
                 new CardsInGraveyard(graveyardFilter, CountScope.CONTROLLER), new Fixed(0));
         return switch (color) {
             case WHITE -> SequenceEffect.of(
-                    new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET), boost);
+                    new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target()), boost);
             case BLUE, BLACK -> boost;
             case RED -> SequenceEffect.of(
-                    new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET), boost);
+                    new GrantKeywordEffect(Keyword.MENACE, Subjects.target()), boost);
             case GREEN -> SequenceEffect.of(
-                    new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET), boost);
+                    new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()), boost);
         };
     }
 

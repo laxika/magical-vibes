@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -37,7 +37,7 @@ public class LeafdrakeRoost extends Card {
                         )),
                         "{G}{U}, {T}: Create a 2/2 green and blue Drake creature token with flying."
                 ),
-                GrantScope.ENCHANTED_PERMANENT
+                Subjects.attached()
         ));
     }
 }

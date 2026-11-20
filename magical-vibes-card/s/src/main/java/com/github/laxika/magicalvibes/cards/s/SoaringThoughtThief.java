@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,7 +19,7 @@ public class SoaringThoughtThief extends Card {
     public SoaringThoughtThief() {
         addStaticEffect(new ConditionalEffect(
                 new OpponentGraveyardAtLeast(8),
-                new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
+                new StaticBoostEffect(1, 0, Subjects.creaturesYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.ROGUE))));
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(

@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "TDM", collectorNumber = "57")
@@ -17,7 +17,7 @@ public class SnowmeltStag extends Card {
     public SnowmeltStag() {
         // During your turn, this creature has base power and toughness 5/2.
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new SetBasePowerToughnessEffect(5, 2, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(5, 2, Subjects.source())));
 
         // {5}{U}{U}: This creature can't be blocked this turn.
         addActivatedAbility(new ActivatedAbility(

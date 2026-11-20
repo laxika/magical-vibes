@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,7 +21,7 @@ public class CrystallineArmor extends Card {
         PermanentCount landsYouControl = new PermanentCount(
                 new PermanentIsLandPredicate(), CountScope.CONTROLLER);
         addStaticEffect(new DynamicStaticBoostEffect(
-                landsYouControl, landsYouControl, GrantScope.ENCHANTED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE));
+                landsYouControl, landsYouControl, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.attachedCreature()));
     }
 }

@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerAndReturnMilledCardsToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -53,7 +53,7 @@ public class GrubsCommand extends Card {
                         "Creatures target player controls get +1/+1 and gain haste until end of turn",
                         List.of(
                                 new BoostAllCreaturesEffect(1, 1, EachPermanentScope.TARGET_PLAYER),
-                                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET_PLAYERS_CREATURES)),
+                                new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesTargetPlayerControls())),
                         anyPlayer),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target artifact or creature",

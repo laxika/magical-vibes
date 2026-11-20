@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -31,7 +30,7 @@ public class TerraHeraldOfHope extends Card {
     public TerraHeraldOfHope() {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                 new MillEffect(2, Subjects.you()),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayPayManaEffect(
                 "{2}",

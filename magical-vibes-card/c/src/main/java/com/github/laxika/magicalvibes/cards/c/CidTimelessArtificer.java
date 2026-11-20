@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -42,7 +42,7 @@ public class CidTimelessArtificer extends Card {
         Sum boost = new Sum(artificersYouControl, artificersInYourGraveyard);
 
         addStaticEffect(new DynamicStaticBoostEffect(
-                boost, boost, GrantScope.ALL_OWN_CREATURES,
+                boost, boost, Subjects.creaturesYouControl(),
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.HERO)))));

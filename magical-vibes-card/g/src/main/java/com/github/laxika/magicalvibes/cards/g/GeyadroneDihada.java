@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMat
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -63,7 +62,7 @@ public class GeyadroneDihada extends Card {
                         new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(Subjects.target()),
                         new PutCounterOnTargetPermanentEffect(CounterType.CORRUPTION),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target())
                 ),
                 "-3: Gain control of target creature or planeswalker until end of turn. Untap it and put a "
                         + "corruption counter on it. It gains haste until end of turn.",

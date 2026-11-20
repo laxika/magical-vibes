@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 /**
@@ -18,9 +18,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class FortifiedArea extends Card {
 
     public FortifiedArea() {
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.WALL)));
-        addStaticEffect(new GrantKeywordEffect(Keyword.BANDING, GrantScope.OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.BANDING, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.WALL)));
     }
 }

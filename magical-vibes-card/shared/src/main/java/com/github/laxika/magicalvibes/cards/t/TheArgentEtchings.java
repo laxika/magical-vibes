@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformAllEffect;
@@ -58,7 +57,7 @@ public class TheArgentEtchings extends Card {
         ));
         addTrigger(Triggers.chapter(2), SequenceEffect.of(
                 new BoostAllOwnCreaturesEffect(1, 1),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.ALL_OWN_CREATURES)
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.creaturesYouControl())
         ));
 
         var otherPermanents = new PermanentAllOfPredicate(List.of(

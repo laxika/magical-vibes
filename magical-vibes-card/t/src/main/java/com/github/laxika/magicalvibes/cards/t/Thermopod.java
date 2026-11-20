@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "CSP", collectorNumber = "100")
@@ -19,7 +19,7 @@ public class Thermopod extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{S}",
-                List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.source())),
                 "{S}: This creature gains haste until end of turn."
         ));
 

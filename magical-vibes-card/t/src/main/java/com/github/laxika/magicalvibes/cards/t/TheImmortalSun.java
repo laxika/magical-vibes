@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.PlaneswalkerLoyaltyAbilitiesC
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,6 +22,6 @@ public class TheImmortalSun extends Card {
         addTrigger(Triggers.drawStep(ActivePlayer.YOU), new DrawCardEffect(1));
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTruePredicate(), 1, CostModificationScope.SELF));
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl()));
     }
 }

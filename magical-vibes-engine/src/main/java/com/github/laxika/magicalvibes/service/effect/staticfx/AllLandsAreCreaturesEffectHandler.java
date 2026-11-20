@@ -33,7 +33,7 @@ public class AllLandsAreCreaturesEffectHandler implements StaticEffectHandlerBea
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var e = (AllLandsAreCreaturesEffect) effect;
-        if (support.namesBeyondSource(context, e.scope().subject(), null)
+        if (support.namesBeyondSource(context, e.subject(), null)
                 && (e.requiredSubtype() == null
                         || gameQueryService.hasEffectiveSubtype(
                                 context.gameData(), context.target(), e.requiredSubtype()))

@@ -27,7 +27,6 @@ import com.github.laxika.magicalvibes.model.PendingGraveyardReturnChoice;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -39,6 +38,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardUntilEndOfTur
 import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.DrawService;
@@ -497,7 +497,7 @@ public class GraveyardChoiceHandlerService {
                                 || card.hasKeyword(com.github.laxika.magicalvibes.model.Keyword.CHANGELING))) {
                         Permanent sourcePerm = gameQueryService.findPermanentById(gameData, grantSourceHasteSourcePermanentId);
                         if (sourcePerm != null) {
-                            gameData.addEffectOnPermanent(sourcePerm.getCard().getName(), null, playerId, new GrantKeywordEffect(com.github.laxika.magicalvibes.model.Keyword.HASTE, GrantScope.TARGET), sourcePerm.getId(), Duration.UNTIL_END_OF_TURN);
+                            gameData.addEffectOnPermanent(sourcePerm.getCard().getName(), null, playerId, new GrantKeywordEffect(com.github.laxika.magicalvibes.model.Keyword.HASTE, Subjects.target()), sourcePerm.getId(), Duration.UNTIL_END_OF_TURN);
                             gameLogService.append(gameData, GameLog.cardThen(sourcePerm.getCard(), " gains haste until end of turn."));
                         }
                     }
@@ -552,11 +552,11 @@ public class GraveyardChoiceHandlerService {
                     }
                     if (grantColor != null) {
                         gameData.addEffectOnPermanent(card.getName(), perm.getId(), playerId,
-                                new GrantColorEffect(grantColor, GrantScope.TARGET), perm.getId(), Duration.PERMANENT);
+                                new GrantColorEffect(grantColor, Subjects.target()), perm.getId(), Duration.PERMANENT);
                     }
                     if (grantSubtype != null) {
                         gameData.addEffectOnPermanent(card.getName(), perm.getId(), playerId,
-                                new GrantSubtypeEffect(grantSubtype, GrantScope.TARGET), perm.getId(),
+                                new GrantSubtypeEffect(grantSubtype, Subjects.target()), perm.getId(),
                                 Duration.PERMANENT);
                     }
                     if (enterTapped) {

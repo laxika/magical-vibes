@@ -8,21 +8,21 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "AVR", collectorNumber = "212")
 public class AngelicArmaments extends Card {
 
     public AngelicArmaments() {
         // Equipped creature gets +2/+2
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()));
         // ... has flying ...
-        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.attachedCreature()));
         // ... and is a white Angel in addition to its other colors and types
-        addStaticEffect(new GrantColorEffect(CardColor.WHITE, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.ANGEL, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantColorEffect(CardColor.WHITE, Subjects.attachedCreature()));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.ANGEL, Subjects.attachedCreature()));
 
         // Equip {4}
         addActivatedAbility(new EquipActivatedAbility("{4}"));

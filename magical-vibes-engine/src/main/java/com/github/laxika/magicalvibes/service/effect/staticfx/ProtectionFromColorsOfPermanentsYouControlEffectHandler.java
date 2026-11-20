@@ -33,8 +33,8 @@ public class ProtectionFromColorsOfPermanentsYouControlEffectHandler implements 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var protection = (ProtectionFromColorsOfPermanentsYouControlEffect) effect;
-        if (protection.scope() == null
-                || !support.namesBeyondSource(context, protection.scope().subject(), null)) {
+        if (protection.subject() == null
+                || !support.namesBeyondSource(context, protection.subject(), null)) {
             return;
         }
 

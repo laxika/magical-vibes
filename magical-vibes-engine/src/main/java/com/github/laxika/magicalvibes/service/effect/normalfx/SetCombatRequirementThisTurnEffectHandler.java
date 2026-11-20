@@ -12,8 +12,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -45,15 +46,17 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SetCombatRequirementThisTurnEffect) effect;
-        if (e.scope() == GrantScope.ALL_OWN_CREATURES) {
+        if (e.subject().isSet()) {
             resolveForOwnCreatures(gameData, entry, e, e.requirement());
             return;
         }
 
-        // TARGETS is every target of one multi-target group; TARGET the first; ENCHANTED_CREATURE the Aura's host as
-        // it resolves, so moving the Aura in response redirects the requirement.
-        List<Permanent> recipients = subjectResolutionService.permanents(gameData, entry, effect, e.scope().subject());
-        if (e.scope() != GrantScope.TARGETS && recipients.size() > 1) {
+        // allTargets() is every target of the effect's multi-target group; target() the first; attachedCreature() the
+        // Aura's host as it resolves, so moving the Aura in response redirects the requirement.
+        boolean everyTarget = e.subject() instanceof PermanentSubject.AllTargets;
+        List<Permanent> recipients = subjectResolutionService.permanents(gameData, entry, effect,
+                everyTarget ? Subjects.target() : e.subject());
+        if (!everyTarget && recipients.size() > 1) {
             recipients = recipients.subList(0, 1);
         }
         for (Permanent target : recipients) {
@@ -121,11 +124,10 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
      * (Joraga Invocation). The per-creature log lines of the targeted branches would flood the log here,
      * so the sweep appends a single line naming the source instead.
      */
-    private void resolveForOwnCreatures(GameData gameData, StackEntry entry, CardEffect effect,
+    private void resolveForOwnCreatures(GameData gameData, StackEntry entry, SetCombatRequirementThisTurnEffect effect,
                                         CombatRequirement requirement) {
         int count = 0;
-        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
-                GrantScope.ALL_OWN_CREATURES.subject())) {
+        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect, effect.subject())) {
             stamp(gameData, entry, permanent, requirement);
             count++;
         }

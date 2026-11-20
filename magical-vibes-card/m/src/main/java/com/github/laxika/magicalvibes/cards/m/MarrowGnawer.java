@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,7 +32,7 @@ public class MarrowGnawer extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.RAT)
         ));
 
-        addStaticEffect(new GrantKeywordEffect(Keyword.FEAR, GrantScope.ALL_CREATURES_INCLUDING_SELF, rat));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FEAR, Subjects.allCreatures(), rat));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

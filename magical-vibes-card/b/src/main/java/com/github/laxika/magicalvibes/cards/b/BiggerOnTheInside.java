@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedTargetPlayerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -42,6 +42,6 @@ public class BiggerOnTheInside extends Card {
                                 new PlayerPredicateTargetFilter(
                                         new PlayerRelationPredicate(PlayerRelation.ANY),
                                         "Target must be a player")),
-                        GrantScope.ENCHANTED_PERMANENT));
+                        Subjects.attached()));
     }
 }

@@ -12,12 +12,12 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "75")
@@ -30,7 +30,7 @@ public class Anavolver extends Card {
         addStaticEffect(new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
         addStaticEffect(new ConditionalEffect(new Kicked(), new GrantKeywordEffect(
-                Keyword.FLYING, GrantScope.SELF)));
+                Keyword.FLYING, Subjects.source())));
 
         addStaticEffect(new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{B}"),
@@ -40,6 +40,6 @@ public class Anavolver extends Card {
                         new ActivatedAbility(false, null,
                                 List.of(new PayLifeCost(3), new RegenerateEffect()),
                                 "Pay 3 life: Regenerate Anavolver."),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

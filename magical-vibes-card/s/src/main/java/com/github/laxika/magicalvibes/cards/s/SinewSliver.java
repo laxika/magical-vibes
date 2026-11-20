@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "PLC", collectorNumber = "30")
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class SinewSliver extends Card {
 
     public SinewSliver() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.allCreatures(),
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
     }
 }

@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,8 +30,8 @@ public class Glamdring extends Card {
         CardsInGraveyard instantsAndSorceries = new CardsInGraveyard(instantOrSorcery, CountScope.CONTROLLER);
 
         addStaticEffect(new AttachedBoostEffect(
-                instantsAndSorceries, new Fixed(0), GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE));
+                instantsAndSorceries, new Fixed(0), Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.attachedCreature()));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new MayCastAnySpellFromHandWithoutPayingManaCostEffect(instantOrSorcery, new EventValue()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));

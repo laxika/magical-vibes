@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -28,6 +28,6 @@ public class SwarmbornGiant extends Card {
                 "{4}{G}{G}: Monstrosity 2."
         ));
         addStaticEffect(new ConditionalEffect(monstrous,
-                new GrantKeywordEffect(Keyword.REACH, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.REACH, Subjects.source())));
     }
 }

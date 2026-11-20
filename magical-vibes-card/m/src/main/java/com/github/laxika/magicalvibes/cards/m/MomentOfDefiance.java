@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "BRO", collectorNumber = "108")
@@ -15,7 +15,7 @@ public class MomentOfDefiance extends Card {
     public MomentOfDefiance() {
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(2, 1))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target()))
                 .addSpellEffect(new DrawCardEffect());
     }
 }

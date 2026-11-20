@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChampionCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -35,7 +35,7 @@ public class WrensRunPackmaster extends Card {
                 "{2}{G}: Create a 2/2 green Wolf creature token."));
 
         // Wolves you control have deathtouch.
-        addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.WOLF)));
     }
 }

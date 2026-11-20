@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 import java.util.Set;
@@ -17,6 +17,6 @@ public class EchoOfDusk extends Card {
     public EchoOfDusk() {
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(4, new CardIsPermanentPredicate()),
-                new StaticBoostEffect(1, 1, Set.of(Keyword.LIFELINK), GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Set.of(Keyword.LIFELINK), Subjects.source())));
     }
 }

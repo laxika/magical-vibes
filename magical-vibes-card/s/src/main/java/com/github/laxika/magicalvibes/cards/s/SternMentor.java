@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
@@ -54,6 +53,6 @@ public class SternMentor extends Card {
         );
         addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
-                new GrantActivatedAbilityEffect(mill, GrantScope.SELF_AND_PAIRED)));
+                new GrantActivatedAbilityEffect(mill, Subjects.sourceAndPaired())));
     }
 }

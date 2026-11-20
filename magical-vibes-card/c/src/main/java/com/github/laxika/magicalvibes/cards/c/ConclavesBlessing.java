@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
@@ -29,6 +29,6 @@ public class ConclavesBlessing extends Card {
 
         target(TargetFilters.creature()).addStaticEffect(new AttachedBoostEffect(
                 new Fixed(0), new Scaled(otherCreaturesYouControl, 2),
-                GrantScope.ENCHANTED_CREATURE));
+                Subjects.attachedCreature()));
     }
 }

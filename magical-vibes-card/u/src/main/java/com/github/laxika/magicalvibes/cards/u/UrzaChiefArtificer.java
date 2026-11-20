@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -34,7 +34,7 @@ public class UrzaChiefArtificer extends Card {
                         new PermanentIsCreaturePredicate())), CountScope.CONTROLLER)));
 
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.MENACE, GrantScope.OWN_CREATURES, new PermanentIsArtifactPredicate()));
+                Keyword.MENACE, Subjects.otherCreaturesYouControl(), new PermanentIsArtifactPredicate()));
 
         CreateTokenEffect constructToken = new CreateTokenEffect(
                 1,
@@ -49,7 +49,7 @@ public class UrzaChiefArtificer extends Card {
                         StaticAbility.of(new DynamicStaticBoostEffect(
                         new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER),
                         new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER),
-                        GrantScope.SELF))));
+                        Subjects.source()))));
         addTrigger(Triggers.endStep(ActivePlayer.YOU), constructToken);
     }
 }

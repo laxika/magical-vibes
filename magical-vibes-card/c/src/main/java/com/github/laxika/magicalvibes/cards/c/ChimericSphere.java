@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -25,7 +25,7 @@ public class ChimericSphere extends Card {
                 "{2}",
                 List.of(
                         new AnimatePermanentsEffect(2, 1, List.of(CardSubtype.CONSTRUCT), Set.of()),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.source())),
                 "{2}: Until end of turn, this artifact becomes a 2/1 Construct artifact creature with flying."
         ));
 
@@ -35,7 +35,7 @@ public class ChimericSphere extends Card {
                 "{2}",
                 List.of(
                         new AnimatePermanentsEffect(3, 2, List.of(CardSubtype.CONSTRUCT), Set.of()),
-                        new RemoveKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                        new RemoveKeywordEffect(Keyword.FLYING, Subjects.source())),
                 "{2}: Until end of turn, this artifact becomes a 3/2 Construct artifact creature and loses flying."
         ));
     }

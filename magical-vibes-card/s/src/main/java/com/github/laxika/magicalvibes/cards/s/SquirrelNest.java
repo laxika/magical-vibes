@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public class SquirrelNest extends Card {
                                 List.of(CardSubtype.SQUIRREL), Set.of(), Set.of())),
                         "{T}: Create a 1/1 green Squirrel creature token."
                 ),
-                GrantScope.ENCHANTED_PERMANENT
+                Subjects.attached()
         ));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.AllCountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.Set;
@@ -21,7 +21,7 @@ public class HancockGhoulishMayor extends Card {
         addStaticEffect(new DynamicStaticBoostEffect(
                 counters,
                 counters,
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ZOMBIE, CardSubtype.MUTANT))));
     }
 }

@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffe
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttached;
@@ -29,7 +29,7 @@ public class TheRealityChip extends Card {
 
     public TheRealityChip() {
         addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
-        addStaticEffect(new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF,
+        addStaticEffect(new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, Subjects.source(),
                 Duration.WHILE_ATTACHED));
         addStaticEffect(new ConditionalEffect(new SourceIsAttached(),
                 new PlayLandsFromTopOfLibraryEffect()));

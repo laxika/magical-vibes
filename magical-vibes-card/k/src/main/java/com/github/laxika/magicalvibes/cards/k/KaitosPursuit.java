@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -26,7 +25,7 @@ public class KaitosPursuit extends Card {
                 .addSpellEffect(new DiscardEffect(2, Subjects.targetPlayer()))
                 .addSpellEffect(new GrantKeywordEffect(
                         Keyword.MENACE,
-                        GrantScope.OWN_CREATURES,
+                        Subjects.otherCreaturesYouControl(),
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.NINJA, CardSubtype.ROGUE))));
     }
 }

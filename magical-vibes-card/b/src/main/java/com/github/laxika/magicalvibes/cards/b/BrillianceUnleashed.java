@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.AnimateReturnedPermanentIfNot
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -41,7 +41,7 @@ public class BrillianceUnleashed extends Card {
                                         .build(),
                                 new AnimateReturnedPermanentIfNotCreatureEffect(
                                         new AnimatePermanentsEffect(3, 3, List.of(CardSubtype.ROBOT),
-                                                Set.of(Keyword.FLYING), null, Set.of(), GrantScope.TARGET,
+                                                Set.of(Keyword.FLYING), null, Set.of(), Subjects.target(),
                                                 Duration.PERMANENT))),
                         new GraveyardCardPredicateTargetFilter(artifact,
                                 GraveyardSearchScope.CONTROLLERS_GRAVEYARD))

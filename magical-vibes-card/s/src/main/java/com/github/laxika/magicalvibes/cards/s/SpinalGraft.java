@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,7 +19,7 @@ public class SpinalGraft extends Card {
         // When enchanted creature becomes the target of a spell or ability, destroy that creature.
         // It can't be regenerated.
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(3, 3, Subjects.attachedCreature()))
                 .addTrigger(Triggers.becomesTargetOfSpellOrAbility(),
                         new DestroyTargetPermanentEffect(Subjects.triggering(), true));
     }

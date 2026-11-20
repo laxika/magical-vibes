@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,7 +19,7 @@ public class AvatarKyoshiEarthbender extends Card {
 
     public AvatarKyoshiEarthbender() {
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source())));
 
         target(TargetFilters.landYouControl())
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),

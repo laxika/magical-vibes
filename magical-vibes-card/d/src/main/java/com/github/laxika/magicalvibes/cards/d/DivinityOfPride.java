@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "EVE", collectorNumber = "86")
 @CardRegistration(set = "MMA", collectorNumber = "188")
@@ -14,6 +14,6 @@ public class DivinityOfPride extends Card {
 
     public DivinityOfPride() {
         // This creature gets +4/+4 as long as you have 25 or more life. (Flying and lifelink are auto-loaded.)
-        addStaticEffect(new ConditionalEffect(new ControllerLifeAtLeast(25), new StaticBoostEffect(4, 4, GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new ControllerLifeAtLeast(25), new StaticBoostEffect(4, 4, Subjects.source())));
     }
 }

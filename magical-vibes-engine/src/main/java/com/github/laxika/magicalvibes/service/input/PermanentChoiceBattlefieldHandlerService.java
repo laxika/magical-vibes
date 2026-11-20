@@ -51,8 +51,8 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -2959,7 +2959,7 @@ public class PermanentChoiceBattlefieldHandlerService {
             gameData.addPowerToughnessBoost(source, ctx.power(), ctx.toughness());
             if (!ctx.grantedKeywords().isEmpty()) {
                 gameData.addEffectOnPermanent(ctx.sourceCard().getName(), null, ctx.controllerId(),
-                        new GrantKeywordEffect(Set.copyOf(ctx.grantedKeywords()), GrantScope.TARGET),
+                        new GrantKeywordEffect(Set.copyOf(ctx.grantedKeywords()), Subjects.target()),
                         source.getId(), Duration.UNTIL_END_OF_TURN);
             }
             gameLogService.append(gameData, GameLog.builder()
@@ -3000,7 +3000,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                     ctx.sourceCard().getName(),
                     null,
                     ctx.controllerId(),
-                    new GrantKeywordEffect(ctx.keywords(), GrantScope.SELF),
+                    new GrantKeywordEffect(ctx.keywords(), Subjects.source()),
                     source.getId(),
                     null,
                     null,
@@ -3503,7 +3503,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 }
                 if (auraGraveyardReturn.grantHaste()) {
                     gameData.addEffectOnPermanent(auraPerm.getCard().getName(), auraPerm.getId(), auraControllerId,
-                            new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), auraPerm.getId(), Duration.PERMANENT);
+                            new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), auraPerm.getId(), Duration.PERMANENT);
                 }
                 if (auraGraveyardReturn.exileIfLeavesBattlefield()) {
                     auraPerm.setExileIfLeavesBattlefield(true);

@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "TLE", collectorNumber = "65")
@@ -21,8 +21,8 @@ public class Swampbenders extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.ANY_PLAYER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(
                 swampsOnBattlefield, swampsOnBattlefield));
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.SWAMP, GrantScope.OWN_LANDS));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.SWAMP, Subjects.landsYouControl()));
         addStaticEffect(new GrantActivatedAbilityEffect(
-                ManaAbilities.tapFor(ManaColor.BLACK), GrantScope.OWN_LANDS));
+                ManaAbilities.tapFor(ManaColor.BLACK), Subjects.landsYouControl()));
     }
 }

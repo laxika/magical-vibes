@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -25,7 +25,7 @@ public class WolfhuntersQuiver extends Card {
                         List.of(new DealDamageToAnyTargetEffect(1)),
                         "{T}: This creature deals 1 damage to any target."
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
@@ -38,7 +38,7 @@ public class WolfhuntersQuiver extends Card {
                                 "Target must be a Werewolf creature"
                         )
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
         addActivatedAbility(new EquipActivatedAbility("{5}"));
     }

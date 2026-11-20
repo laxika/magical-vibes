@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class Gigantoplasm extends Card {
                 false,
                 "{X}",
                 List.of(new SetBasePowerToughnessToAmountEffect(
-                        new XValue(), new XValue(), GrantScope.SELF)),
+                        new XValue(), new XValue(), Subjects.source())),
                 "{X}: This creature has base power and toughness X/X.")
                 .withXValue();
 

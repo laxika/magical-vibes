@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceHasDealtDamage;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M19", collectorNumber = "219")
 public class PalladiaMorsTheRuiner extends Card {
@@ -15,6 +15,6 @@ public class PalladiaMorsTheRuiner extends Card {
     public PalladiaMorsTheRuiner() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new SourceHasDealtDamage()),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source())));
     }
 }

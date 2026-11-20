@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -36,8 +35,8 @@ public class HammerOfNazahn extends Card {
                                 "Attach that Equipment to target creature you control?"));
 
         // Equipped creature gets +2/+0 and has indestructible.
-        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.attachedCreature()));
 
         // Equip {4}
         addActivatedAbility(new EquipActivatedAbility("{4}"));

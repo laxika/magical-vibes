@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCountersFromSourceToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -45,7 +45,7 @@ public class BlasterMoraleBooster extends Card {
                 "{X}",
                 List.of(
                         new MoveCountersFromSourceToTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
                         new ConditionalEffect(
                                 new NotCondition(new SourceCounterThreshold(
                                         1, CounterType.PLUS_ONE_PLUS_ONE)),

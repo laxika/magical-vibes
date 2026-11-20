@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -22,7 +22,7 @@ public class ArmoredAscension extends Card {
                 .addStaticEffect(new AttachedBoostEffect(
                         new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.PLAINS), CountScope.CONTROLLER),
                         new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.PLAINS), CountScope.CONTROLLER),
-                        GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
+                        Subjects.attachedCreature()))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.attachedCreature()));
     }
 }

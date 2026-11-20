@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +29,7 @@ public class GoblinWarParty extends Card {
                         "Creatures you control get +1/+1 and gain haste until end of turn",
                         List.of(
                                 new BoostAllOwnCreaturesEffect(1, 1),
-                                new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES)))
+                                new GrantKeywordEffect(Keyword.HASTE, Subjects.otherCreaturesYouControl())))
         )));
     }
 }

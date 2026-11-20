@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,7 +28,7 @@ public class NecrogenRotpriest extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B}{G}",
-                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target())),
                 "{1}{B}{G}: Target creature you control with toxic gains deathtouch until end of turn.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

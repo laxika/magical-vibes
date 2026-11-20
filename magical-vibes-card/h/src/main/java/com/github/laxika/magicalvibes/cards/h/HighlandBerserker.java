@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,7 +27,7 @@ public class HighlandBerserker extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.ALLY))),
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                 new MayEffect(
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES, ally),
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.creaturesYouControl(), ally),
                         "Have Ally creatures you control gain first strike until end of turn?"));
     }
 }

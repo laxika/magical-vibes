@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndStationEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public class StoicStarCaptain extends Card {
 
     public StoicStarCaptain() {
         addStaticEffect(new GrantEffectEffect(
-                new PowerBoostForCrewAndStationEffect(2), GrantScope.ALL_OWN_CREATURES));
+                new PowerBoostForCrewAndStationEffect(2), Subjects.creaturesYouControl()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

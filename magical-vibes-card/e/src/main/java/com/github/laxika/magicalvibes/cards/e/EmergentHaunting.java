@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsCreature;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -37,7 +37,7 @@ public class EmergentHaunting extends Card {
                                 Set.of(Keyword.FLYING),
                                 null,
                                 Set.of(CardType.CREATURE),
-                                GrantScope.SELF,
+                                Subjects.source(),
                                 Duration.PERMANENT
                         ));
 

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,7 +26,7 @@ public class PyrewoodGearhulk extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new BoostAllOwnCreaturesEffect(2, 2, otherCreatures),
                 new GrantKeywordEffect(
-                Set.of(Keyword.VIGILANCE, Keyword.MENACE), GrantScope.OWN_CREATURES, otherCreatures),
+                Set.of(Keyword.VIGILANCE, Keyword.MENACE), Subjects.otherCreaturesYouControl(), otherCreatures),
                 new DamageCantBePreventedThisTurnEffect());
     }
 }

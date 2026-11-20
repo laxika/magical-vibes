@@ -5,14 +5,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DOM", collectorNumber = "151")
 public class WarlordsFury extends Card {
 
     public WarlordsFury() {
         // Creatures you control gain first strike until end of turn.
-        addSpellEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.otherCreaturesYouControl()));
         // Draw a card.
         addSpellEffect(new DrawCardEffect());
     }

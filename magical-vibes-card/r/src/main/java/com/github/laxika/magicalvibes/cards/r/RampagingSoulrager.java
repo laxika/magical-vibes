@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsUnlockedRoomDoorsCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DSK", collectorNumber = "151")
 public class RampagingSoulrager extends Card {
@@ -13,6 +13,6 @@ public class RampagingSoulrager extends Card {
     public RampagingSoulrager() {
         addStaticEffect(new ConditionalEffect(
                 new ControlsUnlockedRoomDoorsCount(2),
-                new StaticBoostEffect(3, 0, GrantScope.SELF)));
+                new StaticBoostEffect(3, 0, Subjects.source())));
     }
 }

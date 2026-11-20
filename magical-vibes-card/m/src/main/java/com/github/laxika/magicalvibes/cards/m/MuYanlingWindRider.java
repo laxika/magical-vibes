@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -39,7 +39,7 @@ public class MuYanlingWindRider extends Card {
 
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.FLYING,
-                GrantScope.OWN_PERMANENTS,
+                Subjects.otherPermanentsYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()

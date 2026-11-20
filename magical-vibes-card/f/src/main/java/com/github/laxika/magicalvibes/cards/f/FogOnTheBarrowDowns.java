@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "HOC", collectorNumber = "168")
@@ -13,7 +13,7 @@ public class FogOnTheBarrowDowns extends Card {
 
     public FogOnTheBarrowDowns() {
         target(TargetFilters.creature())
-                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.SPIRIT, GrantScope.ENCHANTED_CREATURE, true))
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.SPIRIT, Subjects.attachedCreature(), true))
                 .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect());
     }
 }

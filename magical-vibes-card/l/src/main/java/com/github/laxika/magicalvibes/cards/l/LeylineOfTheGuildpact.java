@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -28,17 +28,17 @@ public class LeylineOfTheGuildpact extends Card {
 
         var nonlandPermanent = new PermanentNotPredicate(new PermanentIsLandPredicate());
         for (CardColor color : CardColor.values()) {
-            addStaticEffect(new GrantColorEffect(color, GrantScope.OWN_PERMANENTS, false, nonlandPermanent));
+            addStaticEffect(new GrantColorEffect(color, Subjects.permanentsYouControl(), false, nonlandPermanent));
         }
 
         for (CardSubtype basicLandType : List.of(CardSubtype.PLAINS, CardSubtype.ISLAND,
                 CardSubtype.SWAMP, CardSubtype.MOUNTAIN, CardSubtype.FOREST)) {
-            addStaticEffect(new GrantSubtypeEffect(basicLandType, GrantScope.OWN_LANDS));
+            addStaticEffect(new GrantSubtypeEffect(basicLandType, Subjects.landsYouControl()));
         }
 
         addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentIsLandPredicate()
         ));
     }

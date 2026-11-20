@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -29,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 
@@ -51,52 +51,52 @@ public final class PermanentGrants {
 
     /** Makes {@code permanent} also {@code subtype}. */
     public static FloatingContinuousEffect subtype(GameData gd, Permanent permanent, CardSubtype subtype) {
-        return grant(gd, permanent, new GrantSubtypeEffect(subtype, GrantScope.TARGET, false));
+        return grant(gd, permanent, new GrantSubtypeEffect(subtype, Subjects.target(), false));
     }
 
     /** Makes {@code permanent} also {@code color}. */
     public static FloatingContinuousEffect color(GameData gd, Permanent permanent, CardColor color) {
-        return grant(gd, permanent, new GrantColorEffect(color, GrantScope.TARGET, false));
+        return grant(gd, permanent, new GrantColorEffect(color, Subjects.target(), false));
     }
 
     /** Gives {@code permanent} {@code keyword}. */
     public static FloatingContinuousEffect keyword(GameData gd, Permanent permanent, Keyword keyword) {
-        return grant(gd, permanent, new GrantKeywordEffect(keyword, GrantScope.TARGET, Duration.PERMANENT));
+        return grant(gd, permanent, new GrantKeywordEffect(keyword, Subjects.target(), Duration.PERMANENT));
     }
 
     /** Gives {@code permanent} {@code keyword} until end of turn. */
     public static FloatingContinuousEffect keywordUntilEndOfTurn(GameData gd, Permanent permanent, Keyword keyword) {
-        return untilEndOfTurn(gd, permanent, new GrantKeywordEffect(keyword, GrantScope.TARGET));
+        return untilEndOfTurn(gd, permanent, new GrantKeywordEffect(keyword, Subjects.target()));
     }
 
     /** Gives {@code permanent} {@code keywords} until end of turn. */
     public static FloatingContinuousEffect keywordsUntilEndOfTurn(GameData gd, Permanent permanent,
                                                                   Set<Keyword> keywords) {
-        return untilEndOfTurn(gd, permanent, new GrantKeywordEffect(Set.copyOf(keywords), GrantScope.TARGET));
+        return untilEndOfTurn(gd, permanent, new GrantKeywordEffect(Set.copyOf(keywords), Subjects.target()));
     }
 
     /** Makes {@code permanent} lose {@code keyword} until end of turn. */
     public static FloatingContinuousEffect removeKeywordUntilEndOfTurn(GameData gd, Permanent permanent,
                                                                        Keyword keyword) {
-        return untilEndOfTurn(gd, permanent, new RemoveKeywordEffect(keyword, GrantScope.TARGET));
+        return untilEndOfTurn(gd, permanent, new RemoveKeywordEffect(keyword, Subjects.target()));
     }
 
     /** Gives {@code permanent} protection from {@code color} until end of turn. */
     public static FloatingContinuousEffect protectionFromColorUntilEndOfTurn(GameData gd, Permanent permanent,
                                                                              CardColor color) {
-        return untilEndOfTurn(gd, permanent, new ProtectionFromColorsEffect(Set.of(color), GrantScope.TARGET));
+        return untilEndOfTurn(gd, permanent, new ProtectionFromColorsEffect(Set.of(color), Subjects.target()));
     }
 
     /** Gives {@code permanent} protection from {@code type} until end of turn. */
     public static FloatingContinuousEffect protectionFromCardTypeUntilEndOfTurn(GameData gd, Permanent permanent,
                                                                                 CardType type) {
         return untilEndOfTurn(gd, permanent,
-                new GrantEffectEffect(new ProtectionFromCardTypesEffect(Set.of(type)), GrantScope.TARGET));
+                new GrantEffectEffect(new ProtectionFromCardTypesEffect(Set.of(type)), Subjects.target()));
     }
 
     /** Makes {@code permanent} also {@code type}. */
     public static FloatingContinuousEffect cardType(GameData gd, Permanent permanent, CardType type) {
-        return grant(gd, permanent, new GrantCardTypeEffect(type, GrantScope.TARGET));
+        return grant(gd, permanent, new GrantCardTypeEffect(type, Subjects.target()));
     }
 
     /** Makes {@code permanent} {@code supertype} ({@code gained}) or no longer {@code supertype}. */
@@ -253,7 +253,7 @@ public final class PermanentGrants {
 
     /** Makes {@code permanent} lose all its abilities until end of turn, as Merfolk Trickster does (layer 6). */
     public static FloatingContinuousEffect loseAllAbilitiesUntilEndOfTurn(GameData gd, Permanent permanent) {
-        return untilEndOfTurn(gd, permanent, new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.UNTIL_END_OF_TURN));
+        return untilEndOfTurn(gd, permanent, new LosesAllAbilitiesEffect(Subjects.target(), Duration.UNTIL_END_OF_TURN));
     }
 
     /** Gives {@code permanent} {@code ability} until end of turn (layer 6). */

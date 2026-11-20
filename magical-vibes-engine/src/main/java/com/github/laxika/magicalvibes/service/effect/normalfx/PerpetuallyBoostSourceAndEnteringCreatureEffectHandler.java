@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceAndEnteringCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -42,7 +42,7 @@ public class PerpetuallyBoostSourceAndEnteringCreatureEffectHandler implements N
         }
 
         Card modifiedCard = permanent.getCard().createRuntimeCopy();
-        modifiedCard.addStaticEffect(new StaticBoostEffect(boost.powerBoost(), boost.toughnessBoost(), GrantScope.SELF));
+        modifiedCard.addStaticEffect(new StaticBoostEffect(boost.powerBoost(), boost.toughnessBoost(), Subjects.source()));
         modifiedCard.freeze();
         permanent.exchangeCard(modifiedCard);
     }

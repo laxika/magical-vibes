@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,12 +27,12 @@ public class CatharsCall extends Card {
         // Enchanted creature has vigilance and "At the beginning of your end step,
         // create a 1/1 white Human creature token."
         target(TargetFilters.creature())
-                .addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.attachedCreature()))
                 // The granted ability is the creature's own, so its controller gets the token
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU),
                         new CreateTokenEffect("Human", 1, 1,
                                 CardColor.WHITE, List.of(CardSubtype.HUMAN), Set.of(), Set.of())),
-                        GrantScope.ENCHANTED_CREATURE));
+                        Subjects.attachedCreature()));
     }
 }

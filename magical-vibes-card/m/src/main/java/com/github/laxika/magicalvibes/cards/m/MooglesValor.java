@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -24,6 +24,6 @@ public class MooglesValor extends Card {
         addSpellEffect(new CreateTokenEffect(
                 creatures, "Moogle", 1, 2, CardColor.WHITE, List.of(CardSubtype.MOOGLE),
                 Set.of(Keyword.LIFELINK), Set.of()));
-        addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.otherCreaturesYouControl()));
     }
 }

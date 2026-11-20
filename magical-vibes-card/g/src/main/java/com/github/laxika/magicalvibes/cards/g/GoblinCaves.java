@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -27,7 +27,7 @@ public class GoblinCaves extends Card {
                         new PermanentIsLandPredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.BASIC),
                         new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN))),
-                new StaticBoostEffect(0, 2, GrantScope.ALL_CREATURES,
+                new StaticBoostEffect(0, 2, Subjects.otherCreatures(),
                         new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)),
                 null));
     }

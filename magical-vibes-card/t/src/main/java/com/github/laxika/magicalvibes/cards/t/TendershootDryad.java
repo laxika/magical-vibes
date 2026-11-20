@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
 import com.github.laxika.magicalvibes.model.effect.AscendEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -35,7 +35,7 @@ public class TendershootDryad extends Card {
                 Set.of()
         ));
         addStaticEffect(new ConditionalEffect(new ControllerHasCityBlessing(),
-                new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
+                new StaticBoostEffect(2, 2, Subjects.creaturesYouControl(),
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SAPROLING)))));
     }
 }

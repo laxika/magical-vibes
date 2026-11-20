@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesO
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,6 +29,6 @@ public class EnkiraHostileScavenger extends Card {
                 new MustBeBlockedIfAbleEffect()));
         addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withEventCondition(
                 new MinimumAttackingCreaturesOfSubtype(2, CardSubtype.ZOMBIE)),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source()));
     }
 }

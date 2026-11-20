@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.AlternativeEchoCostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "TSP", collectorNumber = "182")
@@ -19,7 +19,7 @@ public class ThickSkinnedGoblin extends Card {
         addActivatedAbility(new ActivatedAbility(
             false,
             "{R}",
-            List.of(new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.RED, GrantScope.SELF)),
+            List.of(new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.RED, Subjects.source())),
             "{R}: This creature gains protection from red until end of turn."
         ));
     }

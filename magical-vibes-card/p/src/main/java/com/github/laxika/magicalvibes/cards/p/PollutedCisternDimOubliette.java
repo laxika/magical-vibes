@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.CardTypesAmongTriggeringCards
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -46,7 +45,7 @@ public class PollutedCisternDimOubliette extends Card {
                                 TriggerOptions.ONE_OR_MORE, List.of(new EffectRegistration(
                                         new LoseLifeEffect(new CardTypesAmongTriggeringCards(),
                                                 Subjects.eachOpponent())))),
-                        GrantScope.SELF)));
+                        Subjects.source())));
         addTrigger(Triggers.doorUnlocked(1),
                 SequenceEffect.of(
                         new MillEffect(3, Subjects.you()),

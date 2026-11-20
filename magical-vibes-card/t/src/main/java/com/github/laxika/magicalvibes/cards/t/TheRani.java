@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadEquippedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsGoadedPredicate;
@@ -65,7 +65,7 @@ public class TheRani extends Card {
                 false,
                 List.of(
                         StaticAbility.of(SequenceEffect.of(
-                                new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE),
+                                new StaticBoostEffect(2, 2, Subjects.attachedCreature()),
                                 new GoadEquippedCreatureEffect()))),
                 List.of(),
                 false,

@@ -20,9 +20,9 @@ import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.IncreaseSpellCostEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -47,7 +47,7 @@ public class PaladinClass extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
-                new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES)));
+                new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl())));
 
         DynamicAmount otherAttackingCreatures = new Sum(
                 new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.CONTROLLER),
@@ -56,7 +56,7 @@ public class PaladinClass extends Card {
                 .addTrigger(Triggers.youAttack(),
                         TriggerOptions.DEFAULT.withEventCondition(new SourceCounterThreshold(2, CounterType.LEVEL)),
                         new BoostTargetCreatureEffect(otherAttackingCreatures, otherAttackingCreatures),
-                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()));
 
         addActivatedAbility(new ActivatedAbility(
                 false, "{4}{W}", List.of(new ClassLevelUpEffect(3)),

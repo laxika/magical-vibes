@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "FIN", collectorNumber = "13")
@@ -19,7 +19,7 @@ public class CrystalFragments extends Card {
     public CrystalFragments() {
         setBackFaceCard(new SummonAlexander());
 
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

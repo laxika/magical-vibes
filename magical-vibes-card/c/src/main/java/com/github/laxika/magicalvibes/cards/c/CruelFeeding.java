@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "JOU", collectorNumber = "64")
@@ -18,6 +18,6 @@ public class CruelFeeding extends Card {
         // Any number of target creatures each get +1/+0 and gain lifelink until end of turn.
         target(TargetFilters.creature(), 0, Integer.MAX_VALUE)
                 .addSpellEffect(new BoostTargetCreatureEffect(1, 0))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target()));
     }
 }

@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "DFT", collectorNumber = "177")
@@ -13,7 +13,7 @@ public class RegalImperiosaur extends Card {
 
     public RegalImperiosaur() {
         addStaticEffect(new StaticBoostEffect(1, 1,
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)));
     }
 }

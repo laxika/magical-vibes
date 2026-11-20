@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class BilbosRing extends Card {
 
     public BilbosRing() {
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.EQUIPPED_CREATURE)));
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.attachedCreature())));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(), new CantBeBlockedEffect()));
 
         addTrigger(Triggers.attacks(),

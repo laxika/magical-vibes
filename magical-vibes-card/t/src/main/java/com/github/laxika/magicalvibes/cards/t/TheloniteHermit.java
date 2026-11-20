@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ import java.util.Set;
 public class TheloniteHermit extends Card {
 
     public TheloniteHermit() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.allCreatures(),
                 new PermanentHasSubtypePredicate(CardSubtype.SAPROLING)));
         addMorph("{3}{G}{G}");
         addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS), new CreateTokenEffect(

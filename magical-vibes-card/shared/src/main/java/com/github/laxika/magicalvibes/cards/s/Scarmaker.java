@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -25,7 +25,7 @@ public class Scarmaker extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.KI),
-                        new GrantKeywordEffect(Keyword.FEAR, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.FEAR, Subjects.target())
                 ),
                 "Remove a ki counter from Scarmaker: Target creature gains fear until end of turn.",
                 new PermanentPredicateTargetFilter(

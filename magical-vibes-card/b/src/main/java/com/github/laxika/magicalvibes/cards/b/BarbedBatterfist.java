@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +22,7 @@ public class BarbedBatterfist extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new LivingWeaponEffect(new CreateTokenEffect("Rebel", 2, 2, CardColor.RED,
                         List.of(CardSubtype.REBEL), Set.of(), Set.of())));
-        addStaticEffect(new StaticBoostEffect(1, -1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, -1, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 }

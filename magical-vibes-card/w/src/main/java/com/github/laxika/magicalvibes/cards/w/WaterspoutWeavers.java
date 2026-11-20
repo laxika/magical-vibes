@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KinshipEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,6 +19,6 @@ public class WaterspoutWeavers extends Card {
         // If it shares a creature type with this creature, you may reveal it. If you do, each
         // creature you control gains flying until end of turn.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new KinshipEffect(List.of(
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES))));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.creaturesYouControl()))));
     }
 }

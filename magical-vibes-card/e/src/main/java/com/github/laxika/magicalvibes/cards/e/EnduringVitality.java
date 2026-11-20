@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ public class EnduringVitality extends Card {
 
     public EnduringVitality() {
         addStaticEffect(new GrantActivatedAbilityEffect(
-                ManaAbilities.tapForAnyColor(), GrantScope.ALL_OWN_CREATURES));
+                ManaAbilities.tapForAnyColor(), Subjects.creaturesYouControl()));
         addTrigger(Triggers.dies(Triggers.CREATURE, ObjectRelation.THIS),
                 new ReturnSourceCardFromGraveyardToBattlefieldEffect(false, Set.of(CardType.ENCHANTMENT)));
     }

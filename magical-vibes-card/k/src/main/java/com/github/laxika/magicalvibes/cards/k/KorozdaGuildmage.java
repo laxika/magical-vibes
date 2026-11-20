@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -36,7 +36,7 @@ public class KorozdaGuildmage extends Card {
                 "{1}{B}{G}",
                 List.of(
                         new BoostTargetCreatureEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.INTIMIDATE, Subjects.target())
                 ),
                 "{1}{B}{G}: Target creature gets +1/+1 and gains intimidate until end of turn.",
                 TargetFilters.creature()

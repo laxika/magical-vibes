@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardTwoUnlessCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControllerActivatedArtifactAbilityThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -53,7 +53,7 @@ public class TezzeretBetrayerOfFlesh extends Card {
 
         AnimatePermanentsEffect animateArtifact = new AnimatePermanentsEffect(
                 null, null, List.of(), Set.of(), null, Set.of(CardType.CREATURE),
-                GrantScope.TARGET, Duration.PERMANENT, null);
+                Subjects.target(), Duration.PERMANENT, null);
         addActivatedAbility(new ActivatedAbility(
                 -2,
                 List.of(
@@ -63,7 +63,7 @@ public class TezzeretBetrayerOfFlesh extends Card {
                                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))),
                                 new AnimatePermanentsEffect(
                                         4, 4, List.of(), Set.of(), null, Set.of(),
-                                        GrantScope.TARGET, Duration.PERMANENT))),
+                                        Subjects.target(), Duration.PERMANENT))),
                 "−2: Target artifact becomes an artifact creature. If it isn't a Vehicle, it has base power and toughness 4/4.",
                 TargetFilters.artifact()
         ));

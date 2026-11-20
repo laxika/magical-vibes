@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 
 @CardRegistration(set = "GN3", collectorNumber = "1")
@@ -14,7 +14,7 @@ public class ZamrielSeraphOfSteel extends Card {
 
     public ZamrielSeraphOfSteel() {
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_OWN_CREATURES,
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.creaturesYouControl(),
                         new PermanentIsEquippedPredicate())));
     }
 }

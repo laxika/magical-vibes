@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -21,11 +21,11 @@ public class ArcticAven extends Card {
         // Arctic Aven gets +1/+1 as long as you control a Plains.
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.PLAINS)),
-                new StaticBoostEffect(1, 1, GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Subjects.source())));
 
         // {W}: Arctic Aven gains lifelink until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{W}",
-                List.of(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source())),
                 "{W}: Arctic Aven gains lifelink until end of turn."));
     }
 }

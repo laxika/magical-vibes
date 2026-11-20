@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -30,7 +30,7 @@ public class ClandestineMeddler extends Card {
                 otherCreatureYouControl,
                 "Target must be another creature you control"
         ), 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new SuspectEffect(GrantScope.TARGET));
+                new SuspectEffect(Subjects.target()));
 
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(new HasAttacker(new PermanentIsSuspectedPredicate())),

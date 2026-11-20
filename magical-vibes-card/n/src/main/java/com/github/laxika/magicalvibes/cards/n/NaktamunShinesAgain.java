@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PerpetualBoostOwnCreatureCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,7 +25,7 @@ public class NaktamunShinesAgain extends Card {
         addTrigger(Triggers.chapter(2),
                 new SeekLibraryEffect(new CardTypePredicate(CardType.CREATURE), 2));
         addTrigger(Triggers.chapter(3),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES,
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.otherCreaturesYouControl(),
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentMaxManaValuePredicate(2)))));

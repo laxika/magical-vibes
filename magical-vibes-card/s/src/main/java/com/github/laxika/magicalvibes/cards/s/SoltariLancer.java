@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TMP", collectorNumber = "44")
 @CardRegistration(set = "TPR", collectorNumber = "30")
@@ -16,6 +16,6 @@ public class SoltariLancer extends Card {
         // This creature has first strike as long as it's attacking.
         addStaticEffect(new ConditionalEffect(
                 new SourceIsAttacking(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())));
     }
 }

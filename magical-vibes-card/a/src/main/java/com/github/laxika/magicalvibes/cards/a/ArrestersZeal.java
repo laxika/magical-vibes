@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RNA", collectorNumber = "4")
@@ -20,6 +20,6 @@ public class ArrestersZeal extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(2, 2))
                 .addSpellEffect(new ConditionalEffect(new AllOf(java.util.List.of(new WasCast(), new ControllerMainPhase())),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)));
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target())));
     }
 }

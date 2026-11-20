@@ -2,6 +2,9 @@ package com.github.laxika.magicalvibes.service.battlefield;
 
 import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
 
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.TestCards;
@@ -35,7 +38,6 @@ import com.github.laxika.magicalvibes.model.effect.NoteControllerLifeTotalEffect
 import com.github.laxika.magicalvibes.model.effect.ChooseRandomNumberOnEnterEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -422,23 +424,25 @@ class BattlefieldPlacementServiceTest {
             realRegistry = new StaticEffectHandlerRegistry();
             realRegistry.register(GrantSubtypeEffect.class, (context, effect, accumulator) -> {
                 var grant = (GrantSubtypeEffect) effect;
-                boolean matches = switch (grant.scope()) {
-                    case OWN_CREATURES, OWN_PERMANENTS -> context.targetOnSameBattlefield();
-                    case ALL_CREATURES, ALL_PERMANENTS -> true;
-                    case OPPONENT_CREATURES -> !context.targetOnSameBattlefield();
-                    default -> false;
-                };
+                boolean matches = grant.subject() instanceof PermanentSubject.ControlledBy set
+                        && switch (set.players()) {
+                            case PlayerSubject.You ignored -> context.targetOnSameBattlefield();
+                            case PlayerSubject.Each each -> each.relation() == PlayerSubject.Relation.ALL
+                                    || !context.targetOnSameBattlefield();
+                            default -> false;
+                        };
                 if (matches) {
                     accumulator.addGrantedSubtype(grant.subtype());
                 }
             });
             realRegistry.register(GrantKeywordEffect.class, (context, effect, accumulator) -> {
                 var grant = (GrantKeywordEffect) effect;
-                boolean matches = switch (grant.scope()) {
-                    case OWN_CREATURES, OWN_PERMANENTS -> context.targetOnSameBattlefield();
-                    case ALL_CREATURES, ALL_PERMANENTS -> true;
-                    default -> false;
-                };
+                boolean matches = grant.subject() instanceof PermanentSubject.ControlledBy set
+                        && switch (set.players()) {
+                            case PlayerSubject.You ignored -> context.targetOnSameBattlefield();
+                            case PlayerSubject.Each each -> each.relation() == PlayerSubject.Relation.ALL;
+                            default -> false;
+                        };
                 if (matches) {
                     accumulator.addKeywords(grant.keywords());
                 }
@@ -531,7 +535,7 @@ class BattlefieldPlacementServiceTest {
             Card xenograftCard = new Card();
             xenograftCard.setName("Xenograft");
             xenograftCard.setType(CardType.ENCHANTMENT);
-            xenograftCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            xenograftCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, Subjects.otherCreaturesYouControl()));
             Permanent xenograft = new Permanent(xenograftCard);
             lookaheadGameData.playerBattlefields.get(playerId).add(xenograft);
 
@@ -554,7 +558,7 @@ class BattlefieldPlacementServiceTest {
             Card subtypeSourceCard = new Card();
             subtypeSourceCard.setName("Subtype Source");
             subtypeSourceCard.setType(CardType.ENCHANTMENT);
-            subtypeSourceCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.WIZARD, GrantScope.OWN_CREATURES));
+            subtypeSourceCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.WIZARD, Subjects.otherCreaturesYouControl()));
             Permanent subtypeSource = new Permanent(subtypeSourceCard);
             lookaheadGameData.playerBattlefields.get(playerId).add(subtypeSource);
 
@@ -620,7 +624,7 @@ class BattlefieldPlacementServiceTest {
             Card subtypeSourceCard = new Card();
             subtypeSourceCard.setName("Subtype Source");
             subtypeSourceCard.setType(CardType.ENCHANTMENT);
-            subtypeSourceCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.WIZARD, GrantScope.OWN_CREATURES));
+            subtypeSourceCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.WIZARD, Subjects.otherCreaturesYouControl()));
             lookaheadGameData.playerBattlefields.get(playerId).add(new Permanent(subtypeSourceCard));
 
             Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
@@ -636,7 +640,7 @@ class BattlefieldPlacementServiceTest {
             Card xenograftCard = new Card();
             xenograftCard.setName("Xenograft");
             xenograftCard.setType(CardType.ENCHANTMENT);
-            xenograftCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            xenograftCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, Subjects.otherCreaturesYouControl()));
             Permanent xenograft = new Permanent(xenograftCard);
             lookaheadGameData.playerBattlefields.get(opponentId).add(xenograft);
 
@@ -652,7 +656,7 @@ class BattlefieldPlacementServiceTest {
             Card conspiracyCard = new Card();
             conspiracyCard.setName("Conspiracy");
             conspiracyCard.setType(CardType.ENCHANTMENT);
-            conspiracyCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.ALL_CREATURES));
+            conspiracyCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, Subjects.otherCreatures()));
             Permanent conspiracy = new Permanent(conspiracyCard);
             lookaheadGameData.playerBattlefields.get(opponentId).add(conspiracy);
 
@@ -668,7 +672,7 @@ class BattlefieldPlacementServiceTest {
             Card maskCard = new Card();
             maskCard.setName("Maskwood Nexus");
             maskCard.setType(CardType.ARTIFACT);
-            maskCard.addStaticEffect(new GrantKeywordEffect(Keyword.CHANGELING, GrantScope.OWN_CREATURES));
+            maskCard.addStaticEffect(new GrantKeywordEffect(Keyword.CHANGELING, Subjects.otherCreaturesYouControl()));
             Permanent mask = new Permanent(maskCard);
             lookaheadGameData.playerBattlefields.get(playerId).add(mask);
 
@@ -686,7 +690,7 @@ class BattlefieldPlacementServiceTest {
             Card xenograftCard = new Card();
             xenograftCard.setName("Xenograft");
             xenograftCard.setType(CardType.ENCHANTMENT);
-            xenograftCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            xenograftCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, Subjects.otherCreaturesYouControl()));
             Permanent xenograft = new Permanent(xenograftCard);
             lookaheadGameData.playerBattlefields.get(playerId).add(xenograft);
 
@@ -702,7 +706,7 @@ class BattlefieldPlacementServiceTest {
             Card xenograftCard = new Card();
             xenograftCard.setName("Xenograft");
             xenograftCard.setType(CardType.ENCHANTMENT);
-            xenograftCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            xenograftCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, Subjects.otherCreaturesYouControl()));
             Permanent preExistingXenograft = new Permanent(xenograftCard);
             lookaheadGameData.playerBattlefields.get(playerId).add(preExistingXenograft);
 
@@ -749,7 +753,7 @@ class BattlefieldPlacementServiceTest {
             Card badCard = new Card();
             badCard.setName("Bad Enchantment");
             badCard.setType(CardType.ENCHANTMENT);
-            badCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            badCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, Subjects.otherCreaturesYouControl()));
             lookaheadGameData.playerBattlefields.get(playerId).add(new Permanent(badCard));
 
             Permanent entering = new Permanent(createCreatureCard("Grizzly Bears", List.of(CardSubtype.BEAR)));
@@ -914,7 +918,7 @@ class BattlefieldPlacementServiceTest {
             Card badCard = new Card();
             badCard.setName("Bad Enchantment");
             badCard.setType(CardType.ENCHANTMENT);
-            badCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.OWN_CREATURES));
+            badCard.addStaticEffect(new GrantSubtypeEffect(CardSubtype.HUMAN, Subjects.otherCreaturesYouControl()));
             Permanent thrower = new Permanent(badCard);
 
             List<Permanent> battlefield = lookaheadGameData.playerBattlefields.get(playerId);

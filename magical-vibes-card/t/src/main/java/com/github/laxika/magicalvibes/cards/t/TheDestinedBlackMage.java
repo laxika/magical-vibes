@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.FullParty;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -30,7 +29,7 @@ public class TheDestinedBlackMage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{B}",
-                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target())),
                 "{B}, {T}: Another target creature you control gains deathtouch until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

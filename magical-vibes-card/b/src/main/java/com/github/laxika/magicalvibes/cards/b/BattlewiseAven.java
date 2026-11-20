@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "JUD", collectorNumber = "4")
@@ -16,6 +16,6 @@ public class BattlewiseAven extends Card {
     public BattlewiseAven() {
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
-                new StaticBoostEffect(1, 1, Set.of(Keyword.FIRST_STRIKE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Set.of(Keyword.FIRST_STRIKE), Subjects.source())));
     }
 }

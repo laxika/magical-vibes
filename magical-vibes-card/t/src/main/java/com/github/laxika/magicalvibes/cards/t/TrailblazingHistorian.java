@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -21,7 +21,7 @@ public class TrailblazingHistorian extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.target())),
                 "{T}: Another target creature gains haste until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

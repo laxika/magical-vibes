@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.Set;
@@ -20,6 +20,6 @@ public class EmberWeaver extends Card {
         // As long as you control a red permanent, this creature gets +1/+0 and has first strike.
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.RED))),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.FIRST_STRIKE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.FIRST_STRIKE), Subjects.source())));
     }
 }

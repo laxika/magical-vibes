@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -31,11 +30,11 @@ import java.util.Set;
 public class ReadyWilling extends Card {
 
     public ReadyWilling() {
-        CardEffect indestructible = new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_CREATURES);
+        CardEffect indestructible = new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.otherCreaturesYouControl());
         CardEffect untap = new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
                 new PermanentIsCreaturePredicate()));
         CardEffect deathtouchLifelink = new GrantKeywordEffect(
-                Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK), GrantScope.OWN_CREATURES);
+                Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK), Subjects.otherCreaturesYouControl());
 
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,7 +25,7 @@ public class MobileHomestead extends Card {
     public MobileHomestead() {
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.MOUNT)),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.source())));
 
         addTrigger(Triggers.attacks(),
                 new LookAtTopCardMayPutMatchingOntoBattlefieldEffect(

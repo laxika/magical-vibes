@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -34,8 +34,8 @@ public class WeaponSurge extends Card {
                 new BoostAllOwnCreaturesEffect(1, 0)));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target()),
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.otherCreaturesYouControl())));
         target(TargetFilters.creatureYouControl());
     }
 }

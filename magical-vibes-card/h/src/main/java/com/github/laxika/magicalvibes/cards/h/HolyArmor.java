@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,7 +20,7 @@ import java.util.List;
 public class HolyArmor extends Card {
 
     public HolyArmor() {
-        target(TargetFilters.creature()).addStaticEffect(new StaticBoostEffect(0, 2, GrantScope.ENCHANTED_CREATURE));
+        target(TargetFilters.creature()).addStaticEffect(new StaticBoostEffect(0, 2, Subjects.attachedCreature()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesOfChosenPa
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,6 +22,6 @@ public class MutinousMassacre extends Card {
                 new PermanentIsCreaturePredicate(), Duration.UNTIL_END_OF_TURN));
         addSpellEffect(new UntapPermanentsEffect(
                 Subjects.controlledBy(Subjects.you(), new PermanentIsCreaturePredicate())));
-        addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.otherCreaturesYouControl()));
     }
 }

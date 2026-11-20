@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 @CardRegistration(set = "MID", collectorNumber = "23")
@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicat
 public class HedgewitchsMask extends Card {
 
     public HedgewitchsMask() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
         addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtLeastPredicate(4)));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

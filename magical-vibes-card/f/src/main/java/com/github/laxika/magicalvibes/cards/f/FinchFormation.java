@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -23,6 +23,6 @@ public class FinchFormation extends Card {
                 new CreateTokenCopyOfSourceEffect(false, 1, null, null, false, 1, 1));
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target()));
     }
 }

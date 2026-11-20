@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TapGrantingEquipmentCost;
@@ -35,7 +34,7 @@ public class FishingPole extends Card {
                                 new PutCounterOnTargetPermanentEffect(Subjects.granter(), CounterType.BAIT)),
                         "{1}, {T}, Tap Fishing Pole: Put a bait counter on Fishing Pole."
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
 
         addTrigger(Triggers.permanentBecomesUntapped()

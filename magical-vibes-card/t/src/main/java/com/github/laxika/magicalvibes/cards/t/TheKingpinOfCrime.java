@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantPlayerStaticEffectsUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -27,7 +26,7 @@ public class TheKingpinOfCrime extends Card {
                 2,
                 new GrantPlayerStaticEffectsUntilEndOfTurnEffect(List.of(
                         new AssignCombatDamageWithToughnessEffect(
-                                GrantScope.ALL_OWN_CREATURES,
+                                Subjects.creaturesYouControl(),
                                 new PermanentToughnessGreaterThanPowerPredicate()))),
                 "Pay 2 life to have creatures you control assign combat damage using toughness?"));
     }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongOwnedCommanders;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +25,7 @@ public class TangleweaveArmor extends Card {
         addStaticEffect(new AttachedBoostEffect(
                 greatestCommanderManaValue,
                 greatestCommanderManaValue,
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
 
         // Equip {4}
         addActivatedAbility(new EquipActivatedAbility("{4}"));

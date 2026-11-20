@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
 @CardRegistration(set = "ORI", collectorNumber = "230")
@@ -17,7 +17,7 @@ public class HelmOfTheGods extends Card {
         addStaticEffect(new AttachedBoostEffect(
                 new PermanentCount(new PermanentIsEnchantmentPredicate(), CountScope.CONTROLLER),
                 new PermanentCount(new PermanentIsEnchantmentPredicate(), CountScope.CONTROLLER),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
 
         // Equip {1}
         addActivatedAbility(new EquipActivatedAbility("{1}"));

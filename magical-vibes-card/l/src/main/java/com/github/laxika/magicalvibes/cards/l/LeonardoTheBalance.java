@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -36,7 +36,7 @@ public class LeonardoTheBalance extends Card {
                 "{W}{U}{B}{R}{G}",
                 List.of(new GrantKeywordEffect(
                         Set.of(Keyword.MENACE, Keyword.TRAMPLE, Keyword.LIFELINK),
-                        GrantScope.ALL_OWN_CREATURES)),
+                        Subjects.creaturesYouControl())),
                 "{W}{U}{B}{R}{G}: Creatures you control gain menace, trample, and lifelink until end of turn."
         ));
     }

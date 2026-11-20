@@ -29,7 +29,7 @@ public class DynamicStaticBoostSelfEffectHandler implements StaticEffectHandlerB
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (DynamicStaticBoostEffect) effect;
-        if (!support.names(context, boost.scope().subject(), boost.filter())) {
+        if (!support.names(context, boost.subject(), boost.filter())) {
             return;
         }
         AmountContext amountContext = boost.amountsFromTarget()

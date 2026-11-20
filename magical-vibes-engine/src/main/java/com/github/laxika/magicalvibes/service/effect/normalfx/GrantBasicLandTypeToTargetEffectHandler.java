@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -89,7 +89,7 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
             Duration floatingDuration = Duration.STATIC.equals(duration) ? Duration.PERMANENT : duration;
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), sourceName, sourcePermanentId, controllerId,
-                    new GrantSubtypeEffect(subtype, GrantScope.TARGET, true),
+                    new GrantSubtypeEffect(subtype, Subjects.target(), true),
                     targetLand.getId(), null, null, floatingDuration, 0));
             return;
         }
@@ -102,13 +102,13 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
         if (Duration.UNTIL_END_OF_TURN.equals(duration)) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), sourceName, sourcePermanentId, controllerId,
-                    new GrantSubtypeEffect(subtype, GrantScope.TARGET),
+                    new GrantSubtypeEffect(subtype, Subjects.target()),
                     targetLand.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             gameData.grantAbilityToPermanent(sourceName, sourcePermanentId, controllerId, manaAbility,
                     targetLand.getId(), Duration.UNTIL_END_OF_TURN);
         } else {
             gameData.addEffectOnPermanent(sourceName, sourcePermanentId, controllerId,
-                    new GrantSubtypeEffect(subtype, GrantScope.TARGET), targetLand.getId(), Duration.PERMANENT);
+                    new GrantSubtypeEffect(subtype, Subjects.target()), targetLand.getId(), Duration.PERMANENT);
             gameData.grantAbilityToPermanent(sourceName, sourcePermanentId, controllerId, manaAbility,
                     targetLand.getId(), Duration.PERMANENT);
         }

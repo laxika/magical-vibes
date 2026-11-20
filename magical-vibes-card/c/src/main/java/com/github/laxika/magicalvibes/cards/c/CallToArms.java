@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.condition.ChosenColorStrictlyMostCom
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentChosenColorStrictlyMostCommonPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -30,7 +30,7 @@ public class CallToArms extends Card {
         // nontoken permanents the chosen player controls but isn't tied for most common."
         addStaticEffect(new ConditionalEffect(
                 new ChosenColorStrictlyMostCommonAmongOpponentNontokens(),
-                new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
+                new StaticBoostEffect(1, 1, Subjects.allCreatures(),
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE)))));
 
         // "When the chosen color isn't the most common … or is tied for most common, sacrifice this."

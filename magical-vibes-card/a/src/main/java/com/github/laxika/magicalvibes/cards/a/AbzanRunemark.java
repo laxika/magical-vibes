@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -19,9 +19,9 @@ public class AbzanRunemark extends Card {
 
     public AbzanRunemark() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()))
                 .addStaticEffect(new ConditionalEffect(
                         new ControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.BLACK, CardColor.GREEN))),
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ENCHANTED_CREATURE)));
+                        new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.attachedCreature())));
     }
 }

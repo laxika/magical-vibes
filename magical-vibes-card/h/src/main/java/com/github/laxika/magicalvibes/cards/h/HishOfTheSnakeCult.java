@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -59,17 +58,17 @@ public class HishOfTheSnakeCult extends Card {
         var snakes = new PermanentHasSubtypePredicate(CardSubtype.SNAKE);
 
         addStaticEffect(new GrantSubtypeEffect(
-                CardSubtype.SNAKE, GrantScope.ALL_OWN_CREATURES, true, nagasOrSerpents));
+                CardSubtype.SNAKE, Subjects.creaturesYouControl(), true, nagasOrSerpents));
         addStaticEffect(new GrantKeywordEffect(
-                Set.of(Keyword.DEATHTOUCH, Keyword.POISONOUS), GrantScope.ALL_OWN_CREATURES, snakes));
+                Set.of(Keyword.DEATHTOUCH, Keyword.POISONOUS), Subjects.creaturesYouControl(), snakes));
         addStaticEffect(new GrantEffectEffect(
                 new CantBeBlockedByCreaturesMatchingPredicateEffect(new PermanentPowerAtMostPredicate(2)),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 snakes));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                 new GivePoisonCountersEffect(2, Subjects.targetPlayer())),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 snakes));
     }
 }

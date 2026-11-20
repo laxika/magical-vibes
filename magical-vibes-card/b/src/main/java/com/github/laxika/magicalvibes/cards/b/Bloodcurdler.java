@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -23,11 +22,11 @@ public class Bloodcurdler extends Card {
 
         var threshold = new GraveyardCardThreshold(7, null);
         addStaticEffect(new ConditionalEffect(threshold,
-                new StaticBoostEffect(1, 1, GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Subjects.source())));
         addStaticEffect(new ConditionalEffect(threshold,
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU),
                         new ExileGraveyardCardsEffect(2, GraveyardExileScope.OWN)),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

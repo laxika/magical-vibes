@@ -22,7 +22,7 @@ public class LoseAllCreatureTypesEffectHandler implements StaticEffectHandlerBea
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var lose = (LoseAllCreatureTypesEffect) effect;
-        if (support.namesBeyondSource(context, lose.scope().subject(), lose.filter())) {
+        if (support.namesBeyondSource(context, lose.subject(), lose.filter())) {
             accumulator.setSubtypeOverriding(true);
         }
     }

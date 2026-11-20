@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class SyrGwynHeroOfAshvale extends Card {
                 new EquipActivatedAbility("{0}",
                         new PermanentHasSubtypePredicate(CardSubtype.KNIGHT),
                         "Target must be a Knight you control"),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT)));
     }
 }

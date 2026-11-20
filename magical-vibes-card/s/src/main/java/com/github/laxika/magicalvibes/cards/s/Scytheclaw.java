@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.HalvedRoundedUp;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +24,7 @@ public class Scytheclaw extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new LivingWeaponEffect());
 
         // Equipped creature gets +1/+1
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
 
         // Whenever equipped creature deals combat damage to a player, that player loses half
         // their life, rounded up

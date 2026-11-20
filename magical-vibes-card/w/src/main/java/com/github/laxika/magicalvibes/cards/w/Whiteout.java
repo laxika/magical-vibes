@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -25,7 +25,7 @@ public class Whiteout extends Card {
 
     public Whiteout() {
         // All creatures lose flying until end of turn.
-        addSpellEffect(new RemoveKeywordEffect(Keyword.FLYING, GrantScope.ALL_CREATURES));
+        addSpellEffect(new RemoveKeywordEffect(Keyword.FLYING, Subjects.allCreatures()));
 
         // Sacrifice a snow land: Return this card from your graveyard to your hand.
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(

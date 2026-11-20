@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -22,7 +22,7 @@ public class FerocityOfTheWilds extends Card {
                 new PermanentIsAttackingPredicate(),
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN))
         ));
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES, attackingNonHumans));
-        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES, attackingNonHumans));
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.creaturesYouControl(), attackingNonHumans));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl(), attackingNonHumans));
     }
 }

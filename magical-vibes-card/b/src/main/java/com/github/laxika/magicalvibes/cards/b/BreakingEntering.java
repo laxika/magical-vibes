@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
@@ -35,7 +34,7 @@ public class BreakingEntering extends Card {
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                 .mandatory(true)
-                .battlefieldEffectGrants(List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)))
+                .battlefieldEffectGrants(List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.target())))
                 .battlefieldEffectGrantDuration(Duration.UNTIL_END_OF_TURN)
                 .build();
 

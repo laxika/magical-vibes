@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEf
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MOM", collectorNumber = "56")
 public class ExpeditionLookout extends Card {
@@ -17,6 +17,6 @@ public class ExpeditionLookout extends Card {
         addStaticEffect(new ConditionalEffect(threshold,
                 new CanAttackAsThoughNoDefenderEffect()));
         addStaticEffect(new ConditionalEffect(threshold,
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
     }
 }

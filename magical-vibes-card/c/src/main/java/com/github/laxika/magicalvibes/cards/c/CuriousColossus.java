@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -24,11 +24,11 @@ public class CuriousColossus extends Card {
                 "Target must be an opponent"
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET_PLAYERS_CREATURES,
+                        new LosesAllAbilitiesEffect(Subjects.creaturesTargetPlayerControls(),
                                 Duration.PERMANENT),
                         new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.COWARD,
-                                GrantScope.TARGET_PLAYERS_CREATURES, null, Duration.PERMANENT),
-                        new SetBasePowerToughnessEffect(1, 1, GrantScope.TARGET_PLAYERS_CREATURES,
+                                Subjects.creaturesTargetPlayerControls(), null, Duration.PERMANENT),
+                        new SetBasePowerToughnessEffect(1, 1, Subjects.creaturesTargetPlayerControls(),
                                 Duration.PERMANENT));
     }
 }

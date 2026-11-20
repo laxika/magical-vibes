@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,6 +20,6 @@ public class StrengthInNumbers extends Card {
         var attackingCreatures = new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER);
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(attackingCreatures, attackingCreatures))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));
     }
 }

@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,6 +20,6 @@ public class YavimayaIconoclast extends Card {
         addStaticEffect(new KickerEffect("{R}"));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
-                SequenceEffect.of(new BoostSelfEffect(1, 1), new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
+                SequenceEffect.of(new BoostSelfEffect(1, 1), new GrantKeywordEffect(Keyword.HASTE, Subjects.source())));
     }
 }

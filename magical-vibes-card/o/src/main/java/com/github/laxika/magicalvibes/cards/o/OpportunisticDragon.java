@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -40,7 +40,7 @@ public class OpportunisticDragon extends Card {
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new GainControlOfTargetEffect(Duration.WHILE_SOURCE_REMAINS),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.WHILE_SOURCE_REMAINS),
+                        new LosesAllAbilitiesEffect(Subjects.target(), Duration.WHILE_SOURCE_REMAINS),
                         new LockTargetPermanentEffect(true, true, false,
                                 Duration.WHILE_SOURCE_REMAINS, TargetPredicates.permanent()));
     }

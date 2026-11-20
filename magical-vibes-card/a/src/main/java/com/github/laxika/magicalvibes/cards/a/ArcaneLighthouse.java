@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToOpponentCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "C14", collectorNumber = "59")
@@ -25,8 +25,8 @@ public class ArcaneLighthouse extends Card {
                 true,
                 "{1}",
                 List.of(
-                        new RemoveKeywordEffect(Keyword.HEXPROOF, GrantScope.OPPONENT_CREATURES),
-                        new RemoveKeywordEffect(Keyword.SHROUD, GrantScope.OPPONENT_CREATURES),
+                        new RemoveKeywordEffect(Keyword.HEXPROOF, Subjects.creaturesYourOpponentsControl()),
+                        new RemoveKeywordEffect(Keyword.SHROUD, Subjects.creaturesYourOpponentsControl()),
                         new GrantStaticEffectToOpponentCreaturesUntilEndOfTurnEffect(
                                 new CantHaveOrGainKeywordEffect(Keyword.HEXPROOF)),
                         new GrantStaticEffectToOpponentCreaturesUntilEndOfTurnEffect(

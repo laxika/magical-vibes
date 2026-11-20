@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -36,7 +35,7 @@ public class ReverentHowl extends Card {
                         "Target creature gets +2/+2 and gains lifelink until end of turn",
                         List.of(
                                 new BoostTargetCreatureEffect(2, 2),
-                                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target())),
                         TargetFilters.creature())
         )));
     }

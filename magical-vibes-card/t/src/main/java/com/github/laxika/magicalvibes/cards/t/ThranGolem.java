@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "9ED", collectorNumber = "313")
@@ -22,6 +22,6 @@ public class ThranGolem extends Card {
         addStaticEffect(new ConditionalEffect(new Enchanted(),
                 new StaticBoostEffect(2, 2,
                         Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.TRAMPLE),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

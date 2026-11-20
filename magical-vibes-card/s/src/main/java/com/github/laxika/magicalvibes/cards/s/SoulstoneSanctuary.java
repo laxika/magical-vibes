@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -25,7 +25,7 @@ public class SoulstoneSanctuary extends Card {
                 false,
                 "{4}",
                 List.of(new AnimatePermanentsEffect(3, 3, List.of(), Set.of(Keyword.VIGILANCE, Keyword.CHANGELING), null,
-                        Set.of(CardType.CREATURE), GrantScope.SELF, Duration.PERMANENT)),
+                        Set.of(CardType.CREATURE), Subjects.source(), Duration.PERMANENT)),
                 "{4}: This land becomes a 3/3 creature with vigilance and all creature types. It's still a land."
         ));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));

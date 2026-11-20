@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +20,7 @@ public class PurrajOfUrborg extends Card {
         // Purraj has first strike as long as it's attacking.
         addStaticEffect(new ConditionalEffect(
                 new SourceIsAttacking(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())));
 
         // Whenever a player casts a black spell, you may pay {B}. If you do, put a +1/+1 counter on Purraj.
         addTrigger(Triggers.playerCastsSpell().withFilter(new CardColorPredicate(CardColor.BLACK)),

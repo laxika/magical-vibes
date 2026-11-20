@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCoun
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -41,7 +41,7 @@ public class RhonasTheIndomitable extends Card {
                 false, "{2}{G}",
                 List.of(
                         new BoostTargetCreatureEffect(2, 0),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())
                 ),
                 "{2}{G}: Another target creature gets +2/+0 and gains trample until end of turn.",
                 new PermanentPredicateTargetFilter(

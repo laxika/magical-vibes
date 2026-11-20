@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
@@ -25,10 +24,10 @@ public class SwordOfBodyAndMind extends Card {
 
     public SwordOfBodyAndMind() {
         // Static: equipped creature gets +2/+2
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()));
 
         // Static: equipped creature has protection from green and from blue
-        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.GREEN, CardColor.BLUE), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.GREEN, CardColor.BLUE), Subjects.attachedCreature()));
 
         // Triggered: whenever equipped creature deals combat damage to a player,
         // you create a 2/2 green Wolf creature token and that player mills ten cards

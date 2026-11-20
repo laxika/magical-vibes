@@ -21,7 +21,9 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         PermanentSubject.TargetSpell, PermanentSubject.TriggeringSpell, PermanentSubject.Returned,
         PermanentSubject.ReturnedThisResolution, PermanentSubject.ExiledThisResolution, PermanentSubject.Granter,
         PermanentSubject.Named, PermanentSubject.ControlledBy, PermanentSubject.OwnedBy, PermanentSubject.AttachmentsOf,
-        PermanentSubject.AllOf, PermanentSubject.OneOf {
+        PermanentSubject.AllOf, PermanentSubject.OneOf, PermanentSubject.TriggeringAttackers,
+        PermanentSubject.TriggeringSpellTargets, PermanentSubject.CreatedThisResolution, PermanentSubject.BandmatesOf,
+        PermanentSubject.WithCreaturesSharingAColor {
 
     /** Whether this subject is the effect's own target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -30,6 +32,14 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
 
     /** Whether resolving this subject reads a stack entry, so a static ability can't use it. */
     default boolean needsStackEntry() {
+        return false;
+    }
+
+    /**
+     * Whether this subject is a set of the permanents a player target of the effect controls ("creatures target player
+     * controls"), so the effect declares that player as its target.
+     */
+    default boolean declaresPlayerTarget() {
         return false;
     }
 
@@ -86,8 +96,18 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         }
     }
 
-    /** "Enchanted creature", "equipped creature": the permanent the source Aura or Equipment is attached to. */
-    record Attached() implements PermanentSubject {
+    /**
+     * "Enchanted permanent", "enchanted creature", "equipped creature": the permanent the source Aura or Equipment is
+     * attached to. With {@code creature}, "enchanted creature" / "equipped creature": a resolving effect names the host
+     * only while it is a creature. A static ability's host is judged without a type read (an Aura or Equipment on a
+     * noncreature it can't be attached to leaves it as state-based actions are checked).
+     */
+    record Attached(boolean creature) implements PermanentSubject {
+
+        /** "Enchanted permanent": the host, whatever it is. */
+        public Attached() {
+            this(false);
+        }
     }
 
     /**
@@ -273,6 +293,11 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         }
 
         @Override
+        public boolean declaresPlayerTarget() {
+            return players.declaresTarget();
+        }
+
+        @Override
         public boolean isSet() {
             return true;
         }
@@ -364,6 +389,83 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         @Override
         public boolean needsStackEntry() {
             return options.stream().anyMatch(PermanentSubject::needsStackEntry);
+        }
+    }
+
+    /**
+     * "They gain ...", "those creatures" in a "whenever you attack" ability: the attacking creatures the stack entry
+     * recorded as the ability triggered, those still on the battlefield as it resolves. No target.
+     */
+    record TriggeringAttackers() implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "Those creatures" naming the targets of the spell a trigger event was about: that spell's targets as it is on the
+     * stack, else as the entry recorded them as the ability triggered; with no triggering spell, the targets the
+     * resolving entry assigns to the effect (its own targets, declared by the card's target filter, not by this
+     * subject).
+     */
+    record TriggeringSpellTargets() implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "Those tokens" after an earlier step of the same resolution created them: every permanent the stack entry
+     * recorded as created this resolution, those still on the battlefield. A step result.
+     */
+    record CreatedThisResolution() implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "Each other creature banded with it" (CR 702.22): the other attacking creatures in the same attacking band as
+     * the one permanent {@code permanent} names, read as it is, else (for {@code source()}) as it last existed. Nothing
+     * when it is not attacking in a band. Found as the effect resolves.
+     */
+    record BandmatesOf(PermanentSubject permanent) implements PermanentSubject {
+
+        public BandmatesOf {
+            Objects.requireNonNull(permanent, "permanent");
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "Target creature and each other creature that shares a color with it": the creature {@code permanent} names and
+     * every creature that shares a color with it, found as the effect resolves; nothing when the named permanent is no
+     * longer a creature. Declares a target only through {@code permanent}.
+     */
+    record WithCreaturesSharingAColor(PermanentSubject permanent) implements PermanentSubject {
+
+        public WithCreaturesSharingAColor {
+            Objects.requireNonNull(permanent, "permanent");
+        }
+
+        @Override
+        public boolean declaresTarget() {
+            return permanent.declaresTarget();
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
         }
     }
 }

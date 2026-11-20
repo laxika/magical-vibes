@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "JOU", collectorNumber = "8")
 @CardRegistration(set = "DDO", collectorNumber = "8")
@@ -13,6 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class DictateOfHeliod extends Card {
 
     public DictateOfHeliod() {
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.creaturesYouControl()));
     }
 }

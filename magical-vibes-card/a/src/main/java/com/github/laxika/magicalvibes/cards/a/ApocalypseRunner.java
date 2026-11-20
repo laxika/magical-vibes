@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,7 +24,7 @@ public class ApocalypseRunner extends Card {
                 true,
                 null,
                 List.of(
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target()),
                         new MakeCreatureUnblockableEffect()
                 ),
                 "{T}: Target creature you control with power 2 or less gains lifelink until end of turn and can't be blocked this turn.",

@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 
 @CardRegistration(set = "WOE", collectorNumber = "34")
@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate
 public class ATaleForTheAges extends Card {
 
     public ATaleForTheAges() {
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.creaturesYouControl(),
                 new PermanentIsEnchantedPredicate()));
     }
 }

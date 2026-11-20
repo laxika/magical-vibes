@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.AttachedPermanentColorCount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RTR", collectorNumber = "227")
 @CardRegistration(set = "2X2", collectorNumber = "300")
@@ -15,7 +15,7 @@ public class CivicSaber extends Card {
 
     public CivicSaber() {
         addStaticEffect(new AttachedBoostEffect(
-                new AttachedPermanentColorCount(), new Fixed(0), GrantScope.EQUIPPED_CREATURE));
+                new AttachedPermanentColorCount(), new Fixed(0), Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 }

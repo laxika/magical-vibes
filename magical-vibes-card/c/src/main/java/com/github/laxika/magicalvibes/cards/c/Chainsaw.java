@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -25,7 +25,7 @@ public class Chainsaw extends Card {
         addTrigger(new TriggerCondition(Triggers.creatureDies(ObjectRelation.ANY)), TriggerOptions.ONE_OR_MORE,
                 new PutCountersOnSourceCardEffect(CounterType.REV));
         addStaticEffect(new DynamicStaticBoostEffect(
-                new CountersOnSource(CounterType.REV), new Fixed(0), GrantScope.EQUIPPED_CREATURE));
+                new CountersOnSource(CounterType.REV), new Fixed(0), Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

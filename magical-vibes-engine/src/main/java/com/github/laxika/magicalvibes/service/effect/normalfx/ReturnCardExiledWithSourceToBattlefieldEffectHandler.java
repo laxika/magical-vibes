@@ -15,11 +15,11 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -223,7 +223,7 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
         permanent.setEnteredFromExile(true);
         if (grantedSubtype != null) {
             gameData.addEffectOnPermanent(sourceName, null, controllerId,
-                    new GrantSubtypeEffect(grantedSubtype, GrantScope.TARGET), permanent.getId(), Duration.PERMANENT);
+                    new GrantSubtypeEffect(grantedSubtype, Subjects.target()), permanent.getId(), Duration.PERMANENT);
         }
         if (additionalPlusOnePlusOneCounters > 0
                 && !gameQueryService.cantHavePlusOnePlusOneCounters(gameData, permanent, controllerId)) {

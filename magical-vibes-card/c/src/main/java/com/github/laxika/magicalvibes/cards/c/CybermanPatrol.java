@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -21,7 +20,7 @@ public class CybermanPatrol extends Card {
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesBlocked(),
                 new LoseLifeEffect(3, Subjects.defendingPlayer())),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentIsArtifactPredicate()));
     }
 }

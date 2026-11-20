@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostEnchantedAndSharingCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEnchantedAndSharingCreaturesUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -19,8 +19,8 @@ public class CrownOfFury extends Card {
 
     public CrownOfFury() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 0, Subjects.attachedCreature()))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.attachedCreature()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

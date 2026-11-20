@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.PlayersWhoLostGame;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPutMilledLandsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M3C", collectorNumber = "66")
@@ -19,7 +19,7 @@ public class RampantFrogantua extends Card {
         addStaticEffect(new DynamicStaticBoostEffect(
                 new Scaled(new PlayersWhoLostGame(), 10),
                 new Scaled(new PlayersWhoLostGame(), 10),
-                GrantScope.SELF));
+                Subjects.source()));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(
                 new MillControllerAndMayPutMilledLandsOntoBattlefieldEffect(new EventValue()),
                 "Mill that many cards?"));

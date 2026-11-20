@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCreaturePredicate;
@@ -39,7 +39,7 @@ public class SeedlingCharm extends Card {
                                 "Target must be a green creature.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gains trample until end of turn",
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),
                                 "Target must be a creature."))

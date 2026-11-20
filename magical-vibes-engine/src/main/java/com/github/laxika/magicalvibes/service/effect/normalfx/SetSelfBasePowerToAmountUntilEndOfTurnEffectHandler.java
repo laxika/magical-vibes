@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfBasePowerToAmountUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -42,7 +42,7 @@ public class SetSelfBasePowerToAmountUntilEndOfTurnEffectHandler implements Norm
 
         int power = amountEvaluationService.evaluate(gameData, e.power(),
                 AmountContext.forStackEntry(entry, source));
-        SetBasePowerToughnessEffect setter = new SetBasePowerToughnessEffect(power, null, GrantScope.SELF);
+        SetBasePowerToughnessEffect setter = new SetBasePowerToughnessEffect(power, null, Subjects.source());
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(), setter, source.getId(), null, null,

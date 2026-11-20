@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class Windreaver extends Card {
 
     public Windreaver() {
         addActivatedAbility(new ActivatedAbility(false, "{W}",
-                List.of(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source())),
                 "{W}: This creature gains vigilance until end of turn."));
         addActivatedAbility(new ActivatedAbility(false, "{W}",
                 List.of(new BoostSelfEffect(0, 1)),

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentManaValueAtMostXPredicate;
@@ -29,7 +29,7 @@ public class Mockingbird extends Card {
                 Set.of(CardSubtype.BIRD),
                 List.of(
                         StaticAbility.of(List.<CardEffect>of(
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.source())
                 ))),
                 true
         ));

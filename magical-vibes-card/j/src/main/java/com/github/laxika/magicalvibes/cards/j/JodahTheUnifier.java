@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class JodahTheUnifier extends Card {
 
     public JodahTheUnifier() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.creaturesYouControl(),
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
         addStaticEffect(new BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect(1, 1));
 

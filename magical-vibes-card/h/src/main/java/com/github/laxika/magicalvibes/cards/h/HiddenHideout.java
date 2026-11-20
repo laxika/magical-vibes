@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -46,7 +46,7 @@ public class HiddenHideout extends Card {
                 "{2}",
                 List.of(new GrantKeywordEffect(
                         Keyword.LIFELINK,
-                        GrantScope.TARGET,
+                        Subjects.target(),
                         counteredCreatureYouControl
                 )),
                 "{2}, {T}: Target creature you control with a counter on it gains lifelink until end of turn.",

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "5DN", collectorNumber = "142")
 @CardRegistration(set = "MMA", collectorNumber = "211")
@@ -15,7 +15,7 @@ public class ParadiseMantle extends Card {
     public ParadiseMantle() {
         addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }

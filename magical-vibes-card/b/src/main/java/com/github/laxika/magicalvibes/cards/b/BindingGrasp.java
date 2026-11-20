@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -33,6 +33,6 @@ public class BindingGrasp extends Card {
                 // You control enchanted creature.
                 .addStaticEffect(new ControlEnchantedCreatureEffect())
                 // Enchanted creature gets +0/+1.
-                .addStaticEffect(new StaticBoostEffect(0, 1, Set.of(), GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(0, 1, Set.of(), Subjects.attachedCreature()));
     }
 }

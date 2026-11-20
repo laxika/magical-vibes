@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,7 +29,7 @@ public class ChainerDementiaMaster extends Card {
 
     public ChainerDementiaMaster() {
         // All Nightmares get +1/+1.
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreatures(),
                 new PermanentHasSubtypePredicate(CardSubtype.NIGHTMARE)));
 
         // {B}{B}{B}, Pay 3 life: Put target creature card from a graveyard onto the battlefield
@@ -42,7 +42,7 @@ public class ChainerDementiaMaster extends Card {
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                         .targetGraveyard(true)
-                        .battlefieldEffectGrants(List.of(new GrantColorEffect(CardColor.BLACK, GrantScope.TARGET, true)))
+                        .battlefieldEffectGrants(List.of(new GrantColorEffect(CardColor.BLACK, Subjects.target(), true)))
                         .grantSubtype(CardSubtype.NIGHTMARE)
                         .build()),
                 "{B}{B}{B}, Pay 3 life: Put target creature card from a graveyard onto the battlefield under your control. "

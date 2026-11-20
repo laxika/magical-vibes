@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -28,7 +28,7 @@ public class ProvisionsMerchant extends Card {
                                 new BoostAllCreaturesEffect(1, 1, new PermanentIsAttackingPredicate()),
                                 new GrantKeywordEffect(
                                         Keyword.TRAMPLE,
-                                        GrantScope.ALL_CREATURES,
+                                        Subjects.allCreatures(),
                                         new PermanentIsAttackingPredicate())),
                         "a Food"),
                 "Sacrifice a Food?"));

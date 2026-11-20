@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -34,12 +33,12 @@ public class ScreechingSliver extends Card {
 
         addStaticEffect(new GrantActivatedAbilityEffect(
                 millAbility,
-                GrantScope.ALL_CREATURES,
+                Subjects.otherCreatures(),
                 sliver
         ));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 millAbility,
-                GrantScope.SELF,
+                Subjects.source(),
                 sliver
         ));
     }

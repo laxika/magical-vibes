@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -21,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -472,10 +472,10 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
                                    ReturnTargetCardsFromGraveyardToBattlefieldEffect effect) {
         if (effect.grantHaste()) {
             if (effect.permanentHaste()) {
-                gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
                         permanent.getId(), Duration.PERMANENT);
             } else {
-                gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
                         permanent.getId(), Duration.UNTIL_END_OF_TURN);
             }
         }

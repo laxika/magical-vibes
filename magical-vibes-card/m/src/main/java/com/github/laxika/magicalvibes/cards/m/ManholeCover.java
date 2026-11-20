@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -24,7 +23,7 @@ public class ManholeCover extends Card {
     public ManholeCover() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

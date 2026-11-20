@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -27,6 +27,6 @@ public class SolitaryCamel extends Card {
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
                         new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))
                 )),
-                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source())));
     }
 }

@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class HarborBandit extends Card {
         // This creature gets +1/+1 as long as you control an Island.
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)),
-                new StaticBoostEffect(1, 1, GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Subjects.source())));
 
         // {1}{U}: This creature can't be blocked this turn.
         addActivatedAbility(new ActivatedAbility(

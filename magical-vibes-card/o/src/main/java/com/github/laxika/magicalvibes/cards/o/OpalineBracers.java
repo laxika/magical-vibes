@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "5DN", collectorNumber = "141")
 public class OpalineBracers extends Card {
@@ -18,7 +18,7 @@ public class OpalineBracers extends Card {
         addStaticEffect(new AttachedBoostEffect(
                 new CountersOnSource(CounterType.CHARGE),
                 new CountersOnSource(CounterType.CHARGE),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

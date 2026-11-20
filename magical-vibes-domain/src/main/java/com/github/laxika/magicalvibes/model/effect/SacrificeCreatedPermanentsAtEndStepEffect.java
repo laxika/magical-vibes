@@ -9,7 +9,7 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * <p>Reads {@code StackEntry.createdPermanentIds}, so it only ever touches the tokens this
  * resolution made — the same mechanism {@code DestroyAllPermanentsEffect.sparingPermanentsCreatedThisResolution}
- * and {@code GrantScope.CREATED_THIS_RESOLUTION} use. Sacrifice, not destruction (ignores
+ * and {@code Subjects.createdThisResolution()} use. Sacrifice, not destruction (ignores
  * indestructible and regeneration).
  */
 public record SacrificeCreatedPermanentsAtEndStepEffect(boolean controllerEndStepOnly) implements CardEffect {

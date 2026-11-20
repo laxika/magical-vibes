@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WTH", collectorNumber = "13")
@@ -18,6 +18,6 @@ public class EmpyrialArmor extends Card {
         CardsInHand hand = new CardsInHand(CountScope.CONTROLLER);
         target(TargetFilters.creature())
                 .addStaticEffect(new AttachedBoostEffect(
-                        hand, hand, GrantScope.ENCHANTED_CREATURE));
+                        hand, hand, Subjects.attachedCreature()));
     }
 }

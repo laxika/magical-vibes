@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,6 +29,6 @@ public class FrostcliffSiege extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceHasChosenMode("Temur"),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.OWN_CREATURES)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE, Keyword.HASTE), Subjects.otherCreaturesYouControl())));
     }
 }

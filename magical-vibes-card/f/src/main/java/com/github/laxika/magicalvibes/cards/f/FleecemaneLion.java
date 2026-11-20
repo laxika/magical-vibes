@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "193")
@@ -31,8 +31,8 @@ public class FleecemaneLion extends Card {
         ));
 
         addStaticEffect(new ConditionalEffect(monstrous,
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source())));
         addStaticEffect(new ConditionalEffect(monstrous,
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
     }
 }

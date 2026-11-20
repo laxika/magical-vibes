@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAndAttachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromHandOrGraveyardOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
@@ -45,7 +45,7 @@ public class NahiriTheLithomancer extends Card {
                 CardType.ARTIFACT, 1, "Stoneforged Blade", 0, 0,
                 null, null, List.of(CardSubtype.EQUIPMENT), Set.of(Keyword.INDESTRUCTIBLE), Set.of(),
                 false, false,
-                List.of(StaticAbility.of(new StaticBoostEffect(5, 5, Set.of(Keyword.DOUBLE_STRIKE), GrantScope.EQUIPPED_CREATURE))),
+                List.of(StaticAbility.of(new StaticBoostEffect(5, 5, Set.of(Keyword.DOUBLE_STRIKE), Subjects.attachedCreature()))),
                 List.of(new EquipActivatedAbility("{0}")),
                 false, false, false, 0, Set.of());
         addActivatedAbility(new ActivatedAbility(

@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,10 +23,10 @@ public class TheFleshIsWeak extends Card {
                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
         addStaticEffect(new GrantCardTypeEffect(
                 CardType.ARTIFACT,
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)));
         addStaticEffect(new StaticBoostEffect(
-                -1, -1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                -1, -1, Subjects.allCreatures(),
                 new PermanentNotPredicate(new PermanentIsArtifactPredicate())));
     }
 }

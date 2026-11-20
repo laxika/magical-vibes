@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemWithChosenSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +45,7 @@ public class CreateEmblemWithChosenSubtypeEffectHandler implements NormalEffectH
                 emblemEffect.powerBoost(),
                 emblemEffect.toughnessBoost(),
                 emblemEffect.grantedKeywords(),
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(chosenSubtype));
         createEmblemEffectHandler.resolve(
                 gameData,

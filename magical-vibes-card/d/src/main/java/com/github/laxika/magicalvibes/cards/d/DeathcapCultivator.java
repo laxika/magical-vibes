@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "202")
@@ -32,6 +32,6 @@ public class DeathcapCultivator extends Card {
                 "{T}: Add {G}."
         ));
         addStaticEffect(new ConditionalEffect(
-                new Delirium(), new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
+                new Delirium(), new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())));
     }
 }

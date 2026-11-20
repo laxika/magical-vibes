@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CMM", collectorNumber = "243")
@@ -19,8 +19,8 @@ public class MeteoricMace extends Card {
         addTrigger(Triggers.youCastThisSpell(), new CascadeEffect());
 
         // Equipped creature gets +4/+0 and has trample.
-        addStaticEffect(new StaticBoostEffect(4, 0, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(4, 0, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.attachedCreature()));
 
         // Equip {4}
         addActivatedAbility(new EquipActivatedAbility("{4}"));

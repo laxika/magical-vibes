@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -25,8 +25,8 @@ public class BurdenOfProof extends Card {
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.DETECTIVE),
                                 new PermanentControlledBySourceControllerPredicate())),
-                        new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE),
-                        new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE)))
+                        new StaticBoostEffect(2, 2, Subjects.attachedCreature()),
+                        new SetBasePowerToughnessEffect(1, 1, Subjects.attachedCreature())))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.DETECTIVE),

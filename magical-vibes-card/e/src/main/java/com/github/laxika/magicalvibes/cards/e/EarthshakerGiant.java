@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -20,6 +20,6 @@ public class EarthshakerGiant extends Card {
         PermanentPredicate otherCreature = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new BoostAllOwnCreaturesEffect(3, 3, otherCreature),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, otherCreature));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl(), otherCreature));
     }
 }

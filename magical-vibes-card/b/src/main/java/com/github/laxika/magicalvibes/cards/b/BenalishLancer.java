@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "INV", collectorNumber = "7")
 @CardRegistration(set = "DDG", collectorNumber = "12")
@@ -19,7 +19,7 @@ public class BenalishLancer extends Card {
     public BenalishLancer() {
         addStaticEffect(new KickerEffect("{2}{W}"));
         addStaticEffect(new ConditionalEffect(new Kicked(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())));
         addStaticEffect(new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
     }

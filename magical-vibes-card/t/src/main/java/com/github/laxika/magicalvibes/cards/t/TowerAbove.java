@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,8 +23,8 @@ public class TowerAbove extends Card {
         // source snapshotted to the attacker in CombatAttackService).
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(4, 4))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.WITHER, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.WITHER, Subjects.target()))
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.attacks(), new MustBlockSourceEffect(null))));
     }

@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class ThelonOfHavenwood extends Card {
     public ThelonOfHavenwood() {
         var fungus = new PermanentHasSubtypePredicate(CardSubtype.FUNGUS);
         addStaticEffect(new StaticBoostEffect(
-                1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF, fungus, CounterType.FUNGUS, true));
+                1, 1, Subjects.allCreatures(), fungus, CounterType.FUNGUS, true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

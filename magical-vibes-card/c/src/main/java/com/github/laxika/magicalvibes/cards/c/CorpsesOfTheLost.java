@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.DescendedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -25,7 +25,7 @@ import java.util.Set;
 public class CorpsesOfTheLost extends Card {
 
     public CorpsesOfTheLost() {
-        addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), Subjects.creaturesYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.SKELETON)));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttachedPermanentControllerControlsNoOther;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,10 +18,10 @@ public class PredatorsGambit extends Card {
         // Enchant creature
         target(TargetFilters.creature())
                 // Enchanted creature gets +2/+1.
-                .addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(2, 1, Subjects.attachedCreature()))
                 // Enchanted creature has intimidate as long as its controller controls no other creatures.
                 .addStaticEffect(new ConditionalEffect(
                                 new AttachedPermanentControllerControlsNoOther(new PermanentIsCreaturePredicate()),
-                                new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.ENCHANTED_CREATURE)));
+                                new GrantKeywordEffect(Keyword.INTIMIDATE, Subjects.attachedCreature())));
     }
 }

@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -32,7 +32,7 @@ public class OrneryTumblewagg extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SaddleCost(2), new BecomeSaddledUntilEndOfTurnEffect(GrantScope.SELF)),
+                List.of(new SaddleCost(2), new BecomeSaddledUntilEndOfTurnEffect(Subjects.source())),
                 "Saddle 2",
                 ActivationTimingRestriction.SORCERY_SPEED));
     }

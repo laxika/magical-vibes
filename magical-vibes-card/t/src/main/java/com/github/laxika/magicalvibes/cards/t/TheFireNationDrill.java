@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapSourceThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -41,8 +41,8 @@ public class TheFireNationDrill extends Card {
                 false,
                 "{1}",
                 List.of(
-                        new RemoveKeywordEffect(Keyword.HEXPROOF, GrantScope.ALL_PERMANENTS, opponentPermanent),
-                        new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_PERMANENTS, opponentPermanent)
+                        new RemoveKeywordEffect(Keyword.HEXPROOF, Subjects.allPermanents(), opponentPermanent),
+                        new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.allPermanents(), opponentPermanent)
                 ),
                 "{1}: Permanents your opponents control lose hexproof and indestructible until end of turn."
         ));

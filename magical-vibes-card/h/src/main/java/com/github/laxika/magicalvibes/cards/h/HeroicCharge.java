@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DMU", collectorNumber = "20")
 public class HeroicCharge extends Card {
@@ -17,6 +17,6 @@ public class HeroicCharge extends Card {
         addStaticEffect(new KickerEffect("{1}{R}"));
         addSpellEffect(new BoostAllOwnCreaturesEffect(2, 1));
         addSpellEffect(new ConditionalEffect(new Kicked(),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl())));
     }
 }

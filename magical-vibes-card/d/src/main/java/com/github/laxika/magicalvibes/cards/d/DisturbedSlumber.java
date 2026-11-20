@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class DisturbedSlumber extends Card {
                 .addSpellEffect(new AnimatePermanentsEffect(
                         4, 4,
                         List.of(CardSubtype.DINOSAUR), Set.of(Keyword.REACH, Keyword.HASTE),
-                        null, Set.of(), GrantScope.TARGET, Duration.UNTIL_END_OF_TURN))
+                        null, Set.of(), Subjects.target(), Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(SetCombatRequirementThisTurnEffect.forAnimatedPermanent(
                                 CombatRequirement.MUST_BE_BLOCKED));
     }

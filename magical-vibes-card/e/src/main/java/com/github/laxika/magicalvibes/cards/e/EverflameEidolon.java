@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -19,7 +18,7 @@ public class EverflameEidolon extends Card {
         addCastingOption(new BestowCast("{2}{R}"));
 
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.planar;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerSpellsCantBeCounteredByColorsEffect;
@@ -68,7 +69,7 @@ class PlanechaseServiceTest extends BaseCardTest {
     @Test
     void continuousBoostAffectsBothPlayersAndStopsAfterPlaneswalking() {
         faceUp(staticFixture("Test plane", CardType.PLANE,
-                new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING), GrantScope.ALL_CREATURES)));
+                new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING), Subjects.otherCreatures())));
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent first = gd.playerBattlefields.get(player1.getId()).getFirst();
@@ -84,7 +85,7 @@ class PlanechaseServiceTest extends BaseCardTest {
     @Test
     void controllerRelativeContinuousEffectMovesWithController() {
         faceUp(staticFixture("Test plane", CardType.PLANE,
-                new StaticBoostEffect(1, 1, Set.of(), GrantScope.OWN_CREATURES)));
+                new StaticBoostEffect(1, 1, Set.of(), Subjects.otherCreaturesYouControl())));
         harness.addToBattlefield(player1, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
         Permanent first = gd.playerBattlefields.get(player1.getId()).getFirst();

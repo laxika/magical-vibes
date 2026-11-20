@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "PLS", collectorNumber = "23")
@@ -21,7 +21,7 @@ public class DralnusPet extends Card {
         addStaticEffect(KickerEffect.discarding("{2}{B}",
                 new CardTypePredicate(CardType.CREATURE), "creature"));
         addStaticEffect(new ConditionalEffect(new Kicked(),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
         addStaticEffect(new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new LastDiscardedCardManaValue())));
     }

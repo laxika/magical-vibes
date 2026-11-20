@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayXManaCreateXTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,7 +30,7 @@ public class RiseOfTheHobgoblins extends Card {
 
         // {R/W}: Red creatures and white creatures you control gain first strike until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{R/W}",
-                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES,
+                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.creaturesYouControl(),
                         new PermanentColorInPredicate(Set.of(CardColor.RED, CardColor.WHITE)))),
                 "{R/W}: Red creatures and white creatures you control gain first strike until end of turn."));
     }

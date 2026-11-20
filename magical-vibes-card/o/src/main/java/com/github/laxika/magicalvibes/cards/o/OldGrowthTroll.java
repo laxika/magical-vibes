@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAsAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -38,7 +38,7 @@ public class OldGrowthTroll extends Card {
                 new ActivatedAbility(true, null,
                         List.of(new AwardManaEffect(ManaColor.GREEN, 2)),
                         "{T}: Add {G}{G}."),
-                GrantScope.ENCHANTED_PERMANENT));
+                Subjects.attached()));
 
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, "{1}",
@@ -48,6 +48,6 @@ public class OldGrowthTroll extends Card {
                                         List.of(CardSubtype.TROLL, CardSubtype.WARRIOR),
                                         Set.of(Keyword.TRAMPLE), Set.of(), true)),
                         "{1}, {T}, Sacrifice this land: Create a tapped 4/4 green Troll Warrior creature token with trample."),
-                GrantScope.ENCHANTED_PERMANENT));
+                Subjects.attached()));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,12 +24,12 @@ public class RattleblazeScarecrow extends Card {
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentColorInPredicate(Set.of(CardColor.BLACK))))),
-                new GrantKeywordEffect(Keyword.PERSIST, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.PERSIST, Subjects.source())));
         // Has haste as long as you control a red creature.
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentColorInPredicate(Set.of(CardColor.RED))))),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.source())));
     }
 }

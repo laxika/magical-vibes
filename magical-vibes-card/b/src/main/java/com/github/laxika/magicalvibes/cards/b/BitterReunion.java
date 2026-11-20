@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,7 +30,7 @@ public class BitterReunion extends Card {
                 "{1}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.otherCreaturesYouControl())
                 ),
                 "{1}, Sacrifice Bitter Reunion: Creatures you control gain haste until end of turn."
         ));

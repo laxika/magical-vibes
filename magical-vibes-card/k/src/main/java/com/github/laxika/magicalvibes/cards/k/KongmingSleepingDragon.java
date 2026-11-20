@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "PTK", collectorNumber = "9")
 @CardRegistration(set = "VMA", collectorNumber = "33")
@@ -13,6 +13,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class KongmingSleepingDragon extends Card {
 
     public KongmingSleepingDragon() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl()));
     }
 }

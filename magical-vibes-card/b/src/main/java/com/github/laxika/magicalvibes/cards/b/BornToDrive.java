@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndSaddleEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -41,7 +41,7 @@ public class BornToDrive extends Card {
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentIsCreaturePredicate(),
                         new DynamicStaticBoostEffect(
-                                creaturesAndVehicles, creaturesAndVehicles, GrantScope.ENCHANTED_PERMANENT),
+                                creaturesAndVehicles, creaturesAndVehicles, Subjects.attached()),
                         null));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SelfHasKeyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -24,6 +24,6 @@ public class MomentumRumbler extends Card {
                 new PutCountersOnSelfEffect(CounterType.FIRST_STRIKE));
         addTrigger(Triggers.attacks().withFilter(new PermanentHasKeywordPredicate(Keyword.FIRST_STRIKE)),
                 TriggerOptions.DEFAULT.withInterveningIf(new SelfHasKeyword(Keyword.FIRST_STRIKE)),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.source()));
     }
 }

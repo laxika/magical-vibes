@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,10 +30,10 @@ public class SummonFatChocobo extends Card {
         addTrigger(Triggers.chapter(1), bird);
 
         addTrigger(Triggers.chapter(2),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl()));
         addTrigger(Triggers.chapter(3),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl()));
         addTrigger(Triggers.chapter(4),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl()));
     }
 }

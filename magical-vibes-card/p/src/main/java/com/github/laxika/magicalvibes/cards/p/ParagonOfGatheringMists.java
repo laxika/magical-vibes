@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -22,13 +22,13 @@ import java.util.Set;
 public class ParagonOfGatheringMists extends Card {
 
     public ParagonOfGatheringMists() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentColorInPredicate(Set.of(CardColor.BLUE))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{U}",
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.FLYING, Subjects.target())),
                 "{U}, {T}: Another target blue creature you control gains flying until end of turn.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

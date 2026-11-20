@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class UnbridledGrowth extends Card {
         target(TargetFilters.land())
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                         ManaAbilities.tapForAnyColor(),
-                        GrantScope.ENCHANTED_PERMANENT
+                        Subjects.attached()
                 ));
 
         addActivatedAbility(new ActivatedAbility(

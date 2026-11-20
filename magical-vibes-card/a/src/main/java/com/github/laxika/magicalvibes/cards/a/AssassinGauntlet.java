@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -36,13 +35,13 @@ public class AssassinGauntlet extends Card {
                 .bindEffect(tapPermanents);
         addTrigger(Triggers.enters(ObjectRelation.THIS), attachSourceEquipmentToTargetCreature, tapPermanents);
 
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                         SequenceEffect.of(
                                 new DrawCardEffect(1),
                                 new DiscardEffect(1, Subjects.you()))),
-                        GrantScope.EQUIPPED_CREATURE));
+                        Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

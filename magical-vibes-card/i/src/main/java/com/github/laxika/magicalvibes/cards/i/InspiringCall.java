@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -42,7 +42,7 @@ public class InspiringCall extends Card {
                 new PermanentCount(counteredCreature, CountScope.CONTROLLER)));
         addSpellEffect(new GrantKeywordEffect(
                 Keyword.INDESTRUCTIBLE,
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 counteredCreature));
     }
 }

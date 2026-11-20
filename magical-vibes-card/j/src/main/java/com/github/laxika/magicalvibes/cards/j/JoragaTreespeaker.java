@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -37,20 +37,20 @@ public class JoragaTreespeaker extends Card {
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(5, CounterType.LEVEL)))),
-                new SetBasePowerToughnessEffect(1, 2, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(1, 2, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(1, 4, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(1, 4, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(5, CounterType.LEVEL)))),
-                new GrantActivatedAbilityEffect(manaAbility(), GrantScope.SELF)));
+                new GrantActivatedAbilityEffect(manaAbility(), Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.LEVEL),
                 new GrantActivatedAbilityEffect(
                         manaAbility(),
-                        GrantScope.ALL_OWN_CREATURES,
+                        Subjects.creaturesYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.ELF))));
     }
 

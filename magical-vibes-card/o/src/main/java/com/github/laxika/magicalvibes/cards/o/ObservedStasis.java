@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,7 +32,7 @@ public class ObservedStasis extends Card {
                         )),
                         CountScope.ATTACHED_CONTROLLER
                 )))
-                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new LosesAllAbilitiesEffect(Subjects.attachedCreature()))
                 .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect());
     }
 }

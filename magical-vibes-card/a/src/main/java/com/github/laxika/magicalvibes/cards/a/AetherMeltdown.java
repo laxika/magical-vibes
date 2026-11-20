@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,6 +26,6 @@ public class AetherMeltdown extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))),
                 "Target must be a creature or Vehicle"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new EnergyCountersEffect(2))
-                .addStaticEffect(new StaticBoostEffect(-4, 0, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(-4, 0, Subjects.attachedCreature()));
     }
 }

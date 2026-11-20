@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.Set;
@@ -12,7 +12,7 @@ import java.util.Set;
 public class VillageReavers extends Card {
 
     public VillageReavers() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.WOLF, CardSubtype.WEREWOLF))));
     }
 }

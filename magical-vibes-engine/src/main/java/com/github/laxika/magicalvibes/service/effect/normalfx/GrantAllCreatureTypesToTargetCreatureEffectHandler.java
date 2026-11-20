@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +48,7 @@ public class GrantAllCreatureTypesToTargetCreatureEffectHandler implements Norma
             }
             for (CardSubtype subtype : CardSubtype.values()) {
                 if (subtype.isCreatureType()) {
-                    gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(subtype, GrantScope.TARGET),
+                    gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(subtype, Subjects.target()),
                             target.getId(), Duration.PERMANENT);
                 }
             }

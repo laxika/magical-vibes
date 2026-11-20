@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class TheSquadronSinister extends Card {
 
     public TheSquadronSinister() {
         addStaticEffect(new StaticBoostEffect(
-                2, 2, Set.of(Keyword.FLYING, Keyword.HASTE), GrantScope.OWN_CREATURES,
+                2, 2, Set.of(Keyword.FLYING, Keyword.HASTE), Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.VILLAIN))));
         addCastingOption(new GraveyardCast(null, "{3}{U}{R}", List.of(), new CardDiscardedThisTurn()));
     }

@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,14 +22,14 @@ public class GiftOfTheDeity extends Card {
         // As long as enchanted creature is black, it gets +1/+1 and has deathtouch.
         addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentColorInPredicate(Set.of(CardColor.BLACK)),
-                new StaticBoostEffect(1, 1, Set.of(Keyword.DEATHTOUCH), GrantScope.ENCHANTED_CREATURE),
+                new StaticBoostEffect(1, 1, Set.of(Keyword.DEATHTOUCH), Subjects.attachedCreature()),
                 null
         ));
 
         // As long as enchanted creature is green, it gets +1/+1 and all creatures able to block it do so.
         addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN)),
-                new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
+                new StaticBoostEffect(1, 1, Subjects.attachedCreature()),
                 null
         ));
         addStaticEffect(new EnchantedPermanentConditionalEffect(

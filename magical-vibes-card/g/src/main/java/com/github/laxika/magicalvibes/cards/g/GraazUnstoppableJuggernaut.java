@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,10 +27,10 @@ public class GraazUnstoppableJuggernaut extends Card {
         addStaticEffect(new GrantEffectEffect(
                 new CantBeBlockedByCreaturesMatchingPredicateEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.WALL)),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.JUGGERNAUT)));
-        GrantSubtypeEffect becomeJuggernauts = new GrantSubtypeEffect(CardSubtype.JUGGERNAUT, GrantScope.OWN_CREATURES);
-        addStaticEffect(new SetBasePowerToughnessEffect(5, 3, GrantScope.OWN_CREATURES)
+        GrantSubtypeEffect becomeJuggernauts = new GrantSubtypeEffect(CardSubtype.JUGGERNAUT, Subjects.otherCreaturesYouControl());
+        addStaticEffect(new SetBasePowerToughnessEffect(5, 3, Subjects.otherCreaturesYouControl())
                 .partOfSameAbilityAs(becomeJuggernauts));
         addStaticEffect(becomeJuggernauts);
     }

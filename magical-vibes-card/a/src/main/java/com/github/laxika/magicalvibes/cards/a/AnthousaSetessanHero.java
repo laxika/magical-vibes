@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTargetsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,6 +23,6 @@ public class AnthousaSetessanHero extends Card {
                         .withStackEntryFilter(new StackEntryTargetsSourcePredicate()),
                 new AnimatePermanentsEffect(
                         2, 2, List.of(CardSubtype.WARRIOR), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN));
+                        Subjects.target(), Duration.UNTIL_END_OF_TURN));
     }
 }

@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -67,7 +67,7 @@ public class MonumentToPerfection extends Card {
                 false,
                 "{3}",
                 List.of(
-                        new LosesAllAbilitiesEffect(GrantScope.SELF, Duration.PERMANENT),
+                        new LosesAllAbilitiesEffect(Subjects.source(), Duration.PERMANENT),
                         new AnimatePermanentsEffect(
                                 new Fixed(9),
                                 new Fixed(9),
@@ -75,11 +75,11 @@ public class MonumentToPerfection extends Card {
                                 Set.of(),
                                 null,
                                 Set.of(CardType.ARTIFACT),
-                                GrantScope.SELF,
+                                Subjects.source(),
                                 Duration.PERMANENT,
                                 null
                         ),
-                        new GrantKeywordEffect(Set.of(Keyword.INDESTRUCTIBLE, Keyword.TOXIC), GrantScope.SELF,
+                        new GrantKeywordEffect(Set.of(Keyword.INDESTRUCTIBLE, Keyword.TOXIC), Subjects.source(),
                                 Duration.PERMANENT),
                         new GrantStaticEffectToSourceEffect(new ToxicEffect(9), Duration.PERMANENT)
                 ),

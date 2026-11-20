@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "INR", collectorNumber = "50")
@@ -23,14 +23,14 @@ public class VoiceOfTheBlessed extends Card {
         // As long as this creature has four or more +1/+1 counters on it, it has flying and vigilance.
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.PLUS_ONE_PLUS_ONE),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.PLUS_ONE_PLUS_ONE),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source())));
 
         // As long as this creature has ten or more +1/+1 counters on it, it has indestructible.
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(10, CounterType.PLUS_ONE_PLUS_ONE),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
     }
 }

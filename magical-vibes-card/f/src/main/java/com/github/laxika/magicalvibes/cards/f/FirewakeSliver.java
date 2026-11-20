@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,7 +29,7 @@ public class FirewakeSliver extends Card {
         ));
 
         addStaticEffect(new GrantKeywordEffect(Keyword.HASTE,
-                GrantScope.ALL_CREATURES_INCLUDING_SELF, sliver));
+                Subjects.allCreatures(), sliver));
 
         ActivatedAbility boostAbility = new ActivatedAbility(
                 false,
@@ -40,12 +40,12 @@ public class FirewakeSliver extends Card {
         );
         addStaticEffect(new GrantActivatedAbilityEffect(
                 boostAbility,
-                GrantScope.ALL_CREATURES,
+                Subjects.otherCreatures(),
                 sliver
         ));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 boostAbility,
-                GrantScope.SELF,
+                Subjects.source(),
                 sliver
         ));
     }

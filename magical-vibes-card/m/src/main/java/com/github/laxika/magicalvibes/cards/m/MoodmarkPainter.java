@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -24,6 +24,6 @@ public class MoodmarkPainter extends Card {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new BoostTargetCreatureEffect(creatureCards, new Fixed(0)),
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.MENACE, Subjects.target()));
     }
 }

@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CantBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "130")
@@ -29,7 +29,7 @@ public class DirtyWererat extends Card {
 
         var threshold = new GraveyardCardThreshold(7, null);
         addStaticEffect(new ConditionalEffect(threshold,
-                new StaticBoostEffect(2, 2, GrantScope.SELF)));
+                new StaticBoostEffect(2, 2, Subjects.source())));
         addStaticEffect(new CantBlockUnlessEffect(
                 new NotCondition(threshold), "there are fewer than seven cards in your graveyard"));
     }

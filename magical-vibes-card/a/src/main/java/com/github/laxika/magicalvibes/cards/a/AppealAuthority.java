@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 /**
@@ -28,7 +28,7 @@ public class AppealAuthority extends Card {
         PermanentCount creaturesYouControl =
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addSpellEffect(new BoostTargetCreatureEffect(creaturesYouControl, creaturesYouControl));
-        addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+        addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));
     }
 
     @Override

@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToCastSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -38,7 +37,7 @@ public class TyvarKell extends Card {
     public TyvarKell() {
         PermanentHasSubtypePredicate elf = new PermanentHasSubtypePredicate(CardSubtype.ELF);
         addStaticEffect(new GrantActivatedAbilityEffect(
-                ManaAbilities.tapFor(ManaColor.BLACK), GrantScope.OWN_CREATURES, elf));
+                ManaAbilities.tapFor(ManaColor.BLACK), Subjects.otherCreaturesYouControl(), elf));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -46,7 +45,7 @@ public class TyvarKell extends Card {
                 List.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new UntapPermanentsEffect(Subjects.target(), elf),
-                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target())
                 ),
                 "+1: Put a +1/+1 counter on up to one target Elf. Untap it. It gains deathtouch until end of turn.",
                 new PermanentPredicateTargetFilter(elf, "Target must be an Elf"),

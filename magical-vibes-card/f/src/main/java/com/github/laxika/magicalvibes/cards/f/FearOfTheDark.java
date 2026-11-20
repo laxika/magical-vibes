@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +28,7 @@ public class FearOfTheDark extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new NotCondition(new DefendingPlayerControlsPermanent(glimmerCreature))),
                 SequenceEffect.of(
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF),
-                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
+                        new GrantKeywordEffect(Keyword.MENACE, Subjects.source()),
+                        new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())));
     }
 }

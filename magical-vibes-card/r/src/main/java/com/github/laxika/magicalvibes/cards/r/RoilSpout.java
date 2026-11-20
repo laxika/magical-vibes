@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -46,7 +46,7 @@ public class RoilSpout extends Card {
                                 Set.of(Keyword.HASTE),
                                 null,
                                 Set.of(CardType.CREATURE),
-                                GrantScope.TARGET,
+                                Subjects.target(),
                                 Duration.PERMANENT)));
     }
 }

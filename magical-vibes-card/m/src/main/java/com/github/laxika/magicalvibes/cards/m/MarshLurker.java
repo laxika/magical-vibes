@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class MarshLurker extends Card {
                 List.of(
                         new SacrificePermanentCost(
                                 new PermanentHasSubtypePredicate(CardSubtype.SWAMP), "Sacrifice a Swamp", false),
-                        new GrantKeywordEffect(Keyword.FEAR, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.FEAR, Subjects.source())
                 ),
                 "Sacrifice a Swamp: This creature gains fear until end of turn."
         ));

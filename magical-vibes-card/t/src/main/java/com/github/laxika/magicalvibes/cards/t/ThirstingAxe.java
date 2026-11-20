@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.EquippedCreatureDidntDealCombatDamageToCreatureThisTurn;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,7 +19,7 @@ import java.util.List;
 public class ThirstingAxe extends Card {
 
     public ThirstingAxe() {
-        addStaticEffect(new StaticBoostEffect(4, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(4, 0, Subjects.attachedCreature()));
         // You can only sacrifice a permanent you control (CR 701.21a), so an opponent's equipped
         // creature is left alone.
         addTrigger(Triggers.endStep(ActivePlayer.YOU),

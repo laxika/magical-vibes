@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -54,7 +54,7 @@ public class GideonChampionOfJustice extends Card {
                                 Set.of(Keyword.INDESTRUCTIBLE),
                                 null,
                                 Set.of(),
-                                GrantScope.SELF,
+                                Subjects.source(),
                                 Duration.UNTIL_END_OF_TURN,
                                 null
                         ),

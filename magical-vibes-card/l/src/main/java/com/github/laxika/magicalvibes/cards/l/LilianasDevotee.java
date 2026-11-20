@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -21,7 +21,7 @@ public class LilianasDevotee extends Card {
 
     public LilianasDevotee() {
         // Zombies you control get +1/+0.
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
 
         // At the beginning of your end step, if a creature died this turn, you may pay {1}{B}.

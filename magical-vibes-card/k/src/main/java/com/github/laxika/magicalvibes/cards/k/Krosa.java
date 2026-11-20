@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OHOP", collectorNumber = "20")
@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class Krosa extends Card {
 
     public Krosa() {
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ALL_CREATURES));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.otherCreatures()));
         addTrigger(Triggers.chaosEnsues(), new MayEffect(
                 SequenceEffect.of(
                         new AwardManaEffect(ManaColor.WHITE),

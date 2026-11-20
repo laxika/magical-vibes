@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
@@ -27,7 +27,7 @@ public class BlasterHulk extends Card {
 
     public BlasterHulk() {
         addStaticEffect(new ReduceOwnCastCostEffect(new EnergyCountersPaidOrLostThisTurn()));
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.source()));
         var damage = new DealDividedDamageEffect(
                 new Fixed(8), null, DivisionMode.CHOSEN, new PermanentIsCreaturePredicate(),
                 8, false, false, true);

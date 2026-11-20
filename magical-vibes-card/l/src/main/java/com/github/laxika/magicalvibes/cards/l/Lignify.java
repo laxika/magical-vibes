@@ -2,12 +2,12 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "228")
@@ -21,10 +21,10 @@ public class Lignify extends Card {
     public Lignify() {
         target(TargetFilters.creature())
         // Enchanted creature has base power and toughness 0/4
-        .addStaticEffect(new SetBasePowerToughnessEffect(0, 4, GrantScope.ENCHANTED_CREATURE))
+        .addStaticEffect(new SetBasePowerToughnessEffect(0, 4, Subjects.attachedCreature()))
         // Enchanted creature loses all abilities
-        .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
+        .addStaticEffect(new LosesAllAbilitiesEffect(Subjects.attachedCreature()))
         // Enchanted creature is a Treefolk (replaces its other creature types)
-        .addStaticEffect(new GrantSubtypeEffect(CardSubtype.TREEFOLK, GrantScope.ENCHANTED_CREATURE, true));
+        .addStaticEffect(new GrantSubtypeEffect(CardSubtype.TREEFOLK, Subjects.attachedCreature(), true));
     }
 }

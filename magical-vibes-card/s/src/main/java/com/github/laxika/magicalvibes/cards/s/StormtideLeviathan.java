@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -22,7 +22,7 @@ public class StormtideLeviathan extends Card {
     public StormtideLeviathan() {
         // All lands are Islands in addition to their other types.
         addStaticEffect(new GrantSubtypeEffect(
-                CardSubtype.ISLAND, GrantScope.ALL_PERMANENTS, false, new PermanentIsLandPredicate()
+                CardSubtype.ISLAND, Subjects.otherPermanents(), false, new PermanentIsLandPredicate()
         ));
 
         // Creatures without flying or islandwalk can't attack.

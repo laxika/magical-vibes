@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MSH", collectorNumber = "9")
@@ -24,7 +24,7 @@ public class CaptainAmericaSuperSoldier extends Card {
                 new GrantControllerKeywordEffect(Keyword.HEXPROOF)));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.SHIELD),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_CREATURES,
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.otherCreaturesYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.HERO))));
     }
 }

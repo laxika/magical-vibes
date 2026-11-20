@@ -7,39 +7,41 @@ import java.util.UUID;
 
 public record GrantActivatedAbilityEffect(
         ActivatedAbility ability,
-        GrantScope scope,
+        PermanentSubject subject,
         PermanentPredicate filter,
         Duration duration,
         UUID expirationCardId
 ) implements CardEffect {
 
     /** Continuous (static) grant — existing behavior. */
-    public GrantActivatedAbilityEffect(ActivatedAbility ability, GrantScope scope) {
-        this(ability, scope, null, Duration.STATIC, null);
+    public GrantActivatedAbilityEffect(ActivatedAbility ability, PermanentSubject subject) {
+        this(ability, subject, null, Duration.STATIC, null);
     }
 
     /** Continuous (static) grant with filter — existing behavior. */
-    public GrantActivatedAbilityEffect(ActivatedAbility ability, GrantScope scope, PermanentPredicate filter) {
-        this(ability, scope, filter, Duration.STATIC, null);
+    public GrantActivatedAbilityEffect(ActivatedAbility ability, PermanentSubject subject, PermanentPredicate filter) {
+        this(ability, subject, filter, Duration.STATIC, null);
     }
 
-    public GrantActivatedAbilityEffect(ActivatedAbility ability, GrantScope scope,
+    public GrantActivatedAbilityEffect(ActivatedAbility ability, PermanentSubject subject,
                                        PermanentPredicate filter, Duration duration) {
-        this(ability, scope, filter, duration, null);
+        this(ability, subject, filter, duration, null);
     }
 
-    /** TARGET scope grants the ability to the spell/ability's target permanent (e.g. Banishing Knack). */
+    /** TARGET subject grants the ability to the spell/ability's target permanent (e.g. Banishing Knack). */
     @Override
     public TargetSpec targetSpec() {
-        return scope == GrantScope.TARGET ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
+        return subject instanceof PermanentSubject.Target
+                ? TargetSpec.benign(TargetPredicates.permanent())
+                : TargetSpec.NONE;
     }
 
     /**
-     * The ENCHANTED_PERMANENT scope grants the ability to the Aura's attached permanent, so an
+     * The ENCHANTED_PERMANENT subject grants the ability to the Aura's attached permanent, so an
      * activation whose source is that Aura captures the attached permanent at activation time.
      */
     @Override
     public boolean resolvesAgainstAttachedPermanent() {
-        return scope == GrantScope.ENCHANTED_PERMANENT;
+        return Subjects.attached().equals(subject);
     }
 }

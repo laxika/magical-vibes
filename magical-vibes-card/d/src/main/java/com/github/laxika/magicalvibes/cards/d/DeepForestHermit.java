@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -25,7 +25,7 @@ import java.util.Set;
 public class DeepForestHermit extends Card {
 
     public DeepForestHermit() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL)));
         addStaticEffect(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3)));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(

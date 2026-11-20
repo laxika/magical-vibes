@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextInstantOrSorceryCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class Twinferno extends Card {
                         new CopyNextInstantOrSorceryCastThisTurnEffect()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature you control gains double strike until end of turn.",
-                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()),
                         TargetFilters.creatureYouControl())
         )));
     }

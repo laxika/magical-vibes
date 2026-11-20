@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookToExile
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCopyOfExiledCardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -51,7 +51,7 @@ public class LooseInThePark extends Card {
                 List.of(
                         new EnchantedPermanentBecomesCopyOfExiledCardUntilEndOfTurnEffect(
                                 Set.of(CardType.LAND)),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_PERMANENT)),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.attached())),
                 "Enchanted land becomes a copy of the exiled card until end of turn and gains haste. "
                         + "It's still a land."));
     }

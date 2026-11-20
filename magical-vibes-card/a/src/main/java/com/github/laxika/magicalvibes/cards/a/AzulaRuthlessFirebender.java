@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExperienceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -38,7 +37,7 @@ public class AzulaRuthlessFirebender extends Card {
                 List.of(
                         new BoostSelfEffect(new ControllerExperienceCounters(),
                                 new ControllerExperienceCounters()),
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.MENACE, Subjects.source())
                 ),
                 "{2}{B}: Until end of turn, Azula gets +1/+1 for each experience counter you have and gains menace."
         ));

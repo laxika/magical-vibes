@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -34,6 +34,6 @@ public class TobyBeastieBefriender extends Card {
                 List.of(StaticAbility.of(new CantAttackOrBlockAloneEffect()))));
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(4, creatureToken),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES, creatureToken)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.creaturesYouControl(), creatureToken)));
     }
 }

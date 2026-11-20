@@ -32,12 +32,8 @@ public class UnsuspectEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UnsuspectEffect unsuspect = (UnsuspectEffect) effect;
-        List<UUID> targetIds = switch (unsuspect.scope()) {
-            case SELF, TARGET, ENCHANTED_CREATURE, ENCHANTED_PERMANENT, EQUIPPED_CREATURE ->
-                    subjectResolutionService.permanents(gameData, entry, effect, unsuspect.scope().subject()).stream()
-                            .map(Permanent::getId).toList();
-            default -> List.of();
-        };
+        List<UUID> targetIds = subjectResolutionService.permanents(gameData, entry, effect, unsuspect.subject())
+                .stream().map(Permanent::getId).toList();
 
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);

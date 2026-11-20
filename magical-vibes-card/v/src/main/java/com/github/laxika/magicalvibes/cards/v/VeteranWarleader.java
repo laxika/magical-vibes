@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -34,7 +34,7 @@ public class VeteranWarleader extends Card {
                                 1, new PermanentHasSubtypePredicate(CardSubtype.ALLY), true),
                         new GrantChosenKeywordEffect(
                                 List.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE, Keyword.TRAMPLE),
-                                GrantScope.SELF)
+                                Subjects.source())
                 ),
                 "Tap another untapped Ally you control: This creature gains your choice of first strike, vigilance, or trample until end of turn."
         ));

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -12,6 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EncoreEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -53,7 +53,7 @@ public class EncoreEffectHandler implements NormalEffectHandlerBean {
         // "They gain haste" is granted to the tokens, not part of the copy (CR 707.2).
         tokenCopySupport.createTokenCopiesForEachOpponent(gameData, entry, List.of(entry.getCard()),
                 entry.getControllerId(), copyEffect, opponentIds,
-                token -> gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                token -> gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
                         token.getId(), Duration.PERMANENT),
                 (opponentId, token) -> gameData.addEffectOnPermanent(entry, new MustAttackIfAbleEffect(opponentId),
                         token.getId(), Duration.UNTIL_END_OF_TURN));

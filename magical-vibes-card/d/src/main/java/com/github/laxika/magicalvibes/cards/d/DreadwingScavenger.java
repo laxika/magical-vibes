@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -24,9 +23,9 @@ public class DreadwingScavenger extends Card {
 
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);
         addStaticEffect(new ConditionalEffect(threshold,
-                new StaticBoostEffect(1, 1, GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Subjects.source())));
         addStaticEffect(new ConditionalEffect(threshold,
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())));
     }
 
     private SequenceEffect loot() {

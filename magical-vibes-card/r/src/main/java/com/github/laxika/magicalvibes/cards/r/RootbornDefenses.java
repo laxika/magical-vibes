@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PopulateEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RTR", collectorNumber = "19")
 @CardRegistration(set = "MM3", collectorNumber = "21")
@@ -19,6 +19,6 @@ public class RootbornDefenses extends Card {
         // Populate resolves first, so the token copy it creates is also a creature you
         // control when the grant applies.
         addSpellEffect(new PopulateEffect());
-        addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.otherCreaturesYouControl()));
     }
 }

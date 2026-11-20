@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -25,7 +25,7 @@ public class HeroicDefiance extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new ConditionalEffect(
                         new NotCondition(sharesMostCommonColor()),
-                        new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE)));
+                        new StaticBoostEffect(3, 3, Subjects.attachedCreature())));
     }
 
     private static Condition sharesMostCommonColor() {

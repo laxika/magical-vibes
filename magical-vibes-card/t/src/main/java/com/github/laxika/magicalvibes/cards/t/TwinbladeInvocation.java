@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 /**
@@ -16,7 +16,7 @@ public class TwinbladeInvocation extends Card {
     public TwinbladeInvocation() {
         // Enchant creature
         // Enchanted creature has double strike.
-        target(TargetFilters.creature()).addStaticEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.ENCHANTED_CREATURE));
+        target(TargetFilters.creature()).addStaticEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.attachedCreature()));
 
         // If Twinblade Invocation would be put into a graveyard from anywhere, exile it instead.
         addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());

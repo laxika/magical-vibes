@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.OpponentAttacksWithAtLeastCreatures;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +19,7 @@ public class EverettKRossHaplessAttache extends Card {
 
     public EverettKRossHaplessAttache() {
         addStaticEffect(new StaticBoostEffect(
-                1, 1, Set.of(Keyword.LIFELINK), GrantScope.ALL_OWN_CREATURES,
+                1, 1, Set.of(Keyword.LIFELINK), Subjects.creaturesYouControl(),
                 new PermanentIsCommanderPredicate()));
         addTrigger(Triggers.playerAttacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new OpponentAttacksWithAtLeastCreatures(2, false)),

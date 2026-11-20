@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatch
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -33,10 +33,10 @@ public class WallCrawl extends Card {
                 "Spider", 2, 1, CardColor.GREEN, List.of(CardSubtype.SPIDER),
                 Set.of(Keyword.REACH), Set.of()),
                 new GainLifeEffect(new PermanentCount(spiders, CountScope.CONTROLLER)));
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES, spiders));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.creaturesYouControl(), spiders));
         addStaticEffect(new GrantEffectEffect(
                 new CantBeBlockedByCreaturesMatchingPredicateEffect(
                         new PermanentHasKeywordPredicate(Keyword.DEFENDER)),
-                GrantScope.ALL_OWN_CREATURES, spiders));
+                Subjects.creaturesYouControl(), spiders));
     }
 }

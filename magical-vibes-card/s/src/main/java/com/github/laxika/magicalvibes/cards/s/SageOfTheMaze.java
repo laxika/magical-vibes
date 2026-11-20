@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -46,7 +45,7 @@ public class SageOfTheMaze extends Card {
                         new Scaled(gatesYouControl, 2),
                         List.of(CardSubtype.CITIZEN), Set.of(Keyword.HASTE),
                         null, Set.of(CardType.CREATURE),
-                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN, null, Set.of())),
+                        Subjects.target(), Duration.UNTIL_END_OF_TURN, null, Set.of())),
                 "{T}: Until end of turn, target land you control becomes an X/X Citizen creature with haste "
                         + "in addition to its other types, where X is twice the number of Gates you control. "
                         + "Activate only as a sorcery.",

@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEquipByManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
@@ -38,7 +38,7 @@ public class GrantEquipByManaValueEffectHandler implements StaticEffectHandlerBe
         if (support.matchesStaticFilter(context, target, grant.filter())) {
             int manaValue = target.getCard().getManaValue();
             accumulator.addGrantedEffect(new AttachedBoostEffect(
-                    new Fixed(manaValue), new Fixed(0), GrantScope.EQUIPPED_CREATURE));
+                    new Fixed(manaValue), new Fixed(0), Subjects.attachedCreature()));
             String cost = "{" + manaValue + "}";
             accumulator.addActivatedAbility(new ActivatedAbility(
                     false,

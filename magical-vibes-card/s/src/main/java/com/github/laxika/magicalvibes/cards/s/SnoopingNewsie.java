@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.DistinctManaValuesAmongCardsInGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -21,6 +20,6 @@ public class SnoopingNewsie extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(2, Subjects.you()));
         addStaticEffect(new ConditionalEffect(
                 new DistinctManaValuesAmongCardsInGraveyardAtLeast(5),
-                new StaticBoostEffect(1, 1, Set.of(Keyword.LIFELINK), GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Set.of(Keyword.LIFELINK), Subjects.source())));
     }
 }

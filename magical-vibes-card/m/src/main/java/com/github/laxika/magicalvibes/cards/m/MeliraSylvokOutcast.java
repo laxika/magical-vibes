@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantHaveMinusOneMinusOneCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantGetPoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "NPH", collectorNumber = "115")
 public class MeliraSylvokOutcast extends Card {
@@ -18,9 +18,9 @@ public class MeliraSylvokOutcast extends Card {
 
         // Creatures you control can't have -1/-1 counters put on them.
         addStaticEffect(new GrantEffectEffect(
-                new CantHaveMinusOneMinusOneCountersEffect(), GrantScope.ALL_OWN_CREATURES));
+                new CantHaveMinusOneMinusOneCountersEffect(), Subjects.creaturesYouControl()));
 
         // Creatures your opponents control lose infect.
-        addStaticEffect(new RemoveKeywordEffect(Keyword.INFECT, GrantScope.OPPONENT_CREATURES));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.INFECT, Subjects.creaturesYourOpponentsControl()));
     }
 }

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 
@@ -20,7 +20,7 @@ public class CryptolithRite extends Card {
         // Creatures you control have "{T}: Add one mana of any color."
         addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentIsCreaturePredicate()
         ));
     }

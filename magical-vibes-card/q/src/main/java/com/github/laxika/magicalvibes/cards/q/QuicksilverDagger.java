@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class QuicksilverDagger extends Card {
                                 ),
                                 "{T}: This creature deals 1 damage to target player or planeswalker. You draw a card."
                         ),
-                        GrantScope.ENCHANTED_CREATURE
+                        Subjects.attachedCreature()
                 ));
     }
 }

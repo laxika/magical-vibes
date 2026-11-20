@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,9 +21,9 @@ import java.util.Set;
 public class SigiledSwordOfValeron extends Card {
 
     public SigiledSwordOfValeron() {
-        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.KNIGHT, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.attachedCreature()));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.KNIGHT, Subjects.attachedCreature()));
         addTrigger(Triggers.attacks(), new CreateTokenEffect(
                 1, "Knight", 2, 2, CardColor.WHITE, List.of(CardSubtype.KNIGHT),
                 Set.of(Keyword.VIGILANCE), true, false).withAttackingUntapped());

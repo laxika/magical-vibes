@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
@@ -24,7 +23,7 @@ public class Despair extends Card {
     public Despair() {
         // Until end of turn, creatures you control gain menace and
         // "Whenever this creature deals combat damage to a player, that player discards a card."
-        addSpellEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.MENACE, Subjects.otherCreaturesYouControl()));
         addSpellEffect(new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                 new DiscardEffect(1, Subjects.targetPlayer()))));

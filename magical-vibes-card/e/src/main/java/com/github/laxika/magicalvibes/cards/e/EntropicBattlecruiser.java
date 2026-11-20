@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentDiscardsOrLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -50,11 +49,11 @@ public class EntropicBattlecruiser extends Card {
                 new SourceCounterThreshold(8, CounterType.CHARGE),
                 new AnimatePermanentsEffect(
                         (DynamicAmount) null, (DynamicAmount) null, List.of(), Set.of(), null,
-                        Set.of(CardType.CREATURE), GrantScope.SELF, Duration.STATIC, null
+                        Set.of(CardType.CREATURE), Subjects.source(), Duration.STATIC, null
                 )));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.CHARGE),
-                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.DEATHTOUCH), GrantScope.SELF)));
+                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.DEATHTOUCH), Subjects.source())));
 
         addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withEventCondition(
                 new SourceCounterThreshold(8, CounterType.CHARGE)),

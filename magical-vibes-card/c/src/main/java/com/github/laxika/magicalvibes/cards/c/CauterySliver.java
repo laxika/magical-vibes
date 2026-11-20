@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -26,16 +26,16 @@ public class CauterySliver extends Card {
 
     public CauterySliver() {
         addStaticEffect(new GrantActivatedAbilityEffect(
-                damageAbility(), GrantScope.ALL_CREATURES,
+                damageAbility(), Subjects.otherCreatures(),
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
         addStaticEffect(new GrantActivatedAbilityEffect(
-                damageAbility(), GrantScope.SELF,
+                damageAbility(), Subjects.source(),
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
         addStaticEffect(new GrantActivatedAbilityEffect(
-                preventDamageAbility(), GrantScope.ALL_CREATURES,
+                preventDamageAbility(), Subjects.otherCreatures(),
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
         addStaticEffect(new GrantActivatedAbilityEffect(
-                preventDamageAbility(), GrantScope.SELF,
+                preventDamageAbility(), Subjects.source(),
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
     }
 

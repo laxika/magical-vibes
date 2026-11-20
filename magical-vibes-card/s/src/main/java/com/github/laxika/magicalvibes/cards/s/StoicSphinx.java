@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTur
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "OTJ", collectorNumber = "71")
@@ -16,6 +16,6 @@ public class StoicSphinx extends Card {
     public StoicSphinx() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new ControllerCastSpellThisTurn(new CardTruePredicate())),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source())));
     }
 }

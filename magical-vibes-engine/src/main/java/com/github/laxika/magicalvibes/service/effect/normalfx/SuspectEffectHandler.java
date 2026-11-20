@@ -31,12 +31,8 @@ public class SuspectEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         SuspectEffect suspect = (SuspectEffect) effect;
-        List<UUID> targetIds = switch (suspect.scope()) {
-            case SELF, TARGET, ENCHANTED_CREATURE -> subjectResolutionService.permanents(gameData, entry, effect,
-                    suspect.scope().subject()).stream().map(Permanent::getId).toList();
-            case TOKENS_CREATED_THIS_RESOLUTION -> entry.getCreatedPermanentIds();
-            default -> List.of();
-        };
+        List<UUID> targetIds = subjectResolutionService.permanents(gameData, entry, effect, suspect.subject())
+                .stream().map(Permanent::getId).toList();
 
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);

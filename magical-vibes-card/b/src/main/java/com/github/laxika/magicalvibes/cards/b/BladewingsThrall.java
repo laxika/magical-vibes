@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -30,7 +30,7 @@ public class BladewingsThrall extends Card {
     public BladewingsThrall() {
         addStaticEffect(new ConditionalEffect(
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
-                        new StaticBoostEffect(0, 0, Set.of(Keyword.FLYING), GrantScope.SELF)));
+                        new StaticBoostEffect(0, 0, Set.of(Keyword.FLYING), Subjects.source())));
 
         addTrigger(new TriggerCondition(Triggers.enters(
                                 new PermanentAllOfPredicate(List.of(

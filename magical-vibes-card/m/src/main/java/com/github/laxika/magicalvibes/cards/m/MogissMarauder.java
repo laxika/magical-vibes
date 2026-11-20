@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -24,6 +24,6 @@ public class MogissMarauder extends Card {
                         "Targets must be creatures"),
                 100)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantKeywordEffect(Set.of(Keyword.INTIMIDATE, Keyword.HASTE), GrantScope.TARGET));
+                        new GrantKeywordEffect(Set.of(Keyword.INTIMIDATE, Keyword.HASTE), Subjects.target()));
     }
 }

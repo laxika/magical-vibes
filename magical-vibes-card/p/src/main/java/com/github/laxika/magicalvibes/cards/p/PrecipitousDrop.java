@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCompletedDungeon;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -17,9 +17,9 @@ public class PrecipitousDrop extends Card {
     public PrecipitousDrop() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new VentureIntoDungeonEffect())
-                .addStaticEffect(new StaticBoostEffect(-2, -2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(-2, -2, Subjects.attachedCreature()))
                 .addStaticEffect(new ConditionalEffect(
                         new ControllerHasCompletedDungeon(),
-                        new StaticBoostEffect(-3, -3, GrantScope.ENCHANTED_CREATURE)));
+                        new StaticBoostEffect(-3, -3, Subjects.attachedCreature())));
     }
 }

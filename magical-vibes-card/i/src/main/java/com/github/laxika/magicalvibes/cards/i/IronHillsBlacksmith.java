@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +20,7 @@ import java.util.Set;
 public class IronHillsBlacksmith extends Card {
 
     public IronHillsBlacksmith() {
-        List<Ability> axeEffects = List.of(StaticAbility.of(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE)));
+        List<Ability> axeEffects = List.of(StaticAbility.of(new StaticBoostEffect(1, 0, Subjects.attachedCreature())));
         CreateTokenEffect axeToken = new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Axe", 0, 0,
                 null, null, List.of(CardSubtype.EQUIPMENT), Set.of(), Set.of(),

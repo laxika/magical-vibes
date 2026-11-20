@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEf
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageNotRemovedDuringCleanupEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetThenPerpetuallyGrantStaticEffectsIfCreatureDamagedEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -42,7 +42,7 @@ public class SwitchgrassGrazer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SaddleCost(1), new BecomeSaddledUntilEndOfTurnEffect(GrantScope.SELF)),
+                List.of(new SaddleCost(1), new BecomeSaddledUntilEndOfTurnEffect(Subjects.source())),
                 "Saddle 1",
                 ActivationTimingRestriction.SORCERY_SPEED));
     }

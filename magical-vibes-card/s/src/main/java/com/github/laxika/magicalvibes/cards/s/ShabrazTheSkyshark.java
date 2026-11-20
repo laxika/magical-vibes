@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -47,7 +47,7 @@ public class ShabrazTheSkyshark extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{W/U}",
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.FLYING, Subjects.target())),
                 "{W/U}: Target Human gains flying until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN),

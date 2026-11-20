@@ -14,30 +14,30 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  *
  * @param damage the amount each permanent deals, evaluated with that permanent as the amount's source
  *               ({@code SourcePower} is its power)
- * @param scope a targeted creature or the tokens created during this resolution
+ * @param subject a targeted creature or the tokens created during this resolution
  * @param player {@code controllerOf(target())}: each damaging permanent's own controller; {@code you()}: the resolving
  *               ability's controller; {@code eachOpponent()}: each opponent of the resolving ability's controller
  */
-public record TargetCreatureDealsDamageToControllerEffect(DynamicAmount damage, GrantScope scope,
+public record TargetCreatureDealsDamageToControllerEffect(DynamicAmount damage, PermanentSubject subject,
                                                            PlayerSubject player)
         implements DamageDealingEffect {
 
     public TargetCreatureDealsDamageToControllerEffect {
-        if (scope != GrantScope.TARGET && scope != GrantScope.TOKENS_CREATED_THIS_RESOLUTION) {
-            throw new IllegalArgumentException("Unsupported damage source scope");
+        if (!(subject instanceof PermanentSubject.Target) && !Subjects.createdThisResolution().equals(subject)) {
+            throw new IllegalArgumentException("Unsupported damage source subject");
         }
         boolean eachOpponent = player.equals(Subjects.eachOpponent());
         if (!(player instanceof PlayerSubject.You) && !player.equals(Subjects.controllerOf(Subjects.target()))
                 && !eachOpponent) {
             throw new IllegalArgumentException("Unsupported damage recipient: " + player);
         }
-        if (eachOpponent && scope != GrantScope.TARGET) {
+        if (eachOpponent && !(subject instanceof PermanentSubject.Target)) {
             throw new IllegalArgumentException("Each opponent is dealt damage only by a targeted creature");
         }
     }
 
     public TargetCreatureDealsDamageToControllerEffect(DynamicAmount damage) {
-        this(damage, GrantScope.TARGET, Subjects.controllerOf(Subjects.target()));
+        this(damage, Subjects.target(), Subjects.controllerOf(Subjects.target()));
     }
 
     public TargetCreatureDealsDamageToControllerEffect(int damage) {
@@ -46,7 +46,9 @@ public record TargetCreatureDealsDamageToControllerEffect(DynamicAmount damage, 
 
     @Override
     public TargetSpec targetSpec() {
-        return scope == GrantScope.TARGET ? TargetSpec.harmful(TargetPredicates.creature()) : TargetSpec.NONE;
+        return subject instanceof PermanentSubject.Target
+                ? TargetSpec.harmful(TargetPredicates.creature())
+                : TargetSpec.NONE;
     }
 
     @Override

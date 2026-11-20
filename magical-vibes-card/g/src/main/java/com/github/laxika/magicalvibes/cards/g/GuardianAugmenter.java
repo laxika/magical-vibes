@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 
 @CardRegistration(set = "SOC", collectorNumber = "271")
@@ -14,10 +14,10 @@ public class GuardianAugmenter extends Card {
 
     public GuardianAugmenter() {
         var commanderFilter = new PermanentIsCommanderPredicate();
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES, commanderFilter));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.creaturesYouControl(), commanderFilter));
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS, commanderFilter));
+                Keyword.HEXPROOF, Subjects.otherPermanentsYouControl(), commanderFilter));
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.HEXPROOF, GrantScope.SELF, commanderFilter));
+                Keyword.HEXPROOF, Subjects.source(), commanderFilter));
     }
 }

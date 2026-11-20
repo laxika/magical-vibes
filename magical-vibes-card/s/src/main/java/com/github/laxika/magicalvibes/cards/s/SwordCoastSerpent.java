@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTur
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -21,7 +21,7 @@ public class SwordCoastSerpent extends Card {
         addCastingOption(new AdventureCast("{1}{U}"));
         addStaticEffect(new ConditionalEffect(
                 new ControllerCastSpellThisTurn(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
     }
 
     @Override

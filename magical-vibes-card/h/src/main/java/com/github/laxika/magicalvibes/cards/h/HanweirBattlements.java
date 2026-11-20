@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MeldWithNamedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -36,7 +36,7 @@ public class HanweirBattlements extends Card {
 
         // {R}, {T}: Target creature gains haste until end of turn.
         addActivatedAbility(new ActivatedAbility(true, "{R}",
-                List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.target())),
                 "{R}, {T}: Target creature gains haste until end of turn.",
                 TargetFilters.creature()));
 

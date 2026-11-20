@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class CivilServant extends Card {
                 new TapMultiplePermanentsCost(1, new PermanentHasSubtypePredicate(CardSubtype.CITIZEN), true),
                 SequenceEffect.of(
                         new BoostSelfEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)),
+                        new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source())),
                 "Tap another untapped Citizen you control?"));
     }
 }

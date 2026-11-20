@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -33,7 +33,7 @@ public class ResplendentAngel extends Card {
 
         // {3}{W}{W}{W}: Until end of turn, this creature gets +2/+2 and gains lifelink.
         addActivatedAbility(new ActivatedAbility(false, "{3}{W}{W}{W}",
-                List.of(new BoostSelfEffect(2, 2), new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)),
+                List.of(new BoostSelfEffect(2, 2), new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source())),
                 "{3}{W}{W}{W}: Until end of turn, this creature gets +2/+2 and gains lifelink."));
     }
 }

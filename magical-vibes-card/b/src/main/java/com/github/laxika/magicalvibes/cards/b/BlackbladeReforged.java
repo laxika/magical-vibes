@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -32,7 +32,7 @@ public class BlackbladeReforged extends Card {
         addStaticEffect(new AttachedBoostEffect(
                 new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER),
                 new PermanentCount(new PermanentIsLandPredicate(), CountScope.CONTROLLER),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
 
         // Equip legendary creature {3}
         addActivatedAbility(new ActivatedAbility(

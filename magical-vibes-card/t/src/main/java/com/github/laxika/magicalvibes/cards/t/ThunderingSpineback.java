@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class ThunderingSpineback extends Card {
     public ThunderingSpineback() {
         // Other Dinosaurs you control get +1/+1.
         addStaticEffect(new StaticBoostEffect(1, 1,
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)));
 
         // {5}{G}: Create a 3/3 green Dinosaur creature token with trample.

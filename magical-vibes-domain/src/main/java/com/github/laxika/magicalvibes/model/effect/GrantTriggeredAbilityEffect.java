@@ -7,14 +7,14 @@ import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * Continuously grants a triggered ability to the permanents selected by {@code scope} (and,
+ * Continuously grants a triggered ability to the permanents selected by {@code subject} (and,
  * for the multi-permanent scopes, {@code filter}). Added as a static ability.
  *
  * <p>{@code expirationCardId} names the exiled card a {@link Duration#WHILE_SOURCE_CARD_EXILED} grant depends on, or is
  * {@code null}.
  *
  * <p>{@code grantedAbility} is the granted ability — e.g. {@code (new TriggeredAbility(
- * Triggers.dealsDamageToOpponent(), new DrawCardEffect(1)), GrantScope.SELF_AND_PAIRED)} for Tandem
+ * Triggers.dealsDamageToOpponent(), new DrawCardEffect(1)), Subjects.sourceAndPaired())} for Tandem
  * Lookout's "each of those creatures has 'Whenever this creature deals damage to an opponent, draw
  * a card.'"
  *
@@ -23,18 +23,18 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * (e.g. wrapped in {@code ConditionalEffect(new SourceIsPaired(), …)}).
  */
 public record GrantTriggeredAbilityEffect(Ability grantedAbility,
-                                          GrantScope scope,
+                                          PermanentSubject subject,
                                           PermanentPredicate filter,
                                           UUID expirationCardId) implements CardEffect {
 
     /** The grant of {@code grantedAbility}. */
-    public GrantTriggeredAbilityEffect(Ability grantedAbility, GrantScope scope) {
-        this(grantedAbility, scope, null, null);
+    public GrantTriggeredAbilityEffect(Ability grantedAbility, PermanentSubject subject) {
+        this(grantedAbility, subject, null, null);
     }
 
     /** The grant of {@code grantedAbility} to the permanents {@code filter} matches. */
-    public GrantTriggeredAbilityEffect(Ability grantedAbility, GrantScope scope, PermanentPredicate filter) {
-        this(grantedAbility, scope, filter, null);
+    public GrantTriggeredAbilityEffect(Ability grantedAbility, PermanentSubject subject, PermanentPredicate filter) {
+        this(grantedAbility, subject, filter, null);
     }
 
     /**
@@ -43,7 +43,7 @@ public record GrantTriggeredAbilityEffect(Ability grantedAbility,
      * (CR 702.99a, 702.99c).
      */
     public static GrantTriggeredAbilityEffect whileCardExiled(Ability grantedAbility, UUID expirationCardId) {
-        return new GrantTriggeredAbilityEffect(grantedAbility, GrantScope.TARGET, null, expirationCardId);
+        return new GrantTriggeredAbilityEffect(grantedAbility, Subjects.target(), null, expirationCardId);
     }
 
     /** The effect of {@link #grantedAbility}, or {@code null} when there is none. */

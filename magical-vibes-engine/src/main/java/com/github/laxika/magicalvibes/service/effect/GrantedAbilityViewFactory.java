@@ -130,7 +130,7 @@ public class GrantedAbilityViewFactory {
     private Set<CardColor> printedProtectionColors(GameData gameData, Permanent permanent) {
         Set<CardColor> colors = EnumSet.noneOf(CardColor.class);
         for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-            if (effect instanceof ProtectionFromColorsEffect protection && protection.scope() == null) {
+            if (effect instanceof ProtectionFromColorsEffect protection && protection.subject() == null) {
                 ProtectionFromColorsEffect rewritten = (ProtectionFromColorsEffect)
                         TextChangeTransformer.transform(protection, gameData.textReplacements(permanent.getId()));
                 colors.addAll(rewritten.colors());
@@ -145,7 +145,7 @@ public class GrantedAbilityViewFactory {
         }
         boolean grantsChosenProtection = permanent.getCard().getStaticEffects().stream()
                 .anyMatch(effect -> effect instanceof ProtectionFromChosenColorEffect protection
-                        && protection.scope() == null);
+                        && protection.subject() == null);
         return grantsChosenProtection ? permanent.getChosenColor() : null;
     }
 

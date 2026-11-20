@@ -16,10 +16,10 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCombatDamageCantBePreventedEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -83,14 +83,14 @@ public class QuestingCosplayer extends Card {
                         StaticAbility.of(SequenceEffect.of(
                         new GrantKeywordEffect(
                                 Set.of(Keyword.VIGILANCE, Keyword.DEATHTOUCH, Keyword.HASTE),
-                                GrantScope.ENCHANTED_CREATURE),
+                                Subjects.attachedCreature()),
                         new GrantEffectEffect(
                                 new CantBeBlockedByCreaturesMatchingPredicateEffect(
                                         new PermanentPowerAtMostPredicate(2)),
-                                GrantScope.ENCHANTED_CREATURE),
+                                Subjects.attachedCreature()),
                         new GrantEffectEffect(
                                 new ControlledCreaturesCombatDamageCantBePreventedEffect(),
-                                GrantScope.ENCHANTED_CREATURE),
+                                Subjects.attachedCreature()),
                         new GrantTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(
@@ -98,7 +98,7 @@ public class QuestingCosplayer extends Card {
                                         new PermanentAllOfPredicate(List.of(
                                                 new PermanentIsPlaneswalkerPredicate(),
                                                 new PermanentControlledByDefendingPlayerPredicate())))),
-                                GrantScope.ENCHANTED_CREATURE)))),
+                                Subjects.attachedCreature())))),
                 List.of(),
                 false,
                 false,

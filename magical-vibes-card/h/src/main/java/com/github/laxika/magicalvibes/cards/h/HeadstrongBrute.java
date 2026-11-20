@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "147")
@@ -16,6 +16,6 @@ public class HeadstrongBrute extends Card {
 
     public HeadstrongBrute() {
         addStaticEffect(new CantBlockEffect());
-        addStaticEffect(new ConditionalEffect(new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.PIRATE)), new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.PIRATE)), new GrantKeywordEffect(Keyword.MENACE, Subjects.source())));
     }
 }

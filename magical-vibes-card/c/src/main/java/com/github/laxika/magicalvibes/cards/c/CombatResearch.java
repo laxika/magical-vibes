@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,10 +24,10 @@ public class CombatResearch extends Card {
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                         new DrawCardEffect(1)),
-                        GrantScope.ENCHANTED_CREATURE))
+                        Subjects.attachedCreature()))
                 // As long as enchanted creature is legendary, it gets +1/+1.
                 .addStaticEffect(new StaticBoostEffect(
-                        1, 1, GrantScope.ENCHANTED_CREATURE,
+                        1, 1, Subjects.attachedCreature(),
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)))
                 // As long as enchanted creature is legendary, it has ward {1}.
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
@@ -35,7 +35,7 @@ public class CombatResearch extends Card {
                         new GrantTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                                 new CounterUnlessPaysEffect(1)),
-                                GrantScope.ENCHANTED_CREATURE),
+                                Subjects.attachedCreature()),
                         null));
     }
 }

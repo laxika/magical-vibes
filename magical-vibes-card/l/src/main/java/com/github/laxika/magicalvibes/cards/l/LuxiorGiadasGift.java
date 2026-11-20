@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 
@@ -25,9 +25,9 @@ public class LuxiorGiadasGift extends Card {
         addStaticEffect(new AttachedBoostEffect(
                 new CountersOnSource(CounterType.ANY),
                 new CountersOnSource(CounterType.ANY),
-                GrantScope.EQUIPPED_CREATURE,
+                Subjects.attachedCreature(),
                 true));
-        addStaticEffect(new GrantCardTypeEffect(CardType.CREATURE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantCardTypeEffect(CardType.CREATURE, Subjects.attachedCreature()));
         addStaticEffect(new RemoveCardTypeFromAttachedPermanentEffect(CardType.PLANESWALKER));
 
         addActivatedAbility(new ActivatedAbility(

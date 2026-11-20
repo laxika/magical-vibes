@@ -356,7 +356,7 @@ public class BoardEvaluator {
 
         for (CardEffect effect : perm.getCard().getStaticEffects()) {
             if (effect instanceof StaticCreatureBoostEffect boost) {
-                PermanentSubject subject = GrantSubjectShapes.subjectOf(boost.scope());
+                PermanentSubject subject = boost.subject();
                 if (!GrantSubjectShapes.namesAnthemSet(subject)) {
                     continue;
                 }
@@ -369,7 +369,7 @@ public class BoardEvaluator {
                 }
                 bonus += buffedCount * perCreatureValue;
             } else if (effect instanceof KeywordGrantingEffect grant) {
-                PermanentSubject subject = GrantSubjectShapes.subjectOf(grant.scope());
+                PermanentSubject subject = grant.subject();
                 if (!GrantSubjectShapes.namesAnthemSet(subject)) {
                     continue;
                 }

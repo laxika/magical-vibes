@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -28,7 +28,7 @@ import java.util.List;
 public class Sunforger extends Card {
 
     public Sunforger() {
-        addStaticEffect(new StaticBoostEffect(4, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(4, 0, Subjects.attachedCreature()));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}{W}",

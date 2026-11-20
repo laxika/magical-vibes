@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -19,7 +19,7 @@ public class MidnightPathlighter extends Card {
                 new CanBeBlockedOnlyByFilterEffect(
                         new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                         "legendary creatures"),
-                GrantScope.ALL_OWN_CREATURES));
+                Subjects.creaturesYouControl()));
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                 TriggerOptions.ONE_OR_MORE,
                 new VentureIntoDungeonEffect());

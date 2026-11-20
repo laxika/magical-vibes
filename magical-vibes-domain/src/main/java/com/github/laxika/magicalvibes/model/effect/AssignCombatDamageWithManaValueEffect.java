@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-public record AssignCombatDamageWithManaValueEffect(GrantScope scope)
+public record AssignCombatDamageWithManaValueEffect(PermanentSubject subject)
         implements CombatDamageAssignmentEffect {
 
     @Override

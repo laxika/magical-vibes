@@ -5,23 +5,23 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 /**
  * Static effect: creatures assign combat damage equal to their toughness rather than their power.
  *
- * <p>The {@code scope} determines which creatures are affected:
+ * <p>The {@code subject} determines which creatures are affected:
  * <ul>
- *   <li>{@link GrantScope#SELF} — only the source creature; always uses toughness regardless of
+ *   <li>{@link Subjects#source()} — only the source creature; always uses toughness regardless of
  *       power.</li>
- *   <li>{@link GrantScope#EQUIPPED_CREATURE} / {@link GrantScope#ENCHANTED_CREATURE} —
+ *   <li>{@link Subjects#attachedCreature()} / {@link Subjects#attachedCreature()} —
  *       only the attached creature; also requires toughness &gt; power (equipment/aura pattern,
  *       e.g. Bark of Doran).</li>
- *   <li>{@link GrantScope#OWN_CREATURES} — all other creatures the controller controls;
+ *   <li>{@link Subjects#otherCreaturesYouControl()} — all other creatures the controller controls;
  *       always uses toughness regardless of power (e.g. Belligerent Brontodon).</li>
- *   <li>{@link GrantScope#ALL_OWN_CREATURES} — all creatures the controller controls
+ *   <li>{@link Subjects#creaturesYouControl()} — all creatures the controller controls
  *       including the source; always uses toughness regardless of power.</li>
- *   <li>{@link GrantScope#ALL_CREATURES} — every creature on the battlefield regardless of
+ *   <li>{@link Subjects#otherCreatures()} — every creature on the battlefield regardless of
  *       controller; always uses toughness regardless of power (e.g. Doran, the Siege Tower).</li>
  * </ul>
  */
 public record AssignCombatDamageWithToughnessEffect(
-        GrantScope scope,
+        PermanentSubject subject,
         PermanentPredicate affectedPredicate,
         boolean alwaysUseToughness
 )
@@ -32,22 +32,22 @@ public record AssignCombatDamageWithToughnessEffect(
         return CombatDamageAssignmentMode.TOUGHNESS;
     }
 
-    public AssignCombatDamageWithToughnessEffect(GrantScope scope) {
-        this(scope, null, false);
+    public AssignCombatDamageWithToughnessEffect(PermanentSubject subject) {
+        this(subject, null, false);
     }
 
-    public AssignCombatDamageWithToughnessEffect(GrantScope scope, boolean alwaysUseToughness) {
-        this(scope, null, alwaysUseToughness);
+    public AssignCombatDamageWithToughnessEffect(PermanentSubject subject, boolean alwaysUseToughness) {
+        this(subject, null, alwaysUseToughness);
     }
 
-    public AssignCombatDamageWithToughnessEffect(GrantScope scope, PermanentPredicate affectedPredicate) {
-        this(scope, affectedPredicate, false);
+    public AssignCombatDamageWithToughnessEffect(PermanentSubject subject, PermanentPredicate affectedPredicate) {
+        this(subject, affectedPredicate, false);
     }
 
     /**
-     * Backwards-compatible no-arg constructor defaulting to {@link GrantScope#EQUIPPED_CREATURE}.
+     * Backwards-compatible no-arg constructor defaulting to {@link Subjects#attachedCreature()}.
      */
     public AssignCombatDamageWithToughnessEffect() {
-        this(GrantScope.EQUIPPED_CREATURE, null, false);
+        this(Subjects.attachedCreature(), null, false);
     }
 }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
@@ -30,9 +30,9 @@ public class ElendaSaintOfDusk extends Card {
         // "at least 10 greater than your starting life total" (relative to the format's starting life).
         addStaticEffect(new ConditionalEffect(
                 new ControllerLifeAtLeast(1, true),
-                new StaticBoostEffect(1, 1, Set.of(Keyword.MENACE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Set.of(Keyword.MENACE), Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new ControllerLifeAtLeast(10, true),
-                new StaticBoostEffect(5, 5, GrantScope.SELF)));
+                new StaticBoostEffect(5, 5, Subjects.source())));
     }
 }

@@ -3,28 +3,30 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * Static effect that makes creatures in the selected scope every creature type. The own-creatures
+ * Static effect that makes creatures in the selected subject every creature type. The own-creatures
  * mode also applies to that controller's creature spells and creature cards they own outside the
  * battlefield; the self mode applies to the source card in every zone. The optional filter narrows
  * the affected battlefield permanents.
  */
-public record GrantAllCreatureTypesToOwnCreaturesEffect(GrantScope scope, PermanentPredicate filter)
+public record GrantAllCreatureTypesToOwnCreaturesEffect(PermanentSubject subject, PermanentPredicate filter)
         implements CardEffect {
 
     public GrantAllCreatureTypesToOwnCreaturesEffect() {
-        this(GrantScope.OWN_CREATURES, null);
+        this(Subjects.otherCreaturesYouControl(), null);
     }
 
-    public GrantAllCreatureTypesToOwnCreaturesEffect(GrantScope scope) {
-        this(scope, null);
+    public GrantAllCreatureTypesToOwnCreaturesEffect(PermanentSubject subject) {
+        this(subject, null);
     }
 
     public static GrantAllCreatureTypesToOwnCreaturesEffect toSelf() {
-        return new GrantAllCreatureTypesToOwnCreaturesEffect(GrantScope.SELF, null);
+        return new GrantAllCreatureTypesToOwnCreaturesEffect(Subjects.source(), null);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return scope == GrantScope.TARGET ? TargetSpec.benign(TargetPredicates.creature()) : TargetSpec.NONE;
+        return subject instanceof PermanentSubject.Target
+                ? TargetSpec.benign(TargetPredicates.creature())
+                : TargetSpec.NONE;
     }
 }

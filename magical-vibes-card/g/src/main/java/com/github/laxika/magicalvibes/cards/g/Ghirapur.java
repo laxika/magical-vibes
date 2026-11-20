@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -44,7 +44,7 @@ public class Ghirapur extends Card {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                 new GrantActivatedAbilityEffect(
                         crewTwo,
-                        GrantScope.OWN_PERMANENTS,
+                        Subjects.permanentsYouControl(),
                         noncreatureNonVehicleArtifact,
                         Duration.UNTIL_END_OF_TURN),
                 AnimatePermanentsEffect.vehicles(5, 3, Set.of(Keyword.TRAMPLE, Keyword.HASTE),

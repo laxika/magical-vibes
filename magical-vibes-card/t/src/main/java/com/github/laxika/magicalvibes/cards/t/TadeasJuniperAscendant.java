@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatch
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,7 +29,7 @@ public class TadeasJuniperAscendant extends Card {
     public TadeasJuniperAscendant() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new SourceIsAttacking()),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source())));
 
         addTrigger(Triggers.creatureYouControlAttacks()
                         .withFilter(new PermanentAllOfPredicate(List.of(

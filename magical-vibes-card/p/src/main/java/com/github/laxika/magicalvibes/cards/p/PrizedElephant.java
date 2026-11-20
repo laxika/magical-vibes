@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -21,11 +21,11 @@ public class PrizedElephant extends Card {
         // This creature gets +1/+1 as long as you control a Forest.
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.FOREST)),
-                new StaticBoostEffect(1, 1, GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Subjects.source())));
 
         // {G}: This creature gains trample until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{G}",
-                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())),
                 "{G}: This creature gains trample until end of turn."));
     }
 }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.LandsMatchingImprintedName;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardTypeToExileAndImprintEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,7 +28,7 @@ public class StrataScythe extends Card {
         addStaticEffect(new AttachedBoostEffect(
                 new LandsMatchingImprintedName(),
                 new LandsMatchingImprintedName(),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
 
         // Equip {3}
         addActivatedAbility(new EquipActivatedAbility("{3}"));

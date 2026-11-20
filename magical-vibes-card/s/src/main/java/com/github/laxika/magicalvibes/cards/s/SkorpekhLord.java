@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.Set;
@@ -14,7 +14,7 @@ public class SkorpekhLord extends Card {
 
     public SkorpekhLord() {
         addStaticEffect(new StaticBoostEffect(
-                1, 0, Set.of(Keyword.MENACE), GrantScope.OWN_CREATURES,
+                1, 0, Set.of(Keyword.MENACE), Subjects.otherCreaturesYouControl(),
                 new PermanentIsArtifactPredicate()));
 
         addUnearth("{2}{B}");

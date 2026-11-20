@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -51,7 +50,7 @@ public class LoreholdCommand extends Card {
                         List.of(
                                 new BoostAllOwnCreaturesEffect(1, 0),
                                 new GrantKeywordEffect(Set.of(Keyword.INDESTRUCTIBLE, Keyword.HASTE),
-                                        GrantScope.OWN_CREATURES))),
+                                        Subjects.otherCreaturesYouControl()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Lorehold Command deals 3 damage to any target. Target player gains 3 life",
                         List.of(

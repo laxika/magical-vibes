@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.TotalPowerOfCardsExiledWithSo
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndImprintEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,9 +21,9 @@ public class DrachNyen extends Card {
         target(TargetFilters.creature(), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new ExileTargetPermanentAndImprintEffect());
 
-        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, Subjects.attachedCreature()));
         addStaticEffect(new AttachedBoostEffect(
-                new TotalPowerOfCardsExiledWithSource(), new Fixed(0), GrantScope.EQUIPPED_CREATURE));
+                new TotalPowerOfCardsExiledWithSource(), new Fixed(0), Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

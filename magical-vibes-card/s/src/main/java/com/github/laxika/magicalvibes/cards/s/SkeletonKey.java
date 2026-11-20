@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,7 +17,7 @@ public class SkeletonKey extends Card {
 
     public SkeletonKey() {
         // Equipped creature has skulk.
-        addStaticEffect(new GrantKeywordEffect(Keyword.SKULK, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.SKULK, Subjects.attachedCreature()));
 
         // Whenever equipped creature deals combat damage to a player, you may draw a card. If you
         // do, discard a card.

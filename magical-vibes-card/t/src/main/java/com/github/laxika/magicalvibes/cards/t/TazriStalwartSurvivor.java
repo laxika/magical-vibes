@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndReturnMilledCardsToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNonManaActivatedAbilityPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -30,7 +30,7 @@ public class TazriStalwartSurvivor extends Card {
                         List.of(new AwardAnyColorManaEffect(1, ManaSpendRestriction.CREATURE_COLORS_ABILITIES)),
                         "{T}: Add one mana of any of this creature's colors. Spend this mana only to activate an ability of a creature.")
                         .withRequiresAnotherActivatedAbility(),
-                GrantScope.ALL_OWN_CREATURES));
+                Subjects.creaturesYouControl()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -33,7 +33,7 @@ public class ElspethsTalent extends Card {
                         +1,
                         List.of(CreateTokenEffect.whiteSoldier(3)),
                         "+1: Create three 1/1 white Soldier creature tokens."),
-                GrantScope.ENCHANTED_PERMANENT,
+                Subjects.attached(),
                 new PermanentIsPlaneswalkerPredicate()));
 
         addTrigger(Triggers.youActivateAbility()
@@ -43,6 +43,6 @@ public class ElspethsTalent extends Card {
                                 new PermanentIsHostOfSourceAuraPredicate()))),
                 SequenceEffect.of(
                         new BoostAllOwnCreaturesEffect(2, 2),
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES)));
+                        new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl())));
     }
 }

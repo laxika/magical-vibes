@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public class MazeSkullbomb extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         new BoostTargetCreatureEffect(3, 3),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()),
                         new DrawCardEffect(1)
                 ),
                 "{2}{G}, Sacrifice this artifact: Target creature you control gets +3/+3 and gains trample until end of turn. Draw a card. Activate only as a sorcery.",

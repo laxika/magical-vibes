@@ -7,14 +7,14 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "ISD", collectorNumber = "3")
 public class AngelicOverseer extends Card {
 
     public AngelicOverseer() {
-        addStaticEffect(new ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
-        addStaticEffect(new ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source())));
+        addStaticEffect(new ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)), new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
     }
 }

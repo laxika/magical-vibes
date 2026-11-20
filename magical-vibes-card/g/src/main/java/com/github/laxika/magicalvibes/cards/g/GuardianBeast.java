@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEf
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,15 +28,15 @@ public class GuardianBeast extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceUntapped(),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_PERMANENTS,
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.permanentsYouControl(),
                         noncreatureArtifact)));
         addStaticEffect(new ConditionalEffect(
                 new SourceUntapped(),
                 new GrantEffectEffect(CantBeEnchantedByOtherAurasEffect.keepingExistingAuras(),
-                        GrantScope.OWN_PERMANENTS, noncreatureArtifact)));
+                        Subjects.permanentsYouControl(), noncreatureArtifact)));
         addStaticEffect(new ConditionalEffect(
                 new SourceUntapped(),
                 new GrantEffectEffect(new CantBeControlledByOtherPlayersEffect(),
-                        GrantScope.OWN_PERMANENTS, noncreatureArtifact)));
+                        Subjects.permanentsYouControl(), noncreatureArtifact)));
     }
 }

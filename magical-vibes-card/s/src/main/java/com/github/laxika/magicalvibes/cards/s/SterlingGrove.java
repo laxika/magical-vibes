@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -23,7 +23,7 @@ import java.util.List;
 public class SterlingGrove extends Card {
 
     public SterlingGrove() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.OWN_PERMANENTS,
+        addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, Subjects.otherPermanentsYouControl(),
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsEnchantmentPredicate(),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))));

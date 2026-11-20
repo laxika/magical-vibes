@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -37,10 +37,12 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantColorUntilEndOfTurnEffect) effect;
-        if (e.scope() == GrantScope.TARGETS) {
-            // Only the targets of this effect's group: an empty group names nothing.
+        PermanentSubject subject = e.subject();
+        if (subject instanceof PermanentSubject.AllTargets) {
+            // "Any number of target creatures become [color]": every target of this effect's group; an empty group
+            // names nothing.
             List<Permanent> targets = entry.targetsForEffect(e).isEmpty() ? List.of()
-                    : subjectResolutionService.permanents(gameData, entry, effect, e.scope().subject());
+                    : subjectResolutionService.permanents(gameData, entry, effect, Subjects.target());
             int count = 0;
             for (Permanent target : targets) {
                 applyEffect(gameData, entry, e, target);
@@ -52,13 +54,13 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
             return;
         }
 
-        if (e.scope() == GrantScope.TARGET_PLAYERS_CREATURES) {
+        if (subject.declaresPlayerTarget()) {
             if (subjectResolutionService.players(gameData, entry, effect, Subjects.targetPlayer()).isEmpty()) {
                 return;
             }
             int count = 0;
             for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
-                    e.scope().subject())) {
+                    e.subject())) {
                 applyEffect(gameData, entry, e, permanent);
                 count++;
             }
@@ -67,11 +69,9 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
             return;
         }
 
-        if (e.scope() == GrantScope.OWN_CREATURES) {
+        if (subject.isSet()) {
             int count = 0;
-            // This one-shot "creatures you control" includes the source.
-            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
-                    GrantScope.ALL_OWN_CREATURES.subject())) {
+            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect, subject)) {
                 applyEffect(gameData, entry, e, permanent);
                 count++;
             }
@@ -80,21 +80,9 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
             return;
         }
 
-        if (e.scope() == GrantScope.ALL_CREATURES || e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
-            int count = 0;
-            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
-                    e.scope().subject())) {
-                applyEffect(gameData, entry, e, permanent);
-                count++;
-            }
-            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
-                    .text(" makes " + count + " creature(s) " + colorName(e) + " until end of turn.").build());
-            return;
-        }
-
-        if (e.scope() == GrantScope.SELF || e.scope() == GrantScope.TRIGGERING_PERMANENT) {
+        if (subject instanceof PermanentSubject.Source || subject instanceof PermanentSubject.Triggering) {
             // "It becomes [color]": the permanent whose event triggered the ability (Shadow Puppeteers).
-            Permanent target = subjectResolutionService.permanent(gameData, entry, effect, e.scope().subject());
+            Permanent target = subjectResolutionService.permanent(gameData, entry, effect, subject);
             if (target == null) {
                 return;
             }
@@ -109,7 +97,7 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
             return;
         }
 
-        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, GrantScope.TARGET.subject());
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, Subjects.target());
         if (target == null) {
             if (e.canTargetSpell()) {
                 StackEntry targetSpell = gameQueryService.findStackEntryByCardId(gameData, entry.getTargetId());

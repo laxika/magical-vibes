@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -48,11 +48,11 @@ public class BelloBardOfTheBrambles extends Card {
                 new AnimatePermanentsEffect(
                         new Fixed(4), new Fixed(4), List.of(CardSubtype.ELEMENTAL),
                         Set.of(Keyword.INDESTRUCTIBLE, Keyword.HASTE), null,
-                        Set.of(CardType.CREATURE), GrantScope.OWN_PERMANENTS,
+                        Set.of(CardType.CREATURE), Subjects.permanentsYouControl(),
                         Duration.STATIC, eligiblePermanent)));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                        new DrawCardEffect()), GrantScope.OWN_PERMANENTS, eligiblePermanent)));
+                        new DrawCardEffect()), Subjects.permanentsYouControl(), eligiblePermanent)));
     }
 }

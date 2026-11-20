@@ -10,12 +10,12 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentBecomesSubtypeEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -53,11 +53,11 @@ public class OkoThiefOfCrowns extends Card {
         addActivatedAbility(new ActivatedAbility(
                 1,
                 List.of(
-                        new SetCardTypesEffect(Set.of(CardType.CREATURE), GrantScope.TARGET),
+                        new SetCardTypesEffect(Set.of(CardType.CREATURE), Subjects.target()),
                         new SetTargetColorEffect(CardColor.GREEN),
                         new TargetPermanentBecomesSubtypeEffect(CardSubtype.ELK),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT),
-                        new SetBasePowerToughnessEffect(3, 3, GrantScope.TARGET, Duration.PERMANENT)
+                        new LosesAllAbilitiesEffect(Subjects.target(), Duration.PERMANENT),
+                        new SetBasePowerToughnessEffect(3, 3, Subjects.target(), Duration.PERMANENT)
                 ),
                 "+1: Target artifact or creature loses all abilities and becomes a green Elk creature with base power and toughness 3/3.",
                 artifactOrCreature

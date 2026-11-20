@@ -11,11 +11,11 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -139,7 +139,7 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
             }
             if (!returnEffect.grantedKeywords().isEmpty()) {
                 gameData.addEffectOnPermanent(entry,
-                        new GrantKeywordEffect(Set.copyOf(returnEffect.grantedKeywords()), GrantScope.TARGET),
+                        new GrantKeywordEffect(Set.copyOf(returnEffect.grantedKeywords()), Subjects.target()),
                         perm.getId(), Duration.PERMANENT);
             }
             if (returnEffect.enterFaceDown()) {
@@ -234,10 +234,10 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
                                                ReturnAllCardsExiledWithSourceEffect effect) {
         if (effect.basePower() != null || effect.baseToughness() != null) {
             gameData.addEffectOnPermanent(entry, new SetBasePowerToughnessEffect(effect.basePower(),
-                    effect.baseToughness(), GrantScope.TARGET, Duration.PERMANENT), permanent.getId(), Duration.PERMANENT);
+                    effect.baseToughness(), Subjects.target(), Duration.PERMANENT), permanent.getId(), Duration.PERMANENT);
         }
         if (effect.grantedSubtype() != null) {
-            gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(effect.grantedSubtype(), GrantScope.TARGET),
+            gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(effect.grantedSubtype(), Subjects.target()),
                     permanent.getId(), Duration.PERMANENT);
         }
         if (effect.enteringCounterType() != null

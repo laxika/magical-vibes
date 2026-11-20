@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasEnduringStory;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.StoriedEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -27,7 +27,7 @@ public class FLiThePathfinder extends Card {
         addStaticEffect(new StoriedEffect());
         addStaticEffect(new ConditionalEffect(
                 new ControllerHasEnduringStory(),
-                new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES)));
+                new StaticBoostEffect(1, 1, Subjects.creaturesYouControl())));
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 Triggers.CREATURE,

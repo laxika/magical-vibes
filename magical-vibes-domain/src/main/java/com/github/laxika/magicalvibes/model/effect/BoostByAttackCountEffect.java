@@ -9,23 +9,23 @@ import java.util.Set;
 public record BoostByAttackCountEffect(
         int powerPerAttack,
         int toughnessPerAttack,
-        GrantScope scope,
+        PermanentSubject subject,
         PermanentPredicate filter,
         boolean countThisGame
 ) implements StaticCreatureBoostEffect {
 
-    public BoostByAttackCountEffect(int powerPerAttack, int toughnessPerAttack, GrantScope scope) {
-        this(powerPerAttack, toughnessPerAttack, scope, null, false);
+    public BoostByAttackCountEffect(int powerPerAttack, int toughnessPerAttack, PermanentSubject subject) {
+        this(powerPerAttack, toughnessPerAttack, subject, null, false);
     }
 
     public BoostByAttackCountEffect(int powerPerAttack, int toughnessPerAttack,
-                                    GrantScope scope, PermanentPredicate filter) {
-        this(powerPerAttack, toughnessPerAttack, scope, filter, false);
+                                    PermanentSubject subject, PermanentPredicate filter) {
+        this(powerPerAttack, toughnessPerAttack, subject, filter, false);
     }
 
     public static BoostByAttackCountEffect forEachAttackThisGame(int powerPerAttack, int toughnessPerAttack,
-                                                                  GrantScope scope) {
-        return new BoostByAttackCountEffect(powerPerAttack, toughnessPerAttack, scope, null, true);
+                                                                  PermanentSubject subject) {
+        return new BoostByAttackCountEffect(powerPerAttack, toughnessPerAttack, subject, null, true);
     }
 
     @Override

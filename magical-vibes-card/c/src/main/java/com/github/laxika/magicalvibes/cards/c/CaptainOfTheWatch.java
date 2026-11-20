@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,7 +25,7 @@ public class CaptainOfTheWatch extends Card {
 
     public CaptainOfTheWatch() {
         // Other Soldier creatures you control get +1/+1 and have vigilance.
-        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.VIGILANCE), GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.VIGILANCE), Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SOLDIER))));
 
         // When Captain of the Watch enters the battlefield, create three 1/1 white Soldier creature tokens.

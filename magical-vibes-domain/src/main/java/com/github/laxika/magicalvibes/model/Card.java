@@ -30,7 +30,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceCardFromGraveyardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.AllCardNamesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -2709,7 +2709,7 @@ public class Card {
         return keywords.contains(keyword)
                 || (keyword == Keyword.CHANGELING && getStaticEffects().stream()
                 .anyMatch(effect -> effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
-                        && grant.scope() == GrantScope.SELF));
+                        && grant.subject() instanceof PermanentSubject.Source));
     }
 
     public boolean hasAllCardNames() {

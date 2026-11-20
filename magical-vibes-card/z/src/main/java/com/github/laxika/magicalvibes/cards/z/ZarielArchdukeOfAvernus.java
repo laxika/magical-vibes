@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -42,7 +41,7 @@ public class ZarielArchdukeOfAvernus extends Card {
                 +1,
                 List.of(
                         new BoostAllOwnCreaturesEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl())),
                 "+1: Creatures you control get +1/+0 and gain haste until end of turn."));
 
         List<Ability> tokenEffects =

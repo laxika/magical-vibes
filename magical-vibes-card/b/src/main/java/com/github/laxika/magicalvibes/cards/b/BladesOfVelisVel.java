@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "152")
@@ -14,6 +14,6 @@ public class BladesOfVelisVel extends Card {
     public BladesOfVelisVel() {
         target(TargetFilters.creature(), 0, 2)
                 .addSpellEffect(new BoostTargetCreatureEffect(2, 0))
-                .addSpellEffect(new GrantAllCreatureTypesToOwnCreaturesEffect(GrantScope.TARGET));
+                .addSpellEffect(new GrantAllCreatureTypesToOwnCreaturesEffect(Subjects.target()));
     }
 }

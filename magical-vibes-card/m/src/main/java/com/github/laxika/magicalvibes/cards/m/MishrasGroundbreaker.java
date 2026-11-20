@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public class MishrasGroundbreaker extends Card {
                                 List.of(),
                                 Set.of(),
                                 null, Set.of(),
-                                GrantScope.TARGET, Duration.PERMANENT
+                                Subjects.target(), Duration.PERMANENT
                         ),
                         new AddCardTypeToTargetPermanentEffect(CardType.ARTIFACT, true)
                 ),

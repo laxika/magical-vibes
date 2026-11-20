@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DIS", collectorNumber = "109")
 public class DreadSlag extends Card {
@@ -15,6 +15,6 @@ public class DreadSlag extends Card {
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
         Scaled minusFourPerCard = new Scaled(cardsInHand, -4);
         addStaticEffect(new DynamicStaticBoostEffect(
-                minusFourPerCard, minusFourPerCard, GrantScope.SELF));
+                minusFourPerCard, minusFourPerCard, Subjects.source()));
     }
 }

@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.effect.UnsuspectAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,6 +20,6 @@ public class AbsolvingLammasu extends Card {
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
                 .addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
                         new GainLifeEffect(3),
-                        new SuspectEffect(GrantScope.TARGET)));
+                        new SuspectEffect(Subjects.target())));
     }
 }

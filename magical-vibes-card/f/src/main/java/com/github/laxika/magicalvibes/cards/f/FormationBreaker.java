@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesWithLessPowerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,6 +27,6 @@ public class FormationBreaker extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasCountersPredicate(CounterType.ANY)
                 ))),
-                new StaticBoostEffect(1, 2, GrantScope.SELF)));
+                new StaticBoostEffect(1, 2, Subjects.source())));
     }
 }

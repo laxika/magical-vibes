@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,7 +22,7 @@ import java.util.List;
 public class VelaTheNightClad extends Card {
 
     public VelaTheNightClad() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.INTIMIDATE, Subjects.otherCreaturesYouControl()));
 
         LoseLifeEffect loseLife = new LoseLifeEffect(1, Subjects.eachOpponent());
         addTriggeredAbility(new TriggeredAbility(List.of(

@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfBaseToughnessFromTargetPowerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -40,7 +40,7 @@ public class SetSelfBaseToughnessFromTargetPowerEffectHandler implements NormalE
         }
 
         int toughness = gameQueryService.getEffectivePower(gameData, target) + e.toughnessOffset();
-        var setter = new SetBasePowerToughnessEffect(null, toughness, GrantScope.SELF);
+        var setter = new SetBasePowerToughnessEffect(null, toughness, Subjects.source());
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), source.getId(), entry.getControllerId(), setter,
                 source.getId(), null, null, Duration.PERMANENT, 0));

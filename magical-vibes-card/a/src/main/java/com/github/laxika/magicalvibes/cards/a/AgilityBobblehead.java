@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -33,7 +33,7 @@ public class AgilityBobblehead extends Card {
                 true,
                 "{3}",
                 List.of(
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
                         new MakeCreatureBlockableOnlyByFilterThisTurnEffect(
                                 new PermanentHasKeywordPredicate(Keyword.HASTE),
                                 "creatures with haste")

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -23,6 +23,6 @@ public class GhituLavarunner extends Card {
         addStaticEffect(new ConditionalEffect(new GraveyardCardThreshold(2, new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY)
-                ))), new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), GrantScope.SELF)));
+                ))), new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), Subjects.source())));
     }
 }

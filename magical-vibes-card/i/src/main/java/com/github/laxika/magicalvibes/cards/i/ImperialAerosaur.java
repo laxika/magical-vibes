@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,6 +33,6 @@ public class ImperialAerosaur extends Card {
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new BoostTargetCreatureEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target()));
     }
 }

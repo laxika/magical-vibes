@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,7 +32,7 @@ List.of(CardSubtype.CAT), Set.of(), Set.of()));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{W}",
-                List.of(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target())),
                 "{2}{W}: Another target Cleric gains lifelink until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

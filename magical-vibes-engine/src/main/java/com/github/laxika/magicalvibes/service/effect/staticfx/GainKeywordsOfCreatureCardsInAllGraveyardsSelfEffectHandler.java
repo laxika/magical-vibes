@@ -73,8 +73,8 @@ public class GainKeywordsOfCreatureCardsInAllGraveyardsSelfEffectHandler impleme
                 }
                 for (CardEffect staticEffect : card.getStaticEffects()) {
                     if (staticEffect instanceof ProtectionFromColorsEffect protection
-                            && (protection.scope() == null
-                                    || protection.scope().subject() instanceof PermanentSubject.Source)) {
+                            && (protection.subject() == null
+                                    || protection.subject() instanceof PermanentSubject.Source)) {
                         accumulator.addProtectionColors(protection.colors());
                     }
                 }

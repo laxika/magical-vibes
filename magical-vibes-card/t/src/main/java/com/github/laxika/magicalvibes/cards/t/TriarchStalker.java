@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentForTargetingRelayEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingRememberedPlayerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ public class TriarchStalker extends Card {
 
         // Creatures attacking the last chosen player have menace.
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.MENACE, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                Keyword.MENACE, Subjects.allCreatures(),
                 new PermanentIsAttackingRememberedPlayerPredicate()));
     }
 }

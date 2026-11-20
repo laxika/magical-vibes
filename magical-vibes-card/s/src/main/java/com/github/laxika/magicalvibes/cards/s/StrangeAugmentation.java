@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EMN", collectorNumber = "105")
@@ -13,8 +13,8 @@ public class StrangeAugmentation extends Card {
 
     public StrangeAugmentation() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()))
                 .addStaticEffect(new ConditionalEffect(
-                        new Delirium(), new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE)));
+                        new Delirium(), new StaticBoostEffect(2, 2, Subjects.attachedCreature())));
     }
 }

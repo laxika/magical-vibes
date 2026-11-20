@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -28,8 +28,8 @@ public class SlayersStronghold extends Card {
         addActivatedAbility(new ActivatedAbility(true, "{R}{W}",
                 List.of(
                         new BoostTargetCreatureEffect(2, 0),
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target()),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target())
                 ),
                 "{R}{W}, {T}: Target creature gets +2/+0 and gains vigilance and haste until end of turn.",
                 TargetFilters.creature()));

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.CreaturesEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,7 +23,7 @@ public class Kinbinding extends Card {
     public Kinbinding() {
         var creaturesEntered = new CreaturesEnteredBattlefieldThisTurn(CountScope.CONTROLLER);
         addStaticEffect(new DynamicStaticBoostEffect(
-                creaturesEntered, creaturesEntered, GrantScope.OWN_CREATURES));
+                creaturesEntered, creaturesEntered, Subjects.otherCreaturesYouControl()));
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new CreateTokenEffect(
                 "Kithkin", 1, 1, CardColor.GREEN,
                 Set.of(CardColor.GREEN, CardColor.WHITE), List.of(CardSubtype.KITHKIN)));

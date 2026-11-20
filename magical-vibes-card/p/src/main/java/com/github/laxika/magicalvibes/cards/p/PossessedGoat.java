@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "DSK", collectorNumber = "25")
@@ -24,8 +24,8 @@ public class PossessedGoat extends Card {
                 List.of(
                         new DiscardCardTypeCost(null, null),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 3),
-                        new GrantColorEffect(CardColor.BLACK, GrantScope.SELF),
-                        new GrantSubtypeEffect(CardSubtype.DEMON, GrantScope.SELF)
+                        new GrantColorEffect(CardColor.BLACK, Subjects.source()),
+                        new GrantSubtypeEffect(CardSubtype.DEMON, Subjects.source())
                 ),
                 "{3}, Discard a card: Put three +1/+1 counters on this creature and it becomes a "
                         + "black Demon in addition to its other colors and types. Activate only once."

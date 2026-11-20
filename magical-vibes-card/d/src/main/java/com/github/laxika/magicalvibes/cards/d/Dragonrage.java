@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public class Dragonrage extends Card {
                         List.of(new BoostSelfEffect(1, 0)),
                         "{R}: This creature gets +1/+0 until end of turn."
                 ),
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentIsAttackingPredicate(),
                 Duration.UNTIL_END_OF_TURN
         ));

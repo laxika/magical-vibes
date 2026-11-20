@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToOwnLandsAndLandCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerThenIfMilledEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class DuneChanter extends Card {
     public DuneChanter() {
         addStaticEffect(new GrantSubtypeToOwnLandsAndLandCardsEffect(CardSubtype.DESERT));
         addStaticEffect(new GrantActivatedAbilityEffect(
-                ManaAbilities.tapForAnyColor(), GrantScope.OWN_LANDS));
+                ManaAbilities.tapForAnyColor(), Subjects.landsYouControl()));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

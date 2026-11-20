@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "137")
@@ -33,18 +33,18 @@ public class BrimstoneMage extends Card {
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(3, CounterType.LEVEL)))),
-                new SetBasePowerToughnessEffect(2, 3, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(2, 3, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(2, 4, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(2, 4, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(3, CounterType.LEVEL)))),
-                new GrantActivatedAbilityEffect(damageAbility(1), GrantScope.SELF)));
+                new GrantActivatedAbilityEffect(damageAbility(1), Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.LEVEL),
-                new GrantActivatedAbilityEffect(damageAbility(3), GrantScope.SELF)));
+                new GrantActivatedAbilityEffect(damageAbility(3), Subjects.source())));
     }
 
     private static ActivatedAbility damageAbility(int amount) {

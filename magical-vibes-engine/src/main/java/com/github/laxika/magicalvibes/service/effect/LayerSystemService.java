@@ -64,7 +64,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.WrappedStackStaticEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
@@ -1387,7 +1386,7 @@ public class LayerSystemService {
      * Angel's threshold) is not one, because it sets the color only if a condition is met.
      */
     private static boolean isPrintedSelfColorDefinition(CardEffect effect) {
-        return effect instanceof GrantColorEffect color && color.scope().subject() instanceof PermanentSubject.Source;
+        return effect instanceof GrantColorEffect color && color.subject() instanceof PermanentSubject.Source;
     }
 
     private static LayerClassifier.LayerClassification classifyOrNull(CardEffect effect) {
@@ -1594,7 +1593,7 @@ public class LayerSystemService {
                         continue;
                     }
                     GrantKeywordEffect grant = new GrantKeywordEffect(
-                            keyword, GrantScope.TARGET, Duration.PERMANENT);
+                            keyword, Subjects.target(), Duration.PERMANENT);
                     FloatingContinuousEffect counterEffect = new FloatingContinuousEffect(
                             UUID.randomUUID(), keyword.name().toLowerCase() + " counter", null,
                             slot.controllerId(), grant, permanent.getId(), null, null,
@@ -1608,7 +1607,7 @@ public class LayerSystemService {
                         continue;
                     }
                     GrantEffectEffect grant = new GrantEffectEffect(
-                            TargetingRestrictionEffect.hexproofFromColors(Set.of(hexproofColor)), GrantScope.TARGET);
+                            TargetingRestrictionEffect.hexproofFromColors(Set.of(hexproofColor)), Subjects.target());
                     FloatingContinuousEffect counterEffect = new FloatingContinuousEffect(
                             UUID.randomUUID(), "hexproof from " + hexproofColor.name().toLowerCase() + " counter",
                             null, slot.controllerId(), grant, permanent.getId(), null, null,
@@ -1709,7 +1708,7 @@ public class LayerSystemService {
 
     private static boolean isFixedSelfAnimation(CardEffect effect) {
         return effect instanceof AnimatePermanentsEffect animate
-                && animate.scope().subject() instanceof PermanentSubject.Source
+                && animate.subject() instanceof PermanentSubject.Source
                 && animate.power() instanceof Fixed
                 && animate.toughness() instanceof Fixed;
     }
@@ -2074,7 +2073,7 @@ public class LayerSystemService {
     private void applyL3Instance(GameData gameData, EffectInstance instance, List<PermanentSlot> slots,
                                  Map<UUID, PermanentSlot> slotsById, LayeredBoardState board) {
         if (instance.effect() instanceof SetNameEffect setName) {
-            for (PermanentSlot target : scopeTargets(gameData, instance, setName.scope().subject(), null,
+            for (PermanentSlot target : scopeTargets(gameData, instance, setName.subject(), null,
                     slots, slotsById, board)) {
                 board.states().get(target.permanent().getId()).setName(setName.name());
             }
@@ -2086,7 +2085,7 @@ public class LayerSystemService {
             }
         } else if (instance.effect() instanceof SetChosenNameAndCreatureTypeEffect set) {
             if (instance.source() == null || instance.source().permanent().getChosenName() == null) return;
-            for (PermanentSlot target : scopeTargets(gameData, instance, set.scope().subject(), null,
+            for (PermanentSlot target : scopeTargets(gameData, instance, set.subject(), null,
                     slots, slotsById, board)) {
                 board.states().get(target.permanent().getId()).setName(
                         instance.source().permanent().getChosenName());
@@ -2150,7 +2149,7 @@ public class LayerSystemService {
             }
             case GrantSubtypeEffect grant -> {
                 manage(board, instance);
-                for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope().subject(), grant.filter(), slots, slotsById, board)) {
+                for (PermanentSlot target : scopeTargets(gameData, instance, grant.subject(), grant.filter(), slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     if (!grant.overriding()) {
                         state.addSubtype(grant.subtype());
@@ -2186,7 +2185,7 @@ public class LayerSystemService {
                         allCreatureTypes.add(subtype);
                     }
                 }
-                for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope().subject(), grant.filter(),
+                for (PermanentSlot target : scopeTargets(gameData, instance, grant.subject(), grant.filter(),
                         slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     allCreatureTypes.forEach(state::addSubtype);
@@ -2217,7 +2216,7 @@ public class LayerSystemService {
             }
             case GrantCardTypeEffect grant -> {
                 manage(board, instance);
-                for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope().subject(), grant.filter(), slots, slotsById, board)) {
+                for (PermanentSlot target : scopeTargets(gameData, instance, grant.subject(), grant.filter(), slots, slotsById, board)) {
                     states.get(target.permanent().getId()).addCardType(grant.cardType());
                     record(board, instance, target, new L4Contribution(
                         null, false, false, grant.cardType(), null));
@@ -2251,12 +2250,12 @@ public class LayerSystemService {
             }
             case SetCardTypesEffect set -> {
                 manage(board, instance);
-                if (set.scope().subject() instanceof PermanentSubject.Source
+                if (set.subject() instanceof PermanentSubject.Source
                         && Duration.WHILE_ATTACHED.equals(set.duration())
                         && (instance.source() == null || !instance.source().permanent().isAttached())) {
                     return;
                 }
-                for (PermanentSlot target : scopeTargets(gameData, instance, set.scope().subject(), null, slots, slotsById, board)) {
+                for (PermanentSlot target : scopeTargets(gameData, instance, set.subject(), null, slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     state.overrideCardTypes(set.cardTypes());
                     if (!state.hasCardType(CardType.CREATURE)) {
@@ -2282,7 +2281,7 @@ public class LayerSystemService {
                         && (instance.source() == null || !instance.source().permanent().isAttached())) {
                     return;
                 }
-                for (PermanentSlot target : scopeTargets(gameData, instance, remove.scope().subject(), null,
+                for (PermanentSlot target : scopeTargets(gameData, instance, remove.subject(), null,
                         slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     state.removeCardType(remove.cardType());
@@ -2390,7 +2389,7 @@ public class LayerSystemService {
                 if (instance.source() == null) return;
                 CardSubtype chosen = instance.source().permanent().getChosenSubtype();
                 if (chosen == null) return;
-                for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope().subject(), grant.filter(), slots, slotsById, board)) {
+                for (PermanentSlot target : scopeTargets(gameData, instance, grant.subject(), grant.filter(), slots, slotsById, board)) {
                     if (grant.overriding()) {
                         setCreatureType(states.get(target.permanent().getId()), chosen);
                     } else {
@@ -2405,7 +2404,7 @@ public class LayerSystemService {
                 if (instance.source() == null) return;
                 CardSubtype chosen = instance.source().permanent().getChosenSubtype();
                 if (chosen == null) return;
-                for (PermanentSlot target : scopeTargets(gameData, instance, set.scope().subject(), null,
+                for (PermanentSlot target : scopeTargets(gameData, instance, set.subject(), null,
                         slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     setCreatureType(state, chosen);
@@ -2548,7 +2547,7 @@ public class LayerSystemService {
             }
             case LoseAllLandTypesEffect lose -> {
                 manage(board, instance);
-                for (PermanentSlot target : scopeTargets(gameData, instance, lose.scope().subject(), lose.filter(),
+                for (PermanentSlot target : scopeTargets(gameData, instance, lose.subject(), lose.filter(),
                         slots, slotsById, board)) {
                     CharacteristicState state = states.get(target.permanent().getId());
                     if (!state.hasCardType(CardType.LAND)) continue;
@@ -2665,7 +2664,7 @@ public class LayerSystemService {
                     if (state.hasCardType(CardType.LAND) && !state.hasCardType(CardType.CREATURE)
                             && subjectResolutionService.names(gameData, instance.source().permanent(),
                                     instance.source().controllerId(), target.controllerId(), permanent,
-                                    animateLands.scope().subject(), typeLayerReads)
+                                    animateLands.subject(), typeLayerReads)
                             && (animateLands.requiredSubtype() == null
                                     || state.hasSubtype(animateLands.requiredSubtype()))
                             && !isOneShotAnimated(permanent)) {
@@ -2708,7 +2707,7 @@ public class LayerSystemService {
                 // EARLIER timestamp still boosts the target (no CR 613.8 dependency needed).
                 // The keyword itself is (re-)applied and removable in layer 6.
                 if (grant.keywords().contains(Keyword.CHANGELING)) {
-                    for (PermanentSlot target : scopeTargets(gameData, instance, grant.scope().subject(),
+                    for (PermanentSlot target : scopeTargets(gameData, instance, grant.subject(),
                             grant.filter(), slots, slotsById, board)) {
                         states.get(target.permanent().getId()).addKeyword(Keyword.CHANGELING);
                         for (CardSubtype subtype : CardSubtype.values()) {
@@ -2735,8 +2734,8 @@ public class LayerSystemService {
                 }
             }
             case AnimatePermanentsEffect animate -> {
-                if (animate.scope().subject() instanceof PermanentSubject.ControlledBy) {
-                    for (PermanentSlot target : scopeTargets(gameData, instance, animate.scope().subject(),
+                if (animate.subject() instanceof PermanentSubject.ControlledBy) {
+                    for (PermanentSlot target : scopeTargets(gameData, instance, animate.subject(),
                             animate.filter(), slots, slotsById, board)) {
                         CharacteristicState state = states.get(target.permanent().getId());
                         if (state == null) continue;
@@ -2759,7 +2758,7 @@ public class LayerSystemService {
                 // creature — a later layer-6 grant to "creatures you control", another layer-4
                 // effect's scope filter, and March of the Machines' noncreature test.
                 List<PermanentSlot> targets;
-                if (animate.scope().subject() instanceof PermanentSubject.Source) {
+                if (animate.subject() instanceof PermanentSubject.Source) {
                     PermanentSlot animated = instance.source();
                     if (animated == null) return;
                     targets = List.of(animated);
@@ -3113,7 +3112,7 @@ public class LayerSystemService {
             }
             state.addKeywords(keepingPerpetualRemovals(gameData, permanent.getCard().getId(), rewrittenKeywords));
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {
-                if (effect instanceof ProtectionFromColorsEffect protection && protection.scope() == null) {
+                if (effect instanceof ProtectionFromColorsEffect protection && protection.subject() == null) {
                     ProtectionFromColorsEffect rewritten = (ProtectionFromColorsEffect)
                             TextChangeTransformer.transform(protection, gameData.textReplacements(permanent.getId()),
                                     globalWordChange);
@@ -3122,7 +3121,7 @@ public class LayerSystemService {
             }
             if (permanent.getChosenColor() != null && permanent.getCard().getStaticEffects().stream()
                     .anyMatch(effect -> effect instanceof ProtectionFromChosenColorEffect protection
-                            && protection.scope() == null)) {
+                            && protection.subject() == null)) {
                 state.addProtectionColors(Set.of(permanent.getChosenColor()));
             }
         }
@@ -3165,7 +3164,7 @@ public class LayerSystemService {
             for (Ability ability : gameData.perpetualAbilities(cardId)) {
                 switch (ability) {
                     case TriggeredAbility triggered -> {
-                        state.addStaticEffect(new GrantTriggeredAbilityEffect(triggered, GrantScope.SELF));
+                        state.addStaticEffect(new GrantTriggeredAbilityEffect(triggered, Subjects.source()));
                         seeded = true;
                     }
                     case StaticAbility statik -> {
@@ -3570,8 +3569,8 @@ public class LayerSystemService {
                                 provenanceSourceName(instance), restriction);
                     }
                     case GrantEffectEffect grant -> {
-                        if (!(grant.scope().subject() instanceof PermanentSubject.Target
-                                || grant.scope().subject() instanceof PermanentSubject.Source)) {
+                        if (!(grant.subject() instanceof PermanentSubject.Target
+                                || grant.subject() instanceof PermanentSubject.Source)) {
                             continue;
                         }
                         // A granted "loses all (non-mana) abilities" static ability (Town-Razer Tyrant's
@@ -3594,7 +3593,7 @@ public class LayerSystemService {
                                 provenanceSourceName(instance), grant.effect());
                     }
                     case GrantNonAbilityEffectEffect grant -> {
-                        if (!(grant.scope().subject() instanceof PermanentSubject.Target)) {
+                        if (!(grant.subject() instanceof PermanentSubject.Target)) {
                             continue;
                         }
                         state.addNonAbilityEffect(grant.effect());
@@ -3620,7 +3619,7 @@ public class LayerSystemService {
         // ability — already seeded into its state (and removable by a lose-all there); the
         // attachment handler would no-op anyway.
         if (instance.effect() instanceof ProtectionFromColorsEffect protection
-                && protection.scope() == null && instance.source() != null
+                && protection.subject() == null && instance.source() != null
                 && !instance.source().permanent().isAttached()) {
             return;
         }
@@ -3983,7 +3982,7 @@ public class LayerSystemService {
                     if (instance.floating() == null
                             || instance.source() == null
                             || !(grant.staticEffect() instanceof SetBasePowerToughnessToAmountEffect setPt)
-                            || !(setPt.scope().subject() instanceof PermanentSubject.Source)) {
+                            || !(setPt.subject() instanceof PermanentSubject.Source)) {
                         continue;
                     }
                     PermanentSlot source = instance.source();
@@ -4019,7 +4018,7 @@ public class LayerSystemService {
                                     }
                                 });
                 case AnimatePermanentsEffect animate -> {
-                    if (animate.scope().subject() instanceof PermanentSubject.ControlledBy) {
+                    if (animate.subject() instanceof PermanentSubject.ControlledBy) {
                         applyStaticInstanceViaHandlers(gameData, instance, slots, board, false,
                                 (target, harvested) -> {
                                     if (harvested.isBasePTOverridden()) {
@@ -4081,13 +4080,13 @@ public class LayerSystemService {
         for (Emblem emblem : gameData.emblems) {
             for (CardEffect emblemEffect : emblem.staticEffects()) {
                 if (!(emblemEffect instanceof SetBasePowerToughnessEffect setPt)
-                        || !(setPt.scope().subject() instanceof PermanentSubject.ControlledBy)) {
+                        || !(setPt.subject() instanceof PermanentSubject.ControlledBy)) {
                     continue;
                 }
                 for (PermanentSlot target : slots) {
                     Permanent permanent = target.permanent();
                     if (!subjectResolutionService.names(gameData, null, emblem.controllerId(),
-                            target.controllerId(), permanent, setPt.scope().subject(), layeredTypeReads)
+                            target.controllerId(), permanent, setPt.subject(), layeredTypeReads)
                             || setPt.filter() != null && !predicateEvaluationService.matchesPermanentPredicate(
                             null, permanent, setPt.filter())) {
                         continue;

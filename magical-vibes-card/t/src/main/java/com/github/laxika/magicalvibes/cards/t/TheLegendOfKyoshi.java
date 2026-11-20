@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "TLA", collectorNumber = "186")
@@ -25,7 +25,7 @@ public class TheLegendOfKyoshi extends Card {
                 new DrawCardEffect(new GreatestPowerAmongControlled()));
         addTrigger(Triggers.chapter(2), SequenceEffect.of(
                 new EarthbendTargetLandEffect(new CardsInHand(CountScope.CONTROLLER)),
-                new GrantSubtypeEffect(CardSubtype.ISLAND, GrantScope.TARGET)));
+                new GrantSubtypeEffect(CardSubtype.ISLAND, Subjects.target())));
         setSagaChapterTargetRequired(2);
         addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect(true));
     }

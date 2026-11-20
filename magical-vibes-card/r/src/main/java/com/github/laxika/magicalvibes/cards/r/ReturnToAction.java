@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class ReturnToAction extends Card {
         // dies, return it to the battlefield tapped under its owner's control."
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(1, 0))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target()))
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new ReturnSourceCardFromGraveyardToBattlefieldEffect(true))));
     }

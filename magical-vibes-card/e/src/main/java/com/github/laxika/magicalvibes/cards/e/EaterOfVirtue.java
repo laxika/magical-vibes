@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCardsExiledWithSourceToEquippedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ public class EaterOfVirtue extends Card {
     public EaterOfVirtue() {
         addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED),
                 new ExileTriggeringCreatureAndTrackWithSourceEffect());
-        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, Subjects.attachedCreature()));
         addStaticEffect(new GainKeywordsOfCardsExiledWithSourceToEquippedCreatureEffect());
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }

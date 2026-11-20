@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "CMM", collectorNumber = "13")
 @CardRegistration(set = "CMM", collectorNumber = "456")
@@ -18,8 +18,8 @@ public class AngelicFieldMarshal extends Card {
     public AngelicFieldMarshal() {
         var lieutenant = new ControllerControlsOwnCommander();
         addStaticEffect(new ConditionalEffect(lieutenant,
-                new StaticBoostEffect(2, 2, GrantScope.SELF)));
+                new StaticBoostEffect(2, 2, Subjects.source())));
         addStaticEffect(new ConditionalEffect(lieutenant,
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl())));
     }
 }

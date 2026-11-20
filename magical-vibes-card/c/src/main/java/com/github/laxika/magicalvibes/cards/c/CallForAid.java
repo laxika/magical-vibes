@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ControllerCantSacrificeTarget
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsTargetPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,7 +31,7 @@ public class CallForAid extends Card {
                 Duration.UNTIL_END_OF_TURN,
                 List.of(
                         new UntapPermanentsEffect(Subjects.target()),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
                         new ControllerCantSacrificeTargetThisTurnEffect())));
         addSpellEffect(new ControllerCantAttackTargetPlayerThisTurnEffect());
     }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class WatertightGondola extends Card {
     public WatertightGondola() {
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(8, new CardIsPermanentPredicate()),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -30,6 +30,6 @@ public class Rumbleweed extends Card {
         PermanentPredicate otherCreature = new PermanentNotPredicate(new PermanentIsSourceCardPredicate());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new BoostAllOwnCreaturesEffect(3, 3, otherCreature),
-                new GrantKeywordEffect(Set.of(Keyword.TRAMPLE), GrantScope.OWN_CREATURES, otherCreature));
+                new GrantKeywordEffect(Set.of(Keyword.TRAMPLE), Subjects.otherCreaturesYouControl(), otherCreature));
     }
 }

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "DTK", collectorNumber = "219")
@@ -22,7 +22,7 @@ public class DragonlordOjutai extends Card {
     public DragonlordOjutai() {
         addStaticEffect(new ConditionalEffect(
                 new SourceUntapped(),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source())));
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 LookAtTopCardsEffect.chooseOneToHandRestOnBottom(new Fixed(3)));

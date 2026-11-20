@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "KLD", collectorNumber = "238")
@@ -16,7 +16,7 @@ public class WeldfastMonitor extends Card {
     public WeldfastMonitor() {
         addActivatedAbility(new ActivatedAbility(
                 false, "{R}",
-                List.of(new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.MENACE, Subjects.source())),
                 "{R}: This creature gains menace until end of turn."
         ));
     }

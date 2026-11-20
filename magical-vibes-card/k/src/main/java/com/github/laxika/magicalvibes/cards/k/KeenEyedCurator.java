@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.ExiledCardTypeThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "BLB", collectorNumber = "181")
@@ -20,7 +20,7 @@ public class KeenEyedCurator extends Card {
         ExiledCardTypeThreshold threshold = new ExiledCardTypeThreshold(4);
         addStaticEffect(new ConditionalEffect(threshold, new BoostSelfEffect(4, 4)));
         addStaticEffect(new ConditionalEffect(threshold,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",

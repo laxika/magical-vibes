@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 
 @CardRegistration(set = "HOB", collectorNumber = "49")
@@ -18,7 +18,7 @@ public class MostDecrepitOldBird extends Card {
         addCastingOption(new AdventureCast("{1}{U}"));
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, new CardTruePredicate()),
-                new StaticBoostEffect(1, 1, GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Subjects.source())));
     }
 
     @Override

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -33,6 +33,6 @@ public class EelHounds extends Card {
         ))
                 .addTrigger(Triggers.attacks(),
                         new BoostTargetCreatureEffect(2, 2, targetFilter),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET, targetFilter));
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target(), targetFilter));
     }
 }

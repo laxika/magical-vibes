@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnterPermanentsOfTypesTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "NPH", collectorNumber = "98")
@@ -20,7 +20,7 @@ import java.util.Set;
 public class UrabraskTheHidden extends Card {
 
     public UrabraskTheHidden() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl()));
         addStaticEffect(new EnterPermanentsOfTypesTappedEffect(Set.of(CardType.CREATURE), true));
     }
 }

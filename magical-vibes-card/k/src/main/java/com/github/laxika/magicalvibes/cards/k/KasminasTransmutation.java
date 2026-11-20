@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WAR", collectorNumber = "57")
@@ -14,7 +14,7 @@ public class KasminasTransmutation extends Card {
 
     public KasminasTransmutation() {
         target(TargetFilters.creature())
-                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new LosesAllAbilitiesEffect(Subjects.attachedCreature()))
+                .addStaticEffect(new SetBasePowerToughnessEffect(1, 1, Subjects.attachedCreature()));
     }
 }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentBecomesSubtypeEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -43,7 +43,7 @@ public class TargetPermanentBecomesSubtypeEffectHandler implements NormalEffectH
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(),
-                new GrantSubtypeEffect(becomes.subtype(), GrantScope.TARGET, true),
+                new GrantSubtypeEffect(becomes.subtype(), Subjects.target(), true),
                 target.getId(), null, null, Duration.PERMANENT, 0));
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " becomes an " + becomes.subtype().getDisplayName() + "."));

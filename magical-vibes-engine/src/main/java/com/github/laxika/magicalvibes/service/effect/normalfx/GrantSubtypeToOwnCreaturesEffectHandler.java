@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -33,7 +33,7 @@ public class GrantSubtypeToOwnCreaturesEffectHandler implements NormalEffectHand
         }
         for (Permanent permanent : battlefield) {
             if (gameQueryService.isCreature(gameData, permanent)) {
-                gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(grantEffect.subtype(), GrantScope.TARGET),
+                gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(grantEffect.subtype(), Subjects.target()),
                         permanent.getId(), Duration.PERMANENT);
             }
         }

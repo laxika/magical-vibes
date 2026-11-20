@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RiotEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsAndAbilitiesCantBeCounteredEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SPM", collectorNumber = "92")
@@ -21,7 +21,7 @@ public class SpiderPunk extends Card {
         addStaticEffect(new RiotEffect());
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.RIOT,
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.SPIDER)));
         addStaticEffect(new SpellsAndAbilitiesCantBeCounteredEffect());
         addStaticEffect(new DamageCantBePreventedEffect());

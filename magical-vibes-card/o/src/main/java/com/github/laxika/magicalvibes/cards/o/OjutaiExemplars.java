@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -33,7 +32,7 @@ public class OjutaiExemplars extends Card {
                         new ChooseOneEffect.ChooseOneOption(
                                 "Ojutai Exemplars gains first strike and lifelink until end of turn",
                                 new GrantKeywordEffect(
-                                        Set.of(Keyword.FIRST_STRIKE, Keyword.LIFELINK), GrantScope.SELF)),
+                                        Set.of(Keyword.FIRST_STRIKE, Keyword.LIFELINK), Subjects.source())),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Exile Ojutai Exemplars, then return it to the battlefield tapped under its owner's control",
                                 new FlickerEffect(

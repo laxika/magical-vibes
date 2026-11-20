@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MBS", collectorNumber = "127")
 public class RazorfieldRhino extends Card {
@@ -13,6 +13,6 @@ public class RazorfieldRhino extends Card {
     public RazorfieldRhino() {
         // Metalcraft — Razorfield Rhino gets +2/+2 as long as you control three or more artifacts.
         addStaticEffect(new ConditionalEffect(new Metalcraft(), 
-                new StaticBoostEffect(2, 2, GrantScope.SELF)));
+                new StaticBoostEffect(2, 2, Subjects.source())));
     }
 }

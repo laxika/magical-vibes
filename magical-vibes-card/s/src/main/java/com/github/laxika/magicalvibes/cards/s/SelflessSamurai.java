@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -30,14 +30,14 @@ public class SelflessSamurai extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.SAMURAI),
                                 new PermanentHasSubtypePredicate(CardSubtype.WARRIOR)))),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target())
                 ),
                 "Sacrifice Selfless Samurai: Another target creature you control gains indestructible until end of turn.",
                 new ControlledPermanentPredicateTargetFilter(

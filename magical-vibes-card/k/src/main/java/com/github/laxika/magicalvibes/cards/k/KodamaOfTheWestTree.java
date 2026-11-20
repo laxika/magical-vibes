@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +16,7 @@ public class KodamaOfTheWestTree extends Card {
 
     public KodamaOfTheWestTree() {
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES, new PermanentIsModifiedPredicate()));
+                Keyword.TRAMPLE, Subjects.creaturesYouControl(), new PermanentIsModifiedPredicate()));
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentIsModifiedPredicate()),
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));

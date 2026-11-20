@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,7 +22,7 @@ public class SpectralGuardian extends Card {
         // every artifact on any battlefield that isn't currently a creature.
         addStaticEffect(new ConditionalEffect(
                 new SourceUntapped(),
-                new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ALL_PERMANENTS,
+                new GrantKeywordEffect(Keyword.SHROUD, Subjects.otherPermanents(),
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()))))));

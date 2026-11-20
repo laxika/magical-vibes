@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -24,7 +24,7 @@ public class SecretIdentity extends Card {
                         List.of(
                                 new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.CITIZEN),
                                 new SetBasePowerToughnessEffect(1, 1),
-                                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.target())),
                         TargetFilters.creatureYouControl()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Reveal — Target creature you control becomes a Hero with base power and toughness 3/4 and gains flying and vigilance until end of turn",
@@ -32,7 +32,7 @@ public class SecretIdentity extends Card {
                                 new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.HERO),
                                 new SetBasePowerToughnessEffect(3, 4),
                                 new GrantKeywordEffect(
-                                        java.util.Set.of(Keyword.FLYING, Keyword.VIGILANCE), GrantScope.TARGET)),
+                                        java.util.Set.of(Keyword.FLYING, Keyword.VIGILANCE), Subjects.target())),
                         TargetFilters.creatureYouControl())
         )));
     }

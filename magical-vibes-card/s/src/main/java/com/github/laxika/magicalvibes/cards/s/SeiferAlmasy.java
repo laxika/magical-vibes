@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ public class SeiferAlmasy extends Card {
     public SeiferAlmasy() {
         addTrigger(Triggers.creatureYouControlAttacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()));
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new CastTargetInstantOrSorceryFromGraveyardEffect(

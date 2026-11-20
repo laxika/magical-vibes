@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "MH2", collectorNumber = "78")
@@ -22,13 +22,13 @@ public class CabalInitiate extends Card {
                 null,
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source())
                 ),
                 "Discard a card: This creature gains lifelink until end of turn."
         ));
 
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
-                new StaticBoostEffect(1, 2, GrantScope.SELF)));
+                new StaticBoostEffect(1, 2, Subjects.source())));
     }
 }

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -38,7 +37,7 @@ public class RustlerRampage extends Card {
                         playerFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gains double strike until end of turn",
-                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()),
                         creatureFilter)
         )));
     }

@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,7 +29,7 @@ public class NutCollector extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
-                new StaticBoostEffect(2, 2, GrantScope.ALL_CREATURES,
+                new StaticBoostEffect(2, 2, Subjects.allCreatures(),
                         new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL))));
     }
 }

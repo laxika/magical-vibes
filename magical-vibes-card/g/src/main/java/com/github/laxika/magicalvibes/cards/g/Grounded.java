@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AVR", collectorNumber = "181")
@@ -14,6 +14,6 @@ public class Grounded extends Card {
         // Enchant creature
         // Enchanted creature loses flying.
         target(TargetFilters.creature())
-                .addStaticEffect(new RemoveKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new RemoveKeywordEffect(Keyword.FLYING, Subjects.attachedCreature()));
     }
 }

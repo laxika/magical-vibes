@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -70,7 +70,7 @@ public class LilianaOfTheDarkRealms extends Card {
                                         true, null,
                                         List.of(new AwardManaEffect(ManaColor.BLACK, 4)),
                                         "{T}: Add {B}{B}{B}{B}."),
-                                GrantScope.OWN_PERMANENTS,
+                                Subjects.permanentsYouControl(),
                                 new PermanentHasSubtypePredicate(CardSubtype.SWAMP))),
                         "Swamps you control have '{T}: Add {B}{B}{B}{B}.'")),
                 "−6: You get an emblem with \"Swamps you control have '{T}: Add {B}{B}{B}{B}.'\""

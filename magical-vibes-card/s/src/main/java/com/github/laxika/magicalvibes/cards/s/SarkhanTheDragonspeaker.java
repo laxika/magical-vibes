@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -37,7 +36,7 @@ public class SarkhanTheDragonspeaker extends Card {
                 List.of(
                         new AnimatePermanentsEffect(4, 4, List.of(CardSubtype.DRAGON),
                                 Set.of(Keyword.FLYING, Keyword.INDESTRUCTIBLE, Keyword.HASTE), CardColor.RED),
-                        new SetCardTypesUntilEndOfTurnEffect(Set.of(CardType.CREATURE), GrantScope.SELF)
+                        new SetCardTypesUntilEndOfTurnEffect(Set.of(CardType.CREATURE), Subjects.source())
                 ),
                 "+1: Until end of turn, Sarkhan becomes a legendary 4/4 red Dragon creature with flying, indestructible, and haste. (He doesn't lose loyalty while he's not a planeswalker.)"
         ));

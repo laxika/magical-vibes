@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostIfTargetingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,6 +23,6 @@ public class SwampsnareTrap extends Card {
                         new PermanentHasKeywordPredicate(Keyword.FLYING)
                 )), 1));
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(-5, -3, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(-5, -3, Subjects.attachedCreature()));
     }
 }

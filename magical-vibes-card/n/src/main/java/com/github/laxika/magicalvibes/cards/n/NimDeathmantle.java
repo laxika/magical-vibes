@@ -8,12 +8,12 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,12 +23,12 @@ public class NimDeathmantle extends Card {
 
     public NimDeathmantle() {
         // Equipped creature gets +2/+2
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()));
         // Equipped creature has intimidate
-        addStaticEffect(new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.INTIMIDATE, Subjects.attachedCreature()));
         // Equipped creature is a black Zombie (replaces existing colors and creature subtypes per CR 205.1a)
-        addStaticEffect(new GrantColorEffect(CardColor.BLACK, GrantScope.EQUIPPED_CREATURE, true));
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.ZOMBIE, GrantScope.EQUIPPED_CREATURE, true));
+        addStaticEffect(new GrantColorEffect(CardColor.BLACK, Subjects.attachedCreature(), true));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.ZOMBIE, Subjects.attachedCreature(), true));
 
         // Whenever a nontoken creature is put into your graveyard from the battlefield,
         // you may pay {4}. If you do, return that card to the battlefield and attach

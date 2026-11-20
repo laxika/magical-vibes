@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class SunbladeElf extends Card {
 
     public SunbladeElf() {
         // This creature gets +1/+1 as long as you control a Plains.
-        addStaticEffect(new ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.PLAINS)), new StaticBoostEffect(1, 1, GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.PLAINS)), new StaticBoostEffect(1, 1, Subjects.source())));
 
         // {4}{W}: Creatures you control get +1/+1 until end of turn.
         addActivatedAbility(new ActivatedAbility(

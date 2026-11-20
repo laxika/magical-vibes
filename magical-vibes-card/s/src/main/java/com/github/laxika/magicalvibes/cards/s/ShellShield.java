@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZNR", collectorNumber = "79")
@@ -20,6 +20,6 @@ public class ShellShield extends Card {
         target(TargetFilters.creatureYouControl())
                 .addSpellEffect(new BoostTargetCreatureEffect(0, 3))
                 .addSpellEffect(new ConditionalEffect(
-                        new Kicked(), new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET)));
+                        new Kicked(), new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.target())));
     }
 }

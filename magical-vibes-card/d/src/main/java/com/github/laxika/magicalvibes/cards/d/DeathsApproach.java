@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,6 +20,6 @@ public class DeathsApproach extends Card {
         target(TargetFilters.creature()).addStaticEffect(new AttachedBoostEffect(
                 new Scaled(creatureCardsInAttachedControllersGraveyard, -1),
                 new Scaled(creatureCardsInAttachedControllersGraveyard, -1),
-                GrantScope.ENCHANTED_CREATURE));
+                Subjects.attachedCreature()));
     }
 }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class ThorncasterSliver extends Card {
         // The granted attack trigger is collected off each attacking Sliver in CombatAttackService and
         // routed through the AttackTriggerTarget interaction, with that Sliver as the damage source.
         addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.attacks(),
-                new DealDamageToAnyTargetEffect(1)), GrantScope.ALL_OWN_CREATURES,
+                new DealDamageToAnyTargetEffect(1)), Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
     }
 }

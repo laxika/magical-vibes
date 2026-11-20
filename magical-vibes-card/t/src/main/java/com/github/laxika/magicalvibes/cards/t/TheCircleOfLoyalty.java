@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,7 +31,7 @@ public class TheCircleOfLoyalty extends Card {
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.KNIGHT), CountScope.CONTROLLER)));
 
         // Creatures you control get +1/+1.
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl()));
 
         CreateTokenEffect knightToken = new CreateTokenEffect(
                 "Knight", 2, 2, CardColor.WHITE,

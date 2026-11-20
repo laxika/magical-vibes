@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -67,7 +68,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -445,7 +445,7 @@ public class GraveyardReturnSupport {
                                 if (effect.grantSubtypes() != null) {
                                     for (CardSubtype subtype : effect.grantSubtypes()) {
                                         gameData.addEffectOnPermanent(entry,
-                                                new GrantSubtypeEffect(subtype, GrantScope.TARGET),
+                                                new GrantSubtypeEffect(subtype, Subjects.target()),
                                                 permanent.getId(), Duration.PERMANENT);
                                     }
                                 }
@@ -534,7 +534,7 @@ public class GraveyardReturnSupport {
                 controllerId) || targetCard.hasKeyword(Keyword.CHANGELING))) {
             Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             if (sourcePermanent != null) {
-                gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
                         sourcePermanent.getId(), Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData, GameLog.cardThen(sourcePermanent.getCard(),
                         " gains haste until end of turn."));
@@ -843,7 +843,7 @@ public class GraveyardReturnSupport {
                 gameData.addEffectOnPermanent(entry != null ? entry.getCard().getName() : card.getName(),
                         entry != null ? entry.getSourcePermanentId() : null,
                         entry != null ? entry.getControllerId() : controllerId,
-                        new GrantKeywordEffect(Set.copyOf(effect.grantKeywords()), GrantScope.TARGET), p.getId(),
+                        new GrantKeywordEffect(Set.copyOf(effect.grantKeywords()), Subjects.target()), p.getId(),
                         Duration.PERMANENT);
             }
             if (effect.grantHasteUntilNextTurn()) {
@@ -851,7 +851,7 @@ public class GraveyardReturnSupport {
                         entry != null ? entry.getCard().getName() : card.getName(),
                         entry != null ? entry.getSourcePermanentId() : null,
                         entry != null ? entry.getControllerId() : controllerId,
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), p.getId(),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), p.getId(),
                         null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
             }
             if (effect.grantSubtypes() != null) {
@@ -859,7 +859,7 @@ public class GraveyardReturnSupport {
                     gameData.addEffectOnPermanent(entry != null ? entry.getCard().getName() : card.getName(),
                             entry != null ? entry.getSourcePermanentId() : null,
                             entry != null ? entry.getControllerId() : controllerId,
-                            new GrantSubtypeEffect(subtype, GrantScope.TARGET), p.getId(), Duration.PERMANENT);
+                            new GrantSubtypeEffect(subtype, Subjects.target()), p.getId(), Duration.PERMANENT);
                 }
             }
             if (plusOneCounters) {
@@ -2237,7 +2237,7 @@ public class GraveyardReturnSupport {
                 enterTapped, enterAttacking, enterWithCounter, grantIndestructible, false,
                 enterWithCounterCount, permanent -> {
                     if (grantHaste) {
-                        gameData.addEffectOnPermanent(card.getName(), null, controllerId, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), permanent.getId(), Duration.UNTIL_END_OF_TURN);
+                        gameData.addEffectOnPermanent(card.getName(), null, controllerId, new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), permanent.getId(), Duration.UNTIL_END_OF_TURN);
                     }
                 }, null);
     }
@@ -2316,7 +2316,7 @@ public class GraveyardReturnSupport {
         if (losesAllAbilities) {
             // It has no abilities as it enters, so its own entry abilities don't apply.
             gameData.addEffectOnPermanent(card.getName(), null, controllerId,
-                    new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT), permanent.getId(),
+                    new LosesAllAbilitiesEffect(Subjects.target(), Duration.PERMANENT), permanent.getId(),
                     Duration.PERMANENT);
         }
         if (enterWithCounter != null && enterWithCounterAmount > 0
@@ -2471,7 +2471,7 @@ public class GraveyardReturnSupport {
                 applyPermanentGrants(gameData, batch.controllerId(), permanent, batch.grantColor(), batch.grantSubtype());
             if (!batch.grantKeywords().isEmpty()) {
                 gameData.addEffectOnPermanent(card.getName(), permanent.getId(), batch.controllerId(),
-                        new GrantKeywordEffect(batch.grantKeywords(), GrantScope.TARGET), permanent.getId(),
+                        new GrantKeywordEffect(batch.grantKeywords(), Subjects.target()), permanent.getId(),
                         Duration.PERMANENT);
             }
             permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
@@ -2672,15 +2672,15 @@ public class GraveyardReturnSupport {
         String cardName = permanent.getCard().getName();
         if (grantColor != null) {
             gameData.addEffectOnPermanent(cardName, permanent.getId(), controllerId,
-                    new GrantColorEffect(grantColor, GrantScope.TARGET), permanent.getId(), Duration.PERMANENT);
+                    new GrantColorEffect(grantColor, Subjects.target()), permanent.getId(), Duration.PERMANENT);
         }
         if (grantSubtype != null) {
             gameData.addEffectOnPermanent(cardName, permanent.getId(), controllerId,
-                    new GrantSubtypeEffect(grantSubtype, GrantScope.TARGET), permanent.getId(), Duration.PERMANENT);
+                    new GrantSubtypeEffect(grantSubtype, Subjects.target()), permanent.getId(), Duration.PERMANENT);
         }
         if (grantIndestructible) {
             gameData.addEffectOnPermanent(cardName, permanent.getId(), controllerId,
-                    new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET), permanent.getId(),
+                    new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()), permanent.getId(),
                     Duration.PERMANENT);
         }
     }
@@ -2705,7 +2705,7 @@ public class GraveyardReturnSupport {
         }
         if (ended != null) {
             gameData.addEffectOnPermanent(ended.sourceCardName(), ended.sourcePermanentId(), ended.controllerId(),
-                    new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), returnedPermanent.getId(),
+                    new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), returnedPermanent.getId(),
                     Duration.UNTIL_END_OF_TURN);
         }
     }
@@ -2795,12 +2795,12 @@ public class GraveyardReturnSupport {
         if (losesAllAbilities) {
             // It has no abilities as it enters, so its own entry abilities don't apply.
             gameData.addEffectOnPermanent(card.getName(), null, controllerId,
-                    new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT), permanent.getId(),
+                    new LosesAllAbilitiesEffect(Subjects.target(), Duration.PERMANENT), permanent.getId(),
                     Duration.PERMANENT);
         }
         if (grantHaste) {
             gameData.addEffectOnPermanent(card.getName(), permanent.getId(), controllerId,
-                    new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), permanent.getId(), Duration.PERMANENT);
+                    new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), permanent.getId(), Duration.PERMANENT);
         }
         if (enterTapped) {
             permanent.tap();

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "TMP", collectorNumber = "220")
@@ -21,7 +21,7 @@ public class CrazedArmodon extends Card {
                 false, "{G}",
                 List.of(
                         new BoostSelfEffect(3, 0),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source()),
                         new DestroySelfAtEndStepEffect()
                 ),
                 "{G}: This creature gets +3/+0 and gains trample until end of turn. Destroy this "

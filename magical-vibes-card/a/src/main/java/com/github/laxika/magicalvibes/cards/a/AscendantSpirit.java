@@ -10,11 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCreatureTypeWithBasePow
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceHasSubtype;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,17 +26,17 @@ public class AscendantSpirit extends Card {
     public AscendantSpirit() {
         addActivatedAbility(new ActivatedAbility(false, "{S}{S}",
                 List.of(new BecomeCreatureTypeWithBasePowerToughnessEffect(2, 3, CardSubtype.WARRIOR),
-                        new GrantSubtypeEffect(CardSubtype.SPIRIT, GrantScope.SELF, true),
-                        new GrantSubtypeEffect(CardSubtype.WARRIOR, GrantScope.SELF)),
+                        new GrantSubtypeEffect(CardSubtype.SPIRIT, Subjects.source(), true),
+                        new GrantSubtypeEffect(CardSubtype.WARRIOR, Subjects.source())),
                 "{S}{S}: This creature becomes a Spirit Warrior with base power and toughness 2/3."));
 
         addActivatedAbility(new ActivatedAbility(false, "{S}{S}{S}", List.of(
                 new ConditionalEffect(new SourceHasSubtype(CardSubtype.WARRIOR), SequenceEffect.of(
                         new PutCountersOnSelfEffect(CounterType.FLYING),
                         new BecomeCreatureTypeWithBasePowerToughnessEffect(4, 4, CardSubtype.ANGEL),
-                        new GrantSubtypeEffect(CardSubtype.SPIRIT, GrantScope.SELF, true),
-                        new GrantSubtypeEffect(CardSubtype.WARRIOR, GrantScope.SELF),
-                        new GrantSubtypeEffect(CardSubtype.ANGEL, GrantScope.SELF)
+                        new GrantSubtypeEffect(CardSubtype.SPIRIT, Subjects.source(), true),
+                        new GrantSubtypeEffect(CardSubtype.WARRIOR, Subjects.source()),
+                        new GrantSubtypeEffect(CardSubtype.ANGEL, Subjects.source())
                 ))),
                 "{S}{S}{S}: If this creature is a Warrior, put a flying counter on it and it becomes a Spirit Warrior Angel with base power and toughness 4/4."));
 
@@ -45,7 +45,7 @@ public class AscendantSpirit extends Card {
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         new GrantEffectToTargetEffect(new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                                 new DrawCardEffect()), com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT,
-                                false, GrantScope.SELF)
+                                false, Subjects.source())
                 ))),
                 "{S}{S}{S}{S}: If this creature is an Angel, put two +1/+1 counters on it and it gains \"Whenever this creature deals combat damage to a player, draw a card.\""));
     }

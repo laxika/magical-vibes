@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseOneMayPlayUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class HeroesHangout extends Card {
                         "One or two target creatures each get +1/+0 and gain first strike until end of turn",
                         List.<CardEffect>of(
                                 new BoostTargetCreatureEffect(1, 0),
-                                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target())),
                         TargetFilters.creature(), null, 1, 2, false, null)
         )));
     }

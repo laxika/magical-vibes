@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPer
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentCountAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -28,7 +28,7 @@ public class GiantShark extends Card {
 
         SequenceEffect damagedCombatOpponentBonus = SequenceEffect.of(
                 new BoostSelfEffect(2, 0),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())
         );
         addTrigger(Triggers.blocks().withFilter(new PermanentDealtDamageThisTurnPredicate()),
                 damagedCombatOpponentBonus);

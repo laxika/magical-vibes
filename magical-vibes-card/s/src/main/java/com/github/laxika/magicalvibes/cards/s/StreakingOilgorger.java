@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DFT", collectorNumber = "107")
 public class StreakingOilgorger extends Card {
 
     public StreakingOilgorger() {
         addStaticEffect(new ConditionalEffect(new MaxSpeed(),
-                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source())));
     }
 }

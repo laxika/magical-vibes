@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -23,6 +23,6 @@ public class GiltLeafAmbush extends Card {
 
         // Clash with an opponent. If you win, those creatures gain deathtouch until end of turn.
         addSpellEffect(new ClashEffect(
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TOKENS_CREATED_THIS_RESOLUTION)));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.createdThisResolution())));
     }
 }

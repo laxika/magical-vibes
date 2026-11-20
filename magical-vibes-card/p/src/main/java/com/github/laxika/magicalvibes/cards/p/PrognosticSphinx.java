@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -29,7 +28,7 @@ public class PrognosticSphinx extends Card {
                 null,
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF),
+                        new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source()),
                         new TapPermanentsEffect(Subjects.source())
                 ),
                 "Discard a card: This creature gains hexproof until end of turn. Tap it."

@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "45")
@@ -22,7 +22,7 @@ public class Fleshformer extends Card {
                 false, "{W}{U}{B}{R}{G}",
                 List.of(
                         new BoostSelfEffect(2, 2),
-                        new GrantKeywordEffect(Keyword.FEAR, GrantScope.SELF),
+                        new GrantKeywordEffect(Keyword.FEAR, Subjects.source()),
                         new BoostTargetCreatureEffect(-2, -2)
                 ),
                 "{W}{U}{B}{R}{G}: This creature gets +2/+2 and gains fear until end of turn. "

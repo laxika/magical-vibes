@@ -14,10 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -26,7 +22,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
@@ -36,7 +31,6 @@ import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -92,43 +86,12 @@ public class StaticEffectSupport implements SubjectResolutionService.StaticReads
     @Lazy
     private SubjectResolutionService subjectResolutionService;
 
-    private static final PermanentIsLandPredicate LAND_PREDICATE = new PermanentIsLandPredicate();
-    private static final PermanentPredicate CREATURE = new PermanentIsCreaturePredicate();
-    private static final PermanentPredicate NOT_SOURCE =
-            new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate());
-
-    /** "Enchanted creature", "equipped creature", "enchanted permanent". */
+    /** "Enchanted permanent", the host whatever it is. */
     public static final PermanentSubject ATTACHED = Subjects.attached();
-    /** "Creatures you control". */
-    public static final PermanentSubject CREATURES_YOU_CONTROL = Subjects.controlledBy(Subjects.you(), CREATURE);
     /** "Other creatures you control". */
-    public static final PermanentSubject OTHER_CREATURES_YOU_CONTROL = Subjects.controlledBy(Subjects.you(),
-            new PermanentAllOfPredicate(List.of(NOT_SOURCE, CREATURE)));
-    /** "Other permanents you control". */
-    public static final PermanentSubject OTHER_PERMANENTS_YOU_CONTROL = Subjects.controlledBy(Subjects.you(),
-            NOT_SOURCE);
-    /** "All permanents", the source included. */
-    public static final PermanentSubject ALL_PERMANENTS_INCLUDING_SOURCE = Subjects.controlledBy(Subjects.eachPlayer());
-
-    /**
-     * The subject of {@code scope} for the verbs whose static "all permanents" reaches the source too (colour, card
-     * types, subtypes, animation, granted abilities: Thran Lens is colourless itself, Ghostflame Sliver is a Sliver):
-     * {@link GrantScope#ALL_PERMANENTS} is read including the source; every other constant is its own subject.
-     */
-    public static PermanentSubject withAllPermanentsIncludingSource(GrantScope scope) {
-        return scope == GrantScope.ALL_PERMANENTS ? ALL_PERMANENTS_INCLUDING_SOURCE : scope.subject();
-    }
-
-    /**
-     * The subject of {@code scope} for the static keyword grants, whose {@link GrantScope#OWN_PERMANENTS} means "other
-     * permanents you control": the keyword grant never reaches its source. Every other constant is its own subject.
-     */
-    public static PermanentSubject withOwnPermanentsAsOthers(GrantScope scope) {
-        return scope == GrantScope.OWN_PERMANENTS ? OTHER_PERMANENTS_YOU_CONTROL : scope.subject();
-    }
-
+    public static final PermanentSubject OTHER_CREATURES_YOU_CONTROL = Subjects.otherCreaturesYouControl();
     /** "Lands you control". */
-    public static final PermanentSubject LANDS_YOU_CONTROL = Subjects.controlledBy(Subjects.you(), LAND_PREDICATE);
+    public static final PermanentSubject LANDS_YOU_CONTROL = Subjects.landsYouControl();
 
     /**
      * Whether a static ability's {@code subject} names the context's target and the target matches {@code filter}:
@@ -209,7 +172,7 @@ public class StaticEffectSupport implements SubjectResolutionService.StaticReads
 
     public void applySelfOnlyConditionalStaticEffect(StaticEffectContext context, CardEffect wrapped, StaticBonusAccumulator accumulator) {
         if (wrapped instanceof StaticBoostEffect boost) {
-            if (conditionalNamesSource(context, boost.scope(), boost.filter())) {
+            if (names(context, boost.subject(), boost.filter())) {
                 int multiplier = boost.scalingCounter() == null
                         ? 1
                         : (boost.scalingCounterOnTarget()
@@ -226,48 +189,48 @@ public class StaticEffectSupport implements SubjectResolutionService.StaticReads
             accumulator.addPower(amountEvaluationService.evaluate(context.gameData(), boost.powerBoost(), amountContext));
             accumulator.addToughness(amountEvaluationService.evaluate(context.gameData(), boost.toughnessBoost(), amountContext));
         } else if (wrapped instanceof GrantKeywordEffect grant) {
-            if (conditionalNamesSource(context, grant.scope(), grant.filter())) {
+            if (names(context, grant.subject(), grant.filter())) {
                 accumulator.addKeywords(grant.keywords());
             }
         } else if (wrapped instanceof GrantSubtypeEffect grant) {
-            if (conditionalNamesSource(context, grant.scope(), grant.filter())) {
+            if (names(context, grant.subject(), grant.filter())) {
                 accumulator.addGrantedSubtype(grant.subtype());
                 if (grant.overriding()) {
                     accumulator.setSubtypeOverriding(true);
                 }
             }
         } else if (wrapped instanceof GrantActivatedAbilityEffect grant) {
-            if (conditionalNamesSource(context, grant.scope(), grant.filter())) {
+            if (names(context, grant.subject(), grant.filter())) {
                 accumulator.addActivatedAbility(grant.ability().withGrantSource(context.sourceId()));
             }
         } else if (wrapped instanceof GrantColorEffect grant) {
-            if (conditionalNamesSource(context, grant.scope(), grant.filter())) {
+            if (names(context, grant.subject(), grant.filter())) {
                 accumulator.addGrantedColor(grant.color());
                 if (grant.overriding()) {
                     accumulator.setColorOverriding(true);
                 }
             }
         } else if (wrapped instanceof GrantTriggeredAbilityEffect grant) {
-            if (conditionalNamesSource(context, grant.scope(), grant.filter())) {
+            if (names(context, grant.subject(), grant.filter())) {
                 accumulator.addGrantedEffect(grant);
             }
         } else if (wrapped instanceof ProtectionFromColorsEffect protection) {
             accumulator.addProtectionColors(protection.colors());
         } else if (wrapped instanceof RemoveKeywordEffect remove
-                && conditionalNamesSource(context, remove.scope(), remove.filter())) {
+                && names(context, remove.subject(), remove.filter())) {
             accumulator.removeKeyword(remove.keyword());
         } else if (wrapped instanceof SetBasePowerToughnessEffect setPT
-                && conditionalNamesSource(context, setPT.scope(), setPT.filter())) {
+                && names(context, setPT.subject(), setPT.filter())) {
             accumulator.setBasePTOverride(setPT.power(), setPT.toughness());
         } else if (wrapped instanceof SetNameEffect setName
-                && conditionalNamesSource(context, setName.scope(), null)) {
+                && names(context, setName.subject(), null)) {
             accumulator.setName(setName.name());
         } else if (wrapped instanceof GrantEffectEffect grant) {
-            if (conditionalNamesSource(context, grant.scope(), grant.filter())) {
+            if (names(context, grant.subject(), grant.filter())) {
                 accumulator.addGrantedEffect(grant.effect());
             }
         } else if (wrapped instanceof AnimatePermanentsEffect animate
-                && conditionalNamesSource(context, animate.scope(), animate.filter())) {
+                && names(context, animate.subject(), animate.filter())) {
             accumulator.setSelfBecomeCreature(true);
             if (animate.cardTypeOverriding()) {
                 java.util.Set<CardType> types = java.util.EnumSet.of(CardType.CREATURE);
@@ -286,20 +249,11 @@ public class StaticEffectSupport implements SubjectResolutionService.StaticReads
             }
             accumulator.addKeywords(animate.grantedKeywords());
         } else if (wrapped instanceof SetCardTypesEffect set
-                && conditionalNamesSource(context, set.scope(), null)
+                && names(context, set.subject(), null)
                 && (!Duration.WHILE_ATTACHED.equals(set.duration()) || context.source().isAttached())) {
             accumulator.setCardTypeOverriding(true);
             accumulator.setGrantedCardTypes(set.cardTypes());
         }
-    }
-
-    /**
-     * Whether a conditional static ability of the source's own reaches the source itself: whether its subject names
-     * it. "All creatures" reaches it too here (the conditional path reads that constant including the source).
-     */
-    private boolean conditionalNamesSource(StaticEffectContext context, GrantScope scope, PermanentPredicate filter) {
-        return names(context, scope == GrantScope.ALL_CREATURES
-                ? GrantScope.ALL_CREATURES_INCLUDING_SELF.subject() : scope.subject(), filter);
     }
 
     /**
@@ -380,7 +334,7 @@ public class StaticEffectSupport implements SubjectResolutionService.StaticReads
                     CardEffect e = TextChangeTransformer.transform(printed, gameData.textReplacements(source.getId()));
                     if (e instanceof AllLandsAreCreaturesEffect animateLands
                             && subjectResolutionService.names(gameData, source, playerId,
-                                    bf.contains(permanent), permanent, animateLands.scope().subject(), this)
+                                    bf.contains(permanent), permanent, animateLands.subject(), this)
                             && (animateLands.requiredSubtype() == null
                                     || subtypes.contains(animateLands.requiredSubtype()))) {
                         return true;

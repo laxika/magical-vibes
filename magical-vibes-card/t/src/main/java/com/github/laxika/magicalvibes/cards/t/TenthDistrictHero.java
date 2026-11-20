@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCreatureTypeWithBasePow
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.effect.SetSelfBasePowerToughnessInde
 import com.github.laxika.magicalvibes.model.effect.SetSelfKeywordIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfPermanentSupertypeIndefinitelyEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "34")
@@ -48,9 +48,9 @@ public class TenthDistrictHero extends Card {
                                         new SetSelfBasePowerToughnessIndefinitelyEffect(5, 5),
                                         new SetSelfPermanentSupertypeIndefinitelyEffect(CardSupertype.LEGENDARY, true),
                                         new GrantStaticEffectToSourceEffect(
-                                                new SetNameEffect("Mileva, the Stalwart", GrantScope.SELF)),
+                                                new SetNameEffect("Mileva, the Stalwart", Subjects.source())),
                                         new GrantStaticEffectToSourceEffect(
-                                                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_CREATURES))
+                                                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.otherCreaturesYouControl()))
                                 )
                         )
                 ),

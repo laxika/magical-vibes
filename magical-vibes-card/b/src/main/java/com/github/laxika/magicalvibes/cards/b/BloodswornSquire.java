@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -31,7 +30,7 @@ public class BloodswornSquire extends Card {
                 "{1}{B}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF),
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source()),
                         new TapPermanentsEffect(Subjects.source()),
                         new ConditionalEffect(
                                 new GraveyardCardThreshold(4, new CardTypePredicate(CardType.CREATURE)),

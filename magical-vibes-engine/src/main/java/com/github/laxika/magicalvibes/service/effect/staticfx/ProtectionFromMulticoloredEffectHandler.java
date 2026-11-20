@@ -21,8 +21,8 @@ public class ProtectionFromMulticoloredEffectHandler implements StaticEffectHand
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var protection = (ProtectionFromMulticoloredEffect) effect;
-        if (protection.scope() != null
-                && support.namesBeyondSource(context, protection.scope().subject(), null)) {
+        if (protection.subject() != null
+                && support.namesBeyondSource(context, protection.subject(), null)) {
             accumulator.addGrantedEffect(protection);
         }
     }

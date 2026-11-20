@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.DefendingPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SeekCardsToHandEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +22,7 @@ public class BlightwingWhelp extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}",
-                List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.source())),
                 "{B}: Blightwing Whelp gains haste until end of turn."
         ));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new SeekCardsToHandEffect(

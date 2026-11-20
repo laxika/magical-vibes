@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INR", collectorNumber = "229")
@@ -21,11 +21,11 @@ public class AngelfireIgnition extends Card {
         // Flashback {2}{R}{W}
         target(TargetFilters.creature())
                 .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target()))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target()))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.target()));
         addCastingOption(new FlashbackCast("{2}{R}{W}"));
     }
 }

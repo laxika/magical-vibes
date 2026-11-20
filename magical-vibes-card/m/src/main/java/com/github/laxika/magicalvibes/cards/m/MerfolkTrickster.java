@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,6 +22,6 @@ public class MerfolkTrickster extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new TapPermanentsEffect(Subjects.target()),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.UNTIL_END_OF_TURN));
+                        new LosesAllAbilitiesEffect(Subjects.target(), Duration.UNTIL_END_OF_TURN));
     }
 }

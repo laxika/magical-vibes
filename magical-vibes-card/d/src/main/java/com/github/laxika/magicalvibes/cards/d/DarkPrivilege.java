@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -16,7 +16,7 @@ import java.util.List;
 public class DarkPrivilege extends Card {
 
     public DarkPrivilege() {
-        target(TargetFilters.creature()).addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+        target(TargetFilters.creature()).addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
 
         // Sacrifice a creature: Regenerate enchanted creature. The self RegenerateEffect on an Aura
         // resolves against the Aura's attachedTo permanent (captured at activation).

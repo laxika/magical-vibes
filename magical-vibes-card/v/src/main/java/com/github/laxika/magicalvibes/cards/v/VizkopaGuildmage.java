@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
@@ -29,7 +28,7 @@ public class VizkopaGuildmage extends Card {
 
     public VizkopaGuildmage() {
         addActivatedAbility(new ActivatedAbility(false, "{1}{W}{B}",
-                List.of(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target())),
                 "{1}{W}{B}: Target creature gains lifelink until end of turn.",
                 new PermanentPredicateTargetFilter(new PermanentIsCreaturePredicate(),
                         "Target must be a creature")));

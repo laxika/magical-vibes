@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -36,7 +36,7 @@ public class OrcishVeteran extends Card {
                 "creatures that aren't white creatures with power 2 or greater"
         ));
         addActivatedAbility(new ActivatedAbility(false, "{R}",
-                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())),
                 "{R}: This creature gains first strike until end of turn."));
     }
 }

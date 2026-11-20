@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,6 +18,6 @@ public class SpringjackKnight extends Card {
         // stack; the clash resolves and, on a win, grants the keyword to that creature.)
         target(TargetFilters.creature())
                 .addTrigger(Triggers.attacks(),
-                        new ClashEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET)));
+                        new ClashEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target())));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureThenTapIfColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class PathwayArrows extends Card {
                         "{2}, {T}: This creature deals 1 damage to target creature. If a colorless creature is dealt damage this way, tap it.",
                         TargetFilters.creature()
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

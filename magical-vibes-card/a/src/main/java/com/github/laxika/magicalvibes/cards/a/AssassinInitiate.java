@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ACR", collectorNumber = "22")
@@ -17,7 +17,7 @@ public class AssassinInitiate extends Card {
                 false,
                 "{1}",
                 List.of(new GrantChosenKeywordEffect(
-                        List.of(Keyword.FLYING, Keyword.DEATHTOUCH, Keyword.LIFELINK), GrantScope.SELF)),
+                        List.of(Keyword.FLYING, Keyword.DEATHTOUCH, Keyword.LIFELINK), Subjects.source())),
                 "{1}: This creature gains your choice of flying, deathtouch, or lifelink until end of turn."
         ));
     }

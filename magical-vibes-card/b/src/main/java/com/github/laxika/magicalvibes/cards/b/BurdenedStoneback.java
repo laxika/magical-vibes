@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class BurdenedStoneback extends Card {
                 "{1}{W}",
                 List.of(
                         new RemoveCounterFromSourceCost(),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target())
                 ),
                 "{1}{W}, Remove a counter from this creature: Target creature gains indestructible until end of turn. Activate only as a sorcery.",
                 TargetFilters.creature(),

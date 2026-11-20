@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToOwnPermanentsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -34,6 +34,6 @@ public class Esper extends Card {
         addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                 new AddCardTypeToOwnPermanentsUntilEndOfTurnEffect(CardType.ARTIFACT, coloredCreature),
                 new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.MENACE, Keyword.LIFELINK),
-                        GrantScope.ALL_OWN_CREATURES, new PermanentIsArtifactPredicate())));
+                        Subjects.creaturesYouControl(), new PermanentIsArtifactPredicate())));
     }
 }

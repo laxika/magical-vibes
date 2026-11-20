@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
 
 import java.util.List;
@@ -18,7 +18,7 @@ import java.util.List;
 public class SurestrikeTrident extends Card {
 
     public SurestrikeTrident() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.attachedCreature()));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
@@ -29,7 +29,7 @@ public class SurestrikeTrident extends Card {
                         ),
                         "{T}, Unattach Surestrike Trident: This creature deals damage equal to its power to target player or planeswalker."
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }

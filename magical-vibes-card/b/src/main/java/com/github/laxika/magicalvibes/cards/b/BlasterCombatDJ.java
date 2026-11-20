@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentsEnterWithAdditionalCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -52,7 +52,7 @@ public class BlasterCombatDJ extends Card {
                 new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
                 new MayEffect(PutCounterOnTargetForEachDyingSourceCounterEffect.modularAbility(),
                         PutCounterOnTargetForEachDyingSourceCounterEffect.MODULAR_PROMPT)),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 modularTarget));
         addTrigger(Triggers.youPutPlusOneCountersOnThis(), new TransformToBackFaceEffect());
     }

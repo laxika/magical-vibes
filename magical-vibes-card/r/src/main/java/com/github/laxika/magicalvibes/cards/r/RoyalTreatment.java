@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,7 +27,7 @@ public class RoyalTreatment extends Card {
 
     public RoyalTreatment() {
         target(TargetFilters.creatureYouControl())
-                .addSpellEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.target()))
                 .addSpellEffect(new CreateTokenAttachedToTargetEffect(royalRoleToken()));
     }
 
@@ -47,11 +47,11 @@ public class RoyalTreatment extends Card {
                 false,
                 List.of(
                         StaticAbility.of(SequenceEffect.of(
-                        new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
+                        new StaticBoostEffect(1, 1, Subjects.attachedCreature()),
                         new GrantTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                                 new CounterUnlessPaysEffect(1)),
-                                GrantScope.ENCHANTED_CREATURE)))),
+                                Subjects.attachedCreature())))),
                 List.of(),
                 false,
                 false,

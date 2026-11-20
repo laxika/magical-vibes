@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,7 +17,7 @@ public class ArcaneTeachings extends Card {
 
     public ArcaneTeachings() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()))
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 true,
@@ -25,7 +25,7 @@ public class ArcaneTeachings extends Card {
                                 List.of(new DealDamageToAnyTargetEffect(1)),
                                 "{T}: This creature deals 1 damage to any target."
                         ),
-                        GrantScope.ENCHANTED_CREATURE
+                        Subjects.attachedCreature()
                 ));
     }
 }

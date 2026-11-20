@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToOwnerBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -69,7 +69,7 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
                 returnEffect.subtypeOverride().isEmpty() ? returnEffect.grantSubtype() : null);
         if (!returnEffect.grantKeywords().isEmpty()) {
             gameData.addEffectOnPermanent(entry,
-                    new GrantKeywordEffect(Set.copyOf(returnEffect.grantKeywords()), GrantScope.TARGET),
+                    new GrantKeywordEffect(Set.copyOf(returnEffect.grantKeywords()), Subjects.target()),
                     permanent.getId(), Duration.PERMANENT);
         }
         if (returnEffect.enterWithCounter() != null && returnEffect.enterWithCounterCount() > 0) {
@@ -91,7 +91,7 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
         for (var subtype : returnEffect.subtypeOverride()) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), cardToReturn.getName(), null, entry.getControllerId(),
-                    new GrantSubtypeEffect(subtype, GrantScope.TARGET, overriding),
+                    new GrantSubtypeEffect(subtype, Subjects.target(), overriding),
                     permanent.getId(), null, null, Duration.PERMANENT, 0));
             overriding = false;
         }

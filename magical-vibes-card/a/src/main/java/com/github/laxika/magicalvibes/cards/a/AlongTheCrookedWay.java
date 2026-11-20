@@ -13,11 +13,11 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -64,7 +64,7 @@ public class AlongTheCrookedWay extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B}",
-                List.of(new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES, goblinOrOrc)),
+                List.of(new GrantKeywordEffect(Keyword.MENACE, Subjects.otherCreaturesYouControl(), goblinOrOrc)),
                 "{1}{B}: Goblins and Orcs you control gain menace until end of turn."
         ));
     }

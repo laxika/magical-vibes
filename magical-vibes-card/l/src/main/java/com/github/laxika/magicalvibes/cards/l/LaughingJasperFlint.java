@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -37,7 +36,7 @@ public class LaughingJasperFlint extends Card {
     public LaughingJasperFlint() {
         addStaticEffect(new GrantSubtypeEffect(
                 CardSubtype.MERCENARY,
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 false,
                 new PermanentNotPredicate(new PermanentOwnedBySourceControllerPredicate())));
 

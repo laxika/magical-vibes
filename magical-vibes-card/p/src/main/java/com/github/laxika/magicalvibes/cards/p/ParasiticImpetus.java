@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadEquippedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +20,7 @@ public class ParasiticImpetus extends Card {
         setAttackTriggerOwnedByAura(true);
 
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()))
                 .addStaticEffect(new GoadEquippedCreatureEffect());
 
         addTrigger(Triggers.attacks(), new LoseLifeEffect(2, Subjects.controllerOf(Subjects.triggering())), new GainLifeEffect(2));

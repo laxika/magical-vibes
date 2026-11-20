@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectsToCounterBearersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -46,9 +46,9 @@ public class SauronDinoDevotee extends Card {
                         List.of(
                                 new PutCounterOnTargetPermanentEffect(CounterType.SAURIAN),
                                 new GrantEffectsToCounterBearersEffect(CounterType.SAURIAN, List.of(
-                                        new GrantColorEffect(CardColor.GREEN, GrantScope.ALL_PERMANENTS, true),
-                                        new GrantSubtypeEffect(CardSubtype.DINOSAUR, GrantScope.ALL_PERMANENTS, true),
-                                        new SetBasePowerToughnessEffect(5, 5, GrantScope.ALL_CREATURES)), true)),
+                                        new GrantColorEffect(CardColor.GREEN, Subjects.otherPermanents(), true),
+                                        new GrantSubtypeEffect(CardSubtype.DINOSAUR, Subjects.otherPermanents(), true),
+                                        new SetBasePowerToughnessEffect(5, 5, Subjects.otherCreatures())), true)),
                         new PermanentPredicateTargetFilter(anotherCreature, "Target must be another creature"))
         )));
     }

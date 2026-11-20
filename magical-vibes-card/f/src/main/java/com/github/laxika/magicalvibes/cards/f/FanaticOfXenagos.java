@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TributeEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,6 +18,6 @@ public class FanaticOfXenagos extends Card {
         addStaticEffect(new TributeEffect(1));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new TributeNotPaidEffect(new BoostSelfEffect(1, 1)),
-                new TributeNotPaidEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
+                new TributeNotPaidEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.source())));
     }
 }

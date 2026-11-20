@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -33,7 +33,7 @@ public class TezzeretAgentOfBolas extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -1,
                 List.of(new AnimatePermanentsEffect(5, 5, List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, Duration.PERMANENT)),
+                        Subjects.target(), Duration.PERMANENT)),
                 "\u22121: Target artifact becomes an artifact creature with base power and toughness 5/5.",
                 TargetFilters.artifact()
         ));

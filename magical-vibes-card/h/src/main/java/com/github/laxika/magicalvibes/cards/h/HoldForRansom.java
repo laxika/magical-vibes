@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeGrantingPermanentAndControllerDrawsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -25,6 +25,6 @@ public class HoldForRansom extends Card {
                                 List.of(new SacrificeGrantingPermanentAndControllerDrawsEffect(1)),
                                 "{7}: Hold for Ransom's controller sacrifices it and draws a card.",
                                 ActivationTimingRestriction.SORCERY_SPEED),
-                        GrantScope.ENCHANTED_CREATURE));
+                        Subjects.attachedCreature()));
     }
 }

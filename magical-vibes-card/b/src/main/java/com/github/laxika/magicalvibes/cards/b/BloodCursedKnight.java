@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
 import java.util.Set;
@@ -16,6 +16,6 @@ public class BloodCursedKnight extends Card {
 
     public BloodCursedKnight() {
         // As long as you control an enchantment, Blood-Cursed Knight gets +1/+1 and has lifelink.
-        addStaticEffect(new ConditionalEffect(new ControlsPermanent(new PermanentIsEnchantmentPredicate()), new StaticBoostEffect(1, 1, Set.of(Keyword.LIFELINK), GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new ControlsPermanent(new PermanentIsEnchantmentPredicate()), new StaticBoostEffect(1, 1, Set.of(Keyword.LIFELINK), Subjects.source())));
     }
 }

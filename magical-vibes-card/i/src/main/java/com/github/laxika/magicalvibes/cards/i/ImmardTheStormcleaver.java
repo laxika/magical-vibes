@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
@@ -29,7 +29,7 @@ public class ImmardTheStormcleaver extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Immard gains lifelink and indestructible until end of turn",
                         new GrantKeywordEffect(
-                                Set.of(Keyword.LIFELINK, Keyword.INDESTRUCTIBLE), GrantScope.SELF))));
+                                Set.of(Keyword.LIFELINK, Keyword.INDESTRUCTIBLE), Subjects.source()))));
 
         var counterMode = new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(

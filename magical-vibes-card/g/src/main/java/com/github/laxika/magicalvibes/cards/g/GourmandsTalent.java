@@ -18,10 +18,10 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -43,11 +43,11 @@ public class GourmandsTalent extends Card {
                 "{2}, {T}, Sacrifice this artifact: You gain 3 life."
         );
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantCardTypeEffect(CardType.ARTIFACT, GrantScope.OWN_PERMANENTS, ARTIFACT)));
+                new GrantCardTypeEffect(CardType.ARTIFACT, Subjects.permanentsYouControl(), ARTIFACT)));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantSubtypeEffect(CardSubtype.FOOD, GrantScope.OWN_PERMANENTS, false, ARTIFACT)));
+                new GrantSubtypeEffect(CardSubtype.FOOD, Subjects.permanentsYouControl(), false, ARTIFACT)));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantActivatedAbilityEffect(foodAbility, GrantScope.OWN_PERMANENTS, ARTIFACT)));
+                new GrantActivatedAbilityEffect(foodAbility, Subjects.permanentsYouControl(), ARTIFACT)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

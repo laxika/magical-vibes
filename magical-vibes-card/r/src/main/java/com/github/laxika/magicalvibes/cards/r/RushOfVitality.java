@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.Set;
@@ -18,6 +18,6 @@ public class RushOfVitality extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(1, 0))
                 .addSpellEffect(new GrantKeywordEffect(
-                        Set.of(Keyword.LIFELINK, Keyword.INDESTRUCTIBLE), GrantScope.TARGET));
+                        Set.of(Keyword.LIFELINK, Keyword.INDESTRUCTIBLE), Subjects.target()));
     }
 }

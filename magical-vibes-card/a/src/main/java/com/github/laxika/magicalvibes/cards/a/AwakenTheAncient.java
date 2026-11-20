@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -22,6 +22,6 @@ public class AwakenTheAncient extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), "Target must be a Mountain"))
                 .addStaticEffect(new EnchantedPermanentBecomesCreatureEffect(
                         7, 7, CardColor.RED, List.of(CardSubtype.GIANT)))
-                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_PERMANENT));
+                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.attached()));
     }
 }

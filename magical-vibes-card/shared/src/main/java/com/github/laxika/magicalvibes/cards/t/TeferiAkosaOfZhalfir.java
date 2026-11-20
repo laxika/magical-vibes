@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardTwoUnlessCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfCreaturesThenReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -38,11 +38,11 @@ public class TeferiAkosaOfZhalfir extends Card {
                 -2,
                 List.of(new CreateEmblemEffect(
                         List.of(
-                                new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES, knight),
+                                new StaticBoostEffect(1, 0, Subjects.otherCreaturesYouControl(), knight),
                                 new GrantTriggeredAbilityEffect(
                                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                                         new CounterUnlessPaysEffect(1)),
-                                        GrantScope.OWN_CREATURES,
+                                        Subjects.otherCreaturesYouControl(),
                                         knight)
                         ),
                         "Knights you control get +1/+0 and have ward {1}."

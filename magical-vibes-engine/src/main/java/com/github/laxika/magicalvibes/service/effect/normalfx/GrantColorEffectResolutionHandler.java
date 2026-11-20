@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
@@ -28,11 +29,12 @@ public class GrantColorEffectResolutionHandler implements NormalEffectHandlerBea
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         GrantColorEffect grant = (GrantColorEffect) effect;
-        if (grant.scope() != GrantScope.TARGET && grant.scope() != GrantScope.SELF) {
+        if (!(grant.subject() instanceof PermanentSubject.Target)
+                && !(grant.subject() instanceof PermanentSubject.Source)) {
             return;
         }
 
-        for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, grant.scope().subject())) {
+        for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, grant.subject())) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                     entry.getControllerId(), grant, target.getId(), null, null,

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AmassGoblinsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "WAR", collectorNumber = "59")
 @CardRegistration(set = "SCD", collectorNumber = "57")
@@ -16,6 +16,6 @@ public class LazotepPlating extends Card {
     public LazotepPlating() {
         addSpellEffect(new AmassGoblinsEffect(1, CardSubtype.ZOMBIE));
         addSpellEffect(new GrantControllerKeywordUntilEndOfTurnEffect(Keyword.HEXPROOF));
-        addSpellEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS));
+        addSpellEffect(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.permanentsYouControl()));
     }
 }

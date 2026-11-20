@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,6 +30,6 @@ public class LivingLightningChargedUp extends Card {
                 "Target must be another creature you control"
         )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 new BoostTargetCreatureEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target()));
     }
 }

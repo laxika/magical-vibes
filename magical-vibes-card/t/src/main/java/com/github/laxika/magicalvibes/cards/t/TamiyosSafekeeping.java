@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.Set;
@@ -19,7 +19,7 @@ public class TamiyosSafekeeping extends Card {
     public TamiyosSafekeeping() {
         target(TargetFilters.permanentYouControl())
                 .addSpellEffect(new GrantKeywordEffect(
-                        Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.TARGET))
+                        Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), Subjects.target()))
                 .addSpellEffect(new GainLifeEffect(2));
     }
 }

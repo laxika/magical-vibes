@@ -16,9 +16,9 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasActivatedAbilityWithEffectsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -77,7 +77,7 @@ public class OddricLunarMarquis extends Card {
         List<CardEffect> sharedEffects = Stream.concat(
                 SHARED_KEYWORDS.stream().map(keyword -> (CardEffect) conditionalSharedEffect(
                         keyword,
-                        new GrantKeywordEffect(keyword, GrantScope.ALL_OWN_CREATURES))),
+                        new GrantKeywordEffect(keyword, Subjects.creaturesYouControl()))),
                 Stream.<CardEffect>of(
                         conditionalSharedEffect(Keyword.INGEST,
                                 new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
@@ -90,7 +90,7 @@ public class OddricLunarMarquis extends Card {
                                 sharesManaAbility(),
                                 new GrantActivatedAbilityEffect(
                                         colorlessManaAbility,
-                                        GrantScope.ALL_OWN_CREATURES,
+                                        Subjects.creaturesYouControl(),
                                         null,
                                         Duration.UNTIL_END_OF_TURN,
                                         null))

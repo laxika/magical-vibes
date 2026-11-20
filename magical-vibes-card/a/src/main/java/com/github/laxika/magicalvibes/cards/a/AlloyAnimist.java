@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -24,7 +24,7 @@ public class AlloyAnimist extends Card {
                 "{2}{G}",
                 List.of(new AnimatePermanentsEffect(
                         4, 4, List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN)),
+                        Subjects.target(), Duration.UNTIL_END_OF_TURN)),
                 "{2}{G}: Until end of turn, target noncreature artifact you control becomes a 4/4 artifact creature.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -44,10 +44,10 @@ public class BorosCharm extends Card {
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Permanents you control gain indestructible until end of turn",
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_PERMANENTS)),
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.permanentsYouControl())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gains double strike until end of turn",
-                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),
                                 "Target must be a creature."

@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualPowerToughnessAndIncorporationEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,9 +27,9 @@ public class GuildpactGreenwalker extends Card {
 
         var multicoloredCreature = new PermanentIsMulticoloredPredicate();
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.WARD, GrantScope.OWN_CREATURES, multicoloredCreature));
+                Keyword.WARD, Subjects.otherCreaturesYouControl(), multicoloredCreature));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(2)), GrantScope.OWN_CREATURES, multicoloredCreature));
+                new CounterUnlessPaysEffect(2)), Subjects.otherCreaturesYouControl(), multicoloredCreature));
     }
 }

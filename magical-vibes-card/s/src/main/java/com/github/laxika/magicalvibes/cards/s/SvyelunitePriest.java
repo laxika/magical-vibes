@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class SvyelunitePriest extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{U}{U}",
-                List.of(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.SHROUD, Subjects.target())),
                 "{U}{U}, {T}: Target creature gains shroud until end of turn. Activate only during your upkeep.",
                 TargetFilters.creature(),
                 null,

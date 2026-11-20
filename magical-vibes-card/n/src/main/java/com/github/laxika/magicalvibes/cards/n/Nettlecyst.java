@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -35,7 +35,7 @@ public class Nettlecyst extends Card {
         addStaticEffect(new AttachedBoostEffect(
                 artifactsAndEnchantmentsYouControl,
                 artifactsAndEnchantmentsYouControl,
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

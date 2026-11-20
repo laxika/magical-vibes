@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,11 +25,11 @@ public class SwordOfTheParuns extends Card {
     public SwordOfTheParuns() {
         addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentIsTappedPredicate(),
-                new StaticBoostEffect(2, 0, GrantScope.OWN_TAPPED_CREATURES),
+                new StaticBoostEffect(2, 0, Subjects.otherTappedCreaturesYouControl()),
                 null));
         addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentNotPredicate(new PermanentIsTappedPredicate()),
-                new StaticBoostEffect(0, 2, GrantScope.OWN_UNTAPPED_CREATURES),
+                new StaticBoostEffect(0, 2, Subjects.otherUntappedCreaturesYouControl()),
                 null));
 
         addActivatedAbility(new ActivatedAbility(

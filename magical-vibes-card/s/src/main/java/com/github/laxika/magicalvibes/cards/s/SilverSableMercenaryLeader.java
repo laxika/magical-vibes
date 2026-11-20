@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -39,6 +39,6 @@ public class SilverSableMercenaryLeader extends Card {
                         new PermanentIsModifiedPredicate()
                 )),
                 "Target must be a modified creature you control"
-        )).addTrigger(Triggers.attacks(), new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET));
+        )).addTrigger(Triggers.attacks(), new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target()));
     }
 }

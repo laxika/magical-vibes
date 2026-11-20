@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -24,7 +24,7 @@ public class PhyrexianAwakening extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), incubatorToken());
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.VIGILANCE,
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN)));
     }
 

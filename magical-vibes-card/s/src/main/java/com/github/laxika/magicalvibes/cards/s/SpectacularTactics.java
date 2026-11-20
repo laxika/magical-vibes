@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -28,7 +28,7 @@ public class SpectacularTactics extends Card {
                         "Put a +1/+1 counter on target creature you control. It gains hexproof until end of turn",
                         List.of(
                                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.target())),
                         TargetFilters.creatureYouControl()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature with power 4 or greater",

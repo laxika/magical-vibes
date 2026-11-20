@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -36,7 +35,7 @@ public class KothOfTheHammer extends Card {
                 List.of(
                         new UntapPermanentsEffect(Subjects.target()),
                         new AnimatePermanentsEffect(4, 4, List.of(CardSubtype.ELEMENTAL), Set.of(),
-                                CardColor.RED, Set.of(), GrantScope.TARGET, Duration.UNTIL_END_OF_TURN)
+                                CardColor.RED, Set.of(), Subjects.target(), Duration.UNTIL_END_OF_TURN)
                 ),
                 "+1: Untap target Mountain. It becomes a 4/4 red Elemental creature until end of turn. It's still a land.",
                 new PermanentPredicateTargetFilter(
@@ -62,7 +61,7 @@ public class KothOfTheHammer extends Card {
                                         true, null,
                                         List.of(new DealDamageToAnyTargetEffect(1)),
                                         "{T}: This land deals 1 damage to any target."),
-                                GrantScope.OWN_PERMANENTS,
+                                Subjects.permanentsYouControl(),
                                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN))),
                         "Mountains you control have '{T}: This land deals 1 damage to any target.'")),
                 "\u22125: You get an emblem with \"Mountains you control have '{T}: This land deals 1 damage to any target.'\"."

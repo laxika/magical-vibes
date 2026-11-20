@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class DefilingTears extends Card {
                 .addSpellEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()),
                                 "{B}: Regenerate this creature."),
-                        GrantScope.TARGET,
+                        Subjects.target(),
                         null,
                         Duration.UNTIL_END_OF_TURN
                 ));

@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -35,7 +35,7 @@ public class Earthbind extends Card {
                                 new GrantStaticEffectToSourceEffect(
                                         new RemoveKeywordEffect(
                                                 Keyword.FLYING,
-                                                GrantScope.ENCHANTED_CREATURE,
+                                                Subjects.attachedCreature(),
                                                 Duration.PERMANENT))));
     }
 }

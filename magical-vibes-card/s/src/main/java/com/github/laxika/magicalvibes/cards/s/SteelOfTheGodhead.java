@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,11 +21,11 @@ public class SteelOfTheGodhead extends Card {
         target(TargetFilters.creature())
                 // As long as enchanted creature is white, it gets +1/+1 and has lifelink.
                 .addStaticEffect(new StaticBoostEffect(
-                        1, 1, Set.of(Keyword.LIFELINK), GrantScope.ENCHANTED_CREATURE,
+                        1, 1, Set.of(Keyword.LIFELINK), Subjects.attachedCreature(),
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE))))
                 // As long as enchanted creature is blue, it gets +1/+1 and can't be blocked.
                 .addStaticEffect(new StaticBoostEffect(
-                        1, 1, GrantScope.ENCHANTED_CREATURE,
+                        1, 1, Subjects.attachedCreature(),
                         new PermanentColorInPredicate(Set.of(CardColor.BLUE))))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.BLUE)),

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LEG", collectorNumber = "75")
@@ -12,6 +12,6 @@ public class SeaKingsBlessing extends Card {
 
     public SeaKingsBlessing() {
         target(TargetFilters.creature(), 1, Integer.MAX_VALUE)
-                .addSpellEffect(new GrantColorUntilEndOfTurnEffect(CardColor.BLUE, GrantScope.TARGETS));
+                .addSpellEffect(new GrantColorUntilEndOfTurnEffect(CardColor.BLUE, Subjects.allTargets()));
     }
 }

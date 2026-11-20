@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.Set;
@@ -21,7 +21,7 @@ public class JuniperOrderAdvocate extends Card {
         // were ever green; the untapped gate is re-evaluated each static pass.
         addStaticEffect(new ConditionalEffect(
                 new SourceUntapped(),
-                new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+                new StaticBoostEffect(1, 1, Subjects.creaturesYouControl(),
                         new PermanentColorInPredicate(Set.of(CardColor.GREEN)))));
     }
 }

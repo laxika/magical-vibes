@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.Set;
@@ -20,6 +20,6 @@ public class DragonloftIdol extends Card {
         // As long as you control a Dragon, this creature gets +1/+1 and has flying and trample.
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
-                new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING, Keyword.TRAMPLE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING, Keyword.TRAMPLE), Subjects.source())));
     }
 }

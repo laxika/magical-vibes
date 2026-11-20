@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class ScarbladesMalice extends Card {
     public ScarbladesMalice() {
         target(TargetFilters.creatureYouControl())
                 .addSpellEffect(new GrantKeywordEffect(
-                        Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK), GrantScope.TARGET))
+                        Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK), Subjects.target()))
                 .addSpellEffect(new ResolveEffectOnTargetDeathThisTurnEffect(
                         new CreateTokenEffect("Elf", 2, 2, CardColor.BLACK,
                                 Set.of(CardColor.BLACK, CardColor.GREEN), List.of(CardSubtype.ELF))));

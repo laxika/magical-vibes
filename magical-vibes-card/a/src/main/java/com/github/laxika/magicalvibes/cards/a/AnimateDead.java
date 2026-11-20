@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReanimateEnchantedCreatureCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeEnchantedCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -46,7 +46,7 @@ public class AnimateDead extends Card {
                 .build());
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ReanimateEnchantedCreatureCardEffect(false));
         // "Enchanted creature gets -1/-0."
-        addStaticEffect(new StaticBoostEffect(-1, 0, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(-1, 0, Subjects.attachedCreature()));
         // "When this Aura leaves the battlefield, that creature's controller sacrifices it."
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new SacrificeEnchantedCreatureOnLeaveEffect());
     }

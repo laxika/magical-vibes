@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTu
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class SoulbrightFlamekin extends Card {
                 false,
                 "{2}",
                 List.of(
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()),
                         new ConditionalEffect(new NthAbilityResolutionThisTurn(3),
                                 new MayEffect(new AwardManaEffect(ManaColor.RED, 8), "Add {R}{R}{R}{R}{R}{R}{R}{R}?"))
                 ),

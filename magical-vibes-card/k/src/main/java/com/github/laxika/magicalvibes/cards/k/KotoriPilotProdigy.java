@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -42,7 +42,7 @@ public class KotoriPilotProdigy extends Card {
                         List.of(new CrewCost(2), AnimatePermanentsEffect.crew()),
                         "Crew 2"
                 ),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)
         ));
 
@@ -50,6 +50,6 @@ public class KotoriPilotProdigy extends Card {
                 ARTIFACT_CREATURE_YOU_CONTROL,
                 "Target must be an artifact creature you control"
         )).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new GrantKeywordEffect(Set.of(Keyword.LIFELINK, Keyword.VIGILANCE), GrantScope.TARGET));
+                new GrantKeywordEffect(Set.of(Keyword.LIFELINK, Keyword.VIGILANCE), Subjects.target()));
     }
 }

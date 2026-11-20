@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTrampleToCreaturesBlockedByTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -46,7 +46,7 @@ public class GrantTrampleToCreaturesBlockedByTargetEffectHandler implements Norm
                 ? List.copyOf(gameData.combatOpponentIdsBlockedByThisTurn
                         .getOrDefault(blocker.getId(), java.util.Set.of()))
                 : List.of();
-        GrantKeywordEffect grant = new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET);
+        GrantKeywordEffect grant = new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target());
         for (UUID blockedCreatureId : blockedCreatureIds) {
             Permanent blockedCreature = gameQueryService.findPermanentById(gameData, blockedCreatureId);
             if (blockedCreature == null || !gameQueryService.isCreature(gameData, blockedCreature)) {

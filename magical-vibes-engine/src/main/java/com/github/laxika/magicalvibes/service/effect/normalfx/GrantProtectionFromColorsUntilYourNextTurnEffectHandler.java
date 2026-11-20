@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorsUntilYourNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -41,7 +41,7 @@ public class GrantProtectionFromColorsUntilYourNextTurnEffectHandler implements 
 
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
-                new ProtectionFromColorsEffect(grant.colors(), GrantScope.TARGET), target.getId(), null, null,
+                new ProtectionFromColorsEffect(grant.colors(), Subjects.target()), target.getId(), null, null,
                 Duration.UNTIL_YOUR_NEXT_TURN, 0));
 
         gameLogService.append(gameData, GameLog.builder()

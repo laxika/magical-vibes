@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AVR", collectorNumber = "103")
@@ -16,9 +16,9 @@ public class Ghoulflesh extends Card {
     public Ghoulflesh() {
         target(TargetFilters.creature())
         // Enchanted creature gets -1/-1
-        .addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.ENCHANTED_CREATURE))
+        .addStaticEffect(new StaticBoostEffect(-1, -1, Subjects.attachedCreature()))
         // and is a black Zombie in addition to its other colors and types
-        .addStaticEffect(new GrantColorEffect(CardColor.BLACK, GrantScope.ENCHANTED_CREATURE))
-        .addStaticEffect(new GrantSubtypeEffect(CardSubtype.ZOMBIE, GrantScope.ENCHANTED_CREATURE));
+        .addStaticEffect(new GrantColorEffect(CardColor.BLACK, Subjects.attachedCreature()))
+        .addStaticEffect(new GrantSubtypeEffect(CardSubtype.ZOMBIE, Subjects.attachedCreature()));
     }
 }

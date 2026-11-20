@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -53,7 +52,7 @@ public class AlchemistsTalent extends Card {
                 new SourceCounterThreshold(1, CounterType.LEVEL),
                 new GrantActivatedAbilityEffect(
                         treasureManaAbility,
-                        GrantScope.OWN_PERMANENTS,
+                        Subjects.permanentsYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.TREASURE))));
 
         addActivatedAbility(new ActivatedAbility(

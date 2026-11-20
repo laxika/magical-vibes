@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -57,11 +57,11 @@ public class CharmedClothier extends Card {
                 false,
                 List.of(
                         StaticAbility.of(SequenceEffect.of(
-                        new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
+                        new StaticBoostEffect(1, 1, Subjects.attachedCreature()),
                         new GrantTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                                 new CounterUnlessPaysEffect(1)),
-                                GrantScope.ENCHANTED_CREATURE)))),
+                                Subjects.attachedCreature())))),
                 List.of(),
                 false,
                 false,

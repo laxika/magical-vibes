@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BolsterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 @CardRegistration(set = "DTK", collectorNumber = "209")
@@ -19,7 +19,7 @@ public class SunbringersTouch extends Card {
         addSpellEffect(new BolsterEffect(new CardsInHand(CountScope.CONTROLLER)));
         // Each creature you control with a +1/+1 counter on it gains trample until end of turn.
         addSpellEffect(new GrantKeywordEffect(
-                Keyword.TRAMPLE, GrantScope.OWN_CREATURES,
+                Keyword.TRAMPLE, Subjects.otherCreaturesYouControl(),
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)));
     }
 }

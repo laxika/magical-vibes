@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ZNR", collectorNumber = "91")
@@ -20,7 +20,7 @@ public class BlackbloomRogue extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new OpponentGraveyardAtLeast(8),
-                new StaticBoostEffect(3, 0, GrantScope.SELF)));
+                new StaticBoostEffect(3, 0, Subjects.source())));
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Blackbloom Rogue", List.of()),
                 new ChooseOneEffect.ChooseOneOption("Blackbloom Bog", List.of())

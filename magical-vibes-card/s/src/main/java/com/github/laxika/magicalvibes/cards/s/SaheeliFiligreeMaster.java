@@ -10,11 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -55,7 +55,7 @@ public class SaheeliFiligreeMaster extends Card {
                 -4,
                 List.of(new CreateEmblemEffect(
                         List.of(
-                                new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, artifactCreature),
+                                new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(), artifactCreature),
                                 new ReduceCastCostForMatchingSpellsEffect(
                                         new CardTypePredicate(CardType.ARTIFACT), 1, CostModificationScope.SELF)),
                         "Artifact creatures you control get +1/+1 and artifact spells you cast cost {1} less to cast.")),

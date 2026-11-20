@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.OpponentPermanentDealtExcessDamageThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -31,7 +31,7 @@ public class RithLiberatedPrimeval extends Card {
         // Other Dragons you control have ward {2}.
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(2)), GrantScope.OWN_CREATURES, dragon));
+                new CounterUnlessPaysEffect(2)), Subjects.otherCreaturesYouControl(), dragon));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new OpponentPermanentDealtExcessDamageThisTurn()),
                 new CreateTokenEffect("Dragon", 4, 4, CardColor.RED,

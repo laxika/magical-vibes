@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "7ED", collectorNumber = "144")
@@ -14,6 +14,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class LeshracsRite extends Card {
 
     public LeshracsRite() {
-        target(TargetFilters.creature()).addStaticEffect(new GrantKeywordEffect(Keyword.SWAMPWALK, GrantScope.ENCHANTED_CREATURE));
+        target(TargetFilters.creature()).addStaticEffect(new GrantKeywordEffect(Keyword.SWAMPWALK, Subjects.attachedCreature()));
     }
 }

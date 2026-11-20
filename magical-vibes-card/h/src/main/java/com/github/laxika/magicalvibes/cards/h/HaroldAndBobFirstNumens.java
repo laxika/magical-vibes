@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAsAuraEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -32,7 +31,7 @@ public class HaroldAndBobFirstNumens extends Card {
                 new ActivatedAbility(true, null,
                         List.of(new AwardAnyColorManaEffect(3), new GiveRadCountersEffect(2, Subjects.you())),
                         "{T}: Add three mana of any one color. You get two rad counters."),
-                GrantScope.ENCHANTED_PERMANENT);
+                Subjects.attached());
 
         addTrigger(Triggers.dies(Triggers.CREATURE, ObjectRelation.THIS),
                 ReturnSourceAsAuraEffect.losingOtherAbilities(forestYouControl, forestMana));

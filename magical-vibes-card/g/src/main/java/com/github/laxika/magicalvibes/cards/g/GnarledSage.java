@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "M21", collectorNumber = "187")
@@ -16,6 +16,6 @@ public class GnarledSage extends Card {
     public GnarledSage() {
         addStaticEffect(new ConditionalEffect(
                 new ControllerDrewAtLeastCardsThisTurn(2),
-                new StaticBoostEffect(0, 2, Set.of(Keyword.VIGILANCE), GrantScope.SELF)));
+                new StaticBoostEffect(0, 2, Set.of(Keyword.VIGILANCE), Subjects.source())));
     }
 }

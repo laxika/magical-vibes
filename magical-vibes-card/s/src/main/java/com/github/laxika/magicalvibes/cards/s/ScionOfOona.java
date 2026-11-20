@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -21,11 +21,11 @@ public class ScionOfOona extends Card {
 
     public ScionOfOona() {
         // Other Faerie creatures you control get +1/+1. (OWN_CREATURES scope excludes the source.)
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.FAERIE)));
 
         // Other Faeries you control have shroud (any permanent type, not only creatures).
-        addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.OWN_PERMANENTS,
+        addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, Subjects.otherPermanentsYouControl(),
                 new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.FAERIE),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())))));

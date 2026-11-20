@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -31,7 +30,7 @@ public class KariZevsExpertise extends Card {
                 "Target must be a creature or Vehicle"))
                 .addSpellEffect(new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new UntapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.target()))
                 .addSpellEffect(new MayCastAnySpellFromHandWithoutPayingManaCostEffect(
                         new CardMaxManaValuePredicate(2)));
     }

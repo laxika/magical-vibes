@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopSevenAndPerpetuallyGainKeywordsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.CardRevealService;
@@ -76,7 +76,7 @@ public class LookAtTopSevenAndPerpetuallyGainKeywordsEffectHandler implements No
             }
             for (CardEffect staticEffect : card.getStaticEffects()) {
                 if (staticEffect instanceof ProtectionGrantingEffect protection
-                        && protection.protectionScope() == null) {
+                        && protection.protectionSubject() == null) {
                     protectionEffects.add(staticEffect);
                 }
             }
@@ -111,7 +111,7 @@ public class LookAtTopSevenAndPerpetuallyGainKeywordsEffectHandler implements No
             }
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), sourceName, null, entry.getControllerId(),
-                    new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET, null,
+                    new GrantKeywordEffect(grantableKeywords, Subjects.target(), null,
                             Duration.PERMANENT, null),
                     sourceId, null, null, Duration.PERMANENT, 0));
         }

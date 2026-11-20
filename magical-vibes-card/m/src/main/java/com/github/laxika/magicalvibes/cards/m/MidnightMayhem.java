@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class MidnightMayhem extends Card {
                 3, "Gremlin", 1, 1, CardColor.RED, List.of(CardSubtype.GREMLIN), Set.of(), Set.of()));
         addSpellEffect(new GrantKeywordEffect(
                 Set.of(Keyword.MENACE, Keyword.LIFELINK, Keyword.HASTE),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.GREMLIN)));
     }
 }

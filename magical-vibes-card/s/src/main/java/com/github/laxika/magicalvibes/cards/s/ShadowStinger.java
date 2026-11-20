@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
@@ -24,7 +23,7 @@ public class ShadowStinger extends Card {
                 null,
                 List.of(
                         new TapCreatureCost(new PermanentHasSubtypePredicate(CardSubtype.ROGUE), true, false),
-                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())
                 ),
                 "Tap another untapped Rogue you control: This creature gains deathtouch until end of turn."
         ));

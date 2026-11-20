@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentToughness;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -33,6 +33,6 @@ public class RighteousValkyrie extends Card {
                 new GainLifeEffect(new TriggeringPermanentToughness()));
         addStaticEffect(new ConditionalEffect(
                         new ControllerLifeAtLeast(7, true),
-                        new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES)));
+                        new StaticBoostEffect(2, 2, Subjects.creaturesYouControl())));
     }
 }

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureToOwnerHandOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class GuardianZendikon extends Card {
                 .addStaticEffect(new EnchantedPermanentBecomesCreatureEffect(
                         2, 6, CardColor.WHITE, List.of(CardSubtype.WALL)))
                 .addStaticEffect(new GrantKeywordEffect(
-                        Keyword.DEFENDER, GrantScope.ENCHANTED_PERMANENT));
+                        Keyword.DEFENDER, Subjects.attached()));
 
         // When enchanted land dies, return that card to its owner's hand.
         addTrigger(Triggers.creatureDies(ObjectRelation.ENCHANTED),

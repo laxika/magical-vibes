@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -60,11 +59,11 @@ public class SpecimenFreighter extends Card {
                 new SourceCounterThreshold(9, CounterType.CHARGE),
                 new AnimatePermanentsEffect(
                         (DynamicAmount) null, (DynamicAmount) null, List.of(), Set.of(), null,
-                        Set.of(CardType.CREATURE), GrantScope.SELF, Duration.STATIC, null
+                        Set.of(CardType.CREATURE), Subjects.source(), Duration.STATIC, null
                 )));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(9, CounterType.CHARGE),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
 
         addTrigger(Triggers.attacks(), new MillEffect(4, Subjects.defendingPlayer()));
     }

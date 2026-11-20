@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RiotEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldPlacementService;
@@ -104,7 +104,7 @@ public class RiotHandler implements MayEffectHandlerBean {
         }
         if (!counterPlaced && source != null) {
             gameData.addEffectOnPermanent(ability.sourceCard().getName(), source.getId(), ability.controllerId(),
-                    new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), source.getId(), Duration.PERMANENT);
+                    new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), source.getId(), Duration.PERMANENT);
         }
 
         if (counterPlaced) {

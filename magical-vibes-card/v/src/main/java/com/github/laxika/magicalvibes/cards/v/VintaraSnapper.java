@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -23,6 +23,6 @@ public class VintaraSnapper extends Card {
                         new PermanentIsLandPredicate(),
                         new PermanentNotPredicate(new PermanentIsTappedPredicate())
                 ))),
-                new GrantKeywordEffect(Keyword.SHROUD, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.SHROUD, Subjects.source())));
     }
 }

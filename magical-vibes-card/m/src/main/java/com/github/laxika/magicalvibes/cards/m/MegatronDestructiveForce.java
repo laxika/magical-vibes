@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureWithExcessToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -25,7 +25,7 @@ public class MegatronDestructiveForce extends Card {
     public MegatronDestructiveForce() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
-                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
+                new GrantCardTypeEffect(CardType.CREATURE, Subjects.source())));
 
         addTrigger(Triggers.attacks(), new MayEffect(
                 new SacrificePermanentThenEffect(

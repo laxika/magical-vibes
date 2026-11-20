@@ -26,7 +26,7 @@ public class RemoveKeywordSelfEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var remove = (RemoveKeywordEffect) effect;
-        if (support.names(context, remove.scope().subject(), remove.filter())) {
+        if (support.names(context, remove.subject(), remove.filter())) {
             accumulator.removeKeyword(remove.keyword());
         }
     }

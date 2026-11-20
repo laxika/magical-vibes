@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "90")
@@ -18,7 +18,7 @@ public class FledglingDragon extends Card {
     public FledglingDragon() {
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
-                new StaticBoostEffect(3, 3, GrantScope.SELF)));
+                new StaticBoostEffect(3, 3, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
                 new GrantActivatedAbilityEffect(
@@ -27,6 +27,6 @@ public class FledglingDragon extends Card {
                                 "{R}",
                                 List.of(new BoostSelfEffect(1, 0)),
                                 "{R}: This creature gets +1/+0 until end of turn."),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

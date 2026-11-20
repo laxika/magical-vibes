@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,9 +26,9 @@ public class HexgoldHalberd extends Card {
                 new LivingWeaponEffect(new CreateTokenEffect("Rebel", 2, 2, CardColor.RED,
                         List.of(CardSubtype.REBEL), Set.of(), Set.of())));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.attachedCreature())));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.attachedCreature())));
         addActivatedAbility(new EquipActivatedAbility("{2}{R}"));
     }
 }

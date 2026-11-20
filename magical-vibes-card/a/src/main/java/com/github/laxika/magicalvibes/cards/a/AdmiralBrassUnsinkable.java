@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -42,7 +41,7 @@ public class AdmiralBrassUnsinkable extends Card {
                         .enterWithCounterCount(1)
                         .battlefieldEffectGrants(List.of(
                                 SetBasePowerToughnessEffect.indefinitely(4, 4),
-                                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET, Duration.UNTIL_END_OF_TURN)))
+                                new GrantKeywordEffect(Keyword.HASTE, Subjects.target(), Duration.UNTIL_END_OF_TURN)))
                         .build(), "Return the targeted Pirate card?"));
     }
 }

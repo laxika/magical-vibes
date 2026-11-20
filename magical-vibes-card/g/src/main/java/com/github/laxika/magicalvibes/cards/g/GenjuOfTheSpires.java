@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -33,7 +33,7 @@ public class GenjuOfTheSpires extends Card {
         // {2}: Enchanted Mountain becomes a 6/1 red Spirit creature until end of turn. It's still a land.
         addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(
                 new AnimatePermanentsEffect(6, 1, List.of(CardSubtype.SPIRIT), Set.of(),
-                        CardColor.RED, Set.of(), GrantScope.ENCHANTED_PERMANENT, Duration.UNTIL_END_OF_TURN)
+                        CardColor.RED, Set.of(), Subjects.attached(), Duration.UNTIL_END_OF_TURN)
         ), "{2}: Enchanted Mountain becomes a 6/1 red Spirit creature until end of turn. It's still a land."));
 
         // When enchanted Mountain is put into a graveyard, you may return this card from your graveyard to your hand.

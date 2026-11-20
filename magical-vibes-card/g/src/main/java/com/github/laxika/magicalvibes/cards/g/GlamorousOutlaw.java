@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -54,7 +53,7 @@ public class GlamorousOutlaw extends Card {
                 "{2}",
                 List.of(new GrantActivatedAbilityEffect(
                         landManaAbility,
-                        GrantScope.TARGET,
+                        Subjects.target(),
                         null,
                         Duration.UNTIL_SOURCE_CARD_CAST_FROM_EXILE
                 ),

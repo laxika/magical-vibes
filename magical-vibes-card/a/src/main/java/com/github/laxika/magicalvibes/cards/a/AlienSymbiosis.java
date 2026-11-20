@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class AlienSymbiosis extends Card {
         addCastingOption(new GraveyardCast(List.of(new DiscardCardCastingCost())));
 
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.MENACE), GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.SYMBIOTE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.MENACE), Subjects.attachedCreature()))
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.SYMBIOTE, Subjects.attachedCreature()));
     }
 }

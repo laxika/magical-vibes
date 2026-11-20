@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMo
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -35,7 +35,7 @@ public class CaseOfTheStashedSkeleton extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(new CreateTokenEffect(
                 1, "Skeleton", 2, 1, CardColor.BLACK,
                 List.of(CardSubtype.SKELETON), Set.of(), Set.of()),
-                new SuspectEffect(GrantScope.TOKENS_CREATED_THIS_RESOLUTION)));
+                new SuspectEffect(Subjects.createdThisResolution())));
 
         var suspectedSkeleton = new PermanentAllOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.SKELETON),

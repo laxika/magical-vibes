@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPlayersPermanentsAndDamageEqualToCountEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
@@ -19,7 +19,7 @@ import java.util.List;
 public class AngelsTrumpet extends Card {
 
     public AngelsTrumpet() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_CREATURES_INCLUDING_SELF));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.allCreatures()));
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 new TapPlayersPermanentsAndDamageEqualToCountEffect(
                         new PermanentAllOfPredicate(List.of(

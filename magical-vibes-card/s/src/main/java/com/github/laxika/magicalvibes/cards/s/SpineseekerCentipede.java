@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,6 +22,6 @@ public class SpineseekerCentipede extends Card {
                 new SearchLibraryEffect(CardPredicateUtils.basicLand()));
         addStaticEffect(new ConditionalEffect(
                 new Delirium(),
-                new StaticBoostEffect(1, 2, Set.of(Keyword.VIGILANCE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 2, Set.of(Keyword.VIGILANCE), Subjects.source())));
     }
 }

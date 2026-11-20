@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class RegalCaracal extends Card {
 
     public RegalCaracal() {
         // Other Cats you control get +1/+1 and have lifelink.
-        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.LIFELINK), GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.LIFELINK), Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.CAT))));
 
         // When Regal Caracal enters, create two 1/1 white Cat creature tokens with lifelink.

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class BalloonPeddler extends Card {
                 true, "{U}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target())
                 ),
                 "{U}, {T}, Discard a card: Target creature gains flying until end of turn.",
                 TargetFilters.creature()

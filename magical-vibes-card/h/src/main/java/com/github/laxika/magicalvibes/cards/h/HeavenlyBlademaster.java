@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.effect.AttachAnyNumberOfControlledAurasAndEquipmentToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,6 +20,6 @@ public class HeavenlyBlademaster extends Card {
                 new AttachAnyNumberOfControlledAurasAndEquipmentToSourceEffect());
         AttachmentsOnSource attachments = new AttachmentsOnSource(true, true);
         addStaticEffect(new DynamicStaticBoostEffect(attachments, attachments,
-                GrantScope.OWN_CREATURES));
+                Subjects.otherCreaturesYouControl()));
     }
 }

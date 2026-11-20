@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -17,7 +18,7 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * Resolves {@link CantBecomeUntappedEffect} with {@link GrantScope#TARGET}: "that creature can't become untapped for as
+ * Resolves {@link CantBecomeUntappedEffect} with {@link com.github.laxika.magicalvibes.model.effect.Subjects#target()}: "that creature can't become untapped for as
  * long as you control [this]" (Spider-Woman, Secret Agent). Each target gets a floating effect with this record as its
  * payload, {@code Duration.WHILE_SOURCE_CONTROLLED}; no effect untaps it while it lasts, the untap step included. A
  * source its controller no longer controls never starts the duration (CR 611.2b). The {@code SELF} and
@@ -38,7 +39,7 @@ public class CantBecomeUntappedEffectHandler implements NormalEffectHandlerBean 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        if (((CantBecomeUntappedEffect) effect).scope() != GrantScope.TARGET) {
+        if (!(((CantBecomeUntappedEffect) effect).subject() instanceof PermanentSubject.Target)) {
             return;
         }
         UUID sourcePermanentId = entry.getSourcePermanentId();
@@ -46,7 +47,7 @@ public class CantBecomeUntappedEffectHandler implements NormalEffectHandlerBean 
                 gameQueryService.findPermanentController(gameData, sourcePermanentId))) {
             return;
         }
-        for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, GrantScope.TARGET.subject())) {
+        for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, Subjects.target())) {
             gameData.addEffectOnPermanent(entry, effect, target.getId(), Duration.WHILE_SOURCE_CONTROLLED);
             gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(),
                     " can't become untapped for as long as its controller controls ", entry.getCard(), "."));

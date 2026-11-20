@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -37,7 +37,7 @@ public class EddytrailHawk extends Card {
                 new ConditionalEffect(new ControllerEnergyAtLeast(1),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-1),
-                                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)
+                                new GrantKeywordEffect(Keyword.FLYING, Subjects.target())
                         )),
                 "Pay {E} to give another target attacking creature flying until end of turn?"
         ));

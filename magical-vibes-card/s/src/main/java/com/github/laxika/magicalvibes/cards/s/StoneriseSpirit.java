@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class StoneriseSpirit extends Card {
                 "{4}",
                 List.of(
                         new ExileCardFromGraveyardCost((CardType) null),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target())
                 ),
                 "{4}, Exile a card from your graveyard: Target creature gains flying until end of turn.",
                 TargetFilters.creature()

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandAndCastSpellFromCardsPutIntoGraveyardsFromLibrariesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -27,7 +26,7 @@ public class CoramTheUndertaker extends Card {
         addStaticEffect(new DynamicStaticBoostEffect(
                 new GreatestPowerAmongCardsInGraveyard(
                         new CardTypePredicate(CardType.CREATURE), CountScope.ANY_PLAYER),
-                new Fixed(0), GrantScope.SELF));
+                new Fixed(0), Subjects.source()));
 
         addTrigger(Triggers.attacks(),
                 new MillEffect(1, Subjects.eachPlayer()));

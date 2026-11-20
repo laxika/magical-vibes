@@ -913,7 +913,7 @@ public class SpellEvaluator {
         double equipBoost = 0;
         for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof StaticCreatureBoostEffect boost
-                    && GrantSubjectShapes.namesAttachedCreature(boost.scope())) {
+                    && GrantSubjectShapes.namesAttachedCreature(boost.subject())) {
                 equipBoost += boost.powerBoost() * 3.0 + boost.toughnessBoost() * 1.5;
             }
         }
@@ -971,14 +971,14 @@ public class SpellEvaluator {
         double perCreatureBoost = 0;
         for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof StaticCreatureBoostEffect boost) {
-                if (GrantSubjectShapes.namesAnthemSet(GrantSubjectShapes.subjectOf(boost.scope()))) {
+                if (GrantSubjectShapes.namesAnthemSet(boost.subject())) {
                     perCreatureBoost += boost.powerBoost() * 3.0 + boost.toughnessBoost() * 1.5;
                     if (boost.grantedKeywords() != null) {
                         perCreatureBoost += boost.grantedKeywords().size() * 3.0;
                     }
                 }
             } else if (effect instanceof KeywordGrantingEffect grant) {
-                if (GrantSubjectShapes.namesAnthemSet(GrantSubjectShapes.subjectOf(grant.scope()))) {
+                if (GrantSubjectShapes.namesAnthemSet(grant.subject())) {
                     perCreatureBoost += grant.keywords().size() * 3.0;
                 }
             }
@@ -1057,12 +1057,12 @@ public class SpellEvaluator {
 
         for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof StaticCreatureBoostEffect boost
-                    && GrantSubjectShapes.namesAttachedCreature(boost.scope())) {
+                    && GrantSubjectShapes.namesAttachedCreature(boost.subject())) {
                 isBeneficial = true;
                 value += boost.powerBoost() * 2.0 + boost.toughnessBoost();
             }
             if (effect instanceof KeywordGrantingEffect grant
-                    && GrantSubjectShapes.namesAttachedCreature(grant.scope())) {
+                    && GrantSubjectShapes.namesAttachedCreature(grant.subject())) {
                 isBeneficial = true;
                 value += 3;
             }

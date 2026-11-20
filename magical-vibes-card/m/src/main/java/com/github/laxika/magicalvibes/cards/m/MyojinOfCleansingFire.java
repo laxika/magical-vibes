@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -31,7 +31,7 @@ public class MyojinOfCleansingFire extends Card {
                 new EnterWithCountersEffect(CounterType.DIVINITY, new Fixed(1))));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.DIVINITY),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,7 +23,7 @@ public class EmbodimentOfFury extends Card {
     public EmbodimentOfFury() {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE,
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentIsLandPredicate()));
 
         target(TargetFilters.landYouControl()).addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
@@ -33,7 +33,7 @@ public class EmbodimentOfFury extends Card {
                                 List.of(CardSubtype.ELEMENTAL),
                                 Set.of(Keyword.HASTE),
                                 null, Set.of(),
-                                GrantScope.TARGET,
+                                Subjects.target(),
                                 Duration.UNTIL_END_OF_TURN),
                         "Have target land you control become a 3/3 Elemental creature with haste until end of turn?"));
     }

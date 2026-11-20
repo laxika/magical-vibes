@@ -18,8 +18,8 @@ public record ChooseCreaturesWithDifferentPowersGrantDoubleStrikeEffect()
     }
 
     @Override
-    public GrantScope scope() {
-        return GrantScope.TARGETS;
+    public PermanentSubject subject() {
+        return Subjects.target();
     }
 
     @Override

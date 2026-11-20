@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -22,7 +22,7 @@ public class RunechantersPike extends Card {
 
     public RunechantersPike() {
         // Equipped creature has first strike
-        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.attachedCreature()));
 
         // Equipped creature gets +X/+0, where X is the number of instant and sorcery cards in your graveyard
         addStaticEffect(new AttachedBoostEffect(
@@ -31,7 +31,7 @@ public class RunechantersPike extends Card {
                         new CardTypePredicate(CardType.SORCERY)
                 )), CountScope.CONTROLLER),
                 new Fixed(0),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
 
         // Equip {2}

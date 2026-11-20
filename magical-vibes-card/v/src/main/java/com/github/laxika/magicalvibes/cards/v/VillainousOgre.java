@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -24,7 +24,7 @@ public class VillainousOgre extends Card {
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(false, "{B}", List.of(new RegenerateEffect()),
                         "{B}: Regenerate this creature."),
-                GrantScope.SELF,
+                Subjects.source(),
                 new PermanentControllerControlsPermanentPredicate(
                         new PermanentHasSubtypePredicate(CardSubtype.DEMON))));
     }

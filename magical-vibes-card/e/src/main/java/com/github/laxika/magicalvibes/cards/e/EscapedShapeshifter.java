@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasProtectionFromColorPredicate;
@@ -34,7 +34,7 @@ public class EscapedShapeshifter extends Card {
         for (Keyword keyword : List.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.TRAMPLE)) {
             addStaticEffect(new ConditionalEffect(
                     new OpponentControlsPermanent(otherCreatureMatching(new PermanentHasKeywordPredicate(keyword))),
-                    new GrantKeywordEffect(keyword, GrantScope.SELF)));
+                    new GrantKeywordEffect(keyword, Subjects.source())));
         }
         for (CardColor color : CardColor.values()) {
             addStaticEffect(new ConditionalEffect(

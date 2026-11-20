@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -37,7 +36,7 @@ public class WispdrinkerVampire extends Card {
                 "{5}{W}{B}",
                 List.of(new GrantKeywordEffect(
                         Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK),
-                        GrantScope.ALL_OWN_CREATURES,
+                        Subjects.creaturesYouControl(),
                         new PermanentPowerAtMostPredicate(2))),
                 "{5}{W}{B}: Creatures you control with power 2 or less gain deathtouch and lifelink until end of turn."
         ));

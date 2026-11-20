@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -24,6 +24,6 @@ public class MoonEatingDog extends Card {
                         new PermanentIsPlaneswalkerPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.YANLING)
                 ))),
-                new StaticBoostEffect(0, 0, Set.of(Keyword.FLYING), GrantScope.SELF)));
+                new StaticBoostEffect(0, 0, Set.of(Keyword.FLYING), Subjects.source())));
     }
 }

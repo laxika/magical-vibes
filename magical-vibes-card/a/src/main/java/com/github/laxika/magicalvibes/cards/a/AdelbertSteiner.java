@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "FIN", collectorNumber = "3")
@@ -17,6 +17,6 @@ public class AdelbertSteiner extends Card {
         PermanentCount equipmentYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT), CountScope.CONTROLLER);
         addStaticEffect(new DynamicStaticBoostEffect(
-                equipmentYouControl, equipmentYouControl, GrantScope.SELF));
+                equipmentYouControl, equipmentYouControl, Subjects.source()));
     }
 }

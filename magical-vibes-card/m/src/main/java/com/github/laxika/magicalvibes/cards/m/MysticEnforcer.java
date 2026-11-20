@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "ODY", collectorNumber = "290")
@@ -20,6 +20,6 @@ public class MysticEnforcer extends Card {
     public MysticEnforcer() {
         addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)));
         addStaticEffect(new ConditionalEffect(new GraveyardCardThreshold(7, null),
-                new StaticBoostEffect(3, 3, Set.of(Keyword.FLYING), GrantScope.SELF)));
+                new StaticBoostEffect(3, 3, Set.of(Keyword.FLYING), Subjects.source())));
     }
 }

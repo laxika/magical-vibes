@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -33,10 +33,10 @@ public class MizziumSkin extends Card {
                 new Overloaded(),
                 SequenceEffect.of(
                         new BoostTargetCreatureEffect(0, 1),
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET)),
+                        new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.target())),
                 SequenceEffect.of(
                         new BoostAllOwnCreaturesEffect(0, 1),
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_CREATURES))));
+                        new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.otherCreaturesYouControl()))));
         target(TargetFilters.creatureYouControl());
     }
 }

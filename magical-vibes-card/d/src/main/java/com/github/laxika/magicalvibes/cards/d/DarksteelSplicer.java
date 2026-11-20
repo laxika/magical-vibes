@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -41,6 +41,6 @@ public class DarksteelSplicer extends Card {
                 TriggerOptions.DEFAULT, List.of(new EffectRegistration(golemToken))));
 
         addStaticEffect(new StaticBoostEffect(0, 0, Set.of(Keyword.INDESTRUCTIBLE),
-                GrantScope.ALL_OWN_CREATURES, new PermanentHasSubtypePredicate(CardSubtype.GOLEM)));
+                Subjects.creaturesYouControl(), new PermanentHasSubtypePredicate(CardSubtype.GOLEM)));
     }
 }

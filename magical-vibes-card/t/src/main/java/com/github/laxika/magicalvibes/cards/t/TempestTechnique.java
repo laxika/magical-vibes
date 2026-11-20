@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class TempestTechnique extends Card {
         PermanentCount enchantmentsYouControl = new PermanentCount(
                 new PermanentIsEnchantmentPredicate(), CountScope.CONTROLLER);
         addStaticEffect(new DynamicStaticBoostEffect(
-                enchantmentsYouControl, enchantmentsYouControl, GrantScope.ENCHANTED_CREATURE));
+                enchantmentsYouControl, enchantmentsYouControl, Subjects.attachedCreature()));
         addTrigger(Triggers.youCastThisSpell(), CopyTriggeringSpellEffect.storm().permanentSpellCopiesAreTokens());
     }
 }

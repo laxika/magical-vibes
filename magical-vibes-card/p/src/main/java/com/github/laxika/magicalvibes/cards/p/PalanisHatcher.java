@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -28,7 +27,7 @@ public class PalanisHatcher extends Card {
     public PalanisHatcher() {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE,
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(

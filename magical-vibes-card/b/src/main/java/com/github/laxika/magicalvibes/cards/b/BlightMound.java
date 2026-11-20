@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -29,7 +29,7 @@ public class BlightMound extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.PEST),
                 new PermanentIsAttackingPredicate()));
         addStaticEffect(new StaticBoostEffect(
-                1, 0, Set.of(Keyword.MENACE), GrantScope.ALL_OWN_CREATURES, attackingPest));
+                1, 0, Set.of(Keyword.MENACE), Subjects.creaturesYouControl(), attackingPest));
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL), pestToken());
     }
 

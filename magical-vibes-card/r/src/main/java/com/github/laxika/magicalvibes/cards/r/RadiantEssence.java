@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.Set;
@@ -18,6 +18,6 @@ public class RadiantEssence extends Card {
         // This creature gets +1/+2 as long as an opponent controls a black permanent.
         addStaticEffect(new ConditionalEffect(
                 new OpponentControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.BLACK))),
-                new StaticBoostEffect(1, 2, GrantScope.SELF)));
+                new StaticBoostEffect(1, 2, Subjects.source())));
     }
 }

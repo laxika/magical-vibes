@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -30,6 +30,6 @@ public class WingshieldAgent extends Card {
                 )),
                 "Target must be another creature"
         ), 0, 1).addTrigger(Triggers.attacks(),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.target()));
     }
 }

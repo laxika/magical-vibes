@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -28,7 +28,7 @@ public class NaturesEmbrace extends Card {
                 "Target must be a creature or land"))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentIsCreaturePredicate(),
-                        new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE),
+                        new StaticBoostEffect(2, 2, Subjects.attachedCreature()),
                         null
                 ))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
@@ -40,7 +40,7 @@ public class NaturesEmbrace extends Card {
                                         List.of(new AwardAnyColorManaEffect(2)),
                                         "{T}: Add two mana of any one color."
                                 ),
-                                GrantScope.ENCHANTED_PERMANENT
+                                Subjects.attached()
                         ),
                         null
                 ));

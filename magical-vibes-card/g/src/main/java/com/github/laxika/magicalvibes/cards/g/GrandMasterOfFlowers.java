@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -46,7 +46,7 @@ public class GrandMasterOfFlowers extends Card {
                 new AnimatePermanentsEffect(7, 7, List.of(CardSubtype.DRAGON, CardSubtype.GOD),
                         Set.of(Keyword.FLYING, Keyword.INDESTRUCTIBLE))));
         addStaticEffect(new ConditionalEffect(SEVEN_LOYALTY,
-                new SetCardTypesEffect(Set.of(CardType.CREATURE), GrantScope.SELF)));
+                new SetCardTypesEffect(Set.of(CardType.CREATURE), Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,

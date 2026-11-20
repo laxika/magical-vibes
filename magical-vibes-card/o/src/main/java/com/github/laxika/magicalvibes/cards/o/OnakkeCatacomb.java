@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OPC2", collectorNumber = "28")
@@ -16,10 +16,10 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class OnakkeCatacomb extends Card {
 
     public OnakkeCatacomb() {
-        addStaticEffect(new GrantColorEffect(CardColor.BLACK, GrantScope.ALL_CREATURES, true));
-        addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_CREATURES));
+        addStaticEffect(new GrantColorEffect(CardColor.BLACK, Subjects.otherCreatures(), true));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.otherCreatures()));
         addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                 new BoostAllOwnCreaturesEffect(1, 0),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.creaturesYouControl())));
     }
 }

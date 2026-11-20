@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "CMM", collectorNumber = "122")
@@ -20,11 +20,11 @@ public class StormsurgeKraken extends Card {
     public StormsurgeKraken() {
         var lieutenant = new ControllerControlsOwnCommander();
         addStaticEffect(new ConditionalEffect(lieutenant,
-                new StaticBoostEffect(2, 2, GrantScope.SELF)));
+                new StaticBoostEffect(2, 2, Subjects.source())));
         addStaticEffect(new ConditionalEffect(lieutenant,
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.becomesBlocked(),
                         new MayEffect(new DrawCardEffect(2), "Draw two cards?")),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

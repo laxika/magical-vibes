@@ -6,16 +6,16 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DFT", collectorNumber = "32")
 public class SwiftwingAssailant extends Card {
 
     public SwiftwingAssailant() {
         addStaticEffect(new ConditionalEffect(new MaxSpeed(),
-                new StaticBoostEffect(0, 1, GrantScope.SELF)));
+                new StaticBoostEffect(0, 1, Subjects.source())));
         addStaticEffect(new ConditionalEffect(new MaxSpeed(),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source())));
     }
 }

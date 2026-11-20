@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
@@ -34,7 +33,7 @@ public class HunterSliver extends Card {
                                 new MustBlockSourceEffect(null,
                                         new PermanentControlledByDefendingPlayerPredicate(), true)),
                         "Have target creature defending player controls untap and block it if able?")),
-                GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                Subjects.allCreatures(),
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
     }
 }

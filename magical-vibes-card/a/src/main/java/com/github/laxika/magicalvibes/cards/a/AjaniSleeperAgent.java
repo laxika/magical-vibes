@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTarget
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMatchingToHandElseMayBottomEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -49,7 +48,7 @@ public class AjaniSleeperAgent extends Card {
                 List.of(
                         DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
                                 CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3), null),
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target())
                 ),
                 "\u22123: Distribute three +1/+1 counters among up to three target creatures. They gain vigilance until end of turn.",
                 null,

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -24,7 +24,7 @@ import java.util.Set;
 public class EchoingAssault extends Card {
 
     public EchoingAssault() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, Subjects.otherCreaturesYouControl(),
                         new PermanentIsTokenPredicate()));
 
         target(new PermanentPredicateTargetFilter(

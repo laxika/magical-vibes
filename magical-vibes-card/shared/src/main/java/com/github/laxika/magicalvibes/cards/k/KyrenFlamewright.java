@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -25,7 +25,7 @@ public class KyrenFlamewright extends Card {
                         new CreateTokenEffect(2, "Elemental", 1, 1, CardColor.BLUE,
                                 Set.of(CardColor.BLUE, CardColor.RED), List.of(CardSubtype.ELEMENTAL)),
                         new BoostAllOwnCreaturesEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl())),
                 "{2}{R}, {T}, Discard a card: Create two 1/1 blue and red Elemental creature tokens. "
                         + "Creatures you control get +1/+0 and gain haste until end of turn."));
     }

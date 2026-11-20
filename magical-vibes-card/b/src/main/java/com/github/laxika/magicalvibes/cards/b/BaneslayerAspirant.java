@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasEmblem;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "MB1", collectorNumber = "3")
@@ -18,6 +18,6 @@ public class BaneslayerAspirant extends Card {
         // have one or more emblems.
         addStaticEffect(new ConditionalEffect(new ControllerHasEmblem(),
                 new StaticBoostEffect(3, 3, Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.LIFELINK),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

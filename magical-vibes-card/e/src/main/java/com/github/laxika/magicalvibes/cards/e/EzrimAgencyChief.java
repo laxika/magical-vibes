@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,13 +30,13 @@ public class EzrimAgencyChief extends Card {
                         new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Vigilance",
-                                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)),
+                                        new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source())),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Lifelink",
-                                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)),
+                                        new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source())),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Hexproof",
-                                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF))
+                                        new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source()))
                         ))
                 ),
                 "{1}, Sacrifice an artifact: Ezrim gains your choice of vigilance, lifelink, or hexproof until end of turn."

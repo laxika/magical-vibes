@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.amount.SourceIntensity;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfReturnAtNextUpkeepWithHasteEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.IntensifySourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -32,7 +32,7 @@ public class TeysaOfTheGhostCouncil extends Card {
                 new IntensifySourceCardEffect(1));
 
         addStaticEffect(new DynamicStaticBoostEffect(
-                new SourceIntensity(), new Fixed(0), GrantScope.OWN_CREATURES,
+                new SourceIntensity(), new Fixed(0), Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),

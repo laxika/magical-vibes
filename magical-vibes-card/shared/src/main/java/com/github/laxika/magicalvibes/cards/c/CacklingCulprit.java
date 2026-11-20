@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class CacklingCulprit extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B}",
-                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())),
                 "{1}{B}: This creature gains deathtouch until end of turn."
         ));
     }

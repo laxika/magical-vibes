@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTargetCreatureIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -30,7 +30,7 @@ public class UlderRavengardMarshal extends Card {
                         new PermanentNotPredicate(new PermanentIsSourceCardPredicate()))),
                 "Target must be another nontoken creature you control"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantKeywordEffect(Keyword.DOUBLE_TEAM, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.DOUBLE_TEAM, Subjects.target()));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

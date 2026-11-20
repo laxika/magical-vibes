@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetGroupMarkerEffect;
@@ -39,6 +38,6 @@ public class DomineeringWill extends Card {
                 .addSpellEffect(new TargetPlayerGainsControlOfTargetPermanentsUntilEndOfTurnEffect(1))
                 .addSpellEffect(new UntapPermanentsEffect(Subjects.allTargets()))
                 .addSpellEffect(new SetCombatRequirementThisTurnEffect(
-                                CombatRequirement.MUST_BLOCK, GrantScope.TARGETS));
+                                CombatRequirement.MUST_BLOCK, Subjects.allTargets()));
     }
 }

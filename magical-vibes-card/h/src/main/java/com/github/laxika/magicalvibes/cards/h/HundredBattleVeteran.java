@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlledCreatureCounterK
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TDM", collectorNumber = "82")
 public class HundredBattleVeteran extends Card {
@@ -20,7 +20,7 @@ public class HundredBattleVeteran extends Card {
         addCastingOption(new GraveyardCast());
         addStaticEffect(new ConditionalEffect(
                 new ControlledCreatureCounterKindsAtLeast(3),
-                new StaticBoostEffect(2, 4, GrantScope.SELF)));
+                new StaticBoostEffect(2, 4, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new CastFromZone(Zone.GRAVEYARD),
                 new EnterWithCountersEffect(CounterType.FINALITY, new Fixed(1))));

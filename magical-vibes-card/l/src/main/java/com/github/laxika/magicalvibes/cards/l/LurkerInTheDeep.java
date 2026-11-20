@@ -14,10 +14,10 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicatesOfSoughtCardsAndManifestEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -53,6 +53,6 @@ public class LurkerInTheDeep extends Card {
                 new AllOf(List.of(
                         new CastForAlternateCost(),
                         new SourceCounterThreshold(1, CounterType.TIME))),
-                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
+                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), Subjects.source())));
     }
 }

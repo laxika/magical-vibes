@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.AdditionalLifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M20", collectorNumber = "4")
 @CardRegistration(set = "ANB", collectorNumber = "1")
@@ -16,6 +16,6 @@ public class AngelOfVitality extends Card {
     public AngelOfVitality() {
         addStaticEffect(new AdditionalLifeGainEffect(1));
         addStaticEffect(new ConditionalEffect(
-                new ControllerLifeAtLeast(25), new StaticBoostEffect(2, 2, GrantScope.SELF)));
+                new ControllerLifeAtLeast(25), new StaticBoostEffect(2, 2, Subjects.source())));
     }
 }

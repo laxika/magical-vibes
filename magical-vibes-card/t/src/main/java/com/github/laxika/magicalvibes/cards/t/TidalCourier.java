@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsMatchingToHandRestToBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +22,7 @@ public class TidalCourier extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new RevealTopCardsMatchingToHandRestToBottomEffect(
                 4, new CardSubtypePredicate(CardSubtype.MERFOLK)));
         addActivatedAbility(new ActivatedAbility(false, "{3}{U}",
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.FLYING, Subjects.source())),
                 "{3}{U}: This creature gains flying until end of turn."));
     }
 }

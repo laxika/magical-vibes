@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -13,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 public class SpectersShroud extends Card {
 
     public SpectersShroud() {
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.attachedCreature()));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new DiscardEffect(1, Subjects.targetPlayer()));
         addActivatedAbility(new EquipActivatedAbility("{1}"));

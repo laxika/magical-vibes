@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "INV", collectorNumber = "194")
 public class KavuTitan extends Card {
@@ -18,7 +18,7 @@ public class KavuTitan extends Card {
     public KavuTitan() {
         addStaticEffect(new KickerEffect("{2}{G}"));
         addStaticEffect(new ConditionalEffect(new Kicked(),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
         addStaticEffect(new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(3))));
     }

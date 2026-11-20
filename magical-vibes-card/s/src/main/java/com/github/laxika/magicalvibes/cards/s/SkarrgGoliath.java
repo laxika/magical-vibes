@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class SkarrgGoliath extends Card {
         // hand ability; the engine pays it.
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{5}{G}{G}",
                 List.of(new BoostTargetCreatureEffect(9, 9),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())),
                 "Bloodrush — {5}{G}{G}, Discard this card: Target attacking creature gets +9/+9 and gains trample until end of turn.",
                 TargetFilters.attackingCreature()));
     }

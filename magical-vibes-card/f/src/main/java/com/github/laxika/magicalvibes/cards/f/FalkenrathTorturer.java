@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -39,7 +39,7 @@ public class FalkenrathTorturer extends Card {
                                 "Sacrifice a Human",
                                 false
                         ),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF),
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.source()),
                         new PutCountersOnSourceEffect(1, 1, 1)
                 ),
                 "Sacrifice a Human: Falkenrath Torturer gains flying until end of turn and gets a +1/+1 counter."
@@ -57,7 +57,7 @@ public class FalkenrathTorturer extends Card {
                                 "Sacrifice a non-Human creature",
                                 false
                         ),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.source())
                 ),
                 "Sacrifice a non-Human creature: Falkenrath Torturer gains flying until end of turn."
         ));

@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -41,11 +41,11 @@ public class GideonBlackblade extends Card {
                 null,
                 List.of(new ChooseOneEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption("Vigilance",
-                                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target())),
                         new ChooseOneEffect.ChooseOneOption("Lifelink",
-                                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target())),
                         new ChooseOneEffect.ChooseOneOption("Indestructible",
-                                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET))
+                                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()))
                 ))),
                 "+1: Up to one other target creature you control gains your choice of vigilance, "
                         + "lifelink, or indestructible until end of turn.",

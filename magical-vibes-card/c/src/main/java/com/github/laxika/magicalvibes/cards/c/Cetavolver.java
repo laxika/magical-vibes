@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "21")
@@ -26,12 +26,12 @@ public class Cetavolver extends Card {
         addStaticEffect(new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
         addStaticEffect(new ConditionalEffect(new Kicked(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())));
 
         addStaticEffect(new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{G}"),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
         addStaticEffect(new ConditionalEffect(new RepeatedAdditionalCostPaid("{G}"),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
     }
 }

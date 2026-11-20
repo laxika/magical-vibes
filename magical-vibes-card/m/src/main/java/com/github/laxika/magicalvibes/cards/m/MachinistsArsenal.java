@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,8 +30,8 @@ public class MachinistsArsenal extends Card {
         PermanentCount artifactsYouControl =
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
         Scaled artifactBoost = new Scaled(artifactsYouControl, 2);
-        addStaticEffect(new AttachedBoostEffect(artifactBoost, artifactBoost, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.ARTIFICER, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new AttachedBoostEffect(artifactBoost, artifactBoost, Subjects.attachedCreature()));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.ARTIFICER, Subjects.attachedCreature()));
 
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }

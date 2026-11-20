@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceFortificationToTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ import java.util.List;
 public class DarksteelGarrison extends Card {
 
     public DarksteelGarrison() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_PERMANENT));
+        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.attached()));
         addTrigger(Triggers.enchantedPermanentBecomesTapped(), new BoostTargetCreatureEffect(1, 1));
 
         addActivatedAbility(new ActivatedAbility(

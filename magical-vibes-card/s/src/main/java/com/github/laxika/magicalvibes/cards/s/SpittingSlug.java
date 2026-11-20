@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentInCombatWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,10 +15,10 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SpittingSlug extends Card {
 
     public SpittingSlug() {
-        GrantKeywordEffect firstStrikeToSlug = new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF);
+        GrantKeywordEffect firstStrikeToSlug = new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source());
         GrantKeywordEffect firstStrikeToCombatOpponents = new GrantKeywordEffect(
                 Keyword.FIRST_STRIKE,
-                GrantScope.ALL_CREATURES,
+                Subjects.allCreatures(),
                 new PermanentInCombatWithSourcePredicate());
         MayPayManaEffect mayPay = new MayPayManaEffect(
                 "{1}{G}",

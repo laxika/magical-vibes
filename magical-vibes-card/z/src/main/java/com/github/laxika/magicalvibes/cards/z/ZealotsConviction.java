@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.OpponentPoisoned;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.Set;
@@ -16,9 +16,9 @@ public class ZealotsConviction extends Card {
 
     public ZealotsConviction() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()))
                 .addStaticEffect(new ConditionalEffect(
                         new OpponentPoisoned(3),
-                        new StaticBoostEffect(1, 0, Set.of(Keyword.FIRST_STRIKE), GrantScope.ENCHANTED_CREATURE)));
+                        new StaticBoostEffect(1, 0, Set.of(Keyword.FIRST_STRIKE), Subjects.attachedCreature())));
     }
 }

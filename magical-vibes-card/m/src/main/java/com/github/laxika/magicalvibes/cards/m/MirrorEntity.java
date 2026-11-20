@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerToughnessEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "LRW", collectorNumber = "31")
@@ -29,7 +30,7 @@ public class MirrorEntity extends Card {
                 "{X}",
                 List.of(
                         new SetAllOwnCreaturesBasePowerToughnessEffect(new XValue(), new XValue()),
-                        new GrantAllCreatureTypesToOwnCreaturesEffect()),
+                        new GrantAllCreatureTypesToOwnCreaturesEffect(Subjects.creaturesYouControl())),
                 "{X}: Until end of turn, creatures you control have base power and toughness X/X and gain all creature types."
         ));
     }

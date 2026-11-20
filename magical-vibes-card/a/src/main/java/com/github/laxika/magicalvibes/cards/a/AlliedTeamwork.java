@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ public class AlliedTeamwork extends Card {
     public AlliedTeamwork() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 "Ally", 1, 1, CardColor.WHITE, List.of(CardSubtype.ALLY), Set.of(), Set.of()));
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_PERMANENTS,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.permanentsYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.ALLY)));
     }
 }

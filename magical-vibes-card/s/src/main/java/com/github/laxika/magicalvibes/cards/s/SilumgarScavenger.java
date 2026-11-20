@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceExploitedTriggeringP
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,6 +23,6 @@ public class SilumgarScavenger extends Card {
         addTrigger(Triggers.creatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new PutCountersOnSourceEffect(1, 1, 1),
                 new ConditionalEffect(
                 new SourceExploitedTriggeringPermanent(),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.source())));
     }
 }

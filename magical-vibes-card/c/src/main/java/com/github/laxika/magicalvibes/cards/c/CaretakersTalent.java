@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -65,7 +65,7 @@ public class CaretakersTalent extends Card {
                 new StaticBoostEffect(
                         2,
                         2,
-                        GrantScope.OWN_CREATURES,
+                        Subjects.otherCreaturesYouControl(),
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsTokenPredicate())))));

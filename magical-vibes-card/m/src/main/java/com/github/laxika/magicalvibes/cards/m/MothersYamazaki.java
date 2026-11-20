@@ -13,11 +13,11 @@ import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.IgnoreLegendRuleWhenControllerControlsExactlyTwoSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -71,6 +71,6 @@ public class MothersYamazaki extends Card {
                 new ControlsPermanentCountAtMost(2, new PermanentNamedPredicate(CARD_NAME))));
         addStaticEffect(new ConditionalEffect(exactlyTwo,
                 new StaticBoostEffect(2, 2, Set.of(Keyword.VIGILANCE, Keyword.HASTE),
-                        GrantScope.ALL_OWN_CREATURES, new PermanentHasSubtypePredicate(CardSubtype.SAMURAI))));
+                        Subjects.creaturesYouControl(), new PermanentHasSubtypePredicate(CardSubtype.SAMURAI))));
     }
 }

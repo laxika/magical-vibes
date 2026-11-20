@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "69")
@@ -23,7 +23,7 @@ public class RakdosPitDragon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}{R}",
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.FLYING, Subjects.source())),
                 "{R}{R}: This creature gains flying until end of turn."
         ));
         addActivatedAbility(new ActivatedAbility(
@@ -34,7 +34,7 @@ public class RakdosPitDragon extends Card {
         ));
         addStaticEffect(new ConditionalEffect(
                 new ControllerHandEmpty(),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF)
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.source())
         ));
     }
 }

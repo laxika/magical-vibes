@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -16,7 +15,7 @@ public class BeastmastersMagemark extends Card {
 
     public BeastmastersMagemark() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+                .addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                         new PermanentIsEnchantedPredicate()))
                 .addTrigger(Triggers.creatureYouControlBecomesBlocked()
                                 .withFilter(new PermanentIsEnchantedPredicate()),

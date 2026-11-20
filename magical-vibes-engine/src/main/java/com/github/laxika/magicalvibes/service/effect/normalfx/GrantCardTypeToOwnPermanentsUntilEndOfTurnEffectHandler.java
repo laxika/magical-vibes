@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnPermanentsUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -50,7 +50,7 @@ public class GrantCardTypeToOwnPermanentsUntilEndOfTurnEffectHandler implements 
             }
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
-                    entry.getControllerId(), new GrantCardTypeEffect(grant.cardType(), GrantScope.TARGET),
+                    entry.getControllerId(), new GrantCardTypeEffect(grant.cardType(), Subjects.target()),
                     permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             count++;
         }

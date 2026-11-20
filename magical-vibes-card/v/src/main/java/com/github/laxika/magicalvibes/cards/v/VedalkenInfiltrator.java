@@ -6,15 +6,15 @@ import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MH2", collectorNumber = "73")
 public class VedalkenInfiltrator extends Card {
 
     public VedalkenInfiltrator() {
-        addStaticEffect(new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF));
+        addStaticEffect(new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source()));
         addStaticEffect(new ConditionalEffect(new Metalcraft(),
-                new StaticBoostEffect(1, 0, GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Subjects.source())));
     }
 }

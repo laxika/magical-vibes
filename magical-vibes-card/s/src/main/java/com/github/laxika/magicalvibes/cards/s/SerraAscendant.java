@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "M11", collectorNumber = "28")
@@ -19,6 +19,6 @@ public class SerraAscendant extends Card {
 
     public SerraAscendant() {
         // As long as you have 30 or more life, Serra Ascendant gets +5/+5 and has flying.
-        addStaticEffect(new ConditionalEffect(new ControllerLifeAtLeast(30), new StaticBoostEffect(5, 5, Set.of(Keyword.FLYING), GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new ControllerLifeAtLeast(30), new StaticBoostEffect(5, 5, Set.of(Keyword.FLYING), Subjects.source())));
     }
 }

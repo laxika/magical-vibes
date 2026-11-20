@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class KingDarienXLVIII extends Card {
 
     public KingDarienXLVIII() {
         // Other creatures you control get +1/+1.
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl()));
 
         // {3}{G}{W}: Put a +1/+1 counter on King Darien XLVIII and create a 1/1 white Soldier creature token.
         addActivatedAbility(new ActivatedAbility(
@@ -41,7 +41,7 @@ public class KingDarienXLVIII extends Card {
                         new SacrificeSelfCost(),
                         new GrantKeywordEffect(
                                 Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE),
-                                GrantScope.OWN_CREATURES,
+                                Subjects.otherCreaturesYouControl(),
                                 new PermanentIsTokenPredicate())
                 ),
                 "Sacrifice King Darien XLVIII: Creature tokens you control gain hexproof and indestructible until end of turn."

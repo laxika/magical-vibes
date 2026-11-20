@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,9 +26,9 @@ public class GrotesqueHybrid extends Card {
                 null,
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF),
-                        new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.GREEN, GrantScope.SELF),
-                        new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.WHITE, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.source()),
+                        new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.GREEN, Subjects.source()),
+                        new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.WHITE, Subjects.source())
                 ),
                 "Discard a card: This creature gains flying and protection from green and from white until end of turn."
         ));

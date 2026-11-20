@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
@@ -16,7 +15,7 @@ import java.util.List;
 public class RobeOfStars extends Card {
 
     public RobeOfStars() {
-        addStaticEffect(new StaticBoostEffect(0, 3, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(0, 3, Subjects.attachedCreature()));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{W}",

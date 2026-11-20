@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControllerUnspentManaAtLeast;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReplaceManaDrainWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -22,6 +22,6 @@ public class OzaiThePhoenixKing extends Card {
         addStaticEffect(new ReplaceManaDrainWithColorlessEffect(ManaColor.RED));
         addStaticEffect(new ConditionalEffect(
                 new ControllerUnspentManaAtLeast(6),
-                new StaticBoostEffect(0, 0, Set.of(Keyword.FLYING, Keyword.INDESTRUCTIBLE), GrantScope.SELF)));
+                new StaticBoostEffect(0, 0, Set.of(Keyword.FLYING, Keyword.INDESTRUCTIBLE), Subjects.source())));
     }
 }

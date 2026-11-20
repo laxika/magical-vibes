@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -36,7 +36,7 @@ public class OllenbockEscort extends Card {
                         new SacrificeSelfCost(),
                         new GrantKeywordEffect(
                                 Set.of(Keyword.LIFELINK, Keyword.INDESTRUCTIBLE),
-                                GrantScope.TARGET,
+                                Subjects.target(),
                                 counteredCreatureYouControl
                         )
                 ),

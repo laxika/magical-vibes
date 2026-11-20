@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.Set;
@@ -23,7 +23,7 @@ public class GraySlaad extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(4, new CardTypePredicate(CardType.CREATURE)),
-                new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.DEATHTOUCH), GrantScope.SELF)));
+                new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.DEATHTOUCH), Subjects.source())));
     }
 
     @Override

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,9 +27,9 @@ public class RafiqOfTheMany extends Card {
                 new BoostTargetCreatureEffect(1, 1));
 
         // Whenever a creature you control attacks alone, it gains double strike until end of turn.
-        // GrantScope.TARGET grants to the recorded lone attacker, same trigger target as the boost.
+        // The target() subject grants to the recorded lone attacker, same trigger target as the boost.
         addTrigger(Triggers.creatureYouControlAttacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()));
     }
 }

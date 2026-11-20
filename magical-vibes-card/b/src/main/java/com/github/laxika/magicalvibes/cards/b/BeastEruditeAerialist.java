@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,7 +15,7 @@ public class BeastEruditeAerialist extends Card {
     public BeastEruditeAerialist() {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.FLYING,
-                GrantScope.SELF,
+                Subjects.source(),
                 new PermanentReceivedPlusOnePlusOneCounterThisTurnPredicate(true)));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect(1));
     }

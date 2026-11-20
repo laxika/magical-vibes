@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.GreatestToughnessAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "WAR", collectorNumber = "230")
@@ -15,7 +15,7 @@ import java.util.List;
 public class HuatliTheSunsHeart extends Card {
 
     public HuatliTheSunsHeart() {
-        addStaticEffect(new AssignCombatDamageWithToughnessEffect(GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new AssignCombatDamageWithToughnessEffect(Subjects.creaturesYouControl()));
 
         addActivatedAbility(new ActivatedAbility(
                 -3,

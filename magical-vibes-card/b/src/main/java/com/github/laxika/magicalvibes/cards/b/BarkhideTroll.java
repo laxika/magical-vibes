@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "M20", collectorNumber = "165")
@@ -24,7 +24,7 @@ public class BarkhideTroll extends Card {
                 "{1}",
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.PLUS_ONE_PLUS_ONE),
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source())
                 ),
                 "{1}, Remove a +1/+1 counter from this creature: This creature gains hexproof until end of turn."
         ));

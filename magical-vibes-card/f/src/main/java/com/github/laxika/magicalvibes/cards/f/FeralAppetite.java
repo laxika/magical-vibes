@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithConditionalEffectsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -33,7 +33,7 @@ public class FeralAppetite extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.PEST),
                 new PermanentIsAttackingPredicate()));
         addStaticEffect(new StaticBoostEffect(
-                1, 0, Set.of(Keyword.DEATHTOUCH), GrantScope.ALL_OWN_CREATURES, attackingPest));
+                1, 0, Set.of(Keyword.DEATHTOUCH), Subjects.creaturesYouControl(), attackingPest));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "OTJ", collectorNumber = "147")
@@ -19,6 +19,6 @@ public class StingerbackTerror extends Card {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{2}{R}"))));
         CardsInHand cardsInHand = new CardsInHand(CountScope.CONTROLLER);
         Scaled handSize = new Scaled(cardsInHand, -1);
-        addStaticEffect(new DynamicStaticBoostEffect(handSize, handSize, GrantScope.SELF));
+        addStaticEffect(new DynamicStaticBoostEffect(handSize, handSize, Subjects.source()));
     }
 }

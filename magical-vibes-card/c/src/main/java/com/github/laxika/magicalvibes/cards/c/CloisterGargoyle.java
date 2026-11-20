@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCompletedDungeon;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,8 +18,8 @@ public class CloisterGargoyle extends Card {
     public CloisterGargoyle() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new VentureIntoDungeonEffect());
         addStaticEffect(new ConditionalEffect(new ControllerHasCompletedDungeon(),
-                new StaticBoostEffect(3, 0, GrantScope.SELF)));
+                new StaticBoostEffect(3, 0, Subjects.source())));
         addStaticEffect(new ConditionalEffect(new ControllerHasCompletedDungeon(),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
     }
 }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -18,12 +18,12 @@ public class TimberProtector extends Card {
 
     public TimberProtector() {
         // Other Treefolk creatures you control get +1/+1.
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.TREEFOLK)));
 
         // Other Treefolk and Forests you control have indestructible. The source permanent is
         // excluded from static bonus computation, so OWN_PERMANENTS models the "other" wording.
-        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_PERMANENTS,
+        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.otherPermanentsYouControl(),
                 new PermanentAnyOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.TREEFOLK),
                         new PermanentHasSubtypePredicate(CardSubtype.FOREST)))));

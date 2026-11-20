@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -22,7 +21,7 @@ public class UnrootedAncestor extends Card {
                 "{1}",
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF),
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source()),
                         new TapPermanentsEffect(Subjects.source())
                 ),
                 "{1}, Sacrifice another creature: This creature gains indestructible until end of turn. Tap it."

@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PlayWithTopCardRevealedEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "198")
@@ -23,7 +23,7 @@ public class MulDayaChannelers extends Card {
         // As long as the top card of your library is a creature card, this creature gets +3/+3.
         addStaticEffect(new ConditionalEffect(
                 new TopCardOfLibraryType(CardType.CREATURE),
-                new StaticBoostEffect(3, 3, GrantScope.SELF)));
+                new StaticBoostEffect(3, 3, Subjects.source())));
         // As long as the top card of your library is a land card, this creature has
         // "{T}: Add two mana of any one color."
         addStaticEffect(new ConditionalEffect(
@@ -31,6 +31,6 @@ public class MulDayaChannelers extends Card {
                 new GrantActivatedAbilityEffect(
                         new ActivatedAbility(true, null, List.of(new AwardAnyColorManaEffect(2)),
                                 "{T}: Add two mana of any one color."),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

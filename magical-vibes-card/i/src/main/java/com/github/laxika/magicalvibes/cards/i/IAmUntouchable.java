@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,7 +23,7 @@ public class IAmUntouchable extends Card {
     public IAmUntouchable() {
         // You and permanents you control have hexproof.
         addStaticEffect(new GrantControllerKeywordEffect(Keyword.HEXPROOF));
-        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.otherPermanentsYouControl()));
 
         // When combat damage is dealt to you, create a 4/4 colorless Scarecrow artifact creature
         // token with vigilance, then abandon this scheme.

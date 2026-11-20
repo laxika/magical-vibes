@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "103")
@@ -14,9 +14,9 @@ public class PitilessVizier extends Card {
     public PitilessVizier() {
         // Whenever you cycle or discard a card, this creature gains indestructible until end of turn.
         // Cycling is a discard (CR 702.29e), so a single "controller discards" trigger covers both
-        // wordings; the GrantScope.SELF grant is enqueued as a triggered ability by
+        // wordings; the source() grant is enqueued as a triggered ability by
         // DiscardTriggerCollectorService and resolves against the source permanent.
         addTrigger(Triggers.youDiscardCard(),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source()));
     }
 }

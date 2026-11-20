@@ -22,7 +22,7 @@ public class BecomeColorlessEffectHandler implements StaticEffectHandlerBean {
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var becomes = (BecomeColorlessEffect) effect;
         boolean matches = support.namesBeyondSource(context,
-                StaticEffectSupport.withAllPermanentsIncludingSource(becomes.scope()), becomes.filter());
+                becomes.subject(), becomes.filter());
         if (matches) {
             accumulator.setColorOverriding(true);
         }

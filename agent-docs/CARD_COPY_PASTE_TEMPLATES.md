@@ -482,7 +482,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
 @CardRegistration(set = "SET", collectorNumber = "NUM")
@@ -490,7 +490,7 @@ public class CARDNAME extends Card {
 
     public CARDNAME() {
         addSpellEffect(new BoostAllOwnCreaturesEffect(POWER_BOOST, TOUGHNESS_BOOST));
-        addSpellEffect(new GrantKeywordEffect(Keyword.KEYWORD, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.KEYWORD, Subjects.otherCreaturesYouControl()));
     }
 }
 ```
@@ -712,7 +712,7 @@ public class CARDNAME extends Card {
 5. Fizzles if target removed before resolution
 6. Cannot target noncreature
 
-**Placeholders:** `STATIC_EFFECT_CLASS` (e.g. `StaticBoostEffect`, `EnchantedCreatureCantAttackOrBlockEffect`), `ARGS` (e.g. `-13, 0, GrantScope.ENCHANTED_CREATURE`).
+**Placeholders:** `STATIC_EFFECT_CLASS` (e.g. `StaticBoostEffect`, `EnchantedCreatureCantAttackOrBlockEffect`), `ARGS` (e.g. `-13, 0, Subjects.attachedCreature()`).
 
 ---
 
@@ -772,7 +772,7 @@ package com.github.laxika.magicalvibes.cards.LETTER;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.GRANTED_EFFECT_CLASS;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -794,7 +794,7 @@ public class CARDNAME extends Card {
                         List.of(new GRANTED_EFFECT_CLASS(ARGS)),
                         "ABILITY_RULES_TEXT"
                 ),
-                GrantScope.ENCHANTED_CREATURE
+                Subjects.attachedCreature()
         ));
     }
 }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -22,13 +22,13 @@ import java.util.Set;
 public class ParagonOfOpenGraves extends Card {
 
     public ParagonOfOpenGraves() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentColorInPredicate(Set.of(CardColor.BLACK))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{B}",
-                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target())),
                 "{2}{B}, {T}: Another target black creature you control gains deathtouch until end of turn.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

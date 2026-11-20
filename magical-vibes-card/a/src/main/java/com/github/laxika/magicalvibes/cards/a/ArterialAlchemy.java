@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,16 +29,16 @@ public class ArterialAlchemy extends Card {
                 CreateTokenEffect.ofBloodToken(new Sum(new PlayersInGame(), new Fixed(-1))));
 
         // Blood tokens you control are Equipment in addition to their other types.
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.EQUIPMENT, GrantScope.OWN_PERMANENTS, false, blood));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.EQUIPMENT, Subjects.permanentsYouControl(), false, blood));
 
         // Blood tokens you control have "Equipped creature gets +2/+0".
         addStaticEffect(new GrantEffectEffect(
-                        new AttachedBoostEffect(new Fixed(2), new Fixed(0), GrantScope.EQUIPPED_CREATURE),
-                        GrantScope.OWN_PERMANENTS,
+                        new AttachedBoostEffect(new Fixed(2), new Fixed(0), Subjects.attachedCreature()),
+                        Subjects.permanentsYouControl(),
                         blood));
 
         // ...and equip {2}.
         addStaticEffect(new GrantActivatedAbilityEffect(
-                        new EquipActivatedAbility("{2}"), GrantScope.OWN_PERMANENTS, blood));
+                        new EquipActivatedAbility("{2}"), Subjects.permanentsYouControl(), blood));
     }
 }

@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,7 +27,7 @@ public class AethersphereHarvester extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new PayEnergyCost(1), new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)),
+                List.of(new PayEnergyCost(1), new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source())),
                 "Pay {E}: This Vehicle gains lifelink until end of turn."
         ).withActivationCondition(new ControllerEnergyAtLeast(1),
                 "You need at least one energy counter to activate this ability."));

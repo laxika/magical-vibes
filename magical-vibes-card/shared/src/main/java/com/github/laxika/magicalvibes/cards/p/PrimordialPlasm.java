@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -26,6 +26,6 @@ public class PrimordialPlasm extends Card {
         target(new PermanentPredicateTargetFilter(otherCreature, "Target must be another creature"))
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new BoostTargetCreatureEffect(2, 2),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.UNTIL_END_OF_TURN));
+                        new LosesAllAbilitiesEffect(Subjects.target(), Duration.UNTIL_END_OF_TURN));
     }
 }

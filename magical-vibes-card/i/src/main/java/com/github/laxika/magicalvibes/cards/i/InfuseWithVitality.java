@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ public class InfuseWithVitality extends Card {
         // Until end of turn, target creature gains deathtouch and "When this creature dies, return
         // it to the battlefield tapped under its owner's control." You gain 2 life.
         target(TargetFilters.creature())
-                .addSpellEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target()))
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new ReturnSourceCardFromGraveyardToBattlefieldEffect(true))))
                 .addSpellEffect(new GainLifeEffect(2));

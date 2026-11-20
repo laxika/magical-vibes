@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayXManaPutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
@@ -26,6 +26,6 @@ public class RemnantOfTheRisingStar extends Card {
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(5, new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(), new PermanentIsModifiedPredicate()))),
-                new StaticBoostEffect(5, 5, Set.of(Keyword.TRAMPLE), GrantScope.SELF)));
+                new StaticBoostEffect(5, 5, Set.of(Keyword.TRAMPLE), Subjects.source())));
     }
 }

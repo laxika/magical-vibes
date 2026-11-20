@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveAnyNumberOfCountersFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -34,7 +34,7 @@ public class RhysTheEvermore extends Card {
         target(new PermanentPredicateTargetFilter(anotherCreatureYouControl,
                 "Target must be another creature you control"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantKeywordEffect(Keyword.PERSIST, GrantScope.TARGET, anotherCreatureYouControl));
+                        new GrantKeywordEffect(Keyword.PERSIST, Subjects.target(), anotherCreatureYouControl));
 
         PermanentPredicate creatureYouControl = new PermanentControlledBySourceControllerPredicate();
         addActivatedAbility(new ActivatedAbility(

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,7 +20,7 @@ import java.util.Set;
 public class RageWeaver extends Card {
 
     public RageWeaver() {
-        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
+        addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.target())),
                 "{2}: Target black or green creature gains haste until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class AmonkhetRaceway extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.target())),
                 "Max speed — {T}: Target creature gains haste until end of turn.",
                 TargetFilters.creature()
         ).withActivationCondition(new MaxSpeed(), "Activate only if you have max speed"));

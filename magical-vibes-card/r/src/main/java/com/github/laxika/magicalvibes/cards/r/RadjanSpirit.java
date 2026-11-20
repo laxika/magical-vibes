@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -22,7 +22,7 @@ public class RadjanSpirit extends Card {
         // {T}: Target creature loses flying until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new RemoveKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),
+                List.of(new RemoveKeywordEffect(Keyword.FLYING, Subjects.target())),
                 "{T}: Target creature loses flying until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsCreaturePredicate(),

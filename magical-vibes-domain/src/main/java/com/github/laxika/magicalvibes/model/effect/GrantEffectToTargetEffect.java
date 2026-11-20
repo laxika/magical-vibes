@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.AbilityEffects;
  *
  * @param grantedAbility the granted ability
  * @param duration       how long the grant lasts
- * @param scope          which permanent receives the ability: {@link GrantScope#TARGET} (the chosen
- *                       target), {@link GrantScope#SELF} (the source permanent), or
- *                       {@link GrantScope#ENCHANTED_PERMANENT} (the permanent the source
+ * @param subject          which permanent receives the ability: {@link Subjects#target()} (the chosen
+ *                       target), {@link Subjects#source()} (the source permanent), or
+ *                       {@link Subjects#attached()} (the permanent the source
  *                       Aura is attached to, re-derived at resolution and without targeting — the
  *                       Genju cycle's granted "whenever this creature deals damage" ability)
  */
@@ -23,7 +23,7 @@ public record GrantEffectToTargetEffect(
         Ability grantedAbility,
         Duration duration,
         boolean skipIfAlreadyPresent,
-        GrantScope scope
+        PermanentSubject subject
 ) implements CardEffect {
 
     /** The grant of {@code grantedAbility}. */
@@ -39,27 +39,29 @@ public record GrantEffectToTargetEffect(
     /** The grant of {@code grantedAbility}. */
     public GrantEffectToTargetEffect(Ability grantedAbility, Duration duration,
                                      boolean skipIfAlreadyPresent) {
-        this(grantedAbility, duration, skipIfAlreadyPresent, GrantScope.TARGET);
+        this(grantedAbility, duration, skipIfAlreadyPresent, Subjects.target());
     }
 
     /** Indefinite grant of {@code grantedAbility} to the source permanent. */
     public static GrantEffectToTargetEffect toSourcePermanent(Ability grantedAbility) {
-        return new GrantEffectToTargetEffect(grantedAbility, Duration.PERMANENT, true, GrantScope.SELF);
+        return new GrantEffectToTargetEffect(grantedAbility, Duration.PERMANENT, true, Subjects.source());
     }
 
     /** Grant to the permanent the source Aura enchants, for the given duration (Genju cycle). */
     public static GrantEffectToTargetEffect toEnchantedPermanent(Ability grantedAbility, Duration duration) {
-        return new GrantEffectToTargetEffect(grantedAbility, duration, false, GrantScope.ENCHANTED_PERMANENT);
+        return new GrantEffectToTargetEffect(grantedAbility, duration, false, Subjects.attached());
     }
 
     /** Grants {@code grantedAbility} to the resolving source permanent without targeting it. */
     public static GrantEffectToTargetEffect toSource(Ability grantedAbility, Duration duration) {
-        return new GrantEffectToTargetEffect(grantedAbility, duration, true, GrantScope.SELF);
+        return new GrantEffectToTargetEffect(grantedAbility, duration, true, Subjects.source());
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return scope == GrantScope.TARGET ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
+        return subject instanceof PermanentSubject.Target
+                ? TargetSpec.benign(TargetPredicates.permanent())
+                : TargetSpec.NONE;
     }
 
     /** The effect of {@link #grantedAbility}, or {@code null} when there is none. */

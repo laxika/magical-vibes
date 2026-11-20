@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomCardFromEachOpponentGraveyardMayCastFreeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ public class KefkaDancingMad extends Card {
     public KefkaDancingMad() {
         // During your turn, Kefka has indestructible.
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
 
         // At the beginning of your end step, exile a card at random from each opponent's graveyard.
         addTrigger(Triggers.endStep(ActivePlayer.YOU),

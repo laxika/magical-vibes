@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "27")
@@ -28,15 +28,15 @@ public class IkiralOutrider extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addStaticEffect(new RemoveKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.VIGILANCE, Subjects.source()));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(2, 6, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(2, 6, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(3, 10, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(3, 10, Subjects.source())));
     }
 }

@@ -22,7 +22,7 @@ public class GrantColorEffectHandler implements StaticEffectHandlerBean {
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantColorEffect) effect;
         boolean matches = support.namesBeyondSource(context,
-                StaticEffectSupport.withAllPermanentsIncludingSource(grant.scope()), grant.filter());
+                grant.subject(), grant.filter());
         if (matches) {
             accumulator.addGrantedColor(grant.color());
             if (grant.overriding()) {

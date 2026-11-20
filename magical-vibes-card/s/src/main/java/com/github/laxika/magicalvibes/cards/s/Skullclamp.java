@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -38,7 +38,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class Skullclamp extends Card {
 
     public Skullclamp() {
-        addStaticEffect(new StaticBoostEffect(1, -1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, -1, Subjects.attachedCreature()));
         addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED), new DrawCardEffect(2));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }

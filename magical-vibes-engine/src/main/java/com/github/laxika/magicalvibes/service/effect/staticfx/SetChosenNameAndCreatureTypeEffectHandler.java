@@ -22,7 +22,7 @@ public class SetChosenNameAndCreatureTypeEffectHandler implements StaticEffectHa
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         SetChosenNameAndCreatureTypeEffect set = (SetChosenNameAndCreatureTypeEffect) effect;
-        boolean applies = support.names(context, set.scope().subject(), null);
+        boolean applies = support.names(context, set.subject(), null);
         if (!applies) return;
 
         String chosenName = context.source().getChosenName();

@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MaySacrificePermanentForCounterSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -27,7 +27,7 @@ public class Chitterspitter extends Card {
                 new PermanentIsTokenPredicate(), "a token", CounterType.ACORN));
 
         addStaticEffect(new StaticBoostEffect(
-                1, 1, GrantScope.OWN_CREATURES,
+                1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.SQUIRREL), CounterType.ACORN, false));
 
         addActivatedAbility(new ActivatedAbility(

@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -30,7 +30,7 @@ public class AstorBearerOfBlades extends Card {
 
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new EquipActivatedAbility("{1}"),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT)));
 
         addStaticEffect(new GrantActivatedAbilityEffect(
@@ -39,7 +39,7 @@ public class AstorBearerOfBlades extends Card {
                         null,
                         List.of(new CrewCost(1), AnimatePermanentsEffect.crew()),
                         "Crew 1"),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
     }
 }

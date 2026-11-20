@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardEffect
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -32,14 +32,14 @@ public class WrennAndRealmbreaker extends Card {
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, null, List.of(new AwardAnyColorManaEffect()),
                         "{T}: Add one mana of any color."),
-                GrantScope.OWN_LANDS));
+                Subjects.landsYouControl()));
 
         addActivatedAbility(new ActivatedAbility(
                 false, null,
                 List.of(new AnimatePermanentsEffect(
                         3, 3, List.of(CardSubtype.ELEMENTAL),
                         Set.of(Keyword.VIGILANCE, Keyword.HEXPROOF, Keyword.HASTE),
-                        null, Set.of(), GrantScope.TARGET, Duration.UNTIL_YOUR_NEXT_TURN)),
+                        null, Set.of(), Subjects.target(), Duration.UNTIL_YOUR_NEXT_TURN)),
                 "+1: Up to one target land you control becomes a 3/3 Elemental creature with vigilance, "
                         + "hexproof, and haste until your next turn. It's still a land.",
                 null, +1, null, null,

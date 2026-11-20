@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BecomeAuraManifestTopCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +17,6 @@ public class Cloudform extends Card {
 
     public Cloudform() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new BecomeAuraManifestTopCardEffect());
-        addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.HEXPROOF), GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.HEXPROOF), Subjects.attachedCreature()));
     }
 }

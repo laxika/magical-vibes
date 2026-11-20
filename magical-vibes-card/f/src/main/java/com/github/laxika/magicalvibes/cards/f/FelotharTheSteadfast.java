@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
@@ -22,7 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 public class FelotharTheSteadfast extends Card {
 
     public FelotharTheSteadfast() {
-        addStaticEffect(new AssignCombatDamageWithToughnessEffect(GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new AssignCombatDamageWithToughnessEffect(Subjects.creaturesYouControl()));
         addStaticEffect(new MatchingCreaturesCanAttackAsThoughNoDefenderEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentControlledBySourceControllerPredicate(),

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class KnightOfTheEbonLegion extends Card {
                 "{2}{B}",
                 List.of(
                         new BoostSelfEffect(3, 3),
-                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())
                 ),
                 "{2}{B}: This creature gets +3/+3 and gains deathtouch until end of turn."
         ));

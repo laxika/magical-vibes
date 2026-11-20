@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +22,7 @@ public class BreathOfDreams extends Card {
         // Green creatures have "Cumulative upkeep {1}."
         addStaticEffect(new GrantEffectEffect(
                 new CumulativeUpkeepEffect("{1}"),
-                GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                Subjects.allCreatures(),
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN))));
     }
 }

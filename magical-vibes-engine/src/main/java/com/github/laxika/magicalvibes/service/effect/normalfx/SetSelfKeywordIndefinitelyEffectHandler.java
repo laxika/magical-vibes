@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfKeywordIndefinitelyEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -59,8 +59,8 @@ public class SetSelfKeywordIndefinitelyEffectHandler implements NormalEffectHand
         // layer-6 effect with its own timestamp (CR 613.7), so a later grant or removal by another
         // source (Soar) wins over it and an earlier one loses to it.
         CardEffect layerEffect = change.gained()
-                ? new GrantKeywordEffect(change.keyword(), GrantScope.TARGET)
-                : new RemoveKeywordEffect(change.keyword(), GrantScope.TARGET, Duration.PERMANENT);
+                ? new GrantKeywordEffect(change.keyword(), Subjects.target())
+                : new RemoveKeywordEffect(change.keyword(), Subjects.target(), Duration.PERMANENT);
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), source.getId(), entry.getControllerId(), layerEffect,
                 source.getId(), null, null, Duration.PERMANENT, 0));

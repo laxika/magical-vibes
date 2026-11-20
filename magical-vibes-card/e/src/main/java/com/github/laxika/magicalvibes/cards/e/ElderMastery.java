@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +20,7 @@ public class ElderMastery extends Card {
         target(TargetFilters.creature());
 
         // Enchanted creature gets +3/+3 and has flying.
-        addStaticEffect(new StaticBoostEffect(3, 3, Set.of(Keyword.FLYING), GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 3, Set.of(Keyword.FLYING), Subjects.attachedCreature()));
 
         // Whenever enchanted creature deals damage to a player, that player discards two cards.
         // (The damaged player is supplied as the effect's target by CombatDamageService.)

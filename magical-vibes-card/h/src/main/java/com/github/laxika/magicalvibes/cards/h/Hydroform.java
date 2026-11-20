@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -22,6 +22,6 @@ public class Hydroform extends Card {
                 3, 3,
                 List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.FLYING),
                 null, Set.of(),
-                GrantScope.TARGET, Duration.UNTIL_END_OF_TURN));
+                Subjects.target(), Duration.UNTIL_END_OF_TURN));
     }
 }

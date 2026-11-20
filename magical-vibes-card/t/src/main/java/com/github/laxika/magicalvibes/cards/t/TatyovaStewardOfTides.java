@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,7 +23,7 @@ public class TatyovaStewardOfTides extends Card {
 
     public TatyovaStewardOfTides() {
         // Land creatures you control have flying.
-        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.creaturesYouControl(),
                         new PermanentIsLandPredicate()));
 
         // Whenever a land you control enters, if you control seven or more lands, up to one target
@@ -35,6 +35,6 @@ public class TatyovaStewardOfTides extends Card {
                         new AnimatePermanentsEffect(
                                 3, 3,
                                 List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE),
-                                null, Set.of(), GrantScope.TARGET, Duration.PERMANENT));
+                                null, Set.of(), Subjects.target(), Duration.PERMANENT));
     }
 }

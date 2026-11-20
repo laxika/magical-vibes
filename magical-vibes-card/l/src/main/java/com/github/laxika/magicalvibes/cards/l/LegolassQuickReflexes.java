@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SourcePermanentDealsPowerDamageToUpToOneTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -23,7 +22,7 @@ public class LegolassQuickReflexes extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new UntapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new GrantKeywordEffect(
-                        Set.of(Keyword.REACH, Keyword.HEXPROOF), GrantScope.TARGET))
+                        Set.of(Keyword.REACH, Keyword.HEXPROOF), Subjects.target()))
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.becomesTapped(),
                                 new SourcePermanentDealsPowerDamageToUpToOneTargetCreatureEffect())));

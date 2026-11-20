@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DelayedEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndSaddledCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,7 +28,7 @@ public class FortuneLoyalSteed extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SaddleCost(1), new BecomeSaddledUntilEndOfTurnEffect(GrantScope.SELF)),
+                List.of(new SaddleCost(1), new BecomeSaddledUntilEndOfTurnEffect(Subjects.source())),
                 "Saddle 1",
                 ActivationTimingRestriction.SORCERY_SPEED));
     }

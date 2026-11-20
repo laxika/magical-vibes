@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
@@ -394,7 +394,7 @@ public class PermanentControlSupport {
             Set<Keyword> blueprintGrantedKeywords = tokenBlueprint.grantedKeywordsUntilEndOfTurn();
             if (blueprintGrantedKeywords != null && !blueprintGrantedKeywords.isEmpty()) {
                 gameData.addEffectOnPermanent(tokenPermanent.getCard().getName(), null, controllerId,
-                        new GrantKeywordEffect(Set.copyOf(blueprintGrantedKeywords), GrantScope.TARGET),
+                        new GrantKeywordEffect(Set.copyOf(blueprintGrantedKeywords), Subjects.target()),
                         tokenPermanent.getId(), Duration.UNTIL_END_OF_TURN);
             }
 

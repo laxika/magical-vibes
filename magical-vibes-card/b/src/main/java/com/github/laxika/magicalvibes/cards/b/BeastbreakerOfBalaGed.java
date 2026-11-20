@@ -11,11 +11,11 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "178")
@@ -31,17 +31,17 @@ public class BeastbreakerOfBalaGed extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addStaticEffect(new RemoveKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.TRAMPLE, Subjects.source()));
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(4, CounterType.LEVEL)))),
-                new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(4, 4, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(6, 6, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(6, 6, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.LEVEL),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
     }
 }

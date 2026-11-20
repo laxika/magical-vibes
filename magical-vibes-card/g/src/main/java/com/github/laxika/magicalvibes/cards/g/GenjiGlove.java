@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -18,7 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class GenjiGlove extends Card {
 
     public GenjiGlove() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.attachedCreature()));
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new FirstCombatPhase()),
                 SequenceEffect.of(

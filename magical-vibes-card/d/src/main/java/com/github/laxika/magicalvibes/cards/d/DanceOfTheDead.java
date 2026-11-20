@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayPayer;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -37,7 +36,7 @@ public class DanceOfTheDead extends Card {
                 .build());
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ReanimateEnchantedCreatureCardEffect(true));
         // "Enchanted creature gets +1/+1 and doesn't untap during its controller's untap step."
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
         addStaticEffect(DoesntUntapEffect.enchanted());
         // "When this Aura leaves the battlefield, that creature's controller sacrifices it."
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new SacrificeEnchantedCreatureOnLeaveEffect());

@@ -22,7 +22,7 @@ public class CantBeTurnedFaceUpEffectHandler implements StaticEffectHandlerBean 
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         CantBeTurnedFaceUpEffect restriction = (CantBeTurnedFaceUpEffect) effect;
         if (context.target().isFaceDown()
-                && support.namesBeyondSource(context, restriction.scope().subject(), null)) {
+                && support.namesBeyondSource(context, restriction.subject(), null)) {
             accumulator.setTurnFaceUpPrevented(true);
         }
     }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformAllEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -42,7 +42,7 @@ public class GlissaHeraldOfPredation extends Card {
                         "Phyrexians you control gain first strike and deathtouch until end of turn",
                         new GrantKeywordEffect(
                                 Set.of(Keyword.FIRST_STRIKE, Keyword.DEATHTOUCH),
-                                GrantScope.OWN_PERMANENTS,
+                                Subjects.permanentsYouControl(),
                                 new PermanentHasSubtypePredicate(CardSubtype.PHYREXIAN)))
         )));
     }

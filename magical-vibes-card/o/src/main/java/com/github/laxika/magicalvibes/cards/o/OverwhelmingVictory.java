@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TLE", collectorNumber = "123")
@@ -19,6 +19,6 @@ public class OverwhelmingVictory extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new DealDamageToTargetCreatureEffect(5))
                 .addSpellEffect(new BoostAllOwnCreaturesEffect(new EventValue(), new Fixed(0)))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl()));
     }
 }

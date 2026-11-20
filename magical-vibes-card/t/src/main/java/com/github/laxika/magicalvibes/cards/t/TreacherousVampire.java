@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,8 +31,8 @@ public class TreacherousVampire extends Card {
 
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);
         addStaticEffect(new ConditionalEffect(threshold,
-                new StaticBoostEffect(2, 2, GrantScope.SELF)));
+                new StaticBoostEffect(2, 2, Subjects.source())));
         addStaticEffect(new ConditionalEffect(threshold,
-                new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new LoseLifeEffect(6)), GrantScope.SELF)));
+                new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new LoseLifeEffect(6)), Subjects.source())));
     }
 }

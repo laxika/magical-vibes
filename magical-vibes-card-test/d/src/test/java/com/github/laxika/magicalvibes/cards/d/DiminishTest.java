@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 
@@ -216,7 +216,7 @@ class DiminishTest extends BaseCardTest {
         harness.addToBattlefield(player1, new GrizzlyBears());
         Permanent perm = harness.getGameData().playerBattlefields.get(player1.getId()).getFirst();
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Tezzeret", null, player1.getId(),
-                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.TARGET), perm.getId(), null, null,
+                new GrantCardTypeEffect(CardType.CREATURE, Subjects.target()), perm.getId(), null, null,
                 Duration.PERMANENT, 0));
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Tezzeret", null, player1.getId(),
                 new SetBasePowerToughnessEffect(5, 5), perm.getId(), null, null, Duration.PERMANENT, 0));

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "SOI", collectorNumber = "100")
@@ -15,7 +15,7 @@ import java.util.List;
 public class BehindTheScenes extends Card {
 
     public BehindTheScenes() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.SKULK, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.SKULK, Subjects.creaturesYouControl()));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{W}",

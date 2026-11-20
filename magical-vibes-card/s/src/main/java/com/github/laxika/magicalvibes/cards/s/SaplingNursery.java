@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -38,7 +38,7 @@ public class SaplingNursery extends Card {
                 "{1}{G}",
                 List.of(
                         new ExileSelfCost(),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_PERMANENTS,
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.permanentsYouControl(),
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentHasSubtypePredicate(CardSubtype.TREEFOLK),
                                         new PermanentHasSubtypePredicate(CardSubtype.FOREST))))

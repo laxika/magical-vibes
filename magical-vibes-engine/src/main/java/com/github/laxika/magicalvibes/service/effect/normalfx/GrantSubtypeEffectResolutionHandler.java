@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
@@ -34,13 +35,14 @@ public class GrantSubtypeEffectResolutionHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         GrantSubtypeEffect grant = (GrantSubtypeEffect) effect;
-        if (grant.scope() != GrantScope.SELF && grant.scope() != GrantScope.TRIGGERING_PERMANENT
-                && grant.scope() != GrantScope.TARGET) {
+        if (!(grant.subject() instanceof PermanentSubject.Source)
+                && !(grant.subject() instanceof PermanentSubject.Triggering)
+                && !(grant.subject() instanceof PermanentSubject.Target)) {
             return;
         }
-        for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, grant.scope().subject())) {
+        for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, grant.subject())) {
             gameData.addEffectOnPermanent(entry, grant, target.getId(), Duration.PERMANENT);
-            if (grant.scope() == GrantScope.TRIGGERING_PERMANENT) {
+            if (grant.subject() instanceof PermanentSubject.Triggering) {
                 gameLogService.append(gameData, GameLog.builder().card(target.getCard())
                         .text(" becomes a " + grant.subtype().getDisplayName() + " in addition to its other types.")
                         .build());

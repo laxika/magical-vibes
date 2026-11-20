@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNoAbilitiesPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -38,10 +38,10 @@ public class RuxaPatientProfessor extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), returnCreature);
         addTrigger(Triggers.attacks(), returnCreature);
         PermanentHasNoAbilitiesPredicate noAbilities = new PermanentHasNoAbilitiesPredicate();
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, noAbilities));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(), noAbilities));
         addStaticEffect(new GrantEffectEffect(
                 new AssignCombatDamageAsThoughUnblockedEffect(),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 noAbilities));
     }
 }

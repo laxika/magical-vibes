@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.Set;
@@ -14,7 +14,7 @@ public class PrideOfThePerfect extends Card {
 
     public PrideOfThePerfect() {
         // Elves you control get +2/+0.
-        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 0, Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELF))));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,9 +21,9 @@ public class WatchwingScarecrow extends Card {
     public WatchwingScarecrow() {
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentColorInPredicate(Set.of(CardColor.WHITE))))),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentColorInPredicate(Set.of(CardColor.BLUE))))),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
     }
 }

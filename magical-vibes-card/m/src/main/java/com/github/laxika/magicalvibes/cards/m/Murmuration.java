@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +23,7 @@ public class Murmuration extends Card {
 
     public Murmuration() {
         addStaticEffect(new StaticBoostEffect(
-                1, 1, Set.of(Keyword.VIGILANCE), GrantScope.ALL_OWN_CREATURES,
+                1, 1, Set.of(Keyword.VIGILANCE), Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.BIRD)));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new CreateTokenEffect(

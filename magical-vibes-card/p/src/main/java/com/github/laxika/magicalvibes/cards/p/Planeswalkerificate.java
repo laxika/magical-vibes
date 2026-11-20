@@ -10,11 +10,11 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentToughnessBe
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.InitializeEnchantedPermanentToughnessAsLoyaltyEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,7 +28,7 @@ public class Planeswalkerificate extends Card {
     public Planeswalkerificate() {
         target(TargetFilters.creatureYouControl());
 
-        addStaticEffect(new GrantCardTypeEffect(CardType.PLANESWALKER, GrantScope.ENCHANTED_PERMANENT));
+        addStaticEffect(new GrantCardTypeEffect(CardType.PLANESWALKER, Subjects.attached()));
         addStaticEffect(new EnchantedPermanentToughnessBecomesLoyaltyEffect());
         addStaticEffect(new CantBlockEffect());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
@@ -40,20 +40,20 @@ public class Planeswalkerificate extends Card {
                         List.of(new AwardManaEffect(ManaColor.RED, 2)),
                         "+1: Add {R}{R}."
                 ).withToughnessAsLoyalty(),
-                GrantScope.ENCHANTED_PERMANENT));
+                Subjects.attached()));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         -1,
                         List.of(new ExileTopCardMayPlayThisTurnEffect(false)),
                         "−1: Exile the top card of your library. You may play it this turn."
                 ).withToughnessAsLoyalty(),
-                GrantScope.ENCHANTED_PERMANENT));
+                Subjects.attached()));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 ActivatedAbility.variableLoyaltyAbility(
                         List.of(new DealDamageToAnyTargetEffect(new XValue())),
                         "−X: This planeswalker deals X damage to any target.",
                         null
                 ).withToughnessAsLoyalty(),
-                GrantScope.ENCHANTED_PERMANENT));
+                Subjects.attached()));
     }
 }

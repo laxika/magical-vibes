@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SNC", collectorNumber = "155")
 public class RhoxPummeler extends Card {
@@ -18,6 +18,6 @@ public class RhoxPummeler extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.SHIELD),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
     }
 }

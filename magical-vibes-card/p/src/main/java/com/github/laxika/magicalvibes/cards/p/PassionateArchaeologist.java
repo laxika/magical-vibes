@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -38,7 +37,7 @@ public class PassionateArchaeologist extends Card {
                         .withTargetFilter(new PlayerPredicateTargetFilter(
                                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                                 "Target must be an opponent")),
-                GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                Subjects.allCreatures(),
                 commanderCreatureYouOwn));
     }
 }

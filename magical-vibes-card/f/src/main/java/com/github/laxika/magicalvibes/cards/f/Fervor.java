@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "6ED", collectorNumber = "174")
 @CardRegistration(set = "7ED", collectorNumber = "181")
@@ -14,6 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class Fervor extends Card {
 
     public Fervor() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl()));
     }
 }

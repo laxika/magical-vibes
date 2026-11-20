@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "USG", collectorNumber = "151")
@@ -25,7 +25,7 @@ public class RainOfFilth extends Card {
         );
         addSpellEffect(new GrantActivatedAbilityEffect(
                 sacrificeLandForBlackMana,
-                GrantScope.OWN_LANDS,
+                Subjects.landsYouControl(),
                 null,
                 Duration.UNTIL_END_OF_TURN
         ));

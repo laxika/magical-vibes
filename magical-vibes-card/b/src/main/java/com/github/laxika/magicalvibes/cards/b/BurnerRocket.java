@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,7 +26,7 @@ public class BurnerRocket extends Card {
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new BoostTargetCreatureEffect(2, 0),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

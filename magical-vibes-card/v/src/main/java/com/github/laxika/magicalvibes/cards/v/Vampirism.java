@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
@@ -38,10 +38,10 @@ public class Vampirism extends Card {
 
         // Enchanted creature gets +1/+1 for each other creature you control.
         addStaticEffect(new AttachedBoostEffect(
-                otherCreaturesYouControl, otherCreaturesYouControl, GrantScope.ENCHANTED_CREATURE));
+                otherCreaturesYouControl, otherCreaturesYouControl, Subjects.attachedCreature()));
 
         // Other creatures you control get -1/-1.
-        addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(-1, -1, Subjects.otherCreaturesYouControl(),
                 new PermanentNotPredicate(new PermanentIsHostOfSourceAuraPredicate())));
     }
 }

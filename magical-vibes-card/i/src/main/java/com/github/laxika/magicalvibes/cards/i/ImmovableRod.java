@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -28,7 +28,7 @@ public class ImmovableRod extends Card {
                 true,
                 "{3}{W}",
                 List.of(
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.WHILE_SOURCE_REMAINS_TAPPED),
+                        new LosesAllAbilitiesEffect(Subjects.target(), Duration.WHILE_SOURCE_REMAINS_TAPPED),
                         new LockTargetPermanentEffect(
                                 true, true, false, Duration.WHILE_SOURCE_REMAINS_TAPPED,
                                 TargetPredicates.permanent())

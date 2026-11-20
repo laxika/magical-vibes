@@ -22,7 +22,7 @@ public class GrantKeywordEffectHandler implements StaticEffectHandlerBean {
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantKeywordEffect) effect;
         boolean scopeMatch = support.names(context,
-                StaticEffectSupport.withOwnPermanentsAsOthers(grant.scope()), grant.filter());
+                grant.subject(), grant.filter());
         if (scopeMatch) {
             accumulator.addKeywords(grant.keywords());
         }

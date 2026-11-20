@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "207")
@@ -19,7 +19,7 @@ public class PoisonDartFrog extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
-                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())),
                 "{2}: This creature gains deathtouch until end of turn."
         ));
     }

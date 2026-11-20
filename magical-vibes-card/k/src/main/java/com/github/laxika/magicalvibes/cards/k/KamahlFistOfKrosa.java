@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class KamahlFistOfKrosa extends Card {
                 "{G}",
                 List.of(new AnimatePermanentsEffect(
                         1, 1, List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN)),
+                        Subjects.target(), Duration.UNTIL_END_OF_TURN)),
                 "{G}: Target land becomes a 1/1 creature until end of turn. It's still a land.",
                 TargetFilters.land()
         ));
@@ -35,7 +35,7 @@ public class KamahlFistOfKrosa extends Card {
                 "{2}{G}{G}{G}",
                 List.of(
                         new BoostAllOwnCreaturesEffect(3, 3),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl())
                 ),
                 "{2}{G}{G}{G}: Creatures you control get +3/+3 and gain trample until end of turn."
         ));

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -40,7 +39,7 @@ public class FuneralRoomAwakeningHall extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(0),
                 new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.creatureDies(ObjectRelation.YOU_CONTROL),
-                        drain), GrantScope.SELF)));
+                        drain), Subjects.source())));
 
         addTrigger(Triggers.doorUnlocked(1),
                 new ReturnCardsFromControllerGraveyardToBattlefieldEffect(

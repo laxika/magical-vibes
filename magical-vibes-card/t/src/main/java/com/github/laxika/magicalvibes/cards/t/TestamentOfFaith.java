@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -23,7 +23,7 @@ public class TestamentOfFaith extends Card {
                 List.of(new AnimatePermanentsEffect(
                         new XValue(), new XValue(),
                         List.of(CardSubtype.WALL), Set.of(Keyword.DEFENDER), null, Set.of(),
-                        GrantScope.SELF, Duration.UNTIL_END_OF_TURN, null
+                        Subjects.source(), Duration.UNTIL_END_OF_TURN, null
                 )),
                 "{X}: This enchantment becomes an X/X Wall creature with defender in addition to its other types until end of turn."
         ));

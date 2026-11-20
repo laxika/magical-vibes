@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SourceBecomesSubtypeUntilEndOfTurnEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "62")
@@ -20,8 +20,8 @@ public class DragonsoulKnight extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{W}{U}{B}{R}{G}", List.of(
                 new SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.DRAGON),
                 new BoostSelfEffect(5, 3),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)),
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source()),
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())),
                 "{W}{U}{B}{R}{G}: Until end of turn, this creature becomes a Dragon, gets +5/+3, and gains flying and trample."));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.Set;
@@ -19,10 +19,10 @@ public class CliffrunnerBehemoth extends Card {
         // This creature has haste as long as you control a red permanent.
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.RED))),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.source())));
         // This creature has lifelink as long as you control a white permanent.
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.WHITE))),
-                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source())));
     }
 }

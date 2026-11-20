@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,7 +27,7 @@ public class BefriendingTheMoths extends Card {
     private void addChapterEffects(int chapter) {
         addTrigger(Triggers.chapter(chapter),
                 new BoostTargetCreatureEffect(1, 1),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.target()));
         setSagaChapterTargetGroups(chapter, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creatureYouControl(), 1, 1)));
     }

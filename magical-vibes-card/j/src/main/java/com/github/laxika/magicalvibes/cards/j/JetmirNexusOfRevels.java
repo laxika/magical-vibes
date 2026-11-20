@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.Set;
@@ -19,12 +19,12 @@ public class JetmirNexusOfRevels extends Card {
     public JetmirNexusOfRevels() {
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(3, new PermanentIsCreaturePredicate()),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.VIGILANCE), GrantScope.ALL_OWN_CREATURES)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.VIGILANCE), Subjects.creaturesYouControl())));
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(6, new PermanentIsCreaturePredicate()),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE), GrantScope.ALL_OWN_CREATURES)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE), Subjects.creaturesYouControl())));
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(9, new PermanentIsCreaturePredicate()),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.DOUBLE_STRIKE), GrantScope.ALL_OWN_CREATURES)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.DOUBLE_STRIKE), Subjects.creaturesYouControl())));
     }
 }

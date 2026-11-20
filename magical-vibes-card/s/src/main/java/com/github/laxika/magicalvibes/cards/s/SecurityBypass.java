@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfAttackingAloneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,6 +18,6 @@ public class SecurityBypass extends Card {
                 .addStaticEffect(new CantBeBlockedIfAttackingAloneEffect())
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                        new DrawDiscardAndConniveEffect()), GrantScope.ENCHANTED_CREATURE));
+                        new DrawDiscardAndConniveEffect()), Subjects.attachedCreature()));
     }
 }

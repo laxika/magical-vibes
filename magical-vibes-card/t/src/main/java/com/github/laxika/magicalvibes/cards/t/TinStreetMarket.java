@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class TinStreetMarket extends Card {
                         new ActivatedAbility(true, null,
                                 List.of(new DiscardCardTypeCost(null, null), new DrawCardEffect(1)),
                                 "{T}, Discard a card: Draw a card."),
-                        GrantScope.ENCHANTED_PERMANENT
+                        Subjects.attached()
                 ));
     }
 }

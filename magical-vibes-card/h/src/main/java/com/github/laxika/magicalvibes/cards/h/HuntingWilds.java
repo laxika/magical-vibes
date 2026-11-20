@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapSearchedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -31,7 +31,7 @@ public class HuntingWilds extends Card {
         CardPredicate forestFilter = new CardSubtypePredicate(CardSubtype.FOREST);
         AnimatePermanentsEffect animation = new AnimatePermanentsEffect(
                 3, 3, List.of(), Set.of(Keyword.HASTE), CardColor.GREEN, Set.of(),
-                GrantScope.OWN_PERMANENTS, Duration.PERMANENT);
+                Subjects.permanentsYouControl(), Duration.PERMANENT);
 
         addStaticEffect(new KickerEffect("{3}{G}"));
         addSpellEffect(new ConditionalReplacementEffect(new Kicked(),

@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -25,7 +25,7 @@ public class ElvishReclaimer extends Card {
         // This creature gets +2/+2 as long as there are three or more land cards in your graveyard.
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(3, new CardTypePredicate(CardType.LAND)),
-                new StaticBoostEffect(2, 2, GrantScope.SELF)));
+                new StaticBoostEffect(2, 2, Subjects.source())));
 
         // {2}, {T}, Sacrifice a land: Search your library for a land card, put it onto the
         // battlefield tapped, then shuffle.

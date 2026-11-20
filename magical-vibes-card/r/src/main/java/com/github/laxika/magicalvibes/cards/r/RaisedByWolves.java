@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,6 +29,6 @@ public class RaisedByWolves extends Card {
                         2, "Wolf", 2, 2, CardColor.GREEN,
                         List.of(CardSubtype.WOLF), Set.of(), Set.of()))
                 .addStaticEffect(new AttachedBoostEffect(
-                        wolves, wolves, GrantScope.ENCHANTED_CREATURE));
+                        wolves, wolves, Subjects.attachedCreature()));
     }
 }

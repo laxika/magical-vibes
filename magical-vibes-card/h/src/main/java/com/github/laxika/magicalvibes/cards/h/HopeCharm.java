@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,7 +22,7 @@ public class HopeCharm extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gains first strike until end of turn",
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target()),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),
                                 "Target must be a creature.")),

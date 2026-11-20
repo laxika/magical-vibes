@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,11 +20,11 @@ public class CoppercoatVanguard extends Card {
     public CoppercoatVanguard() {
         var humanFilter = new PermanentHasSubtypePredicate(CardSubtype.HUMAN);
 
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES, humanFilter));
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.otherCreaturesYouControl(), humanFilter));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new CounterUnlessPaysEffect(1)),
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 humanFilter));
     }
 }

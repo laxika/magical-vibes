@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "MID", collectorNumber = "139")
@@ -22,7 +22,7 @@ public class FangbladeBrigand extends Card {
                 "{1}{R}",
                 List.of(
                         new BoostSelfEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())
                 ),
                 "{1}{R}: This creature gets +1/+0 and gains first strike until end of turn."
         ));

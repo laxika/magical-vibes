@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -26,7 +26,7 @@ public class LunarchMantle extends Card {
         // Enchant creature — enchanted creature gets +2/+2 and has
         // "{1}, Sacrifice a permanent: This creature gains flying until end of turn."
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()))
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 false,
@@ -36,11 +36,11 @@ public class LunarchMantle extends Card {
                                                 new PermanentTruePredicate(),
                                                 "Sacrifice a permanent",
                                                 false),
-                                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)
+                                        new GrantKeywordEffect(Keyword.FLYING, Subjects.source())
                                 ),
                                 "{1}, Sacrifice a permanent: This creature gains flying until end of turn."
                         ),
-                        GrantScope.ENCHANTED_CREATURE
+                        Subjects.attachedCreature()
                 ));
     }
 }

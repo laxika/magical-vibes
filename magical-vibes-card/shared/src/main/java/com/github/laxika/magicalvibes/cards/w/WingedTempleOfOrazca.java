@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class WingedTempleOfOrazca extends Card {
                 true,
                 "{1}{G}{U}",
                 List.of(
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target()),
                         new BoostTargetCreatureEffect(new TargetPower(), new TargetPower())
                 ),
                 "{1}{G}{U}, {T}: Target creature you control gains flying and gets +X/+X until end of turn, where X is its power.",

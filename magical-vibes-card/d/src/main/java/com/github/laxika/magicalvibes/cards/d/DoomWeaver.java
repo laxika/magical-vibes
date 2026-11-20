@@ -11,11 +11,11 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPairedPredicate;
@@ -49,6 +49,6 @@ public class DoomWeaver extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
                 new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
-                        new DrawCardEffect(new SourcePower())), GrantScope.SELF_AND_PAIRED)));
+                        new DrawCardEffect(new SourcePower())), Subjects.sourceAndPaired())));
     }
 }

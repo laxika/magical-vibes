@@ -13,11 +13,11 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -57,7 +57,7 @@ public class DoomskarWarrior extends Card {
                 new ConditionalEffect(
                         new TargetPermanentMatches(anotherCreature),
                         SequenceEffect.of(
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()),
                                 new GrantEffectToTargetUntilEndOfTurnEffect(
                                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayerOrBattle(),
                                         combatDamageAbility))))

@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsHandTopBottomEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
@@ -241,7 +240,7 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
                 "Target must be an artifact or creature"))
                 .addSpellEffect(new AnimatePermanentsEffect(
                         4, 4, List.of(CardSubtype.ANGEL), Set.of(Keyword.FLYING),
-                        null, Set.of(CardType.ARTIFACT), GrantScope.TARGET, Duration.UNTIL_END_OF_TURN))
+                        null, Set.of(CardType.ARTIFACT), Subjects.target(), Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new DrawCardEffect());
         return freeze(card);
     }
@@ -287,7 +286,7 @@ public class ConjureSkywriterDjinnSpellbookEffectHandler implements NormalEffect
                 "Target must be a creature or Vehicle"))
                 .addSpellEffect(new AnimatePermanentsEffect(
                         4, 5, List.of(), Set.of(), null, Set.of(CardType.ARTIFACT),
-                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN))
+                        Subjects.target(), Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new DrawCardEffect());
         return freeze(card);
     }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -27,7 +27,7 @@ import java.util.Set;
 public class NahirisResolve extends Card {
 
     public NahirisResolve() {
-        addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), Subjects.otherCreaturesYouControl()));
 
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 FlickerEffect.exileControllersAnyNumberPermanentsReturnAtStep(

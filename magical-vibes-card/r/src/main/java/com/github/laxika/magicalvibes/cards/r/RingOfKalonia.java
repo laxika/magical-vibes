@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +21,7 @@ public class RingOfKalonia extends Card {
 
     public RingOfKalonia() {
         // Equipped creature has trample.
-        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.attachedCreature()));
 
         // At the beginning of your upkeep, put a +1/+1 counter on equipped creature if it's green.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCounterOnTargetPermanentEffect(

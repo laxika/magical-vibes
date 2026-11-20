@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -31,11 +31,11 @@ public class SkeletalSwarming extends Card {
 
     public SkeletalSwarming() {
         PermanentPredicate skeleton = new PermanentHasSubtypePredicate(CardSubtype.SKELETON);
-        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, skeleton));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl(), skeleton));
 
         PermanentCount otherSkeletons = new PermanentCount(skeleton, CountScope.CONTROLLER, true);
         addStaticEffect(new DynamicStaticBoostEffect(
-                otherSkeletons, new Fixed(0), GrantScope.OWN_CREATURES, skeleton, true));
+                otherSkeletons, new Fixed(0), Subjects.otherCreaturesYouControl(), skeleton, true));
 
         addStaticEffect(new MatchingCreaturesMustAttackEffect(new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

@@ -11,12 +11,12 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToUpToOneTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -35,7 +35,7 @@ public class GiantInheritance extends Card {
 
     public GiantInheritance() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(5, 5, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(5, 5, Subjects.attachedCreature()))
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.attacks(),
                         new CreateTokenAttachedToUpToOneTargetEffect(
@@ -44,7 +44,7 @@ public class GiantInheritance extends Card {
                                 new PermanentAllOfPredicate(List.of(
                                         new PermanentIsCreaturePredicate(),
                                         new PermanentIsAttackingPredicate())))),
-                        GrantScope.ENCHANTED_CREATURE));
+                        Subjects.attachedCreature()));
         // When this Aura is put into a graveyard from the battlefield, return it to its owner's hand.
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS),
                 ReturnCardFromGraveyardEffect.builder()
@@ -70,8 +70,8 @@ public class GiantInheritance extends Card {
                 false,
                 List.of(
                         StaticAbility.of(SequenceEffect.of(
-                        new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE)))),
+                        new StaticBoostEffect(1, 1, Subjects.attachedCreature()),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.attachedCreature())))),
                 List.of(),
                 false,
                 false,

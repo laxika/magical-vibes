@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
@@ -23,11 +23,11 @@ import java.util.Set;
 public class TenzaGodosMaul extends Card {
 
     public TenzaGodosMaul() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
         addStaticEffect(new StaticBoostEffect(
-                2, 2, GrantScope.EQUIPPED_CREATURE, new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
+                2, 2, Subjects.attachedCreature(), new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE, new PermanentColorInPredicate(Set.of(CardColor.RED))));
+                Keyword.TRAMPLE, Subjects.attachedCreature(), new PermanentColorInPredicate(Set.of(CardColor.RED))));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 }

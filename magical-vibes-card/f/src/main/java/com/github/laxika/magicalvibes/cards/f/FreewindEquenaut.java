@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -36,7 +36,7 @@ public class FreewindEquenaut extends Card {
                                         "Target must be an attacking or blocking creature"
                                 )
                         ),
-                        GrantScope.SELF
+                        Subjects.source()
                 )
         ));
     }

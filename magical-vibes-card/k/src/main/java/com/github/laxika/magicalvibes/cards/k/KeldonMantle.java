@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -35,7 +34,7 @@ public class KeldonMantle extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{G}",
-                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE)),
+                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.attachedCreature())),
                 "{G}: Enchanted creature gains trample until end of turn."
         ));
     }

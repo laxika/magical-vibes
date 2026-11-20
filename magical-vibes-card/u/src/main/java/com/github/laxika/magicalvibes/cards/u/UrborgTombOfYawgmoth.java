@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /**
  * "Each land is a Swamp in addition to its other land types." The grant is additive (CR 305.6),
@@ -30,8 +30,8 @@ public class UrborgTombOfYawgmoth extends Card {
 
     public UrborgTombOfYawgmoth() {
         addStaticEffect(new GrantSubtypeEffect(
-                CardSubtype.SWAMP, GrantScope.ALL_LANDS_INCLUDING_SELF));
+                CardSubtype.SWAMP, Subjects.allLands()));
         addStaticEffect(new GrantActivatedAbilityEffect(
-                ManaAbilities.tapFor(ManaColor.BLACK), GrantScope.ALL_LANDS));
+                ManaAbilities.tapFor(ManaColor.BLACK), Subjects.otherLands()));
     }
 }

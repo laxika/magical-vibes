@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "214")
@@ -17,7 +17,7 @@ public class ReclusiveTaxidermist extends Card {
     public ReclusiveTaxidermist() {
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(4, new CardTypePredicate(CardType.CREATURE)),
-                new StaticBoostEffect(3, 2, GrantScope.SELF)));
+                new StaticBoostEffect(3, 2, Subjects.source())));
         addActivatedAbility(ManaAbilities.tapForAnyColor());
     }
 }

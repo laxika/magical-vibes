@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetSelfCantBeBlockedIndefinitelyEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -37,7 +37,7 @@ public class SetSelfCantBeBlockedIndefinitelyEffectHandler implements NormalEffe
             return;
         }
 
-        GrantEffectEffect grant = new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF);
+        GrantEffectEffect grant = new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source());
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), source.getId(), entry.getControllerId(), grant,
                 source.getId(), null, null, Duration.PERMANENT, 0));

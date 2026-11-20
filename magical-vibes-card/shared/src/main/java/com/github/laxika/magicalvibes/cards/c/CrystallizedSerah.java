@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForFirstMatchingSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -21,7 +21,7 @@ public class CrystallizedSerah extends Card {
                         new CardTypePredicate(CardType.CREATURE),
                         new CardSupertypePredicate(CardSupertype.LEGENDARY)
                 )), 2));
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
     }
 }

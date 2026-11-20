@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CommanderCastsFromCommandZoneThisGame;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -29,7 +29,7 @@ public class JirinaKudro extends Card {
                 List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of()));
 
         // Other Humans you control get +2/+0.
-        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 0, Subjects.creaturesYouControl(),
                 new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())

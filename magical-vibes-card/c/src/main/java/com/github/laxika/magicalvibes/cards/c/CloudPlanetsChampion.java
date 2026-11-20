@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostForTargetingSourceEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -21,7 +21,7 @@ public class CloudPlanetsChampion extends Card {
     public CloudPlanetsChampion() {
         addStaticEffect(new ConditionalEffect(
                 new AllConditions(List.of(new ControllerTurn(), new Equipped())),
-                new GrantKeywordEffect(Set.of(Keyword.DOUBLE_STRIKE, Keyword.INDESTRUCTIBLE), GrantScope.SELF)));
+                new GrantKeywordEffect(Set.of(Keyword.DOUBLE_STRIKE, Keyword.INDESTRUCTIBLE), Subjects.source())));
         addStaticEffect(new ReduceActivatedAbilityCostForTargetingSourceEffect(2));
     }
 }

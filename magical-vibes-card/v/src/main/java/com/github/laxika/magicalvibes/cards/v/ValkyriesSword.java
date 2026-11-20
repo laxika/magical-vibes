@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachMatchingEquipmentToCreatedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -36,7 +36,7 @@ public class ValkyriesSword extends Card {
                                 new AttachMatchingEquipmentToCreatedPermanentEffect(
                                         new PermanentIsSourcePermanentPredicate())),
                         "Pay {4}{W} to create an Angel Warrior token and attach Valkyrie's Sword to it?"));
-        addStaticEffect(new AttachedBoostEffect(new Fixed(2), new Fixed(1), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new AttachedBoostEffect(new Fixed(2), new Fixed(1), Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyGrantingPermanentIfNoC
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -23,7 +22,7 @@ public class HeliodsPunishment extends Card {
     public HeliodsPunishment() {
         target(TargetFilters.creature())
                 .addStaticEffect(new EnchantedCreatureCantAttackOrBlockEffect())
-                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new LosesAllAbilitiesEffect(Subjects.attachedCreature()))
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 true,
@@ -34,7 +33,7 @@ public class HeliodsPunishment extends Card {
                                 ),
                                 "{T}: Remove a task counter from Heliod's Punishment. Then if it has no task counters on it, destroy Heliod's Punishment."
                         ),
-                        GrantScope.ENCHANTED_CREATURE
+                        Subjects.attachedCreature()
                 ));
         addStaticEffect(new EnterWithCountersEffect(CounterType.TASK, new Fixed(4)));
     }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class VerdantField extends Card {
                                 List.of(new BoostTargetCreatureEffect(1, 1)),
                                 "{T}: Target creature gets +1/+1 until end of turn."
                         ),
-                        GrantScope.ENCHANTED_PERMANENT
+                        Subjects.attached()
                 ));
     }
 }

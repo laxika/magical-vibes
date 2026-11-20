@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -41,7 +40,7 @@ public class ToriDAvenantFuryRider extends Card {
         ));
         addTrigger(Triggers.attacks(), new BoostAllOwnCreaturesEffect(1, 1, otherAttackingCreatures),
                 new GrantKeywordEffect(
-                Keyword.TRAMPLE, GrantScope.OWN_CREATURES, otherRedAttackingCreatures),
+                Keyword.TRAMPLE, Subjects.otherCreaturesYouControl(), otherRedAttackingCreatures),
                 new UntapPermanentsEffect(
                 Subjects.controlledBy(Subjects.you(),
                         new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),

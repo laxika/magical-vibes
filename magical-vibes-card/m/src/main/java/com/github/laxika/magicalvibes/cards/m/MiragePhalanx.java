@@ -11,11 +11,11 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPairedPredicate;
@@ -53,6 +53,6 @@ public class MiragePhalanx extends Card {
                         CreateTokenCopyOfSourceEffect.withoutSourceEffects(
                                 Set.of(MayEffect.class, SoulbondPairWithEnteringEffect.class),
                                 Set.of(Keyword.SOULBOND), true, true)),
-                        GrantScope.SELF_AND_PAIRED)));
+                        Subjects.sourceAndPaired())));
     }
 }

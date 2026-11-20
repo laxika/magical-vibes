@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -24,7 +24,7 @@ public class RampagingSpiketail extends Card {
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new BoostTargetCreatureEffect(2, 0),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}",
                 List.of(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.SWAMP))),

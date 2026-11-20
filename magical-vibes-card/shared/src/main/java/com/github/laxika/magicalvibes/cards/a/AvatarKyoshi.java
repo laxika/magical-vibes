@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -15,7 +15,7 @@ public class AvatarKyoshi extends Card {
 
     public AvatarKyoshi() {
         addStaticEffect(new GrantKeywordEffect(
-                Set.of(Keyword.TRAMPLE, Keyword.HEXPROOF), GrantScope.OWN_LANDS));
+                Set.of(Keyword.TRAMPLE, Keyword.HEXPROOF), Subjects.landsYouControl()));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

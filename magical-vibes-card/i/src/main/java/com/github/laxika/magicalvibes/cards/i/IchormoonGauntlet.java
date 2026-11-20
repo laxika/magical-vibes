@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AddAnotherCounterOfChosenTypeToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProliferateEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -23,13 +23,13 @@ public class IchormoonGauntlet extends Card {
     public IchormoonGauntlet() {
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(0, List.of(new ProliferateEffect()), "[0]: Proliferate."),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentIsPlaneswalkerPredicate()
         ));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(-12, List.of(new ControllerExtraTurnEffect(1)),
                         "[-12]: Take an extra turn after this one."),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentIsPlaneswalkerPredicate()
         ));
         target(TargetFilters.permanent()).addTrigger(Triggers.youCastSpell()

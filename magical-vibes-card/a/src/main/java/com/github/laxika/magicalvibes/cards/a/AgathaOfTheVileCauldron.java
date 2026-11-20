@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -36,7 +36,7 @@ public class AgathaOfTheVileCauldron extends Card {
                 "{4}{R}{G}",
                 List.of(
                         new BoostAllOwnCreaturesEffect(1, 1, otherCreature),
-                        new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.OWN_CREATURES,
+                        new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), Subjects.otherCreaturesYouControl(),
                                 otherCreature)
                 ),
                 "{4}{R}{G}: Other creatures you control get +1/+1 and gain trample and haste until end of turn."

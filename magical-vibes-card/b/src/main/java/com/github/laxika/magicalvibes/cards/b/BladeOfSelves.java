@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "1570")
@@ -21,7 +21,7 @@ public class BladeOfSelves extends Card {
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.attacks(),
                 CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect.myriad()),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }
 }

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -36,7 +36,7 @@ public class SelesnyaCharm extends Card {
                         "Target creature gets +2/+2 and gains trample until end of turn",
                         List.of(
                                 new BoostTargetCreatureEffect(2, 2),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),
                                 "Target must be a creature.")),

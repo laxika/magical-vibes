@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +29,7 @@ public class GrantChosenKeywordEffectHandler implements NormalEffectHandlerBean 
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantChosenKeywordEffect) effect;
         Permanent recipient = subjectResolutionService.permanent(gameData, entry, effect,
-                e.scope() == GrantScope.SELF ? GrantScope.SELF.subject() : GrantScope.TARGET.subject());
+                e.subject() instanceof PermanentSubject.Source ? e.subject() : Subjects.target());
         if (recipient == null) {
             return;
         }

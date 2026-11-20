@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -64,7 +64,7 @@ public class VivienReid extends Card {
                                 2,
                                 2,
                                 Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE),
-                                GrantScope.OWN_CREATURES)),
+                                Subjects.otherCreaturesYouControl())),
                         "Creatures you control get +2/+2 and have vigilance, trample, and indestructible.")),
                 "\u22128: You get an emblem with \"Creatures you control get +2/+2 and have vigilance, "
                         + "trample, and indestructible.\""

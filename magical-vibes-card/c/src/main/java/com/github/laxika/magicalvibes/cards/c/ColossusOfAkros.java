@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "THS", collectorNumber = "214")
@@ -27,7 +27,7 @@ public class ColossusOfAkros extends Card {
         ));
 
         addStaticEffect(new ConditionalEffect(monstrous,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
         addStaticEffect(new ConditionalEffect(monstrous,
                 new CanAttackAsThoughNoDefenderEffect()));
     }

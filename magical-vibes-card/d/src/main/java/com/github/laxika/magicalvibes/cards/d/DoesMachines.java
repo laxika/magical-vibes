@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
@@ -84,7 +83,7 @@ public class DoesMachines extends Card {
                                         Set.of(),
                                         null,
                                         Set.of(CardType.CREATURE),
-                                        GrantScope.TARGET,
+                                        Subjects.target(),
                                         Duration.PERMANENT)));
     }
 }

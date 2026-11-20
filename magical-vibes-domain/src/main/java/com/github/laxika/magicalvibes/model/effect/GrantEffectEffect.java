@@ -2,9 +2,10 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
-public record GrantEffectEffect(CardEffect effect, GrantScope scope, PermanentPredicate filter) implements CardEffect {
+public record GrantEffectEffect(CardEffect effect, PermanentSubject subject, PermanentPredicate filter)
+        implements CardEffect {
 
-    public GrantEffectEffect(CardEffect effect, GrantScope scope) {
-        this(effect, scope, null);
+    public GrantEffectEffect(CardEffect effect, PermanentSubject subject) {
+        this(effect, subject, null);
     }
 }

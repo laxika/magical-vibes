@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -41,9 +41,9 @@ public class SparkshaperVisionary extends Card {
                         new AnimatePermanentsEffect(
                                 3, 3, List.of(CardSubtype.BIRD),
                                 Set.of(Keyword.FLYING, Keyword.HEXPROOF), CardColor.BLUE,
-                                Set.of(), GrantScope.TARGET, Duration.UNTIL_END_OF_TURN
+                                Set.of(), Subjects.target(), Duration.UNTIL_END_OF_TURN
                         ),
-                        new SetCardTypesUntilEndOfTurnEffect(Set.of(CardType.CREATURE), GrantScope.TARGET),
+                        new SetCardTypesUntilEndOfTurnEffect(Set.of(CardType.CREATURE), Subjects.target()),
                         new GrantEffectToTargetEffect(
                                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                                 new ScryEffect(1)),

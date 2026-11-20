@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -38,7 +38,7 @@ public class DeadBeforeSunrise extends Card {
                         List.of(new DealDamageToAnyTargetEffect(new SourcePower())),
                         "{T}: This creature deals damage equal to its power to target creature.",
                         TargetFilters.creature()),
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 outlaws,
                 Duration.UNTIL_END_OF_TURN));
     }

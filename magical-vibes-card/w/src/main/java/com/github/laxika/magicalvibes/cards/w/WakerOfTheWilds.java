@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -33,7 +33,7 @@ public class WakerOfTheWilds extends Card {
                                 List.of(CardSubtype.ELEMENTAL),
                                 Set.of(Keyword.HASTE),
                                 null, Set.of(),
-                                GrantScope.TARGET, Duration.PERMANENT
+                                Subjects.target(), Duration.PERMANENT
                         )
                 ),
                 "{X}{G}{G}: Put X +1/+1 counters on target land you control. That land becomes a 0/0 Elemental creature with haste. It's still a land.",

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,7 +27,7 @@ public class MomentOfValor extends Card {
                         List.of(
                                 new UntapPermanentsEffect(Subjects.target()),
                                 new BoostTargetCreatureEffect(1, 0),
-                                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target())),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target creature with power 4 or greater",

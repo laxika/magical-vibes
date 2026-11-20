@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -16,7 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class StitchersGraft extends Card {
 
     public StitchersGraft() {
-        addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 3, Subjects.attachedCreature()));
         addTrigger(Triggers.attacks(), new SkipNextUntapEffect(Subjects.triggering()));
         addTrigger(Triggers.becomesUnattachedFromPermanent(), SacrificeSelfEffect.ofTriggeringPermanent());
         addActivatedAbility(new EquipActivatedAbility("{2}"));

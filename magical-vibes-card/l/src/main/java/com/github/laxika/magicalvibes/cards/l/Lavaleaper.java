@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class Lavaleaper extends Card {
 
     public Lavaleaper() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_CREATURES_INCLUDING_SELF));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.allCreatures()));
         // Whenever a player taps a basic land for mana, that player adds one mana of any type that land produced.
         addTrigger(Triggers.playerTapsLandForMana().withFilter(new PermanentHasSupertypePredicate(CardSupertype.BASIC)),
                 new AddOneOfEachManaTypeProducedByLandEffect());

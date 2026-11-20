@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class ImodanesRecruiter extends Card {
         addCastingOption(new AdventureCast("{4}{W}"));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new BoostAllOwnCreaturesEffect(1, 0),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl()));
     }
 
     @Override

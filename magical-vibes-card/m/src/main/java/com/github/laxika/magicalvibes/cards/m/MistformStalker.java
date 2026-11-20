@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenSubtypeUntilEndOfTurnEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "98")
@@ -26,7 +26,7 @@ public class MistformStalker extends Card {
                 "{2}{U}{U}",
                 List.of(
                         new BoostSelfEffect(2, 2),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.source())
                 ),
                 "{2}{U}{U}: This creature gets +2/+2 and gains flying until end of turn."
         ));

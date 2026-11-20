@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,7 +21,7 @@ public class VigorousCharge extends Card {
     public VigorousCharge() {
         addStaticEffect(new KickerEffect("{W}"));
         target(TargetFilters.creature())
-                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()))
                 .addSpellEffect(new ConditionalEffect(new Kicked(),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.dealsCombatDamage(),

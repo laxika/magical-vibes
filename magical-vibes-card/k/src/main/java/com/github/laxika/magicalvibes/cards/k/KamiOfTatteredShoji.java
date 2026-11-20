@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,6 +21,6 @@ public class KamiOfTatteredShoji extends Card {
                         .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
                                 new CardSubtypePredicate(CardSubtype.ARCANE)))),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source()));
     }
 }

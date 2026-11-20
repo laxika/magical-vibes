@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class VengefulFirebrand extends Card {
         // This creature has haste as long as a Warrior card is in your graveyard.
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.WARRIOR)),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.source())));
 
         // {R}: This creature gets +1/+0 until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{R}", List.of(new BoostSelfEffect(1, 0)),

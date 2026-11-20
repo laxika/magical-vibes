@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,7 +24,7 @@ public class ThePrincessTakesFlight extends Card {
 
         addTrigger(Triggers.chapter(2),
                 new BoostTargetCreatureEffect(2, 2),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.target()));
         setSagaChapterTargetGroups(2, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creatureYouControl(), 1, 1)));
 

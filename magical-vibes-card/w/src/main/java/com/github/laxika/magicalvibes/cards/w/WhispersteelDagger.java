@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.AllowCastMatchingCardsFromDamagedPlayerGraveyardThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class WhispersteelDagger extends Card {
 
     public WhispersteelDagger() {
-        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, Subjects.attachedCreature()));
         addTrigger(Triggers.equippedCreatureDealsCombatDamageToPlayer(),
                 new AllowCastMatchingCardsFromDamagedPlayerGraveyardThisTurnEffect(
                         new CardTypePredicate(CardType.CREATURE), true));

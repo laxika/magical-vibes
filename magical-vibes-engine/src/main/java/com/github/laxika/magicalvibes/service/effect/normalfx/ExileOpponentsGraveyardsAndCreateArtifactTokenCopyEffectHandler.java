@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOpponentsGraveyardsAndCreateArtifactTokenCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
@@ -98,7 +98,7 @@ public class ExileOpponentsGraveyardsAndCreateArtifactTokenCopyEffectHandler
                         false,
                         List.of(
                                 StaticAbility.of(List.of(
-                                new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF)))));
+                                new SetCardTypesEffect(Set.of(CardType.ARTIFACT), Subjects.source())))));
         tokenCopySupport.createTokenCopies(gameData, entry, List.of(exiled.card()), null, copyEffect);
     }
 }

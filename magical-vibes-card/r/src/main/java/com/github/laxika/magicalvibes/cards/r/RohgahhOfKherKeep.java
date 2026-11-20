@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapAndChooseOpponentGainsControlOfSourceAndMatchingPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,6 +30,6 @@ public class RohgahhOfKherKeep extends Card {
                 null,
                 "Pay {R}{R}{R} to keep control of Rohgahh of Kher Keep?",
                 new TapAndChooseOpponentGainsControlOfSourceAndMatchingPermanentsEffect(kobolds)));
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES, kobolds));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.creaturesYouControl(), kobolds));
     }
 }

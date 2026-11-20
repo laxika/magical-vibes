@@ -4,14 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.CommittedCrimeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "OTJ", collectorNumber = "68")
 public class SlickshotVaultBuster extends Card {
 
     public SlickshotVaultBuster() {
         addStaticEffect(new ConditionalEffect(
-                new CommittedCrimeThisTurn(), new StaticBoostEffect(2, 0, GrantScope.SELF)));
+                new CommittedCrimeThisTurn(), new StaticBoostEffect(2, 0, Subjects.source())));
     }
 }

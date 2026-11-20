@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -24,7 +24,7 @@ public class GhostLitDrifter extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{U}",
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.FLYING, Subjects.target())),
                 "{2}{U}: Another target creature gains flying until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
@@ -39,7 +39,7 @@ public class GhostLitDrifter extends Card {
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,
                 "{X}{U}",
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.FLYING, Subjects.target())),
                 "Channel — {X}{U}, Discard this card: X target creatures gain flying until end of turn.",
                 TargetFilters.creature()
         ).withExactXTargets());

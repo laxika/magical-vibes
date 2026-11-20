@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
@@ -42,14 +41,14 @@ public class QuestingPhelddagrif extends Card {
                 targetOpponent));
 
         addActivatedAbility(new ActivatedAbility(false, "{W}",
-                List.of(new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.BLACK, GrantScope.SELF),
-                        new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.RED, GrantScope.SELF),
+                List.of(new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.BLACK, Subjects.source()),
+                        new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.RED, Subjects.source()),
                         new GainLifeEffect(new Fixed(2), Subjects.targetPlayerDeclaredElsewhere())),
                 "{W}: Questing Phelddagrif gains protection from black and from red until end of turn. Target opponent gains 2 life.",
                 targetOpponent));
 
         addActivatedAbility(new ActivatedAbility(false, "{U}",
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF),
+                List.of(new GrantKeywordEffect(Keyword.FLYING, Subjects.source()),
                         new MayEffect(new DrawCardEffect(1, Subjects.targetPlayerDeclaredElsewhere()), "Draw a card?", null, MayChoicePlayer.TARGET_PLAYER)),
                 "{U}: Questing Phelddagrif gains flying until end of turn. Target opponent may draw a card.",
                 targetOpponent));

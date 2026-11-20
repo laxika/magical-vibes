@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,10 +25,10 @@ public class WhiteMagesStaff extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new LivingWeaponEffect(new CreateTokenEffect("Hero", 1, 1, null,
                         List.of(CardSubtype.HERO), Set.of(), Set.of())));
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                new TriggeredAbility(Triggers.attacks(), new GainLifeEffect(1)), GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.CLERIC, GrantScope.EQUIPPED_CREATURE));
+                new TriggeredAbility(Triggers.attacks(), new GainLifeEffect(1)), Subjects.attachedCreature()));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.CLERIC, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControllerControlsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,10 +20,10 @@ public class FavorableDestiny extends Card {
     public FavorableDestiny() {
         target(TargetFilters.creature())
                 // Enchanted creature gets +1/+2 as long as it's white.
-                .addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.ENCHANTED_CREATURE,
+                .addStaticEffect(new StaticBoostEffect(1, 2, Subjects.attachedCreature(),
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE))))
                 // Enchanted creature has shroud as long as its controller controls another creature.
-                .addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ENCHANTED_CREATURE,
+                .addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, Subjects.attachedCreature(),
                         new PermanentControllerControlsPermanentPredicate(new PermanentIsCreaturePredicate(), true)));
     }
 }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "VIS", collectorNumber = "85")
@@ -17,7 +17,7 @@ public class KeeperOfKookus extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.RED, GrantScope.SELF)),
+                List.of(new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.RED, Subjects.source())),
                 "{R}: This creature gains protection from red until end of turn."
         ));
     }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTu
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -34,7 +33,7 @@ public class MsBumbleflower extends Card {
 
         PutCounterOnTargetPermanentEffect counter =
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1);
-        GrantKeywordEffect flying = new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET);
+        GrantKeywordEffect flying = new GrantKeywordEffect(Keyword.FLYING, Subjects.target());
         ConditionalEffect secondResolutionDraw = new ConditionalEffect(
                 new NthAbilityResolutionThisTurn(2), new DrawCardEffect(2));
 

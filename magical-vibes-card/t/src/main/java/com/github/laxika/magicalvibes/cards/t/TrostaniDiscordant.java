@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerGainsControlOfOwnedCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ import java.util.Set;
 public class TrostaniDiscordant extends Card {
 
     public TrostaniDiscordant() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl()));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(2, "Soldier", 1, 1,
                 CardColor.WHITE, List.of(CardSubtype.SOLDIER), Set.of(Keyword.LIFELINK), Set.of()));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),

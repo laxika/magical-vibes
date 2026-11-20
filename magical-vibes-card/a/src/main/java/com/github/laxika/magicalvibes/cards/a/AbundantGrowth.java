@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,7 +30,7 @@ public class AbundantGrowth extends Card {
         target(TargetFilters.land())
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                         ManaAbilities.tapForAnyColor(),
-                        GrantScope.ENCHANTED_PERMANENT
+                        Subjects.attached()
                 ))
                 // When this Aura enters, draw a card.
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));

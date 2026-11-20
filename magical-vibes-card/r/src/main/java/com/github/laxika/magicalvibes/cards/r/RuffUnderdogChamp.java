@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ErrataCreatureTypeForMatchEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerLostGameThisMatch;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -23,7 +23,7 @@ public class RuffUnderdogChamp extends Card {
 
         // Underdog - if the controller has lost a game this match, Ruff and other Dogs get +1/+1.
         addStaticEffect(new ConditionalEffect(new ControllerLostGameThisMatch(),
-                new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+                new StaticBoostEffect(1, 1, Subjects.creaturesYouControl(),
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsSourceCardPredicate(),
                                 new PermanentHasSubtypePredicate(CardSubtype.DOG))))));

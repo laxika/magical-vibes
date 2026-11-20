@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -50,7 +50,7 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
 
         if (e.power() != null || e.toughness() != null) {
             gameData.addEffectOnPermanent(entry, new SetBasePowerToughnessEffect(
-                    e.power(), e.toughness(), GrantScope.TARGET, Duration.PERMANENT), source.getId(), Duration.PERMANENT);
+                    e.power(), e.toughness(), Subjects.target(), Duration.PERMANENT), source.getId(), Duration.PERMANENT);
         }
 
         if (!e.setSubtypes().isEmpty()) {
@@ -100,7 +100,7 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
                     opponentIds.add(playerId);
                 }
             }
-            gameData.addEffectOnPermanent(entry, new GrantEffectEffect(new ProtectionFromPlayersEffect(opponentIds, true), GrantScope.TARGET),
+            gameData.addEffectOnPermanent(entry, new GrantEffectEffect(new ProtectionFromPlayersEffect(opponentIds, true), Subjects.target()),
                     source.getId(), Duration.PERMANENT);
         }
 
@@ -115,7 +115,7 @@ public class BecomeCreatureTypeWithBasePowerToughnessEffectHandler implements No
         gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
                 java.util.UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(), new com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect(
-                        subtype, com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET, overriding),
+                        subtype, com.github.laxika.magicalvibes.model.effect.Subjects.target(), overriding),
                 source.getId(), null, null,
                 com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT, 0));
     }

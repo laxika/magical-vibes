@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,7 +27,7 @@ public class AngelicSkirmisher extends Card {
 
     private static List<CardEffect> grantToCreaturesYouControl(Keyword keyword) {
         return List.of(
-                new GrantKeywordEffect(keyword, GrantScope.ALL_OWN_CREATURES)
+                new GrantKeywordEffect(keyword, Subjects.creaturesYouControl())
         );
     }
 }

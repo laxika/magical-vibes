@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringAuraFromGraveyardMayCastUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
@@ -29,7 +29,7 @@ public class MazzyTrueswordPaladin extends Card {
                                 new PermanentIsAttackingOpponentOfSourceControllerPredicate()))),
                 SequenceEffect.of(
                         new BoostTargetCreatureEffect(2, 0),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)));
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())));
 
         // "Whenever an Aura you control is put into your graveyard from the battlefield".
         addTrigger(Triggers.dies(new PermanentAllOfPredicate(List.of(

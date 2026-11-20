@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "USG", collectorNumber = "244")
 @CardRegistration(set = "DSC", collectorNumber = "81")
@@ -15,7 +15,7 @@ public class CitanulHierophants extends Card {
     public CitanulHierophants() {
         addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapFor(ManaColor.GREEN),
-                GrantScope.ALL_OWN_CREATURES
+                Subjects.creaturesYouControl()
         ));
     }
 }

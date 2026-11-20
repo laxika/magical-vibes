@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -45,7 +45,7 @@ public class AinokStrikeLeader extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_OWN_CREATURES,
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.creaturesYouControl(),
                                 new PermanentIsTokenPredicate())
                 ),
                 "Sacrifice this creature: Creature tokens you control gain indestructible until end of turn."

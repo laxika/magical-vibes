@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.ExactlyAttackers;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,11 +19,11 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class LoveOnTheBattlefield extends Card {
 
     public LoveOnTheBattlefield() {
-        // The two attackers are fixed when the trigger fires: GrantScope.DECLARED_ATTACKERS reads the entry's
+        // The two attackers are fixed when the trigger fires: Subjects.triggeringAttackers() reads the entry's
         // attacking creatures, so a creature that left combat before resolution still gains first strike.
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(new ExactlyAttackers(2)),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.DECLARED_ATTACKERS),
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.triggeringAttackers()),
                 new DrawCardEffect(1),
                 new GrantEffectToOwnCreaturesUntilEndOfCombatEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),

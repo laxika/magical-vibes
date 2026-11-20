@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class SalvationEngine extends Card {
                 List.of(new CrewCost(6), AnimatePermanentsEffect.crew()),
                 "Crew 6"));
 
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.otherCreaturesYouControl(),
                 new PermanentIsArtifactPredicate()));
 
         addTrigger(Triggers.attacks(), ReturnCardFromGraveyardEffect.builder()

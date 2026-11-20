@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "C15", collectorNumber = "41")
 @CardRegistration(set = "MKC", collectorNumber = "199")
@@ -24,6 +24,6 @@ public class AnyaMercilessAngel extends Card {
                 Duration.STATIC));
         addStaticEffect(new ConditionalEffect(
                 new AnOpponentLifeAtMost(0, true),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
     }
 }

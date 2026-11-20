@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "C16", collectorNumber = "26")
@@ -16,6 +16,6 @@ public class AkiriLineSlinger extends Card {
         PermanentCount artifactsYouControl =
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
         addStaticEffect(new DynamicStaticBoostEffect(
-                artifactsYouControl, new Fixed(0), GrantScope.SELF));
+                artifactsYouControl, new Fixed(0), Subjects.source()));
     }
 }

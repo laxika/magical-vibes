@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -33,6 +33,6 @@ public class AppaTheVigilant extends Card {
                 TriggerOptions.DEFAULT, List.of(new EffectRegistration(SequenceEffect.of(
                         new BoostAllOwnCreaturesEffect(1, 1),
                         new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE),
-                                GrantScope.ALL_OWN_CREATURES))))));
+                                Subjects.creaturesYouControl()))))));
     }
 }

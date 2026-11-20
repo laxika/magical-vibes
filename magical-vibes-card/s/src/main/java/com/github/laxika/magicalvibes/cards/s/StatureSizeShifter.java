@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.condition.SourcePowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "MSH", collectorNumber = "76")
@@ -21,7 +21,7 @@ public class StatureSizeShifter extends Card {
     public StatureSizeShifter() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new SourcePowerAtLeast(2)),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

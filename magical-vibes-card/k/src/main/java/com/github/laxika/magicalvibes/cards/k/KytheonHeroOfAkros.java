@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.MinimumAttackersThisCombat
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedThisCombat;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -34,7 +34,7 @@ public class KytheonHeroOfAkros extends Card {
         // {2}{W}: Kytheon gains indestructible until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 false, "{2}{W}",
-                List.of(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())),
                 "{2}{W}: Kytheon, Hero of Akros gains indestructible until end of turn."
         ));
     }

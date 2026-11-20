@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsThenEffect;
@@ -15,6 +14,7 @@ import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.amount.OpponentsWhoLostLifeThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.condition.ControllerLostLifeThisTurn;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -53,7 +53,7 @@ public class StrefanMaurerProgenitor extends Card {
                                         true,
                                         true,
                                         null,
-                                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET)),
+                                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target())),
                                 "two Blood tokens"),
                         "Sacrifice two Blood tokens?"));
     }

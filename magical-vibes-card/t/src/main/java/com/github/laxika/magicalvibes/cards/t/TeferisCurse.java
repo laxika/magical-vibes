@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,6 +25,6 @@ public class TeferisCurse extends Card {
         ))
                 // Enchanted permanent has phasing.
                 .addStaticEffect(new GrantKeywordEffect(
-                        Keyword.PHASING, GrantScope.ENCHANTED_PERMANENT));
+                        Keyword.PHASING, Subjects.attached()));
     }
 }

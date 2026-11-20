@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.CardsInExileMatchingAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
 
 import java.util.Set;
@@ -17,7 +17,7 @@ public class HowlingGalefang extends Card {
     public HowlingGalefang() {
         addStaticEffect(new ConditionalEffect(
                 new CardsInExileMatchingAtLeast(1, new CardHasAdventurePredicate()),
-                new StaticBoostEffect(0, 0, Set.of(Keyword.HASTE), GrantScope.SELF)
+                new StaticBoostEffect(0, 0, Set.of(Keyword.HASTE), Subjects.source())
         ));
     }
 }

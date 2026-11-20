@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ONE", collectorNumber = "40")
@@ -17,8 +17,8 @@ public class AspirantsAscent extends Card {
     public AspirantsAscent() {
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(1, 3))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.TOXIC, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.target()))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TOXIC, Subjects.target()))
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(new ToxicEffect(1))));
     }
 }

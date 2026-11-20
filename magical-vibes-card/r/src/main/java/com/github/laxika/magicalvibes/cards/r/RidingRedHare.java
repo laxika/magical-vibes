@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "PTK", collectorNumber = "18")
 public class RidingRedHare extends Card {
@@ -13,6 +13,6 @@ public class RidingRedHare extends Card {
     public RidingRedHare() {
         // Target creature gets +3/+3 and gains horsemanship until end of turn.
         addSpellEffect(new BoostTargetCreatureEffect(3, 3));
-        addSpellEffect(new GrantKeywordEffect(Keyword.HORSEMANSHIP, GrantScope.TARGET));
+        addSpellEffect(new GrantKeywordEffect(Keyword.HORSEMANSHIP, Subjects.target()));
     }
 }

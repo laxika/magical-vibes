@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.Set;
@@ -18,6 +18,6 @@ public class AbzanKinGuard extends Card {
     public AbzanKinGuard() {
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.WHITE, CardColor.BLACK))),
-                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source())));
     }
 }

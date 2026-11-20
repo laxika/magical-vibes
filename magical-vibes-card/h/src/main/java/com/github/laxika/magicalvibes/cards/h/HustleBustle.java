@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TurnOwnCreatureFaceUpEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -23,7 +23,7 @@ public class HustleBustle extends Card {
     public HustleBustle() {
         List<CardEffect> bustle = List.of(
                 new BoostAllOwnCreaturesEffect(2, 2),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES),
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl()),
                 new MayEffect(new TurnOwnCreatureFaceUpEffect(), "Turn a creature you control face up?"));
 
         addSpellEffect(new ChooseOneEffect(List.of(

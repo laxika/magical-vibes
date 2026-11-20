@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -73,7 +72,7 @@ public class UrzaPlaneswalker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -10,
                 List.of(
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_PERMANENTS,
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.permanentsYouControl(),
                                 new PermanentAnyOfPredicate(List.of(
                                         new PermanentIsArtifactPredicate(),
                                         new PermanentIsPlaneswalkerPredicate()))),

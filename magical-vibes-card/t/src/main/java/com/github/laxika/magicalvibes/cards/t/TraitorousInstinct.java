@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,6 +21,6 @@ public class TraitorousInstinct extends Card {
                 .addSpellEffect(new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new UntapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new BoostTargetCreatureEffect(2, 0))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.target()));
     }
 }

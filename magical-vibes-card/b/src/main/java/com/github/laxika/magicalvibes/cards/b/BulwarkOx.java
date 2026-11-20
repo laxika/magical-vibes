@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -36,7 +36,7 @@ public class BulwarkOx extends Card {
                         new SacrificeSelfCost(),
                         new GrantKeywordEffect(
                                 Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE),
-                                GrantScope.OWN_CREATURES,
+                                Subjects.otherCreaturesYouControl(),
                                 new PermanentHasCountersPredicate(CounterType.ANY))
                 ),
                 "Sacrifice this creature: Creatures you control with counters on them gain hexproof and indestructible until end of turn."
@@ -45,7 +45,7 @@ public class BulwarkOx extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SaddleCost(1), new BecomeSaddledUntilEndOfTurnEffect(GrantScope.SELF)),
+                List.of(new SaddleCost(1), new BecomeSaddledUntilEndOfTurnEffect(Subjects.source())),
                 "Saddle 1",
                 ActivationTimingRestriction.SORCERY_SPEED));
     }

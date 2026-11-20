@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeLifeTotalWithCreatureStatEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
@@ -15,7 +16,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 
 /**
@@ -90,7 +90,7 @@ public class ExchangeLifeTotalWithCreatureStatEffectHandler implements NormalEff
         // The creature's base stat becomes the player's former life total: a layer-7b setting effect with no
         // stated duration (CR 613.4b, 611.2a), ordered against other 7b setters by its timestamp (CR 613.7b).
         gameData.addEffectOnPermanent(entry, new SetBasePowerToughnessEffect(usePower ? currentLife : null,
-                usePower ? null : currentLife, GrantScope.TARGET, Duration.PERMANENT), source.getId(), Duration.PERMANENT);
+                usePower ? null : currentLife, Subjects.target(), Duration.PERMANENT), source.getId(), Duration.PERMANENT);
 
         log.info("Game {} - {} exchanges life ({} -> {}) with {}'s {} ({} -> {})",
                 gameData.id, playerName, currentLife, currentStat,

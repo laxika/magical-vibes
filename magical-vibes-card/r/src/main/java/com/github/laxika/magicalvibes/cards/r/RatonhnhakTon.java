@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,11 +26,11 @@ public class RatonhnhakTon extends Card {
     public RatonhnhakTon() {
         ConditionalEffect hasNotDealtDamage = new ConditionalEffect(
                 new NotCondition(new SourceHasDealtDamage()),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source()));
         addStaticEffect(hasNotDealtDamage);
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new SourceHasDealtDamage()),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
 
         CreateTokenEffect assassin = new CreateTokenEffect(
                 "Assassin", 1, 1, CardColor.BLACK,

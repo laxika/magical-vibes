@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -26,14 +25,14 @@ public class UnswervingSloth extends Card {
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
                 SequenceEffect.of(
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF),
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source()),
                         new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(),
                                 new PermanentIsCreaturePredicate()))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SaddleCost(4), new BecomeSaddledUntilEndOfTurnEffect(GrantScope.SELF)),
+                List.of(new SaddleCost(4), new BecomeSaddledUntilEndOfTurnEffect(Subjects.source())),
                 "Saddle 4",
                 ActivationTimingRestriction.SORCERY_SPEED));
     }

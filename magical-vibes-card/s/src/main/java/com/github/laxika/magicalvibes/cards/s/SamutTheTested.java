@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DivisionMode;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -26,7 +26,7 @@ public class SamutTheTested extends Card {
         // +1: Up to one target creature gains double strike until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 false, null,
-                List.of(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target())),
                 "+1: Up to one target creature gains double strike until end of turn.",
                 TargetFilters.creature(),
                 +1, null, null,

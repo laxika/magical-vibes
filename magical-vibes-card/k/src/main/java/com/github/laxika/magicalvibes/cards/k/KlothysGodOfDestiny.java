@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithConditionalEffectsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,7 +29,7 @@ public class KlothysGodOfDestiny extends Card {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorsAtLeast(
                         Set.of(ManaColor.RED, ManaColor.GREEN), 7)),
-                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
+                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), Subjects.source())));
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),
                 new ExileTargetCardFromGraveyardWithConditionalEffectsEffect(
                         new CardTypePredicate(CardType.LAND),

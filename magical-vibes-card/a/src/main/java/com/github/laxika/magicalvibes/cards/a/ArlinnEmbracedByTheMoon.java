@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -27,7 +27,7 @@ public class ArlinnEmbracedByTheMoon extends Card {
                 +1,
                 List.of(
                         new BoostAllOwnCreaturesEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl())
                 ),
                 "+1: Creatures you control get +1/+1 and gain trample until end of turn."
         ));
@@ -48,14 +48,14 @@ public class ArlinnEmbracedByTheMoon extends Card {
                 -6,
                 List.of(new CreateEmblemEffect(
                         List.of(
-                                new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_PERMANENTS,
+                                new GrantKeywordEffect(Keyword.HASTE, Subjects.permanentsYouControl(),
                                         new PermanentIsCreaturePredicate()),
                                 new GrantActivatedAbilityEffect(
                                         new ActivatedAbility(
                                                 true, null,
                                                 List.of(new DealDamageToAnyTargetEffect(new SourcePower())),
                                                 "{T}: This creature deals damage equal to its power to any target."),
-                                        GrantScope.OWN_PERMANENTS,
+                                        Subjects.permanentsYouControl(),
                                         new PermanentIsCreaturePredicate())),
                         "Creatures you control have haste and '{T}: This creature deals damage "
                                 + "equal to its power to any target.'")),

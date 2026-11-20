@@ -821,7 +821,7 @@ class PredicateEvaluationServiceTest {
 
             gd.addFloatingEffect(com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect.onPermanent(
                     "test", null, null, new com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect(
-                            CardSubtype.GIANT, com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET, true),
+                            CardSubtype.GIANT, com.github.laxika.magicalvibes.model.effect.Subjects.target(), true),
                     source.getId(), com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
 
             assertThat(evaluator.matchesCardPredicate(illusion, predicate, sourceCard.getId(), gd, player1Id))

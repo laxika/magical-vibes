@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class StoneHavenOutfitter extends Card {
 
     public StoneHavenOutfitter() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.creaturesYouControl(),
                 new PermanentIsEquippedPredicate()));
         addTrigger(Triggers.creatureDies(new PermanentIsEquippedPredicate(), ObjectRelation.YOU_CONTROL),
                 new DrawCardEffect(1));

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterOrSacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -23,7 +22,7 @@ public class ParallaxDementia extends Card {
                 .addStaticEffect(new EnterWithCountersEffect(CounterType.FADE, new Fixed(1)))
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                         new RemoveCounterOrSacrificeSelfEffect(CounterType.FADE))
-                .addStaticEffect(new StaticBoostEffect(3, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(3, 2, Subjects.attachedCreature()))
                 .addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                         new DestroyTargetPermanentEffect(Subjects.attached(), true));
     }

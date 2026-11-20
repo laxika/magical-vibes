@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +22,7 @@ public class RohgahhKherKeepOverlord extends Card {
 
     public RohgahhKherKeepOverlord() {
         // Other Kobolds you control get +2/+2.
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.KOBOLD)));
 
         // Whenever you cast a Kobold spell, you may pay {2}. If you do, create a 4/4 red Dragon

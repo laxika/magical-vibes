@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class SeethingPathblazer extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.ELEMENTAL),
                                 "Sacrifice an Elemental", false),
                         new BoostSelfEffect(2, 0),
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)),
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())),
                 "Sacrifice an Elemental: This creature gets +2/+0 and gains first strike until end of turn."));
     }
 }

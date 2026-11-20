@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.EquippedCreatureHasAtLeast
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SNC", collectorNumber = "234")
@@ -21,7 +21,7 @@ public class BrassKnuckles extends Card {
         addTrigger(Triggers.youCastThisSpell(), new CopyTriggeringSpellEffect(true));
         addStaticEffect(new ConditionalEffect(
                 new EquippedCreatureHasAtLeastEquipment(2),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.EQUIPPED_CREATURE)));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.attachedCreature())));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 }

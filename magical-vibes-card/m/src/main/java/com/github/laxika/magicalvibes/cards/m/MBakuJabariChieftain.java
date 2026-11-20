@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.NoMonarch;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerBecomesMonarchEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -35,6 +35,6 @@ public class MBakuJabariChieftain extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new AttackedTargetIsMonarch()),
                 SequenceEffect.of(
                         new BoostTargetCreatureEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)));
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())));
     }
 }

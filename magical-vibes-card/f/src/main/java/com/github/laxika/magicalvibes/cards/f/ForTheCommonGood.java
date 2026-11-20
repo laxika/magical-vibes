@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -33,7 +33,7 @@ public class ForTheCommonGood extends Card {
         addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect(new XValue()));
         addSpellEffect(new GrantKeywordEffect(
                 Set.of(Keyword.INDESTRUCTIBLE),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentIsTokenPredicate(),
                 Duration.UNTIL_YOUR_NEXT_TURN,
                 null));

@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -49,6 +49,6 @@ public class CaseOfTheShatteredPact extends Card {
                                         Keyword.FLYING,
                                         Keyword.DOUBLE_STRIKE,
                                         Keyword.VIGILANCE
-                                ), GrantScope.TARGET));
+                                ), Subjects.target()));
     }
 }

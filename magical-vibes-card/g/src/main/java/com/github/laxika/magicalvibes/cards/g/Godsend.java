@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSameNameAsExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOneOfCombatOpponentsAndTrackWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class Godsend extends Card {
 
     public Godsend() {
-        addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 3, Subjects.attachedCreature()));
         addStaticEffect(new CantCastSpellsWithSameNameAsExiledCardEffect(true));
         addTrigger(Triggers.blocks(),
                 TriggerOptions.ONE_OR_MORE,

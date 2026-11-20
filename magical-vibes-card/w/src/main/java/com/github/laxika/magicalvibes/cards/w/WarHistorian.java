@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceAttackedBattleThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MOM", collectorNumber = "214")
 public class WarHistorian extends Card {
@@ -14,6 +14,6 @@ public class WarHistorian extends Card {
     public WarHistorian() {
         addStaticEffect(new ConditionalEffect(
                 new SourceAttackedBattleThisTurn(),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
     }
 }

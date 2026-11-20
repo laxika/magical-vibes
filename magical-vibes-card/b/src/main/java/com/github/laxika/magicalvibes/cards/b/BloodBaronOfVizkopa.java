@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -27,6 +27,6 @@ public class BloodBaronOfVizkopa extends Card {
         // As long as you have 30 or more life and an opponent has 10 or less life, this creature gets +6/+6 and has flying.
         addStaticEffect(new ConditionalEffect(
                 new AllConditions(List.of(new ControllerLifeAtLeast(30), new AnOpponentLifeAtMost(10))),
-                new StaticBoostEffect(6, 6, Set.of(Keyword.FLYING), GrantScope.SELF)));
+                new StaticBoostEffect(6, 6, Set.of(Keyword.FLYING), Subjects.source())));
     }
 }

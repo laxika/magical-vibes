@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "C14", collectorNumber = "46")
 @CardRegistration(set = "CMA", collectorNumber = "144")
@@ -17,6 +17,6 @@ public class SiegeBehemoth extends Card {
                 new SourceIsAttacking(),
                 new GrantEffectEffect(
                         new AssignCombatDamageAsThoughUnblockedEffect(),
-                        GrantScope.ALL_OWN_CREATURES)));
+                        Subjects.creaturesYouControl())));
     }
 }

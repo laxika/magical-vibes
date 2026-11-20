@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SOI", collectorNumber = "117")
 public class HoundOfTheFarbogs extends Card {
 
     public HoundOfTheFarbogs() {
         addStaticEffect(new ConditionalEffect(
-                new Delirium(), new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)));
+                new Delirium(), new GrantKeywordEffect(Keyword.MENACE, Subjects.source())));
     }
 }

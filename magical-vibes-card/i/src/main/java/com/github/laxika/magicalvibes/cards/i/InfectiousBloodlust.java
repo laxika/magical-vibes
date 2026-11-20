@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,8 +23,8 @@ public class InfectiousBloodlust extends Card {
         // Enchant creature
         target(TargetFilters.creature())
         // Enchanted creature gets +2/+1, has haste, and attacks each combat if able.
-        .addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.ENCHANTED_CREATURE))
-        .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE))
+        .addStaticEffect(new StaticBoostEffect(2, 1, Subjects.attachedCreature()))
+        .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.attachedCreature()))
         .addStaticEffect(new MustAttackEffect());
 
         // When enchanted creature dies, you may search your library for a card named

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -19,6 +19,6 @@ public class CrabappleCohort extends Card {
 
     public CrabappleCohort() {
         // This creature gets +1/+1 as long as you control another green creature.
-        addStaticEffect(new ConditionalEffect(new ControlsAnotherPermanent(new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentColorInPredicate(Set.of(CardColor.GREEN))))), new StaticBoostEffect(1, 1, GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new ControlsAnotherPermanent(new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), new PermanentColorInPredicate(Set.of(CardColor.GREEN))))), new StaticBoostEffect(1, 1, Subjects.source())));
     }
 }

@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -38,7 +38,7 @@ public class MarshFlitter extends Card {
                                 "Sacrifice a Goblin",
                                 false
                         ),
-                        new SetBasePowerToughnessEffect(3, 3, GrantScope.SELF)
+                        new SetBasePowerToughnessEffect(3, 3, Subjects.source())
                 ),
                 "Sacrifice a Goblin: This creature has base power and toughness 3/3 until end of turn."
         ));

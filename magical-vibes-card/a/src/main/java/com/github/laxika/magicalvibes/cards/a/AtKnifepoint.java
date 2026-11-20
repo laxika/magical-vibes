@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -36,7 +36,7 @@ public class AtKnifepoint extends Card {
     public AtKnifepoint() {
         addStaticEffect(new ConditionalEffect(
                 new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES,
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.otherCreaturesYouControl(),
                         new PermanentHasAnySubtypePredicate(OUTLAW_SUBTYPES))));
 
         addTrigger(Triggers.youCommitCrime(),

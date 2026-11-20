@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -40,7 +40,7 @@ public class RydiaSummonerOfMist extends Card {
                         .requiresManaValueEqualsX(true)
                         .enterWithCounter(CounterType.FINALITY)
                         .enterWithCounterCount(1)
-                        .battlefieldEffectGrants(List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)))
+                        .battlefieldEffectGrants(List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.target())))
                         .battlefieldEffectGrantDuration(Duration.UNTIL_END_OF_TURN)
                         .build()),
                 "{X}, {T}: Return target Saga card with mana value X from your graveyard to the battlefield "

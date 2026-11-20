@@ -21,7 +21,7 @@ public class LosesAllAbilitiesEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var loses = (LosesAllAbilitiesEffect) effect;
-        boolean matches = support.namesBeyondSource(context, loses.scope().subject(), loses.filter());
+        boolean matches = support.namesBeyondSource(context, loses.subject(), loses.filter());
         if (matches) {
             accumulator.setLosesAllAbilities(true);
         }

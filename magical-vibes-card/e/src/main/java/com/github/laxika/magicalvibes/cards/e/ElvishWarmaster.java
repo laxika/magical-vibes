@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -42,7 +42,7 @@ public class ElvishWarmaster extends Card {
                 "{5}{G}{G}",
                 List.of(
                         new BoostAllOwnCreaturesEffect(2, 2, elves),
-                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES, elves)
+                        new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.creaturesYouControl(), elves)
                 ),
                 "{5}{G}{G}: Elves you control get +2/+2 and gain deathtouch until end of turn."
         ));

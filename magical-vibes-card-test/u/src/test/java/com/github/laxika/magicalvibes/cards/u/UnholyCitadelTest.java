@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Duration;
 
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 
@@ -191,7 +191,7 @@ class UnholyCitadelTest extends BaseCardTest {
         Permanent citadel = addCreatureReady(player1, new UnholyCitadel());
         animateUntilEndOfTurn(citadel, 3, 3);
         gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
-                new GrantColorEffect(CardColor.BLACK, GrantScope.TARGET, true), citadel.getId(),
+                new GrantColorEffect(CardColor.BLACK, Subjects.target(), true), citadel.getId(),
                 Duration.UNTIL_END_OF_TURN));
         PermanentGrants.supertype(gd, citadel, CardSupertype.LEGENDARY, true);
         Permanent otherLegendary = addCreatureReady(player1, new TobiasAndrion());

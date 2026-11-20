@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -41,7 +41,7 @@ public class ToxrillTheCorrosive extends Card {
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 new PutCounterOnEachMatchingPermanentEffect(
                         CounterType.SLIME, 1, opponentsCreatures, EachPermanentScope.ALL_PLAYERS));
-        addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(-1, -1, Subjects.otherCreatures(),
                         opponentsCreatures, CounterType.SLIME, true));
         addTrigger(Triggers.creatureDies(new PermanentHasCountersPredicate(CounterType.SLIME),
                         ObjectRelation.OPPONENT_CONTROLS),

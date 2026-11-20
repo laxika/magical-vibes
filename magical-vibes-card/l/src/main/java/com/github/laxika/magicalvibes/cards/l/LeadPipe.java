@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -19,7 +18,7 @@ import java.util.List;
 public class LeadPipe extends Card {
 
     public LeadPipe() {
-        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, Subjects.attachedCreature()));
         addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED),
                 new LoseLifeEffect(1, Subjects.eachOpponent()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

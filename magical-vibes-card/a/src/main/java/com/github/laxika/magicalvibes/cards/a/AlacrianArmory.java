@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -26,7 +26,7 @@ import java.util.Set;
 public class AlacrianArmory extends Card {
 
     public AlacrianArmory() {
-        addStaticEffect(new StaticBoostEffect(0, 1, Set.of(Keyword.VIGILANCE), GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(0, 1, Set.of(Keyword.VIGILANCE), Subjects.otherCreaturesYouControl()));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
@@ -38,10 +38,10 @@ public class AlacrianArmory extends Card {
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.MOUNT)),
-                                new BecomeSaddledUntilEndOfTurnEffect(GrantScope.TARGET)),
+                                new BecomeSaddledUntilEndOfTurnEffect(Subjects.target())),
                         new ConditionalEffect(
                                 new TargetPermanentMatches(new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)),
                                 new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null, Set.of(),
-                                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN, null)));
+                                        Subjects.target(), Duration.UNTIL_END_OF_TURN, null)));
     }
 }

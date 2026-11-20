@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeEnchantedByOtherAurasEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSB", collectorNumber = "4")
@@ -17,7 +17,7 @@ public class ConsecrateLand extends Card {
 
     public ConsecrateLand() {
         target(TargetFilters.land())
-                .addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.attached()))
                 .addStaticEffect(new AttachedPermanentRestrictionEffect(new CantBeEnchantedByOtherAurasEffect()));
     }
 }

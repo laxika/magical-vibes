@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureAndCreateSpiritTokenCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +19,7 @@ public class HofriGhostforge extends Card {
 
     public HofriGhostforge() {
         addStaticEffect(new StaticBoostEffect(1, 1,
-                Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.ALL_OWN_CREATURES,
+                Set.of(Keyword.TRAMPLE, Keyword.HASTE), Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)));
 
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),

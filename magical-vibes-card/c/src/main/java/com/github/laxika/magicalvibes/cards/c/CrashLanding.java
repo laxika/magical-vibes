@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,7 +33,7 @@ public class CrashLanding extends Card {
                         new PermanentHasKeywordPredicate(Keyword.FLYING)
                 )),
                 "Target must be a creature with flying"
-        )).addSpellEffect(new RemoveKeywordEffect(Keyword.FLYING, GrantScope.TARGET))
+        )).addSpellEffect(new RemoveKeywordEffect(Keyword.FLYING, Subjects.target()))
                 .addSpellEffect(new DealDamageToTargetCreatureEffect(forestsYouControl));
     }
 }

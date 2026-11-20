@@ -37,8 +37,8 @@ public record GainKeywordsOfCardsExiledWithSourceToEquippedCreatureEffect(
     }
 
     @Override
-    public GrantScope scope() {
-        return GrantScope.EQUIPPED_CREATURE;
+    public PermanentSubject subject() {
+        return Subjects.attachedCreature();
     }
 
     @Override

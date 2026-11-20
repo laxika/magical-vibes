@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "88")
@@ -28,15 +28,15 @@ public class SkywatcherAdept extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addStaticEffect(new RemoveKeywordEffect(Keyword.FLYING, GrantScope.SELF));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.FLYING, Subjects.source()));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(2, 2, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(2, 2, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(4, 2, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(4, 2, Subjects.source())));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -23,7 +23,7 @@ public class BatteringRam extends Card {
     public BatteringRam() {
         // "At the beginning of combat on your turn, this creature gains banding until end of combat."
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new GrantKeywordEffect(Keyword.BANDING, GrantScope.SELF, Duration.UNTIL_END_OF_COMBAT));
+                new GrantKeywordEffect(Keyword.BANDING, Subjects.source(), Duration.UNTIL_END_OF_COMBAT));
 
         // Whenever this creature becomes blocked by a Wall, destroy that Wall at end of combat.
         addTrigger(Triggers.becomesBlocked().withFilter(new PermanentHasSubtypePredicate(CardSubtype.WALL)),

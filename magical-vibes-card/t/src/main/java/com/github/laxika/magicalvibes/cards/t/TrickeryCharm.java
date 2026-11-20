@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReorderTopCardsOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect;
@@ -24,10 +23,10 @@ public class TrickeryCharm extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gains flying until end of turn",
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET), creature),
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target()), creature),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature becomes the creature type of your choice until end of turn",
-                        new TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(GrantScope.TARGET, Set.of()), creature),
+                        new TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(Subjects.target(), Set.of()), creature),
                 new ChooseOneEffect.ChooseOneOption(
                         "Look at the top four cards of your library, then put them back in any order",
                         new ReorderTopCardsOfLibraryEffect(4, Subjects.you()))

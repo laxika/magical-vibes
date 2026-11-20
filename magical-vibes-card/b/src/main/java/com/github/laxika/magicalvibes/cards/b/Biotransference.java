@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +20,7 @@ import java.util.Set;
 public class Biotransference extends Card {
 
     public Biotransference() {
-        addStaticEffect(new GrantCardTypeEffect(CardType.ARTIFACT, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantCardTypeEffect(CardType.ARTIFACT, Subjects.creaturesYouControl()));
         addStaticEffect(new GrantCardTypeToOwnCardsEffect(CardType.ARTIFACT,
                         new CardTypePredicate(CardType.CREATURE), false));
 

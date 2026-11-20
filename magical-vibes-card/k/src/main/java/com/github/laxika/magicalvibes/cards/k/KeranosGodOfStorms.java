@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RevealDrawnCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class KeranosGodOfStorms extends Card {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorsAtLeast(
                         Set.of(ManaColor.BLUE, ManaColor.RED), 7)),
-                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
+                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), Subjects.source())));
         // Reveal the first card you draw on each of your turns. Whenever you reveal a land card this way, draw a
         // card. Whenever you reveal a nonland card this way, Keranos deals 3 damage to any target.
         addStaticEffect(RevealDrawnCardsEffect.firstOnEachOfYourTurns());

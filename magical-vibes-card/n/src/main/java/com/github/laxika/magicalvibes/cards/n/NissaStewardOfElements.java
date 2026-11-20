@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardPutLandOrCreatureWithinLoyaltyEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -53,7 +52,7 @@ public class NissaStewardOfElements extends Card {
                         new AnimatePermanentsEffect(
                                 5, 5, List.of(CardSubtype.ELEMENTAL),
                                 Set.of(Keyword.FLYING, Keyword.HASTE), null, Set.of(),
-                                GrantScope.TARGET, Duration.UNTIL_END_OF_TURN)
+                                Subjects.target(), Duration.UNTIL_END_OF_TURN)
                 ),
                 "−6: Untap up to two target lands you control. They become 5/5 Elemental "
                         + "creatures with flying and haste until end of turn. They're still lands.",

@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -22,7 +21,7 @@ public class StabWound extends Card {
     public StabWound() {
         target(TargetFilters.creature())
                 // Enchanted creature gets -2/-2.
-                .addStaticEffect(new StaticBoostEffect(-2, -2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(-2, -2, Subjects.attachedCreature()))
 
                 // At the beginning of the upkeep of enchanted creature's controller,
                 // that player loses 2 life.

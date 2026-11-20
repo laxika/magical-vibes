@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -36,7 +35,7 @@ public class HydroManFluidFelon extends Card {
                         new UntapPermanentsEffect(Subjects.source()),
                         new SetCardTypesUntilYourNextTurnEffect(Set.of(CardType.LAND)),
                         new GrantActivatedAbilityEffect(
-                                ManaAbilities.tapFor(ManaColor.BLUE), GrantScope.SELF, null,
+                                ManaAbilities.tapFor(ManaColor.BLUE), Subjects.source(), null,
                                 Duration.UNTIL_YOUR_NEXT_TURN)));
     }
 }

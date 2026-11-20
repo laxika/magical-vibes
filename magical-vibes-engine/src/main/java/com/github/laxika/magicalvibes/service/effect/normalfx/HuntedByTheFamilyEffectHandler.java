@@ -12,12 +12,12 @@ import com.github.laxika.magicalvibes.model.VillainousChoiceState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.HuntedByTheFamilyEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentBecomesSubtypeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -114,15 +114,15 @@ public class HuntedByTheFamilyEffectHandler implements NormalEffectHandlerBean {
         targetEntry.setSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
         setCardTypesEffectHandler.resolve(gameData, targetEntry,
-                new SetCardTypesEffect(Set.of(CardType.CREATURE), GrantScope.TARGET,
+                new SetCardTypesEffect(Set.of(CardType.CREATURE), Subjects.target(),
                         Duration.PERMANENT));
         setTargetColorEffectHandler.resolve(gameData, targetEntry, new SetTargetColorEffect(CardColor.WHITE));
         subtypeEffectHandler.resolve(gameData, targetEntry,
                 new TargetPermanentBecomesSubtypeEffect(CardSubtype.HUMAN));
         setBasePowerToughnessEffectHandler.resolve(gameData, targetEntry,
-                new SetBasePowerToughnessEffect(1, 1, GrantScope.TARGET,
+                new SetBasePowerToughnessEffect(1, 1, Subjects.target(),
                         Duration.PERMANENT));
         losesAllAbilitiesEffectHandler.resolve(gameData, targetEntry,
-                new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT));
+                new LosesAllAbilitiesEffect(Subjects.target(), Duration.PERMANENT));
     }
 }

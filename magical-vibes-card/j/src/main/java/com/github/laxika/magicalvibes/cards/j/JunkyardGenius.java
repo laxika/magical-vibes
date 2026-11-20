@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -37,7 +37,7 @@ public class JunkyardGenius extends Card {
                                 new PermanentIsArtifactPredicate()
                         )), "another creature or artifact"),
                         new BoostAllOwnCreaturesEffect(1, 0, otherCreature),
-                        new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.HASTE), GrantScope.OWN_CREATURES, otherCreature)
+                        new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.HASTE), Subjects.otherCreaturesYouControl(), otherCreature)
                 ),
                 "{1}{B}{R}, Sacrifice another creature or artifact: Other creatures you control get +1/+0 and gain menace and haste until end of turn."
         ));

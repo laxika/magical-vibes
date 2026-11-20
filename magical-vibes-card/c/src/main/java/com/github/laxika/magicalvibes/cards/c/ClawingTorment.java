@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -28,12 +27,12 @@ public class ClawingTorment extends Card {
                         new PermanentIsCreaturePredicate()
                 )),
                 "Target must be an artifact or creature"))
-                .addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.ENCHANTED_PERMANENT,
+                .addStaticEffect(new StaticBoostEffect(-1, -1, Subjects.attached(),
                                 new PermanentIsCreaturePredicate()))
                 .addStaticEffect(new CantBlockEffect())
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                         new LoseLifeEffect(1, Subjects.you())),
-                        GrantScope.ENCHANTED_PERMANENT));
+                        Subjects.attached()));
     }
 }

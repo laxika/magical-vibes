@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsMulticoloredPredicate;
@@ -25,7 +25,7 @@ public class PsychoticFury extends Card {
         target(new PermanentPredicateTargetFilter(
                 multicoloredCreature,
                 "Target must be a multicolored creature"))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET, multicoloredCreature))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target(), multicoloredCreature))
                 .addSpellEffect(new DrawCardEffect(1));
     }
 }

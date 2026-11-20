@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -31,7 +30,7 @@ public class OniPossession extends Card {
                         1, new PermanentIsCreaturePredicate(), Subjects.you()))
                 // Enchanted creature gets +3/+3 and has trample.
                 .addStaticEffect(new StaticBoostEffect(
-                        3, 3, Set.of(Keyword.TRAMPLE), GrantScope.ENCHANTED_CREATURE))
+                        3, 3, Set.of(Keyword.TRAMPLE), Subjects.attachedCreature()))
                 // Enchanted creature is a Demon Spirit (type-replacing, not additive).
                 .addStaticEffect(new EnchantedPermanentBecomesTypeEffect(
                         List.of(CardSubtype.DEMON, CardSubtype.SPIRIT)));

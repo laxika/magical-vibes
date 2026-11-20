@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +26,7 @@ public class DreamTrawler extends Card {
                 null,
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF),
+                        new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source()),
                         new TapPermanentsEffect(Subjects.source())
                 ),
                 "Discard a card: This creature gains hexproof until end of turn. Tap it."

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterOrSacrificeSelfEffect;
@@ -35,7 +34,7 @@ public class Cocoon extends Card {
         addStaticEffect(DoesntUntapWithCounterEffect.enchanted(CounterType.PUPA));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new RemoveCounterOrSacrificeSelfEffect(CounterType.PUPA, List.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, Duration.PERMANENT)
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.target(), Duration.PERMANENT)
         )));
     }
 }

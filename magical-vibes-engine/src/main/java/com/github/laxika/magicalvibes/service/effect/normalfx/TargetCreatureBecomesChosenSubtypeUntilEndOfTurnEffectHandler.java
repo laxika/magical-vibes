@@ -7,8 +7,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -46,27 +47,10 @@ public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler imple
         CardSubtype chosenSubtype = gameData.chosenSpellSubtype;
         gameData.chosenSpellSubtype = null;
 
-        if (chosenEffect.scope() == GrantScope.ALL_CREATURES) {
-            int[] affectedCount = {0};
-            // This one-shot "all creatures" includes the source.
-            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
-                    GrantScope.ALL_CREATURES_INCLUDING_SELF.subject())) {
-                setCreatureTypeOverride(gameData, entry, permanent, chosenSubtype);
-                affectedCount[0]++;
-            }
-            gameLogService.append(gameData, GameLog.builder()
-                    .card(entry.getCard())
-                    .text(" makes " + affectedCount[0] + " creature(s) into "
-                            + chosenSubtype.getDisplayName() + "s until end of turn.")
-                    .build());
-            return;
-        }
-
-        if (chosenEffect.scope() == GrantScope.OWN_CREATURES) {
+        if (chosenEffect.subject().isSet()) {
             int affectedCount = 0;
-            // This one-shot "creatures you control" includes the source.
             for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
-                    GrantScope.ALL_OWN_CREATURES.subject())) {
+                    chosenEffect.subject())) {
                 setCreatureTypeOverride(gameData, entry, permanent, chosenSubtype);
                 affectedCount++;
             }
@@ -78,7 +62,7 @@ public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler imple
             return;
         }
 
-        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, GrantScope.TARGET.subject());
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, Subjects.target());
         if (target == null) {
             return;
         }
@@ -94,7 +78,7 @@ public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler imple
                                          CardSubtype chosenSubtype) {
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
-                entry.getControllerId(), new GrantSubtypeEffect(chosenSubtype, GrantScope.TARGET, true),
+                entry.getControllerId(), new GrantSubtypeEffect(chosenSubtype, Subjects.target(), true),
                 permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
     }
 }

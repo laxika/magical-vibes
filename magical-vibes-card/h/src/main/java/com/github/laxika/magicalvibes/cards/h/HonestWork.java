@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
@@ -26,12 +25,12 @@ public class HonestWork extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new TapPermanentsEffect(Subjects.attached()),
                         new RemoveAllCountersFromTargetPermanentEffect(Subjects.attached()))
-                .addStaticEffect(new SetNameEffect("Humble Merchant", GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.CITIZEN, GrantScope.ENCHANTED_CREATURE, true))
-                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new SetNameEffect("Humble Merchant", Subjects.attachedCreature()))
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.CITIZEN, Subjects.attachedCreature(), true))
+                .addStaticEffect(new LosesAllAbilitiesEffect(Subjects.attachedCreature()))
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                                 ManaAbilities.tapFor(ManaColor.COLORLESS),
-                                GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+                                Subjects.attachedCreature()))
+                .addStaticEffect(new SetBasePowerToughnessEffect(1, 1, Subjects.attachedCreature()));
     }
 }

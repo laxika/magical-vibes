@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndSaddleEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class DefendTheRider extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target permanent you control gains hexproof and indestructible until end of turn",
                         new GrantKeywordEffect(
-                                Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.TARGET),
+                                Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), Subjects.target()),
                         TargetFilters.permanentYouControl()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Create a 1/1 colorless Pilot creature token with \"This token saddles Mounts and crews Vehicles as though its power were 2 greater.\"",

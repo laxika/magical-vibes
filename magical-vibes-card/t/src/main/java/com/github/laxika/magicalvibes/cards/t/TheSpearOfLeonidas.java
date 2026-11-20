@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAndDrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class TheSpearOfLeonidas extends Card {
         addTrigger(Triggers.attacks(), new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Bull Rush — It gains double strike until end of turn",
-                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TRIGGERING_PERMANENT)),
+                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.triggering())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Summon — Create Phobos, a legendary 3/2 red Horse creature token",
                         phobos),

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PIP", collectorNumber = "90")
@@ -16,7 +16,7 @@ public class AlmostPerfect extends Card {
 
     public AlmostPerfect() {
         target(TargetFilters.creature())
-                .addStaticEffect(new SetBasePowerToughnessEffect(9, 10, GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new SetBasePowerToughnessEffect(9, 10, Subjects.attachedCreature()))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.attachedCreature()));
     }
 }

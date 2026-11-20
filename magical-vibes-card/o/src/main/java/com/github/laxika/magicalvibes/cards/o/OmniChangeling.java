@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class OmniChangeling extends Card {
                 new PermanentIsCreaturePredicate(), "creature", Set.of(),
                 List.of(
                         StaticAbility.of(List.<CardEffect>of(
-                        new GrantKeywordEffect(Keyword.CHANGELING, GrantScope.SELF))))
+                        new GrantKeywordEffect(Keyword.CHANGELING, Subjects.source()))))
         ));
     }
 }

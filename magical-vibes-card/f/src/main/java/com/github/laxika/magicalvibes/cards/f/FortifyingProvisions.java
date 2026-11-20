@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ import java.util.List;
 public class FortifyingProvisions extends Card {
 
     public FortifyingProvisions() {
-        addStaticEffect(new StaticBoostEffect(0, 1, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(0, 1, Subjects.creaturesYouControl()));
         addTrigger(Triggers.enters(ObjectRelation.THIS), foodToken());
     }
 

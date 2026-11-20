@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -56,12 +55,10 @@ public class GrantProtectionChoiceUntilEndOfTurnEffectHandler implements NormalE
      * creatures") or the single {@code targetId}.
      */
     private static PermanentSubject recipients(GrantProtectionChoiceUntilEndOfTurnEffect e) {
-        return switch (e.scope()) {
-            case SELF -> GrantScope.SELF.subject();
-            // The one-shot "creatures you control" and "all creatures" include the source.
-            case OWN_CREATURES -> Subjects.narrowed(GrantScope.ALL_OWN_CREATURES.subject(), e.filter());
-            case ALL_CREATURES -> GrantScope.ALL_CREATURES_INCLUDING_SELF.subject();
-            default -> Subjects.allTargets();
-        };
+        PermanentSubject subject = e.subject();
+        if (subject instanceof PermanentSubject.Source) {
+            return subject;
+        }
+        return subject.isSet() ? Subjects.narrowed(subject, e.filter()) : Subjects.allTargets();
     }
 }

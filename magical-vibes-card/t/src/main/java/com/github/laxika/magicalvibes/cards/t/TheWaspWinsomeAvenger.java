@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -27,7 +26,7 @@ public class TheWaspWinsomeAvenger extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.HERO),
                 "Target must be a Hero"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.target()));
 
         target(new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

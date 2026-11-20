@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -26,7 +26,7 @@ public class ArmedDangerous extends Card {
         TargetFilter creature = TargetFilters.creature();
         CardEffect armed = SequenceEffect.of(
                 new BoostTargetCreatureEffect(1, 1),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()));
         CardEffect dangerous = new SetCombatRequirementThisTurnEffect(
                 CombatRequirement.MUST_BE_BLOCKED_BY_ALL);
 

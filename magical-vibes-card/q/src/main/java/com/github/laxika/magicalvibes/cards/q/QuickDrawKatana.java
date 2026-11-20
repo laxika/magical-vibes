@@ -7,17 +7,17 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "FDN", collectorNumber = "130")
 public class QuickDrawKatana extends Card {
 
     public QuickDrawKatana() {
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE)));
+                new StaticBoostEffect(2, 0, Subjects.attachedCreature())));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.attachedCreature())));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

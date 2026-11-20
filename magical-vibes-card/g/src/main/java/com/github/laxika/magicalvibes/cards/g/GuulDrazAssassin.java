@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -34,18 +34,18 @@ public class GuulDrazAssassin extends Card {
                 new AllOf(List.of(
                         new SourceCounterThreshold(2, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(4, CounterType.LEVEL)))),
-                new SetBasePowerToughnessEffect(2, 2, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(2, 2, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(4, 4, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(2, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(4, CounterType.LEVEL)))),
-                new GrantActivatedAbilityEffect(assassinateAbility(2), GrantScope.SELF)));
+                new GrantActivatedAbilityEffect(assassinateAbility(2), Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.LEVEL),
-                new GrantActivatedAbilityEffect(assassinateAbility(4), GrantScope.SELF)));
+                new GrantActivatedAbilityEffect(assassinateAbility(4), Subjects.source())));
     }
 
     private static ActivatedAbility assassinateAbility(int amount) {

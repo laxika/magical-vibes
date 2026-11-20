@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "43")
@@ -15,7 +15,7 @@ public class Dreadwing extends Card {
 
     public Dreadwing() {
         addActivatedAbility(new ActivatedAbility(false, "{1}{U}{R}",
-                List.of(new BoostSelfEffect(3, 0), new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                List.of(new BoostSelfEffect(3, 0), new GrantKeywordEffect(Keyword.FLYING, Subjects.source())),
                 "{1}{U}{R}: This creature gets +3/+0 and gains flying until end of turn."));
     }
 }

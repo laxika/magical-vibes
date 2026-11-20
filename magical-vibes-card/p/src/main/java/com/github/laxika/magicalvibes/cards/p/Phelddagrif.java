@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
@@ -37,14 +36,14 @@ public class Phelddagrif extends Card {
 
     public Phelddagrif() {
         addActivatedAbility(new ActivatedAbility(false, "{G}",
-                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF),
+                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source()),
                         new TargetOpponentCreatesTokenEffect(new CreateTokenEffect("Hippo", 1, 1,
                                 CardColor.GREEN, List.of(CardSubtype.HIPPO), Set.of(), Set.of()))),
                 "{G}: Phelddagrif gains trample until end of turn. Target opponent creates a 1/1 green Hippo creature token.",
                 OPPONENT_TARGET));
 
         addActivatedAbility(new ActivatedAbility(false, "{W}",
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF),
+                List.of(new GrantKeywordEffect(Keyword.FLYING, Subjects.source()),
                         new GainLifeEffect(new Fixed(2), Subjects.targetPlayerDeclaredElsewhere())),
                 "{W}: Phelddagrif gains flying until end of turn. Target opponent gains 2 life.",
                 OPPONENT_TARGET));

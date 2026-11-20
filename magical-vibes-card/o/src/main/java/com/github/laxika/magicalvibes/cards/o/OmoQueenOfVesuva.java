@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -55,7 +55,7 @@ public class OmoQueenOfVesuva extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), putCounterOnTargetPermanent, putCounterOnTargetPermanent2);
 
         addStaticEffect(new GrantAllCreatureTypesToOwnCreaturesEffect(
-                GrantScope.ALL_CREATURES_INCLUDING_SELF, NONLAND_CREATURE));
-        CardSubtype.rulesLandTypes().forEach(subtype -> addStaticEffect(new GrantSubtypeEffect(subtype, GrantScope.ALL_PERMANENTS, false, LAND)));
+                Subjects.allCreatures(), NONLAND_CREATURE));
+        CardSubtype.rulesLandTypes().forEach(subtype -> addStaticEffect(new GrantSubtypeEffect(subtype, Subjects.otherPermanents(), false, LAND)));
     }
 }

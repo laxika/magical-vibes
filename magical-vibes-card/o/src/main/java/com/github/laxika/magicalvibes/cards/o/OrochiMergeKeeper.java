@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class OrochiMergeKeeper extends Card {
                 new ActivatedAbility(true, null,
                         List.of(new AwardManaEffect(ManaColor.GREEN, 2)),
                         "{T}: Add {G}{G}."),
-                GrantScope.SELF,
+                Subjects.source(),
                 new PermanentIsModifiedPredicate()));
     }
 }

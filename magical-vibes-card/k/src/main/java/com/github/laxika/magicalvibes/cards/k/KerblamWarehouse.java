@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -36,7 +36,7 @@ public class KerblamWarehouse extends Card {
                 "{T}, Sacrifice this artifact: Flip a coin. If you win the flip, this artifact deals 3 damage to any target.");
         addTrigger(Triggers.chaosEnsues(), new GrantActivatedAbilityEffect(
                 artifactAbility,
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentNotPredicate(new PermanentIsCreaturePredicate()))),

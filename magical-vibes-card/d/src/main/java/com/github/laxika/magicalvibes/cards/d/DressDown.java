@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -15,7 +15,7 @@ public class DressDown extends Card {
 
     public DressDown() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
-        addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ALL_CREATURES_INCLUDING_SELF));
+        addStaticEffect(new LosesAllAbilitiesEffect(Subjects.allCreatures()));
         addTrigger(Triggers.endStep(ActivePlayer.ANY), new SacrificeSelfEffect());
     }
 }

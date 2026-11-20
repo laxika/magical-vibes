@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromAllOtherManaValuesEffect;
@@ -21,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.ProtectionFromManaValueParity
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionGrantingEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -77,7 +77,7 @@ public class GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffectHandler impl
             for (CardEffect protection : protectionEffects) {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
-                        new GrantEffectEffect(protection, GrantScope.TARGET), recipient.getId(), null, null,
+                        new GrantEffectEffect(protection, Subjects.target()), recipient.getId(), null, null,
                         Duration.UNTIL_END_OF_TURN, 0));
             }
         }
@@ -99,7 +99,7 @@ public class GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffectHandler impl
         if (!bonus.losesAllAbilities() && !gameQueryService.hasLostPrintedProtection(gameData, creature)) {
             for (CardEffect staticEffect : creature.getCard().getStaticEffects()) {
                 if (staticEffect instanceof ProtectionFromColorsOfPermanentsYouControlEffect protection
-                        && protection.scope() == null) {
+                        && protection.subject() == null) {
                     collectColorsOfControlledPermanents(gameData, creature, protectionColors);
                 } else if (staticEffect instanceof ProtectionFromChosenPlayerEffect
                         && !creature.getChosenPlayerIds().isEmpty()) {
@@ -109,7 +109,7 @@ public class GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffectHandler impl
                 } else if (staticEffect instanceof ProtectionFromPermanentsMatchingEffect protection) {
                     protectionEffects.add(protection);
                 } else if (staticEffect instanceof ProtectionGrantingEffect protection
-                        && protection.protectionScope() == null) {
+                        && protection.protectionSubject() == null) {
                     addProtectionAbility(withChosenValues(protection, creature), protectionColors, protectionEffects);
                 }
             }

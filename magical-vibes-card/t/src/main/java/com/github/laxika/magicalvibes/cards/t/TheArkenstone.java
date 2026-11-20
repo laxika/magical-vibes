@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.cards.s.SeekTheHeart;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ public class TheArkenstone extends Card {
     public TheArkenstone() {
         setBackFaceCard(new SeekTheHeart());
         addCastingOption(new AdventureCast("{2}{W}"));
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.creaturesYouControl()));
         addTrigger(Triggers.endStep(ActivePlayer.YOU), new DrawCardEffect());
     }
 

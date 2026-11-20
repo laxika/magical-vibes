@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CommanderCastsFromCommandZoneThisGame;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "TDC", collectorNumber = "111")
 @CardRegistration(set = "C19", collectorNumber = "2")
@@ -14,6 +14,6 @@ public class CommandersInsignia extends Card {
     public CommandersInsignia() {
         var commanderCasts = new CommanderCastsFromCommandZoneThisGame();
         addStaticEffect(new DynamicStaticBoostEffect(
-                commanderCasts, commanderCasts, GrantScope.ALL_OWN_CREATURES));
+                commanderCasts, commanderCasts, Subjects.creaturesYouControl()));
     }
 }

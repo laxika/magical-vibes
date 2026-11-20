@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -17,7 +17,7 @@ import java.util.List;
 public class AangDestinedSavior extends Card {
 
     public AangDestinedSavior() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_PERMANENTS,
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.otherPermanentsYouControl(),
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsLandPredicate(),
                                 new PermanentIsCreaturePredicate()

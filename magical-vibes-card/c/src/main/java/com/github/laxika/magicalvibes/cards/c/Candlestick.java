@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,9 +19,9 @@ import java.util.List;
 public class Candlestick extends Card {
 
     public Candlestick() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                new TriggeredAbility(Triggers.attacks(), new SurveilEffect(2)), GrantScope.EQUIPPED_CREATURE));
+                new TriggeredAbility(Triggers.attacks(), new SurveilEffect(2)), Subjects.attachedCreature()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

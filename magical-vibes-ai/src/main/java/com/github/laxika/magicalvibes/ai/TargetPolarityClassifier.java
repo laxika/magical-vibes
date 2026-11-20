@@ -443,12 +443,12 @@ public class TargetPolarityClassifier {
         }
         if (effect instanceof KeywordGrantingEffect grant) {
             return GrantSubjectShapes.grantsToItsTarget(grant)
-                    || GrantSubjectShapes.namesAttachedCreature(grant.scope())
+                    || GrantSubjectShapes.namesAttachedCreature(grant.subject())
                     ? TargetPolarity.BENEFICIAL
                     : null;
         }
         if (effect instanceof SuspectEffect suspect) {
-            return GrantSubjectShapes.namesTarget(GrantSubjectShapes.subjectOf(suspect.scope()))
+            return GrantSubjectShapes.namesTarget(suspect.subject())
                     ? TargetPolarity.NEUTRAL : null;
         }
 

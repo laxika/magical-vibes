@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
@@ -51,7 +51,7 @@ public class KoglaTheTitanApe extends Card {
                 "{1}{G}",
                 List.of(
                         ReturnToHandEffect.target(),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())
                 ),
                 "{1}{G}: Return target Human you control to its owner's hand. Kogla gains indestructible until end of turn.",
                 new PermanentPredicateTargetFilter(humanYouControl, "Target must be a Human you control")

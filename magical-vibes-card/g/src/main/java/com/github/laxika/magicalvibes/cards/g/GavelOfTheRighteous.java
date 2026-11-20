@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -33,10 +33,10 @@ public class GavelOfTheRighteous extends Card {
                 new PutCountersOnSelfEffect(CounterType.CHARGE));
 
         CountersOnSource counters = new CountersOnSource(CounterType.ANY);
-        addStaticEffect(new AttachedBoostEffect(counters, counters, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new AttachedBoostEffect(counters, counters, Subjects.attachedCreature()));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.ANY),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.EQUIPPED_CREATURE)));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.attachedCreature())));
 
         addActivatedAbility(new EquipActivatedAbility("{3}"));
 

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestManaValueAmongAllArtifactsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -22,7 +22,7 @@ public class PadeemConsulOfInnovation extends Card {
 
     public PadeemConsulOfInnovation() {
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS, new PermanentIsArtifactPredicate()));
+                Keyword.HEXPROOF, Subjects.otherPermanentsYouControl(), new PermanentIsArtifactPredicate()));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsPermanent(new PermanentHasGreatestManaValueAmongAllArtifactsPredicate())),

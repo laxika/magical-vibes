@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -48,6 +47,6 @@ public class MiresMalice extends Card {
                         new CastForAlternateCost(),
                         new AnimatePermanentsEffect(
                                 0, 0, List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE), null,
-                                Set.of(CardType.CREATURE), GrantScope.TARGET, Duration.PERMANENT)));
+                                Set.of(CardType.CREATURE), Subjects.target(), Duration.PERMANENT)));
     }
 }

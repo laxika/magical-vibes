@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTarget
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,10 +23,10 @@ public class VibraniumStrikeGauntlets extends Card {
         target(TargetFilters.creatureYouControl())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new AttachSourceEquipmentToTargetCreatureEffect());
-        addStaticEffect(new StaticBoostEffect(3, 0, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 0, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                        new DrawCardEffect(1)), GrantScope.EQUIPPED_CREATURE));
+                        new DrawCardEffect(1)), Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

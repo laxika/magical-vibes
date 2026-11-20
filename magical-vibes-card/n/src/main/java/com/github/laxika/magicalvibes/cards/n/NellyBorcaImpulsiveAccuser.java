@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnSnapshotEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -20,7 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class NellyBorcaImpulsiveAccuser extends Card {
 
     public NellyBorcaImpulsiveAccuser() {
-        var suspect = new SuspectEffect(GrantScope.TARGET);
+        var suspect = new SuspectEffect(Subjects.target());
         target(TargetFilters.creature())
                 .bindEffect(suspect);
         addTrigger(Triggers.attacks(),

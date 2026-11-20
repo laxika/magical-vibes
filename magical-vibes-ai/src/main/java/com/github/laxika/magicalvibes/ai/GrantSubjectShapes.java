@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -21,14 +20,6 @@ public final class GrantSubjectShapes {
     private GrantSubjectShapes() {
     }
 
-    /**
-     * The subject {@code scope} stands for, or {@code null} for a scope with no subject variant yet (the triggering
-     * spell's targets and the sharing creatures, the declared attackers, the tokens just created, the bandmates).
-     */
-    public static PermanentSubject subjectOf(GrantScope scope) {
-        return scope != null && scope.hasSubject() ? scope.subject() : null;
-    }
-
     /** Whether the subject is the effect's target. */
     public static boolean namesTarget(PermanentSubject subject) {
         return subject instanceof PermanentSubject.Target;
@@ -40,18 +31,17 @@ public final class GrantSubjectShapes {
     }
 
     /**
-     * Whether {@code scope} is the creature the source Aura or Equipment is attached to: {@code attached()}, read only
-     * when the host is a creature. {@link GrantScope#ENCHANTED_PERMANENT} is {@code attached()} too but applies to a
-     * noncreature host as well, and the subject does not tell them apart yet (the engine's attachment-restriction query
-     * reads the same distinction), so this is the one scope constant the AI still names.
+     * Whether the subject is the creature the source Aura or Equipment is attached to ({@code attachedCreature()}):
+     * "enchanted creature", "equipped creature", not "enchanted permanent", which applies to a noncreature host too.
      */
-    public static boolean namesAttachedCreature(GrantScope scope) {
-        return namesAttached(subjectOf(scope)) && scope != GrantScope.ENCHANTED_PERMANENT;
+    public static boolean namesAttachedCreature(PermanentSubject subject) {
+        return subject instanceof PermanentSubject.Attached attached && attached.creature();
     }
 
     /**
      * Whether {@code grant} gives its keywords to the permanent it targets: it declares a permanent target, which only
-     * a {@code target()} subject (or the target-and-sharing form, which has no subject variant yet) does.
+     * a subject naming the effect's target ({@code target()}, or the target and the creatures sharing a color with it)
+     * does.
      */
     public static boolean grantsToItsTarget(CardEffect grant) {
         return grant.targetSpec().admits(TargetPredicate.Kind.PERMANENT);

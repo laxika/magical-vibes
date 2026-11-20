@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -44,7 +43,7 @@ public class CoerciveRecruiter extends Card {
         return SequenceEffect.of(
                 new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                 new UntapPermanentsEffect(Subjects.target()),
-                new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.PIRATE, GrantScope.TARGET),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
+                new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.PIRATE, Subjects.target()),
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.target()));
     }
 }

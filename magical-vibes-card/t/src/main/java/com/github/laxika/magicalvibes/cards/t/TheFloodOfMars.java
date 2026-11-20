@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.BecomeTargetPermanentCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -44,6 +44,6 @@ public class TheFloodOfMars extends Card {
                         new BecomeTargetPermanentCopyOfSourceEffect()),
                         new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentIsLandPredicate()),
-                        new GrantSubtypeEffect(CardSubtype.ISLAND, GrantScope.TARGET)));
+                        new GrantSubtypeEffect(CardSubtype.ISLAND, Subjects.target())));
     }
 }

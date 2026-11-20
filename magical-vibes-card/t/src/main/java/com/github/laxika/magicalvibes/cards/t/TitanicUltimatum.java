@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "ALA", collectorNumber = "204")
@@ -18,6 +18,6 @@ public class TitanicUltimatum extends Card {
     public TitanicUltimatum() {
         addSpellEffect(new BoostAllOwnCreaturesEffect(5, 5));
         addSpellEffect(new GrantKeywordEffect(
-                Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE, Keyword.LIFELINK), GrantScope.OWN_CREATURES));
+                Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE, Keyword.LIFELINK), Subjects.otherCreaturesYouControl()));
     }
 }

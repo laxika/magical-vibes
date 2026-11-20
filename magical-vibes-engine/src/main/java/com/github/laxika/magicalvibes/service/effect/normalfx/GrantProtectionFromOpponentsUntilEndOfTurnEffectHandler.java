@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 import java.util.HashSet;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromPlayersEffect;
@@ -49,7 +49,7 @@ public class GrantProtectionFromOpponentsUntilEndOfTurnEffectHandler implements 
             }
         }
         gameData.addEffectOnPermanent(entry.getCard().getName(), null, entry.getControllerId(),
-                new GrantEffectEffect(new ProtectionFromPlayersEffect(opponentIds, true), GrantScope.TARGET), target.getId(),
+                new GrantEffectEffect(new ProtectionFromPlayersEffect(opponentIds, true), Subjects.target()), target.getId(),
                 com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.builder()

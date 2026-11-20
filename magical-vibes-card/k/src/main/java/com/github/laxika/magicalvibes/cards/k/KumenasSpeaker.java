@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -22,6 +22,6 @@ public class KumenasSpeaker extends Card {
                 new AnyOf(List.of(
                         new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)),
                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.ISLAND)))),
-                new StaticBoostEffect(1, 1, GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Subjects.source())));
     }
 }

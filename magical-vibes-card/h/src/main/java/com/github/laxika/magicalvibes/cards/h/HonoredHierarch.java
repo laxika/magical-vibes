@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RenownEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,7 +28,7 @@ public class HonoredHierarch extends Card {
 
         // As long as Honored Hierarch is renowned, it has vigilance ...
         addStaticEffect(new ConditionalEffect(
-                new SourceIsRenowned(), new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
+                new SourceIsRenowned(), new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source())));
 
         // ... and "{T}: Add one mana of any color."
         addActivatedAbility(new ActivatedAbility(true, null,

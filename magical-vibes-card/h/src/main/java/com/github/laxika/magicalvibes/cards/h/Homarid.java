@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -33,12 +33,12 @@ public class Homarid extends Card {
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.TIDE),
                         new NotCondition(new SourceCounterThreshold(2, CounterType.TIDE)))),
-                new StaticBoostEffect(-1, -1, GrantScope.SELF)));
+                new StaticBoostEffect(-1, -1, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(3, CounterType.TIDE),
                         new NotCondition(new SourceCounterThreshold(4, CounterType.TIDE)))),
-                new StaticBoostEffect(1, 1, GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Subjects.source())));
 
         addTrigger(Triggers.sourceState(new PermanentHasAtLeastCountersPredicate(CounterType.TIDE, 4)),
                 new RemoveAllCountersEffect(CounterType.TIDE));

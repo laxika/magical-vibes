@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -24,7 +24,7 @@ public class EvershrikesGift extends Card {
     public EvershrikesGift() {
         // Enchant creature. Enchanted creature gets +1/+0 and has flying.
         target(TargetFilters.creature());
-        addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.FLYING), GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.FLYING), Subjects.attachedCreature()));
 
         // {1}{W}, Blight 2: Return this card from your graveyard to your hand. Activate only as a
         // sorcery.

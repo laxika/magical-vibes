@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -23,9 +23,9 @@ import java.util.List;
 public class Shadowspear extends Card {
 
     public Shadowspear() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.attachedCreature()));
 
         PermanentNotPredicate opponentPermanent = new PermanentNotPredicate(
                 new PermanentControlledBySourceControllerPredicate());
@@ -33,8 +33,8 @@ public class Shadowspear extends Card {
                 false,
                 "{1}",
                 List.of(
-                        new RemoveKeywordEffect(Keyword.HEXPROOF, GrantScope.ALL_PERMANENTS, opponentPermanent),
-                        new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_PERMANENTS, opponentPermanent)
+                        new RemoveKeywordEffect(Keyword.HEXPROOF, Subjects.allPermanents(), opponentPermanent),
+                        new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.allPermanents(), opponentPermanent)
                 ),
                 "Permanents your opponents control lose hexproof and indestructible until end of turn."));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -33,6 +33,6 @@ public class KodamaOfTheSouthTree extends Card {
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
                                 new CardSubtypePredicate(CardSubtype.ARCANE)))),
                 new BoostAllOwnCreaturesEffect(1, 1, otherCreature),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, otherCreature));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl(), otherCreature));
     }
 }

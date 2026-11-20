@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenSubtypeIndefinitelyEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -52,7 +52,7 @@ public class SourceBecomesChosenSubtypeIndefinitelyEffectHandler implements Norm
 
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), source.getId(), entry.getControllerId(),
-                new GrantSubtypeEffect(chosenSubtype, GrantScope.TARGET, true),
+                new GrantSubtypeEffect(chosenSubtype, Subjects.target(), true),
                 source.getId(), null, null, Duration.PERMANENT, 0));
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(),
                 " becomes an " + chosenSubtype.getDisplayName() + "."));

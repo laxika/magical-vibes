@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class DiscipleOfKangee extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, "{U}",
                 List.of(
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target()),
                         new GrantColorUntilEndOfTurnEffect(CardColor.BLUE)
                 ),
                 "{U}, {T}: Target creature gains flying and becomes blue until end of turn.",

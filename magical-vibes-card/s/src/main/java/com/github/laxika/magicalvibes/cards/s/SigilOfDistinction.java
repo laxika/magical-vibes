@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class SigilOfDistinction extends Card {
         addStaticEffect(new AttachedBoostEffect(
                 new CountersOnSource(CounterType.CHARGE),
                 new CountersOnSource(CounterType.CHARGE),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
 
         // Equip—Remove a charge counter from this Equipment.
         addActivatedAbility(new ActivatedAbility(

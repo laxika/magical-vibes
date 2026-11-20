@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "INV", collectorNumber = "105")
@@ -17,6 +17,6 @@ public class ExoticCurse extends Card {
 
         BasicLandTypesAmongControlledLands domain = new BasicLandTypesAmongControlledLands();
         Scaled penalty = new Scaled(domain, -1);
-        addStaticEffect(new AttachedBoostEffect(penalty, penalty, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new AttachedBoostEffect(penalty, penalty, Subjects.attachedCreature()));
     }
 }

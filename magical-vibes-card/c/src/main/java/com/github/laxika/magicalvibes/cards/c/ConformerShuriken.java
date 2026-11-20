@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -38,7 +37,7 @@ public class ConformerShuriken extends Card {
                                 CounterType.PLUS_ONE_PLUS_ONE,
                                 new Max(new Fixed(0),
                                         new Sum(new TargetPower(true), new Scaled(new SourcePower(true), -1)))))),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

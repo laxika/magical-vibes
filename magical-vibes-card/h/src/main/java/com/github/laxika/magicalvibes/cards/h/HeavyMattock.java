@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "DKA", collectorNumber = "150")
@@ -13,10 +13,10 @@ public class HeavyMattock extends Card {
 
     public HeavyMattock() {
         // Equipped creature gets +1/+1.
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
 
         // As long as equipped creature is a Human, it gets an additional +1/+1.
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature(),
                 new PermanentHasSubtypePredicate(CardSubtype.HUMAN)));
 
         // Equip {2}

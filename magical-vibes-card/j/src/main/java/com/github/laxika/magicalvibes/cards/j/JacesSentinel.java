@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "283")
@@ -16,7 +16,7 @@ public class JacesSentinel extends Card {
 
     public JacesSentinel() {
         // As long as you control a Jace planeswalker, this creature gets +1/+0 and can't be blocked.
-        addStaticEffect(new ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.JACE)), new StaticBoostEffect(1, 0, GrantScope.SELF)));
-        addStaticEffect(new ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.JACE)), new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.JACE)), new StaticBoostEffect(1, 0, Subjects.source())));
+        addStaticEffect(new ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.JACE)), new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
     }
 }

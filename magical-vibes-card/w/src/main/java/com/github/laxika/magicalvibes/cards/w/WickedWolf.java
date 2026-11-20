@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
@@ -35,7 +34,7 @@ public class WickedWolf extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.FOOD),
                                 "Sacrifice a Food"),
                         new PutCountersOnSourceEffect(1, 1, 1),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF),
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source()),
                         new TapPermanentsEffect(Subjects.source())),
                 "Sacrifice a Food: Put a +1/+1 counter on this creature. It gains indestructible until end of turn. Tap it."
         ));

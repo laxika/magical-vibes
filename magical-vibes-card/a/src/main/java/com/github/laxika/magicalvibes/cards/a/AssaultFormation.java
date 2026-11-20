@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,7 +21,7 @@ import java.util.List;
 public class AssaultFormation extends Card {
 
     public AssaultFormation() {
-        addStaticEffect(new AssignCombatDamageWithToughnessEffect(GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new AssignCombatDamageWithToughnessEffect(Subjects.creaturesYouControl()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,7 +27,7 @@ public class DragonsRageChanneler extends Card {
                 new SurveilEffect(1));
 
         addStaticEffect(new ConditionalEffect(
-                new Delirium(), new StaticBoostEffect(2, 2, Set.of(Keyword.FLYING), GrantScope.SELF)));
+                new Delirium(), new StaticBoostEffect(2, 2, Set.of(Keyword.FLYING), Subjects.source())));
         addStaticEffect(new ConditionalEffect(new Delirium(), new MustAttackEffect()));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -32,6 +32,6 @@ public class PrideOfTheRoad extends Card {
                 "Target must be a creature or Vehicle you control"))
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         TriggerOptions.DEFAULT.withEventCondition(new MaxSpeed()),
-                                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET));
+                                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()));
     }
 }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -31,7 +30,7 @@ public class FuneralCharm extends Card {
                                 "Target must be a creature.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gains swampwalk until end of turn",
-                        new GrantKeywordEffect(Keyword.SWAMPWALK, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.SWAMPWALK, Subjects.target()),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),
                                 "Target must be a creature."))

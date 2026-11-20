@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,7 +24,7 @@ public class BloodhillBastion extends Card {
 
     public BloodhillBastion() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
-                new GrantKeywordEffect(Set.of(Keyword.DOUBLE_STRIKE, Keyword.HASTE), GrantScope.TRIGGERING_PERMANENT));
+                new GrantKeywordEffect(Set.of(Keyword.DOUBLE_STRIKE, Keyword.HASTE), Subjects.triggering()));
 
         target(new ControlledPermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(

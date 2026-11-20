@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreCardsInHandThanEachOpponent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SOK", collectorNumber = "140")
 public class OkinaNightwatch extends Card {
@@ -13,6 +13,6 @@ public class OkinaNightwatch extends Card {
     public OkinaNightwatch() {
         addStaticEffect(new ConditionalEffect(
                 new ControllerHasMoreCardsInHandThanEachOpponent(),
-                new StaticBoostEffect(3, 3, GrantScope.SELF)));
+                new StaticBoostEffect(3, 3, Subjects.source())));
     }
 }

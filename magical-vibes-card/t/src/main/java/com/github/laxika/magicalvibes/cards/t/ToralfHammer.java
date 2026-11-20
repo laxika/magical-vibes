@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
@@ -29,10 +29,10 @@ public class ToralfHammer extends Card {
                         "{1}{R}, {T}, Unattach Toralf's Hammer: It deals 3 damage to any target. "
                                 + "Return Toralf's Hammer to its owner's hand."
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
         addStaticEffect(new StaticBoostEffect(
-                3, 0, GrantScope.EQUIPPED_CREATURE,
+                3, 0, Subjects.attachedCreature(),
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)));
         addActivatedAbility(new EquipActivatedAbility("{1}{R}"));
     }

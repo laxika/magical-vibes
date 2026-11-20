@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenSubtypeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -23,12 +23,12 @@ public class MistformSliver extends Card {
         );
         addStaticEffect(new GrantActivatedAbilityEffect(
                 becomeCreatureType,
-                GrantScope.ALL_PERMANENTS,
+                Subjects.otherPermanents(),
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)
         ));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 becomeCreatureType,
-                GrantScope.SELF,
+                Subjects.source(),
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)
         ));
     }

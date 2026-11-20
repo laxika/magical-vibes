@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.TargetPlayerIs;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import org.springframework.stereotype.Component;
 
@@ -36,7 +36,7 @@ public class GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffectHandler
             for (Permanent permanent : battlefield) {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
-                        entry.getControllerId(), new GrantEffectEffect(grantedEffect, GrantScope.TARGET),
+                        entry.getControllerId(), new GrantEffectEffect(grantedEffect, Subjects.target()),
                         permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             }
         });
@@ -55,7 +55,7 @@ public class GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffectHandler
                     ability.options().withEventCondition(player.withPlayer(casterId)), ability.effects(),
                     ability.chapterTargets(), ability.instance(), ability.grantingPermanentId(),
                     ability.targetFilter());
-            return new GrantTriggeredAbilityEffect(bound, grant.scope(), grant.filter());
+            return new GrantTriggeredAbilityEffect(bound, grant.subject(), grant.filter());
         }
         return staticEffect;
     }

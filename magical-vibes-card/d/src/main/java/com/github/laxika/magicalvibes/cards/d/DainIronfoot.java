@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTarget
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +28,7 @@ import java.util.Set;
 public class DainIronfoot extends Card {
 
     public DainIronfoot() {
-        List<Ability> axeEffects = List.of(StaticAbility.of(new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE)));
+        List<Ability> axeEffects = List.of(StaticAbility.of(new StaticBoostEffect(1, 0, Subjects.attachedCreature())));
         CreateTokenEffect axe = new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Axe", 0, 0,
                 null, null, List.of(CardSubtype.EQUIPMENT), Set.of(), Set.of(),
@@ -42,7 +42,7 @@ public class DainIronfoot extends Card {
                 new PermanentIsAttackingPredicate(),
                 new PermanentIsEquippedPredicate()));
         addTrigger(Triggers.attacks(), new GrantKeywordEffect(
-                Keyword.DOUBLE_STRIKE, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                Keyword.DOUBLE_STRIKE, Subjects.allCreatures(),
                 equippedAttackingCreature));
     }
 }

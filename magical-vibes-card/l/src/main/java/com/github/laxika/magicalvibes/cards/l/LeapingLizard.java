@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "HML", collectorNumber = "90")
@@ -20,7 +20,7 @@ public class LeapingLizard extends Card {
                 false,
                 "{1}{G}",
                 List.of(new BoostSelfEffect(0, -1),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.source())),
                 "{1}{G}: Leaping Lizard gets -0/-1 and gains flying until end of turn."
         ));
     }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.Morbid;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -33,7 +32,7 @@ public class GrimReapersSprint extends Card {
                         new PermanentIsCreaturePredicate())),
                         new ConditionalEffect(
                         new ControllerMainPhase(), new AdditionalCombatPhaseEffect(1)))
-                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.attachedCreature()));
     }
 }

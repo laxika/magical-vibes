@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "EVE", collectorNumber = "63")
 @CardRegistration(set = "MM2", collectorNumber = "131")
@@ -18,6 +18,6 @@ public class Thunderblust extends Card {
         // (Haste and Persist are keywords auto-loaded from Scryfall and handled by the engine.)
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.MINUS_ONE_MINUS_ONE),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
     }
 }

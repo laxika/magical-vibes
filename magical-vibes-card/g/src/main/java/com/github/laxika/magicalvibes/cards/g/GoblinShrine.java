@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -33,7 +33,7 @@ public class GoblinShrine extends Card {
                         new PermanentIsLandPredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.BASIC),
                         new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN))),
-                new StaticBoostEffect(1, 0, GrantScope.ALL_CREATURES,
+                new StaticBoostEffect(1, 0, Subjects.otherCreatures(),
                         new PermanentHasSubtypePredicate(CardSubtype.GOBLIN)),
                 null));
 

@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -35,7 +35,7 @@ public class TangletroveKelp extends Card {
                 Set.of(),
                 null,
                 Set.of(),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 Duration.UNTIL_END_OF_TURN,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.CLUE),

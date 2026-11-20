@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "FIN", collectorNumber = "253")
 @CardRegistration(set = "FIN", collectorNumber = "350")
@@ -14,7 +14,7 @@ public class AettirAndPriwen extends Card {
     public AettirAndPriwen() {
         ControllerLifeTotal life = new ControllerLifeTotal();
         addStaticEffect(new SetBasePowerToughnessToAmountEffect(life, life,
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{5}"));
     }
 }

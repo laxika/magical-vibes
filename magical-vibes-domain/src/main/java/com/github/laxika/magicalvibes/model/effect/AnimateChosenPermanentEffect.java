@@ -12,6 +12,6 @@ public record AnimateChosenPermanentEffect(AnimatePermanentsEffect animation) im
     public AnimateChosenPermanentEffect(int power, int toughness, List<CardSubtype> grantedSubtypes,
                                         Set<Keyword> grantedKeywords) {
         this(new AnimatePermanentsEffect(power, toughness, grantedSubtypes, grantedKeywords, null,
-                Set.of(), GrantScope.TARGET, Duration.PERMANENT));
+                Set.of(), Subjects.target(), Duration.PERMANENT));
     }
 }

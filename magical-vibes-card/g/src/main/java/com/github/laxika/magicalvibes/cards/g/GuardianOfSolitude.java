@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -18,12 +18,12 @@ public class GuardianOfSolitude extends Card {
 
     public GuardianOfSolitude() {
         // Whenever you cast a Spirit or Arcane spell, target creature gains flying until end of turn.
-        // GrantScope.TARGET drives the trigger's target choice through the spell-cast trigger pipeline;
+        // The target() subject drives the trigger's target choice through the spell-cast trigger pipeline;
         // no cast-time target() is declared, so casting Guardian of Solitude itself never prompts.
         addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardAnyOfPredicate(List.of(
                                 new CardSubtypePredicate(CardSubtype.SPIRIT),
                                 new CardSubtypePredicate(CardSubtype.ARCANE)))),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, new PermanentIsCreaturePredicate()));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.target(), new PermanentIsCreaturePredicate()));
     }
 }

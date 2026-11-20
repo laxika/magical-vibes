@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ZEN", collectorNumber = "19")
 @CardRegistration(set = "MM2", collectorNumber = "22")
@@ -15,6 +15,6 @@ public class KorDuelist extends Card {
 
     public KorDuelist() {
         addStaticEffect(new ConditionalEffect(new Equipped(),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.source())));
     }
 }

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -30,7 +29,7 @@ public class WakerootElemental extends Card {
                                 List.of(CardSubtype.ELEMENTAL),
                                 Set.of(Keyword.HASTE),
                                 null, Set.of(),
-                                GrantScope.TARGET, Duration.PERMANENT
+                                Subjects.target(), Duration.PERMANENT
                         )
                 ),
                 "{G}{G}{G}{G}{G}: Untap target land you control. It becomes a 5/5 Elemental creature with haste. It's still a land.",

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -49,7 +48,7 @@ public class GreatTrainHeist extends Card {
                         "Creatures you control get +1/+0 and gain first strike until end of turn.",
                         List.of(
                                 new BoostAllOwnCreaturesEffect(1, 0),
-                                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES))),
+                                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.otherCreaturesYouControl()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Choose target opponent. Whenever a creature you control deals combat damage to that player this turn, create a tapped Treasure token.",
                         new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(

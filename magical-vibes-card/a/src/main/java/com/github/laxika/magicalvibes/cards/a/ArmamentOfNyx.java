@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -17,7 +17,7 @@ public class ArmamentOfNyx extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentIsEnchantmentPredicate(),
-                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.ENCHANTED_CREATURE),
+                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.attachedCreature()),
                         new PreventAllDamageDealtByEnchantedCreatureEffect()
                 ));
     }

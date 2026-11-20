@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCompletedDungeon;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -28,7 +28,7 @@ public class EccentricApprentice extends Card {
                         SequenceEffect.of(
                                         new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.BIRD),
                                         new SetBasePowerToughnessEffect(1, 1),
-                                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)
+                                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target())
                                 ));
     }
 }

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,6 +31,6 @@ public class CompanyCommander extends Card {
         // Bring it Down! — Whenever this creature attacks, creatures you control gain deathtouch
         // until end of turn.
         addTrigger(Triggers.attacks(),
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.creaturesYouControl()));
     }
 }

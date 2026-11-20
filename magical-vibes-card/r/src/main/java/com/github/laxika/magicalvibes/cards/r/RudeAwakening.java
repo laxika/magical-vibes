@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -31,7 +30,7 @@ public class RudeAwakening extends Card {
                         "Until end of turn, lands you control become 2/2 creatures that are still lands",
                         new AnimatePermanentsEffect(
                                 2, 2, List.of(), Set.of(), null, Set.of(),
-                                GrantScope.OWN_LANDS, Duration.UNTIL_END_OF_TURN))
+                                Subjects.landsYouControl(), Duration.UNTIL_END_OF_TURN))
         )));
     }
 }

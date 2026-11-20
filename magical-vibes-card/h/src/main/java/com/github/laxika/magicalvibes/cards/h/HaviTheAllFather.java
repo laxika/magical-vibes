@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.SourceManaValueMinusOne;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
@@ -28,7 +28,7 @@ public class HaviTheAllFather extends Card {
     public HaviTheAllFather() {
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(4, new CardIsHistoricPredicate()),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
 
         ReturnCardFromGraveyardEffect returnLegendaryCreature = ReturnCardFromGraveyardEffect.builder()
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)

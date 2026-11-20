@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.LifeGainedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOC", collectorNumber = "264")
@@ -23,7 +23,7 @@ public class BlossomingBogbeast extends Card {
         addTrigger(Triggers.attacks(), SequenceEffect.of(
                 new GainLifeEffect(2),
                 new BoostAllOwnCreaturesEffect(lifeGained, lifeGained),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES)
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl())
         ));
     }
 }

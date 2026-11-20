@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -28,7 +28,7 @@ public class SerraPaladin extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{W}{W}",
-                List.of(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target())),
                 "{1}{W}{W}, {T}: Target creature gains vigilance until end of turn.",
                 TargetFilters.creature()
         ));

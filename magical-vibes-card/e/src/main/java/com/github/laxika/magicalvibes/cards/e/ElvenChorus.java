@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "HOC", collectorNumber = "26")
@@ -19,6 +19,6 @@ public class ElvenChorus extends Card {
         addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
         addStaticEffect(new AllowCastFromTopOfLibraryEffect(Set.of(CardType.CREATURE)));
         addStaticEffect(new GrantActivatedAbilityEffect(
-                ManaAbilities.tapForAnyColor(), GrantScope.ALL_OWN_CREATURES));
+                ManaAbilities.tapForAnyColor(), Subjects.creaturesYouControl()));
     }
 }

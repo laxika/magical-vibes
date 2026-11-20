@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -38,11 +38,11 @@ public class GwaihirGreatestOfTheEagles extends Card {
 
         // Whenever Gwaihir attacks, target attacking creature gains flying until end of turn.
         target(attackingCreature).addTrigger(Triggers.attacks(),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.target()));
 
         // At the beginning of each end step, if you gained 3 or more life this turn, create a 3/3
         // white Bird creature token with flying and the same attack trigger.
-        CardEffect birdAttackTrigger = new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET);
+        CardEffect birdAttackTrigger = new GrantKeywordEffect(Keyword.FLYING, Subjects.target());
         CreateTokenEffect birdToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Bird", 3, 3,
                 CardColor.WHITE, null,

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentE
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -37,7 +37,7 @@ public class StoneBySunlight extends Card {
                         "Target creature becomes an artifact and gains indestructible until end of turn",
                         List.of(
                                 new AddCardTypeToTargetPermanentEffect(CardType.ARTIFACT),
-                                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET)
+                                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target())
                         ),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),

@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M21", collectorNumber = "326")
@@ -14,6 +14,6 @@ public class MysticSkyfish extends Card {
     public MysticSkyfish() {
         // Whenever you draw your second card each turn, this creature gains flying until end of turn.
         addTrigger(Triggers.youDrawSecondCardEachTurn(),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source()));
     }
 }

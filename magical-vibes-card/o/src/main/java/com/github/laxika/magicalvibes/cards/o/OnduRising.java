@@ -14,9 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -36,7 +36,7 @@ public class OnduRising extends Card {
 
         addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
                 Triggers.creatureAttacks(),
-                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET))));
+                new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target()))));
 
         target(TargetFilters.landYouControl(), 0, 1)
                 .addSpellEffect(new ConditionalEffect(
@@ -46,6 +46,6 @@ public class OnduRising extends Card {
                         new CastForAlternateCost(),
                         new AnimatePermanentsEffect(
                                 0, 0, List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE), null,
-                                Set.of(CardType.CREATURE), GrantScope.TARGET, Duration.PERMANENT)));
+                                Set.of(CardType.CREATURE), Subjects.target(), Duration.PERMANENT)));
     }
 }

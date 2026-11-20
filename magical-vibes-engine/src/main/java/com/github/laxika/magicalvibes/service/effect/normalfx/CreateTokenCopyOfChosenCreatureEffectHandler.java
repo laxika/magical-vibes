@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -99,7 +99,7 @@ public class CreateTokenCopyOfChosenCreatureEffectHandler implements NormalEffec
                 Permanent created = gameQueryService.findPermanentById(gameData, createdId);
                 if (created != null) {
                     gameData.addEffectOnPermanent(resolvingEntry,
-                            new GrantKeywordEffect(Set.copyOf(replaced.grantedKeywordsUntilEndOfTurn()), GrantScope.TARGET),
+                            new GrantKeywordEffect(Set.copyOf(replaced.grantedKeywordsUntilEndOfTurn()), Subjects.target()),
                             created.getId(), Duration.UNTIL_END_OF_TURN);
                 }
             }

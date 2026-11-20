@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -14,8 +13,8 @@ public class AugustaDeanOfOrder extends Card {
 
     public AugustaDeanOfOrder() {
         PermanentIsCreaturePredicate creature = new PermanentIsCreaturePredicate();
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_TAPPED_CREATURES));
-        addStaticEffect(new StaticBoostEffect(0, 1, GrantScope.OWN_UNTAPPED_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.otherTappedCreaturesYouControl()));
+        addStaticEffect(new StaticBoostEffect(0, 1, Subjects.otherUntappedCreaturesYouControl()));
         addTrigger(Triggers.youAttack(), SequenceEffect.of(
                 new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(), creature)),
                 new TapAnyNumberPermanentsEffect(creature)));

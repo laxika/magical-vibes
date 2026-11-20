@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,7 +32,7 @@ public class CaribouRange extends Card {
                                 List.of(new CreateTokenEffect("Caribou", 0, 1, CardColor.WHITE,
                                         List.of(CardSubtype.CARIBOU), Set.of(), Set.of())),
                                 "{W}{W}, {T}: Create a 0/1 white Caribou creature token."),
-                        GrantScope.ENCHANTED_PERMANENT
+                        Subjects.attached()
                 ));
 
         // Sacrifice a Caribou token: You gain 1 life.

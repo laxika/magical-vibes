@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class FlamekinVillage extends Card {
 
         // {R}, {T}: Target creature gains haste until end of turn.
         addActivatedAbility(new ActivatedAbility(true, "{R}",
-                List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.target())),
                 "{R}, {T}: Target creature gains haste until end of turn.",
                 TargetFilters.creature()));
     }

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -25,7 +25,7 @@ public class CrestedSunmare extends Card {
     public CrestedSunmare() {
         // Other Horses you control have indestructible.
         addStaticEffect(new StaticBoostEffect(0, 0, Set.of(Keyword.INDESTRUCTIBLE),
-                GrantScope.OWN_CREATURES, new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.HORSE))));
+                Subjects.otherCreaturesYouControl(), new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.HORSE))));
 
         // At the beginning of each end step, if you gained life this turn, create a 5/5 white Horse creature token.
         addTrigger(Triggers.endStep(ActivePlayer.ANY),

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -16,7 +16,7 @@ import java.util.Set;
 public class RenegadesGetaway extends Card {
 
     public RenegadesGetaway() {
-        addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
+        addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()));
         addSpellEffect(new CreateTokenEffect(1, "Servo", 1, 1, null,
                 List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT)));
     }

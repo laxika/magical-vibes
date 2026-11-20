@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -22,7 +22,7 @@ public class UndeadWarchief extends Card {
                 new CardSubtypePredicate(CardSubtype.ZOMBIE), 1, CostModificationScope.SELF));
 
         // Zombie creatures you control get +2/+1. This Zombie gets the bonus too.
-        addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 1, Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
     }
 }

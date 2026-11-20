@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,6 +25,6 @@ public class WhenWeWereYoung extends Card {
                         new AllOf(List.of(
                                 new ControlsPermanent(new PermanentIsArtifactPredicate()),
                                 new ControlsPermanent(new PermanentIsEnchantmentPredicate()))),
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET)));
+                        new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target())));
     }
 }

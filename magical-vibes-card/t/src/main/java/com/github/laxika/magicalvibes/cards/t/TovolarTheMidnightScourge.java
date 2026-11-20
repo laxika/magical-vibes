@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -33,7 +33,7 @@ public class TovolarTheMidnightScourge extends Card {
                 "{X}{R}{G}",
                 List.of(
                         new BoostTargetCreatureEffect(new XValue(), new Fixed(0)),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())
                 ),
                 "{X}{R}{G}: Target Wolf or Werewolf you control gets +X/+0 and gains trample until end of turn.",
                 new ControlledPermanentPredicateTargetFilter(wolfOrWerewolf,

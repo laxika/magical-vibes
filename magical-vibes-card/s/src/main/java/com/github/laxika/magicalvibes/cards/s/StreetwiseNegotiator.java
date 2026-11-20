@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -31,13 +31,13 @@ public class StreetwiseNegotiator extends Card {
                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
         ));
 
-        addStaticEffect(new AssignCombatDamageWithToughnessEffect(GrantScope.SELF, true));
+        addStaticEffect(new AssignCombatDamageWithToughnessEffect(Subjects.source(), true));
 
         target(TargetFilters.creature()).addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 new ConditionalEffect(
                         new TargetPermanentMatches(anotherCreature),
-                        new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(new AssignCombatDamageWithToughnessEffect(GrantScope.SELF, true)))
+                        new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(new AssignCombatDamageWithToughnessEffect(Subjects.source(), true)))
                 )
         ));
     }

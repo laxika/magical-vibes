@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -24,7 +23,7 @@ public class HostileRealm extends Card {
                         "{T}: Target creature can't block this turn.",
                         TargetFilters.creature()
                 ),
-                GrantScope.ENCHANTED_PERMANENT
+                Subjects.attached()
         ));
     }
 }

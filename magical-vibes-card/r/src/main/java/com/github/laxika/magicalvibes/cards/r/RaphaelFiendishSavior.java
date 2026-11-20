@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.CreatureCardPutIntoYourGraveyardThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,7 +27,7 @@ public class RaphaelFiendishSavior extends Card {
     public RaphaelFiendishSavior() {
         // Other Demons, Devils, Imps, and Tieflings you control get +1/+1 and have lifelink.
         addStaticEffect(new StaticBoostEffect(1, 1,
-                Set.of(Keyword.LIFELINK), GrantScope.OWN_CREATURES,
+                Set.of(Keyword.LIFELINK), Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(
                         CardSubtype.DEMON,
                         CardSubtype.DEVIL,

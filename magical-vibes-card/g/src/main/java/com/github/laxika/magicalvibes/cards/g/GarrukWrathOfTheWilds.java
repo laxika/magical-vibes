@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPer
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -56,7 +56,7 @@ public class GarrukWrathOfTheWilds extends Card {
                 -6,
                 List.of(
                         new BoostAllOwnCreaturesEffect(3, 3),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES)),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl())),
                 "−6: Until end of turn, creatures you control get +3/+3 and gain trample."));
     }
 }

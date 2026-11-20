@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DIS", collectorNumber = "42")
 @CardRegistration(set = "DDC", collectorNumber = "38")
@@ -16,6 +16,6 @@ public class DemonsJester extends Card {
         // This creature gets +2/+1 as long as you have no cards in hand.
         addStaticEffect(new ConditionalEffect(
                 new ControllerHandEmpty(),
-                new StaticBoostEffect(2, 1, GrantScope.SELF)));
+                new StaticBoostEffect(2, 1, Subjects.source())));
     }
 }

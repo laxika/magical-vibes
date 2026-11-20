@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,7 +29,7 @@ public class MogisGodOfSlaughter extends Card {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorsAtLeast(
                         Set.of(ManaColor.BLACK, ManaColor.RED), 7)),
-                new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF)));
+                new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, Subjects.source())));
         addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT),
                 ForcedCostOrElseEffect.enchantedControllerMayPay(
                         new SacrificePermanentCost(

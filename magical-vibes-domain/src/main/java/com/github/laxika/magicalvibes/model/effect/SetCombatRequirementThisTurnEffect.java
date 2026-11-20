@@ -16,26 +16,26 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
  * cost to obey the requirement.
  *
  * @param requirement which requirement to impose; see {@link CombatRequirement}
- * @param scope       whom the requirement lands on; {@link GrantScope#TARGET} targets a creature,
- *                    {@link GrantScope#TARGETS} applies it to every target in one multi-target group,
- *                    {@link GrantScope#SELF} applies to the source permanent,
- *                    {@link GrantScope#ENCHANTED_CREATURE} applies to the source Aura's attached
- *                    creature, and {@link GrantScope#ALL_OWN_CREATURES} applies to every creature
+ * @param subject       whom the requirement lands on; {@link Subjects#target()} targets a creature,
+ *                    {@link Subjects#target()} applies it to every target in one multi-target group,
+ *                    {@link Subjects#source()} applies to the source permanent,
+ *                    {@link Subjects#attachedCreature()} applies to the source Aura's attached
+ *                    creature, and {@link Subjects#creaturesYouControl()} applies to every creature
  *                    the controller controls
  */
-public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, GrantScope scope,
+public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, PermanentSubject subject,
                                                   boolean allowPermanentTarget)
         implements CardEffect {
 
-    public SetCombatRequirementThisTurnEffect(CombatRequirement requirement, GrantScope scope) {
-        this(requirement, scope, false);
+    public SetCombatRequirementThisTurnEffect(CombatRequirement requirement, PermanentSubject subject) {
+        this(requirement, subject, false);
     }
 
     /**
      * The overwhelmingly common shape: the requirement lands on the spell's single target.
      */
     public SetCombatRequirementThisTurnEffect(CombatRequirement requirement) {
-        this(requirement, GrantScope.TARGET, false);
+        this(requirement, Subjects.target(), false);
     }
 
     /**
@@ -50,24 +50,24 @@ public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, 
      * The card's own target filter must still restrict that permanent to the card's legal choices.
      */
     public static SetCombatRequirementThisTurnEffect targetPermanent(CombatRequirement requirement) {
-        return new SetCombatRequirementThisTurnEffect(requirement, GrantScope.TARGET, true);
+        return new SetCombatRequirementThisTurnEffect(requirement, Subjects.target(), true);
     }
 
     /**
      * Only creatures can carry any of these requirements. {@code MUST_BLOCK} additionally carries the
      * explicit predicate, which preserves the creature restriction on targeted-trigger candidates.
-     * {@link GrantScope#ALL_OWN_CREATURES} sweeps the controller's creatures without targeting
+     * {@link Subjects#creaturesYouControl()} sweeps the controller's creatures without targeting
      * (Joraga Invocation), so it declares no target at all.
      */
     @Override
     public TargetSpec targetSpec() {
-        if (scope == GrantScope.SELF) {
+        if (subject instanceof PermanentSubject.Source) {
             return new TargetSpec(null, false, null, true, 1);
         }
-        if (scope == GrantScope.ENCHANTED_CREATURE) {
+        if (Subjects.attachedCreature().equals(subject)) {
             return new TargetSpec(null, false, null, true, 1);
         }
-        if (scope != GrantScope.TARGET) {
+        if (!(subject instanceof PermanentSubject.Target)) {
             return TargetSpec.NONE;
         }
 
@@ -82,6 +82,6 @@ public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, 
 
     @Override
     public boolean resolvesAgainstAttachedPermanent() {
-        return scope == GrantScope.ENCHANTED_CREATURE;
+        return Subjects.attachedCreature().equals(subject);
     }
 }

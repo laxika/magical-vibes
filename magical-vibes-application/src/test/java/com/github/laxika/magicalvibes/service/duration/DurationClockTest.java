@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.duration;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToNextMatchingSpellEffect;
@@ -18,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.ActionEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
@@ -266,7 +266,7 @@ class DurationClockTest extends BaseCardTest {
         FloatingContinuousEffect controlled = addFrom(source, Duration.WHILE_SOURCE_CONTROLLED,
                 new BoostTargetCreatureEffect(1, 1));
         FloatingContinuousEffect grant = addFrom(source, Duration.WHILE_SOURCE_ON_BATTLEFIELD,
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, Duration.WHILE_SOURCE_ON_BATTLEFIELD));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.target(), Duration.WHILE_SOURCE_ON_BATTLEFIELD));
         FloatingContinuousEffect onBattlefield = addFrom(source, Duration.WHILE_SOURCE_ON_BATTLEFIELD,
                 new BoostTargetCreatureEffect(1, 1));
         FloatingContinuousEffect remains = addFrom(source, Duration.WHILE_SOURCE_REMAINS, new BoostTargetCreatureEffect(1, 1));
@@ -304,7 +304,7 @@ class DurationClockTest extends BaseCardTest {
         Card lesson = new GrizzlyBears();
         gd.addToExile(player1.getId(), lesson);
         FloatingContinuousEffect grant = gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Test",
-                null, player1.getId(), new GrantActivatedAbilityEffect(null, GrantScope.TARGET, null,
+                null, player1.getId(), new GrantActivatedAbilityEffect(null, Subjects.target(), null,
                 Duration.WHILE_SOURCE_CARD_EXILED, lesson.getId()), null, null, null,
                 Duration.WHILE_SOURCE_CARD_EXILED, 0));
 

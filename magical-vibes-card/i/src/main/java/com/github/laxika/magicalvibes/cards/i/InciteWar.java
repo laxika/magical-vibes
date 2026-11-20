@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayersCreaturesMustAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -30,7 +30,7 @@ public class InciteWar extends Card {
                         new TargetPlayersCreaturesMustAttackThisTurnEffect(), playerFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control gain first strike until end of turn",
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES))
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.otherCreaturesYouControl()))
         )));
     }
 }

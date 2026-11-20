@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "NEM", collectorNumber = "122")
@@ -22,7 +22,7 @@ public class StampedeDriver extends Card {
                 List.of(
                         new DiscardCardTypeCost(null, null),
                         new BoostAllOwnCreaturesEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl())
                 ),
                 "{1}{G}, {T}, Discard a card: Creatures you control get +1/+1 and gain trample until end of turn."
         ));

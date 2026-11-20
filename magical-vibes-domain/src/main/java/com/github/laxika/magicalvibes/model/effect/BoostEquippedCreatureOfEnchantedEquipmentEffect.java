@@ -18,8 +18,8 @@ public record BoostEquippedCreatureOfEnchantedEquipmentEffect(int powerBoost, in
     }
 
     @Override
-    public GrantScope scope() {
-        return GrantScope.EQUIPPED_CREATURE;
+    public PermanentSubject subject() {
+        return Subjects.attachedCreature();
     }
 
     @Override

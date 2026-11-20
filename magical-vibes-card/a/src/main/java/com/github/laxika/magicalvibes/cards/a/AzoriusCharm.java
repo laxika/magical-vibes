@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -31,7 +31,7 @@ public class AzoriusCharm extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control gain lifelink until end of turn",
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES)),
+                        new GrantKeywordEffect(Keyword.LIFELINK, Subjects.otherCreaturesYouControl())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Draw a card",
                         new DrawCardEffect(1)),

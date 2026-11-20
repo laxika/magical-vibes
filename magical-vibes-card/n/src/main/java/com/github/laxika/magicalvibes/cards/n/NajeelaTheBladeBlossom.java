@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -48,7 +47,7 @@ public class NajeelaTheBladeBlossom extends Card {
                                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
                                         new PermanentIsAttackingPredicate())))),
                         new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.LIFELINK, Keyword.HASTE),
-                                GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                                Subjects.allCreatures(),
                                 new PermanentIsAttackingPredicate()),
                         new AdditionalCombatPhaseEffect(1)
                 ),

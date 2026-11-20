@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -17,7 +17,7 @@ public class HowToStartARiot extends Card {
 
     public HowToStartARiot() {
         target(TargetFilters.creature())
-                .addSpellEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.MENACE, Subjects.target()));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY), "Target must be a player"))

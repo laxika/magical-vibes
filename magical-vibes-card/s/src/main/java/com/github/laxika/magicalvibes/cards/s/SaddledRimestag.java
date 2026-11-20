@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MH1", collectorNumber = "177")
@@ -15,6 +15,6 @@ public class SaddledRimestag extends Card {
     public SaddledRimestag() {
         addStaticEffect(new ConditionalEffect(
                 new AnotherPermanentEnteredThisTurn(new CardTypePredicate(CardType.CREATURE)),
-                new StaticBoostEffect(2, 2, GrantScope.SELF)));
+                new StaticBoostEffect(2, 2, Subjects.source())));
     }
 }

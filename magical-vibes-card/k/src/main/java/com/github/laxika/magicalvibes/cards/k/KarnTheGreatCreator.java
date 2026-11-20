@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.effect.ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchOutsideGameOrExileForCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -43,7 +43,7 @@ public class KarnTheGreatCreator extends Card {
                 List.of(new AnimatePermanentsEffect(
                         new TargetManaValue(), new TargetManaValue(),
                         List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, Duration.UNTIL_YOUR_NEXT_TURN, null
+                        Subjects.target(), Duration.UNTIL_YOUR_NEXT_TURN, null
                 )),
                 "+1: Until your next turn, up to one target noncreature artifact becomes an artifact creature with power and toughness each equal to its mana value.",
                 new PermanentPredicateTargetFilter(

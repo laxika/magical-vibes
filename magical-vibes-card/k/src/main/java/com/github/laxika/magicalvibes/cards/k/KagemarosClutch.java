@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "SOK", collectorNumber = "74")
@@ -16,6 +16,6 @@ public class KagemarosClutch extends Card {
         CardsInHand hand = new CardsInHand(CountScope.CONTROLLER);
         target(TargetFilters.creature())
                 .addStaticEffect(new AttachedBoostEffect(
-                        new Scaled(hand, -1), new Scaled(hand, -1), GrantScope.ENCHANTED_CREATURE));
+                        new Scaled(hand, -1), new Scaled(hand, -1), Subjects.attachedCreature()));
     }
 }

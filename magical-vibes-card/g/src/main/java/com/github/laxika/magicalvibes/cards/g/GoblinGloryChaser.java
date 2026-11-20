@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsRenowned;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RenownEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,6 +24,6 @@ public class GoblinGloryChaser extends Card {
 
         // As long as this creature is renowned, it has menace.
         addStaticEffect(new ConditionalEffect(
-                new SourceIsRenowned(), new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)));
+                new SourceIsRenowned(), new GrantKeywordEffect(Keyword.MENACE, Subjects.source())));
     }
 }

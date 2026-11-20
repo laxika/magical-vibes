@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfEnchantedTargetE
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetWhileHasCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -600,7 +600,7 @@ class CreatureControlServiceTest {
         private void addIndestructibleGrant(Permanent source, Permanent affected) {
             gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Aegis Angel",
                     source.getId(), player1Id,
-                    new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET,
+                    new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target(),
                             Duration.WHILE_SOURCE_ON_BATTLEFIELD),
                     affected.getId(), null, null, Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }

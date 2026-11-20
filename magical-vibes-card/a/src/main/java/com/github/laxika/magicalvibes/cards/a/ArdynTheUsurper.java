@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -27,7 +27,7 @@ public class ArdynTheUsurper extends Card {
     public ArdynTheUsurper() {
         addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.MENACE, Keyword.LIFELINK, Keyword.HASTE),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.DEMON)));
 
         target(0, 1).addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),

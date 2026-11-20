@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,7 +29,7 @@ public class Toymaker extends Card {
                         new AnimatePermanentsEffect(
                                 new TargetManaValue(), new TargetManaValue(),
                                 List.of(), Set.of(), null, Set.of(),
-                                GrantScope.TARGET, Duration.UNTIL_END_OF_TURN, null
+                                Subjects.target(), Duration.UNTIL_END_OF_TURN, null
                         )
                 ),
                 "{1}, {T}, Discard a card: Target noncreature artifact becomes an artifact creature with power and toughness each equal to its mana value until end of turn. (It retains its abilities.)",

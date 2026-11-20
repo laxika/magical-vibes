@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSuspected;
@@ -27,7 +27,7 @@ public class RepeatOffender extends Card {
                         ),
                         new ConditionalEffect(
                                 new NotCondition(new SourceIsSuspected()),
-                                new SuspectEffect(GrantScope.SELF)
+                                new SuspectEffect(Subjects.source())
                         )
                 ),
                 "{2}{B}: If this creature is suspected, put a +1/+1 counter on it. Otherwise, suspect it."

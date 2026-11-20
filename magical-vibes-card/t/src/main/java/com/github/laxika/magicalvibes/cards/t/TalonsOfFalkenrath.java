@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class TalonsOfFalkenrath extends Card {
                         List.of(new BoostSelfEffect(2, 0)),
                         "{1}{R}: This creature gets +2/+0 until end of turn."
                 ),
-                GrantScope.ENCHANTED_CREATURE
+                Subjects.attachedCreature()
         ));
     }
 }

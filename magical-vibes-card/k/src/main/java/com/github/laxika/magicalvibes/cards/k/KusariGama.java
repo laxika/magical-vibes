@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -32,7 +32,7 @@ public class KusariGama extends Card {
                         List.of(new BoostSelfEffect(1, 0)),
                         "{2}: This creature gets +1/+0 until end of turn."
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
 
         // Whenever equipped creature deals damage to a blocking creature, this Equipment deals that

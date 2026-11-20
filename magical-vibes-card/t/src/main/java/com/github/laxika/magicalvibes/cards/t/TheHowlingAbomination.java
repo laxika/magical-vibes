@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -21,7 +20,7 @@ public class TheHowlingAbomination extends Card {
     public TheHowlingAbomination() {
         addStaticEffect(new ConditionalEffect(
                 new ControllerCastThreeOrMoreSpellsThisTurn(new CardTruePredicate()),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
 
         addTrigger(Triggers.becomesTargetOfSpell(), SequenceEffect.of(
                 new BoostSelfEffect(2, 2),

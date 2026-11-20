@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AllowLoyaltyActivationAtInstantSpeedEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -37,7 +36,7 @@ public class TeferisTalent extends Card {
                                 EMBLEM_TEXT)),
                         "−12: You get an emblem with \"" + EMBLEM_TEXT + "\"."
                 ),
-                GrantScope.ENCHANTED_PERMANENT
+                Subjects.attached()
         ));
 
         addTrigger(Triggers.youDrawCard(),

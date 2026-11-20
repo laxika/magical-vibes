@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "MKM", collectorNumber = "134")
@@ -20,9 +20,9 @@ public class Knife extends Card {
 
     public Knife() {
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE)));
+                new StaticBoostEffect(1, 0, Subjects.attachedCreature())));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.attachedCreature())));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",

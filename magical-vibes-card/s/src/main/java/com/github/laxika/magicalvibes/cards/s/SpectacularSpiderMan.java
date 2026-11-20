@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -26,7 +26,7 @@ public class SpectacularSpiderMan extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.FLYING, Subjects.source())),
                 "{1}: Spectacular Spider-Man gains flying until end of turn."
         ));
 
@@ -35,7 +35,7 @@ public class SpectacularSpiderMan extends Card {
                 "{1}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new GrantKeywordEffect(Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.OWN_CREATURES)
+                        new GrantKeywordEffect(Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), Subjects.otherCreaturesYouControl())
                 ),
                 "{1}, Sacrifice Spectacular Spider-Man: Creatures you control gain hexproof and indestructible until end of turn."
         ));

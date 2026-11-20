@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -97,7 +97,7 @@ class KeywordTriggersTest extends BaseCardTest {
         Card card = new Card();
         card.setName("Anthem");
         card.setType(CardType.ENCHANTMENT);
-        card.addStaticEffect(new GrantKeywordEffect(keyword, GrantScope.OWN_CREATURES));
+        card.addStaticEffect(new GrantKeywordEffect(keyword, Subjects.otherCreaturesYouControl()));
         return card;
     }
 }

@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.SubgameResult;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetCardPredicate;
@@ -80,6 +80,12 @@ import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringOrS
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringCard;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringSpell;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.attachedCreature;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.bandmatesOf;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.createdThisResolution;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringAttackers;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.triggeringSpellTargets;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.withCreaturesSharingAColor;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.you;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -466,6 +472,165 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             assertThat(permanents(entry, exiledThisResolution())).isEmpty();
             assertThat(subjects.permanentIds(gd, entry, EFFECT, exiledThisResolution()))
                     .containsExactly(bears.getId());
+        }
+    }
+
+    @Nested
+    @DisplayName("attachedCreature()")
+    class AttachedCreature {
+
+        @Test
+        @DisplayName("Is the creature the source Aura is attached to")
+        void enchantedCreature() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent pacifism = attach(player1, new Pacifism(), bears);
+
+            assertThat(permanents(entry(player1, null, pacifism.getId()), attachedCreature())).containsExactly(bears);
+        }
+
+        @Test
+        @DisplayName("Names a host that is not a creature only as \"enchanted permanent\", not as \"enchanted creature\"")
+        void noncreatureHost() {
+            Permanent forest = addCreatureReady(player2, new Forest());
+            Permanent pacifism = attach(player1, new Pacifism(), forest);
+            StackEntry entry = entry(player1, null, pacifism.getId());
+
+            assertThat(permanents(entry, attachedCreature())).isEmpty();
+            assertThat(permanents(entry, attached())).containsExactly(forest);
+        }
+    }
+
+    @Nested
+    @DisplayName("triggeringAttackers()")
+    class TriggeringAttackers {
+
+        @Test
+        @DisplayName("Is every attacker the entry recorded as the ability triggered, those still on the battlefield")
+        void recordedAttackers() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player1, new HillGiant());
+            addCreatureReady(player1, new GrizzlyBears());
+            StackEntry entry = entry(player1, null, null);
+            entry.setAttackingPermanentSnapshots(List.of(new Permanent(bears), new Permanent(giant)));
+
+            assertThat(permanents(entry, triggeringAttackers())).containsExactly(bears, giant);
+            assertThat(triggeringAttackers().declaresTarget()).isFalse();
+
+            leaveBattlefield(giant);
+
+            assertThat(permanents(entry, triggeringAttackers())).containsExactly(bears);
+        }
+    }
+
+    @Nested
+    @DisplayName("triggeringSpellTargets()")
+    class TriggeringSpellTargets {
+
+        @Test
+        @DisplayName("Is the targets of the triggering spell as it is on the stack")
+        void spellOnTheStack() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player1, new HillGiant());
+            StackEntry spell = entry(player1, giant.getId(), null);
+            StackEntry entry = entry(player1, null, null);
+            entry.setTriggeringCardId(spell.getTargetableId());
+            entry.setTriggeringSpellTargetIds(List.of(bears.getId()));
+
+            assertThat(permanents(entry, triggeringSpellTargets())).containsExactly(giant);
+        }
+
+        @Test
+        @DisplayName("Is the targets the entry recorded once the spell left the stack, and declares no target")
+        void recordedTargets() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            StackEntry entry = entry(player1, null, null);
+            entry.setTriggeringSpellTargetIds(List.of(bears.getId()));
+
+            assertThat(permanents(entry, triggeringSpellTargets())).containsExactly(bears);
+            assertThat(triggeringSpellTargets().declaresTarget()).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("createdThisResolution()")
+    class CreatedThisResolution {
+
+        @Test
+        @DisplayName("Is every permanent the entry recorded as created that is still on the battlefield")
+        void recordedTokens() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player1, new HillGiant());
+            addCreatureReady(player1, new GrizzlyBears());
+            StackEntry entry = entry(player1, null, null);
+            entry.getCreatedPermanentIds().add(bears.getId());
+            entry.getCreatedPermanentIds().add(giant.getId());
+
+            assertThat(permanents(entry, createdThisResolution())).containsExactly(bears, giant);
+
+            leaveBattlefield(bears);
+
+            assertThat(permanents(entry, createdThisResolution())).containsExactly(giant);
+        }
+    }
+
+    @Nested
+    @DisplayName("bandmatesOf(source())")
+    class BandmatesOf {
+
+        @Test
+        @DisplayName("Is the other attacking creatures in the source's band, not the source or other attackers")
+        void otherBandMembers() {
+            Permanent source = addCreatureReady(player1, new GrizzlyBears());
+            Permanent bandmate = addCreatureReady(player1, new HillGiant());
+            Permanent loneAttacker = addCreatureReady(player1, new GrizzlyBears());
+            UUID band = UUID.randomUUID();
+            for (Permanent attacker : List.of(source, bandmate, loneAttacker)) {
+                attacker.setAttacking(true);
+            }
+            source.setBandId(band);
+            bandmate.setBandId(band);
+            StackEntry entry = entry(player1, null, source.getId());
+
+            assertThat(permanents(entry, bandmatesOf(source()))).containsExactly(bandmate);
+        }
+
+        @Test
+        @DisplayName("Is nothing when the source is not attacking in a band")
+        void notInABand() {
+            Permanent source = addCreatureReady(player1, new GrizzlyBears());
+            Permanent attacker = addCreatureReady(player1, new HillGiant());
+            attacker.setAttacking(true);
+            attacker.setBandId(UUID.randomUUID());
+
+            assertThat(permanents(entry(player1, null, source.getId()), bandmatesOf(source()))).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("withCreaturesSharingAColor(target())")
+    class WithCreaturesSharingAColor {
+
+        @Test
+        @DisplayName("Is the target creature and every creature sharing a color with it, and declares the target")
+        void targetAndSharingCreatures() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent otherBears = addCreatureReady(player1, new GrizzlyBears());
+            addCreatureReady(player1, new HillGiant());
+
+            assertThat(permanents(entry(player1, bears.getId(), null), withCreaturesSharingAColor(target())))
+                    .containsExactlyInAnyOrder(bears, otherBears);
+            assertThat(withCreaturesSharingAColor(target()).declaresTarget()).isTrue();
+        }
+
+        @Test
+        @DisplayName("Is nothing once the target left the battlefield")
+        void targetLeft() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            addCreatureReady(player1, new GrizzlyBears());
+            StackEntry entry = entry(player1, bears.getId(), null);
+            leaveBattlefield(bears);
+
+            assertThat(permanents(entry, withCreaturesSharingAColor(target()))).isEmpty();
         }
     }
 
@@ -1030,20 +1195,19 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             addCreatureReady(player2, new Forest());
             List<Permanent> board = gd.playerBattlefields.values().stream().flatMap(List::stream).toList();
 
-            for (GrantScope scope : GrantScope.values()) {
-                PermanentSubject subject;
-                try {
-                    subject = scope.subject();
-                } catch (UnsupportedOperationException noVariantYet) {
-                    continue;
-                }
-                if (subject.needsStackEntry()) {
-                    continue;
-                }
+            List<PermanentSubject> staticSubjects = List.of(Subjects.source(), Subjects.attached(),
+                    Subjects.attachedCreature(), Subjects.sourceAndPaired(), Subjects.creaturesYouControl(),
+                    Subjects.otherCreaturesYouControl(), Subjects.otherTappedCreaturesYouControl(),
+                    Subjects.otherUntappedCreaturesYouControl(), Subjects.creaturesYourOpponentsControl(),
+                    Subjects.permanentsYouControl(), Subjects.otherPermanentsYouControl(), Subjects.allCreatures(),
+                    Subjects.otherCreatures(), Subjects.allPermanents(), Subjects.otherPermanents(),
+                    Subjects.creaturesEnchantedPlayerControls(), Subjects.landsYouControl(),
+                    Subjects.landsYourOpponentsControl(), Subjects.allLands(), Subjects.otherLands());
+            for (PermanentSubject subject : staticSubjects) {
                 List<Permanent> listed = subjects.permanents(gd, bears, subject);
                 for (Permanent permanent : board) {
                     assertThat(names(bears, permanent, subject, null))
-                            .as("%s on %s", scope, permanent.getCard().getName())
+                            .as("%s on %s", subject, permanent.getCard().getName())
                             .isEqualTo(listed.contains(permanent));
                 }
             }
@@ -1105,7 +1269,7 @@ class SubjectResolutionServiceTest extends BaseCardTest {
         void noSourcePermanent() {
             Permanent bears = addCreatureReady(player1, new GrizzlyBears());
             Permanent opposingBears = addCreatureReady(player2, new GrizzlyBears());
-            PermanentSubject otherCreaturesYouControl = GrantScope.OWN_CREATURES.subject();
+            PermanentSubject otherCreaturesYouControl = Subjects.otherCreaturesYouControl();
 
             assertThat(subjects.names(gd, null, player1.getId(), player1.getId(), bears, otherCreaturesYouControl,
                     reads)).isTrue();

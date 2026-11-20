@@ -11,28 +11,31 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * system and preserves the permanents' existing creature types.</p>
  *
  * @param subtype the creature subtype to grant
- * @param scope the permanent or player scope receiving the subtype
+ * @param subject the permanent or player subject receiving the subtype
  * @param duration how long the subtype grant applies
  */
-public record GrantSubtypeUntilEndOfTurnEffect(CardSubtype subtype, GrantScope scope,
+public record GrantSubtypeUntilEndOfTurnEffect(CardSubtype subtype, PermanentSubject subject,
                                                PermanentPredicate filter, Duration duration) implements CardEffect {
 
-    public GrantSubtypeUntilEndOfTurnEffect(CardSubtype subtype, GrantScope scope,
+    public GrantSubtypeUntilEndOfTurnEffect(CardSubtype subtype, PermanentSubject subject,
                                            PermanentPredicate filter) {
-        this(subtype, scope, filter, Duration.UNTIL_END_OF_TURN);
+        this(subtype, subject, filter, Duration.UNTIL_END_OF_TURN);
     }
 
-    public GrantSubtypeUntilEndOfTurnEffect(CardSubtype subtype, GrantScope scope) {
-        this(subtype, scope, null);
+    public GrantSubtypeUntilEndOfTurnEffect(CardSubtype subtype, PermanentSubject subject) {
+        this(subtype, subject, null);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return switch (scope) {
-            case TARGET_PLAYERS_CREATURES -> TargetSpec.benign(TargetPredicates.player());
-            case OWN_CREATURES -> TargetSpec.NONE;
-            case SELF -> new TargetSpec(null, false, null, true, 1);
-            default -> TargetSpec.benign(TargetPredicates.creature());
-        };
+        if (subject.declaresPlayerTarget()) {
+            return TargetSpec.benign(TargetPredicates.player());
+        }
+        if (subject.isSet()) {
+            return TargetSpec.NONE;
+        }
+        return subject instanceof PermanentSubject.Source
+                ? new TargetSpec(null, false, null, true, 1)
+                : TargetSpec.benign(TargetPredicates.creature());
     }
 }

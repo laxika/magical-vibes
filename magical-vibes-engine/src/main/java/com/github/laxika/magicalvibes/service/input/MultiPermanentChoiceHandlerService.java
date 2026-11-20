@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.input;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 
 import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventionSupport;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
@@ -76,7 +77,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
 /**
  * Handles multi-permanent choice inputs where the player selects
@@ -3706,7 +3706,7 @@ public class MultiPermanentChoiceHandlerService {
 
         if (entering != null) {
             gameData.addEffectOnPermanent(context.card().getName(), entering.getId(), context.controllerId(),
-                    new SetBasePowerToughnessEffect(totalPower, totalToughness, GrantScope.TARGET, Duration.PERMANENT),
+                    new SetBasePowerToughnessEffect(totalPower, totalToughness, Subjects.target(), Duration.PERMANENT),
                     entering.getId(), Duration.PERMANENT);
             gameLogService.append(gameData, GameLog.cardThen(context.card(),
                     " becomes " + totalPower + "/" + totalToughness + "."));
@@ -3733,7 +3733,7 @@ public class MultiPermanentChoiceHandlerService {
             // characteristic-defining ability (CR 613.4a, layer 7a), so any layer 7b setter wins;
             // timestamp 0 orders this entry before every real 7b effect.
             gameData.putFloatingEffect(FloatingContinuousEffect.onPermanent(context.card().getName(), entering.getId(),
-                    context.controllerId(), new SetBasePowerToughnessEffect(sacrificed, sacrificed, GrantScope.TARGET,
+                    context.controllerId(), new SetBasePowerToughnessEffect(sacrificed, sacrificed, Subjects.target(),
                             Duration.PERMANENT), entering.getId(), Duration.PERMANENT));
             gameLogService.append(gameData, GameLog.cardThen(context.card(),
                     " becomes " + sacrificed + "/" + sacrificed + "."));

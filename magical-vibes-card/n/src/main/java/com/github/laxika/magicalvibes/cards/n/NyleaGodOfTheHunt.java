@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import java.util.List;
 import java.util.Set;
@@ -25,8 +25,8 @@ public class NyleaGodOfTheHunt extends Card {
     public NyleaGodOfTheHunt() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorAtLeast(ManaColor.GREEN, 5)),
-                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
-        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), Subjects.source())));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl()));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{G}",

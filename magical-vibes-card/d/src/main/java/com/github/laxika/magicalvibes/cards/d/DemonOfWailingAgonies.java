@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,12 +19,12 @@ public class DemonOfWailingAgonies extends Card {
         ControllerControlsOwnCommander lieutenant = new ControllerControlsOwnCommander();
 
         addStaticEffect(new ConditionalEffect(lieutenant,
-                new StaticBoostEffect(2, 2, GrantScope.SELF)));
+                new StaticBoostEffect(2, 2, Subjects.source())));
         addStaticEffect(new ConditionalEffect(lieutenant,
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
                                 Subjects.targetPlayer())),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

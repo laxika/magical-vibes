@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.ControllerSpeed;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -19,7 +19,7 @@ public class SamutTheDrivingForce extends Card {
         addStaticEffect(new DynamicStaticBoostEffect(
                 new ControllerSpeed(),
                 new Fixed(0),
-                GrantScope.OWN_CREATURES
+                Subjects.otherCreaturesYouControl()
         ));
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)),

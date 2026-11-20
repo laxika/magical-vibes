@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,13 +22,13 @@ import java.util.Set;
 public class MabelHeirToCragflame extends Card {
 
     public MabelHeirToCragflame() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MOUSE))));
 
         List<Ability> cragflameEffects = List.of(
                 StaticAbility.of(new StaticBoostEffect(1, 1,
                         Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.HASTE),
-                        GrantScope.EQUIPPED_CREATURE)));
+                        Subjects.attachedCreature())));
         CreateTokenEffect cragflame = new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Cragflame", 0, 0,
                 null, null, List.of(CardSubtype.EQUIPMENT), Set.of(), Set.of(),

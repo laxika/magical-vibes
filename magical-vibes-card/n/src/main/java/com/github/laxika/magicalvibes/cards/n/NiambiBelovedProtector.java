@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
@@ -40,7 +40,7 @@ public class NiambiBelovedProtector extends Card {
                                         new TriggeredAbility(Triggers.becomesTargetOfSpellOrAbility(),
                                                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
                                                 new DrawCardEffect(1)),
-                                        GrantScope.SELF)))
+                                        Subjects.source())))
                         .build());
     }
 }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardNamedIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,7 +25,7 @@ public class EmeraldCollector extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{G}",
-                List.of(new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF)),
+                List.of(new SetBasePowerToughnessEffect(4, 4, Subjects.source())),
                 "{2}{G}: This creature has base power and toughness 4/4 until end of turn."));
     }
 }

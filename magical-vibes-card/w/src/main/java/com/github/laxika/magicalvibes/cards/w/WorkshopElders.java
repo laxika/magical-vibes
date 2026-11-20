@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -31,7 +31,7 @@ public class WorkshopElders extends Card {
     public WorkshopElders() {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.FLYING,
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentIsArtifactPredicate()));
 
         target(new ControlledPermanentPredicateTargetFilter(
@@ -49,7 +49,7 @@ public class WorkshopElders extends Card {
                                 Set.of(),
                                 null,
                                 Set.of(CardType.CREATURE),
-                                GrantScope.TARGET,
+                                Subjects.target(),
                                 Duration.PERMANENT),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4)
                 ),

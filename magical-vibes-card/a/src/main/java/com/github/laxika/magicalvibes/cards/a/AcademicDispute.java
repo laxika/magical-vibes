@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LearnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "STX", collectorNumber = "91")
@@ -18,7 +18,7 @@ public class AcademicDispute extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_BLOCK))
                 .addSpellEffect(new MayEffect(
-                        new GrantKeywordEffect(Keyword.REACH, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.REACH, Subjects.target()),
                         "Have it gain reach until end of turn?"));
 
         addSpellEffect(new LearnEffect());

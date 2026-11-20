@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSacrificeSourceWhenTargetLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +28,7 @@ public class HeartWolf extends Card {
                 null,
                 List.of(
                         new BoostTargetCreatureEffect(2, 0),
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target()),
                         new RegisterDelayedSacrificeSourceWhenTargetLeavesEffect()
                 ),
                 "{T}: Target Dwarf creature gets +2/+0 and gains first strike until end of turn. When that "

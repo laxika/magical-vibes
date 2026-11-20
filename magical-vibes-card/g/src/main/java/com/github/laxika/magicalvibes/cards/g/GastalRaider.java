@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -33,8 +33,8 @@ public class GastalRaider extends Card {
                 HandChoiceDestination.DISCARD
         ));
         addStaticEffect(new ConditionalEffect(new MaxSpeed(),
-                new StaticBoostEffect(1, 1, GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Subjects.source())));
         addStaticEffect(new ConditionalEffect(new MaxSpeed(),
-                new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.MENACE, Subjects.source())));
     }
 }

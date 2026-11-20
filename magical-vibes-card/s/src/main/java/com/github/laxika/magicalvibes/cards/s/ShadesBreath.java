@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 
 import java.util.List;
@@ -18,8 +18,8 @@ import java.util.List;
 public class ShadesBreath extends Card {
 
     public ShadesBreath() {
-        addSpellEffect(new GrantColorUntilEndOfTurnEffect(CardColor.BLACK, GrantScope.OWN_CREATURES));
-        addSpellEffect(new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.SHADE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantColorUntilEndOfTurnEffect(CardColor.BLACK, Subjects.creaturesYouControl()));
+        addSpellEffect(new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.SHADE, Subjects.creaturesYouControl()));
         addSpellEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         false,
@@ -27,7 +27,7 @@ public class ShadesBreath extends Card {
                         List.of(new BoostSelfEffect(1, 1)),
                         "{B}: This creature gets +1/+1 until end of turn."
                 ),
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 null,
                 Duration.UNTIL_END_OF_TURN
         ));

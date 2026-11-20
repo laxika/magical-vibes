@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class MyojinOfToweringMight extends Card {
                 new EnterWithCountersEffect(CounterType.INDESTRUCTIBLE, new Fixed(1))));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.INDESTRUCTIBLE),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -38,7 +38,7 @@ public class MyojinOfToweringMight extends Card {
                         new RemoveCounterFromSourceCost(1, CounterType.INDESTRUCTIBLE),
                         DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
                                 CounterType.PLUS_ONE_PLUS_ONE, new Fixed(8), null),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGETS)
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.triggeringSpellTargets())
                 ),
                 "Remove an indestructible counter from Myojin of Towering Might: Distribute eight +1/+1 counters among any number of target creatures you control. They gain trample until end of turn.",
                 TargetFilters.creatureYouControl(), null, null, null, List.of(), 0, 99

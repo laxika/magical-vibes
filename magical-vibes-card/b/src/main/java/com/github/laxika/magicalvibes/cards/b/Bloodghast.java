@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.condition.AnOpponentLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -32,7 +32,7 @@ public class Bloodghast extends Card {
         addStaticEffect(new CantBlockEffect());
         addStaticEffect(new ConditionalEffect(
                 new AnOpponentLifeAtMost(10),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.source())));
         addTrigger(new TriggerCondition(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 new MayEffect(ReturnCardFromGraveyardEffect.builder()

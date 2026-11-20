@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -30,7 +30,7 @@ public class SlaughterPriestOfMogis extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentIsEnchantmentPredicate()
                         )), "another creature or an enchantment"),
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())
                 ),
                 "{2}, Sacrifice another creature or an enchantment: This creature gains first strike until end of turn."
         ));

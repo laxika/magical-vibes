@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -17,8 +16,8 @@ public class TilonallisCrown extends Card {
 
     public TilonallisCrown() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(3, 0, GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(3, 0, Subjects.attachedCreature()))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.attachedCreature()))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new DealDamageToTargetCreatureEffect(Subjects.attached(), 1));
     }

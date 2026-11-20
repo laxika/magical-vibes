@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 import java.util.Set;
@@ -18,10 +18,10 @@ import java.util.Set;
 public class HerosHeirloom extends Card {
 
     public HerosHeirloom() {
-        addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 1, Subjects.attachedCreature()));
         addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
-                new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.EQUIPPED_CREATURE),
+                new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), Subjects.attachedCreature()),
                 null));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

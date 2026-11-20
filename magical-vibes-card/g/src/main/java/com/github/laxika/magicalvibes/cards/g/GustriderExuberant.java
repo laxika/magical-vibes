@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class GustriderExuberant extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES,
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.otherCreaturesYouControl(),
                                 new PermanentPowerAtLeastPredicate(5))
                 ),
                 "Sacrifice Gustrider Exuberant: Creatures you control with power 5 or greater gain flying until end of turn."

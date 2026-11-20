@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -23,7 +23,7 @@ public class LoAndLiTwinTutors extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new SearchLibraryEffect(new CardAnyOfPredicate(List.of(
                 new CardSubtypePredicate(CardSubtype.LESSON),
                 new CardSubtypePredicate(CardSubtype.NOBLE)))));
-        addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.NOBLE)));
         addStaticEffect(GrantLifelinkToControllerSpellsByColorEffect.forCardPredicate(
                         new CardSubtypePredicate(CardSubtype.LESSON)));

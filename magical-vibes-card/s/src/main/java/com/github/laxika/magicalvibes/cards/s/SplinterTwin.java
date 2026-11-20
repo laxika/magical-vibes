@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class SplinterTwin extends Card {
                         "{T}: Create a token that's a copy of this creature, except it has haste. "
                                 + "Exile that token at the beginning of the next end step."
                 ),
-                GrantScope.ENCHANTED_CREATURE
+                Subjects.attachedCreature()
         ));
     }
 }

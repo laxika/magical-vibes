@@ -24,7 +24,7 @@ public class GrantAllCreatureTypesToOwnCreaturesEffectHandler implements StaticE
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantAllCreatureTypesToOwnCreaturesEffect) effect;
-        if (!support.namesBeyondSource(context, grant.scope().subject(), grant.filter())) return;
+        if (!support.namesBeyondSource(context, grant.subject(), grant.filter())) return;
         for (CardSubtype subtype : CardSubtype.values()) {
             if (StaticEffectSupport.isCreatureSubtype(subtype)) {
                 accumulator.addGrantedSubtype(subtype);

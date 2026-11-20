@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -39,7 +39,7 @@ public class RestrictedOfficeLectureHall extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS,
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.permanentsYouControl(),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))));
     }
 }

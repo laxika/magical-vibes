@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.Set;
@@ -23,6 +23,6 @@ public class ThornfistStriker extends Card {
         // Infusion — Creatures you control get +1/+0 and have trample as long as you gained life this turn.
         addStaticEffect(new ConditionalEffect(
                 new GainedLifeThisTurn(),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE), GrantScope.ALL_OWN_CREATURES)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE), Subjects.creaturesYouControl())));
     }
 }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BNG", collectorNumber = "32")
 @CardRegistration(set = "DSC", collectorNumber = "111")
@@ -15,9 +15,9 @@ import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 public class ArchetypeOfImagination extends Card {
 
     public ArchetypeOfImagination() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES));
-        addStaticEffect(new RemoveKeywordEffect(Keyword.FLYING, GrantScope.OPPONENT_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.creaturesYouControl()));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.FLYING, Subjects.creaturesYourOpponentsControl()));
         addStaticEffect(new GrantEffectEffect(
-                new CantHaveOrGainKeywordEffect(Keyword.FLYING), GrantScope.OPPONENT_CREATURES));
+                new CantHaveOrGainKeywordEffect(Keyword.FLYING), Subjects.creaturesYourOpponentsControl()));
     }
 }

@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -22,11 +22,11 @@ public class PolymorphistsJest extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addSpellEffect(new LosesAllAbilitiesEffect(GrantScope.TARGET_PLAYERS_CREATURES,
+        )).addSpellEffect(new LosesAllAbilitiesEffect(Subjects.creaturesTargetPlayerControls(),
                                 Duration.UNTIL_END_OF_TURN))
-                .addSpellEffect(new GrantColorUntilEndOfTurnEffect(CardColor.BLUE, GrantScope.TARGET_PLAYERS_CREATURES))
+                .addSpellEffect(new GrantColorUntilEndOfTurnEffect(CardColor.BLUE, Subjects.creaturesTargetPlayerControls()))
                 .addSpellEffect(new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.FROG,
-                                GrantScope.TARGET_PLAYERS_CREATURES))
-                .addSpellEffect(new SetBasePowerToughnessEffect(1, 1, GrantScope.TARGET_PLAYERS_CREATURES));
+                                Subjects.creaturesTargetPlayerControls()))
+                .addSpellEffect(new SetBasePowerToughnessEffect(1, 1, Subjects.creaturesTargetPlayerControls()));
     }
 }

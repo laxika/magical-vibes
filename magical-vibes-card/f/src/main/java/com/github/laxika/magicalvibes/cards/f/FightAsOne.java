@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -38,14 +38,14 @@ public class FightAsOne extends Card {
                         "Target Human creature you control gets +1/+1 and gains indestructible until end of turn",
                         List.of(
                                 new BoostTargetCreatureEffect(1, 1),
-                                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET)
+                                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target())
                         ),
                         humanCreatureYouControl),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target non-Human creature you control gets +1/+1 and gains indestructible until end of turn",
                         List.of(
                                 new BoostTargetCreatureEffect(1, 1),
-                                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET)
+                                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target())
                         ),
                         nonHumanCreatureYouControl)
         )));

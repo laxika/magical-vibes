@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UpgradeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -65,7 +65,7 @@ public class UpgradeSupport {
         covered.getMeldComponentCards().addAll(coveredCards);
         covered.setCard(enteringPermanent.getCard());
         gameData.addEffectOnPermanent(enteringPermanent.getCard().getName(), null, controllerId,
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), covered.getId(), Duration.PERMANENT);
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), covered.getId(), Duration.PERMANENT);
 
         gameData.playerBattlefields.get(controllerId).removeIf(
                 permanent -> permanent.getId().equals(enteringPermanent.getId()));

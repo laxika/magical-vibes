@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLandwalkOfSacrificedLandToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -40,7 +40,7 @@ public class GrantLandwalkOfSacrificedLandToTargetEffectHandler implements Norma
             return;
         }
         grantKeywordEffectHandler.resolve(gameData, entry,
-                new GrantKeywordEffect(landwalks, GrantScope.TARGET));
+                new GrantKeywordEffect(landwalks, Subjects.target()));
     }
 
     private Set<Keyword> landwalksOfSacrificedLand(StackEntry entry) {

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCoun
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,7 +26,7 @@ public class IceFangCoatl extends Card {
         // This creature has deathtouch as long as you control at least three other snow permanents.
         addStaticEffect(new ConditionalEffect(
                 new ControlsOtherPermanentCount(3, new PermanentHasSupertypePredicate(CardSupertype.SNOW)),
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())
         ));
     }
 }

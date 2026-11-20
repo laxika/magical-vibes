@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsUpToThenDrawsThatManyEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -47,7 +47,7 @@ public class MishrasCommand extends Card {
                         "Target creature gets +X/+0 and gains haste until end of turn",
                         List.of(
                                 new BoostTargetCreatureEffect(new XValue(), new Fixed(0)),
-                                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.HASTE, Subjects.target())),
                         TargetFilters.creature())
         ), 2));
     }

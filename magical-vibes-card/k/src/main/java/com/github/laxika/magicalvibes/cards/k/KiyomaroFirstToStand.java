@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,7 +22,7 @@ public class KiyomaroFirstToStand extends Card {
         addStaticEffect(new SetPowerToughnessToAmountEffect(cardsInHand, cardsInHand));
         addStaticEffect(new ConditionalEffect(
                 new CardsInHandAtLeast(4),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source())));
         addTrigger(Triggers.dealsDamage(),
                 TriggerOptions.DEFAULT.withInterveningIf(new CardsInHandAtLeast(7)),
                 new GainLifeEffect(7));

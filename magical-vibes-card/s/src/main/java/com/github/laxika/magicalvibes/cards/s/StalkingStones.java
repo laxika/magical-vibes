@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -31,7 +31,7 @@ public class StalkingStones extends Card {
                         List.of(CardSubtype.ELEMENTAL),
                         Set.of(),
                         null, Set.of(CardType.ARTIFACT),
-                        GrantScope.SELF, Duration.PERMANENT
+                        Subjects.source(), Duration.PERMANENT
                 )),
                 "{6}: Stalking Stones becomes a 3/3 Elemental artifact creature that's still a land."
         ));

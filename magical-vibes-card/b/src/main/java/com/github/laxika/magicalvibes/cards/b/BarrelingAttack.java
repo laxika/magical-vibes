@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CreaturesBlockingSource;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class BarrelingAttack extends Card {
         // Target creature gains trample until end of turn. When that creature becomes blocked
         // this turn, it gets +1/+1 until end of turn for each creature blocking it.
         target(TargetFilters.creature())
-                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()))
                 .addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.becomesBlocked(),
                         new BoostTargetCreatureEffect(new CreaturesBlockingSource(true),

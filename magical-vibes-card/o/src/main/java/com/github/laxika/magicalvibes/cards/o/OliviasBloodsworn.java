@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -22,7 +22,7 @@ public class OliviasBloodsworn extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.target())),
                 "{R}: Target Vampire gains haste until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentHasSubtypePredicate(CardSubtype.VAMPIRE),

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TSP", collectorNumber = "137")
@@ -18,7 +18,7 @@ public class TraitorsClutch extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(1, 0))
                 .addSpellEffect(new GrantColorUntilEndOfTurnEffect(CardColor.BLACK))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.SHADOW, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.SHADOW, Subjects.target()));
         addCastingOption(new FlashbackCast("{1}{B}"));
     }
 }

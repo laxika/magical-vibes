@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCards
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -24,6 +23,6 @@ public class EvangelOfSynthesis extends Card {
                 SequenceEffect.of(new DrawCardEffect(1), new DiscardEffect(1, Subjects.you())));
         addStaticEffect(new ConditionalEffect(
                 new ControllerDrewAtLeastCardsThisTurn(2),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.MENACE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.MENACE), Subjects.source())));
     }
 }

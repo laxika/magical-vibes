@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetThenRemoveKeywordIfDamagedEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -75,7 +75,7 @@ public class DealDamageToAnyTargetThenRemoveKeywordIfDamagedEffectHandler
                             entry.getControllerId(), entry.getDescription(), java.util.List.of(),
                             recipient.getId(), entry.getSourcePermanentId());
                     removeKeywordEffectHandler.resolve(gameData, recipientEntry,
-                            new RemoveKeywordEffect(damageEffect.keyword(), GrantScope.TARGET,
+                            new RemoveKeywordEffect(damageEffect.keyword(), Subjects.target(),
                                     Duration.UNTIL_END_OF_TURN));
                 });
             }

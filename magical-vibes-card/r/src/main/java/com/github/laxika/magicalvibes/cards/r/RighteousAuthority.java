@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -22,7 +21,7 @@ public class RighteousAuthority extends Card {
         CardsInHand hand = new CardsInHand(CountScope.ATTACHED_CONTROLLER);
         target(TargetFilters.creature())
                 .addStaticEffect(new AttachedBoostEffect(
-                        hand, hand, GrantScope.ENCHANTED_CREATURE))
+                        hand, hand, Subjects.attachedCreature()))
                 // At the beginning of the draw step of enchanted creature's controller, that player
                 // draws an additional card. Slot bakes that player as targetId.
                 .addTrigger(Triggers.drawStep(ActivePlayer.ENCHANTED_PERMANENT_CONTROLLER),

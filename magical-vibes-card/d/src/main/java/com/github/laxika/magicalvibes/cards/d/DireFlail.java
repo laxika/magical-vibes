@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromExileTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "LCI", collectorNumber = "145")
@@ -20,7 +20,7 @@ public class DireFlail extends Card {
     public DireFlail() {
         setBackFaceCard(new DireBlunderbuss());
 
-        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
         addActivatedAbility(new ActivatedAbility(
                 false,

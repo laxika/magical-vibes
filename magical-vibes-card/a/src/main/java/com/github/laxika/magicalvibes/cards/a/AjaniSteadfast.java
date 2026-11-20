@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventAllButOneDamageToControllerAndPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -33,7 +33,7 @@ public class AjaniSteadfast extends Card {
                         new BoostTargetCreatureEffect(1, 1),
                         new GrantKeywordEffect(
                                 Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE, Keyword.LIFELINK),
-                                GrantScope.TARGET)
+                                Subjects.target())
                 ),
                 "+1: Until end of turn, up to one target creature gets +1/+1 and gains first strike, vigilance, and lifelink.",
                 TargetFilters.creature(),

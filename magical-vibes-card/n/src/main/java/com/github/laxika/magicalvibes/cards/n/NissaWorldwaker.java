@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -36,7 +35,7 @@ public class NissaWorldwaker extends Card {
                 +1,
                 List.of(new AnimatePermanentsEffect(4, 4, List.of(CardSubtype.ELEMENTAL),
                         Set.of(Keyword.TRAMPLE), null, Set.of(),
-                        GrantScope.TARGET, Duration.PERMANENT)),
+                        Subjects.target(), Duration.PERMANENT)),
                 "+1: Target land you control becomes a 4/4 Elemental creature with trample. It's still a land.",
                 TargetFilters.landYouControl()
         ));
@@ -65,7 +64,7 @@ public class NissaWorldwaker extends Card {
                                 new CardTypePredicate(CardType.LAND))),
                         new AnimatePermanentsEffect(4, 4, List.of(CardSubtype.ELEMENTAL),
                                 Set.of(Keyword.TRAMPLE), null, Set.of(),
-                                GrantScope.OWN_PERMANENTS, Duration.PERMANENT))),
+                                Subjects.permanentsYouControl(), Duration.PERMANENT))),
                 "−7: Search your library for any number of basic land cards, put them onto the "
                         + "battlefield, then shuffle. Those lands become 4/4 Elemental creatures "
                         + "with trample. They're still lands."

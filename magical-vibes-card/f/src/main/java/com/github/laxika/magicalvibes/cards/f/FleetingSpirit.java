@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "VOW", collectorNumber = "14")
@@ -22,7 +22,7 @@ public class FleetingSpirit extends Card {
                 "{W}",
                 List.of(
                         new ExileNCardsFromGraveyardCost(3, null),
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())
                 ),
                 "{W}, Exile three cards from your graveyard: This creature gains first strike until end of turn."
         ));

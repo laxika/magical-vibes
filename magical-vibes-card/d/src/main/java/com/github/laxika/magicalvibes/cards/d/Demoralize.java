@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ODY", collectorNumber = "184")
@@ -15,7 +14,7 @@ public class Demoralize extends Card {
 
     public Demoralize() {
         // All creatures gain menace until end of turn.
-        addSpellEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.MENACE, Subjects.allCreatures()));
 
         // Threshold — If there are seven or more cards in your graveyard, creatures can't block this turn.
         addSpellEffect(new ConditionalEffect(new GraveyardCardThreshold(7, null),

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.effect.ExileEnchantedCreatureAndSelfReturnAtNextTurnDeclareAttackersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -47,7 +47,7 @@ public class MeanderedTowershell extends Card {
 
     public MeanderedTowershell() {
         target(TargetFilters.creature())
-                .addStaticEffect(new GrantKeywordEffect(Keyword.ISLANDWALK, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.ISLANDWALK, Subjects.attachedCreature()))
                 .addTrigger(Triggers.attacks(),
                         new ExileEnchantedCreatureAndSelfReturnAtNextTurnDeclareAttackersEffect());
     }

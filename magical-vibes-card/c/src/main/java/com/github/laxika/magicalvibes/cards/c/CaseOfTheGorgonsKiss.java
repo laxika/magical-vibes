@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -52,7 +52,7 @@ public class CaseOfTheGorgonsKiss extends Card {
                                 Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK),
                                 null,
                                 Set.of(CardType.CREATURE),
-                                GrantScope.SELF,
+                                Subjects.source(),
                                 Duration.PERMANENT)));
     }
 }

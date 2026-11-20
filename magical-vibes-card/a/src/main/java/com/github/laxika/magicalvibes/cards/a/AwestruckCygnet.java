@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.IntensifyNamedCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetNameEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.condition.SourceIntensityThreshold;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -44,10 +44,10 @@ public class AwestruckCygnet extends Card {
                 new IntensifyNamedCardsEffect(CARD_NAME));
 
         addStaticEffect(new ConditionalEffect(TRANSFORM_THRESHOLD,
-                new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(4, 4, Subjects.source())));
         addStaticEffect(new ConditionalEffect(TRANSFORM_THRESHOLD,
-                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE), GrantScope.SELF)));
+                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE), Subjects.source())));
         addStaticEffect(new ConditionalEffect(TRANSFORM_THRESHOLD,
-                new SetNameEffect("Radiant Swan", GrantScope.SELF)));
+                new SetNameEffect("Radiant Swan", Subjects.source())));
     }
 }

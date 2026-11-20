@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -33,7 +33,7 @@ public class BaruFistOfKrosa extends Card {
         PermanentColorInPredicate green = new PermanentColorInPredicate(Set.of(CardColor.GREEN));
         CardEffect forestTrigger = SequenceEffect.of(
                         new BoostAllOwnCreaturesEffect(1, 1, green),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES, green));
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl(), green));
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 Triggers.LAND,

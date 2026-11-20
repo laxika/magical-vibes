@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,7 +21,7 @@ public class Downdraft extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{G}",
-                List.of(new RemoveKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),
+                List.of(new RemoveKeywordEffect(Keyword.FLYING, Subjects.target())),
                 "{G}: Target creature loses flying until end of turn.",
                 TargetFilters.creature()
         ));

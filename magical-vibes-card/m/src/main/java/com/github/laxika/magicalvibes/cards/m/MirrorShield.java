@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCombatOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ import java.util.Set;
 public class MirrorShield extends Card {
 
     public MirrorShield() {
-        addStaticEffect(new StaticBoostEffect(0, 2, Set.of(Keyword.HEXPROOF), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(0, 2, Set.of(Keyword.HEXPROOF), Subjects.attachedCreature()));
 
         // "Whenever a creature with deathtouch blocks or becomes blocked by this creature": the filter is on the
         // creature on the other side of the block.
@@ -28,11 +28,11 @@ public class MirrorShield extends Card {
         CardEffect destroyDeathtouchCreature = new DestroyCombatOpponentEffect(false);
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.blocks().withFilter(deathtouch), destroyDeathtouchCreature),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesBlocked().withFilter(deathtouch), TriggerOptions.EACH_BLOCKER,
                         destroyDeathtouchCreature),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -16,7 +16,7 @@ public class ScornfulAetherLich extends Card {
     public ScornfulAetherLich() {
         // {W}{B}: This creature gains fear and vigilance until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{W}{B}",
-                List.of(new GrantKeywordEffect(Set.of(Keyword.FEAR, Keyword.VIGILANCE), GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Set.of(Keyword.FEAR, Keyword.VIGILANCE), Subjects.source())),
                 "{W}{B}: This creature gains fear and vigilance until end of turn."));
     }
 }

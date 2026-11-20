@@ -6,11 +6,11 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.Set;
@@ -21,10 +21,10 @@ public class EatenByPiranhas extends Card {
 
     public EatenByPiranhas() {
         target(TargetFilters.creature())
-                .addStaticEffect(new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantColorEffect(CardColor.BLACK, GrantScope.ENCHANTED_CREATURE, true))
-                .addStaticEffect(new SetCardTypesEffect(Set.of(CardType.CREATURE), GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.SKELETON, GrantScope.ENCHANTED_CREATURE, true));
+                .addStaticEffect(new SetBasePowerToughnessEffect(1, 1, Subjects.attachedCreature()))
+                .addStaticEffect(new LosesAllAbilitiesEffect(Subjects.attachedCreature()))
+                .addStaticEffect(new GrantColorEffect(CardColor.BLACK, Subjects.attachedCreature(), true))
+                .addStaticEffect(new SetCardTypesEffect(Set.of(CardType.CREATURE), Subjects.attachedCreature()))
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.SKELETON, Subjects.attachedCreature(), true));
     }
 }

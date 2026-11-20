@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ELD", collectorNumber = "217")
@@ -17,7 +17,7 @@ public class CrashingDrawbridge extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)),
+                List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl())),
                 "{T}: Creatures you control gain haste until end of turn."
         ));
     }

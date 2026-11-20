@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "89")
@@ -18,19 +18,19 @@ public class Endling extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}",
-                List.of(new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.MENACE, Subjects.source())),
                 "{B}: This creature gains menace until end of turn."
         ));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}",
-                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())),
                 "{B}: This creature gains deathtouch until end of turn."
         ));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}",
-                List.of(new GrantKeywordEffect(Keyword.UNDYING, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.UNDYING, Subjects.source())),
                 "{B}: This creature gains undying until end of turn."
         ));
         addActivatedAbility(new ActivatedAbility(

@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -47,7 +47,7 @@ public class TarmogoyfNest extends Card {
                         List.of(tarmogoyfToken),
                         "{1}{G}, {T}: Create a Tarmogoyf token."
                 ),
-                GrantScope.ENCHANTED_PERMANENT
+                Subjects.attached()
         ));
     }
 }

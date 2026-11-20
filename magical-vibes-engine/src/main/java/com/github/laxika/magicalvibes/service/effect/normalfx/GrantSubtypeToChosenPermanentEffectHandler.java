@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToChosenPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,7 @@ public class GrantSubtypeToChosenPermanentEffectHandler implements NormalEffectH
             return;
         }
 
-        gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(grant.subtype(), GrantScope.TARGET),
+        gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(grant.subtype(), Subjects.target()),
                 chosen.getId(), Duration.PERMANENT);
         gameLogService.append(gameData, GameLog.builder()
                 .card(chosen.getCard())

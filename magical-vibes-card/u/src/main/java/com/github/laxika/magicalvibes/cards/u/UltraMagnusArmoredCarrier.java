@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,10 +19,10 @@ public class UltraMagnusArmoredCarrier extends Card {
     public UltraMagnusArmoredCarrier() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
-                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
+                new GrantCardTypeEffect(CardType.CREATURE, Subjects.source())));
         addTrigger(Triggers.attacks(), new GrantKeywordEffect(
                 Keyword.INDESTRUCTIBLE,
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentIsAttackingPredicate()),
                 new ConditionalEffect(
                 new AttackingCreaturesTotalPowerAtLeast(8),

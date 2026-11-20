@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ODY", collectorNumber = "43")
@@ -18,7 +18,7 @@ public class ResilientWanderer extends Card {
                 null,
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new GrantProtectionChoiceUntilEndOfTurnEffect(GrantScope.SELF)
+                        new GrantProtectionChoiceUntilEndOfTurnEffect(Subjects.source())
                 ),
                 "Discard a card: This creature gains protection from the color of your choice until end of turn."
         ));

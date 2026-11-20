@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -48,7 +48,7 @@ public class PartTheWaterveil extends Card {
                                 Set.of(Keyword.HASTE),
                                 null,
                                 Set.of(CardType.CREATURE),
-                                GrantScope.TARGET,
+                                Subjects.target(),
                                 Duration.PERMANENT)));
     }
 }

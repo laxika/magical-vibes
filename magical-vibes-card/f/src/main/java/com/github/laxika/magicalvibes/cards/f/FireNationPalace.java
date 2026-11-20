@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -40,7 +40,7 @@ public class FireNationPalace extends Card {
                 true,
                 "{1}{R}",
                 List.of(
-                        new GrantKeywordEffect(Keyword.FIREBENDING, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.FIREBENDING, Subjects.target()),
                         new GrantEffectToTargetUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.attacks(),
                                 new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 4)))

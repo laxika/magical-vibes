@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GTC", collectorNumber = "114")
@@ -15,7 +15,7 @@ public class AlphaAuthority extends Card {
     public AlphaAuthority() {
         target(TargetFilters.creature())
                 // Enchanted creature has hexproof...
-                .addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.attachedCreature()))
                 // ...and can't be blocked by more than one creature.
                 .addStaticEffect(new CanBeBlockedByAtMostNCreaturesEffect(1));
     }

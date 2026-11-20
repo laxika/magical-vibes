@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class RaidersSpoils extends Card {
 
     public RaidersSpoils() {
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.otherCreaturesYouControl()));
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.WARRIOR)),

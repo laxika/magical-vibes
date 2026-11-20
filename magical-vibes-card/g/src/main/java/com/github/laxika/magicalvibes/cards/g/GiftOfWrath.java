@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,7 +32,7 @@ public class GiftOfWrath extends Card {
                 "Target must be an artifact or creature"))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentIsCreaturePredicate(),
-                        new StaticBoostEffect(2, 2, Set.of(Keyword.MENACE), GrantScope.ENCHANTED_CREATURE),
+                        new StaticBoostEffect(2, 2, Set.of(Keyword.MENACE), Subjects.attachedCreature()),
                         null));
 
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new CreateTokenEffect(

@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -24,7 +23,7 @@ public class KitsuneAce extends Card {
                 new ChooseOneAtTriggerTimeEffect(new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "That Vehicle gains first strike until end of turn",
-                                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TRIGGERING_PERMANENT)),
+                                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.triggering())),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Untap this creature",
                                         new UntapPermanentsEffect(Subjects.source())

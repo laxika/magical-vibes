@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillControllerThenIfConditionEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -36,7 +36,7 @@ public class SigilOfMyrkul extends Card {
                         SequenceEffect.of(
                                 PutCounterOnTargetPermanentEffect.withTargetRestriction(
                                         CounterType.PLUS_ONE_PLUS_ONE, 1, creatureYouControl),
-                                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET,
+                                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target(),
                                         creatureYouControl))));
     }
 }

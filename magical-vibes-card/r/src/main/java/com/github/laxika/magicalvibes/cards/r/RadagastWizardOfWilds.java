@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -35,10 +35,10 @@ public class RadagastWizardOfWilds extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.BEAST),
                 new PermanentHasSubtypePredicate(CardSubtype.BIRD)));
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.WARD, GrantScope.OWN_CREATURES, beastOrBird));
+                Keyword.WARD, Subjects.otherCreaturesYouControl(), beastOrBird));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                new CounterUnlessPaysEffect(1)), GrantScope.OWN_CREATURES, beastOrBird));
+                new CounterUnlessPaysEffect(1)), Subjects.otherCreaturesYouControl(), beastOrBird));
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardMinManaValuePredicate(5)),
                 new ChooseOneEffect(List.of(

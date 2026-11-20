@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -28,6 +28,6 @@ public class AngelicVoices extends Card {
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate()),
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.WHITE)))
                 ))),
-                new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES)));
+                new StaticBoostEffect(1, 1, Subjects.creaturesYouControl())));
     }
 }

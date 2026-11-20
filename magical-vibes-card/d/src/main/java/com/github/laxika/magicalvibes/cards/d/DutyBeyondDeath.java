@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "TDM", collectorNumber = "10")
@@ -17,7 +17,7 @@ public class DutyBeyondDeath extends Card {
 
     public DutyBeyondDeath() {
         addCastingCost(new SacrificeCreatureCost());
-        addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.otherCreaturesYouControl()));
         addSpellEffect(new PutCounterOnEachControlledPermanentEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, 1, new PermanentIsCreaturePredicate()));
     }

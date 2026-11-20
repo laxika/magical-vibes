@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostAndGrantKeywordToTriggeringAndSharingCreaturesUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,7 +30,7 @@ public class HauntedOne extends Card {
                 new TriggeredAbility(Triggers.becomesTapped(),
                         new BoostAndGrantKeywordToTriggeringAndSharingCreaturesUntilEndOfTurnEffect(
                                 2, 0, Set.of(Keyword.UNDYING))),
-                GrantScope.ALL_CREATURES,
+                Subjects.otherCreatures(),
                 commanderCreatureYouOwn));
     }
 }

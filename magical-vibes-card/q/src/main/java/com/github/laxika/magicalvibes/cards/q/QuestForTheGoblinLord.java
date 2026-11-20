@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,6 +25,6 @@ public class QuestForTheGoblinLord extends Card {
                         "Put a quest counter on Quest for the Goblin Lord?"));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.QUEST),
-                new StaticBoostEffect(2, 0, GrantScope.ALL_OWN_CREATURES)));
+                new StaticBoostEffect(2, 0, Subjects.creaturesYouControl())));
     }
 }

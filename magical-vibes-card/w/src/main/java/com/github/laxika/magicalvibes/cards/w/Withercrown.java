@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,7 +21,7 @@ public class Withercrown extends Card {
 
     public Withercrown() {
         target(TargetFilters.creature())
-                .addStaticEffect(new SetBasePowerToughnessEffect(0, null, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new SetBasePowerToughnessEffect(0, null, Subjects.attachedCreature()))
                 // Enchanted creature has "At the beginning of your upkeep, you lose 1 life unless you sacrifice
                 // this creature."
                 .addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(
@@ -32,6 +31,6 @@ public class Withercrown extends Card {
                                         "Sacrifice this creature", false),
                                 List.of(new LoseLifeEffect(1, Subjects.you())),
                                 true)),
-                        GrantScope.ENCHANTED_CREATURE));
+                        Subjects.attachedCreature()));
     }
 }

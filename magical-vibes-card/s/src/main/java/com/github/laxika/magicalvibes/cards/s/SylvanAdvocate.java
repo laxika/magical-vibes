@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "OGW", collectorNumber = "144")
@@ -17,8 +17,8 @@ public class SylvanAdvocate extends Card {
         ControlsPermanentCount sixLands = new ControlsPermanentCount(6, new PermanentIsLandPredicate());
 
         addStaticEffect(new ConditionalEffect(sixLands,
-                new StaticBoostEffect(2, 2, GrantScope.SELF)));
+                new StaticBoostEffect(2, 2, Subjects.source())));
         addStaticEffect(new ConditionalEffect(sixLands,
-                new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES, new PermanentIsLandPredicate())));
+                new StaticBoostEffect(2, 2, Subjects.otherCreaturesYouControl(), new PermanentIsLandPredicate())));
     }
 }

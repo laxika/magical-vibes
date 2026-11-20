@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -24,7 +24,7 @@ public class BearerOfMemory extends Card {
                 "{5}{G}",
                 List.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())
                 ),
                 "{5}{G}: Put a +1/+1 counter on target enchantment creature. It gains trample until end of turn.",
                 new PermanentPredicateTargetFilter(

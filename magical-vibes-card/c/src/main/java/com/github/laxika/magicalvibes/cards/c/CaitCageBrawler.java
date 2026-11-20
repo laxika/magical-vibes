@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.CaitCageBrawlerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "PIP", collectorNumber = "96")
@@ -19,7 +19,7 @@ public class CaitCageBrawler extends Card {
     public CaitCageBrawler() {
         // During your turn, Cait has indestructible.
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
 
         // Whenever Cait attacks, you and defending player each draw a card, then discard a card.
         // Cait gets two +1/+1 counters if your discard has the greatest mana value or is tied.

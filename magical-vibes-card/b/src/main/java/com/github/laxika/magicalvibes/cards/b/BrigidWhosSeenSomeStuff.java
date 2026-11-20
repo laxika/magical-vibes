@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -24,7 +24,7 @@ public class BrigidWhosSeenSomeStuff extends Card {
             addStaticEffect(new ConditionalEffect(
                     new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                             kithkin, new PermanentHasKeywordPredicate(keyword, true)))),
-                    new GrantKeywordEffect(keyword, GrantScope.ALL_OWN_CREATURES, kithkin)));
+                    new GrantKeywordEffect(keyword, Subjects.creaturesYouControl(), kithkin)));
         }
     }
 }

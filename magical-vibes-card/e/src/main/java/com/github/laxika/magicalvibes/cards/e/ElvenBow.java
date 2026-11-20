@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.AttachMatchingEquipmentToCrea
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -34,8 +34,8 @@ public class ElvenBow extends Card {
                                 new AttachMatchingEquipmentToCreatedPermanentEffect(
                                         new PermanentIsSourcePermanentPredicate())),
                         "Pay {2} to create an Elf Warrior token and attach Elven Bow to it?"));
-        addStaticEffect(new AttachedBoostEffect(new Fixed(1), new Fixed(2), GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new AttachedBoostEffect(new Fixed(1), new Fixed(2), Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.REACH, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -32,7 +31,7 @@ public class RayOfFrost extends Card {
                         new TapPermanentsEffect(Subjects.attached()))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         red,
-                        new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE),
+                        new LosesAllAbilitiesEffect(Subjects.attachedCreature()),
                         null))
                 .addStaticEffect(DoesntUntapEffect.enchanted());
     }

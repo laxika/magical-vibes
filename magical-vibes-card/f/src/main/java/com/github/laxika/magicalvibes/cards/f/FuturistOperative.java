@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -21,13 +20,13 @@ public class FuturistOperative extends Card {
 
     public FuturistOperative() {
         addStaticEffect(new ConditionalEffect(new SourceIsTapped(),
-                new GrantSubtypeEffect(CardSubtype.HUMAN, GrantScope.SELF, true)));
+                new GrantSubtypeEffect(CardSubtype.HUMAN, Subjects.source(), true)));
         addStaticEffect(new ConditionalEffect(new SourceIsTapped(),
-                new GrantSubtypeEffect(CardSubtype.CITIZEN, GrantScope.SELF)));
+                new GrantSubtypeEffect(CardSubtype.CITIZEN, Subjects.source())));
         addStaticEffect(new ConditionalEffect(new SourceIsTapped(),
-                new SetBasePowerToughnessEffect(1, 1, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(1, 1, Subjects.source())));
         addStaticEffect(new ConditionalEffect(new SourceIsTapped(),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(false, "{2}{U}",
                 List.of(new UntapPermanentsEffect(Subjects.source())),

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -35,7 +35,7 @@ public class TwistedEmbrace extends Card {
                 "Target must be an artifact or creature you control"
         )).addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentIsCreaturePredicate(),
-                new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
+                new StaticBoostEffect(1, 1, Subjects.attachedCreature()),
                 null
         ));
 

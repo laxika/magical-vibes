@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCompletedDungeon;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "AFR", collectorNumber = "16")
 public class GloomStalker extends Card {
 
     public GloomStalker() {
         addStaticEffect(new ConditionalEffect(new ControllerHasCompletedDungeon(),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.source())));
     }
 }

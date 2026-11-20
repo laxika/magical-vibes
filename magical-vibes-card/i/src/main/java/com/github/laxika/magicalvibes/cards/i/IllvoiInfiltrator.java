@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ public class IllvoiInfiltrator extends Card {
     public IllvoiInfiltrator() {
         addStaticEffect(new ConditionalEffect(
                 new ControllerCastTwoOrMoreSpellsThisTurn(new CardTruePredicate()),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect(1));
     }
 }

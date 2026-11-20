@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -24,7 +23,7 @@ public class FearlessSwashbuckler extends Card {
     public FearlessSwashbuckler() {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE,
-                GrantScope.OWN_PERMANENTS,
+                Subjects.otherPermanentsYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)
         ));
 

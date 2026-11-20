@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +24,7 @@ public class LeapOfFlame extends Card {
         addCastingCost(new RepeatableAdditionalManaCost(List.of("{U}{R}")));
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(1, 0))
-                .addSpellEffect(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE), GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE), Subjects.target()));
         addTrigger(Triggers.youCastThisSpell(),
                 TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{U}{R}")),
                 new CopyTriggeringSpellEffect().withCopies(new RepeatedAdditionalCostCount("{U}{R}")));

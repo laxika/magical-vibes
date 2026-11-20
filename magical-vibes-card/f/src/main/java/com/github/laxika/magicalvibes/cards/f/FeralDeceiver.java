@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.TopCardOfLibraryType;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -36,7 +35,7 @@ public class FeralDeceiver extends Card {
                                 new TopCardOfLibraryType(CardType.LAND),
                                 SequenceEffect.of(
                                         new BoostSelfEffect(2, 2),
-                                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)))),
+                                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())))),
                 "{2}: Reveal the top card of your library. If it's a land card, this creature gets "
                         + "+2/+2 and gains trample until end of turn. Activate only once each turn.",
                 1));

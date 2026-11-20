@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.Set;
@@ -17,6 +17,6 @@ public class GoblinTombRaider extends Card {
     public GoblinTombRaider() {
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(1, new PermanentIsArtifactPredicate()),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), Subjects.source())));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "SOI", collectorNumber = "26")
@@ -17,6 +17,6 @@ public class MilitantInquisitor extends Card {
         PermanentCount equipmentYouControl = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT), CountScope.CONTROLLER);
         addStaticEffect(new DynamicStaticBoostEffect(
-                equipmentYouControl, new Fixed(0), GrantScope.SELF));
+                equipmentYouControl, new Fixed(0), Subjects.source()));
     }
 }

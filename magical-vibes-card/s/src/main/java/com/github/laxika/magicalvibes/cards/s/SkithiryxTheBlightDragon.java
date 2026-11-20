@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "79")
@@ -24,7 +24,7 @@ public class SkithiryxTheBlightDragon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}",
-                List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.source())),
                 "{B}: Skithiryx, the Blight Dragon gains haste until end of turn."
         ));
         addActivatedAbility(new ActivatedAbility(

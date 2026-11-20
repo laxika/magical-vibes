@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,6 +26,6 @@ public class LotusguardDisciple extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))),
                 "Target must be a creature or Vehicle"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new GrantKeywordEffect(
-                        Set.of(Keyword.LIFELINK, Keyword.INDESTRUCTIBLE), GrantScope.TARGET));
+                        Set.of(Keyword.LIFELINK, Keyword.INDESTRUCTIBLE), Subjects.target()));
     }
 }

@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.amount.DistinctPermanentNamesAmongCo
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -30,7 +30,7 @@ public class GimbalGremlinProdigy extends Card {
     public GimbalGremlinProdigy() {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE,
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentIsArtifactPredicate()));
 
         PermanentAllOfPredicate artifactToken = new PermanentAllOfPredicate(List.of(

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -20,7 +19,7 @@ public class TheWondrousWasp extends Card {
         target(TargetFilters.creature(), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new TapPermanentsEffect(Subjects.target()),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET,
+                        new LosesAllAbilitiesEffect(Subjects.target(),
                                 Duration.WHILE_SOURCE_REMAINS));
     }
 }

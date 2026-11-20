@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "SOM", collectorNumber = "60")
@@ -17,7 +17,7 @@ public class DrossHopper extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeCreatureCost(), new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                List.of(new SacrificeCreatureCost(), new GrantKeywordEffect(Keyword.FLYING, Subjects.source())),
                 "Sacrifice a creature: Dross Hopper gains flying until end of turn."
         ));
     }

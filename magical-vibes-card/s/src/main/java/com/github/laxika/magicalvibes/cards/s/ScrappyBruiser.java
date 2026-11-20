@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ public class ScrappyBruiser extends Card {
         target(TargetFilters.attackingCreature(), 0, 1)
                 .addTrigger(Triggers.attacks(),
                         new BoostTargetCreatureEffect(2, 0),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()),
                         new ReturnTargetPermanentToHandAtEndOfCombatEffect());
     }
 }

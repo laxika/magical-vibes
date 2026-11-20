@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -103,7 +103,7 @@ public class GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler implements 
         }
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), null, entry.getControllerId(),
-                new GrantKeywordEffect(Set.of(keyword), GrantScope.TARGET),
+                new GrantKeywordEffect(Set.of(keyword), Subjects.target()),
                 target.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
     }
 

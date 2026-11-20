@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.layers;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.d.Dub;
 import com.github.laxika.magicalvibes.cards.e.ElvishChampion;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
@@ -111,7 +111,7 @@ class LayeredBoardCacheTest extends BaseCardTest {
         Card mutableBear = TestCards.mutableCard(bear);
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
 
-        mutableBear.addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
+        mutableBear.addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.source()));
 
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
     }
@@ -121,11 +121,11 @@ class LayeredBoardCacheTest extends BaseCardTest {
         // The card keeps the same number of abilities, so only their identities show the change.
         Permanent bear = add(player1, new GrizzlyBears());
         Card mutableBear = TestCards.mutableCard(bear);
-        mutableBear.addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
+        mutableBear.addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.source()));
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
 
         mutableBear.removeEffectsIf(GrantKeywordEffect.class::isInstance);
-        mutableBear.addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
+        mutableBear.addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source()));
 
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
         assertThat(gqs.hasKeyword(gd, bear, Keyword.TRAMPLE)).isTrue();
@@ -162,7 +162,7 @@ class LayeredBoardCacheTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isFalse();
 
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Test Grant",
-                null, player1.getId(), new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
+                null, player1.getId(), new GrantKeywordEffect(Keyword.FLYING, Subjects.target()),
                 bear.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
         assertThat(gqs.hasKeyword(gd, bear, Keyword.FLYING)).isTrue();
 

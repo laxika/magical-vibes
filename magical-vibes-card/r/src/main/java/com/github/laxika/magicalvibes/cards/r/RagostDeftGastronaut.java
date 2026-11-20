@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
@@ -27,9 +26,9 @@ public class RagostDeftGastronaut extends Card {
 
     public RagostDeftGastronaut() {
         addStaticEffect(new GrantSubtypeEffect(
-                CardSubtype.FOOD, GrantScope.OWN_PERMANENTS, false, new PermanentIsArtifactPredicate()));
+                CardSubtype.FOOD, Subjects.permanentsYouControl(), false, new PermanentIsArtifactPredicate()));
         addStaticEffect(new GrantActivatedAbilityEffect(
-                foodAbility(), GrantScope.OWN_PERMANENTS, new PermanentIsArtifactPredicate()));
+                foodAbility(), Subjects.permanentsYouControl(), new PermanentIsArtifactPredicate()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

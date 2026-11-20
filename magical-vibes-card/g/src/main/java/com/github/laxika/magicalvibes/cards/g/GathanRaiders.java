@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "FUT", collectorNumber = "99")
 @CardRegistration(set = "TSR", collectorNumber = "165")
@@ -16,6 +16,6 @@ public class GathanRaiders extends Card {
     public GathanRaiders() {
         addMorph("{0}", new DiscardCardTypeCost(null, null));
         addStaticEffect(new ConditionalEffect(new ControllerHandEmpty(),
-                new StaticBoostEffect(2, 2, GrantScope.SELF)));
+                new StaticBoostEffect(2, 2, Subjects.source())));
     }
 }

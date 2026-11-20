@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "101")
@@ -19,7 +19,7 @@ public class HellBentRaider extends Card {
                 null,
                 List.of(
                         new DiscardRandomCardCost(),
-                        new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.WHITE, GrantScope.SELF)
+                        new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.WHITE, Subjects.source())
                 ),
                 "Discard a card at random: This creature gains protection from white until end of turn."
         ));

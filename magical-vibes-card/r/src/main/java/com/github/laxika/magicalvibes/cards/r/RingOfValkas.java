@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +21,7 @@ public class RingOfValkas extends Card {
 
     public RingOfValkas() {
         // Equipped creature has haste.
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.attachedCreature()));
 
         // At the beginning of your upkeep, put a +1/+1 counter on equipped creature if it's red.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new PutCounterOnTargetPermanentEffect(

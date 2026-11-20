@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -36,6 +36,6 @@ public class RevivalOfTheAncestors extends Card {
                                 new PermanentControlledBySourceControllerPredicate()))));
         setSagaChapterTargetFilter(2, Set.of(TargetFilters.creatureYouControl()));
         addTrigger(Triggers.chapter(3), new GrantKeywordEffect(
-                Set.of(Keyword.TRAMPLE, Keyword.LIFELINK), GrantScope.ALL_OWN_CREATURES));
+                Set.of(Keyword.TRAMPLE, Keyword.LIFELINK), Subjects.creaturesYouControl()));
     }
 }

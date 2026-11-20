@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -39,6 +38,6 @@ public class ThievesGuildEnforcer extends Card {
                 new MillEffect(2, Subjects.eachOpponent()));
         addStaticEffect(new ConditionalEffect(
                         new OpponentGraveyardAtLeast(8),
-                        new StaticBoostEffect(2, 1, Set.of(Keyword.DEATHTOUCH), GrantScope.SELF)));
+                        new StaticBoostEffect(2, 1, Set.of(Keyword.DEATHTOUCH), Subjects.source())));
     }
 }

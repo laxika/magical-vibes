@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +20,7 @@ public class MerchantOfTruth extends Card {
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL), CreateTokenEffect.ofClueToken(1));
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.EXALTED,
-                GrantScope.OWN_PERMANENTS,
+                Subjects.otherPermanentsYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.CLUE)));
     }
 }

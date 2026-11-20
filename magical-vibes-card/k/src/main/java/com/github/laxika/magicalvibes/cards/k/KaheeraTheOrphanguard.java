@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.Set;
@@ -17,7 +17,7 @@ import java.util.Set;
 public class KaheeraTheOrphanguard extends Card {
 
     public KaheeraTheOrphanguard() {
-        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.VIGILANCE), GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.VIGILANCE), Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(
                         CardSubtype.CAT,
                         CardSubtype.ELEMENTAL,

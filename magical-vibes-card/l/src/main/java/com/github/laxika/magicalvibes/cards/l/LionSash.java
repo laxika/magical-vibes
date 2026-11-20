@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithConditionalEffectsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -40,9 +40,9 @@ public class LionSash extends Card {
         addStaticEffect(new AttachedBoostEffect(
                 new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
                 new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
 
-        addStaticEffect(new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF,
+        addStaticEffect(new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, Subjects.source(),
                 Duration.WHILE_ATTACHED));
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(

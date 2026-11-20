@@ -4,14 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ZNR", collectorNumber = "28")
 public class MesaLynx extends Card {
 
     public MesaLynx() {
         addStaticEffect(new ConditionalEffect(new NotControllerTurn(),
-                new StaticBoostEffect(0, 2, GrantScope.SELF)));
+                new StaticBoostEffect(0, 2, Subjects.source())));
     }
 }

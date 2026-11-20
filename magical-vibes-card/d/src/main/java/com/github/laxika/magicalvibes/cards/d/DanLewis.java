@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -34,11 +34,11 @@ public class DanLewis extends Card {
         ));
 
         addStaticEffect(new GrantSubtypeEffect(
-                CardSubtype.EQUIPMENT, GrantScope.ALL_PERMANENTS, false, noncreatureNonEquipmentArtifact));
+                CardSubtype.EQUIPMENT, Subjects.otherPermanents(), false, noncreatureNonEquipmentArtifact));
         addStaticEffect(new GrantEffectEffect(
-                new StaticBoostEffect(1, 0, GrantScope.EQUIPPED_CREATURE),
-                GrantScope.ALL_PERMANENTS, noncreatureNonEquipmentArtifact));
+                new StaticBoostEffect(1, 0, Subjects.attachedCreature()),
+                Subjects.otherPermanents(), noncreatureNonEquipmentArtifact));
         addStaticEffect(new GrantActivatedAbilityEffect(
-                new EquipActivatedAbility("{1}"), GrantScope.ALL_PERMANENTS, noncreatureNonEquipmentArtifact));
+                new EquipActivatedAbility("{1}"), Subjects.otherPermanents(), noncreatureNonEquipmentArtifact));
     }
 }

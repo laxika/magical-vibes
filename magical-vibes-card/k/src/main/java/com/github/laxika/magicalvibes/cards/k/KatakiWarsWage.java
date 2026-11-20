@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,9 +24,9 @@ public class KatakiWarsWage extends Card {
         // All artifacts have "At the beginning of your upkeep, sacrifice this artifact unless you pay {1}."
         TriggeredAbility payOrLose = new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                 new ForcedCostOrElseEffect(new PayManaCost("{1}"), List.of(new SacrificeSelfEffect()), true));
-        addStaticEffect(new GrantTriggeredAbilityEffect(payOrLose, GrantScope.ALL_PERMANENTS,
+        addStaticEffect(new GrantTriggeredAbilityEffect(payOrLose, Subjects.otherPermanents(),
                 new PermanentIsArtifactPredicate()));
-        addStaticEffect(new GrantTriggeredAbilityEffect(payOrLose, GrantScope.SELF,
+        addStaticEffect(new GrantTriggeredAbilityEffect(payOrLose, Subjects.source(),
                 new PermanentIsArtifactPredicate()));
     }
 }

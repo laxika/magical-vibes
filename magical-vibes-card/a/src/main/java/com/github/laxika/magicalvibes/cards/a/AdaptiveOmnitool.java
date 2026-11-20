@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +22,7 @@ public class AdaptiveOmnitool extends Card {
         PermanentCount artifactsYouControl =
                 new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER);
         addStaticEffect(new DynamicStaticBoostEffect(
-                artifactsYouControl, artifactsYouControl, GrantScope.EQUIPPED_CREATURE));
+                artifactsYouControl, artifactsYouControl, Subjects.attachedCreature()));
         addTrigger(Triggers.attacks(),
                 LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(
                         6, new CardTypePredicate(CardType.ARTIFACT)));

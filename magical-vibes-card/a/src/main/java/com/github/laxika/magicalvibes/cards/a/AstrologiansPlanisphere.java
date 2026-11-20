@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -30,16 +30,16 @@ public class AstrologiansPlanisphere extends Card {
                 new LivingWeaponEffect(new CreateTokenEffect("Hero", 1, 1, null,
                         List.of(CardSubtype.HERO), Set.of(), Set.of())));
 
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.WIZARD, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.WIZARD, Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.youCastSpell()
                                         .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
                                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
-                        GrantScope.EQUIPPED_CREATURE));
+                        Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.youDrawNthCardEachTurn(3),
                                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)),
-                        GrantScope.EQUIPPED_CREATURE));
+                        Subjects.attachedCreature()));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

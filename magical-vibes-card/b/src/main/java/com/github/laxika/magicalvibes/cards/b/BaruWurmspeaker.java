@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class BaruWurmspeaker extends Card {
         PermanentHasSubtypePredicate wurms = new PermanentHasSubtypePredicate(CardSubtype.WURM);
 
         addStaticEffect(new StaticBoostEffect(2, 2, Set.of(Keyword.TRAMPLE),
-                GrantScope.ALL_OWN_CREATURES, wurms));
+                Subjects.creaturesYouControl(), wurms));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

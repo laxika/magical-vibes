@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "POR", collectorNumber = "190")
 public class TreetopDefense extends Card {
@@ -15,6 +15,6 @@ public class TreetopDefense extends Card {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.DECLARE_ATTACKERS_IF_ATTACKED);
 
         // Creatures you control gain reach until end of turn.
-        addSpellEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.REACH, Subjects.otherCreaturesYouControl()));
     }
 }

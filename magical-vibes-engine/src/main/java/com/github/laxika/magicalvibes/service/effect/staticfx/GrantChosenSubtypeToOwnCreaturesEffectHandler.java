@@ -24,7 +24,7 @@ public class GrantChosenSubtypeToOwnCreaturesEffectHandler implements StaticEffe
         var grant = (GrantChosenSubtypeToOwnCreaturesEffect) effect;
         CardSubtype chosenSubtype = context.source().getChosenSubtype();
         if (chosenSubtype == null) return;
-        if (support.namesBeyondSource(context, grant.scope().subject(), grant.filter())) {
+        if (support.namesBeyondSource(context, grant.subject(), grant.filter())) {
             if (grant.overriding()) accumulator.setSubtypeOverriding(true);
             accumulator.addGrantedSubtype(chosenSubtype);
         }

@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -34,15 +34,15 @@ public class HeroOfBretagard extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.PLUS_ONE_PLUS_ONE),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.PLUS_ONE_PLUS_ONE),
-                new GrantSubtypeEffect(CardSubtype.ANGEL, GrantScope.SELF)));
+                new GrantSubtypeEffect(CardSubtype.ANGEL, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(10, CounterType.PLUS_ONE_PLUS_ONE),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(10, CounterType.PLUS_ONE_PLUS_ONE),
-                new GrantSubtypeEffect(CardSubtype.GOD, GrantScope.SELF)));
+                new GrantSubtypeEffect(CardSubtype.GOD, Subjects.source())));
     }
 }

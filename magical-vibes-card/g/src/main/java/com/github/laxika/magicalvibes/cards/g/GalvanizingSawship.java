@@ -14,9 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
@@ -40,12 +40,12 @@ public class GalvanizingSawship extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.CHARGE),
                 new AnimatePermanentsEffect((DynamicAmount) null, (DynamicAmount) null, List.of(), Set.of(), null,
-                        Set.of(CardType.CREATURE), GrantScope.SELF, Duration.STATIC, null)));
+                        Set.of(CardType.CREATURE), Subjects.source(), Duration.STATIC, null)));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.CHARGE),
-                new SetBasePowerToughnessEffect(6, 5, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(6, 5, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.CHARGE),
-                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.HASTE), GrantScope.SELF)));
+                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.HASTE), Subjects.source())));
     }
 }

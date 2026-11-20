@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "HBG", collectorNumber = "92")
@@ -21,7 +21,7 @@ public class HornOfValhalla extends Card {
         PermanentCount creaturesYouControl = new PermanentCount(
                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addStaticEffect(new AttachedBoostEffect(
-                creaturesYouControl, creaturesYouControl, GrantScope.EQUIPPED_CREATURE));
+                creaturesYouControl, creaturesYouControl, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 

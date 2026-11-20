@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -33,7 +33,7 @@ public class ArcoFlagellant extends Card {
                 null,
                 List.of(
                         new PayLifeCost(3),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())
                 ),
                 "Pay 3 life: Arco-Flagellant gains indestructible until end of turn."
         ));

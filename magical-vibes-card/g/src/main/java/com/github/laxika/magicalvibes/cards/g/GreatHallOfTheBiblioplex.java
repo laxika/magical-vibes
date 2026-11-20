@@ -15,10 +15,10 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -47,7 +47,7 @@ public class GreatHallOfTheBiblioplex extends Card {
                 new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.youCastSpell()
                                 .withFilter(INSTANT_OR_SORCERY),
                         new BoostSelfEffect(1, 0)),
-                        GrantScope.SELF)));
+                        Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -55,7 +55,7 @@ public class GreatHallOfTheBiblioplex extends Card {
                 List.of(new ConditionalEffect(
                         new NotCondition(new SourceIsCreature()),
                         new AnimatePermanentsEffect(2, 4, List.of(CardSubtype.WIZARD), Set.of(), null,
-                                Set.of(), GrantScope.SELF, Duration.PERMANENT))),
+                                Set.of(), Subjects.source(), Duration.PERMANENT))),
                 "{5}: If this land isn't a creature, it becomes a 2/4 Wizard creature with \"Whenever you cast an instant or sorcery spell, this creature gets +1/+0 until end of turn.\" It's still a land."
         ));
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.COLORLESS));

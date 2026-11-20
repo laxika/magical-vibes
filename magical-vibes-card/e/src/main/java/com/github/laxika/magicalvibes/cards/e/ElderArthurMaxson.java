@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class ElderArthurMaxson extends Card {
 
     public ElderArthurMaxson() {
         // Creature tokens you control have training.
-        addStaticEffect(new GrantKeywordEffect(Keyword.TRAINING, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAINING, Subjects.creaturesYouControl(),
                         new PermanentIsTokenPredicate()));
 
         // Sacrifice another creature: Elder Arthur Maxson gains indestructible until end of turn.
@@ -28,7 +28,7 @@ public class ElderArthurMaxson extends Card {
                 null,
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())
                 ),
                 "Sacrifice another creature: Elder Arthur Maxson gains indestructible until end of turn."
         ));

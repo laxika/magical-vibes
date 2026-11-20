@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CantBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
 
 /**
@@ -31,6 +31,6 @@ public class ChaosImps extends Card {
         // This creature has trample as long as it has a +1/+1 counter on it.
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.PLUS_ONE_PLUS_ONE),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
     }
 }

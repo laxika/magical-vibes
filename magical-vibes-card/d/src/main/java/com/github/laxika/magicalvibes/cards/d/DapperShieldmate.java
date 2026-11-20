@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SNC", collectorNumber = "9")
 public class DapperShieldmate extends Card {
@@ -16,6 +16,6 @@ public class DapperShieldmate extends Card {
     public DapperShieldmate() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.SHIELD, new Fixed(1)));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new StaticBoostEffect(2, 0, GrantScope.SELF)));
+                new StaticBoostEffect(2, 0, Subjects.source())));
     }
 }

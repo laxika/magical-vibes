@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "111")
@@ -19,7 +19,7 @@ public class GobhobblerRats extends Card {
     public GobhobblerRats() {
         addStaticEffect(new ConditionalEffect(
                 new ControllerHandEmpty(),
-                new StaticBoostEffect(1, 0, GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new ControllerHandEmpty(),
                 new GrantActivatedAbilityEffect(
@@ -28,6 +28,6 @@ public class GobhobblerRats extends Card {
                                 "{B}",
                                 List.of(new RegenerateEffect()),
                                 "{B}: Regenerate this creature."),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

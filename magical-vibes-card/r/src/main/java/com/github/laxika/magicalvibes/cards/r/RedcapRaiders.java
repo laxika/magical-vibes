@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -28,7 +28,7 @@ public class RedcapRaiders extends Card {
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HUMAN))))),
                 SequenceEffect.of(
                         new BoostSelfEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())),
                 "Tap an untapped non-Human creature you control?"));
     }
 }

@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerExtraTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -36,10 +36,10 @@ public class LighthouseChronologist extends Card {
                 new AllOf(List.of(
                         new SourceCounterThreshold(4, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(7, CounterType.LEVEL)))),
-                new SetBasePowerToughnessEffect(2, 4, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(2, 4, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(7, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(3, 5, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(3, 5, Subjects.source())));
         addTrigger(Triggers.endStep(ActivePlayer.ANY), TriggerOptions.DEFAULT.withEventCondition(
                 new AllOf(List.of(
                         new NotControllerTurn(),

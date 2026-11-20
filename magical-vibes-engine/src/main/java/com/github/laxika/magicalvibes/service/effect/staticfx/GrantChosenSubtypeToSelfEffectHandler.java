@@ -33,7 +33,7 @@ public class GrantChosenSubtypeToSelfEffectHandler implements StaticEffectHandle
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantChosenSubtypeToOwnCreaturesEffect) effect;
-        if (!(grant.scope().subject() instanceof PermanentSubject.Source)) return;
+        if (!(grant.subject() instanceof PermanentSubject.Source)) return;
         CardSubtype chosenSubtype = context.source().getChosenSubtype();
         if (chosenSubtype == null) return;
         if (!support.matchesStaticFilter(context, context.source(), grant.filter())) return;

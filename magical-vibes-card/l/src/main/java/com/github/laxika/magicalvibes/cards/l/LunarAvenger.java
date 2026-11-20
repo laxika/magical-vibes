@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "5DN", collectorNumber = "136")
@@ -26,7 +26,7 @@ public class LunarAvenger extends Card {
                         new RemoveCounterFromSourceCost(1, CounterType.PLUS_ONE_PLUS_ONE),
                         new GrantChosenKeywordEffect(
                                 List.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.HASTE),
-                                GrantScope.SELF)
+                                Subjects.source())
                 ),
                 "Remove a +1/+1 counter from this creature: This creature gains your choice of flying, first strike, or haste until end of turn."
         ));

@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "M13", collectorNumber = "200")
@@ -22,9 +22,9 @@ public class AkromasMemorial extends Card {
     public AkromasMemorial() {
         addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.VIGILANCE, Keyword.TRAMPLE, Keyword.HASTE),
-                GrantScope.ALL_OWN_CREATURES));
+                Subjects.creaturesYouControl()));
         addStaticEffect(new GrantEffectEffect(
                 new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.RED)),
-                GrantScope.ALL_OWN_CREATURES));
+                Subjects.creaturesYouControl()));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class ViashinoShanktail extends Card {
         // Bloodrush — {2}{R}, Discard this card: Target attacking creature gets +3/+1 and gains first strike until end of turn.
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}{R}",
                 List.of(new BoostTargetCreatureEffect(3, 1),
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET)),
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target())),
                 "Bloodrush — {2}{R}, Discard this card: Target attacking creature gets +3/+1 and gains first strike until end of turn.",
                 TargetFilters.attackingCreature()));
     }

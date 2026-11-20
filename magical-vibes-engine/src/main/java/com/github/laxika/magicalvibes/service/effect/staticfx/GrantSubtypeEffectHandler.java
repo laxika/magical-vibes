@@ -22,7 +22,7 @@ public class GrantSubtypeEffectHandler implements StaticEffectHandlerBean {
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantSubtypeEffect) effect;
         boolean matches = support.namesBeyondSource(context,
-                StaticEffectSupport.withAllPermanentsIncludingSource(grant.scope()), grant.filter());
+                grant.subject(), grant.filter());
         if (matches) {
             accumulator.addGrantedSubtype(grant.subtype());
             if (grant.overriding()) {

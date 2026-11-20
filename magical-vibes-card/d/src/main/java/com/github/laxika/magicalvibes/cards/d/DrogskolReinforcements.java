@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "VOC", collectorNumber = "5")
@@ -15,7 +15,7 @@ public class DrogskolReinforcements extends Card {
 
     public DrogskolReinforcements() {
         // Other Spirits you control have melee.
-        addStaticEffect(new GrantKeywordEffect(Keyword.MELEE, GrantScope.OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.MELEE, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)));
 
         // Prevent all noncombat damage that would be dealt to Spirits you control.

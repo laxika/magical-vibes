@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.service;
 
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReboundCastFromExileEffectHandler;
 import com.github.laxika.magicalvibes.model.Card;
@@ -434,13 +434,13 @@ public class StackResolutionService {
         // Keywords the spell grants the permanent as it enters (Choreographed Sparks' hasty copy).
         if (!entry.getGrantedKeywordsOnEntry().isEmpty()) {
             gameData.addEffectOnPermanent(card.getName(), null, entry.getControllerId(),
-                    new GrantKeywordEffect(Set.copyOf(entry.getGrantedKeywordsOnEntry()), GrantScope.TARGET),
+                    new GrantKeywordEffect(Set.copyOf(entry.getGrantedKeywordsOnEntry()), Subjects.target()),
                     perm.getId(), Duration.UNTIL_END_OF_TURN);
         }
         // Keywords granted until the controller's next turn while the spell was on the stack (Jade Orb's hexproof).
         if (!entry.getUntilNextTurnKeywordsOnEntry().isEmpty()) {
             gameData.addEffectOnPermanent(card.getName(), null, entry.getControllerId(),
-                    new GrantKeywordEffect(Set.copyOf(entry.getUntilNextTurnKeywordsOnEntry()), GrantScope.TARGET,
+                    new GrantKeywordEffect(Set.copyOf(entry.getUntilNextTurnKeywordsOnEntry()), Subjects.target(),
                             Duration.UNTIL_YOUR_NEXT_TURN),
                     perm.getId(), Duration.UNTIL_YOUR_NEXT_TURN);
         }
@@ -527,7 +527,7 @@ public class StackResolutionService {
             gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), permanent.getId(), controllerId,
                     new com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect(
-                            Keyword.HASTE, com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET,
+                            Keyword.HASTE, com.github.laxika.magicalvibes.model.effect.Subjects.target(),
                             Duration.UNTIL_CONTROL_LOST),
                     permanent.getId(), null, null, Duration.UNTIL_CONTROL_LOST, 0));
         }

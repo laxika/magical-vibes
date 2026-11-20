@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSuspectedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -33,6 +33,6 @@ public class AgrusKosSpiritOfJustice extends Card {
     private ConditionalEffect suspectIfNotSuspected() {
         return new ConditionalEffect(
                 new NotCondition(new TargetPermanentMatches(new PermanentIsSuspectedPredicate())),
-                new SuspectEffect(GrantScope.TARGET));
+                new SuspectEffect(Subjects.target()));
     }
 }

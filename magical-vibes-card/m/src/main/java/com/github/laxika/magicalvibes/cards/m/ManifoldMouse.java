@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -40,8 +40,8 @@ public class ManifoldMouse extends Card {
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                         new ChooseOneForTargetCreatureEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption("Double strike",
-                                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET)),
+                                        new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target())),
                                 new ChooseOneEffect.ChooseOneOption("Trample",
-                                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)))));
+                                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())))));
     }
 }

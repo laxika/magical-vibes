@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ONE", collectorNumber = "158")
@@ -27,6 +27,6 @@ public class ArmoredScrapgorger extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.OIL),
-                new StaticBoostEffect(3, 0, GrantScope.SELF)));
+                new StaticBoostEffect(3, 0, Subjects.source())));
     }
 }

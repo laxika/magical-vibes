@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "GRN", collectorNumber = "117")
@@ -16,6 +16,6 @@ public class StreetRiot extends Card {
     public StreetRiot() {
         addStaticEffect(new ConditionalEffect(
                 new ControllerTurn(),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE), GrantScope.ALL_OWN_CREATURES)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE), Subjects.creaturesYouControl())));
     }
 }

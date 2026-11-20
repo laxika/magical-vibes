@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDamagedCreatureDeathTriggerEffect;
@@ -20,7 +19,7 @@ public class TouchOfMoonglove extends Card {
         // creature dealt damage by that creature dies this turn, its controller loses 2 life."
         target(TargetFilters.creatureYouControl())
                 .addSpellEffect(new BoostTargetCreatureEffect(1, 0))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target()))
                 .addSpellEffect(RegisterDelayedDamagedCreatureDeathTriggerEffect.byTargetCreature(
                         new LoseLifeEffect(2, Subjects.controllerOf(Subjects.triggering()))));
     }

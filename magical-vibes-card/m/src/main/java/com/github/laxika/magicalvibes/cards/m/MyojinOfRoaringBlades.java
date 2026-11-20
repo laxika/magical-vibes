@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "NEC", collectorNumber = "36")
@@ -28,7 +28,7 @@ public class MyojinOfRoaringBlades extends Card {
                 new EnterWithCountersEffect(CounterType.INDESTRUCTIBLE, new Fixed(1))));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.INDESTRUCTIBLE),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetBasePowerToughnessToAmountUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -34,7 +34,7 @@ public class MinscBelovedRanger extends Card {
                 "{X}",
                 List.of(
                         new SetTargetBasePowerToughnessToAmountUntilEndOfTurnEffect(new XValue(), new XValue()),
-                        new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.GIANT, GrantScope.TARGET)),
+                        new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.GIANT, Subjects.target())),
                 "{X}: Until end of turn, target creature you control has base power and toughness X/X and becomes a Giant in addition to its other types. Activate only as a sorcery.",
                 TargetFilters.creatureYouControl(),
                 null,

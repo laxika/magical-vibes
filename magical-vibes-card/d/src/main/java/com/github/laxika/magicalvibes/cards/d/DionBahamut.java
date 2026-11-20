@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.cards.b.BahamutWardenOfLight;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -31,9 +31,9 @@ public class DionBahamut extends Card {
         setBackFaceCard(new BahamutWardenOfLight());
 
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES,
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.otherCreaturesYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.KNIGHT))));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 "Knight", 2, 2, CardColor.WHITE,

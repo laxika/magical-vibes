@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ISD", collectorNumber = "137")
 @CardRegistration(set = "MB1", collectorNumber = "90")
@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 public class CurseOfTheNightlyHunt extends Card {
 
     public CurseOfTheNightlyHunt() {
-        addStaticEffect(new MustAttackEffect(GrantScope.ENCHANTED_PLAYER_CREATURES));
+        addStaticEffect(new MustAttackEffect(Subjects.creaturesEnchantedPlayerControls()));
     }
 }

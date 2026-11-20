@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfSourceCardIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -34,13 +34,13 @@ public class SolitaryStudyEndlessCorridor extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(0),
-                new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES)));
+                new StaticBoostEffect(1, 0, Subjects.creaturesYouControl())));
 
         var creatureYouControl = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentControlledBySourceControllerPredicate()));
         GrantKeywordEffect firstStrike = new GrantKeywordEffect(
-                Keyword.FIRST_STRIKE, GrantScope.TARGET, creatureYouControl);
+                Keyword.FIRST_STRIKE, Subjects.target(), creatureYouControl);
         addTrigger(Triggers.doorUnlocked(1),
                 SequenceEffect.of(
                         new ConjureDuplicateOfSourceCardIntoHandEffect("YDSK", "4"),

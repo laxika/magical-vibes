@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -24,6 +24,6 @@ public class BloodfireEnforcers extends Card {
                 new AllConditions(List.of(
                         new GraveyardCardThreshold(1, new CardTypePredicate(CardType.INSTANT)),
                         new GraveyardCardThreshold(1, new CardTypePredicate(CardType.SORCERY)))),
-                new StaticBoostEffect(0, 0, Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE), GrantScope.SELF)));
+                new StaticBoostEffect(0, 0, Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE), Subjects.source())));
     }
 }

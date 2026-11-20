@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -32,6 +31,6 @@ public class CaptainAmericaTeamLeader extends Card {
                                 Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
                         new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.HASTE),
-                                GrantScope.TRIGGERING_PERMANENT)));
+                                Subjects.triggering())));
     }
 }

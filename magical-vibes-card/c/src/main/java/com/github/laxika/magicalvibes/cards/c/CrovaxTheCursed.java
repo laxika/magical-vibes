@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MaySacrificePermanentForCounterOrRemoveSourceCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -35,7 +35,7 @@ public class CrovaxTheCursed extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}",
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.FLYING, Subjects.source())),
                 "{B}: Crovax gains flying until end of turn."
         ));
     }

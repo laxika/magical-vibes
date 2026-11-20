@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 @CardRegistration(set = "MPS", collectorNumber = "7")
@@ -25,10 +25,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicat
 public class ChampionsHelm extends Card {
 
     public ChampionsHelm() {
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()));
         addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.EQUIPPED_CREATURE),
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.attachedCreature()),
                 null));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -34,7 +33,7 @@ public class SorinSolemnVisitor extends Card {
                 +1,
                 List.of(
                         new BoostAllOwnCreaturesEffect(1, 0, Duration.UNTIL_YOUR_NEXT_TURN),
-                        new GrantKeywordEffect(Set.of(Keyword.LIFELINK), GrantScope.ALL_OWN_CREATURES,
+                        new GrantKeywordEffect(Set.of(Keyword.LIFELINK), Subjects.creaturesYouControl(),
                                 Duration.UNTIL_YOUR_NEXT_TURN)
                 ),
                 "+1: Until your next turn, creatures you control get +1/+0 and gain lifelink."

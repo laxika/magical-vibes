@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -29,7 +28,7 @@ public class SentinelSarahLyons extends Card {
     public SentinelSarahLyons() {
         addStaticEffect(new ConditionalEffect(
                 new PermanentEnteredThisTurn(new CardTypePredicate(CardType.ARTIFACT), 1),
-                new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES)));
+                new StaticBoostEffect(2, 2, Subjects.creaturesYouControl())));
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),

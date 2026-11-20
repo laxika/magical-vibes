@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "72")
@@ -28,15 +28,15 @@ public class HalimarWavewatch extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addStaticEffect(new RemoveKeywordEffect(Keyword.ISLANDWALK, GrantScope.SELF));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.ISLANDWALK, Subjects.source()));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(0, 6, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(0, 6, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(6, 6, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(6, 6, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.LEVEL),
-                new GrantKeywordEffect(Keyword.ISLANDWALK, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.ISLANDWALK, Subjects.source())));
     }
 }

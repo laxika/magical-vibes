@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -36,7 +36,7 @@ public class LilianasTalent extends Card {
                                 .returnAll(true)
                                 .build()),
                         "-8: Put all creature cards from all graveyards onto the battlefield under your control."),
-                GrantScope.ENCHANTED_PERMANENT,
+                Subjects.attached(),
                 new PermanentIsPlaneswalkerPredicate()));
 
         addTrigger(Triggers.creatureDealsDamageToEnchantedPlaneswalker(),

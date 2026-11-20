@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.EnchantedPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,6 +20,6 @@ public class SpectralCloak extends Card {
                         new EnchantedPermanentMatches(
                                 new PermanentNotPredicate(new PermanentIsTappedPredicate()),
                                 "enchanted creature is untapped"),
-                        new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ENCHANTED_CREATURE)));
+                        new GrantKeywordEffect(Keyword.SHROUD, Subjects.attachedCreature())));
     }
 }

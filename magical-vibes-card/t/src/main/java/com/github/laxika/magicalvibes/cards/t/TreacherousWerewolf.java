@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,8 +18,8 @@ public class TreacherousWerewolf extends Card {
     public TreacherousWerewolf() {
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);
         addStaticEffect(new ConditionalEffect(threshold,
-                new StaticBoostEffect(2, 2, GrantScope.SELF)));
+                new StaticBoostEffect(2, 2, Subjects.source())));
         addStaticEffect(new ConditionalEffect(threshold,
-                new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new LoseLifeEffect(4)), GrantScope.SELF)));
+                new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new LoseLifeEffect(4)), Subjects.source())));
     }
 }

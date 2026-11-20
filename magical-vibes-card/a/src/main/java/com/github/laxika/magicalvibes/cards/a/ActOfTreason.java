@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "M10", collectorNumber = "124")
@@ -32,6 +31,6 @@ public class ActOfTreason extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new UntapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.target()));
     }
 }

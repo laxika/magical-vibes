@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherControlledTokensBecomeCopyOfChosenTokenUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,7 +31,7 @@ public class BrudicladTelchorEngineer extends Card {
 
     public BrudicladTelchorEngineer() {
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.HASTE, GrantScope.ALL_OWN_CREATURES, new PermanentIsTokenPredicate()));
+                Keyword.HASTE, Subjects.creaturesYouControl(), new PermanentIsTokenPredicate()));
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                 new CreateTokenEffect(
                         1, "Phyrexian Myr", 2, 1, CardColor.BLUE,

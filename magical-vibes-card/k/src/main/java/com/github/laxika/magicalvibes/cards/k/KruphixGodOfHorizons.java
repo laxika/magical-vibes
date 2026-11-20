@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceManaDrainWithColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "JOU", collectorNumber = "152")
@@ -23,7 +23,7 @@ public class KruphixGodOfHorizons extends Card {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorsAtLeast(
                         Set.of(ManaColor.GREEN, ManaColor.BLUE), 7)),
-                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
+                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), Subjects.source())));
         addStaticEffect(new NoMaximumHandSizeEffect());
         addStaticEffect(new ReplaceManaDrainWithColorlessEffect());
     }

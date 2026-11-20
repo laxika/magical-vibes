@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
@@ -27,10 +26,10 @@ public class SwordOfFeastAndFamine extends Card {
 
     public SwordOfFeastAndFamine() {
         // Static: equipped creature gets +2/+2
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()));
 
         // Static: equipped creature has protection from black and from green
-        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.GREEN), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.GREEN), Subjects.attachedCreature()));
 
         // Triggered: whenever equipped creature deals combat damage to a player,
         // that player discards a card and you untap all lands you control

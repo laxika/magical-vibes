@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +22,7 @@ public class InvasionOfKylem extends Card {
         target(TargetFilters.creature(), 0, 2)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new BoostTargetCreatureEffect(2, 0),
-                        new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.HASTE), GrantScope.TARGET));
+                        new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.HASTE), Subjects.target()));
     }
 
     @Override

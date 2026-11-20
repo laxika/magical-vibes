@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -37,7 +37,7 @@ public class Oliphaunt extends Card {
         ))
                 .addTrigger(Triggers.attacks(),
                         new BoostTargetCreatureEffect(2, 0, anotherCreature),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET, anotherCreature));
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target(), anotherCreature));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}",
                 List.of(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.MOUNTAIN))),

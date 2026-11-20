@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,7 +13,7 @@ public class FangrenPathcutter extends Card {
 
     public FangrenPathcutter() {
         addTrigger(Triggers.attacks(), new GrantKeywordEffect(
-                Keyword.TRAMPLE, GrantScope.ALL_CREATURES, new PermanentIsAttackingPredicate()
+                Keyword.TRAMPLE, Subjects.allCreatures(), new PermanentIsAttackingPredicate()
         ));
     }
 }

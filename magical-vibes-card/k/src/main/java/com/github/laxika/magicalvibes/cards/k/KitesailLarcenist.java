@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -45,11 +45,11 @@ public class KitesailLarcenist extends Card {
         target(new PermanentPredicateTargetFilter(targetFilter,
                 "Target must be another artifact or creature"), 0, 99)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.TARGET,
+                        new SetCardTypesEffect(Set.of(CardType.ARTIFACT), Subjects.target(),
                                 Duration.WHILE_SOURCE_REMAINS),
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.TREASURE,
                                 Duration.WHILE_SOURCE_REMAINS, true),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET,
+                        new LosesAllAbilitiesEffect(Subjects.target(),
                                 Duration.WHILE_SOURCE_REMAINS),
                         new GrantActivatedAbilityEffect(
                                 new ActivatedAbility(
@@ -58,7 +58,7 @@ public class KitesailLarcenist extends Card {
                                         List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),
                                         "{T}, Sacrifice this artifact: Add one mana of any color."
                                 ),
-                                GrantScope.TARGET,
+                                Subjects.target(),
                                 null,
                                 Duration.WHILE_SOURCE_REMAINS));
     }

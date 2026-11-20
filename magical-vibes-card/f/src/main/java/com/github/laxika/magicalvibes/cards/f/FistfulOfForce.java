@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ClashEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LRW", collectorNumber = "212")
@@ -25,6 +25,6 @@ public class FistfulOfForce extends Card {
                 .addSpellEffect(new ConditionalEffect(new WonClash(),
                         new BoostTargetCreatureEffect(2, 2)))
                 .addSpellEffect(new ConditionalEffect(new WonClash(),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)));
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())));
     }
 }

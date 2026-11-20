@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -23,7 +22,7 @@ public class DeepchannelDuelist extends Card {
     public DeepchannelDuelist() {
         var merfolk = new PermanentHasSubtypePredicate(CardSubtype.MERFOLK);
 
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, merfolk));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(), merfolk));
 
         var controlledMerfolk = new PermanentAllOfPredicate(List.of(
                 merfolk,

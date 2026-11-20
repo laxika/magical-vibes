@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "DFT", collectorNumber = "115")
@@ -19,6 +19,6 @@ public class BurnoutBashtronaut extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(new BoostSelfEffect(1, 0)),
                 "{2}: This creature gets +1/+0 until end of turn."));
         addStaticEffect(new ConditionalEffect(new MaxSpeed(),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.source())));
     }
 }

@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -31,6 +31,6 @@ public class AntarcticResearchBase extends Card {
                         new PutCounterOnTargetPermanentEffect(
                                 CounterType.PLUS_ONE_PLUS_ONE,
                                 artifactsYouControl),
-                        new GrantSubtypeEffect(CardSubtype.PLANT, GrantScope.TARGET)));
+                        new GrantSubtypeEffect(CardSubtype.PLANT, Subjects.target())));
     }
 }

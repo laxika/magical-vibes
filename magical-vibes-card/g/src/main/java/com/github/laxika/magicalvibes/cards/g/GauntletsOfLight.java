@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -18,8 +17,8 @@ public class GauntletsOfLight extends Card {
 
     public GauntletsOfLight() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(0, 2, GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new AssignCombatDamageWithToughnessEffect(GrantScope.ENCHANTED_CREATURE, true))
+                .addStaticEffect(new StaticBoostEffect(0, 2, Subjects.attachedCreature()))
+                .addStaticEffect(new AssignCombatDamageWithToughnessEffect(Subjects.attachedCreature(), true))
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 false,
@@ -27,7 +26,7 @@ public class GauntletsOfLight extends Card {
                                 List.of(new UntapPermanentsEffect(Subjects.source())),
                                 "{2}{W}: Untap this creature."
                         ),
-                        GrantScope.ENCHANTED_CREATURE
+                        Subjects.attachedCreature()
                 ));
     }
 }

@@ -36,7 +36,7 @@ public class GainKeywordsOfCardsExiledWithSourceToEquippedCreatureEffectHandler
 
             for (CardEffect staticEffect : card.getStaticEffects()) {
                 if (staticEffect instanceof ProtectionGrantingEffect protection
-                        && protection.protectionScope() == null) {
+                        && protection.protectionSubject() == null) {
                     accumulator.addGrantedEffect(staticEffect);
                 } else if (staticEffect instanceof TargetingRestrictionEffect restriction
                         && restriction.hexproofLike()) {

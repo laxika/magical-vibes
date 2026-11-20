@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -42,10 +41,10 @@ public class AbuelosAwakening extends Card {
                 .filter(artifactOrNonAuraEnchantment)
                 .targetGraveyard(true)
                 .battlefieldEffectGrants(List.of(
-                        new GrantCardTypeEffect(CardType.CREATURE, GrantScope.TARGET),
-                        new GrantSubtypeEffect(CardSubtype.SPIRIT, GrantScope.TARGET),
+                        new GrantCardTypeEffect(CardType.CREATURE, Subjects.target()),
+                        new GrantSubtypeEffect(CardSubtype.SPIRIT, Subjects.target()),
                         SetBasePowerToughnessEffect.indefinitely(1, 1),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET, Duration.PERMANENT)))
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target(), Duration.PERMANENT)))
                 .build());
         addSpellEffect(new PutCounterOnTargetPermanentEffect(
                 Subjects.returned(), CounterType.PLUS_ONE_PLUS_ONE, new XValue()));

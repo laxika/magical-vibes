@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -43,7 +42,7 @@ public class SilverquillCommand extends Card {
                         "Target creature gets +3/+3 and gains flying until end of turn",
                         List.of(
                                 new BoostTargetCreatureEffect(3, 3),
-                                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.FLYING, Subjects.target())),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Return target creature card with mana value 2 or less from your graveyard to the battlefield",

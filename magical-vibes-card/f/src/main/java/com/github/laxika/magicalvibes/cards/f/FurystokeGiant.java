@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class FurystokeGiant extends Card {
                         List.of(new DealDamageToAnyTargetEffect(2)),
                         "{T}: This creature deals 2 damage to any target."
                 ),
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 null,
                 Duration.UNTIL_END_OF_TURN
         ));

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BolsterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
@@ -36,11 +36,11 @@ public class GleamOfAuthority extends Card {
         addStaticEffect(new AttachedBoostEffect(
                 countersOnOtherCreaturesYouControl,
                 countersOnOtherCreaturesYouControl,
-                GrantScope.ENCHANTED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ENCHANTED_CREATURE));
+                Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.attachedCreature()));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(true, "{W}", List.of(new BolsterEffect(1)),
                         "{W}, {T}: Bolster 1."),
-                GrantScope.ENCHANTED_CREATURE));
+                Subjects.attachedCreature()));
     }
 }

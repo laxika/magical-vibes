@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
@@ -28,9 +28,9 @@ public class FelineSovereign extends Card {
     public FelineSovereign() {
         PermanentHasSubtypePredicate cats = new PermanentHasSubtypePredicate(CardSubtype.CAT);
 
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES, cats));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(), cats));
         addStaticEffect(new GrantEffectEffect(
-                new ProtectionFromSubtypesEffect(Set.of(CardSubtype.DOG)), GrantScope.OWN_CREATURES, cats));
+                new ProtectionFromSubtypesEffect(Set.of(CardSubtype.DOG)), Subjects.otherCreaturesYouControl(), cats));
 
         target(new PermanentPredicateTargetFilter(new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -30,7 +29,7 @@ public class SarkhanVol extends Card {
                 +1,
                 List.of(
                         new BoostAllOwnCreaturesEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl())
                 ),
                 "+1: Creatures you control get +1/+1 and gain haste until end of turn."
         ));
@@ -41,7 +40,7 @@ public class SarkhanVol extends Card {
                 List.of(
                         new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(Subjects.target()),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target())
                 ),
                 "−2: Gain control of target creature until end of turn. Untap that creature. It gains haste until end of turn.",
                 TargetFilters.creature()

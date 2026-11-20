@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsToken;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfSourceCardIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -37,7 +37,7 @@ public class EnduringFriendship extends Card {
                         new AllOf(List.of(new SelfHasKeyword(Keyword.DOUBLE), new NotCondition(new SourceIsToken())))),
                 SequenceEffect.of(
                         new ConjureDuplicateOfSourceCardIntoHandEffect("YDSK", "20", Set.of(Keyword.DOUBLE)),
-                        new RemoveKeywordEffect(Keyword.DOUBLE, GrantScope.SELF, null, Duration.PERMANENT)));
+                        new RemoveKeywordEffect(Keyword.DOUBLE, Subjects.source(), null, Duration.PERMANENT)));
 
         addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardAnyOfPredicate(List.of(

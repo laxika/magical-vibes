@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.Set;
@@ -18,7 +18,7 @@ public class MasterOfThePearlTrident extends Card {
 
     public MasterOfThePearlTrident() {
         // Other Merfolk creatures you control get +1/+1 and have islandwalk.
-        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.ISLANDWALK), GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.ISLANDWALK), Subjects.otherCreaturesYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)));
     }
 }

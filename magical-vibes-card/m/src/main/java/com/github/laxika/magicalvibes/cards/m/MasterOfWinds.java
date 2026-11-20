@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -34,8 +33,8 @@ public class MasterOfWinds extends Card {
                 new CardTypePredicate(CardType.SORCERY),
                 new CardSubtypePredicate(CardSubtype.WIZARD)));
         ChooseOneEffect basePowerAndToughness = new ChooseOneEffect(List.of(
-                new ChooseOneOption("4/1", new SetBasePowerToughnessEffect(4, 1, GrantScope.SELF)),
-                new ChooseOneOption("1/4", new SetBasePowerToughnessEffect(1, 4, GrantScope.SELF))));
+                new ChooseOneOption("4/1", new SetBasePowerToughnessEffect(4, 1, Subjects.source())),
+                new ChooseOneOption("1/4", new SetBasePowerToughnessEffect(1, 4, Subjects.source()))));
         addTrigger(Triggers.youCastSpell().withFilter(instantSorceryOrWizard),
                 new MayEffect(new ChooseOneAtResolutionEffect(basePowerAndToughness), "Have Master of Winds's base power and toughness become 4/1 or 1/4?"));
     }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -17,7 +17,7 @@ public class DualSunTechnique extends Card {
 
     public DualSunTechnique() {
         target(TargetFilters.creatureYouControl())
-                .addSpellEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()))
                 .addSpellEffect(new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)),
                         new DrawCardEffect(1)));

@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCanAttackAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -27,7 +27,7 @@ public class Arcades extends Card {
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 new DrawCardEffect(1));
         addStaticEffect(new AssignCombatDamageWithToughnessEffect(
-                        GrantScope.ALL_OWN_CREATURES,
+                        Subjects.creaturesYouControl(),
                         new PermanentHasKeywordPredicate(Keyword.DEFENDER)));
         addStaticEffect(new MatchingCreaturesCanAttackAsThoughNoDefenderEffect(
                         new PermanentAllOfPredicate(List.of(

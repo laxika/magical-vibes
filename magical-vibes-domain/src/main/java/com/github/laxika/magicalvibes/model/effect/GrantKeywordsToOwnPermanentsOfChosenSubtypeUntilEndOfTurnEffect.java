@@ -17,8 +17,8 @@ public record GrantKeywordsToOwnPermanentsOfChosenSubtypeUntilEndOfTurnEffect(Se
     }
 
     @Override
-    public GrantScope scope() {
-        return GrantScope.OWN_PERMANENTS;
+    public PermanentSubject subject() {
+        return Subjects.permanentsYouControl();
     }
 
     @Override

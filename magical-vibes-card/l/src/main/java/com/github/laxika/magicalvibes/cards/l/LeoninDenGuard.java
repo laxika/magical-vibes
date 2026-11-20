@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "MRD", collectorNumber = "9")
@@ -15,6 +15,6 @@ public class LeoninDenGuard extends Card {
 
     public LeoninDenGuard() {
         addStaticEffect(new ConditionalEffect(new Equipped(),
-                new StaticBoostEffect(1, 1, Set.of(Keyword.VIGILANCE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Set.of(Keyword.VIGILANCE), Subjects.source())));
     }
 }

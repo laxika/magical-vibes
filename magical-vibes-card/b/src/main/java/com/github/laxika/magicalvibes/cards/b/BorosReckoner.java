@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class BorosReckoner extends Card {
 
         // {R/W}: This creature gains first strike until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{R/W}",
-                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())),
                 "{R/W}: This creature gains first strike until end of turn."));
     }
 }

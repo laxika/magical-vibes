@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.Set;
@@ -14,7 +14,7 @@ import java.util.Set;
 public class BellowingTanglewurm extends Card {
 
     public BellowingTanglewurm() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.INTIMIDATE, Subjects.otherCreaturesYouControl(),
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN))));
     }
 }

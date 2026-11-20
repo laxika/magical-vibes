@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DKA", collectorNumber = "132")
@@ -18,7 +18,7 @@ public class WildHunger extends Card {
     public WildHunger() {
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(3, 1))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));
         addCastingOption(new FlashbackCast("{3}{R}"));
     }
 }

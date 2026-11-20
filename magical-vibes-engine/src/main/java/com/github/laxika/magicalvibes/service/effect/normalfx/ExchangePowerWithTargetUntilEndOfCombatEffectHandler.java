@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExchangePowerWithTargetUntilEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -47,12 +47,12 @@ public class ExchangePowerWithTargetUntilEndOfCombatEffectHandler implements Nor
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(),
-                new SetBasePowerToughnessEffect(targetPower, null, GrantScope.TARGET, duration),
+                new SetBasePowerToughnessEffect(targetPower, null, Subjects.target(), duration),
                 source.getId(), null, null, duration, 0));
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                 entry.getControllerId(),
-                new SetBasePowerToughnessEffect(sourcePower, null, GrantScope.TARGET, duration),
+                new SetBasePowerToughnessEffect(sourcePower, null, Subjects.target(), duration),
                 target.getId(), null, null, duration, 0));
 
         gameLogService.append(gameData, GameLog.cardTextCard(source.getCard(),

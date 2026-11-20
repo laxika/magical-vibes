@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "FIN", collectorNumber = "255")
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BusterSword extends Card {
 
     public BusterSword() {
-        addStaticEffect(new StaticBoostEffect(3, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 2, Subjects.attachedCreature()));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect(1),
                 new MayCastAnySpellFromHandWithoutPayingManaCostEffect(new EventValue()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

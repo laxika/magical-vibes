@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 
 import java.util.List;
@@ -27,9 +27,9 @@ public class EsikaGodOfTheTree extends Card {
         addActivatedAbility(ManaAbilities.tapForAnyColor());
 
         var legendaryCreature = new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY);
-        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES, legendaryCreature));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.otherCreaturesYouControl(), legendaryCreature));
         addStaticEffect(new GrantActivatedAbilityEffect(
-                        ManaAbilities.tapForAnyColor(), GrantScope.OWN_CREATURES, legendaryCreature));
+                        ManaAbilities.tapForAnyColor(), Subjects.otherCreaturesYouControl(), legendaryCreature));
 
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption("Esika, God of the Tree", List.of())

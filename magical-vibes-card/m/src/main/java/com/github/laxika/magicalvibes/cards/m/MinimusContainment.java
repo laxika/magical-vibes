@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -23,9 +23,9 @@ public class MinimusContainment extends Card {
 
     public MinimusContainment() {
         target(TargetFilters.nonlandPermanent())
-                .addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.ENCHANTED_PERMANENT))
-                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.TREASURE, GrantScope.ENCHANTED_PERMANENT, true))
-                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), Subjects.attached()))
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.TREASURE, Subjects.attached(), true))
+                .addStaticEffect(new LosesAllAbilitiesEffect(Subjects.attached()))
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                                 new ActivatedAbility(
                                         true,
@@ -33,7 +33,7 @@ public class MinimusContainment extends Card {
                                         List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),
                                         "{T}, Sacrifice this artifact: Add one mana of any color."
                                 ),
-                                GrantScope.ENCHANTED_PERMANENT
+                                Subjects.attached()
                         ));
     }
 }

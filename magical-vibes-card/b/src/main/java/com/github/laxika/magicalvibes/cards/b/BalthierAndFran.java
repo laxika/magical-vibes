@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.filter.PermanentCrewedThisTurnBySourcePredicate;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,7 +27,7 @@ public class BalthierAndFran extends Card {
 
     public BalthierAndFran() {
         addStaticEffect(new StaticBoostEffect(
-                1, 1, Set.of(Keyword.REACH, Keyword.VIGILANCE), GrantScope.OWN_PERMANENTS,
+                1, 1, Set.of(Keyword.REACH, Keyword.VIGILANCE), Subjects.permanentsYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE)));
         addTrigger(Triggers.creatureAttacks().withFilter(new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE),

@@ -21,7 +21,7 @@ public class SetNameEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var setName = (SetNameEffect) effect;
-        if (support.names(context, setName.scope().subject(), null)) {
+        if (support.names(context, setName.subject(), null)) {
             accumulator.setName(setName.name());
         }
     }

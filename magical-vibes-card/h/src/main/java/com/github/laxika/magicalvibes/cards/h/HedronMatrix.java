@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.EnchantedPermanentManaValue;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ROE", collectorNumber = "218")
 public class HedronMatrix extends Card {
@@ -14,7 +14,7 @@ public class HedronMatrix extends Card {
         addStaticEffect(new AttachedBoostEffect(
                 new EnchantedPermanentManaValue(),
                 new EnchantedPermanentManaValue(),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }
 }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
@@ -48,7 +47,7 @@ public class BrallinSkysharkRider extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())),
                 "{R}: Target Shark gains trample until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentHasSubtypePredicate(CardSubtype.SHARK),

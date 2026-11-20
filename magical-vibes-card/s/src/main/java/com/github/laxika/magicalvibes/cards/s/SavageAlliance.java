@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -42,7 +42,7 @@ public class SavageAlliance extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures target player controls gain trample until end of turn",
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET_PLAYERS_CREATURES),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesTargetPlayerControls()),
                         playerFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Savage Alliance deals 2 damage to target creature",

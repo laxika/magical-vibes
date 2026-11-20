@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureHexproofFromChosenColorAndCantBeBlockedByItUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -28,7 +28,7 @@ public class SkrelvDefectorMite extends Card {
         addStaticEffect(new ToxicEffect(1));
 
         addActivatedAbility(new ActivatedAbility(true, "{W/P}", List.of(
-                new GrantKeywordEffect(Keyword.TOXIC, GrantScope.TARGET, new PermanentIsCreaturePredicate()),
+                new GrantKeywordEffect(Keyword.TOXIC, Subjects.target(), new PermanentIsCreaturePredicate()),
                 new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(new ToxicEffect(1))),
                 new GrantTargetCreatureHexproofFromChosenColorAndCantBeBlockedByItUntilEndOfTurnEffect()
         ), "{W/P}, {T}: Choose a color. Another target creature you control gains toxic 1 and "

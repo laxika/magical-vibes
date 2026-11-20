@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,9 +25,9 @@ public class PossessedBarbarian extends Card {
     public PossessedBarbarian() {
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);
         addStaticEffect(new ConditionalEffect(threshold,
-                new StaticBoostEffect(1, 1, GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Subjects.source())));
         addStaticEffect(new ConditionalEffect(threshold,
-                new GrantColorEffect(CardColor.BLACK, GrantScope.SELF, true)));
+                new GrantColorEffect(CardColor.BLACK, Subjects.source(), true)));
         addStaticEffect(new ConditionalEffect(threshold,
                 new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
@@ -43,6 +43,6 @@ public class PossessedBarbarian extends Card {
                                         "Target must be a red creature."
                                 )
                         ),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

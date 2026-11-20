@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -32,6 +32,6 @@ public class EidolonOfCountlessBattles extends Card {
 
         target(TargetFilters.creature())
                 .addStaticEffect(new AttachedBoostEffect(
-                        boost, boost, GrantScope.ENCHANTED_CREATURE));
+                        boost, boost, Subjects.attachedCreature()));
     }
 }

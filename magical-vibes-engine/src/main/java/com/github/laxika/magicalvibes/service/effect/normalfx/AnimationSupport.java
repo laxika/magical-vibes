@@ -24,7 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -115,20 +115,20 @@ public class AnimationSupport {
     private void addAnimationColorFloatingEffect(GameData gameData, AnimationSource source, Permanent target,
                                                  CardColor color, Duration duration) {
         if (color == null) return;
-        addFloating(gameData, source, target, new GrantColorEffect(color, GrantScope.SELF, true), duration);
+        addFloating(gameData, source, target, new GrantColorEffect(color, Subjects.source(), true), duration);
     }
 
     /**
      * SELF/TARGET scope, until end of turn (manlands, Crew, Chimeric Staff/Mass, Warden of the Wall).
      * A {@code null} power/toughness means "use the source's printed value" (Crew on Vehicles).
      *
-     * <p>The animated permanents are the effect's {@code GrantScope} subject as the subject resolver names them:
+     * <p>The animated permanents are the effect's subject as the subject resolver names them:
      * the source, the effect's targets ("up to N target" abilities, Fendeep Summoner), the triggering permanent, or
      * the permanent the source Aura is attached to (the Genju cycle's "enchanted Plains becomes a 2/5 white Spirit
      * creature until end of turn": the host now, else the host as the Aura last existed on the battlefield).
      */
     public void animateSingle(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
-        List<UUID> targetIds = subjectResolutionService.permanents(gameData, entry, effect, effect.scope().subject())
+        List<UUID> targetIds = subjectResolutionService.permanents(gameData, entry, effect, effect.subject())
                 .stream().map(Permanent::getId).toList();
         for (UUID targetId : targetIds) {
             Duration duration = effect.duration();
@@ -256,7 +256,7 @@ public class AnimationSupport {
             colorReplaced = true;
         }
         for (CardColor color : effect.animatedColors()) {
-            addFloating(gameData, entry, target, new GrantColorEffect(color, GrantScope.TARGET, !colorReplaced),
+            addFloating(gameData, entry, target, new GrantColorEffect(color, Subjects.target(), !colorReplaced),
                     duration);
             colorReplaced = true;
         }
@@ -264,7 +264,7 @@ public class AnimationSupport {
             if (effect.cardTypeOverriding()) {
                 Set<CardType> replacementTypes = EnumSet.of(CardType.CREATURE);
                 replacementTypes.addAll(effect.grantedCardTypes());
-                addFloating(gameData, entry, target, new SetCardTypesEffect(replacementTypes, GrantScope.TARGET),
+                addFloating(gameData, entry, target, new SetCardTypesEffect(replacementTypes, Subjects.target()),
                         duration);
             } else {
                 addAnimationCardTypeFloatingEffect(gameData, entry, target, CardType.CREATURE, duration);
@@ -279,11 +279,11 @@ public class AnimationSupport {
         for (CardSubtype subtype : effect.grantedSubtypes()) {
             boolean setsCreatureTypes = !creatureTypesSet && gameQueryService.isCreatureSubtype(subtype);
             creatureTypesSet |= setsCreatureTypes;
-            addFloating(gameData, entry, target, new GrantSubtypeEffect(subtype, GrantScope.TARGET, setsCreatureTypes),
+            addFloating(gameData, entry, target, new GrantSubtypeEffect(subtype, Subjects.target(), setsCreatureTypes),
                     duration);
         }
         if (!effect.grantedKeywords().isEmpty()) {
-            addFloating(gameData, entry, target, new GrantKeywordEffect(effect.grantedKeywords(), GrantScope.TARGET),
+            addFloating(gameData, entry, target, new GrantKeywordEffect(effect.grantedKeywords(), Subjects.target()),
                     duration);
         }
     }
@@ -331,13 +331,12 @@ public class AnimationSupport {
     private void addAnimationCardTypeFloatingEffect(GameData gameData, AnimationSource source,
                                                     Permanent target, CardType cardType,
                                                     Duration duration) {
-        addFloating(gameData, source, target, new GrantCardTypeEffect(cardType, GrantScope.TARGET), duration);
+        addFloating(gameData, source, target, new GrantCardTypeEffect(cardType, Subjects.target()), duration);
     }
 
-    /** OWN_LANDS scope — all lands you control (Sylvan Awakening), until end of turn or your next turn. */
+    /** "All lands you control" (Sylvan Awakening), until end of turn or your next turn. */
     public void animateOwnLands(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
-        List<Permanent> lands = subjectResolutionService.permanents(gameData, entry, effect,
-                GrantScope.OWN_LANDS.subject());
+        List<Permanent> lands = subjectResolutionService.permanents(gameData, entry, effect, effect.subject());
 
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
@@ -380,13 +379,12 @@ public class AnimationSupport {
         return creatureNoun + " with " + keywordList;
     }
 
-    /** TARGET_PLAYERS_LANDS scope — all lands the targeted player controls, until end of turn. */
+    /** "All lands target player controls", until end of turn. */
     public void animateTargetPlayersLands(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
         if (subjectResolutionService.player(gameData, entry, effect, Subjects.targetPlayer()) == null) {
             return;
         }
-        List<Permanent> lands = subjectResolutionService.permanents(gameData, entry, effect,
-                GrantScope.TARGET_PLAYERS_LANDS.subject());
+        List<Permanent> lands = subjectResolutionService.permanents(gameData, entry, effect, effect.subject());
 
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
@@ -416,9 +414,8 @@ public class AnimationSupport {
         int power = amountEvaluationService.evaluate(gameData, effect.power(), ctx);
         int toughness = amountEvaluationService.evaluate(gameData, effect.toughness(), ctx);
 
-        // "All lands" includes the source when it is a land.
-        for (Permanent perm : subjectResolutionService.permanents(gameData, entry, effect,
-                GrantScope.ALL_LANDS_INCLUDING_SELF.subject())) {
+        // "All lands" (allLands()) includes the source when it is a land.
+        for (Permanent perm : subjectResolutionService.permanents(gameData, entry, effect, effect.subject())) {
             // Timestamped, so the creature type still applies to a land whose card types were overridden by
             // an earlier effect (e.g. Imprisoned in the Moon, CR 613.1d/613.7).
             addAnimationFloatingEffects(gameData, entry, perm, effect, power, toughness,
@@ -439,7 +436,7 @@ public class AnimationSupport {
         // An animation of "permanents you control" names its permanents by its filter; with none it names nothing.
         List<Permanent> matching = effect.filter() == null ? List.of()
                 : subjectResolutionService.permanents(gameData, entry, effect,
-                Subjects.narrowed(GrantScope.OWN_PERMANENTS.subject(), effect.filter()));
+                Subjects.narrowed(effect.subject(), effect.filter()));
 
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
@@ -486,13 +483,8 @@ public class AnimationSupport {
      * "Untap up to six target lands. They become 6/6 Elemental creatures.").
      */
     public void animatePermanentTarget(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
-        List<UUID> targetIds;
-        if (effect.scope() == GrantScope.TOKENS_CREATED_THIS_RESOLUTION) {
-            targetIds = List.copyOf(entry.getCreatedPermanentIds());
-        } else {
-            targetIds = subjectResolutionService.permanents(gameData, entry, effect, effect.scope().subject())
-                    .stream().map(Permanent::getId).toList();
-        }
+        List<UUID> targetIds = subjectResolutionService.permanents(gameData, entry, effect, effect.subject())
+                .stream().map(Permanent::getId).toList();
         for (UUID targetId : targetIds) {
             Permanent target = gameQueryService.findPermanentById(gameData, targetId);
             if (target == null) {
@@ -524,7 +516,7 @@ public class AnimationSupport {
         AmountContext ctx = AmountContext.forStackEntry(entry, source);
         entry.clearReturnedPermanentIds();
         List<Permanent> matching = subjectResolutionService.permanents(gameData, entry, effect,
-                Subjects.narrowed(GrantScope.OWN_PERMANENTS.subject(), effect.filter()));
+                Subjects.narrowed(effect.subject(), effect.filter()));
         for (Permanent permanent : matching) {
             int power = effect.power() == null ? printedPower(permanent)
                     : amountEvaluationService.evaluate(gameData, effect.power(), ctx);
@@ -627,7 +619,7 @@ public class AnimationSupport {
      * for as long as the source permanent remains on the battlefield (Awakener Druid).
      */
     public void animateWhileSource(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
-        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, effect.scope().subject());
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, effect.subject());
         if (target == null) {
             return;
         }
@@ -652,30 +644,30 @@ public class AnimationSupport {
         for (CardSubtype subtype : effect.grantedSubtypes()) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                    new GrantSubtypeEffect(subtype, GrantScope.TARGET), target.getId(), null, null,
+                    new GrantSubtypeEffect(subtype, Subjects.target()), target.getId(), null, null,
                     Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.TARGET), target.getId(), null, null,
+                new GrantCardTypeEffect(CardType.CREATURE, Subjects.target()), target.getId(), null, null,
                 Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         for (CardType cardType : effect.grantedCardTypes()) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                    new GrantCardTypeEffect(cardType, GrantScope.TARGET), target.getId(), null, null,
+                    new GrantCardTypeEffect(cardType, Subjects.target()), target.getId(), null, null,
                     Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
         if (!effect.grantedKeywords().isEmpty()) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                    new GrantKeywordEffect(effect.grantedKeywords(), GrantScope.TARGET), target.getId(), null, null,
+                    new GrantKeywordEffect(effect.grantedKeywords(), Subjects.target()), target.getId(), null, null,
                     Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
 
         if (effect.animatedColor() != null) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                    new GrantColorEffect(effect.animatedColor(), GrantScope.TARGET), target.getId(), null, null,
+                    new GrantColorEffect(effect.animatedColor(), Subjects.target()), target.getId(), null, null,
                     Duration.WHILE_SOURCE_ON_BATTLEFIELD, 0));
         }
 
@@ -694,7 +686,7 @@ public class AnimationSupport {
      */
     public void animateWhileSourceRemainsTapped(GameData gameData, StackEntry entry,
                                                 AnimatePermanentsEffect effect) {
-        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, effect.scope().subject());
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, effect.subject());
         if (target == null) {
             return;
         }

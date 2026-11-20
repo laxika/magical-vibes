@@ -559,7 +559,7 @@ public class PredicateEvaluationService {
                 for (CardEffect effect : source.getCard().getStaticEffects()) {
                     if (effect instanceof GrantKeywordEffect grant
                             && grant.keywords().contains(keyword)
-                            && grant.scope().subject() instanceof PermanentSubject.Attached) {
+                            && grant.subject() instanceof PermanentSubject.Attached) {
                         return true;
                     }
                 }
@@ -4087,7 +4087,7 @@ public class PredicateEvaluationService {
         }
         for (CardEffect effect : permanent.getCard().getStaticEffects()) {
             if (effect instanceof ProtectionGrantingEffect protection
-                    && protection.protectionScope() == null
+                    && protection.protectionSubject() == null
                     && protection.protectionFromColors().contains(color)) {
                 return true;
             }

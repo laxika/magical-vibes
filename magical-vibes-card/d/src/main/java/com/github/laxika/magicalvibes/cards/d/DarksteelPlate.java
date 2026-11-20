@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MBS", collectorNumber = "104")
 @CardRegistration(set = "DDU", collectorNumber = "52")
@@ -18,7 +18,7 @@ public class DarksteelPlate extends Card {
     public DarksteelPlate() {
         // Indestructible keyword on the Equipment itself is auto-loaded from Scryfall.
         // Equipped creature has indestructible.
-        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.attachedCreature()));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

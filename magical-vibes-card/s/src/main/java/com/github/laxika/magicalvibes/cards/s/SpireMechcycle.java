@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
@@ -32,7 +32,7 @@ public class SpireMechcycle extends Card {
                 List.of(
                         new TapMultiplePermanentsCost(1, mountOrVehicle, true),
                         new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
-                                Set.of(CardType.CREATURE), GrantScope.SELF, Duration.PERMANENT,
+                                Set.of(CardType.CREATURE), Subjects.source(), Duration.PERMANENT,
                                 null, Set.of(), false, false),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE,
                                 new PermanentCount(mountOrVehicle, CountScope.CONTROLLER, true))

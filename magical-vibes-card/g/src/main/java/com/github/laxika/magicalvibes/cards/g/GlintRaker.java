@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +23,7 @@ public class GlintRaker extends Card {
     public GlintRaker() {
         addStaticEffect(new DynamicStaticBoostEffect(
                 new GreatestManaValueAmongControlled(new PermanentIsArtifactPredicate()),
-                new Fixed(0), GrantScope.SELF));
+                new Fixed(0), Subjects.source()));
 
         // "Reveal that many cards": the combat damage this creature dealt.
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(

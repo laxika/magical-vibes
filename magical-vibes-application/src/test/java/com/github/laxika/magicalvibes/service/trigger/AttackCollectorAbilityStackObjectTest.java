@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +16,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -112,7 +112,7 @@ class AttackCollectorAbilityStackObjectTest extends BaseCardTest {
         card.addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.attacks(),
                 TriggerOptions.DEFAULT,
                 List.of(new EffectRegistration(new DrawCardEffect(1)), new EffectRegistration(new GainLifeEffect(1)))),
-                GrantScope.ALL_OWN_CREATURES));
+                Subjects.creaturesYouControl()));
         addCreatureReady(player1, card);
 
         declareAttackers(player1, List.of(0));
@@ -144,7 +144,7 @@ class AttackCollectorAbilityStackObjectTest extends BaseCardTest {
         card.addTrigger(Triggers.youAttack(), new DrawCardEffect(1));
         card.addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.youAttack(),
                 TriggerOptions.DEFAULT, List.of(new EffectRegistration(new GainLifeEffect(1)))),
-                GrantScope.ALL_OWN_CREATURES));
+                Subjects.creaturesYouControl()));
         addCreatureReady(player1, card);
 
         declareAttackers(player1, List.of(0));

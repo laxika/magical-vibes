@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -30,12 +30,12 @@ public class CryptSliver extends Card {
 
         addStaticEffect(new GrantActivatedAbilityEffect(
                 regenerateAbility,
-                GrantScope.ALL_PERMANENTS,
+                Subjects.otherPermanents(),
                 sliver
         ));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 regenerateAbility,
-                GrantScope.SELF,
+                Subjects.source(),
                 sliver
         ));
     }

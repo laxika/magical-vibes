@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -26,6 +26,6 @@ public class KytheonsTactics extends Card {
         addSpellEffect(new ConditionalEffect(new GraveyardCardThreshold(2, new CardAnyOfPredicate(List.of(
                         new CardTypePredicate(CardType.INSTANT),
                         new CardTypePredicate(CardType.SORCERY)
-                ))), new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES)));
+                ))), new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.otherCreaturesYouControl())));
     }
 }

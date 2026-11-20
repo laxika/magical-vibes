@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerMainPhase;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatMainPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -24,8 +23,8 @@ import java.util.List;
 public class Sokenzan extends Card {
 
     public Sokenzan() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES));
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreatures()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.otherCreatures()));
         addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                 new UntapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
                         new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),

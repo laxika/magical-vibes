@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,7 +21,7 @@ public class PontiffOfBlight extends Card {
         // "Other creatures you control have extort" — OWN_CREATURES excludes the source, which
         // already has its own printed extort above. Each instance triggers separately.
         addStaticEffect(new GrantTriggeredAbilityEffect(
-                new TriggeredAbility(Triggers.youCastSpell().anySpell(), extort()), GrantScope.OWN_CREATURES));
+                new TriggeredAbility(Triggers.youCastSpell().anySpell(), extort()), Subjects.otherCreaturesYouControl()));
     }
 
     private static MayPayManaEffect extort() {

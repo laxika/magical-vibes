@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,6 +21,6 @@ public class SublimeArchangel extends Card {
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostTargetCreatureEffect(1, 1));
         // Other creatures you control have exalted; each granted instance is keyword-driven.
-        addStaticEffect(new GrantKeywordEffect(Keyword.EXALTED, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.EXALTED, Subjects.otherCreaturesYouControl()));
     }
 }

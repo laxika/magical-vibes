@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -39,9 +39,9 @@ public class YouExistOnlyToAmuse extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Opposing creatures have base power and toughness 1/1 and lose all abilities until your next turn",
                         List.of(
-                                new SetBasePowerToughnessEffect(1, 1, GrantScope.OPPONENT_CREATURES,
+                                new SetBasePowerToughnessEffect(1, 1, Subjects.creaturesYourOpponentsControl(),
                                         Duration.UNTIL_YOUR_NEXT_TURN),
-                                new LosesAllAbilitiesEffect(GrantScope.OPPONENT_CREATURES,
+                                new LosesAllAbilitiesEffect(Subjects.creaturesYourOpponentsControl(),
                                         Duration.UNTIL_YOUR_NEXT_TURN)))), sixLands));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -26,7 +26,7 @@ public class JolraelEmpressOfBeasts extends Card {
                         new DiscardCardTypeCost(null, null, 2),
                         new AnimatePermanentsEffect(
                                 3, 3, List.of(), Set.of(), null, Set.of(),
-                                GrantScope.TARGET_PLAYERS_LANDS, Duration.UNTIL_END_OF_TURN)
+                                Subjects.landsTargetPlayerControls(), Duration.UNTIL_END_OF_TURN)
                 ),
                 "{2}{G}, {T}, Discard two cards: All lands target player controls become 3/3 creatures until end of turn. They're still lands.",
                 new PlayerPredicateTargetFilter(

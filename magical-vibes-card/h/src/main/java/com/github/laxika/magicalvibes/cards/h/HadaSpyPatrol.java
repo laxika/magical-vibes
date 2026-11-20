@@ -13,11 +13,11 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "71")
@@ -34,20 +34,20 @@ public class HadaSpyPatrol extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addStaticEffect(new RemoveKeywordEffect(Keyword.SHROUD, GrantScope.SELF));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.SHROUD, Subjects.source()));
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(3, CounterType.LEVEL)))),
-                new SetBasePowerToughnessEffect(2, 2, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(2, 2, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(3, 3, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(3, 3, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.LEVEL),
-                new GrantKeywordEffect(Keyword.SHROUD, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.SHROUD, Subjects.source())));
     }
 }

@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class StaticAbilityTest {
 
-    private static final CardEffect ANTHEM = new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES);
+    private static final CardEffect ANTHEM = new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl());
 
     @Test
     void aPermanentsStaticAbilityFunctionsOnTheBattlefield() {
@@ -31,7 +31,7 @@ class StaticAbilityTest {
         List<CardEffect> source = new ArrayList<>(List.of(ANTHEM));
         StaticAbility ability = new StaticAbility(source);
 
-        source.add(new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES));
+        source.add(new StaticBoostEffect(2, 2, Subjects.otherCreaturesYouControl()));
 
         assertThat(ability.effects()).containsExactly(ANTHEM);
         assertThatThrownBy(() -> ability.effects().add(ANTHEM)).isInstanceOf(UnsupportedOperationException.class);

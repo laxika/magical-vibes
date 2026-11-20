@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 
 @CardRegistration(set = "VOW", collectorNumber = "36")
@@ -20,10 +20,10 @@ public class SigardasSummons extends Card {
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE);
 
         addStaticEffect(new SetBasePowerToughnessEffect(
-                4, 4, GrantScope.ALL_OWN_CREATURES, hasPlusOnePlusOneCounters));
+                4, 4, Subjects.creaturesYouControl(), hasPlusOnePlusOneCounters));
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.FLYING, GrantScope.ALL_OWN_CREATURES, hasPlusOnePlusOneCounters));
+                Keyword.FLYING, Subjects.creaturesYouControl(), hasPlusOnePlusOneCounters));
         addStaticEffect(new GrantSubtypeEffect(
-                CardSubtype.ANGEL, GrantScope.ALL_OWN_CREATURES, false, hasPlusOnePlusOneCounters));
+                CardSubtype.ANGEL, Subjects.creaturesYouControl(), false, hasPlusOnePlusOneCounters));
     }
 }

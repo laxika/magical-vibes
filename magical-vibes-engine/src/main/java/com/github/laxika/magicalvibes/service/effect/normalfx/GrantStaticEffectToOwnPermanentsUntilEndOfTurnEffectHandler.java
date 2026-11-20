@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToOwnPermanentsUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import org.springframework.stereotype.Component;
@@ -26,7 +26,7 @@ public class GrantStaticEffectToOwnPermanentsUntilEndOfTurnEffectHandler impleme
         var grant = (GrantStaticEffectToOwnPermanentsUntilEndOfTurnEffect) effect;
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
-                entry.getControllerId(), new GrantNonAbilityEffectEffect(grant.staticEffect(), GrantScope.TARGET),
+                entry.getControllerId(), new GrantNonAbilityEffectEffect(grant.staticEffect(), Subjects.target()),
                 null, null, new PermanentControlledBySourceControllerPredicate(),
                 Duration.UNTIL_END_OF_TURN, 0));
     }

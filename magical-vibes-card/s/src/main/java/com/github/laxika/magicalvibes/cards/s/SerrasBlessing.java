@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "9ED", collectorNumber = "44")
 @CardRegistration(set = "6ED", collectorNumber = "42")
@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class SerrasBlessing extends Card {
 
     public SerrasBlessing() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl()));
     }
 }

@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SurveilThenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -32,9 +32,9 @@ public class SwordOfOnceAndFuture extends Card {
             new CardAllOfPredicate(List.of(new CardTypePredicate(CardType.SORCERY), MAX_MANA_VALUE_TWO))));
 
     public SwordOfOnceAndFuture() {
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()));
         addStaticEffect(new ProtectionFromColorsEffect(
-                Set.of(CardColor.BLUE, CardColor.BLACK), GrantScope.EQUIPPED_CREATURE));
+                Set.of(CardColor.BLUE, CardColor.BLACK), Subjects.attachedCreature()));
         addTrigger(Triggers.equippedCreatureDealsCombatDamageToPlayer(),
                 SurveilThenEffect.direct(2, new CastCardFromGraveyardEffect(
                         INSTANT_OR_SORCERY_WITH_MAX_MANA_VALUE_TWO,

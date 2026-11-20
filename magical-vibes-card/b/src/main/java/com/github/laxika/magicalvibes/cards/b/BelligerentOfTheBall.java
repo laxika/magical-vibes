@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,6 +25,6 @@ public class BelligerentOfTheBall extends Card {
                         new PermanentEnteredThisTurn(new CardNotPredicate(new CardTypePredicate(CardType.LAND)), 2)),
                 SequenceEffect.of(
                         new BoostTargetCreatureEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET)));
+                        new GrantKeywordEffect(Keyword.MENACE, Subjects.target())));
     }
 }

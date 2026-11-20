@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentHasGreaterPowerOrToughnessThanSource;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +22,7 @@ public class EvolvingAdaptive extends Card {
         addStaticEffect(new DynamicStaticBoostEffect(
                 new CountersOnSource(CounterType.OIL),
                 new CountersOnSource(CounterType.OIL),
-                GrantScope.SELF));
+                Subjects.source()));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new TriggeringPermanentHasGreaterPowerOrToughnessThanSource()),

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsColorlessPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,6 +19,6 @@ public class SkitteringCicada extends Card {
         addStaticEffect(new GrantFlashToCardTypeEffect(new CardIsColorlessPredicate()));
         addTrigger(Triggers.youCastSpell().withFilter(new CardIsColorlessPredicate()),
                 new BoostSelfEffect(new TargetSpellManaValue(), new TargetSpellManaValue()),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source()));
     }
 }

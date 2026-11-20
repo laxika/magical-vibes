@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "16")
@@ -14,7 +14,7 @@ public class MarduHateblade extends Card {
 
     public MarduHateblade() {
         addActivatedAbility(new ActivatedAbility(false, "{B}",
-                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())),
                 "{B}: This creature gains deathtouch until end of turn."));
     }
 }

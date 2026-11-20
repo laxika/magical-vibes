@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -21,7 +20,7 @@ public class CaughtRedHanded extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new UntapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
-                .addSpellEffect(new SuspectEffect(GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.target()))
+                .addSpellEffect(new SuspectEffect(Subjects.target()));
     }
 }

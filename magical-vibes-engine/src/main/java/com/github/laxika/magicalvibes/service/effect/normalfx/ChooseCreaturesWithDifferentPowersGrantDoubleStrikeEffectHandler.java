@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreaturesWithDifferentPowersGrantDoubleStrikeEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -71,7 +71,7 @@ public class ChooseCreaturesWithDifferentPowersGrantDoubleStrikeEffectHandler
             chosen.add(permanent);
         }
 
-        GrantKeywordEffect grant = new GrantKeywordEffect(DOUBLE_STRIKE, GrantScope.TARGET);
+        GrantKeywordEffect grant = new GrantKeywordEffect(DOUBLE_STRIKE, Subjects.target());
         for (Permanent permanent : chosen) {
             if (gameQueryService.cantHaveOrGainKeyword(gameData, permanent, DOUBLE_STRIKE)) {
                 continue;

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -23,7 +23,7 @@ public class Rattlechains extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.SPIRIT),
                 "Target must be a Spirit"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.target()));
         addStaticEffect(new GrantFlashToCardTypeEffect(new CardSubtypePredicate(CardSubtype.SPIRIT)));
     }
 }

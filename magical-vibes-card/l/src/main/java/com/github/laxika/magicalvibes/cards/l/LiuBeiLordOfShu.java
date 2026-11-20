@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 
@@ -22,6 +22,6 @@ public class LiuBeiLordOfShu extends Card {
                 new ControlsPermanent(new PermanentAnyOfPredicate(List.of(
                         new PermanentNamedPredicate("Guan Yu, Sainted Warrior"),
                         new PermanentNamedPredicate("Zhang Fei, Fierce Warrior")))),
-                new StaticBoostEffect(2, 2, GrantScope.SELF)));
+                new StaticBoostEffect(2, 2, Subjects.source())));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerGainsControlOfOwnedPermanentsMatchingEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -30,7 +30,7 @@ public class HeraldOfLeshrac extends Card {
                 CumulativeUpkeepEffect.gainControlOf(new PermanentIsLandPredicate()));
         addStaticEffect(new DynamicStaticBoostEffect(
                 new PermanentCount(landsYouControlButDoNotOwn, CountScope.CONTROLLER),
-                new PermanentCount(landsYouControlButDoNotOwn, CountScope.CONTROLLER), GrantScope.SELF));
+                new PermanentCount(landsYouControlButDoNotOwn, CountScope.CONTROLLER), Subjects.source()));
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
                 new EachPlayerGainsControlOfOwnedPermanentsMatchingEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(), new PermanentControlledBySourceControllerPredicate()))));

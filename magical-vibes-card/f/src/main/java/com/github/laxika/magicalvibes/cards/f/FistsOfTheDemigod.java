@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -18,11 +18,11 @@ public class FistsOfTheDemigod extends Card {
         target(TargetFilters.creature())
                 // As long as enchanted creature is black, it gets +1/+1 and has wither.
                 .addStaticEffect(new StaticBoostEffect(
-                        1, 1, Set.of(Keyword.WITHER), GrantScope.ENCHANTED_CREATURE,
+                        1, 1, Set.of(Keyword.WITHER), Subjects.attachedCreature(),
                         new PermanentColorInPredicate(Set.of(CardColor.BLACK))))
                 // As long as enchanted creature is red, it gets +1/+1 and has first strike.
                 .addStaticEffect(new StaticBoostEffect(
-                        1, 1, Set.of(Keyword.FIRST_STRIKE), GrantScope.ENCHANTED_CREATURE,
+                        1, 1, Set.of(Keyword.FIRST_STRIKE), Subjects.attachedCreature(),
                         new PermanentColorInPredicate(Set.of(CardColor.RED))));
     }
 }

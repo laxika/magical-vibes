@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlled
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -35,7 +35,7 @@ public class TheWeatherseedTreaty extends Card {
         BasicLandTypesAmongControlledLands domain = new BasicLandTypesAmongControlledLands();
         addTrigger(Triggers.chapter(3),
                 new BoostTargetCreatureEffect(domain, domain),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));
         setSagaChapterTargetFilter(3, Set.of(TargetFilters.creatureYouControl()));
     }
 }

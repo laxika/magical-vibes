@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AKH", collectorNumber = "157")
@@ -18,6 +18,6 @@ public class BitterbladeWarrior extends Card {
         addStaticEffect(new ExertAsItAttacksEffect());
         addTrigger(Triggers.exertedAsItAttacks(), SequenceEffect.of(
                                 new BoostSelfEffect(1, 0),
-                                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
+                                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())));
     }
 }

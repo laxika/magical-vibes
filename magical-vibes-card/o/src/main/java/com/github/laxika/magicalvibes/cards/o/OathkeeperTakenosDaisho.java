@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -20,7 +19,7 @@ public class OathkeeperTakenosDaisho extends Card {
 
     public OathkeeperTakenosDaisho() {
         // Equipped creature gets +3/+1.
-        addStaticEffect(new StaticBoostEffect(3, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 1, Subjects.attachedCreature()));
 
         // Whenever equipped creature dies, return that card to the battlefield under your control
         // if it's a Samurai card.

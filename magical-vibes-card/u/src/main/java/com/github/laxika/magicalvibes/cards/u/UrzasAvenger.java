@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 /**
@@ -25,7 +25,7 @@ public class UrzasAvenger extends Card {
                 List.of(new BoostSelfEffect(-1, -1),
                         new GrantChosenKeywordEffect(
                                 List.of(Keyword.BANDING, Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.TRAMPLE),
-                                GrantScope.SELF)),
+                                Subjects.source())),
                 "{0}: This creature gets -1/-1 and gains your choice of banding, flying, first strike, or trample until end of turn."));
     }
 }

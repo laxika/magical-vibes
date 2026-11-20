@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -33,6 +33,6 @@ public class ArchonsGlory extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(2, 2))
                 .addSpellEffect(new ConditionalEffect(new Kicked(),
-                        new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.LIFELINK), GrantScope.TARGET)));
+                        new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.LIFELINK), Subjects.target())));
     }
 }

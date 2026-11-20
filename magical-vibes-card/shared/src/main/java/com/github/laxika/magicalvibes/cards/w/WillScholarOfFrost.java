@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -34,7 +34,7 @@ public class WillScholarOfFrost extends Card {
                 null,
                 List.of(new AnimatePermanentsEffect(
                         0, 2, List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, Duration.UNTIL_YOUR_NEXT_TURN)),
+                        Subjects.target(), Duration.UNTIL_YOUR_NEXT_TURN)),
                 "+1: Up to one target creature has base power and toughness 0/2 until your next turn.",
                 null,
                 1,

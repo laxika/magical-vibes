@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "INR", collectorNumber = "177")
 @CardRegistration(set = "M20", collectorNumber = "163")
@@ -17,6 +17,6 @@ public class UncagedFury extends Card {
     public UncagedFury() {
         // Target creature gets +1/+1 and gains double strike until end of turn.
         addSpellEffect(new BoostTargetCreatureEffect(1, 1));
-        addSpellEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET));
+        addSpellEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()));
     }
 }

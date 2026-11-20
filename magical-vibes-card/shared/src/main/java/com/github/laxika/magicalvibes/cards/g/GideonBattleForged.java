@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackSourcePermanentNextTurnEffect;
@@ -50,7 +49,7 @@ public class GideonBattleForged extends Card {
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET,
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target(),
                                 Duration.UNTIL_YOUR_NEXT_TURN),
                         new UntapPermanentsEffect(Subjects.target(), new PermanentIsCreaturePredicate())
                 ),

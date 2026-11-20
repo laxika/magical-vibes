@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,11 +18,11 @@ public class WeldfastWingsmith extends Card {
     public WeldfastWingsmith() {
         // Whenever an artifact you control enters, this creature gains flying until end of turn.
         addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source()));
         // This creature is itself an artifact you control as it enters if an effect made it one (CR 603.6b),
         // so the same ability triggers for its own entry.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceMatchesPermanentPredicate(new PermanentIsArtifactPredicate())),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source()));
     }
 }

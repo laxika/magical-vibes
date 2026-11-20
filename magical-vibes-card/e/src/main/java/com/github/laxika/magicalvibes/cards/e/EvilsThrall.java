@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -23,6 +22,6 @@ public class EvilsThrall extends Card {
                         new ControlsVillainWithGreaterManaValueThanTarget(),
                         new GainControlOfTargetEffect(Duration.UNTIL_END_OF_YOUR_NEXT_TURN)))
                 .addSpellEffect(new UntapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.target()));
     }
 }

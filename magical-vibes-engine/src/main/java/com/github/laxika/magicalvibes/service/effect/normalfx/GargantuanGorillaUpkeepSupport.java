@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -78,7 +78,7 @@ public class GargantuanGorillaUpkeepSupport {
         // A one-shot keyword grant is a floating layer-6 effect with its own timestamp (CR 613.7).
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 source.getCard().getName(), null, controllerId,
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF),
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source()),
                 source.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " gains trample until end of turn."));
         log.info("Game {} - {} gains trample from a sacrificed snow Forest", gameData.id, source.getCard().getName());

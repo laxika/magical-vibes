@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCrewedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +28,7 @@ public class SmogbelcherChariot extends Card {
                         "Target must be a creature that crewed this Vehicle this turn"))
                 .addTrigger(Triggers.attacks(), new GrantChosenKeywordEffect(
                         List.of(Keyword.MENACE, Keyword.DEATHTOUCH, Keyword.LIFELINK),
-                        GrantScope.TARGET, Duration.PERMANENT));
+                        Subjects.target(), Duration.PERMANENT));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,6 +20,6 @@ public class AtarkaWorldRender extends Card {
         // Whenever a Dragon you control attacks, it gains double strike until end of turn.
         addTrigger(Triggers.creatureYouControlAttacks()
                         .withFilter(new PermanentHasSubtypePredicate(CardSubtype.DRAGON)),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()));
     }
 }

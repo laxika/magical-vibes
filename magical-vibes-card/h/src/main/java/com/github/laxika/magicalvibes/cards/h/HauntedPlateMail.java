@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseSubtypesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -20,7 +20,7 @@ import java.util.Set;
 public class HauntedPlateMail extends Card {
 
     public HauntedPlateMail() {
-        addStaticEffect(new StaticBoostEffect(4, 4, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(4, 4, Subjects.attachedCreature()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

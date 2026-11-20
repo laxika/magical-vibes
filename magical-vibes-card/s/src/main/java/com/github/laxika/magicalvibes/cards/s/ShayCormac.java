@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllProtectionUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -25,11 +25,11 @@ public class ShayCormac extends Card {
         PermanentNotPredicate opponentPermanent = new PermanentNotPredicate(
                 new PermanentControlledBySourceControllerPredicate());
         addActivatedAbility(new ActivatedAbility(false, "{1}", List.of(
-                new RemoveKeywordEffect(Keyword.HEXPROOF, GrantScope.ALL_PERMANENTS, opponentPermanent),
-                new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_PERMANENTS, opponentPermanent),
-                new RemoveAllProtectionUntilEndOfTurnEffect(GrantScope.ALL_PERMANENTS, opponentPermanent),
-                new RemoveKeywordEffect(Keyword.SHROUD, GrantScope.ALL_PERMANENTS, opponentPermanent),
-                new RemoveKeywordEffect(Keyword.WARD, GrantScope.ALL_PERMANENTS, opponentPermanent)),
+                new RemoveKeywordEffect(Keyword.HEXPROOF, Subjects.allPermanents(), opponentPermanent),
+                new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.allPermanents(), opponentPermanent),
+                new RemoveAllProtectionUntilEndOfTurnEffect(Subjects.otherPermanents(), opponentPermanent),
+                new RemoveKeywordEffect(Keyword.SHROUD, Subjects.allPermanents(), opponentPermanent),
+                new RemoveKeywordEffect(Keyword.WARD, Subjects.allPermanents(), opponentPermanent)),
                 "{1}: Permanents your opponents control lose hexproof, indestructible, protection, shroud, and ward until end of turn."));
 
         addTrigger(Triggers.creatureOpponentControlsBecomesTargetOfYourSpellOrAbility(),

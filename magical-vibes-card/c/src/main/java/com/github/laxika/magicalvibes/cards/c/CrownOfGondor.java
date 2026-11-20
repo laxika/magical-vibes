@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.NoMonarch;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -31,7 +31,7 @@ public class CrownOfGondor extends Card {
         addStaticEffect(new AttachedBoostEffect(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
 
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(

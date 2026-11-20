@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -24,7 +24,7 @@ public class InfernoFist extends Card {
     public InfernoFist() {
         // Enchant creature you control. Enchanted creature gets +2/+0.
         target(TargetFilters.creatureYouControl())
-                .addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(2, 0, Subjects.attachedCreature()));
 
         // {R}, Sacrifice this Aura: This Aura deals 2 damage to any target. The ability carries its
         // own any-target filter — without one the stack entry falls back to the Aura's enchant

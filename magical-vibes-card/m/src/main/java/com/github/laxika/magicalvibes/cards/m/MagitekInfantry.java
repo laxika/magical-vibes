@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
@@ -20,7 +20,7 @@ public class MagitekInfantry extends Card {
     public MagitekInfantry() {
         addStaticEffect(new ConditionalEffect(
                 new ControlsAnotherPermanent(new PermanentIsArtifactPredicate()),
-                new StaticBoostEffect(1, 0, GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

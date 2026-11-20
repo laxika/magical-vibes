@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -49,7 +49,7 @@ public class RockfaceVillage extends Card {
                 "{R}",
                 List.of(
                         new BoostTargetCreatureEffect(1, 0, KINDRED_CREATURE),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target())),
                 "{R}, {T}: Target Lizard, Mouse, Otter, or Raccoon you control gets +1/+0 and gains haste until end of turn. Activate only as a sorcery.",
                 new PermanentPredicateTargetFilter(
                         KINDRED_CREATURE,

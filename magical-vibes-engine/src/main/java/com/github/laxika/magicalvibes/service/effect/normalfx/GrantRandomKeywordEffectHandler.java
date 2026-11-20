@@ -26,6 +26,6 @@ public class GrantRandomKeywordEffectHandler implements NormalEffectHandlerBean 
         GrantRandomKeywordEffect randomEffect = (GrantRandomKeywordEffect) effect;
         int chosenIndex = ThreadLocalRandom.current().nextInt(randomEffect.options().size());
         grantKeywordEffectHandler.resolve(gameData, entry,
-                new GrantKeywordEffect(randomEffect.options().get(chosenIndex), randomEffect.scope()));
+                new GrantKeywordEffect(randomEffect.options().get(chosenIndex), randomEffect.subject()));
     }
 }

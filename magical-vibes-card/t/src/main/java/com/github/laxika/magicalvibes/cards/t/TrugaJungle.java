@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardsMatchingToHandRestToBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ public class TrugaJungle extends Card {
 
     public TrugaJungle() {
         addStaticEffect(new GrantActivatedAbilityEffect(
-                ManaAbilities.tapForAnyColor(), GrantScope.ALL_LANDS));
+                ManaAbilities.tapForAnyColor(), Subjects.otherLands()));
         addTrigger(Triggers.chaosEnsues(),
                 new RevealTopCardsMatchingToHandRestToBottomEffect(
                         3, new CardTypePredicate(CardType.LAND)));

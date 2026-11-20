@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTransformedPredicate;
@@ -26,11 +26,11 @@ public class GargantuanSlabhorn extends Card {
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
         ));
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.TRAMPLE, GrantScope.OWN_PERMANENTS, otherTransformedPermanent));
+                Keyword.TRAMPLE, Subjects.otherPermanentsYouControl(), otherTransformedPermanent));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 new CounterUnlessPaysEffect(2)),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 otherTransformedPermanent));
     }
 }

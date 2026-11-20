@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.DistinctManaValuesAmongCardsInGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -22,7 +21,7 @@ public class AvenHeartstabber extends Card {
     public AvenHeartstabber() {
         addStaticEffect(new ConditionalEffect(
                 new DistinctManaValuesAmongCardsInGraveyardAtLeast(5),
-                new StaticBoostEffect(2, 2, Set.of(Keyword.DEATHTOUCH), GrantScope.SELF)));
+                new StaticBoostEffect(2, 2, Set.of(Keyword.DEATHTOUCH), Subjects.source())));
         addTrigger(Triggers.dies(ObjectRelation.THIS), SequenceEffect.of(
                 new MillEffect(2, Subjects.you()),
                 new DrawCardEffect(1)));

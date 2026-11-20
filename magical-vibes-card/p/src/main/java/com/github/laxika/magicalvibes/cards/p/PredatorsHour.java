@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OTC", collectorNumber = "147")
@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class PredatorsHour extends Card {
 
     public PredatorsHour() {
-        addSpellEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.MENACE, Subjects.otherCreaturesYouControl()));
         addSpellEffect(new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                 new ExileTopCardOfDamagedPlayerLibraryFaceDownAndGrantCreatureControllerPlayPermissionEffect())));

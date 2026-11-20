@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 /** Grants one keyword selected uniformly at random until end of turn. */
-public record GrantRandomKeywordEffect(List<Keyword> options, GrantScope scope)
+public record GrantRandomKeywordEffect(List<Keyword> options, PermanentSubject subject)
         implements KeywordGrantingEffect {
 
     public GrantRandomKeywordEffect {
@@ -20,8 +20,9 @@ public record GrantRandomKeywordEffect(List<Keyword> options, GrantScope scope)
         if (options.stream().distinct().count() != options.size()) {
             throw new IllegalArgumentException("Keyword options must be distinct");
         }
-        if (scope != GrantScope.SELF && scope != GrantScope.TARGET) {
-            throw new IllegalArgumentException("GrantRandomKeywordEffect supports only SELF and TARGET, got " + scope);
+        if (!(subject instanceof PermanentSubject.Source) && !(subject instanceof PermanentSubject.Target)) {
+            throw new IllegalArgumentException("GrantRandomKeywordEffect supports only source() and target(), got "
+                    + subject);
         }
         options = List.copyOf(options);
     }
@@ -38,7 +39,7 @@ public record GrantRandomKeywordEffect(List<Keyword> options, GrantScope scope)
 
     @Override
     public TargetSpec targetSpec() {
-        return scope == GrantScope.TARGET
+        return subject instanceof PermanentSubject.Target
                 ? TargetSpec.benign(TargetPredicates.creature())
                 : new TargetSpec(null, false, null, true, 1);
     }

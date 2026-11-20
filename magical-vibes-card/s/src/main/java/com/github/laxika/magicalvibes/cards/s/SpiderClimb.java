@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "VIS", collectorNumber = "120")
@@ -17,7 +17,7 @@ public class SpiderClimb extends Card {
         // being sacrificed at the next cleanup step.
         target(TargetFilters.creature())
                 .addStaticEffect(new FlashCastWithCleanupSacrificeEffect())
-                .addStaticEffect(new StaticBoostEffect(0, 3, GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(0, 3, Subjects.attachedCreature()))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.REACH, Subjects.attachedCreature()));
     }
 }

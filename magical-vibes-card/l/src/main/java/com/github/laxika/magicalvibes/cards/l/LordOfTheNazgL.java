@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromRingBearersEffect;
 import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -31,7 +31,7 @@ public class LordOfTheNazgL extends Card {
 
         // Wraiths you control have protection from Ring-bearers.
         addStaticEffect(new GrantEffectEffect(
-                new ProtectionFromRingBearersEffect(), GrantScope.ALL_OWN_CREATURES, wraiths));
+                new ProtectionFromRingBearersEffect(), Subjects.creaturesYouControl(), wraiths));
 
         // Whenever you cast an instant or sorcery spell, create a 3/3 black Wraith creature token
         // with menace. Then if you control nine or more Wraiths, set their base P/T to 9/9 until

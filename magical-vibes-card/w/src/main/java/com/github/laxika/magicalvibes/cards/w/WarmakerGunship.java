@@ -17,8 +17,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -52,10 +52,10 @@ public class WarmakerGunship extends Card {
                 new SourceCounterThreshold(6, CounterType.CHARGE),
                 new AnimatePermanentsEffect(
                         (DynamicAmount) null, (DynamicAmount) null, List.of(), Set.of(), null,
-                        Set.of(CardType.CREATURE), GrantScope.SELF, Duration.STATIC, null
+                        Set.of(CardType.CREATURE), Subjects.source(), Duration.STATIC, null
                 )));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(6, CounterType.CHARGE),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
     }
 }

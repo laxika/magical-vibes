@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class AishaOfSparksAndSmoke extends Card {
 
     public AishaOfSparksAndSmoke() {
         addActivatedAbility(new ActivatedAbility(false, "{R/W}",
-                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())),
                 "{R/W}: Aisha of Sparks and Smoke gains first strike until end of turn."));
 
         addTrigger(Triggers.dealsCombatDamage(),

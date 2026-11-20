@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,7 +21,7 @@ public class RuneBrandJuggler extends Card {
 
     public RuneBrandJuggler() {
         target(TargetFilters.creatureYouControl(), 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new SuspectEffect(GrantScope.TARGET));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new SuspectEffect(Subjects.target()));
 
         var suspectedCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

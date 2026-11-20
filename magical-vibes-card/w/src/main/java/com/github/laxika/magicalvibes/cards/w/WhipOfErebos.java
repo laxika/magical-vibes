@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -22,7 +22,7 @@ import java.util.List;
 public class WhipOfErebos extends Card {
 
     public WhipOfErebos() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.creaturesYouControl()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

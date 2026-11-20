@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.DistinctPermanentNamesAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -24,7 +24,7 @@ public class EmilVastlandsRoamer extends Card {
     public EmilVastlandsRoamer() {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.TRAMPLE,
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)));
 
         addActivatedAbility(new ActivatedAbility(

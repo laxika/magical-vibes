@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class CreepingTrailblazer extends Card {
 
     public CreepingTrailblazer() {
         // Other Elementals you control get +1/+0.
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELEMENTAL))));
 
         // {2}{R}{G}: This creature gets +1/+1 until end of turn for each Elemental you control.

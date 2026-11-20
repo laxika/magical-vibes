@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderControlsMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -20,7 +20,7 @@ public class VectisGloves extends Card {
     public VectisGloves() {
         // Equipped creature gets +2/+0
         addStaticEffect(new AttachedBoostEffect(
-                new Fixed(2), new Fixed(0), GrantScope.EQUIPPED_CREATURE));
+                new Fixed(2), new Fixed(0), Subjects.attachedCreature()));
 
         // Artifact landwalk
         addStaticEffect(new GrantEffectEffect(
@@ -29,7 +29,7 @@ public class VectisGloves extends Card {
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentIsLandPredicate())),
                         true),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

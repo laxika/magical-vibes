@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounteredEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetAllOwnCreaturesBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -30,7 +30,7 @@ public class AllosaurusShepherd extends Card {
                 List.of(
                         new SetAllOwnCreaturesBasePowerToughnessEffect(5, 5, elves),
                         new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.DINOSAUR,
-                                GrantScope.OWN_CREATURES, elves)),
+                                Subjects.creaturesYouControl(), elves)),
                 "{4}{G}{G}: Until end of turn, each Elf creature you control has base power and toughness 5/5 and becomes a Dinosaur in addition to its other creature types."
         ));
     }

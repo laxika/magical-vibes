@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
 import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,6 +22,6 @@ public class UltramarinesHonourGuard extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{2}")),
                 new CreateTokenCopyOfSourceEffect(false, new RepeatedAdditionalCostCount("{2}")));
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl()));
     }
 }

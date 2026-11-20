@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPowerAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class CraterElemental extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{R}",
-                List.of(new SetBasePowerToughnessEffect(8, null, GrantScope.SELF)),
+                List.of(new SetBasePowerToughnessEffect(8, null, Subjects.source())),
                 "{2}{R}: This creature has base power 8 until end of turn."
         ).withActivationCondition(
                 new ControlledCreaturesTotalPowerAtLeast(8),

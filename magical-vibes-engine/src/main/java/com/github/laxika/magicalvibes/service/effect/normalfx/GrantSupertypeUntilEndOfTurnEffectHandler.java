@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -32,11 +33,12 @@ public class GrantSupertypeUntilEndOfTurnEffectHandler implements NormalEffectHa
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var grant = (GrantSupertypeUntilEndOfTurnEffect) effect;
-        if (grant.scope() != GrantScope.SELF && grant.scope() != GrantScope.ENCHANTED_PERMANENT
-                && grant.scope() != GrantScope.TARGET) {
+        if (!(grant.subject() instanceof PermanentSubject.Source)
+                && !(grant.subject() instanceof PermanentSubject.Attached attached && !attached.creature())
+                && !(grant.subject() instanceof PermanentSubject.Target)) {
             return;
         }
-        List<Permanent> targets = subjectResolutionService.permanents(gameData, entry, effect, grant.scope().subject());
+        List<Permanent> targets = subjectResolutionService.permanents(gameData, entry, effect, grant.subject());
 
         for (Permanent target : targets) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(

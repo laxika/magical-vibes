@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseThisActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromExileToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -147,7 +147,7 @@ class ActivationLimitAbilityIdentityTest extends BaseCardTest {
         card.addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(false, null, List.of(new GainLifeEffect(life)),
                         "Gain " + life + " life. Activate only once each turn.", 1),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
         return card;
     }
 

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "168")
@@ -16,7 +16,7 @@ public class ThrashOfRaptors extends Card {
 
     public ThrashOfRaptors() {
         // As long as you control another Dinosaur, this creature gets +2/+0 and has trample.
-        addStaticEffect(new ConditionalEffect(new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)), new StaticBoostEffect(2, 0, GrantScope.SELF)));
-        addStaticEffect(new ConditionalEffect(new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)), new StaticBoostEffect(2, 0, Subjects.source())));
+        addStaticEffect(new ConditionalEffect(new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)), new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
     }
 }

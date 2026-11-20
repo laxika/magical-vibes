@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -28,7 +27,7 @@ public class NettlingCurse extends Card {
                 false,
                 "{1}{R}",
                 List.of(new SetCombatRequirementThisTurnEffect(
-                        CombatRequirement.MUST_ATTACK, GrantScope.ENCHANTED_CREATURE)),
+                        CombatRequirement.MUST_ATTACK, Subjects.attachedCreature())),
                 "{1}{R}: Enchanted creature attacks this turn if able."
         ));
     }

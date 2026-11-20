@@ -12,25 +12,25 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
  * is colourless on its own (CR 202.2), which is why Kormus Bell has to spell out "black" while
  * Living Lands and Nature's Revolt leave their animated lands colourless.
  *
- * <p>The {@code scope} selects all lands, lands the source controller controls, or lands controlled
+ * <p>The {@code subject} selects all lands, lands the source controller controls, or lands controlled
  * by the source's opponents. The layer-4 type change is applied by the layered pass; the colour
  * (layer 5, CR 613.1e), base
  * P/T and creature-ness are filled in the accumulator pass by the matching handler, and
  * combat/targeting queries recognise animated lands via {@code GameQueryService.matchesAnimateLand}.
  */
 public record AllLandsAreCreaturesEffect(int power, int toughness, CardSubtype requiredSubtype, CardColor color,
-                                         GrantScope scope)
+                                         PermanentSubject subject)
         implements CardEffect {
 
     public AllLandsAreCreaturesEffect(int power, int toughness) {
-        this(power, toughness, null, null, GrantScope.ALL_LANDS);
+        this(power, toughness, null, null, Subjects.otherLands());
     }
 
     public AllLandsAreCreaturesEffect(int power, int toughness, CardSubtype requiredSubtype) {
-        this(power, toughness, requiredSubtype, null, GrantScope.ALL_LANDS);
+        this(power, toughness, requiredSubtype, null, Subjects.otherLands());
     }
 
     public AllLandsAreCreaturesEffect(int power, int toughness, CardSubtype requiredSubtype, CardColor color) {
-        this(power, toughness, requiredSubtype, color, GrantScope.ALL_LANDS);
+        this(power, toughness, requiredSubtype, color, Subjects.otherLands());
     }
 }

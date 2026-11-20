@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "197")
@@ -36,7 +36,7 @@ public class SavageKnuckleblade extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.source())),
                 "{R}: This creature gains haste until end of turn."
         ));
     }

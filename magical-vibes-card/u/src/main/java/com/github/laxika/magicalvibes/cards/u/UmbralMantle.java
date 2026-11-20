@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 
@@ -22,7 +22,7 @@ public class UmbralMantle extends Card {
                         List.of(new BoostSelfEffect(2, 2)),
                         "{3}, {Q}: This creature gets +2/+2 until end of turn."
                 ).withRequiresUntap(),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
         addActivatedAbility(new EquipActivatedAbility("{0}"));
     }

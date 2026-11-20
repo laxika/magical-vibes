@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,7 +31,7 @@ public class GoblinSpymaster extends Card {
                         List.of(CardSubtype.GOBLIN),
                         Set.of(),
                         Set.of(),
-                        List.of(StaticAbility.of(new MustAttackEffect(GrantScope.ALL_OWN_CREATURES)))
+                        List.of(StaticAbility.of(new MustAttackEffect(Subjects.creaturesYouControl())))
                 )));
     }
 }

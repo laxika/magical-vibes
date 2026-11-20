@@ -52,7 +52,7 @@ public class GainKeywordsOfCreatureCardsExiledWithSourceSelfEffectHandler implem
             for (CardEffect staticEffect : card.getStaticEffects()) {
                 if (keywordEffect.copyProtectionEffects()
                         && staticEffect instanceof ProtectionGrantingEffect protection
-                        && protection.protectionScope() == null) {
+                        && protection.protectionSubject() == null) {
                     accumulator.addGrantedEffect(staticEffect);
                 } else if (staticEffect instanceof TargetingRestrictionEffect restriction
                         && restriction.hexproofLike()

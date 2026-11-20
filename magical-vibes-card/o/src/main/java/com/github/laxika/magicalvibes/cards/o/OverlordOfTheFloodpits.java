@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
@@ -51,6 +50,6 @@ public class OverlordOfTheFloodpits extends Card {
                 new AllOf(List.of(
                         new CastForAlternateCost(),
                         new SourceCounterThreshold(1, CounterType.TIME))),
-                new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF)));
+                new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, Subjects.source())));
     }
 }

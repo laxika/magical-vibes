@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.ControlledCreaturesTotalPo
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -22,7 +22,7 @@ public class DragonWhisperer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.FLYING, Subjects.source())),
                 "{R}: This creature gains flying until end of turn."
         ));
 

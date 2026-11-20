@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -17,7 +17,7 @@ public class PatricianGeist extends Card {
 
     public PatricianGeist() {
         addStaticEffect(new StaticBoostEffect(
-                1, 1, GrantScope.OWN_CREATURES, new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)));
+                1, 1, Subjects.otherCreaturesYouControl(), new PermanentHasSubtypePredicate(CardSubtype.SPIRIT)));
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTruePredicate(), 1, CostModificationScope.SELF, Zone.GRAVEYARD));
     }

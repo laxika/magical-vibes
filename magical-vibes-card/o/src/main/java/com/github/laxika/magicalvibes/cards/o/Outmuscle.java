@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.ColorSpentToCast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ELD", collectorNumber = "170")
@@ -21,7 +21,7 @@ public class Outmuscle extends Card {
                 .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))
                 .addSpellEffect(new ConditionalEffect(
                         new ColorSpentToCast(ManaColor.GREEN, 3),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET)));
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target())));
         target(TargetFilters.creatureAnOpponentControls())
                 .addSpellEffect(new FightTargetsEffect());
     }

@@ -18,41 +18,42 @@ public record StaticBoostEffect(
         int powerBoost,
         int toughnessBoost,
         Set<Keyword> grantedKeywords,
-        GrantScope scope,
+        PermanentSubject subject,
         PermanentPredicate filter,
         CounterType scalingCounter,
         boolean scalingCounterOnTarget
 ) implements StaticCreatureBoostEffect {
 
-    public StaticBoostEffect(int powerBoost, int toughnessBoost, Set<Keyword> grantedKeywords, GrantScope scope) {
-        this(powerBoost, toughnessBoost, grantedKeywords, scope, null, null, false);
+    public StaticBoostEffect(int powerBoost, int toughnessBoost, Set<Keyword> grantedKeywords,
+                             PermanentSubject subject) {
+        this(powerBoost, toughnessBoost, grantedKeywords, subject, null, null, false);
     }
 
-    public StaticBoostEffect(int powerBoost, int toughnessBoost, Set<Keyword> grantedKeywords, GrantScope scope,
+    public StaticBoostEffect(int powerBoost, int toughnessBoost, Set<Keyword> grantedKeywords, PermanentSubject subject,
                              PermanentPredicate filter) {
-        this(powerBoost, toughnessBoost, grantedKeywords, scope, filter, null, false);
+        this(powerBoost, toughnessBoost, grantedKeywords, subject, filter, null, false);
     }
 
-    public StaticBoostEffect(int powerBoost, int toughnessBoost, GrantScope scope, PermanentPredicate filter) {
-        this(powerBoost, toughnessBoost, Set.of(), scope, filter, null, false);
+    public StaticBoostEffect(int powerBoost, int toughnessBoost, PermanentSubject subject, PermanentPredicate filter) {
+        this(powerBoost, toughnessBoost, Set.of(), subject, filter, null, false);
     }
 
     public StaticBoostEffect(int powerBoost, int toughnessBoost, Set<Keyword> grantedKeywords,
-                             GrantScope scope, PermanentPredicate filter, CounterType scalingCounter) {
-        this(powerBoost, toughnessBoost, grantedKeywords, scope, filter, scalingCounter, false);
+                             PermanentSubject subject, PermanentPredicate filter, CounterType scalingCounter) {
+        this(powerBoost, toughnessBoost, grantedKeywords, subject, filter, scalingCounter, false);
     }
 
-    public StaticBoostEffect(int powerBoost, int toughnessBoost, GrantScope scope) {
-        this(powerBoost, toughnessBoost, Set.of(), scope, null, null, false);
+    public StaticBoostEffect(int powerBoost, int toughnessBoost, PermanentSubject subject) {
+        this(powerBoost, toughnessBoost, Set.of(), subject, null, null, false);
     }
 
-    public StaticBoostEffect(int powerBoost, int toughnessBoost, GrantScope scope, CounterType scalingCounter) {
-        this(powerBoost, toughnessBoost, Set.of(), scope, null, scalingCounter, false);
+    public StaticBoostEffect(int powerBoost, int toughnessBoost, PermanentSubject subject, CounterType scalingCounter) {
+        this(powerBoost, toughnessBoost, Set.of(), subject, null, scalingCounter, false);
     }
 
-    public StaticBoostEffect(int powerBoost, int toughnessBoost, GrantScope scope,
+    public StaticBoostEffect(int powerBoost, int toughnessBoost, PermanentSubject subject,
                              PermanentPredicate filter, CounterType scalingCounter,
                              boolean scalingCounterOnTarget) {
-        this(powerBoost, toughnessBoost, Set.of(), scope, filter, scalingCounter, scalingCounterOnTarget);
+        this(powerBoost, toughnessBoost, Set.of(), subject, filter, scalingCounter, scalingCounterOnTarget);
     }
 }

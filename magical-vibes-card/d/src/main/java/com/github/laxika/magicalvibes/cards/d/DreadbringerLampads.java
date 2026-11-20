@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -27,6 +27,6 @@ public class DreadbringerLampads extends Card {
                                 new TriggerCondition(Triggers.enters(Triggers.ENCHANTMENT,
                                         ObjectRelation.ANOTHER_YOU_CONTROL))),
                         TriggerOptions.DEFAULT, List.of(new EffectRegistration(
-                                new GrantKeywordEffect(Keyword.INTIMIDATE, GrantScope.TARGET)))));
+                                new GrantKeywordEffect(Keyword.INTIMIDATE, Subjects.target())))));
     }
 }

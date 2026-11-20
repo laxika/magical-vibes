@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceBecomesSubtypeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class SourceBecomesSubtypeUntilEndOfTurnEffectHandler implements NormalEf
             gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                     entry.getControllerId(), new com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect(
-                            e.subtypes().get(i), com.github.laxika.magicalvibes.model.effect.GrantScope.TARGET,
+                            e.subtypes().get(i), com.github.laxika.magicalvibes.model.effect.Subjects.target(),
                             e.overriding() && i == 0),
                     self.getId(), null, null, com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN, 0));
         }

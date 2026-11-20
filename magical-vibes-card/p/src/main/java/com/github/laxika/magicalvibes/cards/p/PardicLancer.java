@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "TOR", collectorNumber = "107")
@@ -21,7 +21,7 @@ public class PardicLancer extends Card {
                 List.of(
                         new DiscardRandomCardCost(),
                         new BoostSelfEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())
                 ),
                 "Discard a card at random: This creature gets +1/+0 and gains first strike until end of turn."
         ));

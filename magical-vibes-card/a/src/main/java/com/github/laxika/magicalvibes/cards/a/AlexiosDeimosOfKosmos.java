@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantAttackCardOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -30,7 +29,7 @@ public class AlexiosDeimosOfKosmos extends Card {
                 TargetPlayerGainsControlOfSourceCreatureEffect.triggeringPlayer(),
                 new UntapPermanentsEffect(Subjects.source()),
                 new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.source())
         ));
     }
 }

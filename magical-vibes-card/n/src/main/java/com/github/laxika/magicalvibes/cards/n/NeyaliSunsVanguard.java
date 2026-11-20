@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.AttackedWithTokenThisTurn;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayWhileExiledEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -26,7 +26,7 @@ public class NeyaliSunsVanguard extends Card {
                 new PermanentIsTokenPredicate(),
                 new PermanentIsAttackingPredicate()));
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.DOUBLE_STRIKE, GrantScope.ALL_OWN_CREATURES, attackingToken));
+                Keyword.DOUBLE_STRIKE, Subjects.creaturesYouControl(), attackingToken));
         addTrigger(Triggers.youAttackPlayer(),
                 TriggerOptions.DEFAULT.withEventCondition(new HasAttacker(new PermanentIsTokenPredicate())),
                 new ExileTopCardMayPlayWhileExiledEffect(new AttackedWithTokenThisTurn()));

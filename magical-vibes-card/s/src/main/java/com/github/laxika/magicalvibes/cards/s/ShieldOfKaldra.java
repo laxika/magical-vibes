@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -25,9 +25,9 @@ public class ShieldOfKaldra extends Card {
                     new PermanentNamedPredicate("Helm of Kaldra")))));
 
     public ShieldOfKaldra() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_PERMANENTS, KALDRA_EQUIPMENT));
-        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF, KALDRA_EQUIPMENT));
-        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.otherPermanents(), KALDRA_EQUIPMENT));
+        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source(), KALDRA_EQUIPMENT));
+        addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{4}"));
     }
 }

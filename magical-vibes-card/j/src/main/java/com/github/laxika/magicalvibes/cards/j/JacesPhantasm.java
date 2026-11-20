@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M13", collectorNumber = "57")
 @CardRegistration(set = "DDM", collectorNumber = "3")
@@ -15,6 +15,6 @@ public class JacesPhantasm extends Card {
     public JacesPhantasm() {
         // This creature gets +4/+4 as long as an opponent has ten or more cards in their graveyard.
         addStaticEffect(new ConditionalEffect(new OpponentGraveyardAtLeast(10),
-                new StaticBoostEffect(4, 4, GrantScope.SELF)));
+                new StaticBoostEffect(4, 4, Subjects.source())));
     }
 }

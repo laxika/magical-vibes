@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnOpponentCreaturesFromGraveyardAsFoodEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -133,7 +133,7 @@ public class ReturnOpponentCreaturesFromGraveyardAsFoodEffectHandler implements 
     private void addFoodAbilityEffect(GameData gameData, StackEntry entry, Permanent permanent) {
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
-                new GrantActivatedAbilityEffect(FOOD_ABILITY, GrantScope.TARGET),
+                new GrantActivatedAbilityEffect(FOOD_ABILITY, Subjects.target()),
                 permanent.getId(), null, null, Duration.PERMANENT, 0));
     }
 

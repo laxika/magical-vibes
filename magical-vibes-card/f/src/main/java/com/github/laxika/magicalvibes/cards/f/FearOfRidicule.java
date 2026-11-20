@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomCreatureCardFromDamagedPlayerLibraryAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -28,7 +28,7 @@ public class FearOfRidicule extends Card {
         ));
 
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.MENACE, GrantScope.ALL_OWN_CREATURES, enchantmentCreature));
+                Keyword.MENACE, Subjects.creaturesYouControl(), enchantmentCreature));
 
         CreateTokenCopyOfTargetPermanentEffect tokenCopy = new CreateTokenCopyOfTargetPermanentEffect(
                 List.of(), Set.of(CardType.ENCHANTMENT, CardType.CREATURE), 1, 1, java.util.Map.of(),

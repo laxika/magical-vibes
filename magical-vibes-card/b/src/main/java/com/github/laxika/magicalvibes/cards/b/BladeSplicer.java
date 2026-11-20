@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,7 +30,7 @@ public class BladeSplicer extends Card {
 
         // Golems you control have first strike.
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES,
+                Keyword.FIRST_STRIKE, Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.GOLEM)));
     }
 }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -20,7 +20,7 @@ public class HeraldOfSlaanesh extends Card {
                 new CardSubtypePredicate(CardSubtype.DEMON), 2, CostModificationScope.SELF));
         // Other Demons you control have haste.
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.HASTE, GrantScope.OWN_CREATURES,
+                Keyword.HASTE, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.DEMON)));
     }
 }

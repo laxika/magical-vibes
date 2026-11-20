@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneForTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "LEG", collectorNumber = "310")
@@ -25,9 +25,9 @@ public class Urborg extends Card {
                 null,
                 List.of(new ChooseOneForTargetCreatureEffect(List.of(
                         new ChooseOneEffect.ChooseOneOption("It loses first strike",
-                                new RemoveKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET)),
+                                new RemoveKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target())),
                         new ChooseOneEffect.ChooseOneOption("It loses swampwalk",
-                                new RemoveKeywordEffect(Keyword.SWAMPWALK, GrantScope.TARGET))))),
+                                new RemoveKeywordEffect(Keyword.SWAMPWALK, Subjects.target()))))),
                 "{T}: Target creature loses first strike or swampwalk until end of turn."
         ));
     }

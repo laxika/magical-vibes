@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerCastSpellThisTur
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -28,7 +27,7 @@ public class HumanTorch extends Card {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new ControllerCastSpellThisTurn(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))),
-                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.DOUBLE_STRIKE, Keyword.HASTE), GrantScope.SELF));
+                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.DOUBLE_STRIKE, Keyword.HASTE), Subjects.source()));
 
         addTrigger(Triggers.attacks(), new MayPayManaEffect(
                 "{R}{G}{W}{U}",

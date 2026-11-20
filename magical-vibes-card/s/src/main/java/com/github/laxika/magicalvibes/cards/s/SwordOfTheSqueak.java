@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerEqualsPredicate;
@@ -35,7 +35,7 @@ public class SwordOfTheSqueak extends Card {
                         basePowerOrToughnessOne)),
                 CountScope.CONTROLLER);
         addStaticEffect(new DynamicStaticBoostEffect(
-                qualifyingCreatures, qualifyingCreatures, GrantScope.EQUIPPED_CREATURE));
+                qualifyingCreatures, qualifyingCreatures, Subjects.attachedCreature()));
 
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(

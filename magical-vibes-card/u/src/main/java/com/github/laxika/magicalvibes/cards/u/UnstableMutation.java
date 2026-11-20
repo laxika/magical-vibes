@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -23,7 +22,7 @@ public class UnstableMutation extends Card {
     public UnstableMutation() {
         target(TargetFilters.creature())
                 // Enchanted creature gets +3/+3.
-                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(3, 3, Subjects.attachedCreature()))
 
                 // At the beginning of the upkeep of enchanted creature's controller,
                 // put a -1/-1 counter on that creature.

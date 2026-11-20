@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.Set;
@@ -18,6 +18,6 @@ public class ChargingWarBoar extends Card {
     public ChargingWarBoar() {
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DOMRI)),
-                new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), Subjects.source())));
     }
 }

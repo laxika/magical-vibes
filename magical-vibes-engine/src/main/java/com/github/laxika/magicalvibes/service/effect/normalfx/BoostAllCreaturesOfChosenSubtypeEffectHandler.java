@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesOfChosenSubt
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -72,10 +71,7 @@ public class BoostAllCreaturesOfChosenSubtypeEffectHandler implements NormalEffe
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), amountContext);
 
         PermanentHasSubtypePredicate subtypePredicate = new PermanentHasSubtypePredicate(chosenSubtype);
-        // Both "creatures you control" readings and "all creatures" include the source here.
-        PermanentSubject creatures = boost.scope() == GrantScope.OWN_CREATURES
-                || boost.scope() == GrantScope.ALL_OWN_CREATURES
-                ? GrantScope.ALL_OWN_CREATURES.subject() : GrantScope.ALL_CREATURES_INCLUDING_SELF.subject();
+        PermanentSubject creatures = boost.subject();
         int affectedCount = 0;
 
         for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
@@ -87,7 +83,7 @@ public class BoostAllCreaturesOfChosenSubtypeEffectHandler implements NormalEffe
             if (!grantableKeywords.isEmpty()) {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), entry.getCard().getName(), null, controllerId,
-                        new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET),
+                        new GrantKeywordEffect(grantableKeywords, Subjects.target()),
                         permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             }
             affectedCount++;

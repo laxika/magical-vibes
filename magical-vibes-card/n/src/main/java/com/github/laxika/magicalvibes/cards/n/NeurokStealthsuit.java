@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -17,7 +17,7 @@ import java.util.List;
 public class NeurokStealthsuit extends Card {
 
     public NeurokStealthsuit() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, Subjects.attachedCreature()));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{U}{U}",

@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RampageEffect;
@@ -45,20 +45,19 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantEffectToTargetEffect) effect;
 
-        if (e.scope() == GrantScope.ENCHANTED_PERMANENT) {
-            Permanent enchanted = subjectResolutionService.permanent(gameData, entry, effect,
-                    GrantScope.ENCHANTED_PERMANENT.subject());
+        if (e.subject() instanceof PermanentSubject.Attached) {
+            Permanent enchanted = subjectResolutionService.permanent(gameData, entry, effect, e.subject());
             if (enchanted != null) {
                 grantTo(gameData, entry, e, enchanted);
             }
             return;
         }
 
-        if (e.scope() == GrantScope.SELF) {
+        if (e.subject() instanceof PermanentSubject.Source) {
             // A spell's "put a card onto the battlefield, then it gains ...": the put handler records the permanent as
             // the entry's target, and the spell has no source permanent (Terminal Velocity).
             Permanent source = subjectResolutionService.permanent(gameData, entry, effect,
-                    entry.getSourcePermanentId() == null ? Subjects.target() : GrantScope.SELF.subject());
+                    entry.getSourcePermanentId() == null ? Subjects.target() : Subjects.source());
             if (source != null) {
                 grantTo(gameData, entry, e, source);
             }
@@ -66,7 +65,7 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
         }
 
         for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect,
-                GrantScope.TARGET.subject())) {
+                Subjects.target())) {
             grantTo(gameData, entry, e, target);
         }
     }

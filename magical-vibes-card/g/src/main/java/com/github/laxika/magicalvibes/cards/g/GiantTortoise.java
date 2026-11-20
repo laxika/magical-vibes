@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -17,6 +17,6 @@ public class GiantTortoise extends Card {
     public GiantTortoise() {
         // This creature gets +0/+3 as long as it's untapped.
         addStaticEffect(new StaticBoostEffect(
-                0, 3, GrantScope.SELF, new PermanentNotPredicate(new PermanentIsTappedPredicate())));
+                0, 3, Subjects.source(), new PermanentNotPredicate(new PermanentIsTappedPredicate())));
     }
 }

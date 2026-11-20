@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -26,7 +26,7 @@ public class KindredBoon extends Card {
         addStaticEffect(new ChooseSubtypeOnEnterEffect());
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.INDESTRUCTIBLE,
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentHasCountersPredicate(CounterType.DIVINITY)));
 
         PermanentAllOfPredicate chosenCreatureYouControl = new PermanentAllOfPredicate(List.of(

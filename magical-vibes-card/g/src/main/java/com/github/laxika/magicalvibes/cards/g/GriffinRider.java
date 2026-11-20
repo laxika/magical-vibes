@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,7 +23,7 @@ public class GriffinRider extends Card {
         var griffinCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.GRIFFIN),
                 new PermanentIsCreaturePredicate()));
-        addStaticEffect(new ConditionalEffect(new ControlsPermanent(griffinCreature), new StaticBoostEffect(3, 3, GrantScope.SELF)));
-        addStaticEffect(new ConditionalEffect(new ControlsPermanent(griffinCreature), new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new ControlsPermanent(griffinCreature), new StaticBoostEffect(3, 3, Subjects.source())));
+        addStaticEffect(new ConditionalEffect(new ControlsPermanent(griffinCreature), new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
     }
 }

@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RollWithAdvantageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,7 +32,7 @@ public class BarbarianClass extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.LEVEL)),
                 SequenceEffect.of(
                         new BoostTargetCreatureEffect(2, 0),
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET)));
+                        new GrantKeywordEffect(Keyword.MENACE, Subjects.target())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
@@ -46,7 +46,7 @@ public class BarbarianClass extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

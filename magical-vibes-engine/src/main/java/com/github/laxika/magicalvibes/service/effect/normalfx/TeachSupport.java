@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TeachCastCopyEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -62,7 +62,7 @@ public class TeachSupport {
                     "{T}: Copy the exiled card. You may cast the copy for its teach cost.");
             GrantActivatedAbilityEffect grant = new GrantActivatedAbilityEffect(
                     ability,
-                    GrantScope.TARGET,
+                    Subjects.target(),
                     null,
                     Duration.WHILE_SOURCE_CARD_EXILED,
                     entry.getCard().getId());

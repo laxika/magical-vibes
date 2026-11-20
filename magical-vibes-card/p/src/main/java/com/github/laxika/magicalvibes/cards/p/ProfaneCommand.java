@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -64,7 +63,7 @@ public class ProfaneCommand extends Card {
                                 "Target must be a creature.")),
                 ChooseOneEffect.ChooseOneOption.upToXTargets(
                         "Up to X target creatures gain fear until end of turn",
-                        new GrantKeywordEffect(Keyword.FEAR, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.FEAR, Subjects.target()),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),
                                 "Targets must be creatures"),

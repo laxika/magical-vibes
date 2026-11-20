@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,7 +21,7 @@ public class ElvishPathcutter extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{G}",
-                List.of(new GrantKeywordEffect(Keyword.FORESTWALK, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.FORESTWALK, Subjects.target())),
                 "{2}{G}: Target Elf creature gains forestwalk until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -22,7 +21,7 @@ public class ErebossEmissary extends Card {
         addCastingOption(new BestowCast("{5}{B}"));
 
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(3, 3, Subjects.attachedCreature()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

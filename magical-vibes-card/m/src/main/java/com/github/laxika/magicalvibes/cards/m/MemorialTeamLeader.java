@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "EOE", collectorNumber = "144")
@@ -16,7 +16,7 @@ public class MemorialTeamLeader extends Card {
 
     public MemorialTeamLeader() {
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES)));
+                new StaticBoostEffect(1, 0, Subjects.otherCreaturesYouControl())));
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{1}{R}"))));
     }
 }

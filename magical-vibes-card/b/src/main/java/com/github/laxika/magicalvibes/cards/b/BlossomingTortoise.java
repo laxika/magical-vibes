@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
@@ -33,7 +32,7 @@ public class BlossomingTortoise extends Card {
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsLandPredicate(),
                         new PermanentControlledBySourceControllerPredicate())), 1));
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.creaturesYouControl(),
                 new PermanentIsLandPredicate()));
     }
 

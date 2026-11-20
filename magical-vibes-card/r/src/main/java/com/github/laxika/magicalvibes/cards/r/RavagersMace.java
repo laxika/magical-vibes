@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.PartySize;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,8 +24,8 @@ public class RavagersMace extends Card {
 
         // Equipped creature gets +1/+0 for each creature in your party and has menace.
         addStaticEffect(new DynamicStaticBoostEffect(
-                new PartySize(), new Fixed(0), GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
+                new PartySize(), new Fixed(0), Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, Subjects.attachedCreature()));
 
         // Equip {2}{B}{R}
         addActivatedAbility(new EquipActivatedAbility("{2}{B}{R}"));

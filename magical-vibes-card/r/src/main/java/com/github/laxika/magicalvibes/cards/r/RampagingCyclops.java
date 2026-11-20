@@ -4,14 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.BlockedByMinCreatures;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "DOM", collectorNumber = "139")
 public class RampagingCyclops extends Card {
 
     public RampagingCyclops() {
         // Rampaging Cyclops gets -2/-0 as long as two or more creatures are blocking it.
-        addStaticEffect(new ConditionalEffect(new BlockedByMinCreatures(2), new StaticBoostEffect(-2, 0, GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new BlockedByMinCreatures(2), new StaticBoostEffect(-2, 0, Subjects.source())));
     }
 }

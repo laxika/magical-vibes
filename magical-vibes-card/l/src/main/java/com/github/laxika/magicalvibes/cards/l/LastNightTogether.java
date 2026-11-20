@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhasesAfterMainEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -25,12 +24,12 @@ public class LastNightTogether extends Card {
                 .addSpellEffect(new UntapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))
                 .addSpellEffect(new GrantKeywordEffect(
-                        Set.of(Keyword.VIGILANCE, Keyword.INDESTRUCTIBLE, Keyword.HASTE), GrantScope.TARGET));
+                        Set.of(Keyword.VIGILANCE, Keyword.INDESTRUCTIBLE, Keyword.HASTE), Subjects.target()));
         target(TargetFilters.creature())
                 .addSpellEffect(new UntapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))
                 .addSpellEffect(new GrantKeywordEffect(
-                        Set.of(Keyword.VIGILANCE, Keyword.INDESTRUCTIBLE, Keyword.HASTE), GrantScope.TARGET));
+                        Set.of(Keyword.VIGILANCE, Keyword.INDESTRUCTIBLE, Keyword.HASTE), Subjects.target()));
 
         addSpellEffect(new AdditionalCombatPhasesAfterMainEffect(1, true));
     }

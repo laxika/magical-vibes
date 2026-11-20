@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -25,7 +25,7 @@ public class KolodinTriumphCaster extends Card {
     public KolodinTriumphCaster() {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.HASTE,
-                GrantScope.OWN_PERMANENTS,
+                Subjects.otherPermanentsYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.MOUNT, CardSubtype.VEHICLE))));
 
         addTrigger(Triggers.enters(
@@ -33,7 +33,7 @@ public class KolodinTriumphCaster extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasSubtypePredicate(CardSubtype.MOUNT))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new BecomeSaddledUntilEndOfTurnEffect(GrantScope.TRIGGERING_PERMANENT));
+                new BecomeSaddledUntilEndOfTurnEffect(Subjects.triggering()));
 
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
@@ -42,6 +42,6 @@ public class KolodinTriumphCaster extends Card {
                         ObjectRelation.ANOTHER_YOU_CONTROL),
                 new AnimatePermanentsEffect(
                         null, null, List.of(), Set.of(), null, Set.of(CardType.CREATURE),
-                        GrantScope.TRIGGERING_PERMANENT, Duration.UNTIL_END_OF_TURN, null));
+                        Subjects.triggering(), Duration.UNTIL_END_OF_TURN, null));
     }
 }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class GempalmAvenger extends Card {
         PermanentHasSubtypePredicate soldier = new PermanentHasSubtypePredicate(CardSubtype.SOLDIER);
         addTrigger(Triggers.youCycleThisCard(), SequenceEffect.of(
                 new BoostAllCreaturesEffect(1, 1, soldier),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ALL_CREATURES, soldier)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.allCreatures(), soldier)));
         addCycling("{2}{W}");
     }
 }

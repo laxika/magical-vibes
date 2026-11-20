@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEf
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -51,7 +51,7 @@ public class GadwicksFirstDuel extends Card {
                 Set.of(),
                 false,
                 false,
-                List.of(StaticAbility.of(new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE))),
+                List.of(StaticAbility.of(new SetBasePowerToughnessEffect(1, 1, Subjects.attachedCreature()))),
                 List.of(),
                 false,
                 false,

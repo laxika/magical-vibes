@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -20,7 +20,7 @@ public class AirMarshal extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}",
-                List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.FLYING, Subjects.target())),
                 "{3}: Target Soldier gains flying until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentHasSubtypePredicate(CardSubtype.SOLDIER),

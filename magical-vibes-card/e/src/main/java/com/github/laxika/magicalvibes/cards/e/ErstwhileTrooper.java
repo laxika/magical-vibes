@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class ErstwhileTrooper extends Card {
                 List.of(
                         new DiscardCardTypeCost(new CardTypePredicate(CardType.CREATURE), "creature"),
                         new BoostSelfEffect(2, 2),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())
                 ),
                 "Discard a creature card: This creature gets +2/+2 and gains trample until end of turn. Activate only once each turn.",
                 1

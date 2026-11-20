@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NthAbilityResolutionThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -31,7 +31,7 @@ public class ProwlPursuitVehicle extends Card {
         // Living metal: during your turn, this Vehicle is also a creature.
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
-                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
+                new GrantCardTypeEffect(CardType.CREATURE, Subjects.source())));
 
         PermanentPredicate anotherCreatureOrVehicle = new PermanentAllOfPredicate(List.of(
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()),

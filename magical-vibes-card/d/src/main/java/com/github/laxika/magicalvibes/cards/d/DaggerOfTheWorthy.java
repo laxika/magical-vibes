@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -16,10 +15,10 @@ public class DaggerOfTheWorthy extends Card {
 
     public DaggerOfTheWorthy() {
         // Equipped creature gets +2/+0
-        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, Subjects.attachedCreature()));
 
         addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.becomesBlocked(),
-                new LoseLifeEffect(1, Subjects.defendingPlayer())), GrantScope.EQUIPPED_CREATURE));
+                new LoseLifeEffect(1, Subjects.defendingPlayer())), Subjects.attachedCreature()));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

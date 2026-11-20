@@ -14,10 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandAndPerpetuallyBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -60,11 +60,11 @@ public class CandelaAegisOfAdagia extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.CHARGE),
                 new AnimatePermanentsEffect((DynamicAmount) null, (DynamicAmount) null,
-                        List.of(), Set.of(), null, Set.of(CardType.CREATURE), GrantScope.SELF,
+                        List.of(), Set.of(), null, Set.of(CardType.CREATURE), Subjects.source(),
                         Duration.STATIC, null)));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.CHARGE),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
 
         // Station 8+ also grants the combat damage trigger
         addTrigger(Triggers.dealsCombatDamageToPlayer(),

@@ -4,37 +4,37 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * One-shot or continuous keyword removal for permanents selected by {@code scope}.
+ * One-shot or continuous keyword removal for permanents selected by {@code subject}.
  *
- * <p>With {@link GrantScope#TARGET} on a {@code Triggers.blocks()} / {@code Triggers.becomesBlocked()} ({@code EACH_BLOCKER})
+ * <p>With {@link Subjects#target()} on a {@code Triggers.blocks()} / {@code Triggers.becomesBlocked()} ({@code EACH_BLOCKER})
  * ability whose card declares no target for it, the target is "that creature", the creature on the other side of the
  * block, which the collector records as the entry's non-targeting target (Talruum Champion).
  */
-public record RemoveKeywordEffect(Keyword keyword, GrantScope scope, PermanentPredicate filter,
+public record RemoveKeywordEffect(Keyword keyword, PermanentSubject subject, PermanentPredicate filter,
                                   Duration duration)
         implements CardEffect {
 
-    public RemoveKeywordEffect(Keyword keyword, GrantScope scope) {
-        this(keyword, scope, null, Duration.UNTIL_END_OF_TURN);
+    public RemoveKeywordEffect(Keyword keyword, PermanentSubject subject) {
+        this(keyword, subject, null, Duration.UNTIL_END_OF_TURN);
     }
 
-    public RemoveKeywordEffect(Keyword keyword, GrantScope scope, PermanentPredicate filter) {
-        this(keyword, scope, filter, Duration.UNTIL_END_OF_TURN);
+    public RemoveKeywordEffect(Keyword keyword, PermanentSubject subject, PermanentPredicate filter) {
+        this(keyword, subject, filter, Duration.UNTIL_END_OF_TURN);
     }
 
-    public RemoveKeywordEffect(Keyword keyword, GrantScope scope, Duration duration) {
-        this(keyword, scope, null, duration);
+    public RemoveKeywordEffect(Keyword keyword, PermanentSubject subject, Duration duration) {
+        this(keyword, subject, null, duration);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        if (scope == GrantScope.TARGET) {
+        if (subject instanceof PermanentSubject.Target) {
             return TargetSpec.benign(TargetPredicates.permanent());
         }
-        if (scope == GrantScope.TARGET_PLAYERS_CREATURES) {
+        if (subject.declaresPlayerTarget()) {
             return TargetSpec.benign(TargetPredicates.player());
         }
-        if (scope == GrantScope.SELF) {
+        if (subject instanceof PermanentSubject.Source) {
             return new TargetSpec(null, false, null, true, 1);
         }
         return TargetSpec.NONE;

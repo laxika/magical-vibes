@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "CHK", collectorNumber = "133")
 @CardRegistration(set = "IMA", collectorNumber = "99")
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 public class NightOfSoulsBetrayal extends Card {
 
     public NightOfSoulsBetrayal() {
-        addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.ALL_CREATURES_INCLUDING_SELF));
+        addStaticEffect(new StaticBoostEffect(-1, -1, Subjects.allCreatures()));
     }
 }

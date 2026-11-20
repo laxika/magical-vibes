@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -19,7 +18,7 @@ public class ReapersTalisman extends Card {
 
     public ReapersTalisman() {
         addTrigger(Triggers.attacks(),
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TRIGGERING_PERMANENT));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.triggering()));
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 SequenceEffect.of(new LoseLifeEffect(2, Subjects.defendingPlayer()), new GainLifeEffect(2)));

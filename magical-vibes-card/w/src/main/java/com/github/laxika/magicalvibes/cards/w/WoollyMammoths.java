@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -25,7 +25,7 @@ public class WoollyMammoths extends Card {
                         new PermanentIsLandPredicate(),
                         new PermanentHasSupertypePredicate(CardSupertype.SNOW)
                 ))),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())
         ));
     }
 }

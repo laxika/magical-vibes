@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenForTriggeringPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -27,7 +27,7 @@ public class SoaringLightbringer extends Card {
                 new PermanentIsEnchantmentPredicate(),
                 new PermanentIsCreaturePredicate()));
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.FLYING, GrantScope.OWN_CREATURES, enchantmentCreature));
+                Keyword.FLYING, Subjects.otherCreaturesYouControl(), enchantmentCreature));
 
         CreateTokenEffect glimmerToken = new CreateTokenEffect(
                 CardType.CREATURE, 1, "Glimmer", 1, 1, CardColor.WHITE, null,

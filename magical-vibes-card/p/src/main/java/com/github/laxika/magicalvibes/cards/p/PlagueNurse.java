@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -28,7 +28,7 @@ public class PlagueNurse extends Card {
         ));
         addActivatedAbility(new ActivatedAbility(false, "{2}{G}",
                 List.of(
-                        new GrantKeywordEffect(Keyword.TOXIC, GrantScope.OWN_CREATURES,
+                        new GrantKeywordEffect(Keyword.TOXIC, Subjects.otherCreaturesYouControl(),
                                 new PermanentHasKeywordPredicate(Keyword.TOXIC)),
                         new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(StaticAbility.of(new ToxicEffect(1)),
                                 toxicOtherCreature)),

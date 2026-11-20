@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -18,7 +18,7 @@ public class DaruWarchief extends Card {
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.SOLDIER), 1, CostModificationScope.SELF));
         // Soldier creatures you control get +1/+2.
-        addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 2, Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.SOLDIER)));
     }
 }

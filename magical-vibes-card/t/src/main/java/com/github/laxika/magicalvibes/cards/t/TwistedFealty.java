@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -34,7 +33,7 @@ public class TwistedFealty extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new UntapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.target()));
         target(TargetFilters.creature(), 0, 1)
                 .addSpellEffect(new CreateTokenAttachedToTargetEffect(wickedRoleToken(), PlayerRelation.ANY));
     }
@@ -54,7 +53,7 @@ public class TwistedFealty extends Card {
                 false,
                 false,
                 List.of(
-                        StaticAbility.of(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE)),
+                        StaticAbility.of(new StaticBoostEffect(1, 1, Subjects.attachedCreature())),
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new LoseLifeEffect(1, Subjects.eachOpponent()))),
                 List.of(),
                 false,

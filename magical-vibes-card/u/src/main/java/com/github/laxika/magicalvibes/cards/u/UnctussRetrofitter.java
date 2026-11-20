@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -23,7 +23,7 @@ public class UnctussRetrofitter extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new AnimatePermanentsEffect(
                                 4, 4, List.of(), Set.of(), null, Set.of(),
-                                GrantScope.TARGET, Duration.WHILE_SOURCE_ON_BATTLEFIELD));
+                                Subjects.target(), Duration.WHILE_SOURCE_ON_BATTLEFIELD));
         addStaticEffect(new ToxicEffect(1));
     }
 }

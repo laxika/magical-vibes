@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,7 +29,7 @@ public class SteppeGlider extends Card {
                 "{1}{W}",
                 List.of(new GrantKeywordEffect(
                         Set.of(Keyword.FLYING, Keyword.VIGILANCE),
-                        GrantScope.TARGET,
+                        Subjects.target(),
                         creatureWithPlusOnePlusOneCounter
                 )),
                 "{1}{W}: Target creature with a +1/+1 counter on it gains flying and vigilance until end of turn.",

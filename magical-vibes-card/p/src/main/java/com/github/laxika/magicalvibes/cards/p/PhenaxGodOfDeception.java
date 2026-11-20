@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 
@@ -27,7 +26,7 @@ public class PhenaxGodOfDeception extends Card {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorsAtLeast(
                         Set.of(ManaColor.BLUE, ManaColor.BLACK), 7)),
-                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
+                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), Subjects.source())));
 
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
@@ -36,7 +35,7 @@ public class PhenaxGodOfDeception extends Card {
                         List.of(new MillEffect(new SourceToughness(), Subjects.targetPlayer())),
                         "{T}: Target player mills X cards, where X is this creature's toughness."
                 ),
-                GrantScope.ALL_OWN_CREATURES
+                Subjects.creaturesYouControl()
         ));
     }
 }

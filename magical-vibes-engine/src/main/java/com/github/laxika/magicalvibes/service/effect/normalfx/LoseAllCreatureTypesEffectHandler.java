@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -33,13 +33,13 @@ public class LoseAllCreatureTypesEffectHandler implements NormalEffectHandlerBea
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var lose = (LoseAllCreatureTypesEffect) effect;
 
-        if (lose.scope() == GrantScope.TARGET_PLAYERS_CREATURES) {
+        if (lose.subject().declaresPlayerTarget()) {
             if (subjectResolutionService.players(gameData, entry, effect, Subjects.targetPlayer()).isEmpty()) {
                 return;
             }
             int count = 0;
             for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
-                    lose.scope().subject())) {
+                    lose.subject())) {
                 applyTypeLoss(gameData, entry, effect, permanent);
                 count++;
             }
@@ -47,7 +47,7 @@ public class LoseAllCreatureTypesEffectHandler implements NormalEffectHandlerBea
             return;
         }
 
-        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, GrantScope.TARGET.subject());
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, Subjects.target());
         if (target == null) {
             return;
         }

@@ -102,7 +102,7 @@ public class PermanentCopierService {
                 && permanent.getChosenModeLabels().contains(chosenMode.mode()))) {
             return null;
         }
-        if (conditional.wrapped() instanceof SetBasePowerToughnessEffect set && set.scope().subject() instanceof PermanentSubject.Source) {
+        if (conditional.wrapped() instanceof SetBasePowerToughnessEffect set && set.subject() instanceof PermanentSubject.Source) {
             copy.setPower(set.power());
             copy.setToughness(set.toughness());
             return null;

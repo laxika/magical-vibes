@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class GrafHarvest extends Card {
 
     public GrafHarvest() {
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.MENACE, GrantScope.OWN_CREATURES,
+                Keyword.MENACE, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
         addActivatedAbility(new ActivatedAbility(
                 false, "{3}{B}",

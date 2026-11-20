@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,6 +18,6 @@ public class BogBadger extends Card {
         addStaticEffect(new KickerEffect("{B}"));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),
-                new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.MENACE, Subjects.creaturesYouControl()));
     }
 }

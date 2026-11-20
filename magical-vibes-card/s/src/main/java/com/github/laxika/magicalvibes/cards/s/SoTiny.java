@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ELD", collectorNumber = "64")
@@ -15,6 +15,6 @@ public class SoTiny extends Card {
     public SoTiny() {
         target(TargetFilters.creature()).addStaticEffect(new AttachedBoostEffect(
                 new FixedIfCondition(new GraveyardCardThreshold(7, null), -6, -2),
-                new Fixed(0), GrantScope.ENCHANTED_CREATURE, true));
+                new Fixed(0), Subjects.attachedCreature(), true));
     }
 }

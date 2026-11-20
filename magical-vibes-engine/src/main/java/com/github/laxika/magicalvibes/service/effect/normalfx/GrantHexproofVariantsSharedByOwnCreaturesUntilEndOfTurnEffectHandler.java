@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantHexproofVariantsSharedByOwnCreaturesUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -61,7 +61,7 @@ public class GrantHexproofVariantsSharedByOwnCreaturesUntilEndOfTurnEffectHandle
             for (TargetingRestrictionEffect variant : variants) {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
-                        new GrantEffectEffect(variant, GrantScope.TARGET), recipient.getId(), null, null,
+                        new GrantEffectEffect(variant, Subjects.target()), recipient.getId(), null, null,
                         Duration.UNTIL_END_OF_TURN, 0));
             }
         }

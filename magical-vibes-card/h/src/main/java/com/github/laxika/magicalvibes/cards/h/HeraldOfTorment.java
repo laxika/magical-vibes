@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,6 +23,6 @@ public class HeraldOfTorment extends Card {
 
         target(TargetFilters.creature())
                 .addStaticEffect(new StaticBoostEffect(
-                        3, 3, Set.of(Keyword.FLYING), GrantScope.ENCHANTED_CREATURE));
+                        3, 3, Set.of(Keyword.FLYING), Subjects.attachedCreature()));
     }
 }

@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTopCreatureCardInLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -44,7 +44,7 @@ public class PerpetuallyBoostTopCreatureCardInLibraryEffectHandler implements No
             }
 
             Card modifiedCard = card.createRuntimeCopy();
-            modifiedCard.addStaticEffect(new StaticBoostEffect(amount, amount, GrantScope.SELF));
+            modifiedCard.addStaticEffect(new StaticBoostEffect(amount, amount, Subjects.source()));
             library.set(i, modifiedCard);
             return;
         }

@@ -11,12 +11,12 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -39,7 +39,7 @@ public class TerminalVelocity extends Card {
                         "artifact or creature",
                         null,
                         SequenceEffect.of(
-                                new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF, Duration.PERMANENT),
+                                new GrantKeywordEffect(Keyword.HASTE, Subjects.source(), Duration.PERMANENT),
                                 GrantEffectToTargetEffect.toSourcePermanent(
                                         new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS), leavesDamage)),
                                 GrantEffectToTargetEffect.toSourcePermanent(new TriggeredAbility(

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +22,7 @@ public class StensiaMasquerade extends Card {
     public StensiaMasquerade() {
         // Attacking creatures you control have first strike.
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES, new PermanentIsAttackingPredicate()));
+                Keyword.FIRST_STRIKE, Subjects.creaturesYouControl(), new PermanentIsAttackingPredicate()));
 
         // Whenever a Vampire you control deals combat damage to a player, put a +1/+1 counter on it.
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer()

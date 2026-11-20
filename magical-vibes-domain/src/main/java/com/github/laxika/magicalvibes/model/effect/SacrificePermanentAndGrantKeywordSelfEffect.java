@@ -22,8 +22,8 @@ public record SacrificePermanentAndGrantKeywordSelfEffect(
     }
 
     @Override
-    public GrantScope scope() {
-        return GrantScope.SELF;
+    public PermanentSubject subject() {
+        return Subjects.source();
     }
 
     @Override

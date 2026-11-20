@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -33,7 +32,7 @@ public class ImmolationShaman extends Card {
                 "{3}{R}{R}",
                 List.of(
                         new BoostSelfEffect(3, 3),
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)),
+                        new GrantKeywordEffect(Keyword.MENACE, Subjects.source())),
                 "{3}{R}{R}: This creature gets +3/+3 and gains menace until end of turn."
         ));
     }

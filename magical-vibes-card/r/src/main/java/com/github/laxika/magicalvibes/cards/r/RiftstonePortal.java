@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.WrappedGraveyardStaticEffect;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class RiftstonePortal extends Card {
                         List.of(new AwardManaOfColorsEffect(List.of(ManaColor.GREEN, ManaColor.WHITE))),
                         "{T}: Add {G} or {W}."
                 ),
-                GrantScope.OWN_LANDS
+                Subjects.landsYouControl()
         )));
     }
 }

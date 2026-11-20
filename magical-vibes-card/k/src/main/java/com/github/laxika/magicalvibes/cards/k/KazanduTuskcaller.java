@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -38,10 +38,10 @@ public class KazanduTuskcaller extends Card {
                 new AllOf(List.of(
                         new SourceCounterThreshold(2, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(6, CounterType.LEVEL)))),
-                new GrantActivatedAbilityEffect(createTokenAbility(1), GrantScope.SELF)));
+                new GrantActivatedAbilityEffect(createTokenAbility(1), Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(6, CounterType.LEVEL),
-                new GrantActivatedAbilityEffect(createTokenAbility(2), GrantScope.SELF)));
+                new GrantActivatedAbilityEffect(createTokenAbility(2), Subjects.source())));
     }
 
     private static ActivatedAbility createTokenAbility(int amount) {

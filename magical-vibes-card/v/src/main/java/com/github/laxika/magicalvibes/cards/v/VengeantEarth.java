@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -35,7 +35,7 @@ public class VengeantEarth extends Card {
                         List.of(CardSubtype.ELEMENTAL),
                         Set.of(Keyword.HASTE),
                         null, Set.of(),
-                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN))
+                        Subjects.target(), Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(SetCombatRequirementThisTurnEffect.targetPermanent(CombatRequirement.MUST_BE_BLOCKED));
     }
 }

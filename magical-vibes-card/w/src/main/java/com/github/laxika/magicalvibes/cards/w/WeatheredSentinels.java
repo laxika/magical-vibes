@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackPlayersWhoAttackedControllerLastTurnAsThoughNoDefenderEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "NCC", collectorNumber = "85")
@@ -19,6 +19,6 @@ public class WeatheredSentinels extends Card {
         addStaticEffect(new CanAttackPlayersWhoAttackedControllerLastTurnAsThoughNoDefenderEffect());
         addTrigger(Triggers.attacks(), SequenceEffect.of(
                 new BoostSelfEffect(3, 3),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
     }
 }

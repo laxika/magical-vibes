@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.BolsterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedWatchedCreaturesCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformGrantingPermanentEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,7 +23,7 @@ public class OptimusPrimeAutobotLeader extends Card {
     public OptimusPrimeAutobotLeader() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
-                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
+                new GrantCardTypeEffect(CardType.CREATURE, Subjects.source())));
 
         addTrigger(Triggers.youAttack(), SequenceEffect.of(
                 new BolsterEffect(2, true),

@@ -26,7 +26,7 @@ public class StaticBoostSelfEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (StaticBoostEffect) effect;
-        if (support.names(context, boost.scope().subject(), boost.filter())) {
+        if (support.names(context, boost.subject(), boost.filter())) {
             int multiplier = boost.scalingCounter() == null
                     ? 1
                     : context.sourceCounterCount(boost.scalingCounter());

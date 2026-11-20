@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
@@ -21,7 +21,7 @@ import java.util.List;
 public class SigardaFontOfBlessings extends Card {
 
     public SigardaFontOfBlessings() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.otherPermanentsYouControl()));
         addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
         addStaticEffect(new AllowCastFromTopOfLibraryEffect(new CardAnyOfPredicate(List.of(
                 new CardSubtypePredicate(CardSubtype.ANGEL),

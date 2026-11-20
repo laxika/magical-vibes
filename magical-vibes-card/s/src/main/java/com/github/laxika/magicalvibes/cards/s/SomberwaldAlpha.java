@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,7 +23,7 @@ public class SomberwaldAlpha extends Card {
         // {1}{G}: Target creature you control gains trample until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 false, "{1}{G}",
-                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())),
                 "{1}{G}: Target creature you control gains trample until end of turn.",
                 TargetFilters.creatureYouControl()));
     }

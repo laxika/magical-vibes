@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -43,7 +42,7 @@ public class AplanMortarium extends Card {
                 List.of(
                         new TriggeredAbility(Triggers.opponentCastsSpell()
                                         .withFilter(new CardTypePredicate(CardType.CREATURE)),
-                                new SetCardTypesUntilEndOfTurnEffect(Set.of(CardType.ARTIFACT), GrantScope.SELF))));
+                                new SetCardTypesUntilEndOfTurnEffect(Set.of(CardType.ARTIFACT), Subjects.source()))));
         addTrigger(Triggers.chaosEnsues(), alienAngel);
     }
 }

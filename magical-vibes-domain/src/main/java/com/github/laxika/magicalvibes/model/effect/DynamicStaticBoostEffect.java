@@ -11,18 +11,18 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 public record DynamicStaticBoostEffect(
         DynamicAmount powerBoost,
         DynamicAmount toughnessBoost,
-        GrantScope scope,
+        PermanentSubject subject,
         PermanentPredicate filter,
         boolean amountsFromTarget
 ) implements CardEffect {
 
     public DynamicStaticBoostEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
-                                    GrantScope scope) {
-        this(powerBoost, toughnessBoost, scope, null, false);
+                                    PermanentSubject subject) {
+        this(powerBoost, toughnessBoost, subject, null, false);
     }
 
     public DynamicStaticBoostEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
-                                    GrantScope scope, PermanentPredicate filter) {
-        this(powerBoost, toughnessBoost, scope, filter, false);
+                                    PermanentSubject subject, PermanentPredicate filter) {
+        this(powerBoost, toughnessBoost, subject, filter, false);
     }
 }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RIX", collectorNumber = "55")
 public class SlipperyScoundrel extends Card {
@@ -17,8 +17,8 @@ public class SlipperyScoundrel extends Card {
     public SlipperyScoundrel() {
         addStaticEffect(new AscendEffect());
         addStaticEffect(new ConditionalEffect(new ControllerHasCityBlessing(),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source())));
         addStaticEffect(new ConditionalEffect(new ControllerHasCityBlessing(),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
     }
 }

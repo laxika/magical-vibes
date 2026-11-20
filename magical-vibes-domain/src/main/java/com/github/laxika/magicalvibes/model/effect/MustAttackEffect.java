@@ -5,13 +5,13 @@ package com.github.laxika.magicalvibes.model.effect;
  * Per CR 508.1d, the controller is not required to pay any attack costs
  * (e.g. Ghostly Prison tax) even if this effect is present.
  *
- * @param scope determines which creatures are affected. {@code null} means the creature
- *              carrying this effect (SELF). Use {@link GrantScope#ENCHANTED_PLAYER_CREATURES}
+ * @param subject determines which creatures are affected. {@code null} means the creature
+ *              carrying this effect (SELF). Use {@link Subjects#creaturesEnchantedPlayerControls()}
  *              for curses like Curse of the Nightly Hunt, or
- *              {@link GrantScope#ALL_OWN_CREATURES} / {@link GrantScope#OWN_CREATURES} for
+ *              {@link Subjects#creaturesYouControl()} / {@link Subjects#otherCreaturesYouControl()} for
  *              "creatures you control attack each combat if able" (Hellraiser Goblin).
  */
-public record MustAttackEffect(GrantScope scope) implements CardEffect {
+public record MustAttackEffect(PermanentSubject subject) implements CardEffect {
 
     /** Self-targeting: the creature carrying this effect must attack. */
     public MustAttackEffect() {

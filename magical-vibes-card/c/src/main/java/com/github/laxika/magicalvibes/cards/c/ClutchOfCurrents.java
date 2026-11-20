@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -44,6 +44,6 @@ public class ClutchOfCurrents extends Card {
                         new CastForAlternateCost(),
                         new AnimatePermanentsEffect(
                                 0, 0, List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE), null,
-                                Set.of(CardType.CREATURE), GrantScope.TARGET, Duration.PERMANENT)));
+                                Set.of(CardType.CREATURE), Subjects.target(), Duration.PERMANENT)));
     }
 }

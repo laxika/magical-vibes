@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -23,6 +23,6 @@ public class DeadlyWanderings extends Card {
                                 new ControlsPermanentCount(1, new PermanentIsCreaturePredicate()),
                                 new ControlsPermanentCountAtMost(1, new PermanentIsCreaturePredicate()))),
                         new StaticBoostEffect(2, 0,
-                                Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK), GrantScope.ALL_OWN_CREATURES)));
+                                Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK), Subjects.creaturesYouControl())));
     }
 }

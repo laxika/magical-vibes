@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -35,7 +35,7 @@ public class RoarOfTheFifthPeople extends Card {
                                 ManaColor.RED, ManaColor.GREEN, ManaColor.WHITE))),
                         "{T}: Add {R}, {G}, or {W}."
                 ),
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 null,
                 Duration.WHILE_SOURCE_REMAINS
         ));
@@ -45,7 +45,7 @@ public class RoarOfTheFifthPeople extends Card {
 
         addTrigger(Triggers.chapter(4), new GrantKeywordEffect(
                 Set.of(Keyword.DOUBLE_STRIKE, Keyword.TRAMPLE),
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)
         ));
     }

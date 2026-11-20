@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -47,11 +47,11 @@ public class CarefulCultivation extends Card {
                 "Target must be an artifact or creature"))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         creature,
-                        new StaticBoostEffect(1, 3, GrantScope.ENCHANTED_CREATURE),
+                        new StaticBoostEffect(1, 3, Subjects.attachedCreature()),
                         null))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         creature,
-                        new GrantKeywordEffect(Keyword.REACH, GrantScope.ENCHANTED_CREATURE),
+                        new GrantKeywordEffect(Keyword.REACH, Subjects.attachedCreature()),
                         null))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         creature,
@@ -59,7 +59,7 @@ public class CarefulCultivation extends Card {
                                 new ActivatedAbility(true, null,
                                         List.of(new AwardManaEffect(ManaColor.GREEN, 2)),
                                         "{T}: Add {G}{G}."),
-                                GrantScope.ENCHANTED_CREATURE),
+                                Subjects.attachedCreature()),
                         null));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(

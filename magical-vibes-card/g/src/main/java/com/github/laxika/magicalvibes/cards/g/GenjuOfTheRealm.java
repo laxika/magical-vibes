@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,10 +26,10 @@ public class GenjuOfTheRealm extends Card {
         target(TargetFilters.land());
         addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(
                 new AnimatePermanentsEffect(8, 12, List.of(CardSubtype.SPIRIT),
-                        Set.of(Keyword.TRAMPLE), null, Set.of(), GrantScope.ENCHANTED_PERMANENT,
+                        Set.of(Keyword.TRAMPLE), null, Set.of(), Subjects.attached(),
                         Duration.UNTIL_END_OF_TURN),
                 new GrantSupertypeUntilEndOfTurnEffect(
-                        CardSupertype.LEGENDARY, GrantScope.ENCHANTED_PERMANENT)
+                        CardSupertype.LEGENDARY, Subjects.attached())
         ), "Enchanted land becomes a legendary 8/12 Spirit creature with trample until end of turn. It's still a land."));
         addTrigger(Triggers.dies(ObjectRelation.ENCHANTED), new MayEffect(
                 new ReturnSourceCardFromGraveyardToOwnerHandEffect(),

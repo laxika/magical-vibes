@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 
@@ -22,7 +21,7 @@ public class SeasonedHallowblade extends Card {
                 List.of(
                         new DiscardCardTypeCost(null, null),
                         new TapPermanentsEffect(Subjects.source()),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())
                 ),
                 "Discard a card: Tap this creature. It gains indestructible until end of turn."
         ));

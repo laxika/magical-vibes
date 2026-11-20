@@ -4,12 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,7 +30,7 @@ public class MsMarvelKamalaKhan extends Card {
                 new DrawCardEffect(),
                 new GrantStaticEffectToSourceEffect(
                         new SetBasePowerToughnessToAmountEffect(
-                                new CardsInHand(CountScope.CONTROLLER), null, GrantScope.SELF),
+                                new CardsInHand(CountScope.CONTROLLER), null, Subjects.source()),
                         Duration.UNTIL_END_OF_TURN));
     }
 }

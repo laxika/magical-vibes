@@ -687,21 +687,21 @@ public class AuraAttachmentService {
         return attachment.getCard().getStaticEffects().stream()
                 .anyMatch(effect -> {
                     if (effect instanceof ProtectionFromChosenColorEffect chosenProtection) {
-                        return chosenProtection.scope() != null
-                                && chosenProtection.scope().subject() instanceof PermanentSubject.Attached;
+                        return chosenProtection.subject() != null
+                                && chosenProtection.subject() instanceof PermanentSubject.Attached;
                     }
                     if (effect instanceof ProtectionFromColorsEffect fixedProtection) {
-                        return fixedProtection.scope() != null
-                                && fixedProtection.scope().subject() instanceof PermanentSubject.Attached;
+                        return fixedProtection.subject() != null
+                                && fixedProtection.subject() instanceof PermanentSubject.Attached;
                     }
                     if (effect instanceof GrantEffectEffect grant
-                            && grant.scope().subject() instanceof PermanentSubject.Attached
+                            && grant.subject() instanceof PermanentSubject.Attached
                             && grant.effect() instanceof ProtectionFromCardTypesEffect cardTypeProtection) {
                         return cardTypeProtection.cardTypes().contains(CardType.ENCHANTMENT);
                     }
                     if (effect instanceof ProtectionFromColorsOfPermanentsYouControlEffect dynamicProtection) {
-                        return dynamicProtection.scope() != null
-                                && dynamicProtection.scope().subject() instanceof PermanentSubject.Attached;
+                        return dynamicProtection.subject() != null
+                                && dynamicProtection.subject() instanceof PermanentSubject.Attached;
                     }
                     return false;
                 });

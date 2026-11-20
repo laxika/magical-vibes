@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PlayerDirection;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerDirectionPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,6 +33,6 @@ public class BowieBaseOne extends Card {
                         new GoadTargetCreatureUntilNextTurnEffect(creatureControlledByPlayerToLeft));
         target(TargetFilters.creature())
                 .addTrigger(Triggers.chaosEnsues(),
-                        new GrantKeywordEffect(Keyword.ISLANDWALK, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.ISLANDWALK, Subjects.target()));
     }
 }

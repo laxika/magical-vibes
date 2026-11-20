@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.AttachMatchingEquipmentToCrea
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -35,8 +35,8 @@ public class DwarvenHammer extends Card {
                                 new AttachMatchingEquipmentToCreatedPermanentEffect(
                                         new PermanentIsSourcePermanentPredicate())),
                         "Pay {2} to create a Dwarf Berserker token and attach Dwarven Hammer to it?"));
-        addStaticEffect(new AttachedBoostEffect(new Fixed(3), new Fixed(0), GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new AttachedBoostEffect(new Fixed(3), new Fixed(0), Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

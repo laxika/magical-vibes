@@ -9,7 +9,7 @@ import java.util.Set;
 
 /**
  * "Choose a creature type. All creatures of that type get +P/+T until end of turn," optionally
- * with keyword grants in the same effect. The scope can be narrowed to creatures controlled by
+ * with keyword grants in the same effect. The subject can be narrowed to creatures controlled by
  * the spell's controller.
  *
  * <p>The creature type is chosen during resolution and stored temporarily on
@@ -21,31 +21,31 @@ public record BoostAllCreaturesOfChosenSubtypeEffect(
         DynamicAmount powerBoost,
         DynamicAmount toughnessBoost,
         Set<Keyword> keywords,
-        GrantScope scope
+        PermanentSubject subject
 ) implements CardEffect, KeywordGrantingEffect {
 
     public BoostAllCreaturesOfChosenSubtypeEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost) {
-        this(powerBoost, toughnessBoost, Set.of(), GrantScope.ALL_CREATURES);
+        this(powerBoost, toughnessBoost, Set.of(), Subjects.allCreatures());
     }
 
     public BoostAllCreaturesOfChosenSubtypeEffect(int powerBoost, int toughnessBoost) {
-        this(new Fixed(powerBoost), new Fixed(toughnessBoost), Set.of(), GrantScope.ALL_CREATURES);
+        this(new Fixed(powerBoost), new Fixed(toughnessBoost), Set.of(), Subjects.allCreatures());
     }
 
     public BoostAllCreaturesOfChosenSubtypeEffect(int powerBoost, int toughnessBoost,
                                                   Set<Keyword> keywords) {
-        this(new Fixed(powerBoost), new Fixed(toughnessBoost), keywords, GrantScope.ALL_CREATURES);
+        this(new Fixed(powerBoost), new Fixed(toughnessBoost), keywords, Subjects.allCreatures());
     }
 
     public static BoostAllCreaturesOfChosenSubtypeEffect ownCreatures(
             int powerBoost, int toughnessBoost, Set<Keyword> keywords) {
         return new BoostAllCreaturesOfChosenSubtypeEffect(
-                new Fixed(powerBoost), new Fixed(toughnessBoost), keywords, GrantScope.OWN_CREATURES);
+                new Fixed(powerBoost), new Fixed(toughnessBoost), keywords, Subjects.creaturesYouControl());
     }
 
     public BoostAllCreaturesOfChosenSubtypeEffect {
         keywords = keywords == null ? Set.of() : Set.copyOf(keywords);
-        scope = scope == null ? GrantScope.ALL_CREATURES : scope;
+        subject = subject == null ? Subjects.allCreatures() : subject;
     }
 
     @Override

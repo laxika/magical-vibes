@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,7 +30,7 @@ public class Decomposition extends Card {
         ))
                 // Enchanted creature has "Cumulative upkeep-Pay 1 life."
                 .addStaticEffect(new GrantEffectEffect(
-                        CumulativeUpkeepEffect.life(1), GrantScope.ENCHANTED_CREATURE))
+                        CumulativeUpkeepEffect.life(1), Subjects.attachedCreature()))
 
                 // When enchanted creature dies, its controller loses 2 life.
                 .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),

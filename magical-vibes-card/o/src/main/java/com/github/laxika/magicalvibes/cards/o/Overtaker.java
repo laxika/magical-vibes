@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -28,7 +27,7 @@ public class Overtaker extends Card {
                         new DiscardCardTypeCost(null, null),
                         new UntapPermanentsEffect(Subjects.target()),
                         new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target())),
                 "{3}{U}, {T}, Discard a card: Untap target creature and gain control of it until end of turn. That creature gains haste until end of turn.",
                 TargetFilters.creature()));
     }

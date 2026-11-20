@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -20,7 +20,7 @@ public class FullMoonsRise extends Card {
 
     public FullMoonsRise() {
         // Werewolf creatures you control get +1/+0 and have trample.
-        addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE), GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE), Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.WEREWOLF))));
 
         // Sacrifice Full Moon's Rise: Regenerate all Werewolf creatures you control.

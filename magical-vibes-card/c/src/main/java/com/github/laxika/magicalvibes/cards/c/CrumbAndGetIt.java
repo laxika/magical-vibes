@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -29,7 +29,7 @@ public class CrumbAndGetIt extends Card {
                         TargetOpponentCreatesTokenEffect.gift(foodToken())))
                 .addSpellEffect(new BoostTargetCreatureEffect(2, 2))
                 .addSpellEffect(new ConditionalEffect(new GiftPromised(),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET)));
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target())));
     }
 
     private static CreateTokenEffect foodToken() {

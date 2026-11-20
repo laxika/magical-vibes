@@ -6,17 +6,17 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 
 @CardRegistration(set = "ONE", collectorNumber = "239")
 public class ProstheticInjector extends Card {
 
     public ProstheticInjector() {
-        addStaticEffect(new StaticBoostEffect(0, 2, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.TOXIC, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantEffectEffect(new ToxicEffect(1), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(0, 2, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TOXIC, Subjects.attachedCreature()));
+        addStaticEffect(new GrantEffectEffect(new ToxicEffect(1), Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{1}"));
     }
 }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentE
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -41,7 +41,7 @@ public class AddCardTypeToTargetPermanentEffectHandler implements NormalEffectHa
         // Timestamped layer-4 grant (CR 613.7), so an earlier type-setting effect doesn't hide it.
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
-                new GrantCardTypeEffect(e.cardType(), GrantScope.TARGET), target.getId(), null, null,
+                new GrantCardTypeEffect(e.cardType(), Subjects.target()), target.getId(), null, null,
                 e.persistent() ? Duration.PERMANENT : Duration.UNTIL_END_OF_TURN, 0));
 
         String typeName = e.cardType().name().charAt(0) + e.cardType().name().substring(1).toLowerCase();

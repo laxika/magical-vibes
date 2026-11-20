@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerGr
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostSourcePowerPredicate;
@@ -38,6 +38,6 @@ public class PeltCollector extends Card {
 
         addStaticEffect(new ConditionalEffect(
                         new SourceCounterThreshold(3, CounterType.PLUS_ONE_PLUS_ONE),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
     }
 }

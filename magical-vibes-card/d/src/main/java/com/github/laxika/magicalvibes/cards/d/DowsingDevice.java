@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -35,7 +35,7 @@ public class DowsingDevice extends Card {
                 new TransformSelfEffect());
 
         CardEffect enterEffect = SequenceEffect.of(new BoostTargetCreatureEffect(1, 0),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), transformIfFourArtifacts);
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), transformIfFourArtifacts);
         target(TargetFilters.creatureYouControl(), 0, 1)
                 .addTriggeredAbility(new TriggeredAbility(List.of(
                                 new TriggerCondition(Triggers.enters(ObjectRelation.THIS)),

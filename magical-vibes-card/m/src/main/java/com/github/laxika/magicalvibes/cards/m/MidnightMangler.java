@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -19,7 +19,7 @@ public class MidnightMangler extends Card {
     public MidnightMangler() {
         addStaticEffect(new ConditionalEffect(new NotControllerTurn(),
                 new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null, Set.of(),
-                        GrantScope.SELF, Duration.UNTIL_END_OF_TURN, null)));
+                        Subjects.source(), Duration.UNTIL_END_OF_TURN, null)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

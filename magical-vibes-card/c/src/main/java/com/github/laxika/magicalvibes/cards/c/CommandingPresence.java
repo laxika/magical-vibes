@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,11 +21,11 @@ public class CommandingPresence extends Card {
 
     public CommandingPresence() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(2, 2, Set.of(Keyword.FIRST_STRIKE), GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(2, 2, Set.of(Keyword.FIRST_STRIKE), Subjects.attachedCreature()))
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                         new CreateTokenEffect("Human Soldier", 1, 1, CardColor.WHITE,
                                 List.of(CardSubtype.HUMAN, CardSubtype.SOLDIER), Set.of(), Set.of())),
-                        GrantScope.ENCHANTED_CREATURE));
+                        Subjects.attachedCreature()));
     }
 }

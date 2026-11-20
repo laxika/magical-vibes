@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromHandOrGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -40,7 +39,7 @@ public class NissaOfShadowedBoughs extends Card {
                                 new AnimatePermanentsEffect(
                                         3, 3, List.of(CardSubtype.ELEMENTAL),
                                         Set.of(Keyword.HASTE, Keyword.MENACE), null, Set.of(),
-                                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN),
+                                        Subjects.target(), Duration.UNTIL_END_OF_TURN),
                                 "Have the target land become a 3/3 Elemental creature with haste and menace until end of turn?")),
                 "+1: Untap target land you control. You may have it become a 3/3 Elemental creature with haste and menace until end of turn. It's still a land.",
                 TargetFilters.landYouControl()

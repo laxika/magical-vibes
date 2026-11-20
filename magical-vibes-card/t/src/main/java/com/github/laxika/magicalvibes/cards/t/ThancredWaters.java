@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -37,13 +37,13 @@ public class ThancredWaters extends Card {
                 "Target must be another legendary permanent you control"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS), new GrantKeywordEffect(
                 Set.of(Keyword.INDESTRUCTIBLE),
-                GrantScope.TARGET,
+                Subjects.target(),
                 anotherLegendaryPermanent,
                 Duration.WHILE_SOURCE_ON_BATTLEFIELD,
                 null
         ));
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source()));
     }
 }

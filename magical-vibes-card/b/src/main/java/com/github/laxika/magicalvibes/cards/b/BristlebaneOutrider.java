@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 
@@ -19,6 +19,6 @@ public class BristlebaneOutrider extends Card {
                 new PermanentPowerAtMostPredicate(2)));
         addStaticEffect(new ConditionalEffect(
                 new AnotherPermanentEnteredThisTurn(new CardTypePredicate(CardType.CREATURE)),
-                new StaticBoostEffect(2, 0, GrantScope.SELF)));
+                new StaticBoostEffect(2, 0, Subjects.source())));
     }
 }

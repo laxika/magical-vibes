@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerDrewAtLeastCardsThisTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,7 +35,7 @@ public class LakeTownToymaker extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerDrewAtLeastCardsThisTurn(2)),
                 SequenceEffect.of(
                                 new BoostTargetCreatureEffect(3, 0),
-                                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET)
+                                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target())
                         ));
     }
 }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 
 @CardRegistration(set = "ONE", collectorNumber = "186")
@@ -18,6 +18,6 @@ public class ThrunBreakerOfSilence extends Card {
         addStaticEffect(new CantBeCounteredEffect());
         addStaticEffect(TargetingRestrictionEffect.fromOpponentNonColorSources(CardColor.GREEN));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
     }
 }

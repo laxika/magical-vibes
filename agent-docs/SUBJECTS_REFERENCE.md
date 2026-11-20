@@ -12,7 +12,8 @@ resolver's static entry point rejects the others).
 | `source()` | "this creature", "this permanent" (the entry's source permanent only, never its target) | no | yes |
 | `target()`, `target(group)` | "target creature", "target permanent" | yes | no |
 | `allTargets()` | "untap up to four target permanents" whose targets the ability's target filter or several slots declare (every permanent target of the entry, whichever group it was chosen for) | yes | no |
-| `attached()` | "enchanted creature", "equipped creature" (now while the source is on the battlefield, else as it last was) | no | yes |
+| `attached()` | "enchanted permanent", "enchanted land" (now while the source is on the battlefield, else as it last was) | no | yes |
+| `attachedCreature()` | "enchanted creature", "equipped creature": `attached()` that a resolving effect names only while the host is a creature; a static ability judges the host without a type read (an Aura or Equipment on a noncreature it can't be attached to leaves it through state-based actions), and the engine's attachment-restriction query and the AI tell it from `attached()` | no | yes |
 | `attachedOrSource()` | "this creature ... If it's an Aura, enchanted creature ... instead" (a bestow card's own ability: the host while the source, as it is or last was, is attached, else the source itself) | no | yes |
 | `attachedAtTrigger()` | "that creature" after "at the beginning of the upkeep of enchanted creature's controller" (the host the stack entry recorded when the ability triggered or was activated, not the current one; Paroxysm, Venarian Gold; "that creature" after "whenever enchanted creature deals damage", Guilty Conscience) | no | no |
 | `triggering()` | "it", "that creature" (the permanent the trigger event was about) | no | no |
@@ -30,6 +31,21 @@ resolver's static entry point rejects the others).
 | `ownedBy(players, filter)` | "all artifacts target player owns" (each matching permanent whose card's owner is one of `players`, whoever controls it; the effect declares a player target) | no | if `players` may |
 | `attachmentsOf(permanents, filter)` | "all Auras attached to target permanent" (each matching permanent attached to one of the named permanents still on the battlefield; the attachments are not targeted) | no | if `permanents` may |
 | `allOf(subjects...)` | "this creature and target creature" | if one part targets | if every part may |
+| `triggeringAttackers()` | "they gain ...", "those creatures" in a "whenever you attack" ability: the attackers the entry recorded as the ability triggered, those still on the battlefield (Valor's Reach, Angelic Guardian) | no | no |
+| `triggeringSpellTargets()` | "those creatures" naming the targets of the spell a trigger was about (Storm Windrider): that spell's targets as it is on the stack, else as the entry recorded them; with no triggering spell, the effect's own targets, which the card's target filter declares (Myojin of Towering Might) | no | no |
+| `createdThisResolution()` | "those tokens" after an earlier step of the same resolution created them (every permanent the entry recorded as created, still on the battlefield; step result; Gilt-Leaf Ambush, Tend to the Kiln) | no | no |
+| `bandmatesOf(permanent)` | "each other creature banded with it" (CR 702.22): the other attacking creatures in the band of the permanent `permanent` names, `source()` as it is or last was; nothing outside a band (Icatian Skirmishers) | no | no |
+| `withCreaturesSharingAColor(permanent)` | "target creature and each other creature that shares a color with it": the named creature and every creature sharing a color with it as the effect resolves; nothing once the named permanent is gone or no longer a creature (Surge of Zeal) | if `permanent` targets | no |
+
+Named sets, one shared instance each (a static ability's set is judged per permanent, so a card should use these rather
+than build its own): `creaturesYouControl()` / `otherCreaturesYouControl()`, `otherTappedCreaturesYouControl()`,
+`otherUntappedCreaturesYouControl()`, `creaturesYourOpponentsControl()`, `permanentsYouControl()` /
+`otherPermanentsYouControl()`, `creaturesTargetPlayerControls()` / `landsTargetPlayerControls()` (declare the player
+target), `allCreatures()` / `otherCreatures()`, `allPermanents()` / `otherPermanents()`,
+`creaturesEnchantedPlayerControls()`, `landsYouControl()`, `landsYourOpponentsControl()`, `allLands()` / `otherLands()`,
+`sourceAndPaired()` (soulbond, CR 702.95: the source and its pair, as a set). Pick by the card's words: "creatures you
+control" includes the source, "other creatures you control" does not; a one-shot "all creatures gain ..." is
+`allCreatures()`.
 | `oneOf(options...)` | "exile this permanent or up to one target creature": one of the options, chosen by the controller as the effect resolves; the resolver refuses it, the verb's handler resolves each option and asks; a target option is declared by the ability (Kaya, Ghost Assassin) | no | no |
 
 ## PlayerSubject
@@ -68,8 +84,7 @@ the set's filter when the rule is checked. A static ability whose source is off 
 set with `permanents(GameData, source, controllerId, subject)`.
 
 `Subjects.narrowed(set, filter)` narrows a set subject (`controlledBy`, `ownedBy`, `attachmentsOf`) by an effect's own
-filter. `GrantScope.subject()` gives a `GrantScope` constant's subject while the effects still carry the enum; a one-shot
-handler that reads a constant including the source names the including-self constant's subject.
+filter.
 
 A static ability's handler asks about one permanent at a time: `SubjectResolutionService.names(StaticEffectContext,
 subject, filter, StaticReads)` (through `StaticEffectSupport.names`) says whether the subject names the context's

@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayPutMatchingOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -23,7 +23,7 @@ public class FecundGreenshell extends Card {
     public FecundGreenshell() {
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(10, new PermanentIsLandPredicate()),
-                new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES)));
+                new StaticBoostEffect(2, 2, Subjects.creaturesYouControl())));
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 Triggers.CREATURE,

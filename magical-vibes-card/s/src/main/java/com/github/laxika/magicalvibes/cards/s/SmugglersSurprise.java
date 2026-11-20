@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutUpToCardsFromHandOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -39,7 +39,7 @@ public class SmugglersSurprise extends Card {
                         "Creatures you control with power 4 or greater gain hexproof and indestructible until end of turn",
                         new GrantKeywordEffect(
                                 Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE),
-                                GrantScope.OWN_CREATURES,
+                                Subjects.otherCreaturesYouControl(),
                                 new PermanentPowerAtLeastPredicate(4))
                 )
         )));

@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,14 +29,14 @@ public class SwiftReconfiguration extends Card {
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))),
                 "Target must be a creature or Vehicle"))
-                .addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.ENCHANTED_PERMANENT))
-                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.VEHICLE, GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), Subjects.attached()))
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.VEHICLE, Subjects.attached()))
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
                                 false,
                                 null,
                                 List.of(new CrewCost(5), AnimatePermanentsEffect.crew()),
                                 "Crew 5"),
-                        GrantScope.ENCHANTED_PERMANENT));
+                        Subjects.attached()));
     }
 }

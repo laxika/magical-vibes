@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "WOE", collectorNumber = "230")
 @CardRegistration(set = "WOE", collectorNumber = "291")
@@ -20,7 +20,7 @@ public class KellanTheFaeBlooded extends Card {
         addStaticEffect(new DynamicStaticBoostEffect(
                 new AttachmentsOnSource(true, true),
                 new Fixed(0),
-                GrantScope.OWN_CREATURES
+                Subjects.otherCreaturesYouControl()
         ));
     }
 

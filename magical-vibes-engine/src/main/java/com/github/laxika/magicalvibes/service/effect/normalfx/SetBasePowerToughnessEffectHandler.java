@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -37,13 +37,13 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SetBasePowerToughnessEffect) effect;
-        if (e.scope() == GrantScope.TARGET_PLAYERS_CREATURES) {
+        if (e.subject().declaresPlayerTarget()) {
             if (subjectResolutionService.players(gameData, entry, effect, Subjects.targetPlayer()).isEmpty()) {
                 return;
             }
             int count = 0;
             for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
-                    e.scope().subject())) {
+                    e.subject())) {
                 applyEffect(gameData, entry, e, permanent);
                 count++;
             }
@@ -53,10 +53,10 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
-        if (e.scope() == GrantScope.OPPONENT_CREATURES) {
+        if (Subjects.creaturesYourOpponentsControl().equals(e.subject())) {
             int count = 0;
             for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
-                    e.scope().subject())) {
+                    e.subject())) {
                 applyEffect(gameData, entry, e, permanent);
                 count++;
             }
@@ -67,8 +67,8 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
-        if (e.scope() == GrantScope.TARGET) {
-            for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, e.scope().subject())) {
+        if (e.subject() instanceof PermanentSubject.Target) {
+            for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, e.subject())) {
                 if (e.filter() != null
                         && !predicateEvaluationService.matchesPermanentPredicate(target, e.filter(),
                                 FilterContext.of(gameData)
@@ -87,13 +87,12 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
-        if (e.scope() == GrantScope.ALL_CREATURES
-                || e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
+        if (e.subject().isSet()) {
             SetBasePowerToughnessEffect individualEffect = new SetBasePowerToughnessEffect(
-                    e.power(), e.toughness(), GrantScope.TARGET, e.duration());
+                    e.power(), e.toughness(), Subjects.target(), e.duration());
             int count = 0;
             for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
-                    Subjects.narrowed(e.scope().subject(), e.filter()))) {
+                    Subjects.narrowed(e.subject(), e.filter()))) {
                 applyEffect(gameData, entry, individualEffect, permanent);
                 count++;
             }
@@ -104,9 +103,9 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             return;
         }
 
-        // SELF scope ("this creature has base P/T X/Y until end of turn", e.g. Marsh Flitter), and any other scope,
+        // source() ("this creature has base P/T X/Y until end of turn", e.g. Marsh Flitter), and any other subject,
         // resolves against the source.
-        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, GrantScope.SELF.subject());
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, Subjects.source());
         if (target == null) {
             return;
         }

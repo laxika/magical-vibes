@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -25,12 +25,12 @@ public class LordOfTheAccursed extends Card {
 
     public LordOfTheAccursed() {
         // Other Zombies you control get +1/+1.
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
 
         // {1}{B}, {T}: All Zombies gain menace until end of turn.
         addActivatedAbility(new ActivatedAbility(true, "{1}{B}",
-                List.of(new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_CREATURES,
+                List.of(new GrantKeywordEffect(Keyword.MENACE, Subjects.allCreatures(),
                         new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE))),
                 "{1}{B}, {T}: All Zombies gain menace until end of turn."));
     }

@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyUpToTargetsThenReturnFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -40,7 +40,7 @@ public class SorinLordOfInnistrad extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -2,
                 List.of(new CreateEmblemEffect(
-                        List.of(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES)),
+                        List.of(new StaticBoostEffect(1, 0, Subjects.otherCreaturesYouControl())),
                         "Creatures you control get +1/+0.")),
                 "\u22122: You get an emblem with \"Creatures you control get +1/+0.\"."
         ));

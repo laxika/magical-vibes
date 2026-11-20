@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFreeCastForNextMatchingSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -38,7 +38,7 @@ public class WorldWarHulk extends Card {
 
         addTrigger(Triggers.chapter(3),
                 DoubleSelfPowerToughnessEffect.ofTargetCreature(),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));
         setSagaChapterTargetFilter(3, Set.of(TargetFilters.creatureYouControl()));
     }
 }

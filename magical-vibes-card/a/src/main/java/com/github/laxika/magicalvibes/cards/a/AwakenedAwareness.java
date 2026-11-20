@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -32,7 +31,7 @@ public class AwakenedAwareness extends Card {
                         new PutCounterOnTargetPermanentEffect(Subjects.attached(), CounterType.PLUS_ONE_PLUS_ONE, new XValue()))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentIsCreaturePredicate(),
-                        new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE),
+                        new SetBasePowerToughnessEffect(1, 1, Subjects.attachedCreature()),
                         null));
     }
 }

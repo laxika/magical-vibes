@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -53,7 +53,7 @@ public class GrantSubtypeToTargetCreatureEffectHandler implements NormalEffectHa
             }
 
             if (Duration.PERMANENT.equals(e.duration())) {
-                gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(e.subtype(), GrantScope.TARGET),
+                gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(e.subtype(), Subjects.target()),
                         target.getId(), Duration.PERMANENT);
                 if (e.perpetual() && target.getOriginalCard() != null) {
                     gameData.perpetualCardSubtypes.merge(target.getOriginalCard().getId(), Set.of(e.subtype()),
@@ -68,7 +68,7 @@ public class GrantSubtypeToTargetCreatureEffectHandler implements NormalEffectHa
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
                         entry.getControllerId(),
-                        new GrantSubtypeEffect(e.subtype(), GrantScope.TARGET, e.overriding()),
+                        new GrantSubtypeEffect(e.subtype(), Subjects.target(), e.overriding()),
                         target.getId(), null, null, e.duration(), 0));
             }
 

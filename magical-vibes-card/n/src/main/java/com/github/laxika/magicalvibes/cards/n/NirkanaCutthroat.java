@@ -11,11 +11,11 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "119")
@@ -30,20 +30,20 @@ public class NirkanaCutthroat extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addStaticEffect(new RemoveKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source()));
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new SourceCounterThreshold(1, CounterType.LEVEL)),
-                new RemoveKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
+                new RemoveKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(3, CounterType.LEVEL)))),
-                new SetBasePowerToughnessEffect(4, 3, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(4, 3, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(5, 4, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(5, 4, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.LEVEL),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())));
     }
 }

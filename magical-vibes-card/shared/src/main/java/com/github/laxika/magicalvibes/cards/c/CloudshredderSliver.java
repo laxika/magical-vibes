@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.Set;
 
@@ -18,7 +18,7 @@ public class CloudshredderSliver extends Card {
         // Cloudshredder Sliver is itself a Sliver, so ALL_OWN_CREATURES includes the source.
         addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.FLYING, Keyword.HASTE),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
     }
 }

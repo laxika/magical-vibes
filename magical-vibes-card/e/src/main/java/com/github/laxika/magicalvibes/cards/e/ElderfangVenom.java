@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -29,7 +28,7 @@ public class ElderfangVenom extends Card {
 
     public ElderfangVenom() {
         addStaticEffect(new StaticBoostEffect(0, 0,
-                Set.of(Keyword.DEATHTOUCH), GrantScope.OWN_CREATURES,
+                Set.of(Keyword.DEATHTOUCH), Subjects.otherCreaturesYouControl(),
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsAttackingPredicate(),
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELF))))));

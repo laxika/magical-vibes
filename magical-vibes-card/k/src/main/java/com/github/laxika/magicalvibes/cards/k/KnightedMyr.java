@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AdaptEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,6 +25,6 @@ public class KnightedMyr extends Card {
 
         // Whenever one or more +1/+1 counters are put on Knighted Myr, it gains double strike until end of turn.
         addTrigger(Triggers.plusOneCountersPutOnThis(),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.source()));
     }
 }

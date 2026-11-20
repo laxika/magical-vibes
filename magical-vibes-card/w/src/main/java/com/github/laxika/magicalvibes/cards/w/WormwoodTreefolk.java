@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
@@ -20,7 +19,7 @@ public class WormwoodTreefolk extends Card {
                 false,
                 "{G}{G}",
                 List.of(
-                        new GrantKeywordEffect(Keyword.FORESTWALK, GrantScope.SELF),
+                        new GrantKeywordEffect(Keyword.FORESTWALK, Subjects.source()),
                         new DealDamageToPlayersEffect(2, Subjects.you())
                 ),
                 "{G}{G}: Wormwood Treefolk gains forestwalk until end of turn and deals 2 damage to you."
@@ -29,7 +28,7 @@ public class WormwoodTreefolk extends Card {
                 false,
                 "{B}{B}",
                 List.of(
-                        new GrantKeywordEffect(Keyword.SWAMPWALK, GrantScope.SELF),
+                        new GrantKeywordEffect(Keyword.SWAMPWALK, Subjects.source()),
                         new DealDamageToPlayersEffect(2, Subjects.you())
                 ),
                 "{B}{B}: Wormwood Treefolk gains swampwalk until end of turn and deals 2 damage to you."

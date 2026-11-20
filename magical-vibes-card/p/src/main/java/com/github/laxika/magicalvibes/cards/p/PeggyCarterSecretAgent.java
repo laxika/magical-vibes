@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,6 +15,6 @@ public class PeggyCarterSecretAgent extends Card {
     public PeggyCarterSecretAgent() {
         addTrigger(Triggers.creatureYouControlAttacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()));
     }
 }

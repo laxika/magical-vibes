@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +25,7 @@ public class CentaurChieftain extends Card {
                         new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
                         SequenceEffect.of(
                                 new BoostAllOwnCreaturesEffect(1, 1),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES))),
-                        GrantScope.SELF)));
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl()))),
+                        Subjects.source())));
     }
 }

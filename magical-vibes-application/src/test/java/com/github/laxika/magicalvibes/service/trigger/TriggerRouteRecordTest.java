@@ -53,7 +53,6 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
@@ -2576,7 +2575,7 @@ class TriggerRouteRecordTest extends BaseCardTest {
             Card aura = card("Fixture Aura", CardType.ENCHANTMENT, CardSubtype.AURA);
             aura.setKeywords(Set.of(Keyword.FLASH));
             aura.target(TargetFilters.creature())
-                    .addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.ENCHANTED_CREATURE));
+                    .addStaticEffect(new StaticBoostEffect(1, 2, Subjects.attachedCreature()));
             mainPhaseOf(player1);
             harness.setHand(player1, List.of(aura));
             harness.addMana(player1, ManaColor.COLORLESS, 1);

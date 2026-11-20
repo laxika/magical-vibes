@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,7 +25,7 @@ public class ShinyImpetus extends Card {
         setAttackTriggerOwnedByAura(true);
 
         target(TargetFilters.creature())
-                .addStaticEffect(new AttachedBoostEffect(new Fixed(2), new Fixed(2), GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new AttachedBoostEffect(new Fixed(2), new Fixed(2), Subjects.attachedCreature()))
                 .addStaticEffect(new GoadCreaturesUntilNextTurnEffect(new PermanentIsHostOfSourceAuraPredicate()))
                 .addTrigger(Triggers.attacks(), CreateTokenEffect.ofTreasureToken(1));
     }

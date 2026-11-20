@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 
 import java.util.List;
@@ -47,7 +47,7 @@ public class WanderingFumarole extends Card {
                                         List.of(new SwitchPowerToughnessEffect(true)),
                                         "{0}: Switch this creature's power and toughness until end of turn."
                                 ),
-                                GrantScope.SELF,
+                                Subjects.source(),
                                 null,
                                 Duration.UNTIL_END_OF_TURN)
                 ),

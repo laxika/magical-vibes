@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -35,7 +35,7 @@ public class ErhnamDjinn extends Card {
                         new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))),
                 "Target must be a non-Wall creature an opponent controls"))
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                        new GrantKeywordEffect(Keyword.FORESTWALK, GrantScope.TARGET,
+                        new GrantKeywordEffect(Keyword.FORESTWALK, Subjects.target(),
                                 Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP));
     }
 }

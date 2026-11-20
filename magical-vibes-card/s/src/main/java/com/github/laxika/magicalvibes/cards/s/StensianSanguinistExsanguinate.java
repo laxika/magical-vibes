@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BecomePreparedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,7 +24,7 @@ public class StensianSanguinistExsanguinate extends Card {
 
         target(TargetFilters.creature())
                 .addTrigger(Triggers.youAttack(),
-                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target()),
                         new GrantEffectToTargetUntilEndOfCombatEffect(
                                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                                 BecomePreparedEffect.ofGrantingPermanent())));

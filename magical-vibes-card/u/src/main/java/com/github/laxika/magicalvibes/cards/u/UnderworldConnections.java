@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class UnderworldConnections extends Card {
                         new ActivatedAbility(true, null,
                                 List.of(new PayLifeCost(1), new DrawCardEffect(1)),
                                 "{T}, Pay 1 life: Draw a card."),
-                        GrantScope.ENCHANTED_PERMANENT
+                        Subjects.attached()
                 ));
     }
 }

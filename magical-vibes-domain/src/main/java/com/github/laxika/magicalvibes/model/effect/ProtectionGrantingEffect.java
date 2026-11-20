@@ -75,10 +75,10 @@ public interface ProtectionGrantingEffect extends CardEffect {
     /**
      * For colour-based protection, whether the raw effect applies to the permanent that carries it
      * ({@code null} = self, e.g. Black Knight) or to an equipped creature
-     * ({@link GrantScope#EQUIPPED_CREATURE}, e.g. Sword of War and Peace). Non-colour protection
+     * ({@link Subjects#attachedCreature()}, e.g. Sword of War and Peace). Non-colour protection
      * shapes are always self-scoped and inherit the {@code null} default.
      */
-    default GrantScope protectionScope() {
+    default PermanentSubject protectionSubject() {
         return null;
     }
 

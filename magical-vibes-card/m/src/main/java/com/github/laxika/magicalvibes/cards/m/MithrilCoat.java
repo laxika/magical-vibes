@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -30,7 +30,7 @@ public class MithrilCoat extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new AttachSourceEquipmentToTargetCreatureEffect());
         addStaticEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE,
-                        GrantScope.EQUIPPED_CREATURE));
+                        Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

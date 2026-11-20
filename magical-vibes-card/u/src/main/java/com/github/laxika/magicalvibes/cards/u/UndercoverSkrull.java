@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "MSH", collectorNumber = "194")
@@ -17,7 +17,7 @@ public class UndercoverSkrull extends Card {
     public UndercoverSkrull() {
         var threshold = new GraveyardCardThreshold(2, new CardTypePredicate(CardType.CREATURE));
         addStaticEffect(new ConditionalEffect(threshold,
-                new StaticBoostEffect(2, 2, GrantScope.SELF)));
+                new StaticBoostEffect(2, 2, Subjects.source())));
         addStaticEffect(new ConditionalEffect(threshold,
                 GrantAllCreatureTypesToOwnCreaturesEffect.toSelf()));
 

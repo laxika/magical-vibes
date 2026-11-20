@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PowerBoostForCrewAndSaddleEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,7 +32,7 @@ public class RoadsideAssistance extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                         1, "Pilot", 1, 1, null, List.of(CardSubtype.PILOT), Set.of(), Set.of(),
                         List.of(StaticAbility.of(new PowerBoostForCrewAndSaddleEffect(2)))))
-                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_PERMANENT))
-                .addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ENCHANTED_PERMANENT));
+                .addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attached()))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.attached()));
     }
 }

@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
 import java.util.List;
@@ -34,10 +33,10 @@ public class EnclaveCryptologist extends Card {
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(3, CounterType.LEVEL)))),
-                new GrantActivatedAbilityEffect(lootAbility(), GrantScope.SELF)));
+                new GrantActivatedAbilityEffect(lootAbility(), Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.LEVEL),
-                new GrantActivatedAbilityEffect(drawAbility(), GrantScope.SELF)));
+                new GrantActivatedAbilityEffect(drawAbility(), Subjects.source())));
     }
 
     private static ActivatedAbility lootAbility() {

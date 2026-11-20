@@ -6,13 +6,13 @@ import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "UDS", collectorNumber = "38")
 public class MetathranElite extends Card {
 
     public MetathranElite() {
         addStaticEffect(new ConditionalEffect(new Enchanted(),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
     }
 }

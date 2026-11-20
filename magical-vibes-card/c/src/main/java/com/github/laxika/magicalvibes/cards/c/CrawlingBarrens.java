@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +29,7 @@ public class CrawlingBarrens extends Card {
                         new MayEffect(
                                 new AnimatePermanentsEffect(
                                         0, 0, List.of(CardSubtype.ELEMENTAL), Set.of(), null,
-                                        Set.of(), GrantScope.SELF, Duration.UNTIL_END_OF_TURN),
+                                        Set.of(), Subjects.source(), Duration.UNTIL_END_OF_TURN),
                                 "Have Crawling Barrens become a 0/0 Elemental creature?"
                         )
                 ),

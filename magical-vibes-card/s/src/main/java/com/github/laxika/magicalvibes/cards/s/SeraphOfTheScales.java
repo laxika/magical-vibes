@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,10 +20,10 @@ public class SeraphOfTheScales extends Card {
 
     public SeraphOfTheScales() {
         addActivatedAbility(new ActivatedAbility(false, "{W}",
-                List.of(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source())),
                 "{W}: This creature gains vigilance until end of turn."));
         addActivatedAbility(new ActivatedAbility(false, "{B}",
-                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())),
                 "{B}: This creature gains deathtouch until end of turn."));
 
         addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect(

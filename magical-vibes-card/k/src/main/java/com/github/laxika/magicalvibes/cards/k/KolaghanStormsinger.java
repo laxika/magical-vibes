@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTurnFaceUpEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,6 +20,6 @@ public class KolaghanStormsinger extends Card {
         addStaticEffect(new PutCountersOnTurnFaceUpEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, false));
         target(TargetFilters.creature())
                 .addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target()));
     }
 }

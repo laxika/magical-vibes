@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -22,6 +22,6 @@ public class WindShear extends Card {
                 new PermanentIsAttackingPredicate(),
                 new PermanentHasKeywordPredicate(Keyword.FLYING)));
         addSpellEffect(new BoostAllCreaturesEffect(-2, -2, attackingWithFlying));
-        addSpellEffect(new RemoveKeywordEffect(Keyword.FLYING, GrantScope.ALL_CREATURES, attackingWithFlying));
+        addSpellEffect(new RemoveKeywordEffect(Keyword.FLYING, Subjects.allCreatures(), attackingWithFlying));
     }
 }

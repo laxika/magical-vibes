@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,13 +19,13 @@ public class NehebTheWorthy extends Card {
 
     public NehebTheWorthy() {
         // Other Minotaurs you control have first strike. (OWN_CREATURES excludes this source = "other".)
-        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.MINOTAUR)));
 
         // As long as you have one or fewer cards in hand, Minotaurs you control get +2/+0.
         // ALL_OWN_CREATURES because this creature is itself a Minotaur and qualifies.
         addStaticEffect(new ConditionalEffect(new CardsInHandAtMost(1),
-                new StaticBoostEffect(2, 0, GrantScope.ALL_OWN_CREATURES,
+                new StaticBoostEffect(2, 0, Subjects.creaturesYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.MINOTAUR))));
 
         // Whenever Neheb deals combat damage to a player, each player discards a card.

@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -29,11 +28,11 @@ public class SarythTheVipersFang extends Card {
     public SarythTheVipersFang() {
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.DEATHTOUCH,
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentIsTappedPredicate()));
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.HEXPROOF,
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentNotPredicate(new PermanentIsTappedPredicate())));
 
         PermanentPredicate targetCreatureOrLandYouControl = new PermanentAllOfPredicate(List.of(

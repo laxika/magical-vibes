@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,6 +28,6 @@ public class LightwheelEnhancements extends Card {
                         new PermanentHasSubtypePredicate(CardSubtype.VEHICLE))),
                 "Target must be a creature or Vehicle"))
                 .addStaticEffect(new StaticBoostEffect(
-                        1, 1, Set.of(Keyword.VIGILANCE), GrantScope.ENCHANTED_PERMANENT));
+                        1, 1, Set.of(Keyword.VIGILANCE), Subjects.attached()));
     }
 }

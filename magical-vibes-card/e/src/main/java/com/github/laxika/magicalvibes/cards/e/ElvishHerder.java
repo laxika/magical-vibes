@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -16,7 +16,7 @@ public class ElvishHerder extends Card {
 
     public ElvishHerder() {
         addActivatedAbility(new ActivatedAbility(false, "{G}",
-                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET, new PermanentIsCreaturePredicate())),
+                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target(), new PermanentIsCreaturePredicate())),
                 "{G}: Target creature gains trample until end of turn.",
                 TargetFilters.creature()));
     }

@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -29,7 +29,7 @@ public class MinnWilyIllusionist extends Card {
         DynamicStaticBoostEffect illusionBoost = new DynamicStaticBoostEffect(
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ILLUSION),
                         CountScope.CONTROLLER, true),
-                new Fixed(0), GrantScope.SELF);
+                new Fixed(0), Subjects.source());
 
         addTrigger(Triggers.youDrawSecondCardEachTurn(),
                 new CreateTokenEffect(1, "Illusion", 1, 1, CardColor.BLUE,

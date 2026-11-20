@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -99,14 +99,14 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
             // "Return it to the battlefield ... and it loses all abilities": it has none as it enters, so its own
             // entry abilities don't apply.
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), card.getName(), null,
-                    entry.getControllerId(), new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT),
+                    entry.getControllerId(), new LosesAllAbilitiesEffect(Subjects.target(), Duration.PERMANENT),
                     permanent.getId(), null, null, Duration.PERMANENT, 0));
         }
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
         if (!e.overriddenCardTypes().isEmpty()) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), card.getName(), null, entry.getControllerId(),
-                    new SetCardTypesEffect(e.overriddenCardTypes(), GrantScope.TARGET),
+                    new SetCardTypesEffect(e.overriddenCardTypes(), Subjects.target()),
                     permanent.getId(), null, null, Duration.PERMANENT, 0));
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent, enterTappedTypes);

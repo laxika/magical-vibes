@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 
@@ -76,7 +77,6 @@ import com.github.laxika.magicalvibes.model.effect.DoubleDamageToEnchantedPlayer
 import com.github.laxika.magicalvibes.model.effect.DoubleSelfCombatDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaReflectionEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -1141,7 +1141,7 @@ class GameQueryServiceTest {
         void returnsTrueForAnimated() {
             Permanent perm = addPermanent(player1Id, createLand("Forest"));
             gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
-                    new GrantCardTypeEffect(CardType.CREATURE, GrantScope.TARGET), perm.getId(),
+                    new GrantCardTypeEffect(CardType.CREATURE, Subjects.target()), perm.getId(),
                     Duration.UNTIL_END_OF_TURN));
 
             assertThat(gqs.isCreature(gd, perm)).isTrue();
@@ -2033,8 +2033,8 @@ class GameQueryServiceTest {
             gd.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), "Test Grant", null, player1Id,
                     new GrantEffectEffect(new AssignCombatDamageWithToughnessEffect(
-                            GrantScope.SELF, new PermanentToughnessGreaterThanPowerPredicate()),
-                            GrantScope.TARGET),
+                            Subjects.source(), new PermanentToughnessGreaterThanPowerPredicate()),
+                            Subjects.target()),
                     perm.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
 
             assertThat(gqs.getEffectiveCombatDamage(gd, perm)).isEqualTo(5);
@@ -2079,7 +2079,7 @@ class GameQueryServiceTest {
             Permanent attacker = addPermanent(player1Id, createCreature("Wimpy Dinosaur", 1, 5, CardColor.GREEN));
             // Belligerent Brontodon-style: other own creatures assign combat damage equal to toughness
             addPermanent(player1Id, createCreatureWithStaticEffect("Belligerent Brontodon", 4, 4, CardColor.GREEN,
-                    new com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect(GrantScope.OWN_CREATURES)));
+                    new com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect(Subjects.otherCreaturesYouControl())));
 
             // Combat damage uses toughness (5), but non-combat power-based damage still uses power (1).
             assertThat(gqs.getEffectiveCombatDamage(gd, attacker)).isEqualTo(5);
@@ -2161,7 +2161,7 @@ class GameQueryServiceTest {
         @DisplayName("equipment with EQUIPPED_CREATURE scope does not give itself protection")
         void equipmentWithEquippedCreatureScopeDoesNotProtectItself() {
             Card swordCard = createArtifact("Sword of War and Peace");
-            swordCard.addStaticEffect(new ProtectionFromColorsEffect(EnumSet.of(CardColor.RED, CardColor.WHITE), GrantScope.EQUIPPED_CREATURE));
+            swordCard.addStaticEffect(new ProtectionFromColorsEffect(EnumSet.of(CardColor.RED, CardColor.WHITE), Subjects.attachedCreature()));
             Permanent sword = addPermanent(player1Id, swordCard);
 
             assertThat(gqs.hasProtectionFrom(gd, sword, CardColor.RED)).isFalse();
@@ -2172,7 +2172,7 @@ class GameQueryServiceTest {
         @DisplayName("equipment with EQUIPPED_CREATURE scope grants protection to attached creature")
         void equipmentWithEquippedCreatureScopeProtectsAttachedCreature() {
             ProtectionFromColorsEffect protEffect =
-                    new ProtectionFromColorsEffect(EnumSet.of(CardColor.RED, CardColor.WHITE), GrantScope.EQUIPPED_CREATURE);
+                    new ProtectionFromColorsEffect(EnumSet.of(CardColor.RED, CardColor.WHITE), Subjects.attachedCreature());
             Card swordCard = createArtifact("Sword of War and Peace");
             swordCard.addStaticEffect(protEffect);
             // Stub the static handler to mimic real static effect handler behavior
@@ -3688,7 +3688,7 @@ class GameQueryServiceTest {
             Permanent controlledAura = addPermanent(player1Id, createAura("Mishra's Domination",
                     new EnchantedPermanentConditionalEffect(
                             controllerFilter,
-                            new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE),
+                            new StaticBoostEffect(2, 2, Subjects.attachedCreature()),
                             new CantBlockEffect())));
             controlledAura.setAttachedTo(controlledCreature.getId());
 
@@ -3700,7 +3700,7 @@ class GameQueryServiceTest {
             Permanent opponentAura = addPermanent(player1Id, createAura("Mishra's Domination",
                     new EnchantedPermanentConditionalEffect(
                             controllerFilter,
-                            new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE),
+                            new StaticBoostEffect(2, 2, Subjects.attachedCreature()),
                             new CantBlockEffect())));
             opponentAura.setAttachedTo(opponentCreature.getId());
 
@@ -3935,7 +3935,7 @@ class GameQueryServiceTest {
             Permanent myr = addPermanent(player1Id, myrCard);
 
             // Deep Freeze-style aura that removes all abilities
-            LosesAllAbilitiesEffect loseAll = new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE);
+            LosesAllAbilitiesEffect loseAll = new LosesAllAbilitiesEffect(Subjects.attachedCreature());
             Card auraCard = createAura("Deep Freeze", loseAll);
             // Stub the static handler to mimic real LosesAllAbilitiesEffectHandler behavior:
             // the enchanted creature loses all abilities (resolved via the CR 613 layered pass).

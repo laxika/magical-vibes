@@ -26,7 +26,7 @@ public class SetCardTypesSelfEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var set = (SetCardTypesEffect) effect;
-        if (set.scope().subject() instanceof PermanentSubject.Source
+        if (set.subject() instanceof PermanentSubject.Source
                 && (!Duration.WHILE_ATTACHED.equals(set.duration()) || context.source().isAttached())) {
             accumulator.setCardTypeOverriding(true);
             accumulator.setGrantedCardTypes(set.cardTypes());

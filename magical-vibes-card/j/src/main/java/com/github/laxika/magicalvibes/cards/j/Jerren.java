@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtLeast;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -50,7 +50,7 @@ public class Jerren extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
-                List.of(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target())),
                 "{2}: Target Human you control gains lifelink until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

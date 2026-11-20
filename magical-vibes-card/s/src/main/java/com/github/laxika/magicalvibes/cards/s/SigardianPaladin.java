@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.PlusOnePlusOneCounterPutOnCreatureThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -26,13 +26,13 @@ public class SigardianPaladin extends Card {
     public SigardianPaladin() {
         addStaticEffect(new ConditionalEffect(
                 new PlusOnePlusOneCounterPutOnCreatureThisTurn(),
-                new StaticBoostEffect(0, 0, Set.of(Keyword.TRAMPLE, Keyword.LIFELINK), GrantScope.SELF)));
+                new StaticBoostEffect(0, 0, Set.of(Keyword.TRAMPLE, Keyword.LIFELINK), Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}{W}",
                 List.of(new GrantKeywordEffect(
-                        Set.of(Keyword.TRAMPLE, Keyword.LIFELINK), GrantScope.TARGET)),
+                        Set.of(Keyword.TRAMPLE, Keyword.LIFELINK), Subjects.target())),
                 "{1}{G}{W}: Target creature you control with a +1/+1 counter on it gains trample and lifelink until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

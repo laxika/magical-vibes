@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -26,7 +25,7 @@ public class GisasFavoriteShovel extends Card {
 
     public GisasFavoriteShovel() {
         addStaticEffect(new StaticBoostEffect(
-                2, 0, Set.of(Keyword.MENACE), GrantScope.EQUIPPED_CREATURE));
+                2, 0, Set.of(Keyword.MENACE), Subjects.attachedCreature()));
 
         CreateTokenEffect walker = new CreateTokenEffect(
                 1, "Walker", 2, 2, CardColor.BLACK, List.of(CardSubtype.ZOMBIE), Set.of(), Set.of());

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -31,7 +31,7 @@ public class ArlinnKord extends Card {
                 false, null,
                 List.of(
                         new BoostTargetCreatureEffect(2, 2),
-                        new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.HASTE), GrantScope.TARGET)
+                        new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.HASTE), Subjects.target())
                 ),
                 "+1: Until end of turn, up to one target creature gets +2/+2 and gains vigilance and haste.",
                 TargetFilters.creature(),

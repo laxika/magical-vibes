@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTransformedPredicate;
 
 @CardRegistration(set = "MOM", collectorNumber = "248")
@@ -15,6 +15,6 @@ public class MutagenConnoisseur extends Card {
     public MutagenConnoisseur() {
         addStaticEffect(new DynamicStaticBoostEffect(
                 new PermanentCount(new PermanentIsTransformedPredicate(), CountScope.CONTROLLER),
-                new Fixed(0), GrantScope.SELF));
+                new Fixed(0), Subjects.source()));
     }
 }

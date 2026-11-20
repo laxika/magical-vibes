@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileBottomCardsToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -31,7 +30,7 @@ public class ArvinoxTheMindFlail extends Card {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new ControlsPermanentCount(3, new PermanentNotPredicate(
                         new PermanentOwnedBySourceControllerPredicate()))),
-                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), GrantScope.SELF)));
+                new SetCardTypesEffect(Set.of(CardType.ENCHANTMENT), Subjects.source())));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new ExileBottomCardsToSourceEffect(1, true, Subjects.eachOpponent()));
         addStaticEffect(new AllowCastFromCardsExiledWithSourceEffect(

@@ -13,10 +13,10 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -31,7 +31,7 @@ public class Necravolver extends Card {
         addStaticEffect(new ConditionalEffect(new Kicked(),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(2))));
         addStaticEffect(new ConditionalEffect(new Kicked(),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
 
         addStaticEffect(new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{W}"),
@@ -39,6 +39,6 @@ public class Necravolver extends Card {
         addStaticEffect(new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{W}"),
                 new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.dealsDamage(),
-                        new GainLifeEffect(new EventValue())), GrantScope.SELF)));
+                        new GainLifeEffect(new EventValue())), Subjects.source())));
     }
 }

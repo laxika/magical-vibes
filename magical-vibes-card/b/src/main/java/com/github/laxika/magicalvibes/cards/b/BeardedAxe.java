@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.Set;
@@ -21,7 +21,7 @@ public class BeardedAxe extends Card {
                         CardSubtype.DWARF, CardSubtype.EQUIPMENT, CardSubtype.VEHICLE)),
                 CountScope.CONTROLLER);
         addStaticEffect(new AttachedBoostEffect(
-                dwarvesEquipmentAndVehicles, dwarvesEquipmentAndVehicles, GrantScope.EQUIPPED_CREATURE));
+                dwarvesEquipmentAndVehicles, dwarvesEquipmentAndVehicles, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

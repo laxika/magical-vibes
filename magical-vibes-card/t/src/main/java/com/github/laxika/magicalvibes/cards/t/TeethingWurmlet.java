@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceIfFirstResolutionThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,7 +19,7 @@ public class TeethingWurmlet extends Card {
 
     public TeethingWurmlet() {
         addStaticEffect(new ConditionalEffect(new Metalcraft(),
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())));
         addTrigger(Triggers.enters(Triggers.ARTIFACT, ObjectRelation.ANOTHER_YOU_CONTROL), SequenceEffect.of(
                 new GainLifeEffect(1),
                 new PutCountersOnSourceIfFirstResolutionThisTurnEffect(

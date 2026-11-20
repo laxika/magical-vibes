@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,7 +28,7 @@ public class NewHorizons extends Card {
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(true, null, List.of(new AwardAnyColorManaEffect(2)),
                                 "{T}: Add two mana of any one color."),
-                        GrantScope.ENCHANTED_PERMANENT
+                        Subjects.attached()
                 ));
 
         // When New Horizons enters the battlefield, put a +1/+1 counter on target creature you control.

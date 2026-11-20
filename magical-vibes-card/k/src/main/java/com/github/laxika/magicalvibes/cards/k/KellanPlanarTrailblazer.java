@@ -13,8 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public class KellanPlanarTrailblazer extends Card {
                                 new GrantEffectToTargetEffect(
                                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                                         new ExileTopCardMayPlayThisTurnEffect(false)),
-                                        Duration.PERMANENT, false, GrantScope.SELF)),
+                                        Duration.PERMANENT, false, Subjects.source())),
                         BecomeCreatureTypeWithBasePowerToughnessEffect.settingCreatureTypes(
                                 null, null, CardSubtype.SCOUT,
                                 CardSubtype.HUMAN, CardSubtype.FAERIE, CardSubtype.DETECTIVE)
@@ -42,7 +42,7 @@ public class KellanPlanarTrailblazer extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{2}{R}", List.of(
                 SequenceEffect.of(
                         new ConditionalEffect(new SourceHasSubtype(CardSubtype.DETECTIVE),
-                                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF,
+                                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.source(),
                                         Duration.PERMANENT)),
                         BecomeCreatureTypeWithBasePowerToughnessEffect.settingCreatureTypes(
                                 3, 2, CardSubtype.DETECTIVE,

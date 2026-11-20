@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -17,7 +17,7 @@ import java.util.List;
 public class GethThaneOfContracts extends Card {
 
     public GethThaneOfContracts() {
-        addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(-1, -1, Subjects.otherCreaturesYouControl()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

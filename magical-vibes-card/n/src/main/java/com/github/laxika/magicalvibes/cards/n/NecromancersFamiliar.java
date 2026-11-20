@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 
@@ -20,14 +19,14 @@ public class NecromancersFamiliar extends Card {
     public NecromancersFamiliar() {
         addStaticEffect(new ConditionalEffect(
                 new ControllerHandEmpty(),
-                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{B}",
                 List.of(
                         new DiscardCardTypeCost(null, null),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF),
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source()),
                         new TapPermanentsEffect(Subjects.source())),
                 "{B}, Discard a card: This creature gains indestructible until end of turn. Tap it."
         ));

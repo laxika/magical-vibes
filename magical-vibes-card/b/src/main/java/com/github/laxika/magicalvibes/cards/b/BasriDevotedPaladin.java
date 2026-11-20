@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -26,7 +26,7 @@ public class BasriDevotedPaladin extends Card {
                 false, null,
                 List.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET,
+                        new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target(),
                                 new PermanentIsCreaturePredicate())
                 ),
                 "+1: Put a +1/+1 counter on up to one target creature. It gains vigilance until end of turn.",
@@ -44,7 +44,7 @@ public class BasriDevotedPaladin extends Card {
                 -6,
                 List.of(
                         new BoostAllOwnCreaturesEffect(2, 2),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.otherCreaturesYouControl())
                 ),
                 "−6: Creatures you control get +2/+2 and gain flying until end of turn."));
     }

@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
@@ -54,6 +53,6 @@ public class GalvanicAlchemist extends Card {
         );
         addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
-                new GrantActivatedAbilityEffect(untap, GrantScope.SELF_AND_PAIRED)));
+                new GrantActivatedAbilityEffect(untap, Subjects.sourceAndPaired())));
     }
 }

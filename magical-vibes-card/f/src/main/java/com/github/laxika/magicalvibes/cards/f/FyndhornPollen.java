@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,7 +21,7 @@ public class FyndhornPollen extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CumulativeUpkeepEffect("{1}"));
 
         // All creatures get -1/-0.
-        addStaticEffect(new StaticBoostEffect(-1, 0, GrantScope.ALL_CREATURES_INCLUDING_SELF));
+        addStaticEffect(new StaticBoostEffect(-1, 0, Subjects.allCreatures()));
 
         // {1}{G}: All creatures get -1/-0 until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{1}{G}",

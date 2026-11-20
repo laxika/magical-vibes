@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,6 +20,6 @@ public class GetALegUp extends Card {
 
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(creaturesYouControl, creaturesYouControl))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.REACH, Subjects.target()));
     }
 }

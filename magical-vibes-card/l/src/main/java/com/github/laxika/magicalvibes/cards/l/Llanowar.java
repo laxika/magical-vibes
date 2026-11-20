@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,7 +22,7 @@ public class Llanowar extends Card {
                 new ActivatedAbility(true, null,
                         List.of(new AwardManaEffect(ManaColor.GREEN, 2)),
                         "{T}: Add {G}{G}."),
-                GrantScope.ALL_CREATURES));
+                Subjects.otherCreatures()));
         addTrigger(Triggers.chaosEnsues(),
                 new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(), new PermanentIsCreaturePredicate())));
     }

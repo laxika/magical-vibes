@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -23,7 +23,7 @@ import java.util.List;
 public class PrehistoricPet extends Card {
 
     public PrehistoricPet() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.SKULK, GrantScope.SELF));
+        addStaticEffect(new GrantKeywordEffect(Keyword.SKULK, Subjects.source()));
 
         PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

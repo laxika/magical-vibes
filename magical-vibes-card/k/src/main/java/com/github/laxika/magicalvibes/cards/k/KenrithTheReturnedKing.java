@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -41,7 +40,7 @@ public class KenrithTheReturnedKing extends Card {
                 "{R}",
                 List.of(new GrantKeywordEffect(
                         Set.of(Keyword.TRAMPLE, Keyword.HASTE),
-                        GrantScope.ALL_CREATURES_INCLUDING_SELF)),
+                        Subjects.allCreatures())),
                 "{R}: All creatures gain trample and haste until end of turn."
         ));
 

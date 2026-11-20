@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.CardDiscardedThisTurn;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -34,11 +34,11 @@ public class CarnageCrimsonChaos extends Card {
                         new CardMaxManaValuePredicate(3))))
                 .targetGraveyard(true)
                 .battlefieldEffectGrants(List.of(
-                        new GrantEffectEffect(new MustAttackEffect(), GrantScope.TARGET),
+                        new GrantEffectEffect(new MustAttackEffect(), Subjects.target()),
                         new GrantEffectEffect(
                                 new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                                        new SacrificeSelfEffect()), GrantScope.TARGET),
-                                GrantScope.TARGET)))
+                                        new SacrificeSelfEffect()), Subjects.target()),
+                                Subjects.target())))
                 .build());
         addCastingOption(new GraveyardCast(null, "{B}{R}", List.of(), new CardDiscardedThisTurn()));
     }

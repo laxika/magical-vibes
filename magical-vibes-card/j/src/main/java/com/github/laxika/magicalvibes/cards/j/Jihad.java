@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.condition.ChosenPlayerControlsPerman
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceChosenPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenColorPredicate;
@@ -38,7 +38,7 @@ public class Jihad extends Card {
         // In the two-player engine, the chosen player is the single opponent.
         addStaticEffect(new ConditionalEffect(
                 new ChosenPlayerControlsPermanent(NONTOKEN_PERMANENT_OF_CHOSEN_COLOR),
-                new StaticBoostEffect(2, 1, GrantScope.ALL_CREATURES,
+                new StaticBoostEffect(2, 1, Subjects.allCreatures(),
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE)))));
 
         // When the chosen player controls no matching nontoken permanent, sacrifice Jihad.

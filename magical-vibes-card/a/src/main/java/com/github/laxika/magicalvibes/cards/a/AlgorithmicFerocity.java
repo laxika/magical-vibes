@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.MatchingCardsInHand;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,7 +18,7 @@ public class AlgorithmicFerocity extends Card {
 
     public AlgorithmicFerocity() {
         target(TargetFilters.creatureYouControl())
-                .addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()))
                 .addSpellEffect(new BoostTargetCreatureEffect(
                         new MatchingCardsInHand(CountScope.CONTROLLER, new CardMinManaValuePredicate(4)), new Fixed(0)));
 

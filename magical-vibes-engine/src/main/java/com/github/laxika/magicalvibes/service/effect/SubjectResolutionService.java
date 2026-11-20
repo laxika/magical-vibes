@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -412,7 +413,7 @@ public class SubjectResolutionService {
             case PermanentSubject.AllTargets ignored -> allTargetIds(ctx.entry()).stream()
                     .filter(id -> !ctx.gameData().playerIds.contains(id))
                     .toList();
-            case PermanentSubject.Attached ignored -> listOf(attachedId(ctx));
+            case PermanentSubject.Attached attached -> attachedIds(ctx, attached);
             case PermanentSubject.AttachedOrSource ignored -> listOf(attachedOrSourceId(ctx));
             case PermanentSubject.AttachedAtTrigger ignored -> listOf(ctx.entry().getAttachedPermanentSnapshot() == null
                     ? null : ctx.entry().getAttachedPermanentSnapshot().getId());
@@ -449,7 +450,101 @@ public class SubjectResolutionService {
             }
             case PermanentSubject.OneOf oneOf -> throw new IllegalArgumentException(
                     "A choice between subjects is made by the verb's handler, which resolves each option: " + oneOf);
+            case PermanentSubject.TriggeringAttackers ignored -> ctx.entry().getAttackingPermanentSnapshots().stream()
+                    .map(Permanent::getId)
+                    .toList();
+            case PermanentSubject.TriggeringSpellTargets ignored -> triggeringSpellTargetIds(ctx);
+            case PermanentSubject.CreatedThisResolution ignored -> List.copyOf(ctx.entry().getCreatedPermanentIds());
+            case PermanentSubject.BandmatesOf bandmates -> bandmateIds(ctx, bandmates.permanent());
+            case PermanentSubject.WithCreaturesSharingAColor sharing -> sharingAColorIds(ctx, sharing.permanent());
         };
+    }
+
+    /**
+     * {@link PermanentSubject.Attached}: the host; for "enchanted creature" as an effect resolves, only while the host
+     * on the battlefield is a creature.
+     */
+    private List<UUID> attachedIds(Context ctx, PermanentSubject.Attached attached) {
+        UUID hostId = attachedId(ctx);
+        if (attached.creature() && hostId != null && ctx.entry() != null) {
+            Permanent host = gameQueryService.findPermanentById(ctx.gameData(), hostId);
+            if (host != null && !gameQueryService.isCreature(ctx.gameData(), host)) {
+                return List.of();
+            }
+        }
+        return listOf(hostId);
+    }
+
+    /**
+     * The targets of the spell the trigger event was about, as that spell is on the stack, else as the entry recorded
+     * them; with no triggering spell, the targets the entry assigns to the effect.
+     */
+    private List<UUID> triggeringSpellTargetIds(Context ctx) {
+        StackEntry entry = ctx.entry();
+        StackEntry triggeringSpell = entry.getTriggeringCardId() == null
+                ? null
+                : gameQueryService.findStackEntryByCardId(ctx.gameData(), entry.getTriggeringCardId());
+        if (triggeringSpell == null) {
+            return entry.getTriggeringSpellTargetIds().isEmpty()
+                    ? entry.targetsForEffect(ctx.effect()) : entry.getTriggeringSpellTargetIds();
+        }
+        List<UUID> targetIds = new ArrayList<>();
+        if (triggeringSpell.getTargetId() != null) {
+            targetIds.add(triggeringSpell.getTargetId());
+        }
+        targetIds.addAll(triggeringSpell.getDeclaredTargetIds());
+        return targetIds;
+    }
+
+    /**
+     * The other attacking creatures in the attacking band of the one permanent {@code permanent} names (CR 702.22),
+     * read as it is, else ({@code source()}) as it last existed; none when it is not attacking in a band.
+     */
+    private List<UUID> bandmateIds(Context ctx, PermanentSubject permanent) {
+        Permanent member;
+        if (permanent instanceof PermanentSubject.Source) {
+            member = sourceAsItIsOrWas(ctx);
+        } else {
+            List<Permanent> named = livePermanents(ctx, permanent);
+            member = named.isEmpty() ? null : named.getFirst();
+        }
+        if (member == null || !member.isAttacking() || member.getBandId() == null) {
+            return List.of();
+        }
+        UUID bandId = member.getBandId();
+        UUID memberId = member.getId();
+        List<UUID> bandmates = new ArrayList<>();
+        ctx.gameData().forEachPermanent((playerId, candidate) -> {
+            if (candidate.isAttacking() && bandId.equals(candidate.getBandId())
+                    && !candidate.getId().equals(memberId)) {
+                bandmates.add(candidate.getId());
+            }
+        });
+        return bandmates;
+    }
+
+    /**
+     * The creature {@code permanent} names and every creature sharing a color with it, in battlefield order; nothing
+     * when the named permanent is gone or no longer a creature.
+     */
+    private List<UUID> sharingAColorIds(Context ctx, PermanentSubject permanent) {
+        GameData gameData = ctx.gameData();
+        List<Permanent> named = livePermanents(ctx, permanent);
+        if (named.isEmpty() || !gameQueryService.isCreature(gameData, named.getFirst())) {
+            return List.of();
+        }
+        Permanent creature = named.getFirst();
+        Set<CardColor> colors = gameQueryService.getEffectiveColors(gameData, creature);
+        List<UUID> sharing = new ArrayList<>();
+        gameData.forEachPermanent((playerId, candidate) -> {
+            if (gameQueryService.isCreature(gameData, candidate)
+                    && (candidate.getId().equals(creature.getId())
+                    || !colors.isEmpty() && gameQueryService.getEffectiveColors(gameData, candidate).stream()
+                    .anyMatch(colors::contains))) {
+                sharing.add(candidate.getId());
+            }
+        });
+        return sharing;
     }
 
     private List<UUID> targetIds(Context ctx, Integer group) {

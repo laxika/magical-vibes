@@ -11,11 +11,11 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillControllerThenEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -47,6 +47,6 @@ public class TheLastRonin extends Card {
                                 new GrantKeywordEffect(Set.of(
                                         Keyword.TRAMPLE,
                                         Keyword.LIFELINK,
-                                        Keyword.INDESTRUCTIBLE), GrantScope.TRIGGERING_PERMANENT)))));
+                                        Keyword.INDESTRUCTIBLE), Subjects.triggering())))));
     }
 }

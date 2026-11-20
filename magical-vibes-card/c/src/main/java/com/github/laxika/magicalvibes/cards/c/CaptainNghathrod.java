@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -27,7 +26,7 @@ public class CaptainNghathrod extends Card {
     public CaptainNghathrod() {
         // Horrors you control have menace.
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.MENACE, GrantScope.ALL_OWN_CREATURES,
+                Keyword.MENACE, Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.HORROR)));
 
         // Whenever a Horror you control deals combat damage to a player, that player mills that many cards.

@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,7 +16,7 @@ public class SeshiroTheAnointed extends Card {
 
     public SeshiroTheAnointed() {
         // Other Snake creatures you control get +2/+2.
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.SNAKE)));
 
         // Whenever a Snake you control deals combat damage to a player, you may draw a card.

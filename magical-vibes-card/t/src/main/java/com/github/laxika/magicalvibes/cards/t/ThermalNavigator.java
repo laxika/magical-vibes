@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class ThermalNavigator extends Card {
                 false,
                 null,
                 List.of(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.source())),
                 "Sacrifice an artifact: This creature gains flying until end of turn."
         ));
     }

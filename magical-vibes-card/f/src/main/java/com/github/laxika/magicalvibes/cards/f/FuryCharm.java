@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -32,7 +32,7 @@ public class FuryCharm extends Card {
                         "Target creature gets +1/+1 and gains trample until end of turn",
                         List.of(
                                 new BoostTargetCreatureEffect(1, 1),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),
                                 "Target must be a creature.")),

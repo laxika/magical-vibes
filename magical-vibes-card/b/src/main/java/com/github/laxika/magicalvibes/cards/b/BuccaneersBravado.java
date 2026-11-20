@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -31,13 +31,13 @@ public class BuccaneersBravado extends Card {
                         "Target creature gets +1/+1 and gains first strike until end of turn",
                         List.of(
                                 new BoostTargetCreatureEffect(1, 1),
-                                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target())),
                         creatureTarget),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target Pirate gets +1/+1 and gains double strike until end of turn",
                         List.of(
                                 new BoostTargetPermanentEffect(1, 1, new PermanentHasSubtypePredicate(CardSubtype.PIRATE)),
-                                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target())),
                         pirateTarget)
         )));
     }

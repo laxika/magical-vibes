@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class BlindingPowder extends Card {
                         List.of(new UnattachSourceEquipmentCost(), PreventDamageEffect.allCombatToSelf()),
                         "Unattach Blinding Powder: Prevent all combat damage that would be dealt to this creature this turn."
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));

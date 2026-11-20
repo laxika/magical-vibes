@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,7 +32,7 @@ public class RammasEchorAncientShield extends Card {
         // At the beginning of combat on your turn, creatures you control with defender gain
         // exalted until end of turn.
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new GrantKeywordEffect(Keyword.EXALTED, GrantScope.OWN_CREATURES,
+                new GrantKeywordEffect(Keyword.EXALTED, Subjects.otherCreaturesYouControl(),
                         new PermanentHasKeywordPredicate(Keyword.DEFENDER)));
     }
 }

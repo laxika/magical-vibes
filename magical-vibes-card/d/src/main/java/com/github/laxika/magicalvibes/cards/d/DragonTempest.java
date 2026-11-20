@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -33,7 +33,7 @@ public class DragonTempest extends Card {
                                 Triggers.CREATURE,
                                 new PermanentHasKeywordPredicate(Keyword.FLYING))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TRIGGERING_PERMANENT));
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.triggering()));
 
         // Whenever a Dragon you control enters, it deals X damage to any target,
         // where X is the number of Dragons you control.

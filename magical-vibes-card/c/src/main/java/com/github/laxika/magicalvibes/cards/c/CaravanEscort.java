@@ -8,12 +8,12 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "15")
@@ -30,15 +30,15 @@ public class CaravanEscort extends Card {
                 ActivationTimingRestriction.SORCERY_SPEED
         ));
 
-        addStaticEffect(new RemoveKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source()));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(2, 2, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(2, 2, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(5, 5, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(5, 5, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.LEVEL),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())));
     }
 }

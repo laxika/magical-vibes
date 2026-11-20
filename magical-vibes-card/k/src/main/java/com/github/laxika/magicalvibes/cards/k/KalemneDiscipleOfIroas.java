@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExperienceCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,6 +27,6 @@ public class KalemneDiscipleOfIroas extends Card {
         addStaticEffect(new DynamicStaticBoostEffect(
                 new ControllerExperienceCounters(),
                 new ControllerExperienceCounters(),
-                GrantScope.SELF));
+                Subjects.source()));
     }
 }

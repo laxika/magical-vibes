@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,9 +25,9 @@ public class IchorSynthesizer extends Card {
         SourceCounterThreshold oilThreshold = new SourceCounterThreshold(4, CounterType.OIL);
         addStaticEffect(new ConditionalEffect(
                 oilThreshold,
-                new StaticBoostEffect(2, 0, GrantScope.SELF)));
+                new StaticBoostEffect(2, 0, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 oilThreshold,
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
     }
 }

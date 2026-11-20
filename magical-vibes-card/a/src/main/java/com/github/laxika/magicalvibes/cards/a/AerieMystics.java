@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "CON", collectorNumber = "1")
@@ -19,7 +19,7 @@ public class AerieMystics extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}{U}",
-                List.of(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ALL_OWN_CREATURES)),
+                List.of(new GrantKeywordEffect(Keyword.SHROUD, Subjects.creaturesYouControl())),
                 "{1}{G}{U}: Creatures you control gain shroud until end of turn."
         ));
     }

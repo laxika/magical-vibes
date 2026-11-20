@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -22,7 +22,7 @@ public class SpriteNoble extends Card {
         var flying = new PermanentHasKeywordPredicate(Keyword.FLYING);
 
         // Other creatures you control with flying get +0/+1.
-        addStaticEffect(new StaticBoostEffect(0, 1, GrantScope.OWN_CREATURES, flying));
+        addStaticEffect(new StaticBoostEffect(0, 1, Subjects.otherCreaturesYouControl(), flying));
 
         // {T}: Other creatures you control with flying get +1/+0 until end of turn.
         var otherFlying = new PermanentAllOfPredicate(

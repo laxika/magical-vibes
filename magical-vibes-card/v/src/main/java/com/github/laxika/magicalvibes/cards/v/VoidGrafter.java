@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -31,6 +31,6 @@ public class VoidGrafter extends Card {
                 targetFilter,
                 "Target must be another creature you control"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.target()));
     }
 }

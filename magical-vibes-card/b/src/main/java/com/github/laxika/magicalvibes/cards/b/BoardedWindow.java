@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerDealtDamageThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -20,7 +19,7 @@ public class BoardedWindow extends Card {
 
     public BoardedWindow() {
         // Creatures attacking you get -1/-0.
-        addStaticEffect(new StaticBoostEffect(-1, 0, GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(-1, 0, Subjects.otherCreatures(),
                 new PermanentIsAttackingSourceControllerPredicate()));
 
         // At the beginning of each end step, if you were dealt 4 or more damage this turn,

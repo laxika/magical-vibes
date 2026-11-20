@@ -15,7 +15,8 @@ import java.util.Objects;
  *
  * @param subtypes the creature types the target becomes
  */
-public record TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(List<CardSubtype> subtypes, GrantScope scope) implements CardEffect {
+public record TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(List<CardSubtype> subtypes, PermanentSubject subject)
+        implements CardEffect {
 
     public TargetCreatureBecomesSubtypeUntilEndOfTurnEffect {
         Objects.requireNonNull(subtypes, "subtypes");
@@ -25,16 +26,16 @@ public record TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(List<CardSubtype>
         subtypes = List.copyOf(subtypes);
     }
 
-    public TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype subtype, GrantScope scope) {
-        this(List.of(Objects.requireNonNull(subtype, "subtype")), scope);
+    public TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype subtype, PermanentSubject subject) {
+        this(List.of(Objects.requireNonNull(subtype, "subtype")), subject);
     }
 
     public TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype subtype) {
-        this(List.of(Objects.requireNonNull(subtype, "subtype")), GrantScope.TARGET);
+        this(List.of(Objects.requireNonNull(subtype, "subtype")), Subjects.target());
     }
 
     public TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(List<CardSubtype> subtypes) {
-        this(subtypes, GrantScope.TARGET);
+        this(subtypes, Subjects.target());
     }
 
     public CardSubtype subtype() {
@@ -43,10 +44,9 @@ public record TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(List<CardSubtype>
 
     @Override
     public TargetSpec targetSpec() {
-        return switch (scope) {
-            case TARGET_PLAYERS_CREATURES -> TargetSpec.benign(TargetPredicates.player());
-            case OWN_CREATURES -> TargetSpec.NONE;
-            default -> TargetSpec.benign(TargetPredicates.creature());
-        };
+        if (subject.declaresPlayerTarget()) {
+            return TargetSpec.benign(TargetPredicates.player());
+        }
+        return subject.isSet() ? TargetSpec.NONE : TargetSpec.benign(TargetPredicates.creature());
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,7 +27,7 @@ public class SuitUp extends Card {
                 "Target must be a creature or Vehicle"))
                 .addSpellEffect(new AnimatePermanentsEffect(
                         4, 5, List.of(), Set.of(), null, Set.of(CardType.ARTIFACT),
-                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN))
+                        Subjects.target(), Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new DrawCardEffect());
     }
 }

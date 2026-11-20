@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenFromHalfLifeTotalAndDealDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import org.springframework.stereotype.Component;
@@ -31,6 +30,6 @@ public class CreateTokenFromHalfLifeTotalAndDealDamageEffectHandler implements N
         entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
                 new CreateTokenEffect(token.tokenName(), x, x, token.color(), token.subtypes(), Set.of(), Set.of()),
                 new TargetCreatureDealsDamageToControllerEffect(new Fixed(x),
-                        GrantScope.TOKENS_CREATED_THIS_RESOLUTION, Subjects.you())));
+                        Subjects.createdThisResolution(), Subjects.you())));
     }
 }

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +25,7 @@ public class UltronArtificialMalevolence extends Card {
                         new CreateTokenCopyOfTargetPermanentEffect().ofTriggeringPermanent().withAnimationIfNotCreature(
                                 new AnimatePermanentsEffect(2, 2,
                                         List.of(CardSubtype.ROBOT, CardSubtype.VILLAIN), Set.of(), null,
-                                        Set.of(CardType.CREATURE), GrantScope.TARGET, Duration.PERMANENT)),
+                                        Set.of(CardType.CREATURE), Subjects.target(), Duration.PERMANENT)),
                         "Pay {2} to create a token that's a copy of that artifact?"));
     }
 }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MH2", collectorNumber = "140")
 public class SkophosReaver extends Card {
@@ -14,7 +14,7 @@ public class SkophosReaver extends Card {
     public SkophosReaver() {
         // During your turn, this creature gets +2/+0.
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new StaticBoostEffect(2, 0, GrantScope.SELF)));
+                new StaticBoostEffect(2, 0, Subjects.source())));
 
         // Madness {1}{R}
         addCastingOption(new MadnessCast("{1}{R}"));

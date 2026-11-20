@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.Set;
@@ -14,7 +14,7 @@ import java.util.Set;
 public class HiddenPath extends Card {
 
     public HiddenPath() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.FORESTWALK, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+        addStaticEffect(new GrantKeywordEffect(Keyword.FORESTWALK, Subjects.allCreatures(),
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN))));
     }
 }

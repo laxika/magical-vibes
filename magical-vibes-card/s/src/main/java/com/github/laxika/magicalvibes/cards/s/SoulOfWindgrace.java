@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -62,7 +61,7 @@ public class SoulOfWindgrace extends Card {
                 "{2}{B}",
                 List.of(
                         new DiscardCardTypeCost(new CardTypePredicate(CardType.LAND), "land"),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF),
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source()),
                         new TapPermanentsEffect(Subjects.source())
                 ),
                 "{2}{B}, Discard a land card: Soul of Windgrace gains indestructible until end of turn. Tap it."

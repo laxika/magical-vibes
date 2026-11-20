@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAuraAttachedToCreaturePredicate;
@@ -38,7 +38,7 @@ public class PietyCharm extends Card {
                                 "Target must be a Soldier creature.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control gain vigilance until end of turn",
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES))
+                        new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.otherCreaturesYouControl()))
         )));
     }
 }

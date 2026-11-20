@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
@@ -31,7 +30,7 @@ public class DeepSpawn extends Card {
         // {U}: This creature gains shroud until end of turn and doesn't untap during your next
         // untap step. Tap this creature.
         addActivatedAbility(new ActivatedAbility(false, "{U}",
-                List.of(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.SELF),
+                List.of(new GrantKeywordEffect(Keyword.SHROUD, Subjects.source()),
                         new SkipNextUntapEffect(Subjects.source(), 1, false, false, true),
                         new TapPermanentsEffect(Subjects.source())),
                 "{U}: This creature gains shroud until end of turn and doesn't untap during your next untap step. Tap this creature."));

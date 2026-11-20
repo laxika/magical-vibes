@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GoadEquippedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -16,7 +15,7 @@ public class AcquiredMutation extends Card {
 
     public AcquiredMutation() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()))
                 .addStaticEffect(new GoadEquippedCreatureEffect())
                 .addTrigger(Triggers.attacks(), new GiveRadCountersEffect(2, Subjects.defendingPlayer()));
     }

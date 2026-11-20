@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -29,7 +29,7 @@ public class BlessedHippogriffTyrsBlessing extends Card {
                         new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))
                 )),
                 "Target must be an attacking creature without flying"
-        )).addTrigger(Triggers.attacks(), new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+        )).addTrigger(Triggers.attacks(), new GrantKeywordEffect(Keyword.FLYING, Subjects.target()));
     }
 
     @Override

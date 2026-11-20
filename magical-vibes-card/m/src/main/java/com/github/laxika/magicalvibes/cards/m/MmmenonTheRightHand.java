@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class MmmenonTheRightHand extends Card {
                                 ManaColor.BLUE, 1, new ManaRestriction.NonHandSpellsOnly())),
                         "{T}: Add {U}. Spend this mana only to cast a spell from anywhere other than your hand."
                 ),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentIsArtifactPredicate()
         ));
     }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "MB1", collectorNumber = "39")
@@ -16,6 +16,6 @@ public class CorruptedKey extends Card {
     public CorruptedKey() {
         addStaticEffect(new ConditionalEffect(
                 new SourceIsTapped(),
-                new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.DEATHTOUCH), GrantScope.ALL_OWN_CREATURES)));
+                new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.DEATHTOUCH), Subjects.creaturesYouControl())));
     }
 }

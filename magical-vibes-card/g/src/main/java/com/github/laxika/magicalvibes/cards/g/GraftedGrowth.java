@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -34,7 +34,7 @@ public class GraftedGrowth extends Card {
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(true, null, List.of(new AwardAnyColorManaEffect(2)),
                                 "{T}: Add two mana of any one color."),
-                        GrantScope.ENCHANTED_PERMANENT
+                        Subjects.attached()
                 ));
         target(new ControlledPermanentPredicateTargetFilter(
                 creatureOrVehicle,

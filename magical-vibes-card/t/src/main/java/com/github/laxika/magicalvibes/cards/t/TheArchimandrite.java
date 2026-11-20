@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,7 +32,7 @@ public class TheArchimandrite extends Card {
 
         addTrigger(Triggers.youGainLife(), SequenceEffect.of(
                 new BoostAllOwnCreaturesEffect(new EventValue(), new Fixed(0), advisorArtificerOrMonk),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES,
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl(),
                         advisorArtificerOrMonk)));
 
         addActivatedAbility(new ActivatedAbility(

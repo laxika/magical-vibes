@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -40,8 +40,8 @@ public class SludgeMonster extends Card {
                 new PermanentHasCountersPredicate(CounterType.SLIME),
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.HORROR))
         ));
-        addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ALL_CREATURES_INCLUDING_SELF, affectedCreature));
-        addStaticEffect(new SetBasePowerToughnessEffect(2, 2, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+        addStaticEffect(new LosesAllAbilitiesEffect(Subjects.allCreatures(), affectedCreature));
+        addStaticEffect(new SetBasePowerToughnessEffect(2, 2, Subjects.allCreatures(),
                         affectedCreature));
     }
 }

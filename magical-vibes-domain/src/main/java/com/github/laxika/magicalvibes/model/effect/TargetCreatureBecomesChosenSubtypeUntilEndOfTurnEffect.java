@@ -11,29 +11,26 @@ import java.util.Set;
  * replacing all other creature types.
  */
 public record TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(
-        GrantScope scope,
+        PermanentSubject subject,
         Set<CardSubtype> excludedSubtypes
 ) implements CardEffect {
 
     public TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect() {
-        this(GrantScope.TARGET, Set.of(CardSubtype.WALL));
+        this(Subjects.target(), Set.of(CardSubtype.WALL));
     }
 
-    public TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(GrantScope scope) {
-        this(scope, Set.of(CardSubtype.WALL));
+    public TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(PermanentSubject subject) {
+        this(subject, Set.of(CardSubtype.WALL));
     }
 
-    public TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(GrantScope scope,
+    public TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(PermanentSubject subject,
                                                                    Set<CardSubtype> excludedSubtypes) {
-        this.scope = Objects.requireNonNull(scope, "scope");
+        this.subject = Objects.requireNonNull(subject, "subject");
         this.excludedSubtypes = Set.copyOf(Objects.requireNonNull(excludedSubtypes, "excludedSubtypes"));
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return switch (scope) {
-            case OWN_CREATURES, ALL_CREATURES -> TargetSpec.NONE;
-            default -> TargetSpec.benign(TargetPredicates.creature());
-        };
+        return subject.isSet() ? TargetSpec.NONE : TargetSpec.benign(TargetPredicates.creature());
     }
 }

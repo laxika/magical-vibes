@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ZEN", collectorNumber = "117")
@@ -20,6 +20,6 @@ public class VampiresBite extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(3, 0))
                 .addSpellEffect(new ConditionalEffect(new Kicked(),
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET)));
+                        new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target())));
     }
 }

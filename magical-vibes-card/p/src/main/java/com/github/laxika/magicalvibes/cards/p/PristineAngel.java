@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
@@ -25,7 +24,7 @@ public class PristineAngel extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceUntapped(),
                 new GrantEffectEffect(
-                        new ProtectionFromCardTypesEffect(Set.of(CardType.ARTIFACT)), GrantScope.SELF)));
+                        new ProtectionFromCardTypesEffect(Set.of(CardType.ARTIFACT)), Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceUntapped(),
                 new ProtectionFromColorsEffect(Set.of(

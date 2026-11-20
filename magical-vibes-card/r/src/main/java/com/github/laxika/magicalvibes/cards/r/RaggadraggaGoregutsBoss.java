@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -26,7 +25,7 @@ public class RaggadraggaGoregutsBoss extends Card {
         addStaticEffect(new StaticBoostEffect(
                 2,
                 2,
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasManaAbilityPredicate()))));
@@ -38,6 +37,6 @@ public class RaggadraggaGoregutsBoss extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new SpellManaSpentAtLeast(7)),
                 new UntapPermanentsEffect(Subjects.target()),
                 new BoostTargetCreatureEffect(7, 7),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));
     }
 }

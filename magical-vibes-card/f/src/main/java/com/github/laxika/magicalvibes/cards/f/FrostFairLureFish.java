@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatch
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,11 +30,11 @@ public class FrostFairLureFish extends Card {
                 CreateTokenEffect.ofTreasureToken(2, true));
 
         PermanentHasSubtypePredicate fish = new PermanentHasSubtypePredicate(CardSubtype.FISH);
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES, fish));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl(), fish));
         addStaticEffect(new GrantEffectEffect(
                 new CantBeBlockedByCreaturesMatchingPredicateEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.HUMAN)),
-                GrantScope.ALL_OWN_CREATURES, fish));
+                Subjects.creaturesYouControl(), fish));
 
         addCastingOption(new ForetellCast("{3}{U}{R}"));
     }

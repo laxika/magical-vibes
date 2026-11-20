@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "LRW", collectorNumber = "97")
 @CardRegistration(set = "MM2", collectorNumber = "70")
@@ -15,7 +15,7 @@ public class WingsOfVelisVel extends Card {
         // Until end of turn, target creature has base power and toughness 4/4,
         // gains all creature types (changeling), and gains flying.
         addSpellEffect(new SetBasePowerToughnessEffect(4, 4));
-        addSpellEffect(new GrantKeywordEffect(Keyword.CHANGELING, GrantScope.TARGET));
-        addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+        addSpellEffect(new GrantKeywordEffect(Keyword.CHANGELING, Subjects.target()));
+        addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.target()));
     }
 }

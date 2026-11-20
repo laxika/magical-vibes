@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
@@ -41,7 +40,7 @@ public class TownRazerTyrant extends Card {
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new GrantStaticEffectToTargetEffect(
-                        new LosesAllNonManaAbilitiesEffect(GrantScope.SELF)),
+                        new LosesAllNonManaAbilitiesEffect(Subjects.source())),
                         new GrantStaticEffectToTargetEffect(new GrantTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                                 new ForcedCostOrElseEffect(
@@ -50,6 +49,6 @@ public class TownRazerTyrant extends Card {
                                                 "Sacrifice it", false),
                                         List.of(new DealDamageToPlayersEffect(2, Subjects.you())),
                                         true)),
-                                GrantScope.SELF)));
+                                Subjects.source())));
     }
 }

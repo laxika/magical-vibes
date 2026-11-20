@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -16,7 +16,7 @@ public class ShinenOfStarsLight extends Card {
 
     public ShinenOfStarsLight() {
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}{W}",
-                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target())),
                 "Channel — {1}{W}, Discard this card: Target creature gains first strike until end of turn.",
                 TargetFilters.creature()));
     }

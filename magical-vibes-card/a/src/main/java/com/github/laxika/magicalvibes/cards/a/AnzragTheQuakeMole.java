@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -28,7 +27,7 @@ public class AnzragTheQuakeMole extends Card {
                 false,
                 "{3}{R}{R}{G}{G}",
                 List.of(new SetCombatRequirementThisTurnEffect(
-                        CombatRequirement.MUST_BE_BLOCKED, GrantScope.SELF)),
+                        CombatRequirement.MUST_BE_BLOCKED, Subjects.source())),
                 "{3}{R}{R}{G}{G}: This creature must be blocked each combat this turn if able."
         ));
     }

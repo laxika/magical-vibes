@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +25,7 @@ public class StaffOfTitania extends Card {
         PermanentCount forests = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.FOREST), CountScope.CONTROLLER);
         addStaticEffect(new AttachedBoostEffect(
-                forests, forests, GrantScope.EQUIPPED_CREATURE));
+                forests, forests, Subjects.attachedCreature()));
 
         addTrigger(Triggers.attacks(), new CreateTokenEffect(
                 1, "Forest Dryad", 1, 1, CardColor.GREEN,

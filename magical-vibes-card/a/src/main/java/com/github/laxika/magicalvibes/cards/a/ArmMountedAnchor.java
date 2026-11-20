@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.effect.DiscardTwoUnlessCardPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,8 +21,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ArmMountedAnchor extends Card {
 
     public ArmMountedAnchor() {
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, Subjects.attachedCreature()));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect(2),
                 new DiscardTwoUnlessCardPredicateEffect(new CardSubtypePredicate(CardSubtype.PIRATE)));
         addActivatedAbility(new EquipActivatedAbility("{2}", new ReduceActivationCostEffect(

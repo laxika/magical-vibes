@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -23,7 +23,7 @@ public class EnsouledScimitar extends Card {
                 List.of(new AnimatePermanentsEffect(1, 5, List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING))),
                 "{3}: This artifact becomes a 1/5 Spirit artifact creature with flying until end of turn."
         ));
-        addStaticEffect(new StaticBoostEffect(1, 5, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 5, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

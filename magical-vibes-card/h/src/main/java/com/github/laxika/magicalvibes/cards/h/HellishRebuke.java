@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.TargetPlayerIs;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,6 +22,6 @@ public class HellishRebuke extends Card {
                         new TriggeredAbility(Triggers.dealsDamageToPlayer(),
                                 TriggerOptions.DEFAULT.withEventCondition(new TargetPlayerIs(null)),
                                 SequenceEffect.of(new SacrificeSelfEffect(), new LoseLifeEffect(2))),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

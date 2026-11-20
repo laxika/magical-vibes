@@ -11,11 +11,11 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostSourcePowerPredicate;
@@ -57,7 +57,7 @@ public class GuardianScalelord extends Card {
                 new ConditionalEffect(
                         new TargetPermanentMatches(anotherCreature),
                         SequenceEffect.of(
-                                new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
+                                new GrantKeywordEffect(Keyword.FLYING, Subjects.target()),
                                 new GrantEffectToTargetUntilEndOfTurnEffect(new TriggeredAbility(Triggers.attacks(),
                                         attackTrigger))
                         )

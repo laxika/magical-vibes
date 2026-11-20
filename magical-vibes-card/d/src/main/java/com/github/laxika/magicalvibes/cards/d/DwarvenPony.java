@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,7 +21,7 @@ public class DwarvenPony extends Card {
         // {1}{R}, {T}: Target Dwarf creature gains mountainwalk until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 true, "{1}{R}",
-                List.of(new GrantKeywordEffect(Keyword.MOUNTAINWALK, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.MOUNTAINWALK, Subjects.target())),
                 "{1}{R}, {T}: Target Dwarf creature gains mountainwalk until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

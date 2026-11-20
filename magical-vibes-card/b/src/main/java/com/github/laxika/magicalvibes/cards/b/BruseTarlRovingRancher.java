@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardCreateTokenIfLandOrMayCastUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class BruseTarlRovingRancher extends Card {
 
     public BruseTarlRovingRancher() {
         addStaticEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE,
-                GrantScope.ALL_OWN_CREATURES, new PermanentHasSubtypePredicate(CardSubtype.OX)));
+                Subjects.creaturesYouControl(), new PermanentHasSubtypePredicate(CardSubtype.OX)));
 
         var topCardEffect = new ExileTopCardCreateTokenIfLandOrMayCastUntilNextTurnEffect(
                 new CreateTokenEffect("Ox", 2, 2, CardColor.WHITE, List.of(CardSubtype.OX),

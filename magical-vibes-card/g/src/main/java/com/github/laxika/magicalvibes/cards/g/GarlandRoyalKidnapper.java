@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetCreatureWhileMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerBecomesMonarchEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByMonarchPredicate;
@@ -35,10 +35,10 @@ public class GarlandRoyalKidnapper extends Card {
         PermanentPredicate creaturesYouControlButDontOwn = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentOwnedBySourceControllerPredicate())));
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.creaturesYouControl(),
                 creaturesYouControlButDontOwn));
         addStaticEffect(new GrantEffectEffect(new CantBeSacrificedEffect(),
-                GrantScope.ALL_OWN_CREATURES, creaturesYouControlButDontOwn));
+                Subjects.creaturesYouControl(), creaturesYouControlButDontOwn));
 
         target(new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

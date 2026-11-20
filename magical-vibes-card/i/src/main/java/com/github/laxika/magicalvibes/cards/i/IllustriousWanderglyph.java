@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
 import com.github.laxika.magicalvibes.model.effect.AscendEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +26,7 @@ public class IllustriousWanderglyph extends Card {
     public IllustriousWanderglyph() {
         addStaticEffect(new AscendEffect());
         addStaticEffect(new ConditionalEffect(new ControllerHasCityBlessing(),
-                new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES,
+                new StaticBoostEffect(2, 2, Subjects.otherCreaturesYouControl(),
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentIsCreaturePredicate())))));

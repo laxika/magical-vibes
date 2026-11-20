@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.SpliceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,7 +22,7 @@ public class VeilOfSecrecy extends Card {
 
     public VeilOfSecrecy() {
         target(TargetFilters.creature())
-                .addSpellEffect(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.SHROUD, Subjects.target()))
                 .addSpellEffect(new MakeCreatureUnblockableEffect());
         // Splice onto Arcane—Return a blue creature you control to its owner's hand. The splice cost
         // has no mana component, so only the return filter is supplied.

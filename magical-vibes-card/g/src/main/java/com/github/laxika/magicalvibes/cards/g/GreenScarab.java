@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -24,6 +24,6 @@ public class GreenScarab extends Card {
                 // Enchanted creature gets +2/+2 as long as an opponent controls a green permanent.
                 .addStaticEffect(new ConditionalEffect(
                         new OpponentControlsPermanent(new PermanentColorInPredicate(Set.of(CardColor.GREEN))),
-                        new StaticBoostEffect(2, 2, GrantScope.ENCHANTED_CREATURE)));
+                        new StaticBoostEffect(2, 2, Subjects.attachedCreature())));
     }
 }

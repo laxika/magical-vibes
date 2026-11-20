@@ -162,9 +162,9 @@ public class EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEf
         copy.addCastingCostsAndSpellEffectsFrom(original, effect -> true);
         copy.addStaticAbilitiesFrom(original, effect -> {
             boolean definesColor = effect instanceof GrantColorEffect grant
-                    && grant.scope().subject() instanceof PermanentSubject.Source && grant.filter() == null;
+                    && grant.subject() instanceof PermanentSubject.Source && grant.filter() == null;
             boolean definesTypes = effect instanceof GrantAllCreatureTypesToOwnCreaturesEffect grant
-                    && grant.scope().subject() instanceof PermanentSubject.Source && grant.filter() == null;
+                    && grant.subject() instanceof PermanentSubject.Source && grant.filter() == null;
             return !definesColor && !definesTypes;
         });
         original.getTriggeredAbilities().forEach(copy::addTriggeredAbility);

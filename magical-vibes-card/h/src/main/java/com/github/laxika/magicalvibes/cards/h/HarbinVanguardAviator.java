@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackingCreaturesOfSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,6 +21,6 @@ public class HarbinVanguardAviator extends Card {
                         new MinimumAttackingCreaturesOfSubtype(5, CardSubtype.SOLDIER)),
                 SequenceEffect.of(
                         new BoostAllOwnCreaturesEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.ALL_OWN_CREATURES)));
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.creaturesYouControl())));
     }
 }

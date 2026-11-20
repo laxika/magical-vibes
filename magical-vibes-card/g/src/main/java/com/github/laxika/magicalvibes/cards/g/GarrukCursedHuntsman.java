@@ -14,9 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -63,8 +63,8 @@ public class GarrukCursedHuntsman extends Card {
                 -6,
                 List.of(new CreateEmblemEffect(
                         List.of(
-                                new StaticBoostEffect(3, 3, GrantScope.OWN_CREATURES),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES)
+                                new StaticBoostEffect(3, 3, Subjects.otherCreaturesYouControl()),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl())
                         ),
                         EMBLEM_TEXT
                 )),

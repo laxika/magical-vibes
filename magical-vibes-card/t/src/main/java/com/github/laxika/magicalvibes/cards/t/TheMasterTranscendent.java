@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
@@ -48,9 +47,9 @@ public class TheMasterTranscendent extends Card {
                         .targetGraveyard(true)
                         .targetMilledThisTurn(true)
                         .battlefieldEffectGrants(List.of(
-                                new GrantColorEffect(CardColor.GREEN, GrantScope.TARGET, true),
-                                new GrantSubtypeEffect(CardSubtype.MUTANT, GrantScope.TARGET, true),
-                                new SetBasePowerToughnessEffect(3, 3, GrantScope.TARGET,
+                                new GrantColorEffect(CardColor.GREEN, Subjects.target(), true),
+                                new GrantSubtypeEffect(CardSubtype.MUTANT, Subjects.target(), true),
+                                new SetBasePowerToughnessEffect(3, 3, Subjects.target(),
                                         Duration.PERMANENT)))
                         .build()),
                 "Put target creature card in a graveyard that was milled this turn onto the battlefield under your control. "

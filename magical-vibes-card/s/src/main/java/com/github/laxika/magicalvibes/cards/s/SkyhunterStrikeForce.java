@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsOwnCommander;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ONC", collectorNumber = "21")
 @CardRegistration(set = "ONC", collectorNumber = "31")
@@ -16,6 +16,6 @@ public class SkyhunterStrikeForce extends Card {
         // As long as you control your commander, other creatures you control have melee.
         addStaticEffect(new ConditionalEffect(
                 new ControllerControlsOwnCommander(),
-                new GrantKeywordEffect(Keyword.MELEE, GrantScope.OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.MELEE, Subjects.otherCreaturesYouControl())));
     }
 }

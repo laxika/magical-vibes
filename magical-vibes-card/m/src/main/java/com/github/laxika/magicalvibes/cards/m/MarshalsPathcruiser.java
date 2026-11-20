@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -31,7 +31,7 @@ public class MarshalsPathcruiser extends Card {
                 "{W}{U}{B}{R}{G}",
                 List.of(
                         new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
-                                Set.of(CardType.CREATURE), GrantScope.SELF, Duration.PERMANENT, null,
+                                Set.of(CardType.CREATURE), Subjects.source(), Duration.PERMANENT, null,
                                 Set.of(), false, false),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE, 2)
                 ),

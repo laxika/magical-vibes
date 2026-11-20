@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -21,14 +21,14 @@ public class ThermalFlux extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target nonsnow permanent becomes snow until end of turn",
                         new GrantSupertypeUntilEndOfTurnEffect(
-                                CardSupertype.SNOW, GrantScope.TARGET, true),
+                                CardSupertype.SNOW, Subjects.target(), true),
                         new PermanentPredicateTargetFilter(
                                 new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.SNOW)),
                                 "Target must be a nonsnow permanent.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target snow permanent isn't snow until end of turn",
                         new GrantSupertypeUntilEndOfTurnEffect(
-                                CardSupertype.SNOW, GrantScope.TARGET, false),
+                                CardSupertype.SNOW, Subjects.target(), false),
                         new PermanentPredicateTargetFilter(
                                 new PermanentHasSupertypePredicate(CardSupertype.SNOW),
                                 "Target must be a snow permanent."))

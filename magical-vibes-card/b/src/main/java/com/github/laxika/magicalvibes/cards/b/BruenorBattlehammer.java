@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.FirstEquipFreeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "AFR", collectorNumber = "219")
 public class BruenorBattlehammer extends Card {
@@ -16,7 +16,7 @@ public class BruenorBattlehammer extends Card {
         addStaticEffect(new DynamicStaticBoostEffect(
                 new Scaled(new AttachmentsOnSource(false, true), 2),
                 new Fixed(0),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 null,
                 true));
         addStaticEffect(new FirstEquipFreeEffect());

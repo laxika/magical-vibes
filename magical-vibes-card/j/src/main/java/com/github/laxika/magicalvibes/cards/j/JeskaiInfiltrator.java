@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndTopCardThenManifestEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ public class JeskaiInfiltrator extends Card {
     public JeskaiInfiltrator() {
         addStaticEffect(new ConditionalEffect(
                 new NoOtherPermanent(new PermanentIsCreaturePredicate()),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new ExileSelfAndTopCardThenManifestEffect());
     }

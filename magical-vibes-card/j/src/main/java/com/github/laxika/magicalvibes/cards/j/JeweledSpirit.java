@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class JeweledSpirit extends Card {
                 null,
                 List.of(
                         new SacrificeMultiplePermanentsCost(2, new PermanentIsLandPredicate()),
-                        new GrantProtectionChoiceUntilEndOfTurnEffect(true, false, GrantScope.SELF, null)
+                        new GrantProtectionChoiceUntilEndOfTurnEffect(true, false, Subjects.source(), null)
                 ),
                 "Sacrifice two lands: This creature gains protection from artifacts or from the color of your choice until end of turn."
         ));

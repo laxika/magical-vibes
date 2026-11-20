@@ -29,8 +29,8 @@ public class ProtectionFromChosenColorEffectHandler implements StaticEffectHandl
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var protection = (ProtectionFromChosenColorEffect) effect;
-        if (protection.scope() == null
-                || !support.namesBeyondSource(context, protection.scope().subject(), null)) {
+        if (protection.subject() == null
+                || !support.namesBeyondSource(context, protection.subject(), null)) {
             return;
         }
         CardColor chosen = context.source().getChosenColor();

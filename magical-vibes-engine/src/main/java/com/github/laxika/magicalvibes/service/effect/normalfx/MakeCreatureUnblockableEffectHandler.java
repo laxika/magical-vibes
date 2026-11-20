@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -91,7 +91,7 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
         if (target == null) return;
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.TARGET),
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.target()),
                 target.getId(), null, null, duration, 0));
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 Duration.UNTIL_END_OF_COMBAT.equals(duration)
@@ -118,7 +118,7 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, abilityControllerId,
                 new GrantEffectEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
-                        new PermanentAnyOfPredicate(opponentControlled)), GrantScope.TARGET),
+                        new PermanentAnyOfPredicate(opponentControlled)), Subjects.target()),
                 target.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                 " can't be blocked by creatures its opponents control this turn."));

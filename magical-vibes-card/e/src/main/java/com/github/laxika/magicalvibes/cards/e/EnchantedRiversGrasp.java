@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -20,7 +19,7 @@ public class EnchantedRiversGrasp extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new TapPermanentsEffect(Subjects.attached()),
                         new RemoveAllCountersFromTargetPermanentEffect(Subjects.attached()))
-                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new LosesAllAbilitiesEffect(Subjects.attachedCreature()))
                 .addStaticEffect(DoesntUntapEffect.enchanted());
     }
 }

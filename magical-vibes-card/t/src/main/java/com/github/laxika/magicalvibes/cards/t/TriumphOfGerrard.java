@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasGreatestPowerAmongControlledCreaturesPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -39,7 +39,7 @@ public class TriumphOfGerrard extends Card {
         // flying, first strike, and lifelink until end of turn
         addTrigger(Triggers.chapter(3), new GrantKeywordEffect(
                 Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.LIFELINK),
-                GrantScope.TARGET,
+                Subjects.target(),
                 GREATEST_POWER
         ));
 

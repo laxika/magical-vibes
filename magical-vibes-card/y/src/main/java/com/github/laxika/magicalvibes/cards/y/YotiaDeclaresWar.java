@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ReadAheadEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapAnyNumberOfPermanentsThenReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -36,7 +36,7 @@ public class YotiaDeclaresWar extends Card {
                 new DealDamageToTargetCreatureOrPlaneswalkerEffect(new EventValue())));
 
         addTrigger(Triggers.chapter(3), new AnimatePermanentsEffect(
-                4, 4, List.of(), Set.of(), null, Set.of(), GrantScope.TARGET,
+                4, 4, List.of(), Set.of(), null, Set.of(), Subjects.target(),
                 Duration.UNTIL_END_OF_TURN));
         setSagaChapterTargetGroups(3, List.of(
                 new SagaChapterTargetGroup(new ControlledPermanentPredicateTargetFilter(

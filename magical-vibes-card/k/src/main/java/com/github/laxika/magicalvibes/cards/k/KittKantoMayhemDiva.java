@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayTapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByActivePlayerPredicate;
@@ -43,7 +43,7 @@ public class KittKantoMayhemDiva extends Card {
                         new TapMultiplePermanentsCost(2, new PermanentIsCreaturePredicate()),
                         new QueueReflexiveAbilityEffect(SequenceEffect.of(
                                 new BoostTargetCreatureEffect(2, 2, activePlayerCreature),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()),
                                 new GoadTargetCreatureUntilNextTurnEffect(activePlayerCreature))),
                         "Tap two untapped creatures you control?"));
     }

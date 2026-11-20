@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -36,12 +36,11 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (LosesAllAbilitiesEffect) effect;
-        if (e.scope() == GrantScope.TARGET_PLAYERS_CREATURES || e.scope() == GrantScope.OWN_CREATURES) {
-            // The one-shot "creatures you control" includes the source.
-            GrantScope scope = e.scope() == GrantScope.OWN_CREATURES ? GrantScope.ALL_OWN_CREATURES : e.scope();
+        PermanentSubject subject = e.subject();
+        if (subject.declaresPlayerTarget() || Subjects.creaturesYouControl().equals(subject)) {
             int count = 0;
             for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
-                    Subjects.narrowed(scope.subject(), e.filter()))) {
+                    Subjects.narrowed(subject, e.filter()))) {
                 applyEffect(gameData, entry, e, permanent);
                 count++;
             }
@@ -50,12 +49,10 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (e.scope() == GrantScope.OPPONENT_CREATURES
-                || e.scope() == GrantScope.ALL_CREATURES
-                || e.scope() == GrantScope.ALL_CREATURES_INCLUDING_SELF) {
+        if (subject.isSet()) {
             int count = 0;
             for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
-                    Subjects.narrowed(e.scope().subject(), e.filter()))) {
+                    Subjects.narrowed(subject, e.filter()))) {
                 if (applyEffect(gameData, entry, e, permanent)) {
                     count++;
                 }
@@ -65,11 +62,11 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
-        if (e.scope() != GrantScope.SELF && e.scope() != GrantScope.TARGET) {
+        if (!(subject instanceof PermanentSubject.Source) && !(subject instanceof PermanentSubject.Target)) {
             return;
         }
 
-        for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, e.scope().subject())) {
+        for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, subject)) {
             if (!applyEffect(gameData, entry, e, target)) {
                 continue;
             }

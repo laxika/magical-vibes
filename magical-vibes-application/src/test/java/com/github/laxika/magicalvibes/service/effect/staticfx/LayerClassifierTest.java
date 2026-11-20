@@ -17,13 +17,13 @@ import com.github.laxika.magicalvibes.model.effect.GainKeywordsOfCreatureCardsIn
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.layer.Layer;
 import com.github.laxika.magicalvibes.service.effect.LayerClassifier;
@@ -79,9 +79,9 @@ class LayerClassifierTest {
         @DisplayName("A boost that also grants keywords contributes to layer 6 AND sublayer 7c")
         void staticBoostWithKeywordsSpansTwoLayers() {
             LayerClassification withKeywords = LayerClassifier.classify(
-                    new StaticBoostEffect(1, 1, Set.of(Keyword.MOUNTAINWALK), GrantScope.OWN_CREATURES, null), false);
+                    new StaticBoostEffect(1, 1, Set.of(Keyword.MOUNTAINWALK), Subjects.otherCreaturesYouControl(), null), false);
             LayerClassification withoutKeywords = LayerClassifier.classify(
-                    new StaticBoostEffect(1, 1, Set.of(), GrantScope.OWN_CREATURES, null), false);
+                    new StaticBoostEffect(1, 1, Set.of(), Subjects.otherCreaturesYouControl(), null), false);
 
             assertThat(withKeywords.layers()).containsExactlyInAnyOrder(Layer.L6_ABILITIES, Layer.L7C_MODIFY_PT);
             assertThat(withoutKeywords.layers()).containsExactly(Layer.L7C_MODIFY_PT);
@@ -139,7 +139,7 @@ class LayerClassifierTest {
         @DisplayName("Dynamic base P/T setter is always 7b")
         void dynamicBasePTSetterIsAlways7b() {
             SetBasePowerToughnessToAmountEffect effect = new SetBasePowerToughnessToAmountEffect(
-                    new Fixed(0), new Fixed(1), GrantScope.EQUIPPED_CREATURE);
+                    new Fixed(0), new Fixed(1), Subjects.attachedCreature());
 
             assertThat(LayerClassifier.classify(effect, true).layers()).containsExactly(Layer.L7B_SET_PT);
             assertThat(LayerClassifier.classify(effect, false).layers()).containsExactly(Layer.L7B_SET_PT);
@@ -154,9 +154,9 @@ class LayerClassifierTest {
         @DisplayName("GrantColorEffect follows its overriding flag (Deep Freeze adds, Nim Deathmantle sets)")
         void grantColorFollowsOverridingFlag() {
             LayerClassification additive = LayerClassifier.classify(
-                    new GrantColorEffect(CardColor.BLUE, GrantScope.ENCHANTED_CREATURE), false);
+                    new GrantColorEffect(CardColor.BLUE, Subjects.attachedCreature()), false);
             LayerClassification setting = LayerClassifier.classify(
-                    new GrantColorEffect(CardColor.BLACK, GrantScope.EQUIPPED_CREATURE, true), false);
+                    new GrantColorEffect(CardColor.BLACK, Subjects.attachedCreature(), true), false);
 
             assertThat(additive.layers()).containsExactly(Layer.L5_COLOR);
             assertThat(additive.colorSetting()).isFalse();
@@ -183,7 +183,7 @@ class LayerClassifierTest {
         void conditionalDelegatesToWrapped() {
             LayerClassification classification = LayerClassifier.classify(
                     new ConditionalEffect(null,
-                            new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE)), false);
+                            new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.attachedCreature())), false);
 
             assertThat(classification.layers()).containsExactly(Layer.L6_ABILITIES);
         }
@@ -193,8 +193,8 @@ class LayerClassifierTest {
         void enchantedConditionalUnionsBranches() {
             LayerClassification classification = LayerClassifier.classify(
                     new EnchantedPermanentConditionalEffect(null,
-                            new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ENCHANTED_CREATURE),
-                            new StaticBoostEffect(2, 2, Set.of(), GrantScope.ENCHANTED_CREATURE, null)), false);
+                            new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.attachedCreature()),
+                            new StaticBoostEffect(2, 2, Set.of(), Subjects.attachedCreature(), null)), false);
 
             assertThat(classification.layers())
                     .containsExactlyInAnyOrder(Layer.L6_ABILITIES, Layer.L7C_MODIFY_PT);
@@ -221,7 +221,7 @@ class LayerClassifierTest {
                     .containsExactly(Layer.L3_TEXT);
             assertThat(LayerClassifier.classify(new LoseAllCreatureTypesEffect(), false).layers())
                     .containsExactly(Layer.L4_TYPE);
-            assertThat(LayerClassifier.classify(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE), false)
+            assertThat(LayerClassifier.classify(new LosesAllAbilitiesEffect(Subjects.attachedCreature()), false)
                     .layers()).containsExactly(Layer.L6_ABILITIES);
             assertThat(LayerClassifier.classify(new SwitchPowerToughnessEffect(), false).layers())
                     .containsExactly(Layer.L7D_SWITCH_PT);

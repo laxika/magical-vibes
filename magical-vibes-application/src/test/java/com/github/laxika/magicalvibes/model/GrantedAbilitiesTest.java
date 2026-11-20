@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.model;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -95,12 +95,12 @@ class GrantedAbilitiesTest {
         ActivatedAbility activated = new ActivatedAbility(true, null, List.of(DRAW_TWO), "{T}: Draw two cards.");
 
         assertThat(GameData.abilityGrantEffects(triggered, Duration.UNTIL_END_OF_TURN))
-                .containsExactly(new GrantTriggeredAbilityEffect(triggered, GrantScope.TARGET));
+                .containsExactly(new GrantTriggeredAbilityEffect(triggered, Subjects.target()));
         assertThat(GameData.abilityGrantEffects(new StaticAbility(List.of(DRAW_ONE, GAIN_ONE), AbilityZones.BATTLEFIELD),
-                Duration.PERMANENT)).containsExactly(new GrantEffectEffect(DRAW_ONE, GrantScope.TARGET),
-                new GrantEffectEffect(GAIN_ONE, GrantScope.TARGET));
+                Duration.PERMANENT)).containsExactly(new GrantEffectEffect(DRAW_ONE, Subjects.target()),
+                new GrantEffectEffect(GAIN_ONE, Subjects.target()));
         assertThat(GameData.abilityGrantEffects(activated, Duration.UNTIL_YOUR_NEXT_TURN)).containsExactly(
-                new GrantActivatedAbilityEffect(activated, GrantScope.TARGET, null, Duration.UNTIL_YOUR_NEXT_TURN));
+                new GrantActivatedAbilityEffect(activated, Subjects.target(), null, Duration.UNTIL_YOUR_NEXT_TURN));
     }
 
     @Test

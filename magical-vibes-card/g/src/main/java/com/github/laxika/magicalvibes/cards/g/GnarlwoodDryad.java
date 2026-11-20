@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "EMN", collectorNumber = "159")
 @CardRegistration(set = "SIR", collectorNumber = "196")
@@ -14,6 +14,6 @@ public class GnarlwoodDryad extends Card {
 
     public GnarlwoodDryad() {
         addStaticEffect(new ConditionalEffect(
-                new Delirium(), new StaticBoostEffect(2, 2, GrantScope.SELF)));
+                new Delirium(), new StaticBoostEffect(2, 2, Subjects.source())));
     }
 }

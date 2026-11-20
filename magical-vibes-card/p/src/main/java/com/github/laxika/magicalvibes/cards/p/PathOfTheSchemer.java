@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,7 +28,7 @@ public class PathOfTheSchemer extends Card {
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .mandatory(true)
                 .battlefieldEffectGrants(List.of(
-                        new GrantCardTypeEffect(CardType.ARTIFACT, GrantScope.TARGET)))
+                        new GrantCardTypeEffect(CardType.ARTIFACT, Subjects.target())))
                 .build());
         addSpellEffect(new WillOfThePlaneswalkersEffect());
     }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -32,7 +32,7 @@ public class MobilizerMech extends Card {
                 "Target must be another Vehicle you control"
         ), 0, 1).addTrigger(Triggers.becomesCrewed(),
                 new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN, null));
+                        Subjects.target(), Duration.UNTIL_END_OF_TURN, null));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

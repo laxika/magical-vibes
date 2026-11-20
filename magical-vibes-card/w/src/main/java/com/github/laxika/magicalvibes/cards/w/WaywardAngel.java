@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -27,14 +26,14 @@ public class WaywardAngel extends Card {
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, new CardTruePredicate());
 
         addStaticEffect(new ConditionalEffect(threshold,
-                new StaticBoostEffect(3, 3, Set.of(Keyword.TRAMPLE), GrantScope.SELF)));
+                new StaticBoostEffect(3, 3, Set.of(Keyword.TRAMPLE), Subjects.source())));
         addStaticEffect(new ConditionalEffect(threshold,
-                new GrantColorEffect(CardColor.BLACK, GrantScope.SELF, true)));
+                new GrantColorEffect(CardColor.BLACK, Subjects.source(), true)));
         addStaticEffect(new ConditionalEffect(threshold,
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(),
                                 Subjects.you())),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

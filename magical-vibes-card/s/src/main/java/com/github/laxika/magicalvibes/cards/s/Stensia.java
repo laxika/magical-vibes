@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -37,7 +36,7 @@ public class Stensia extends Card {
                         null,
                         List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(1)),
                         "{T}: This creature deals 1 damage to target player or planeswalker."),
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 null,
                 Duration.UNTIL_END_OF_TURN));
     }

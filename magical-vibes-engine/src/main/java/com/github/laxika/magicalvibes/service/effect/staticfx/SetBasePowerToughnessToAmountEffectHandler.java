@@ -25,7 +25,7 @@ public class SetBasePowerToughnessToAmountEffectHandler implements StaticEffectH
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         SetBasePowerToughnessToAmountEffect setPT = (SetBasePowerToughnessToAmountEffect) effect;
-        if (!support.namesBeyondSource(context, setPT.scope().subject(), null)) {
+        if (!support.namesBeyondSource(context, setPT.subject(), null)) {
             return;
         }
         AmountContext amountContext = AmountContext.forStaticEffect(context.source(), context.sourceControllerId());

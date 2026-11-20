@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMatchingToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,6 +29,6 @@ public class SummonEsperMaduin extends Card {
         addTrigger(Triggers.chapter(2), new AwardManaEffect(ManaColor.GREEN, 2));
         addTrigger(Triggers.chapter(3),
                 new BoostAllOwnCreaturesEffect(2, 2, OTHER_CREATURES),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, OTHER_CREATURES));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl(), OTHER_CREATURES));
     }
 }

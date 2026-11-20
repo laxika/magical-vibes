@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -28,7 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 public class OldOneEye extends Card {
 
     public OldOneEye() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl()));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 "Tyranid", 5, 5, CardColor.GREEN, List.of(CardSubtype.TYRANID), Set.of(), Set.of()));
         // "You may discard two cards. If you do, return this card": both discards and the return

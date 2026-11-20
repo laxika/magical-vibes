@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,6 +22,6 @@ public class NestingBot extends Card {
         addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect(
                 "Servo", 1, 1, null, List.of(CardSubtype.SERVO), Set.of(), Set.of(CardType.ARTIFACT)));
         addStaticEffect(new ConditionalEffect(new MaxSpeed(),
-                new StaticBoostEffect(1, 0, GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Subjects.source())));
     }
 }

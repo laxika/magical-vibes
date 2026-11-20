@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -22,13 +22,13 @@ import java.util.Set;
 public class ParagonOfEternalWilds extends Card {
 
     public ParagonOfEternalWilds() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{G}",
-                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())),
                 "{G}, {T}: Another target green creature you control gains trample until end of turn.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

@@ -31,7 +31,7 @@ public class GrantTriggeredAbilityEffectHandler implements StaticEffectHandlerBe
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantTriggeredAbilityEffect) effect;
-        boolean scopeMatch = support.names(context, grant.scope().subject(), grant.filter());
+        boolean scopeMatch = support.names(context, grant.subject(), grant.filter());
         if (scopeMatch) {
             accumulator.addGrantedEffect(asGrantedByAttachment(asGrantedInstance(grant, context.sourceId()),
                     context.sourceId()));
@@ -46,11 +46,11 @@ public class GrantTriggeredAbilityEffectHandler implements StaticEffectHandlerBe
      */
     private static GrantTriggeredAbilityEffect asGrantedByAttachment(GrantTriggeredAbilityEffect grant,
                                                                      UUID grantingPermanentId) {
-        if (!(grant.scope().subject() instanceof PermanentSubject.Attached)
+        if (!(grant.subject() instanceof PermanentSubject.Attached)
                 || !(grant.grantedAbility() instanceof TriggeredAbility ability)) {
             return grant;
         }
-        return new GrantTriggeredAbilityEffect(ability.withGrantingPermanentId(grantingPermanentId), grant.scope(),
+        return new GrantTriggeredAbilityEffect(ability.withGrantingPermanentId(grantingPermanentId), grant.subject(),
                 grant.filter());
     }
 
@@ -67,6 +67,6 @@ public class GrantTriggeredAbilityEffectHandler implements StaticEffectHandlerBe
             return grant;
         }
         return new GrantTriggeredAbilityEffect(ability.withInstance("granted-by:" + grantorId),
-                grant.scope(), grant.filter());
+                grant.subject(), grant.filter());
     }
 }

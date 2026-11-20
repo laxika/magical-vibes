@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHandEmpty;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class BladebackSliver extends Card {
                                 null,
                                 List.of(new DealDamageToTargetPlayerOrPlaneswalkerEffect(1)),
                                 "{T}: This creature deals 1 damage to target player or planeswalker."),
-                        GrantScope.ALL_OWN_CREATURES,
+                        Subjects.creaturesYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.SLIVER))));
     }
 }

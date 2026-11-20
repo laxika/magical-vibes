@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetThenSearchLibraryPutBothOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -21,9 +21,9 @@ import java.util.Set;
 public class SwordOfHearthAndHome extends Card {
 
     public SwordOfHearthAndHome() {
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()));
         addStaticEffect(new ProtectionFromColorsEffect(
-                Set.of(CardColor.GREEN, CardColor.WHITE), GrantScope.EQUIPPED_CREATURE));
+                Set.of(CardColor.GREEN, CardColor.WHITE), Subjects.attachedCreature()));
 
         target(new OwnedPermanentPredicateTargetFilter(
                 new PermanentIsCreaturePredicate(), "Target must be a creature you own"), 0, 1)

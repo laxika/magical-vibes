@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -21,8 +20,8 @@ import java.util.List;
 public class InquisitorGreyfax extends Card {
 
     public InquisitorGreyfax() {
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES));
-        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.otherCreaturesYouControl()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.otherCreaturesYouControl()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

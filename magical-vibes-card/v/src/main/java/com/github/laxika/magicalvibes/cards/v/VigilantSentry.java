@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -25,7 +25,7 @@ public class VigilantSentry extends Card {
     public VigilantSentry() {
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);
         addStaticEffect(new ConditionalEffect(threshold,
-                new StaticBoostEffect(1, 1, GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Subjects.source())));
 
         PermanentPredicateTargetFilter attackingOrBlockingCreature = new PermanentPredicateTargetFilter(
                 new PermanentAllOfPredicate(List.of(
@@ -42,6 +42,6 @@ public class VigilantSentry extends Card {
                                 List.of(new BoostTargetCreatureEffect(3, 3)),
                                 "{T}: Target attacking or blocking creature gets +3/+3 until end of turn.",
                                 attackingOrBlockingCreature),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

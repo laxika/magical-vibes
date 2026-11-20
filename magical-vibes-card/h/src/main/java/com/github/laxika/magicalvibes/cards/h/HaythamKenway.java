@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,10 +23,10 @@ public class HaythamKenway extends Card {
         PermanentHasSubtypePredicate knights = new PermanentHasSubtypePredicate(CardSubtype.KNIGHT);
 
         addStaticEffect(new ProtectionFromSubtypesEffect(Set.of(CardSubtype.ASSASSIN)));
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES, knights));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.otherCreaturesYouControl(), knights));
         addStaticEffect(new GrantEffectEffect(
                         new ProtectionFromSubtypesEffect(Set.of(CardSubtype.ASSASSIN)),
-                        GrantScope.OWN_CREATURES, knights));
+                        Subjects.otherCreaturesYouControl(), knights));
 
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);
         target(TargetFilters.creatureAnOpponentControls(), 0, 99)

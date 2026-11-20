@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.Set;
@@ -16,7 +16,7 @@ public class NaturesCloak extends Card {
 
     public NaturesCloak() {
         // Green creatures you control gain forestwalk until end of turn.
-        addSpellEffect(new GrantKeywordEffect(Keyword.FORESTWALK, GrantScope.OWN_CREATURES,
+        addSpellEffect(new GrantKeywordEffect(Keyword.FORESTWALK, Subjects.otherCreaturesYouControl(),
                 new PermanentColorInPredicate(Set.of(CardColor.GREEN))));
     }
 }

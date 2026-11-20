@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.CreaturesAttackedThisTurn;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "HBG", collectorNumber = "55")
 public class GnollHuntingParty extends Card {
@@ -17,6 +17,6 @@ public class GnollHuntingParty extends Card {
     public GnollHuntingParty() {
         addStaticEffect(new ReduceOwnCastCostEffect(new CreaturesAttackedThisTurn(CountScope.CONTROLLER)));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())));
     }
 }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -31,7 +31,7 @@ public class ElvishBranchbender extends Card {
                         elfCount, elfCount,
                         List.of(CardSubtype.TREEFOLK), Set.of(),
                         null, Set.of(),
-                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN, null)),
+                        Subjects.target(), Duration.UNTIL_END_OF_TURN, null)),
                 "{T}: Until end of turn, target Forest becomes an X/X Treefolk creature in addition to its other types, where X is the number of Elves you control.",
                 new PermanentPredicateTargetFilter(
                         new PermanentHasSubtypePredicate(CardSubtype.FOREST),

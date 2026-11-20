@@ -12,11 +12,11 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "152")
@@ -38,21 +38,21 @@ public class KarganDragonlord extends Card {
         ).withActivationCondition(new SourceCounterThreshold(8, CounterType.LEVEL),
                 "This creature has level 8 or more"));
 
-        addStaticEffect(new RemoveKeywordEffect(Keyword.FLYING, GrantScope.SELF));
-        addStaticEffect(new RemoveKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.FLYING, Subjects.source()));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.TRAMPLE, Subjects.source()));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.LEVEL),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(4, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(8, CounterType.LEVEL)))),
-                new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(4, 4, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(8, 8, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(8, 8, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.LEVEL),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
     }
 }

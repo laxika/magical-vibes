@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AddCounterToEnchantedCreatureThenDestroyAtThresholdEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,7 +29,7 @@ public class ConsumingFerocity extends Card {
                 "Target must be a non-Wall creature"))
 
         // Enchanted creature gets +1/+0.
-        .addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ENCHANTED_CREATURE))
+        .addStaticEffect(new StaticBoostEffect(1, 0, Subjects.attachedCreature()))
 
         // At the beginning of your upkeep, put a +1/+0 counter on enchanted creature. If that creature
         // has three or more +1/+0 counters on it, it deals damage equal to its power to its controller,

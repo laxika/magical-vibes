@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.Set;
@@ -28,6 +28,6 @@ public class ColossalGrowth extends Card {
                         new BoostTargetCreatureEffect(3, 3),
                         SequenceEffect.of(
                                 new BoostTargetCreatureEffect(4, 4),
-                                new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), GrantScope.TARGET))));
+                                new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.HASTE), Subjects.target()))));
     }
 }

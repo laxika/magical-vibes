@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
@@ -22,7 +21,7 @@ public class GlisteningOil extends Card {
     public GlisteningOil() {
         target(TargetFilters.creature())
         // Enchanted creature has infect.
-        .addStaticEffect(new GrantKeywordEffect(Keyword.INFECT, GrantScope.ENCHANTED_CREATURE))
+        .addStaticEffect(new GrantKeywordEffect(Keyword.INFECT, Subjects.attachedCreature()))
 
         // At the beginning of your upkeep, put a -1/-1 counter on enchanted creature.
         .addTrigger(Triggers.upkeep(ActivePlayer.YOU),

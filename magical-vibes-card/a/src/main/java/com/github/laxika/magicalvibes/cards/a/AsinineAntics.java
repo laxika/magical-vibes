@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAttachedToOpposingCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -39,7 +39,7 @@ public class AsinineAntics extends Card {
                 Set.of(),
                 false,
                 false,
-                List.of(StaticAbility.of(new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE))),
+                List.of(StaticAbility.of(new SetBasePowerToughnessEffect(1, 1, Subjects.attachedCreature()))),
                 List.of(),
                 false,
                 false,

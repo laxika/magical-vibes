@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 
@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 public class WreckingBallArm extends Card {
 
     public WreckingBallArm() {
-        addStaticEffect(new SetBasePowerToughnessEffect(7, 7, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new SetBasePowerToughnessEffect(7, 7, Subjects.attachedCreature()));
         addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtMostPredicate(2)));
 

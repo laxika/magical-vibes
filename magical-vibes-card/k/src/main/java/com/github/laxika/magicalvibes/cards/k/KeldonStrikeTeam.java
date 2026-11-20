@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldTh
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,6 +24,6 @@ public class KeldonStrikeTeam extends Card {
                 CreateTokenEffect.whiteSoldier(2));
         addStaticEffect(new ConditionalEffect(
                 new SourceEnteredBattlefieldThisTurn(),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl())));
     }
 }

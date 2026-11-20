@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -29,7 +29,7 @@ public class NahirisMachinations extends Card {
                 "Target must be a creature you control"
         ))
                 .addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

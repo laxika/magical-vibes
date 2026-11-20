@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeFractionRoundedUpCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
@@ -21,6 +21,6 @@ public class TectonicSplit extends Card {
                 new ActivatedAbility(true, null,
                         List.of(new AwardAnyColorManaEffect(3)),
                         "{T}: Add three mana of any one color."),
-                GrantScope.OWN_LANDS));
+                Subjects.landsYouControl()));
     }
 }

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -29,8 +28,8 @@ public class TheBeastDeathlessPrince extends Card {
                 .addTrigger(Triggers.youCastThisSpell(),
                         new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(Subjects.target()),
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.MENACE, Subjects.target()),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target()));
 
         addStaticEffect(new EntersTappedEffect());
         addStaticEffect(new EnterWithCountersEffect(CounterType.STUN, new Fixed(6)));

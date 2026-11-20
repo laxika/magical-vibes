@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ResolveEffectOnTargetDeathThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,7 +20,7 @@ public class SandalsOfAbdallah extends Card {
                 true,
                 "{2}",
                 List.of(
-                        new GrantKeywordEffect(Keyword.ISLANDWALK, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.ISLANDWALK, Subjects.target()),
                         new ResolveEffectOnTargetDeathThisTurnEffect(
                                 new DestroyTargetPermanentEffect(Subjects.source()))),
                 "{2}, {T}: Target creature gains islandwalk until end of turn. When that creature "

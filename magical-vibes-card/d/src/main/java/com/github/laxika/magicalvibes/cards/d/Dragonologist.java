@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,7 +27,7 @@ public class Dragonologist extends Card {
                         new CardTypePredicate(CardType.SORCERY),
                         new CardSubtypePredicate(CardSubtype.DRAGON)
                 ))));
-        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_UNTAPPED_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.otherUntappedCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.DRAGON)));
     }
 }

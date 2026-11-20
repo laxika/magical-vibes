@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.RepeatedAdditionalCostPaid
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -28,7 +28,7 @@ public class SiegeOfTowers extends Card {
                 new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN), "Target must be a Mountain"))
                 .addSpellEffect(new AnimatePermanentsEffect(
                         3, 1, List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, Duration.PERMANENT));
+                        Subjects.target(), Duration.PERMANENT));
         addTrigger(Triggers.youCastThisSpell(),
                 TriggerOptions.DEFAULT.withInterveningIf(new RepeatedAdditionalCostPaid("{1}{R}")),
                 new CopyTriggeringSpellEffect().withCopies(new RepeatedAdditionalCostCount("{1}{R}")));

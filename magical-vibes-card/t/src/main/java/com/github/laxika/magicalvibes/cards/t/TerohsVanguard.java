@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +20,7 @@ public class TerohsVanguard extends Card {
                 new GraveyardCardThreshold(7, null),
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
-                        new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.BLACK, GrantScope.OWN_CREATURES)),
-                        GrantScope.SELF)));
+                        new GrantProtectionFromColorUntilEndOfTurnEffect(CardColor.BLACK, Subjects.creaturesYouControl())),
+                        Subjects.source())));
     }
 }

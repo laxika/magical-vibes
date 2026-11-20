@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,10 +35,10 @@ public class InTooDeep extends Card {
         target(new PermanentPredicateTargetFilter(
                 creaturePlaneswalkerOrClue,
                 "Target must be a creature, planeswalker, or Clue"))
-                .addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.ENCHANTED_PERMANENT))
-                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.CLUE, GrantScope.ENCHANTED_PERMANENT, true))
-                .addStaticEffect(new BecomeColorlessEffect(GrantScope.ENCHANTED_PERMANENT))
-                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new SetCardTypesEffect(Set.of(CardType.ARTIFACT), Subjects.attached()))
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.CLUE, Subjects.attached(), true))
+                .addStaticEffect(new BecomeColorlessEffect(Subjects.attached()))
+                .addStaticEffect(new LosesAllAbilitiesEffect(Subjects.attached()))
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                                 new ActivatedAbility(
                                         false,
@@ -46,6 +46,6 @@ public class InTooDeep extends Card {
                                         List.of(new SacrificeSelfCost(), new DrawCardEffect()),
                                         "{2}, Sacrifice this artifact: Draw a card."
                                 ),
-                                GrantScope.ENCHANTED_PERMANENT));
+                                Subjects.attached()));
     }
 }

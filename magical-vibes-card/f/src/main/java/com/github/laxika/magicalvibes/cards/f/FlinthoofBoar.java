@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -22,10 +22,10 @@ public class FlinthoofBoar extends Card {
         // This creature gets +1/+1 as long as you control a Mountain.
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN)),
-                new StaticBoostEffect(1, 1, GrantScope.SELF)));
+                new StaticBoostEffect(1, 1, Subjects.source())));
         // {R}: This creature gains haste until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{R}",
-                List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.source())),
                 "{R}: This creature gains haste until end of turn."));
     }
 }

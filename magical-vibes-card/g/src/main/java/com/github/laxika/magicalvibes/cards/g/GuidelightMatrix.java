@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -29,7 +29,7 @@ public class GuidelightMatrix extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new BecomeSaddledUntilEndOfTurnEffect(GrantScope.TARGET)),
+                List.of(new BecomeSaddledUntilEndOfTurnEffect(Subjects.target())),
                 "{2}, {T}: Target Mount you control becomes saddled until end of turn. Activate only as a sorcery.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(
@@ -46,7 +46,7 @@ public class GuidelightMatrix extends Card {
                 "{2}",
                 List.of(new AnimatePermanentsEffect(
                         null, null, List.of(), Set.of(), null, Set.of(),
-                        GrantScope.TARGET, Duration.UNTIL_END_OF_TURN, null)),
+                        Subjects.target(), Duration.UNTIL_END_OF_TURN, null)),
                 "{2}, {T}: Target Vehicle you control becomes an artifact creature until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

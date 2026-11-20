@@ -8,11 +8,11 @@ import com.github.laxika.magicalvibes.model.condition.ControllerSacrificedPerman
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.amount.PermanentsSacrificedThisTurn;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -47,6 +47,6 @@ public class ObsessivePursuit extends Card {
                         null),
                         new ConditionalEffect(
                         new ControllerSacrificedPermanentsAtLeastThisTurn(3),
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET)));
+                        new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target())));
     }
 }

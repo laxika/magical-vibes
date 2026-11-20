@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -25,6 +25,6 @@ public class Fractalize extends Card {
                 .addSpellEffect(new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.FRACTAL))
                 .addSpellEffect(new SetBasePowerToughnessToAmountEffect(
                         new Sum(new Fixed(1), new XValue()), new Sum(new Fixed(1), new XValue()),
-                        GrantScope.TARGET));
+                        Subjects.target()));
     }
 }

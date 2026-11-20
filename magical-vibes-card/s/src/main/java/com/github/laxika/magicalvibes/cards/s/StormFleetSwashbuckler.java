@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
 import com.github.laxika.magicalvibes.model.effect.AscendEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RIX", collectorNumber = "117")
 public class StormFleetSwashbuckler extends Card {
@@ -15,6 +15,6 @@ public class StormFleetSwashbuckler extends Card {
     public StormFleetSwashbuckler() {
         addStaticEffect(new AscendEffect());
         addStaticEffect(new ConditionalEffect(
-                new ControllerHasCityBlessing(), new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF)));
+                new ControllerHasCityBlessing(), new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.source())));
     }
 }

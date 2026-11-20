@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
@@ -28,10 +28,10 @@ public class Towashi extends Card {
                 new PermanentIsModifiedPredicate()));
 
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES, modifiedCreature));
+                Keyword.TRAMPLE, Subjects.creaturesYouControl(), modifiedCreature));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayerOrPlaneswalker(),
-                new DrawCardEffect(1)), GrantScope.ALL_OWN_CREATURES, modifiedCreature));
+                new DrawCardEffect(1)), Subjects.creaturesYouControl(), modifiedCreature));
 
         target(TargetFilters.creatureYouControl(), 1, 3)
                 .addTrigger(Triggers.chaosEnsues(),

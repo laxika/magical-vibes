@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachOpponentFromTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -65,7 +64,7 @@ public class SorcererClass extends Card {
                                         new ManaRestriction.InstantSorceryOrClassLevel())),
                                 "{T}: Add {U} or {R}. Spend this mana only to cast an instant or sorcery spell or to gain a Class level."
                         ),
-                        GrantScope.ALL_OWN_CREATURES
+                        Subjects.creaturesYouControl()
                 )
         ));
 

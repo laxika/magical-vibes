@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -41,7 +41,7 @@ public class SpiritBonds extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.SPIRIT),
                                 "Sacrifice a Spirit",
                                 false),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target())
                 ),
                 "{1}{W}, Sacrifice a Spirit: Target non-Spirit creature gains indestructible until end of turn.",
                 new PermanentPredicateTargetFilter(

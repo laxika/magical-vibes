@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,7 +28,7 @@ public class MaarikaBrutalGladiator extends Card {
     public MaarikaBrutalGladiator() {
         addStaticEffect(new MustBeBlockedIfAbleEffect());
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())));
 
         PermanentPredicate noncreatureNonland = new PermanentAllOfPredicate(List.of(
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate()),

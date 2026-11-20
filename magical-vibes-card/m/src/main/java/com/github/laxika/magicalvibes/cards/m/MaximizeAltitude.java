@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.JumpStartCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "GRN", collectorNumber = "43")
@@ -15,7 +15,7 @@ public class MaximizeAltitude extends Card {
     public MaximizeAltitude() {
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(1, 1))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.target()));
         addCastingOption(new JumpStartCast());
     }
 }

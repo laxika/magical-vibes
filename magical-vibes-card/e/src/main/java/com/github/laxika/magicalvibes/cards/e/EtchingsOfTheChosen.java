@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -34,7 +34,7 @@ public class EtchingsOfTheChosen extends Card {
                                         new PermanentHasSourceChosenSubtypePredicate())),
                                 "a creature of the chosen type",
                                 false),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target())
                 ),
                 "{1}, Sacrifice a creature of the chosen type: Target creature you control gains indestructible until end of turn.",
                 TargetFilters.creatureYouControl()

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "KLD", collectorNumber = "79")
@@ -18,6 +18,6 @@ public class EmbraalBruiser extends Card {
         addStaticEffect(new EntersTappedEffect());
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentIsArtifactPredicate()),
-                new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.MENACE, Subjects.source())));
     }
 }

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Enchanted;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RAV", collectorNumber = "19")
 public class GateHound extends Card {
@@ -14,6 +14,6 @@ public class GateHound extends Card {
     public GateHound() {
         addStaticEffect(new ConditionalEffect(
                 new Enchanted(),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl())));
     }
 }

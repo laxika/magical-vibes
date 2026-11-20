@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -29,7 +29,7 @@ public class ChamberOfManipulation extends Card {
                                 "{T}, Discard a card: Gain control of target creature until end of turn.",
                                 TargetFilters.creature()
                         ),
-                        GrantScope.ENCHANTED_PERMANENT
+                        Subjects.attached()
                 ));
     }
 }

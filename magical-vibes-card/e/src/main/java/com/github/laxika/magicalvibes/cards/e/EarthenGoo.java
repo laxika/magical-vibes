@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,6 +18,6 @@ public class EarthenGoo extends Card {
         addStaticEffect(new DynamicStaticBoostEffect(
                 new CountersOnSource(CounterType.AGE),
                 new CountersOnSource(CounterType.AGE),
-                GrantScope.SELF));
+                Subjects.source()));
     }
 }

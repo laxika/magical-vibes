@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -30,7 +30,7 @@ public class ValleyRally extends Card {
 
         targetWhenGiftPromised(TargetFilters.creatureYouControl(), 0, 1, 1)
                 .addSpellEffect(new ConditionalEffect(new GiftPromised(),
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET)));
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target())));
     }
 
     private static CreateTokenEffect foodToken() {

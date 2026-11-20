@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeLukaminaEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -75,7 +74,7 @@ public class SpecializeLukaminaEffectHandler implements NormalEffectHandlerBean 
                 specialized.addTrigger(Triggers.attacks(), wolfTokenEffect);
                 specializationTrigger = List.of(wolfTokenEffect);
             }
-            case GREEN -> specialized.addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), GrantScope.OWN_CREATURES));
+            case GREEN -> specialized.addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), Subjects.otherCreaturesYouControl()));
             default -> throw new IllegalStateException("Unsupported Lukamina specialization color: "
                     + specialize.color());
         }

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 
 /**
  * Attached-scope static handler for {@link AttachedBoostEffect}: when the target matches the
- * effect's {@link com.github.laxika.magicalvibes.model.effect.GrantScope} (typically the
+ * effect's {@link com.github.laxika.magicalvibes.model.effect.PermanentSubject} (typically the
  * enchanted/equipped creature), evaluates the {@code DynamicAmount}s via
  * {@link AmountEvaluationService} and adds the result as a continuous bonus. Replaces the former
  * per-derivation {@code BoostCreaturePer*} handler classes.
@@ -39,7 +39,7 @@ public class AttachedBoostEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (AttachedBoostEffect) effect;
-        if (!support.namesBeyondSource(context, boost.scope().subject(), null)) {
+        if (!support.namesBeyondSource(context, boost.subject(), null)) {
             return;
         }
         AmountContext ctx = boost.amountsFromAttachedCreature()

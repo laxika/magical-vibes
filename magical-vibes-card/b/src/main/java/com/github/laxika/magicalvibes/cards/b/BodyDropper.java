@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -33,7 +33,7 @@ public class BodyDropper extends Card {
                 "{B}{R}",
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.MENACE, Subjects.source())
                 ),
                 "{B}{R}, Sacrifice another creature: This creature gains menace until end of turn."
         ));

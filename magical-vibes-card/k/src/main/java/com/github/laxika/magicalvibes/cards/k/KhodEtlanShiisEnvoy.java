@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.Set;
@@ -17,10 +17,10 @@ import java.util.Set;
 public class KhodEtlanShiisEnvoy extends Card {
 
     public KhodEtlanShiisEnvoy() {
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.ISLAND, GrantScope.ALL_LANDS_INCLUDING_SELF));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.ISLAND, Subjects.allLands()));
         addStaticEffect(new GrantActivatedAbilityEffect(
-                ManaAbilities.tapFor(ManaColor.BLUE), GrantScope.ALL_LANDS_INCLUDING_SELF));
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+                ManaAbilities.tapFor(ManaColor.BLUE), Subjects.allLands()));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(
                         CardSubtype.HOMARID,
                         CardSubtype.CAMARID,

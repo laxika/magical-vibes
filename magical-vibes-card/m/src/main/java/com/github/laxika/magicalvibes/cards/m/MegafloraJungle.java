@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ import java.util.Set;
 public class MegafloraJungle extends Card {
 
     public MegafloraJungle() {
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.otherCreatures(),
                 new PermanentMaxManaValuePredicate(2)));
         addTrigger(Triggers.chaosEnsues(), new CreateTokenEffect(
                 "Butterfly", 1, 1, CardColor.GREEN, List.of(CardSubtype.INSECT),

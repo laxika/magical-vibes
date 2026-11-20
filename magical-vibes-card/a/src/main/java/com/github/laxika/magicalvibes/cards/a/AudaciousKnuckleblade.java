@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SurveilThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
@@ -45,7 +44,7 @@ public class AudaciousKnuckleblade extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES)),
+                List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl())),
                 "Exhaust — {R}: Creatures you control gain haste until end of turn."
                         + " (Activate each exhaust ability only once.)"
         ).withMaxActivationsPerGame(1).withExhaust());

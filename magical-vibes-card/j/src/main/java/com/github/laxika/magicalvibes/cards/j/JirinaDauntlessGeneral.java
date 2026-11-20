@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -41,7 +41,7 @@ public class JirinaDauntlessGeneral extends Card {
                         new SacrificeSelfCost(),
                         new GrantKeywordEffect(
                                 Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE),
-                                GrantScope.ALL_OWN_CREATURES,
+                                Subjects.creaturesYouControl(),
                                 new PermanentHasSubtypePredicate(CardSubtype.HUMAN)
                         )
                 ),

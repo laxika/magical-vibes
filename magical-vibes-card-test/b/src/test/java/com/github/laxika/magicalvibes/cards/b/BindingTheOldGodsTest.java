@@ -1,11 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.m.MaskedVandal;
@@ -166,7 +166,7 @@ class BindingTheOldGodsTest extends BaseCardTest {
     void chapterIIIIncludesTheSagaIfItIsACreature() {
         Permanent saga = addSaga(player1, 2);
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Animator", null, player1.getId(),
-                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.TARGET), saga.getId(), null, null,
+                new GrantCardTypeEffect(CardType.CREATURE, Subjects.target()), saga.getId(), null, null,
                 Duration.PERMANENT, 0));
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Animator", null, player1.getId(),
                 new SetBasePowerToughnessEffect(4, 4), saga.getId(), null, null, Duration.PERMANENT, 0));

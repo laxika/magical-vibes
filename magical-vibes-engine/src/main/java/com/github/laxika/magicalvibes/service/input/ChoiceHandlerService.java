@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderContro
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsProduceChosenColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOpponentsCantCastUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
@@ -72,7 +73,6 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.NamedSpellsAndLandsCantBePlayedUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
@@ -3675,7 +3675,7 @@ public class ChoiceHandlerService {
             }
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), ctx.sourceCardName(), sourcePermanentIdFor(ctx), player.getId(),
-                    new GrantKeywordEffect(Set.of(keyword), GrantScope.TARGET, null, duration, null),
+                    new GrantKeywordEffect(Set.of(keyword), Subjects.target(), null, duration, null),
                     target.getId(), null, null, duration, 0));
 
             String keywordName = keyword.name().charAt(0) + keyword.name().substring(1).toLowerCase().replace('_', ' ');
@@ -3763,7 +3763,7 @@ public class ChoiceHandlerService {
             if (subtypeName.endsWith("WALK")) {
                 Keyword keyword = Keyword.valueOf(subtypeName);
                 gameData.addEffectOnPermanent(null, null, player.getId(),
-                        new GrantKeywordEffect(keyword, GrantScope.TARGET), target.getId(), Duration.UNTIL_END_OF_TURN);
+                        new GrantKeywordEffect(keyword, Subjects.target()), target.getId(), Duration.UNTIL_END_OF_TURN);
                 landwalkName = keyword.name().toLowerCase();
             } else {
                 CardSubtype subtype = CardSubtype.valueOf(subtypeName);
@@ -3774,7 +3774,7 @@ public class ChoiceHandlerService {
                         .orElse(null);
                 if (keyword != null) {
                     gameData.addEffectOnPermanent(null, null, player.getId(),
-                            new GrantKeywordEffect(keyword, GrantScope.TARGET), target.getId(),
+                            new GrantKeywordEffect(keyword, Subjects.target()), target.getId(),
                             Duration.UNTIL_END_OF_TURN);
                 } else {
                     gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(null, null, player.getId(),
@@ -4825,13 +4825,13 @@ public class ChoiceHandlerService {
             if (artifactsChosen) {
                 gameData.addEffectOnPermanent(null, null, null,
                         new GrantEffectEffect(new ProtectionFromCardTypesEffect(Set.of(CardType.ARTIFACT)),
-                                GrantScope.TARGET),
+                                Subjects.target()),
                         target.getId(), Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains protection from artifacts until end of turn."));
                 log.info("Game {} - {} gains protection from artifacts until end of turn", gameData.id, target.getCard().getName());
             } else if (colorlessChosen) {
                 gameData.addEffectOnPermanent(null, null, null,
-                        new GrantEffectEffect(new ProtectionFromColorlessEffect(), GrantScope.TARGET),
+                        new GrantEffectEffect(new ProtectionFromColorlessEffect(), Subjects.target()),
                         target.getId(), Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
                         " gains protection from colorless until end of turn."));
@@ -4840,7 +4840,7 @@ public class ChoiceHandlerService {
             } else {
                 CardColor color = chosenColor;
                 gameData.addEffectOnPermanent(null, null, null,
-                        new ProtectionFromColorsEffect(Set.of(color), GrantScope.TARGET),
+                        new ProtectionFromColorsEffect(Set.of(color), Subjects.target()),
                         target.getId(), Duration.UNTIL_END_OF_TURN);
                 String colorName = color.name().charAt(0) + color.name().substring(1).toLowerCase();
                 gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " gains protection from " + colorName.toLowerCase() + " until end of turn."));
@@ -4941,7 +4941,7 @@ public class ChoiceHandlerService {
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
                 gameData.addEffectOnPermanent(ctx.sourceCardName(), null, ctx.controllerId(),
-                        new ProtectionFromColorsEffect(Set.of(color), GrantScope.TARGET),
+                        new ProtectionFromColorsEffect(Set.of(color), Subjects.target()),
                         permanent.getId(), Duration.UNTIL_END_OF_TURN);
             }
         }
@@ -6966,7 +6966,7 @@ public class ChoiceHandlerService {
                 if (gameQueryService.isLand(gameData, permanent)) {
                     gameData.addFloatingEffect(new FloatingContinuousEffect(
                             UUID.randomUUID(), "Elsewhere Flask", null, ctx.controllerId(),
-                            new GrantSubtypeEffect(subtype, GrantScope.TARGET, true),
+                            new GrantSubtypeEffect(subtype, Subjects.target(), true),
                             permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
                 }
             }

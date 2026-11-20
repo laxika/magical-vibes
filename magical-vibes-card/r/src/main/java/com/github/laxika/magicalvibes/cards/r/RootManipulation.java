@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOS", collectorNumber = "222")
@@ -17,7 +17,7 @@ public class RootManipulation extends Card {
     public RootManipulation() {
         // Until end of turn, creatures you control get +2/+2 and gain menace.
         addSpellEffect(new BoostAllOwnCreaturesEffect(2, 2));
-        addSpellEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.MENACE, Subjects.otherCreaturesYouControl()));
 
         // Until end of turn, creatures you control gain
         // "Whenever this creature attacks, you gain 1 life."

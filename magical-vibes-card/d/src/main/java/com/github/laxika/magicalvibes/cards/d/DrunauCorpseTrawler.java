@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,7 +27,7 @@ public class DrunauCorpseTrawler extends Card {
         // {2}{B}: Target Zombie gains deathtouch until end of turn.
         addActivatedAbility(new ActivatedAbility(
                 false, "{2}{B}",
-                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target())),
                 "{2}{B}: Target Zombie gains deathtouch until end of turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),

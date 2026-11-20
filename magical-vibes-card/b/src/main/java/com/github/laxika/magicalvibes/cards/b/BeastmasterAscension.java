@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ZEN", collectorNumber = "159")
@@ -29,6 +29,6 @@ public class BeastmasterAscension extends Card {
                         "Put a quest counter on Beastmaster Ascension?"));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(7, CounterType.QUEST),
-                new StaticBoostEffect(5, 5, GrantScope.ALL_OWN_CREATURES)));
+                new StaticBoostEffect(5, 5, Subjects.creaturesYouControl())));
     }
 }

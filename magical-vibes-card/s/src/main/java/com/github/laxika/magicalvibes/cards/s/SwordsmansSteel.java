@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +23,7 @@ public class SwordsmansSteel extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(equipmentYouControl));
         addStaticEffect(new AttachedBoostEffect(
                 new Scaled(equipmentYouControl, 2),
-                new Scaled(equipmentYouControl, 2), GrantScope.EQUIPPED_CREATURE));
+                new Scaled(equipmentYouControl, 2), Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

@@ -10,11 +10,11 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPairedPredicate;
@@ -48,6 +48,6 @@ public class DiregrafEscort extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
                 new GrantEffectEffect(new ProtectionFromSubtypesEffect(Set.of(CardSubtype.ZOMBIE)),
-                        GrantScope.SELF_AND_PAIRED)));
+                        Subjects.sourceAndPaired())));
     }
 }

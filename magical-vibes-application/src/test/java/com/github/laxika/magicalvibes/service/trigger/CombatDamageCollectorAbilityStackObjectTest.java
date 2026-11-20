@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger;
 
 import com.github.laxika.magicalvibes.cards.d.Divination;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.AbilityZones;
@@ -18,7 +19,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RenownEffect;
@@ -180,7 +180,7 @@ class CombatDamageCollectorAbilityStackObjectTest extends BaseCardTest {
     void staticallyGrantedCombatDamageToPlayerAbilityIsOneStackObject() {
         Card banner = attachment("Raid Banner", CardType.ENCHANTMENT);
         banner.addStaticEffect(new GrantTriggeredAbilityEffect(drawAndGain(Triggers.dealsCombatDamageToPlayer()),
-                GrantScope.OWN_CREATURES));
+                Subjects.otherCreaturesYouControl()));
         addCreatureReady(player1, banner);
         attacking(creature("Bannered Raider"));
 

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtype
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +23,7 @@ public class ChronicleOfVictory extends Card {
         addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(2, 2));
         addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentHasSourceChosenSubtypePredicate()));
         addTrigger(Triggers.youCastSpell().withFilter(new CardHasSourceChosenSubtypePredicate(false)),
                 new DrawCardEffect());

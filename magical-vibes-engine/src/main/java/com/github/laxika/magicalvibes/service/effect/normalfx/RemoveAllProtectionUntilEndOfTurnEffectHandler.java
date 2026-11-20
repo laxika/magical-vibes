@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllProtectionUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -43,18 +43,19 @@ public class RemoveAllProtectionUntilEndOfTurnEffectHandler implements NormalEff
                 .withSourcePermanentId(entry.getSourcePermanentId())
                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
 
-        if (remove.scope() == GrantScope.ALL_PERMANENTS) {
+        if (remove.subject().isSet()) {
             for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
-                    Subjects.narrowed(GrantScope.ALL_PERMANENTS.subject(), remove.filter()))) {
+                    Subjects.narrowed(remove.subject(), remove.filter()))) {
                 removeFrom(gameData, entry, remove, permanent);
             }
             return;
         }
-        if (remove.scope() != GrantScope.SELF && remove.scope() != GrantScope.TARGET) {
+        if (!(remove.subject() instanceof PermanentSubject.Source)
+                && !(remove.subject() instanceof PermanentSubject.Target)) {
             return;
         }
 
-        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, remove.scope().subject());
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, remove.subject());
         if (target != null && (remove.filter() == null
                 || predicateEvaluationService.matchesPermanentPredicate(target, remove.filter(), filterContext))) {
             removeFrom(gameData, entry, remove, target);

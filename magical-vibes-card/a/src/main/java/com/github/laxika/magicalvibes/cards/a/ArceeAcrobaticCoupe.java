@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellTargetCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -27,7 +27,7 @@ public class ArceeAcrobaticCoupe extends Card {
     public ArceeAcrobaticCoupe() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
-                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
+                new GrantCardTypeEffect(CardType.CREATURE, Subjects.source())));
 
         var controlledCreatureOrVehicle = new PermanentAllOfPredicate(List.of(
                 new PermanentControlledBySourceControllerPredicate(),

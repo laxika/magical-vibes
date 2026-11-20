@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DSK", collectorNumber = "29")
@@ -17,7 +17,7 @@ public class ShardmagesRescue extends Card {
         target(TargetFilters.creatureYouControl())
                 .addStaticEffect(new ConditionalEffect(
                         new SourceEnteredBattlefieldThisTurn(),
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ENCHANTED_CREATURE)))
-                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+                        new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.attachedCreature())))
+                .addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
     }
 }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "STX", collectorNumber = "2")
@@ -15,6 +15,6 @@ public class ExpandedAnatomy extends Card {
     public ExpandedAnatomy() {
         target(TargetFilters.creature())
                 .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target()));
     }
 }

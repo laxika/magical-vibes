@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOM", collectorNumber = "137")
@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ArgentumArmor extends Card {
 
     public ArgentumArmor() {
-        addStaticEffect(new StaticBoostEffect(6, 6, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(6, 6, Subjects.attachedCreature()));
         addTrigger(Triggers.attacks(), new DestroyTargetPermanentEffect(false));
         addActivatedAbility(new EquipActivatedAbility("{6}"));
     }

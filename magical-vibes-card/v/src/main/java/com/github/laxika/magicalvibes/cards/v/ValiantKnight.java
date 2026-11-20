@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
@@ -19,12 +19,12 @@ public class ValiantKnight extends Card {
 
     public ValiantKnight() {
         // Other Knights you control get +1/+1 (OWN_CREATURES excludes the source).
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.KNIGHT))));
 
         // Knights you control (including this one) gain double strike until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{3}{W}{W}",
-                List.of(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.ALL_OWN_CREATURES,
+                List.of(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.creaturesYouControl(),
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.KNIGHT)))),
                 "{3}{W}{W}: Knights you control gain double strike until end of turn."));
     }

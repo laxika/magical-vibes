@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -29,7 +29,7 @@ public class BatteryBearer extends Card {
                                 ManaColor.COLORLESS, 1, new ManaRestriction.Powerstone())),
                         "{T}: Add {C}. This mana can't be spent to cast a nonartifact spell."
                 ),
-                GrantScope.ALL_OWN_CREATURES
+                Subjects.creaturesYouControl()
         ));
 
         addTrigger(Triggers.youCastSpell()

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.WrappedGraveyardStaticEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -32,6 +32,6 @@ public class Anger extends Card {
     public Anger() {
         addStaticEffect(new WrappedGraveyardStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.MOUNTAIN)),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES))));
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl()))));
     }
 }

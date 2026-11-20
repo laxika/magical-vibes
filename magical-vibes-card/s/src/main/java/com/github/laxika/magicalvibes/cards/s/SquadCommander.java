@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.FullParty;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -31,6 +31,6 @@ public class SquadCommander extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new FullParty()),
                 SequenceEffect.of(
                         new BoostAllOwnCreaturesEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_OWN_CREATURES)));
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.creaturesYouControl())));
     }
 }

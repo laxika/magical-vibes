@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -32,7 +32,7 @@ public class HallowedHaunting extends Card {
         // As long as you control seven or more enchantments, creatures you control have flying and vigilance.
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(7, new PermanentIsEnchantmentPredicate()),
-                new StaticBoostEffect(0, 0, Set.of(Keyword.FLYING, Keyword.VIGILANCE), GrantScope.OWN_CREATURES)));
+                new StaticBoostEffect(0, 0, Set.of(Keyword.FLYING, Keyword.VIGILANCE), Subjects.otherCreaturesYouControl())));
 
         // Whenever you cast an enchantment spell, create a white Spirit Cleric token whose P/T
         // are each equal to the number of Spirits you control.

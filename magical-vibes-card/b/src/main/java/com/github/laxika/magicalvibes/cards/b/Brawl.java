@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "MMQ", collectorNumber = "178")
@@ -22,7 +22,7 @@ public class Brawl extends Card {
                         List.of(new DealDamageToTargetCreatureEffect(new SourcePower())),
                         "{T}: This creature deals damage equal to its power to target creature."
                 ),
-                GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                Subjects.allCreatures(),
                 null,
                 Duration.UNTIL_END_OF_TURN
         ));

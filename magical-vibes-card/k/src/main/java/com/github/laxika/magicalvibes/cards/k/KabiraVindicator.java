@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "28")
@@ -32,17 +32,17 @@ public class KabiraVindicator extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(2, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(3, 6, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(3, 6, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(4, 8, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(4, 8, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(2, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(5, CounterType.LEVEL)))),
-                new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES)));
+                new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.LEVEL),
-                new StaticBoostEffect(2, 2, GrantScope.OWN_CREATURES)));
+                new StaticBoostEffect(2, 2, Subjects.otherCreaturesYouControl())));
     }
 }

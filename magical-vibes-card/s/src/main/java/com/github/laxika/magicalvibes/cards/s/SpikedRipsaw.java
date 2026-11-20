@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -19,7 +18,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SpikedRipsaw extends Card {
 
     public SpikedRipsaw() {
-        addStaticEffect(new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 3, Subjects.attachedCreature()));
         addTrigger(Triggers.attacks(), new MayEffect(
                 new SacrificePermanentThenEffect(
                         new PermanentHasSubtypePredicate(CardSubtype.FOREST),

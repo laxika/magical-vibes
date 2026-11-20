@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -23,7 +23,7 @@ public class FaerieNoble extends Card {
         var faerie = new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.FAERIE));
 
         // Other Faerie creatures you control get +0/+1. (OWN_CREATURES already excludes this creature.)
-        addStaticEffect(new StaticBoostEffect(0, 1, Set.of(), GrantScope.OWN_CREATURES, faerie));
+        addStaticEffect(new StaticBoostEffect(0, 1, Set.of(), Subjects.otherCreaturesYouControl(), faerie));
 
         // {T}: Other Faerie creatures you control get +1/+0 until end of turn.
         var otherFaeries = new PermanentAllOfPredicate(

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -25,16 +24,16 @@ public class HelmOfTheGhastlord extends Card {
         target(TargetFilters.creature())
                 // As long as enchanted creature is blue, it gets +1/+1 and has
                 // "Whenever this creature deals damage to an opponent, draw a card."
-                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE, blue))
+                .addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature(), blue))
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.dealsDamageToOpponent(),
-                                new DrawCardEffect()), GrantScope.ENCHANTED_CREATURE, blue))
+                                new DrawCardEffect()), Subjects.attachedCreature(), blue))
                 // As long as enchanted creature is black, it gets +1/+1 and has
                 // "Whenever this creature deals damage to an opponent, that player discards a card."
-                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE, black))
+                .addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature(), black))
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.dealsDamageToOpponent(),
                         new DiscardEffect(1, Subjects.targetPlayer(), false)),
-                        GrantScope.ENCHANTED_CREATURE, black));
+                        Subjects.attachedCreature(), black));
     }
 }

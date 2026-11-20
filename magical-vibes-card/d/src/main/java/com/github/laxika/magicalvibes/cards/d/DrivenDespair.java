@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 /**
@@ -25,7 +25,7 @@ public class DrivenDespair extends Card {
 
         // Until end of turn, creatures you control gain trample and
         // "Whenever this creature deals combat damage to a player, draw a card."
-        addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl()));
         addSpellEffect(new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(), new DrawCardEffect(1))));
     }

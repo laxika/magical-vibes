@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -48,7 +48,7 @@ public class GrantProtectionFromChosenColorUntilEndOfTurnEffectHandler implement
             return;
         }
 
-        gameData.addEffectOnPermanent(entry, new ProtectionFromColorsEffect(Set.of(chosenColor), GrantScope.TARGET),
+        gameData.addEffectOnPermanent(entry, new ProtectionFromColorsEffect(Set.of(chosenColor), Subjects.target()),
                 target.getId(), Duration.UNTIL_END_OF_TURN);
         String colorName = chosenColor.name().toLowerCase();
         gameLogService.append(gameData, GameLog.builder()

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -24,13 +24,13 @@ public class FootfallCrater extends Card {
                                 null,
                                 List.of(new GrantKeywordEffect(
                                         Set.of(Keyword.TRAMPLE, Keyword.HASTE),
-                                        GrantScope.TARGET,
+                                        Subjects.target(),
                                         new PermanentIsCreaturePredicate()
                                 )),
                                 "{T}: Target creature gains trample and haste until end of turn.",
                                 TargetFilters.creature()
                         ),
-                        GrantScope.ENCHANTED_PERMANENT
+                        Subjects.attached()
                 ));
         addCycling("{1}");
     }

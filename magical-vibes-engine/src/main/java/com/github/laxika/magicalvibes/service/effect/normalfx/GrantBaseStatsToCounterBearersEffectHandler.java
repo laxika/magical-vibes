@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantBaseStatsToCounterBearersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
@@ -45,11 +45,11 @@ public class GrantBaseStatsToCounterBearersEffectHandler implements NormalEffect
                         target.getLastCounterRemovalVersions().getOrDefault(rule.counterType(), 0L))));
         String sourceName = entry.getCard().getName();
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName, null,
-                entry.getControllerId(), new SetBasePowerToughnessEffect(rule.power(), rule.toughness(), GrantScope.ALL_CREATURES),
+                entry.getControllerId(), new SetBasePowerToughnessEffect(rule.power(), rule.toughness(), Subjects.otherCreatures()),
                 null, null, scope, Duration.PERMANENT, 0));
         if (!rule.keywords().isEmpty()) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), sourceName, null,
-                    entry.getControllerId(), new GrantKeywordEffect(rule.keywords(), GrantScope.ALL_CREATURES),
+                    entry.getControllerId(), new GrantKeywordEffect(rule.keywords(), Subjects.otherCreatures()),
                     null, null, scope, Duration.PERMANENT, 0));
         }
     }

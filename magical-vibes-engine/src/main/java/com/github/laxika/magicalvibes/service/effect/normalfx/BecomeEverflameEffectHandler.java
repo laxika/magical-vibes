@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -54,21 +54,21 @@ public class BecomeEverflameEffectHandler implements NormalEffectHandlerBean {
         }
 
         source.setPersistentName(EVERFLAME_NAME);
-        gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(CardSubtype.EQUIPMENT, GrantScope.TARGET),
+        gameData.addEffectOnPermanent(entry, new GrantSubtypeEffect(CardSubtype.EQUIPMENT, Subjects.target()),
                 source.getId(), Duration.PERMANENT);
 
         // "It loses all other card types": a layer-4 effect stamped now, so it overrides an earlier
         // animation that made the permanent a creature.
         addFloatingEffect(gameData, entry, source,
-                new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.TARGET, Duration.PERMANENT));
+                new SetCardTypesEffect(Set.of(CardType.ARTIFACT), Subjects.target(), Duration.PERMANENT));
         addFloatingEffect(gameData, entry, source,
-                new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT));
+                new LosesAllAbilitiesEffect(Subjects.target(), Duration.PERMANENT));
         addFloatingEffect(gameData, entry, source,
-                new GrantActivatedAbilityEffect(new EquipActivatedAbility("{3}"), GrantScope.TARGET,
+                new GrantActivatedAbilityEffect(new EquipActivatedAbility("{3}"), Subjects.target(),
                         null, Duration.PERMANENT));
         addFloatingEffect(gameData, entry, source,
-                new GrantEffectEffect(new StaticBoostEffect(3, 3, GrantScope.EQUIPPED_CREATURE),
-                        GrantScope.TARGET));
+                new GrantEffectEffect(new StaticBoostEffect(3, 3, Subjects.attachedCreature()),
+                        Subjects.target()));
 
         gameLogService.append(gameData, GameLog.builder().card(source.getCard())
                 .text(" becomes " + EVERFLAME_NAME + ".").build());

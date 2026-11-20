@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -19,6 +18,6 @@ public class BillowingShriekmass extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MillEffect(3, Subjects.you()));
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, new CardTruePredicate()),
-                new StaticBoostEffect(2, 1, GrantScope.SELF)));
+                new StaticBoostEffect(2, 1, Subjects.source())));
     }
 }

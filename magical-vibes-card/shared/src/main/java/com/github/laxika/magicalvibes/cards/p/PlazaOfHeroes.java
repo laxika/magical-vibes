@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsAmongControlledEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -58,7 +58,7 @@ public class PlazaOfHeroes extends Card {
                 List.of(
                         new ExileSelfCost(),
                         new GrantKeywordEffect(
-                                Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.TARGET)
+                                Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), Subjects.target())
                 ),
                 "{3}, {T}, Exile this land: Target legendary creature gains hexproof and indestructible until end of turn.",
                 legendaryCreature

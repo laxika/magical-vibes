@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantRandomColorToSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -53,7 +53,7 @@ public class GrantRandomColorToSourceEffectHandler implements NormalEffectHandle
         }
 
         CardColor chosenColor = missingColors.get(ThreadLocalRandom.current().nextInt(missingColors.size()));
-        GrantColorEffect grant = new GrantColorEffect(chosenColor, GrantScope.SELF);
+        GrantColorEffect grant = new GrantColorEffect(chosenColor, Subjects.source());
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), sourceId, entry.getControllerId(),
                 grant, sourceId, null, null, Duration.PERMANENT, 0));

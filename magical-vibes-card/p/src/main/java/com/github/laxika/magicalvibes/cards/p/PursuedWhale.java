@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatesTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,7 +32,7 @@ public class PursuedWhale extends Card {
                 List.of(
                         StaticAbility.of(SequenceEffect.of(
                         new CantBlockEffect(),
-                        new MustAttackEffect(GrantScope.ALL_OWN_CREATURES)))),
+                        new MustAttackEffect(Subjects.creaturesYouControl())))),
                 List.of(), false, false, false, 0, Set.of())));
         addStaticEffect(new IncreaseOpponentCostForTargetingControlledPermanentEffect(
                 new PermanentIsSourcePermanentPredicate(), 3, false));

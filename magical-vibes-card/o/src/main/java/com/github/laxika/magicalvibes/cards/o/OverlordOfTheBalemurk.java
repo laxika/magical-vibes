@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.condition.CastForAlternateCost;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
@@ -68,6 +67,6 @@ public class OverlordOfTheBalemurk extends Card {
                 new AllOf(List.of(
                         new CastForAlternateCost(),
                         new SourceCounterThreshold(1, CounterType.TIME))),
-                new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF)));
+                new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, Subjects.source())));
     }
 }

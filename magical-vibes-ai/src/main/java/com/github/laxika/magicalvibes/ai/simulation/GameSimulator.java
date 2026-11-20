@@ -1685,9 +1685,9 @@ public class GameSimulator {
             boolean isBeneficial = false;
             for (CardEffect effect : card.getStaticEffects()) {
                 if ((effect instanceof StaticCreatureBoostEffect boost
-                        && GrantSubjectShapes.namesAttachedCreature(boost.scope()))
+                        && GrantSubjectShapes.namesAttachedCreature(boost.subject()))
                         || (effect instanceof KeywordGrantingEffect grant
-                        && GrantSubjectShapes.namesAttachedCreature(grant.scope()))) {
+                        && GrantSubjectShapes.namesAttachedCreature(grant.subject()))) {
                     isBeneficial = true;
                     break;
                 }

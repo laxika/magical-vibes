@@ -3,10 +3,10 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToOpponentCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -20,7 +20,7 @@ public class NecroticPlague extends Card {
                 // Enchanted creature has "At the beginning of your upkeep, sacrifice this creature."
                 .addStaticEffect(new GrantTriggeredAbilityEffect(new TriggeredAbility(
                         Triggers.upkeep(ActivePlayer.YOU), new SacrificeSelfEffect()),
-                        GrantScope.ENCHANTED_CREATURE))
+                        Subjects.attachedCreature()))
 
                 // When enchanted creature dies, its controller chooses target creature one of their
                 // opponents controls. Return Necrotic Plague from its owner's graveyard to the battlefield

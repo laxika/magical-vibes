@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -20,7 +20,7 @@ public class BramblefortFink extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{8}",
-                List.of(new SetBasePowerToughnessEffect(10, 10, GrantScope.SELF)),
+                List.of(new SetBasePowerToughnessEffect(10, 10, Subjects.source())),
                 "{8}: This creature has base power and toughness 10/10 until end of turn. Activate only if you control an Oko planeswalker."
         ).withActivationCondition(
                 new ControlsPermanent(new PermanentAllOfPredicate(List.of(

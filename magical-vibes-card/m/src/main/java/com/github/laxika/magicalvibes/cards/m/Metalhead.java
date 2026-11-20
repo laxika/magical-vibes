@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -43,7 +43,7 @@ public class Metalhead extends Card {
                 List.of(
                         new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "another artifact"),
                         new PutCountersOnSourceEffect(1, 1, 1),
-                        new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.HASTE), GrantScope.SELF)
+                        new GrantKeywordEffect(Set.of(Keyword.MENACE, Keyword.HASTE), Subjects.source())
                 ),
                 "{R}, Sacrifice another artifact: Put a +1/+1 counter on Metalhead. It gains menace and haste until end of turn."
         ));

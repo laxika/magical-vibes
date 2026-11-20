@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceAuraCastCostForTargetingAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostForTargetingAttachedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PIP", collectorNumber = "83")
@@ -22,6 +22,6 @@ public class StrongBack extends Card {
                 .addStaticEffect(new ReduceEquipCostForTargetingAttachedPermanentEffect(3))
                 .addStaticEffect(new ReduceAuraCastCostForTargetingAttachedPermanentEffect(3))
                 .addStaticEffect(new AttachedBoostEffect(
-                        twicePerAttachment, twicePerAttachment, GrantScope.ENCHANTED_CREATURE, true));
+                        twicePerAttachment, twicePerAttachment, Subjects.attachedCreature(), true));
     }
 }

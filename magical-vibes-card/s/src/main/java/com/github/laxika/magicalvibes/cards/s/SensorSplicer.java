@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,7 +28,7 @@ public class SensorSplicer extends Card {
 
         // Golem creatures you control have vigilance.
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES,
+                Keyword.VIGILANCE, Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.GOLEM)));
     }
 }

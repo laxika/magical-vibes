@@ -9,46 +9,48 @@ import com.github.laxika.magicalvibes.model.CardColor;
  * previous colors (Distorting Lens, Grand Architect). It is {@code true} for "becomes [color] in
  * addition to its other colors" (Indigo Faerie), which adds the color instead of replacing.
  *
- * <p>{@link GrantScope#TRIGGERING_PERMANENT} is "it becomes [color]" of the permanent whose event triggered the
+ * <p>{@link Subjects#triggering()} is "it becomes [color]" of the permanent whose event triggered the
  * ability, read from the stack entry (Shadow Puppeteers).
  *
- * <p>Group scopes such as {@link GrantScope#ALL_CREATURES} apply the change to the matching
+ * <p>Group scopes such as {@link Subjects#otherCreatures()} apply the change to the matching
  * permanents that exist when the effect resolves.
  *
  * <p>{@link #canTargetSpell} is {@code true} for "target permanent or spell becomes [color]"
  * (Eight-and-a-Half-Tails), where a target that is not on the battlefield is looked up on the stack.
  */
-public record GrantColorUntilEndOfTurnEffect(CardColor color, boolean additive, GrantScope scope,
+public record GrantColorUntilEndOfTurnEffect(CardColor color, boolean additive, PermanentSubject subject,
                                              boolean canTargetSpell) implements CardEffect {
 
     public GrantColorUntilEndOfTurnEffect(CardColor color) {
-        this(color, false, GrantScope.TARGET, false);
+        this(color, false, Subjects.target(), false);
     }
 
     public GrantColorUntilEndOfTurnEffect(CardColor color, boolean additive) {
-        this(color, additive, GrantScope.TARGET, false);
+        this(color, additive, Subjects.target(), false);
     }
 
-    public GrantColorUntilEndOfTurnEffect(CardColor color, boolean additive, GrantScope scope) {
-        this(color, additive, scope, false);
+    public GrantColorUntilEndOfTurnEffect(CardColor color, boolean additive, PermanentSubject subject) {
+        this(color, additive, subject, false);
     }
 
-    public GrantColorUntilEndOfTurnEffect(CardColor color, GrantScope scope) {
-        this(color, false, scope, false);
+    public GrantColorUntilEndOfTurnEffect(CardColor color, PermanentSubject subject) {
+        this(color, false, subject, false);
     }
 
     public GrantColorUntilEndOfTurnEffect(CardColor color, boolean additive, boolean canTargetSpell) {
-        this(color, additive, GrantScope.TARGET, canTargetSpell);
+        this(color, additive, Subjects.target(), canTargetSpell);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return switch (scope) {
-            case TARGET_PLAYERS_CREATURES -> TargetSpec.benign(TargetPredicates.player());
-            case OWN_CREATURES, ALL_OWN_CREATURES, ALL_CREATURES, ALL_CREATURES_INCLUDING_SELF,
-                 TRIGGERING_PERMANENT -> TargetSpec.NONE;
-            case SELF -> new TargetSpec(null, false, null, true, 1);
-            default -> TargetSpec.benign(TargetPredicates.permanent());
-        };
+        if (subject.declaresPlayerTarget()) {
+            return TargetSpec.benign(TargetPredicates.player());
+        }
+        if (subject.isSet() || subject instanceof PermanentSubject.Triggering) {
+            return TargetSpec.NONE;
+        }
+        return subject instanceof PermanentSubject.Source
+                ? new TargetSpec(null, false, null, true, 1)
+                : TargetSpec.benign(TargetPredicates.permanent());
     }
 }

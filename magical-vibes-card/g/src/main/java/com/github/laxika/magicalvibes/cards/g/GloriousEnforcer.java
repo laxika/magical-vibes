@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasMoreLifeThanAnOpponent;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,6 +18,6 @@ public class GloriousEnforcer extends Card {
         // gains double strike until end of turn.
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new ControllerHasMoreLifeThanAnOpponent()),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.source()));
     }
 }

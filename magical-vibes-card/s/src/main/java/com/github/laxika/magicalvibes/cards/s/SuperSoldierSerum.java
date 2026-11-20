@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,8 +25,8 @@ public class SuperSoldierSerum extends Card {
         setAttackTriggerOwnedByAura(true);
         target(TargetFilters.creature());
         addStaticEffect(new StaticBoostEffect(2, 2,
-                Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE), GrantScope.ENCHANTED_CREATURE));
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.SOLDIER, GrantScope.ENCHANTED_CREATURE));
+                Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE), Subjects.attachedCreature()));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.SOLDIER, Subjects.attachedCreature()));
         addStaticEffect(new GrantSupertypeToEnchantedPermanentEffect(CardSupertype.LEGENDARY));
 
         target(new ControlledPermanentPredicateTargetFilter(

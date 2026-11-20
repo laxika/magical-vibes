@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "CHR", collectorNumber = "63")
@@ -14,6 +14,6 @@ import java.util.List;
 public class EmeraldDragonfly extends Card {
 
     public EmeraldDragonfly() {
-        addActivatedAbility(new ActivatedAbility(false, "{G}{G}", List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)), "{G}{G}: This creature gains first strike until end of turn."));
+        addActivatedAbility(new ActivatedAbility(false, "{G}{G}", List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())), "{G}{G}: This creature gains first strike until end of turn."));
     }
 }

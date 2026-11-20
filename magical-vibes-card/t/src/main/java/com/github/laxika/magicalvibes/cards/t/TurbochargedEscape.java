@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimateChosenOwnPermanentEffe
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,6 +27,6 @@ public class TurbochargedEscape extends Card {
         addSpellEffect(new AnimateChosenOwnPermanentEffect(
                 new PermanentHasSubtypePredicate(CardSubtype.VEHICLE),
                 new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
-                        Set.of(CardType.ARTIFACT), GrantScope.TARGET, Duration.PERMANENT, null)));
+                        Set.of(CardType.ARTIFACT), Subjects.target(), Duration.PERMANENT, null)));
     }
 }

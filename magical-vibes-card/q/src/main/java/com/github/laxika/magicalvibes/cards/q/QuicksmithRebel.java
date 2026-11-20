@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -28,7 +28,7 @@ public class QuicksmithRebel extends Card {
                         List.of(new DealDamageToAnyTargetEffect(2)),
                         "{T}: This artifact deals 2 damage to any target."
                 ),
-                GrantScope.TARGET,
+                Subjects.target(),
                 null,
                 Duration.WHILE_SOURCE_ON_BATTLEFIELD
         ));

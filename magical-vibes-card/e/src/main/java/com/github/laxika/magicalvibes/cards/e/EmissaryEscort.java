@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.GreatestManaValueAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 @CardRegistration(set = "EOE", collectorNumber = "56")
@@ -14,6 +14,6 @@ public class EmissaryEscort extends Card {
     public EmissaryEscort() {
         addStaticEffect(new DynamicStaticBoostEffect(
                 new GreatestManaValueAmongControlled(new PermanentIsArtifactPredicate(), true),
-                new Fixed(0), GrantScope.SELF));
+                new Fixed(0), Subjects.source()));
     }
 }

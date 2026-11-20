@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 import java.util.Set;
@@ -22,11 +22,11 @@ public class AkawalliTheSeethingTower extends Card {
         GraveyardCardThreshold descendEight = new GraveyardCardThreshold(8, new CardIsPermanentPredicate());
 
         addStaticEffect(new ConditionalEffect(
-                descendFour, new StaticBoostEffect(2, 2, Set.of(), GrantScope.SELF)));
+                descendFour, new StaticBoostEffect(2, 2, Set.of(), Subjects.source())));
         addStaticEffect(new ConditionalEffect(
-                descendFour, new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)));
+                descendFour, new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
-                descendEight, new StaticBoostEffect(2, 2, Set.of(), GrantScope.SELF)));
+                descendEight, new StaticBoostEffect(2, 2, Set.of(), Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 descendEight, new CanBeBlockedByAtMostNCreaturesEffect(1)));
     }

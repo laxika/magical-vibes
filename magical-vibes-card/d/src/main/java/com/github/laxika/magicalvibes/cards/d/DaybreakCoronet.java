@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAttachedPermanentPredicate;
@@ -35,6 +35,6 @@ public class DaybreakCoronet extends Card {
                 "Target must be an enchanted creature"
         )).addStaticEffect(new StaticBoostEffect(
                 3, 3, Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE, Keyword.LIFELINK),
-                GrantScope.ENCHANTED_CREATURE));
+                Subjects.attachedCreature()));
     }
 }

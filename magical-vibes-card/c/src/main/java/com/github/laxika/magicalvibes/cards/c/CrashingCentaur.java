@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -21,12 +21,12 @@ public class CrashingCentaur extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{G}",
-                List.of(new DiscardCardTypeCost(null, null), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)),
+                List.of(new DiscardCardTypeCost(null, null), new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())),
                 "{G}, Discard a card: This creature gains trample until end of turn."
         ));
 
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
-                new StaticBoostEffect(2, 2, Set.of(Keyword.SHROUD), GrantScope.SELF)));
+                new StaticBoostEffect(2, 2, Set.of(Keyword.SHROUD), Subjects.source())));
     }
 }

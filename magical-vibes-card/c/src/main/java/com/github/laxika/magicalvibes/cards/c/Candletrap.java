@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -21,7 +20,7 @@ public class Candletrap extends Card {
 
     public Candletrap() {
         target(TargetFilters.creature());
-        addStaticEffect(new GrantKeywordEffect(Keyword.DEFENDER, GrantScope.ENCHANTED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DEFENDER, Subjects.attachedCreature()));
         addStaticEffect(new PreventAllDamageDealtByEnchantedCreatureEffect(true));
 
         addActivatedAbility(new ActivatedAbility(

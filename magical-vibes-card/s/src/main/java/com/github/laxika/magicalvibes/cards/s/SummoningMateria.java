@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsAttached;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "FIC", collectorNumber = "72")
@@ -26,9 +26,9 @@ public class SummoningMateria extends Card {
         addStaticEffect(new ConditionalEffect(new SourceIsAttached(),
                 new AllowCastFromTopOfLibraryEffect(Set.of(CardType.CREATURE))));
         addStaticEffect(new StaticBoostEffect(2, 2,
-                Set.of(Keyword.VIGILANCE), GrantScope.EQUIPPED_CREATURE));
+                Set.of(Keyword.VIGILANCE), Subjects.attachedCreature()));
         addStaticEffect(new GrantActivatedAbilityEffect(
-                ManaAbilities.tapFor(ManaColor.GREEN), GrantScope.EQUIPPED_CREATURE));
+                ManaAbilities.tapFor(ManaColor.GREEN), Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

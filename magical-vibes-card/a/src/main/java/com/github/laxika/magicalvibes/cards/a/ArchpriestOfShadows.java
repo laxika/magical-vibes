@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -41,7 +41,7 @@ public class ArchpriestOfShadows extends Card {
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
                 new ConditionalEffect(
                         new TargetPermanentMatches(anotherCreature),
-                        SequenceEffect.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET), new GrantEffectToTargetUntilEndOfTurnEffect(new TriggeredAbility(Triggers.dealsCombatDamageToPlayerOrBattle(),
+                        SequenceEffect.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target()), new GrantEffectToTargetUntilEndOfTurnEffect(new TriggeredAbility(Triggers.dealsCombatDamageToPlayerOrBattle(),
                                 ReturnCardFromGraveyardEffect.builder().destination(GraveyardChoiceDestination.BATTLEFIELD).filter(new CardTypePredicate(CardType.CREATURE)).targetGraveyard(true).build())))
                 )
         ));

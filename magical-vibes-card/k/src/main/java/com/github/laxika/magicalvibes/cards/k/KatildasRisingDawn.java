@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileInsteadOfGraveyardReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromSubtypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -29,12 +29,12 @@ public class KatildasRisingDawn extends Card {
                 CountScope.CONTROLLER);
         target(TargetFilters.creature())
                 .addStaticEffect(new GrantKeywordEffect(
-                        Set.of(Keyword.FLYING, Keyword.LIFELINK), GrantScope.ENCHANTED_CREATURE))
+                        Set.of(Keyword.FLYING, Keyword.LIFELINK), Subjects.attachedCreature()))
                 .addStaticEffect(new GrantEffectEffect(
                         new ProtectionFromSubtypesEffect(Set.of(CardSubtype.VAMPIRE)),
-                        GrantScope.ENCHANTED_CREATURE))
+                        Subjects.attachedCreature()))
                 .addStaticEffect(new AttachedBoostEffect(
-                        spiritsOrEnchantments, spiritsOrEnchantments, GrantScope.ENCHANTED_CREATURE));
+                        spiritsOrEnchantments, spiritsOrEnchantments, Subjects.attachedCreature()));
         addStaticEffect(new ExileInsteadOfGraveyardReplacementEffect());
     }
 }

@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
@@ -35,7 +35,7 @@ public class CorpseDance extends Card {
                 .destination(GraveyardChoiceDestination.BATTLEFIELD)
                 .filter(new CardTypePredicate(CardType.CREATURE))
                 .topmost(true)
-                .battlefieldEffectGrants(List.of(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)))
+                .battlefieldEffectGrants(List.of(new GrantKeywordEffect(Keyword.HASTE, Subjects.target())))
                 .battlefieldEffectGrantDuration(Duration.UNTIL_END_OF_TURN)
                 .exileAtEndStep(true)
                 .build());

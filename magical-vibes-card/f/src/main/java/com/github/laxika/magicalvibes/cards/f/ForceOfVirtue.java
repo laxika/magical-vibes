@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 import java.util.List;
@@ -19,6 +19,6 @@ public class ForceOfVirtue extends Card {
         addCastingOption(new AlternateHandCast(List.of(
                 new ExileCardsFromHandCastingCost(new CardColorPredicate(CardColor.WHITE), "white")),
                 new NotControllerTurn(), false));
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.creaturesYouControl()));
     }
 }

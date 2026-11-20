@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,6 +23,6 @@ public class DrillSkimmer extends Card {
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsCreaturePredicate()
                 ))),
-                new StaticBoostEffect(0, 0, Set.of(Keyword.SHROUD), GrantScope.SELF)));
+                new StaticBoostEffect(0, 0, Set.of(Keyword.SHROUD), Subjects.source())));
     }
 }

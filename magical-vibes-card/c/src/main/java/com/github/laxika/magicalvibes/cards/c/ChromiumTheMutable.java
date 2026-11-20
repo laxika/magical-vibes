@@ -9,12 +9,12 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceBecomesSubtypeUntilEndOfTurnEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "M19", collectorNumber = "214")
@@ -29,9 +29,9 @@ public class ChromiumTheMutable extends Card {
                 List.of(
                         new DiscardCardTypeCost(null, null),
                         new SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.HUMAN),
-                        new SetBasePowerToughnessEffect(1, 1, GrantScope.SELF),
-                        new LosesAllAbilitiesEffect(GrantScope.SELF, Duration.UNTIL_END_OF_TURN),
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF),
+                        new SetBasePowerToughnessEffect(1, 1, Subjects.source()),
+                        new LosesAllAbilitiesEffect(Subjects.source(), Duration.UNTIL_END_OF_TURN),
+                        new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source()),
                         new MakeCreatureUnblockableEffect(true)
                 ),
                 "Discard a card: Until end of turn, Chromium becomes a Human with base power and toughness 1/1, loses all abilities, and gains hexproof. It can't be blocked this turn."

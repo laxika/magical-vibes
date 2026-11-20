@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsDrawnThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MKC", collectorNumber = "42")
 @CardRegistration(set = "MKC", collectorNumber = "352")
@@ -13,6 +13,6 @@ public class KnowledgeIsPower extends Card {
     public KnowledgeIsPower() {
         CardsDrawnThisTurn cardsDrawn = new CardsDrawnThisTurn();
         addStaticEffect(new DynamicStaticBoostEffect(
-                cardsDrawn, cardsDrawn, GrantScope.ALL_OWN_CREATURES));
+                cardsDrawn, cardsDrawn, Subjects.creaturesYouControl()));
     }
 }

@@ -86,7 +86,7 @@ public final class TokenCreationReplacementSupport {
         return tokenCard.hasType(CardType.CREATURE)
                 && tokenCard.getStaticEffects().stream()
                 .noneMatch(effect -> effect instanceof SetCardTypesEffect set
-                        && set.scope().subject() instanceof PermanentSubject.Source
+                        && set.subject() instanceof PermanentSubject.Source
                         && !set.cardTypes().contains(CardType.CREATURE));
     }
 

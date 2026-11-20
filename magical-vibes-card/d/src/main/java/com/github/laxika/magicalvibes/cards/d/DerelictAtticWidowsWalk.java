@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -42,7 +42,7 @@ public class DerelictAtticWidowsWalk extends Card {
                                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                                 SequenceEffect.of(
                                         new BoostTargetCreatureEffect(1, 0),
-                                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET))),
-                        GrantScope.SELF)));
+                                        new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target()))),
+                        Subjects.source())));
     }
 }

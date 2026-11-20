@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceIsMonstrous;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MonstrosityEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "MH1", collectorNumber = "43")
@@ -21,6 +21,6 @@ public class Chillerpillar extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{4}{S}{S}", List.of(new MonstrosityEffect(2)),
                 "{4}{S}{S}: Monstrosity 2."));
         addStaticEffect(new ConditionalEffect(monstrous,
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
     }
 }

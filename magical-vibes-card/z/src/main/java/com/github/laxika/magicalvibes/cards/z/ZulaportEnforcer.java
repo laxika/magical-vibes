@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.List;
@@ -32,16 +32,16 @@ public class ZulaportEnforcer extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(3, 3, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(3, 3, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(5, 5, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(5, 5, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(3, CounterType.LEVEL),
                 new GrantEffectEffect(
                         new CanBeBlockedOnlyByFilterEffect(
                                 new PermanentColorInPredicate(Set.of(CardColor.BLACK)),
                                 "black creatures"),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

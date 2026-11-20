@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -39,7 +39,7 @@ public class BraveTheWilds extends Card {
                                 3, 3,
                                 List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE),
                                 null, Set.of(),
-                                GrantScope.TARGET, Duration.PERMANENT)));
+                                Subjects.target(), Duration.PERMANENT)));
         addSpellEffect(new SearchLibraryEffect(CardPredicateUtils.basicLand()));
     }
 }

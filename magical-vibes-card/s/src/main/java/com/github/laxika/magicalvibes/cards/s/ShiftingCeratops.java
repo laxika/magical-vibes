@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -25,7 +25,7 @@ public class ShiftingCeratops extends Card {
                 "{G}",
                 List.of(new GrantChosenKeywordEffect(
                         List.of(Keyword.REACH, Keyword.TRAMPLE, Keyword.HASTE),
-                        GrantScope.SELF
+                        Subjects.source()
                 )),
                 "{G}: This creature gains your choice of reach, trample, or haste until end of turn."
         ));

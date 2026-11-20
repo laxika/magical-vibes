@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
@@ -23,6 +22,6 @@ public class FormOfTheDinosaur extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU), SequenceEffect.simultaneous(
                         new DealDamageToTargetCreatureEffect(15),
-                        new TargetCreatureDealsDamageToControllerEffect(new TargetPower(), GrantScope.TARGET, Subjects.you())));
+                        new TargetCreatureDealsDamageToControllerEffect(new TargetPower(), Subjects.target(), Subjects.you())));
     }
 }

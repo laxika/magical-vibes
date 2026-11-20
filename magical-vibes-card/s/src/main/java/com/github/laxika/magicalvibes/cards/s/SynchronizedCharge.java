@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.HarmonizeCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -22,7 +22,7 @@ public class SynchronizedCharge extends Card {
                                 CounterType.PLUS_ONE_PLUS_ONE, 2));
         addSpellEffect(new GrantKeywordEffect(
                 Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE),
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentHasCountersPredicate(CounterType.ANY)));
         addCastingOption(new HarmonizeCast("{4}{G}"));
     }

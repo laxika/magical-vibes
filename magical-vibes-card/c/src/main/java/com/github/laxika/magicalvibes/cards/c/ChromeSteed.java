@@ -2,15 +2,15 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SOM", collectorNumber = "142")
 public class ChromeSteed extends Card {
 
     public ChromeSteed() {
-        addStaticEffect(new ConditionalEffect(new Metalcraft(), new StaticBoostEffect(2, 2, GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new Metalcraft(), new StaticBoostEffect(2, 2, Subjects.source())));
     }
 }

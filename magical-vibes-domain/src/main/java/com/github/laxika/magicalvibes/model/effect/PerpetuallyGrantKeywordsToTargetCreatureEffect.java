@@ -39,8 +39,8 @@ public record PerpetuallyGrantKeywordsToTargetCreatureEffect(
     }
 
     @Override
-    public GrantScope scope() {
-        return GrantScope.TARGET;
+    public PermanentSubject subject() {
+        return Subjects.target();
     }
 
     @Override

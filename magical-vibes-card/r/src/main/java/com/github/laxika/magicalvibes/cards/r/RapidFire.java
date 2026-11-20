@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RampageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +20,7 @@ public class RapidFire extends Card {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.BEFORE_BLOCKERS_DECLARED);
         target(TargetFilters.creature())
                 .addSpellEffect(new GrantKeywordEffect(
-                        Keyword.FIRST_STRIKE, GrantScope.TARGET))
+                        Keyword.FIRST_STRIKE, Subjects.target()))
                 .addSpellEffect(new GrantEffectToTargetEffect(
                         new TriggeredAbility(Triggers.becomesBlocked(),
                         new RampageEffect(2)),

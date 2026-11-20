@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.FullParty;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -36,9 +36,9 @@ public class LinvalaShieldOfSeaGate extends Card {
                         new SacrificeSelfCost(),
                         new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption("Hexproof",
-                                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.ALL_OWN_CREATURES)),
+                                        new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.creaturesYouControl())),
                                 new ChooseOneEffect.ChooseOneOption("Indestructible",
-                                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_OWN_CREATURES))
+                                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.creaturesYouControl()))
                         ))
                 ),
                 "Sacrifice Linvala: Choose hexproof or indestructible. Creatures you control gain that ability until end of turn."

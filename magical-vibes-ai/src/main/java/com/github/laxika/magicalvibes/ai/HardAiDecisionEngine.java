@@ -527,7 +527,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     for (CardEffect effect : card.getStaticEffects()) {
                         if (effect instanceof StaticCreatureBoostEffect boost && boost.powerBoost() > 0
                                 && GrantSubjectShapes.namesCreaturesYouControl(
-                                        GrantSubjectShapes.subjectOf(boost.scope()))) {
+                                        boost.subject())) {
                             for (Permanent attacker : attackers) {
                                 if (boost.filter() == null
                                         || predicateEvaluationService.matchesPermanentPredicate(
@@ -684,7 +684,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             for (CardEffect effect : card.getStaticEffects()) {
                 if (effect instanceof StaticCreatureBoostEffect boost && boost.powerBoost() > 0
                         && GrantSubjectShapes.namesCreaturesYouControl(
-                                GrantSubjectShapes.subjectOf(boost.scope()))) {
+                                boost.subject())) {
                     for (Permanent attacker : attackers) {
                         if (boost.filter() == null
                                 || predicateEvaluationService.matchesPermanentPredicate(
@@ -919,7 +919,7 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             for (CardEffect effect : card.getStaticEffects()) {
                 if (effect instanceof StaticCreatureBoostEffect boost && boost.powerBoost() > 0
                         && GrantSubjectShapes.namesCreaturesYouControl(
-                                GrantSubjectShapes.subjectOf(boost.scope()))) {
+                                boost.subject())) {
                     return CombatRelevance.PUMP;
                 }
             }

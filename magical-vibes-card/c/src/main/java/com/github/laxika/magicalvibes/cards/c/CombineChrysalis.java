@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class CombineChrysalis extends Card {
 
     public CombineChrysalis() {
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.FLYING, GrantScope.ALL_OWN_CREATURES, new PermanentIsTokenPredicate()));
+                Keyword.FLYING, Subjects.creaturesYouControl(), new PermanentIsTokenPredicate()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

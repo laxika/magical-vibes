@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -36,7 +35,7 @@ public class CallousDeceiver extends Card {
                                 new TopCardOfLibraryType(CardType.LAND),
                                 SequenceEffect.of(
                                         new BoostSelfEffect(1, 0),
-                                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)))),
+                                        new GrantKeywordEffect(Keyword.FLYING, Subjects.source())))),
                 "{2}: Reveal the top card of your library. If it's a land card, this creature gets +1/+0 "
                         + "and gains flying until end of turn. Activate only once each turn.",
                 1));

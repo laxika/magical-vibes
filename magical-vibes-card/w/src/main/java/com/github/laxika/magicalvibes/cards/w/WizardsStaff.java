@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AdditionalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAttachedPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPre
 public class WizardsStaff extends Card {
 
     public WizardsStaff() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.PROWESS, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.PROWESS, Subjects.attachedCreature()));
         addStaticEffect(new AdditionalTriggeredAbilityEffect(
                         new PermanentHasAttachedPermanentPredicate(new PermanentIsSourcePermanentPredicate()),
                         null, false, true));

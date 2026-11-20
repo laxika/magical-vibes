@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "TMT", collectorNumber = "114")
@@ -18,7 +18,7 @@ public class FrogButler extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
-                List.of(new GrantKeywordEffect(Keyword.REACH, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.REACH, Subjects.source())),
                 "{2}: This creature gains reach until end of turn."
         ));
     }

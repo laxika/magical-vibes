@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -27,7 +26,7 @@ public class ZidaneTantalusThief extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(Subjects.target()),
-                        new GrantKeywordEffect(Set.of(Keyword.LIFELINK, Keyword.HASTE), GrantScope.TARGET));
+                        new GrantKeywordEffect(Set.of(Keyword.LIFELINK, Keyword.HASTE), Subjects.target()));
 
         addTrigger(Triggers.opponentGainsControlOfPermanentYouControl(),
                 CreateTokenEffect.ofTreasureToken(1));

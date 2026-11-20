@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class RabarooTroop extends Card {
 
     public RabarooTroop() {
         addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF),
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source()),
                 new GainLifeEffect(1));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{2}",
                 List.of(new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.PLAINS))),

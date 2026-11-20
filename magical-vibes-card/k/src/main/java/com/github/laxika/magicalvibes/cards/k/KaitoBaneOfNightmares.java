@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -41,14 +40,14 @@ public class KaitoBaneOfNightmares extends Card {
                         new SourceCounterThreshold(1, CounterType.LOYALTY)
                 )),
                 new AnimatePermanentsEffect(new Fixed(3), new Fixed(4), List.of(CardSubtype.NINJA),
-                        Set.of(Keyword.HEXPROOF), null, Set.of(CardType.CREATURE), GrantScope.SELF,
+                        Set.of(Keyword.HEXPROOF), null, Set.of(CardType.CREATURE), Subjects.source(),
                         Duration.UNTIL_END_OF_TURN, null, true)));
 
         addActivatedAbility(new ActivatedAbility(
                 +1,
                 List.of(new CreateEmblemEffect(
                         List.of(new StaticBoostEffect(
-                                1, 1, GrantScope.OWN_CREATURES,
+                                1, 1, Subjects.otherCreaturesYouControl(),
                                 new PermanentHasSubtypePredicate(CardSubtype.NINJA)
                         )),
                         "Ninjas you control get +1/+1."

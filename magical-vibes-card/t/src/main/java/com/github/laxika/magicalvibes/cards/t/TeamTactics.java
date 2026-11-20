@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.TeamworkCostPaid;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TeamworkCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -16,9 +16,9 @@ public class TeamTactics extends Card {
     public TeamTactics() {
         addCastingCost(new TeamworkCost(1));
         target(TargetFilters.creature())
-                .addSpellEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target()))
                 .addSpellEffect(new ConditionalEffect(
                         new TeamworkCostPaid(),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)));
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())));
     }
 }

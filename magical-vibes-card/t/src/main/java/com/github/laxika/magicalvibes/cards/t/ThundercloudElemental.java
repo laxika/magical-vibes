@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -34,7 +33,7 @@ public class ThundercloudElemental extends Card {
                 "{3}{U}",
                 List.of(new RemoveKeywordEffect(
                         Keyword.FLYING,
-                        GrantScope.ALL_CREATURES,
+                        Subjects.allCreatures(),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))),
                 "{3}{U}: All other creatures lose flying until end of turn."
         ));

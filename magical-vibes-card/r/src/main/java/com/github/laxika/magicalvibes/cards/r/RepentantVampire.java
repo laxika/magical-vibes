@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,7 +29,7 @@ public class RepentantVampire extends Card {
 
         GraveyardCardThreshold threshold = new GraveyardCardThreshold(7, null);
         addStaticEffect(new ConditionalEffect(threshold,
-                new GrantColorEffect(CardColor.WHITE, GrantScope.SELF, true)));
+                new GrantColorEffect(CardColor.WHITE, Subjects.source(), true)));
         addStaticEffect(new ConditionalEffect(threshold,
                 new GrantActivatedAbilityEffect(
                         new ActivatedAbility(
@@ -45,6 +45,6 @@ public class RepentantVampire extends Card {
                                         "Target must be a black creature."
                                 )
                         ),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

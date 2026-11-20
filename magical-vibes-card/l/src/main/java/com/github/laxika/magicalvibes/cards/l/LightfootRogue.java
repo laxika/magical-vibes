@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AFR", collectorNumber = "111")
@@ -15,13 +15,13 @@ public class LightfootRogue extends Card {
 
     public LightfootRogue() {
         addTrigger(Triggers.attacks(), new RollD20Effect(
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF),
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source()),
                 SequenceEffect.of(
                         new BoostSelfEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)),
+                        new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())),
                 SequenceEffect.of(
                         new BoostSelfEffect(3, 0),
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF),
-                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF))));
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source()),
+                        new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source()))));
     }
 }

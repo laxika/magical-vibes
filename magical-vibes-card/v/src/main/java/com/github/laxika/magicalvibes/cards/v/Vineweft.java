@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,7 +18,7 @@ public class Vineweft extends Card {
 
     public Vineweft() {
         // Enchant creature. Enchanted creature gets +1/+1.
-        target(TargetFilters.creature()).addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE));
+        target(TargetFilters.creature()).addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
 
         // {4}{G}: Return Vineweft from your graveyard to your hand.
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(

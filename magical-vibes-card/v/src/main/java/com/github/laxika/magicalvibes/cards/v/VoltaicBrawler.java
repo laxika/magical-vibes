@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class VoltaicBrawler extends Card {
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-1),
                                 new BoostSelfEffect(1, 1),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())
                         )),
                 "Pay {E} to give Voltaic Brawler +1/+1 and trample until end of turn?"
         ));

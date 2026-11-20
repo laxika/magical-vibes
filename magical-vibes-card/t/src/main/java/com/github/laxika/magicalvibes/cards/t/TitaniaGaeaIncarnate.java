@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -50,7 +50,7 @@ public class TitaniaGaeaIncarnate extends Card {
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 4),
                         new AnimatePermanentsEffect(
                                 0, 0, List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE),
-                                null, Set.of(CardType.CREATURE), GrantScope.TARGET, Duration.PERMANENT)),
+                                null, Set.of(CardType.CREATURE), Subjects.target(), Duration.PERMANENT)),
                 "{3}{G}: Put four +1/+1 counters on target land you control. It becomes a 0/0 Elemental "
                         + "creature with haste. It's still a land.",
                 TargetFilters.landYouControl()

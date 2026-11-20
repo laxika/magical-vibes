@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.Set;
@@ -18,6 +18,6 @@ public class MaximumOverdrive extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1))
                 .addSpellEffect(new GrantKeywordEffect(
-                        Set.of(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE), GrantScope.TARGET));
+                        Set.of(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE), Subjects.target()));
     }
 }

@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -30,13 +30,13 @@ public class GoddricCloakedReveler extends Card {
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)), 2);
 
         ConditionalEffect becomesDragon = new ConditionalEffect(
-                celebration, new GrantSubtypeEffect(CardSubtype.DRAGON, GrantScope.SELF, true));
+                celebration, new GrantSubtypeEffect(CardSubtype.DRAGON, Subjects.source(), true));
         addStaticEffect(becomesDragon);
         addStaticEffect(new ConditionalEffect(
-                celebration, new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF)
+                celebration, new SetBasePowerToughnessEffect(4, 4, Subjects.source())
                         .partOfSameAbilityAs(becomesDragon)));
         addStaticEffect(new ConditionalEffect(
-                celebration, new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                celebration, new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 celebration,
                 new GrantActivatedAbilityEffect(
@@ -46,6 +46,6 @@ public class GoddricCloakedReveler extends Card {
                                 List.of(new BoostAllOwnCreaturesEffect(
                                         1, 0, new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
                                 "{R}: Dragons you control get +1/+0 until end of turn."),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

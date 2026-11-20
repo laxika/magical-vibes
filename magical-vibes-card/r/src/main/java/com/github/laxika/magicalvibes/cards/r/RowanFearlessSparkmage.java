@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,7 +27,7 @@ public class RowanFearlessSparkmage extends Card {
                 null,
                 List.of(
                         new BoostTargetCreatureEffect(3, 0),
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target())
                 ),
                 "+1: Up to one target creature gets +3/+0 and gains first strike until end of turn.",
                 null,
@@ -63,7 +62,7 @@ public class RowanFearlessSparkmage extends Card {
                 List.of(
                         new GainControlOfAllPermanentsMatchingEffect(creature, Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(), creature)),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.otherCreaturesYouControl())
                 ),
                 "\u22129: Gain control of all creatures until end of turn. Untap them. They gain haste until end of turn."
         ));

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "GTC", collectorNumber = "137")
 @CardRegistration(set = "RNA", collectorNumber = "147")
@@ -14,6 +14,6 @@ public class TowerDefense extends Card {
 
     public TowerDefense() {
         addSpellEffect(new BoostAllOwnCreaturesEffect(0, 5));
-        addSpellEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.REACH, Subjects.otherCreaturesYouControl()));
     }
 }

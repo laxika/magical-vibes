@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,7 +27,7 @@ public class DinosaursOnASpaceship extends Card {
     public DinosaursOnASpaceship() {
         // Other Dinosaurs you control get +1/+1 and have vigilance and trample.
         addStaticEffect(new StaticBoostEffect(1, 1,
-                Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE), GrantScope.OWN_CREATURES,
+                Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE), Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.DINOSAUR)));
 
         // Whenever a time counter is removed from this card while it's exiled, create a 2/2 red

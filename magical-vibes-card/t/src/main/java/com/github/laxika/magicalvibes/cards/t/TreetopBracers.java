@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -19,7 +19,7 @@ import java.util.List;
 public class TreetopBracers extends Card {
 
     public TreetopBracers() {
-        target(TargetFilters.creature()).addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+        target(TargetFilters.creature()).addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()))
                 .addStaticEffect(new CanBeBlockedOnlyByFilterEffect(
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

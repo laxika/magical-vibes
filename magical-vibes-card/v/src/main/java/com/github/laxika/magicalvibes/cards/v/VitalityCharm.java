@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -31,7 +31,7 @@ public class VitalityCharm extends Card {
                         "Target creature gets +1/+1 and gains trample until end of turn",
                         List.of(
                                 new BoostTargetCreatureEffect(1, 1),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Regenerate target Beast",

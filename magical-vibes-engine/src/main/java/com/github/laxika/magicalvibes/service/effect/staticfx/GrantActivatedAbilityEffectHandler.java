@@ -22,7 +22,7 @@ public class GrantActivatedAbilityEffectHandler implements StaticEffectHandlerBe
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantActivatedAbilityEffect) effect;
         boolean scopeMatch = support.names(context,
-                StaticEffectSupport.withAllPermanentsIncludingSource(grant.scope()), grant.filter());
+                grant.subject(), grant.filter());
         if (scopeMatch) {
             accumulator.addActivatedAbility(grant.ability().withGrantSource(context.sourceId()));
         }

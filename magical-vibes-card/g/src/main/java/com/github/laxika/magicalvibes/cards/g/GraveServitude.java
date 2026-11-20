@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MIR", collectorNumber = "126")
@@ -18,7 +18,7 @@ public class GraveServitude extends Card {
         // (CR 105.3), hence the overriding GrantColorEffect.
         target(TargetFilters.creature())
                 .addStaticEffect(new FlashCastWithCleanupSacrificeEffect())
-                .addStaticEffect(new StaticBoostEffect(3, -1, GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantColorEffect(CardColor.BLACK, GrantScope.ENCHANTED_CREATURE, true));
+                .addStaticEffect(new StaticBoostEffect(3, -1, Subjects.attachedCreature()))
+                .addStaticEffect(new GrantColorEffect(CardColor.BLACK, Subjects.attachedCreature(), true));
     }
 }

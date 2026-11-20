@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "XLN", collectorNumber = "177")
 public class BlindingFog extends Card {
@@ -14,6 +14,6 @@ public class BlindingFog extends Card {
         // Prevent all damage that would be dealt to creatures this turn.
         addSpellEffect(PreventDamageEffect.allToCreatures());
         // Creatures you control gain hexproof until end of turn.
-        addSpellEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.otherCreaturesYouControl()));
     }
 }

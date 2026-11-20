@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -17,7 +17,7 @@ import java.util.List;
 public class TheMastersOfEvil extends Card {
 
     public TheMastersOfEvil() {
-        addStaticEffect(new StaticBoostEffect(2, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.VILLAIN)));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(false, "{1}{B}",

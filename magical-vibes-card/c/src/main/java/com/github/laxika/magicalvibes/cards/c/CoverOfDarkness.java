@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 
 @CardRegistration(set = "ONS", collectorNumber = "133")
@@ -16,7 +16,7 @@ public class CoverOfDarkness extends Card {
         addStaticEffect(new ChooseSubtypeOnEnterEffect());
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.FEAR,
-                GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                Subjects.allCreatures(),
                 new PermanentHasSourceChosenSubtypePredicate()));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
 import com.github.laxika.magicalvibes.model.effect.AscendEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RIX", collectorNumber = "21")
 public class SkymarcherAspirant extends Card {
@@ -15,6 +15,6 @@ public class SkymarcherAspirant extends Card {
     public SkymarcherAspirant() {
         addStaticEffect(new AscendEffect());
         addStaticEffect(new ConditionalEffect(
-                new ControllerHasCityBlessing(), new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new ControllerHasCityBlessing(), new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
     }
 }

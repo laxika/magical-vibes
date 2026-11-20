@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.amount.RepeatedAdditionalCostCount;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class JoragaWarcaller extends Card {
         addStaticEffect(new EnterWithCountersEffect(
                 CounterType.PLUS_ONE_PLUS_ONE, new RepeatedAdditionalCostCount("{1}{G}")));
         addStaticEffect(new StaticBoostEffect(
-                1, 1, Set.of(), GrantScope.OWN_CREATURES,
+                1, 1, Set.of(), Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELF)),
                 CounterType.PLUS_ONE_PLUS_ONE));
     }

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -24,7 +24,7 @@ import java.util.Set;
 public class EmbodimentOfInsight extends Card {
 
     public EmbodimentOfInsight() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_PERMANENTS,
+        addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.otherPermanentsYouControl(),
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentIsLandPredicate(),
                                 new PermanentIsCreaturePredicate()
@@ -34,7 +34,7 @@ public class EmbodimentOfInsight extends Card {
                 .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                         new MayEffect(new AnimatePermanentsEffect(
                                 3, 3, List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE),
-                                null, Set.of(), GrantScope.TARGET, Duration.UNTIL_END_OF_TURN),
+                                null, Set.of(), Subjects.target(), Duration.UNTIL_END_OF_TURN),
                                 "Have target land become a 3/3 Elemental creature with haste until end of turn?"));
     }
 }

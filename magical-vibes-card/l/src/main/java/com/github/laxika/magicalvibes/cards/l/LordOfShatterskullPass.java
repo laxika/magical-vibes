@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToDefendingPlayerCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -30,7 +30,7 @@ public class LordOfShatterskullPass extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(6, 6, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(6, 6, Subjects.source())));
         // Level 6+ is a static ability that grants the attack trigger, not an intervening "if", so the
         // level requirement is only checked when the attack happens (CR 711.2, CR 603.4).
         addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withEventCondition(

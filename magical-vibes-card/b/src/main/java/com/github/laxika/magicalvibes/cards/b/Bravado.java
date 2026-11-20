@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
@@ -27,6 +27,6 @@ public class Bravado extends Card {
 
         target(TargetFilters.creature())
                 .addStaticEffect(new AttachedBoostEffect(
-                        otherCreaturesYouControl, otherCreaturesYouControl, GrantScope.ENCHANTED_CREATURE));
+                        otherCreaturesYouControl, otherCreaturesYouControl, Subjects.attachedCreature()));
     }
 }

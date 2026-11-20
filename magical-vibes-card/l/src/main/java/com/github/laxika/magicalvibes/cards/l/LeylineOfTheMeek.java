@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LeylineStartOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 @CardRegistration(set = "GPT", collectorNumber = "10")
@@ -16,7 +16,7 @@ public class LeylineOfTheMeek extends Card {
                 new LeylineStartOnBattlefieldEffect(),
                 "Begin the game with Leyline of the Meek on the battlefield?"
         ));
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.allCreatures(),
                 new PermanentIsTokenPredicate()));
     }
 }

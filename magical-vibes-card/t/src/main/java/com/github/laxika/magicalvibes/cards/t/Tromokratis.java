@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsAttackingOrBlockin
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedUnlessAllDefendingCreaturesBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BNG", collectorNumber = "55")
 @CardRegistration(set = "CMM", collectorNumber = "129")
@@ -17,7 +17,7 @@ public class Tromokratis extends Card {
     public Tromokratis() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new SourceIsAttackingOrBlocking()),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source())));
         addStaticEffect(new CantBeBlockedUnlessAllDefendingCreaturesBlockEffect());
     }
 }

@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceHasAtLeastAttachedEq
 import com.github.laxika.magicalvibes.model.effect.AttachAllEquipmentToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "CMM", collectorNumber = "16")
@@ -20,7 +20,7 @@ public class BalanWanderingKnight extends Card {
     public BalanWanderingKnight() {
         addStaticEffect(new ConditionalEffect(
                 new SourceHasAtLeastAttachedEquipment(2),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.source())));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{W}",

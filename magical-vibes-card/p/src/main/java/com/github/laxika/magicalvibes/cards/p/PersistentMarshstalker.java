@@ -11,9 +11,9 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.HasAttacker;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -27,7 +27,7 @@ public class PersistentMarshstalker extends Card {
         PermanentCount otherRats = new PermanentCount(
                 new PermanentHasSubtypePredicate(CardSubtype.RAT), CountScope.CONTROLLER, true);
         addStaticEffect(new DynamicStaticBoostEffect(
-                otherRats, new Fixed(0), GrantScope.SELF));
+                otherRats, new Fixed(0), Subjects.source()));
 
         addTrigger(new TriggerCondition(Triggers.youAttack(), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT

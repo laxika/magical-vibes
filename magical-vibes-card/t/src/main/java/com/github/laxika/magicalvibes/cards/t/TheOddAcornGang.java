@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -36,7 +36,7 @@ public class TheOddAcornGang extends Card {
                         null,
                         List.of(
                                 new BoostTargetCreatureEffect(2, 2),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())
                         ),
                         "{T}: Target Squirrel gets +2/+2 and gains trample until end of turn. "
                                 + "Activate only as a sorcery.",
@@ -45,7 +45,7 @@ public class TheOddAcornGang extends Card {
                         null,
                         ActivationTimingRestriction.SORCERY_SPEED
                 ),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 squirrel));
 
         addTrigger(Triggers.creatureYouControlDealsCombatDamageToPlayer().withFilter(squirrel),

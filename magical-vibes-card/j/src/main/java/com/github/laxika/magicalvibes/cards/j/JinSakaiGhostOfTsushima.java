@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -29,7 +29,7 @@ public class JinSakaiGhostOfTsushima extends Card {
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Standoff — It gains double strike until end of turn",
                                         new ConditionalEffect(new AttacksPlayerAlone(),
-                                                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TRIGGERING_PERMANENT))),
+                                                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.triggering()))),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Ghost — It can't be blocked this turn",
                                         new ConditionalEffect(new AttacksPlayerAlone(),

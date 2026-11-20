@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 
@@ -27,11 +27,11 @@ public class ShalaiVoiceOfPlenty extends Card {
         addStaticEffect(new GrantControllerKeywordEffect(Keyword.HEXPROOF));
 
         // Planeswalkers you control have hexproof.
-        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS,
+        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.otherPermanentsYouControl(),
                 new PermanentIsPlaneswalkerPredicate()));
 
         // Other creatures you control have hexproof.
-        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.otherCreaturesYouControl()));
 
         // {4}{G}{G}: Put a +1/+1 counter on each creature you control.
         addActivatedAbility(new ActivatedAbility(

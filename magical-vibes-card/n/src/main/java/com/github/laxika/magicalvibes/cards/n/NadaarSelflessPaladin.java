@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCompletedDungeon;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,6 +17,6 @@ public class NadaarSelflessPaladin extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new VentureIntoDungeonEffect());
         addTrigger(Triggers.attacks(), new VentureIntoDungeonEffect());
         addStaticEffect(new ConditionalEffect(new ControllerHasCompletedDungeon(),
-                new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES)));
+                new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl())));
     }
 }

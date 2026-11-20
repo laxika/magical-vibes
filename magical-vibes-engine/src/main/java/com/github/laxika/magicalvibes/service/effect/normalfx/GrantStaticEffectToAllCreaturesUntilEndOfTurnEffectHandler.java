@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToAllCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -33,7 +33,7 @@ public class GrantStaticEffectToAllCreaturesUntilEndOfTurnEffectHandler implemen
                         new PermanentIsCreaturePredicate(), grant.filter()));
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
-                entry.getControllerId(), new GrantEffectEffect(grant.staticEffect(), GrantScope.TARGET),
+                entry.getControllerId(), new GrantEffectEffect(grant.staticEffect(), Subjects.target()),
                 null, null, creatures, Duration.UNTIL_END_OF_TURN, 0));
     }
 }

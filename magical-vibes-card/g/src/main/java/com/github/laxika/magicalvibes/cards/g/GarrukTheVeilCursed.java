@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureSearchLibraryForCreatureToHandEffect;
 
 import java.util.List;
@@ -47,7 +47,7 @@ public class GarrukTheVeilCursed extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -3,
                 List.of(
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES),
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl()),
                         new BoostAllOwnCreaturesEffect(
                                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER),
                                 new CardsInGraveyard(new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER))

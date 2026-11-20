@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -21,7 +21,7 @@ public class OkoyeDoraMilajeLeader extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.whiteSoldier(2));
         addStaticEffect(new GrantKeywordEffect(
                 Keyword.FIRST_STRIKE,
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsTokenPredicate(),
                         new PermanentIsAttackingPredicate()))));

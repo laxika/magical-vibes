@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessSacrificesEffect
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,8 +23,8 @@ import java.util.List;
 public class YgraEaterOfAll extends Card {
 
     public YgraEaterOfAll() {
-        addStaticEffect(new GrantCardTypeEffect(CardType.ARTIFACT, GrantScope.ALL_CREATURES));
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.FOOD, GrantScope.ALL_CREATURES));
+        addStaticEffect(new GrantCardTypeEffect(CardType.ARTIFACT, Subjects.otherCreatures()));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.FOOD, Subjects.otherCreatures()));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
@@ -32,7 +32,7 @@ public class YgraEaterOfAll extends Card {
                         List.of(new SacrificeSelfCost(), new GainLifeEffect(3)),
                         "{2}, {T}, Sacrifice this permanent: You gain 3 life."
                 ),
-                GrantScope.ALL_CREATURES
+                Subjects.otherCreatures()
         ));
         addTrigger(Triggers.dies(new PermanentHasSubtypePredicate(CardSubtype.FOOD), ObjectRelation.ANY),
                 new PutCountersOnSourceEffect(1, 1, 2));

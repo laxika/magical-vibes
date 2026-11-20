@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantedPredicate;
@@ -53,7 +52,7 @@ public class PrestonGarveyMinuteman extends Card {
                 false,
                 List.of(
                         StaticAbility.of(new GrantActivatedAbilityEffect(
-                        ManaAbilities.tapForAnyColor(), GrantScope.ENCHANTED_PERMANENT))),
+                        ManaAbilities.tapForAnyColor(), Subjects.attached()))),
                 List.of(),
                 false,
                 false,

@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -44,7 +44,7 @@ public class UmaroRagingYeti extends Card {
                 "Other creatures you control get +3/+0 and gain trample until end of turn",
                 List.of(
                         new BoostAllOwnCreaturesEffect(3, 0, otherCreatures),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, otherCreatures)));
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl(), otherCreatures)));
         ChooseOneEffect.ChooseOneOption discardAndDraw = new ChooseOneEffect.ChooseOneOption(
                 "Discard your hand, then draw four cards",
                 SequenceEffect.of(new DiscardHandEffect(), new DrawCardEffect(4)));

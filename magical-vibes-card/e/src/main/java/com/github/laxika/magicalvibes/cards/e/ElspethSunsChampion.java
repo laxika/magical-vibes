@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -49,7 +49,7 @@ public class ElspethSunsChampion extends Card {
                 -7,
                 List.of(new CreateEmblemEffect(
                         List.of(
-                                new StaticBoostEffect(2, 2, Set.of(Keyword.FLYING), GrantScope.OWN_CREATURES)
+                                new StaticBoostEffect(2, 2, Set.of(Keyword.FLYING), Subjects.otherCreaturesYouControl())
                         ),
                         "Creatures you control get +2/+2 and have flying."
                 )),

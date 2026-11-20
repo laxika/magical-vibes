@@ -28,7 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.replacement.TokenCopyBatch;
 import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
@@ -775,7 +775,7 @@ public class TokenCopySupport {
         }
         Permanent token = new Permanent(copiableCard);
         if (!effect.hasteUntilEndOfTurn()) {
-            gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+            gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
                     token.getId(), Duration.PERMANENT);
         }
         return token;
@@ -896,7 +896,7 @@ public class TokenCopySupport {
             if (effect.grantHaste() && effect.hasteUntilEndOfTurn()) {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                         entry.getCard().getName(), null, entry.getControllerId(),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
                         tokenPermanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             }
 

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -38,15 +37,10 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
 
         // Mass one-shot removal floats a per-permanent layer-6 removal. Invert the Skies =
         // opponents; Hour of Devastation = all creatures; Spectacular Pileup = all permanents
-        // narrowed to creatures and Vehicles. The one-shot "all" sets include the source.
-        PermanentSubject subject = switch (remove.scope()) {
-            case TARGET_PLAYERS_CREATURES, OPPONENT_CREATURES ->
-                    Subjects.narrowed(remove.scope().subject(), remove.filter());
-            case ALL_CREATURES -> Subjects.narrowed(GrantScope.ALL_CREATURES_INCLUDING_SELF.subject(), remove.filter());
-            case ALL_PERMANENTS -> Subjects.narrowed(Subjects.controlledBy(Subjects.eachPlayer()), remove.filter());
-            case SELF, TARGET -> remove.scope().subject();
-            default -> null;
-        };
+        // narrowed to creatures and Vehicles.
+        PermanentSubject named = remove.subject();
+        PermanentSubject subject = named.isSet() ? Subjects.narrowed(named, remove.filter())
+                : named instanceof PermanentSubject.Source || named instanceof PermanentSubject.Target ? named : null;
         if (subject == null) {
             return;
         }
@@ -65,6 +59,7 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
         String durationLabel = Duration.UNTIL_END_OF_TURN.equals(remove.duration()) ? " until end of turn" : "";
         
         gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" loses " + keywordName + durationLabel + ".").build());
-        log.info("Game {} - {} loses {} ({})", gameData.id, target.getCard().getName(), remove.keyword(), remove.scope());
+        log.info("Game {} - {} loses {} ({})", gameData.id, target.getCard().getName(), remove.keyword(),
+                remove.subject());
     }
 }

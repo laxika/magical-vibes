@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -42,6 +42,6 @@ public class GladiolusAmicitia extends Card {
                 "Target must be another creature you control"))
                 .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                         new BoostTargetCreatureEffect(2, 2, anotherCreatureYouControl),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET, anotherCreatureYouControl));
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target(), anotherCreatureYouControl));
     }
 }

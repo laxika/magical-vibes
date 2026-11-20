@@ -7,13 +7,14 @@ import java.util.Set;
 
 /**
  * On resolution, prompts for a basic land type and grants the matching landwalk until end of
- * turn to the permanent selected by {@code scope}.
+ * turn to the permanent selected by {@code subject}.
  */
-public record GrantChosenLandwalkEffect(GrantScope scope) implements KeywordGrantingEffect {
+public record GrantChosenLandwalkEffect(PermanentSubject subject) implements KeywordGrantingEffect {
 
     public GrantChosenLandwalkEffect {
-        if (scope != GrantScope.SELF && scope != GrantScope.TARGET) {
-            throw new IllegalArgumentException("GrantChosenLandwalkEffect supports only SELF and TARGET, got " + scope);
+        if (!(subject instanceof PermanentSubject.Source) && !(subject instanceof PermanentSubject.Target)) {
+            throw new IllegalArgumentException("GrantChosenLandwalkEffect supports only source() and target(), got "
+                    + subject);
         }
     }
 
@@ -29,7 +30,7 @@ public record GrantChosenLandwalkEffect(GrantScope scope) implements KeywordGran
 
     @Override
     public TargetSpec targetSpec() {
-        return scope == GrantScope.TARGET
+        return subject instanceof PermanentSubject.Target
                 ? TargetSpec.benign(TargetPredicates.creature())
                 : TargetSpec.NONE;
     }

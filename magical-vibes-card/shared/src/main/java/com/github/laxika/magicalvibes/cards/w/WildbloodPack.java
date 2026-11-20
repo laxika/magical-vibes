@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.TwoOrMoreSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -21,8 +21,8 @@ public class WildbloodPack extends Card {
     public WildbloodPack() {
         // Attacking creatures you control get +3/+0.
         // OWN_CREATURES handles other creatures; SELF handles the source itself (no "other" in oracle text).
-        addStaticEffect(new StaticBoostEffect(3, 0, GrantScope.OWN_CREATURES, new PermanentIsAttackingPredicate()));
-        addStaticEffect(new StaticBoostEffect(3, 0, GrantScope.SELF, new PermanentIsAttackingPredicate()));
+        addStaticEffect(new StaticBoostEffect(3, 0, Subjects.otherCreaturesYouControl(), new PermanentIsAttackingPredicate()));
+        addStaticEffect(new StaticBoostEffect(3, 0, Subjects.source(), new PermanentIsAttackingPredicate()));
 
         // At the beginning of each upkeep, if a player cast two or more spells last turn, transform Wildblood Pack.
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),

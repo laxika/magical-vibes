@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -22,9 +22,9 @@ public class ThatWhichWasTaken extends Card {
         PermanentHasCountersPredicate hasDivinityCounter = new PermanentHasCountersPredicate(CounterType.DIVINITY);
 
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.INDESTRUCTIBLE, GrantScope.SELF, hasDivinityCounter));
+                Keyword.INDESTRUCTIBLE, Subjects.source(), hasDivinityCounter));
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.INDESTRUCTIBLE, GrantScope.ALL_PERMANENTS, hasDivinityCounter));
+                Keyword.INDESTRUCTIBLE, Subjects.otherPermanents(), hasDivinityCounter));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

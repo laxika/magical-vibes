@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -43,7 +43,7 @@ public class AjaniInspiringLeader extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -10,
                 List.of(new GrantKeywordEffect(
-                        Set.of(Keyword.FLYING, Keyword.DOUBLE_STRIKE), GrantScope.ALL_OWN_CREATURES)),
+                        Set.of(Keyword.FLYING, Keyword.DOUBLE_STRIKE), Subjects.creaturesYouControl())),
                 "\u221210: Creatures you control gain flying and double strike until end of turn."
         ));
     }

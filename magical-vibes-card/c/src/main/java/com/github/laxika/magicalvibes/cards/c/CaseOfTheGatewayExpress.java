@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceIsSolved;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealDamageToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SolveSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -37,6 +37,6 @@ public class CaseOfTheGatewayExpress extends Card {
                 new SolveSourceEffect());
 
         addStaticEffect(new ConditionalEffect(new SourceIsSolved(),
-                        new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES)));
+                        new StaticBoostEffect(1, 0, Subjects.creaturesYouControl())));
     }
 }

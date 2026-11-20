@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.NoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -22,12 +22,12 @@ public class NerdRage extends Card {
     public NerdRage() {
         target(TargetFilters.creature())
                 .addStaticEffect(new GrantEffectEffect(
-                        new NoMaximumHandSizeEffect(), GrantScope.ENCHANTED_CREATURE))
+                        new NoMaximumHandSizeEffect(), Subjects.attachedCreature()))
                 .addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.attacks(),
                                 TriggerOptions.DEFAULT.withInterveningIf(new CardsInHandAtLeast(10)),
                                 new BoostSelfEffect(10, 10)),
-                        GrantScope.ENCHANTED_CREATURE));
+                        Subjects.attachedCreature()));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(2));
     }
 }

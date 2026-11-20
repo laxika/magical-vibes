@@ -14,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -39,7 +38,7 @@ public class RogueClass extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.LEVEL),
-                new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.MENACE, Subjects.creaturesYouControl())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

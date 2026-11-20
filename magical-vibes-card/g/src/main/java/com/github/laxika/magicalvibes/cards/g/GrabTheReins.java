@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -30,7 +30,7 @@ public class GrabTheReins extends Card {
                         "Until end of turn, you gain control of target creature and it gains haste",
                         List.of(
                                 new GainControlOfTargetEffect(Duration.UNTIL_END_OF_TURN),
-                                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.HASTE, Subjects.target())),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Sacrifice a creature. Grab the Reins deals damage equal to that creature's power to any target",

@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -50,10 +50,10 @@ public class AtmosphericGreenhouse extends Card {
                 new SourceCounterThreshold(8, CounterType.CHARGE),
                 new AnimatePermanentsEffect(
                         (DynamicAmount) null, (DynamicAmount) null, List.of(), Set.of(), null,
-                        Set.of(CardType.CREATURE), GrantScope.SELF, Duration.STATIC, null
+                        Set.of(CardType.CREATURE), Subjects.source(), Duration.STATIC, null
                 )));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.CHARGE),
-                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.TRAMPLE), GrantScope.SELF)));
+                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.TRAMPLE), Subjects.source())));
     }
 }

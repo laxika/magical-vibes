@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AnotherPermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.Set;
@@ -20,6 +20,6 @@ public class BellowingElk extends Card {
         // this creature has trample and indestructible.
         addStaticEffect(new ConditionalEffect(
                 new AnotherPermanentEnteredThisTurn(new CardTypePredicate(CardType.CREATURE)),
-                new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE), GrantScope.SELF)));
+                new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE), Subjects.source())));
     }
 }

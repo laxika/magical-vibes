@@ -28,7 +28,7 @@ public class AnimatePermanentsEffectHandler implements StaticEffectHandlerBean {
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var animate = (AnimatePermanentsEffect) effect;
         if (!support.namesBeyondSource(context,
-                StaticEffectSupport.withAllPermanentsIncludingSource(animate.scope()), animate.filter())) {
+                animate.subject(), animate.filter())) {
             return;
         }
 

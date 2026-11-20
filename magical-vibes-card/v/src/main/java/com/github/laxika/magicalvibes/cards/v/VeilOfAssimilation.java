@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -31,6 +31,6 @@ public class VeilOfAssimilation extends Card {
     private SequenceEffect effect() {
         return SequenceEffect.of(
                 new BoostTargetCreatureEffect(1, 1),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target()));
     }
 }

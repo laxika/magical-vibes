@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceEnteredBattlefieldThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MH2", collectorNumber = "178")
 public class ThrastaTempestsRoar extends Card {
@@ -21,11 +21,11 @@ public class ThrastaTempestsRoar extends Card {
                 new Scaled(new SpellsCastThisTurn(CountScope.ANY_PLAYER), 3)));
 
         // Trample over planeswalkers (CR 702.19c); Scryfall lists no keyword for it.
-        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE_OVER_PLANESWALKERS, GrantScope.SELF));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TRAMPLE_OVER_PLANESWALKERS, Subjects.source()));
 
         // Thrasta has hexproof as long as it entered the battlefield this turn.
         addStaticEffect(new ConditionalEffect(
                 new SourceEnteredBattlefieldThisTurn(),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source())));
     }
 }

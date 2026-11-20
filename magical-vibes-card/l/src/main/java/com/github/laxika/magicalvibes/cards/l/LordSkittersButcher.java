@@ -12,11 +12,11 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -50,7 +50,7 @@ public class LordSkittersButcher extends Card {
                                 "Sacrifice another creature?")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control gain menace until end of turn.",
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES))
+                        new GrantKeywordEffect(Keyword.MENACE, Subjects.creaturesYouControl()))
         ))));
     }
 }

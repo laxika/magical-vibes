@@ -44,7 +44,7 @@ layer order regardless of timestamps, and a creature that lost all abilities los
 `PowerToughnessEqualTo*SelfEffectHandler` family and the ooze-token
 `BoostSelfBySlimeCountersOnLinkedPermanentSelfEffectHandler` — do NOT add new ones.
 
-The attached-scope counterpart is `AttachedBoostEffect(DynamicAmount, DynamicAmount, GrantScope)`,
+The attached-scope counterpart is `AttachedBoostEffect(DynamicAmount, DynamicAmount, PermanentSubject)`,
 handled by the single generic `AttachedBoostEffectHandler` (NOT selfOnly). It gates on
 `StaticEffectSupport.namesBeyondSource` with the scope's subject (typically `attached()`),
 then evaluates the amounts with the **source** (the Aura/Equipment) as the amount source and its
@@ -99,12 +99,11 @@ generic handlers — do NOT add per-condition handlers:
 - `static boolean isCreatureSubtype(CardSubtype subtype)`
 - `boolean names(StaticEffectContext context, PermanentSubject subject, PermanentPredicate filter)` — whether a
   static ability's subject names the context's target (the subject resolver's static entry point asked about one
-  permanent, `SubjectResolutionService.names`); a handler passes `scope.subject()` and never compares `GrantScope`
-  constants. `namesBeyondSource` is the same for a non-self handler: a `source()` subject is the self handler's.
-  `withAllPermanentsIncludingSource` / `withOwnPermanentsAsOthers` are the two per-verb readings of a constant
-  (colour, type, animation and granted-ability verbs read `ALL_PERMANENTS` including the source; keyword grants
-  read `OWN_PERMANENTS` as "other permanents you control"; an activated-ability grant to "permanents you control"
-  reaches its source through its self handler, like every other self-including set).
+  permanent, `SubjectResolutionService.names`); a handler passes its effect's `subject()` and never compares
+  constants. `namesBeyondSource` is the same for a non-self handler: a `source()` subject is the self handler's. Every
+  handler reads the card's subject as it is: whether a set includes the source is the card's choice of subject
+  (`allPermanents()` vs `otherPermanents()`, `permanentsYouControl()` vs `otherPermanentsYouControl()`), not a per-verb
+  reading.
 - `boolean isEffectivelyCreature(Permanent permanent, boolean hasAnimateArtifacts)`
 - `boolean isEffectivelyCreature(GameData gameData, Permanent permanent, boolean hasAnimateArtifacts)`
 - `boolean hasAnimateArtifactEffect(GameData gameData)`

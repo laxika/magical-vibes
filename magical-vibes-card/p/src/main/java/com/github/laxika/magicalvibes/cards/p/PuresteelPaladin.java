@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -35,7 +35,7 @@ public class PuresteelPaladin extends Card {
         addStaticEffect(new ConditionalEffect(new Metalcraft(), 
                 new GrantActivatedAbilityEffect(
                         new EquipActivatedAbility("{0}"),
-                        GrantScope.OWN_PERMANENTS,
+                        Subjects.permanentsYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT)
                 )
         ));

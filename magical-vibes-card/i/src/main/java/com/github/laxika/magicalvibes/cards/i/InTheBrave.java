@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.condition.ControllerHasEnduringStory
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.StoriedEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -22,7 +22,7 @@ public class InTheBrave extends Card {
         addStaticEffect(new StoriedEffect());
         addStaticEffect(new ConditionalEffect(
                 new ControllerHasEnduringStory(),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.HASTE), Subjects.source())));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",

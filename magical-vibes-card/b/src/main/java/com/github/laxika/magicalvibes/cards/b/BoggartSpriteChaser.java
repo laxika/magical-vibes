@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "LRW", collectorNumber = "156")
@@ -16,7 +16,7 @@ public class BoggartSpriteChaser extends Card {
 
     public BoggartSpriteChaser() {
         // As long as you control a Faerie, this creature gets +1/+1 and has flying.
-        addStaticEffect(new ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.FAERIE)), new StaticBoostEffect(1, 1, GrantScope.SELF)));
-        addStaticEffect(new ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.FAERIE)), new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.FAERIE)), new StaticBoostEffect(1, 1, Subjects.source())));
+        addStaticEffect(new ConditionalEffect(new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.FAERIE)), new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
     }
 }

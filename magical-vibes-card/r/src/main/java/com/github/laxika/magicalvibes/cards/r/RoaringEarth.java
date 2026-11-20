@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -54,7 +54,7 @@ public class RoaringEarth extends Card {
                                 List.of(CardSubtype.SPIRIT),
                                 Set.of(Keyword.HASTE),
                                 CardColor.GREEN, Set.of(),
-                                GrantScope.TARGET, Duration.PERMANENT)),
+                                Subjects.target(), Duration.PERMANENT)),
                 "Channel — {X}{G}{G}, Discard this card: Put X +1/+1 counters on target land you control. "
                         + "It becomes a 0/0 green Spirit creature with haste. It's still a land.",
                 TargetFilters.landYouControl()));

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class TitaniumMan extends Card {
         addTrigger(Triggers.attacks(), new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Titanium Man gains flying until end of turn",
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)),
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.source())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Titanium Man deals 1 damage to any target",
                         new DealDamageToAnyTargetEffect(1))

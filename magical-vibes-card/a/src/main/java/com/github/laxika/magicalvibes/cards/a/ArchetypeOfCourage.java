@@ -6,16 +6,16 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BNG", collectorNumber = "4")
 public class ArchetypeOfCourage extends Card {
 
     public ArchetypeOfCourage() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.ALL_OWN_CREATURES));
-        addStaticEffect(new RemoveKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OPPONENT_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.creaturesYouControl()));
+        addStaticEffect(new RemoveKeywordEffect(Keyword.FIRST_STRIKE, Subjects.creaturesYourOpponentsControl()));
         addStaticEffect(new GrantEffectEffect(
-                new CantHaveOrGainKeywordEffect(Keyword.FIRST_STRIKE), GrantScope.OPPONENT_CREATURES));
+                new CantHaveOrGainKeywordEffect(Keyword.FIRST_STRIKE), Subjects.creaturesYourOpponentsControl()));
     }
 }

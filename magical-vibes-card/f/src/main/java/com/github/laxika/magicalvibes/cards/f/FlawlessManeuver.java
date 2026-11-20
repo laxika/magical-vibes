@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsCommander;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import java.util.List;
 
@@ -23,6 +23,6 @@ public class FlawlessManeuver extends Card {
 
     public FlawlessManeuver() {
         addCastingOption(new AlternateHandCast(List.of(), new ControllerControlsCommander(), false));
-        addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.otherCreaturesYouControl()));
     }
 }

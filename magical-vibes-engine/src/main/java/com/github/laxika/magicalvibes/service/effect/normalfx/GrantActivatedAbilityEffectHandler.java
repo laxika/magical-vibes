@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -44,7 +44,8 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantActivatedAbilityEffect) effect;
-        if (e.scope() == GrantScope.OWN_CREATURES
+        PermanentSubject subject = e.subject();
+        if (Subjects.otherCreaturesYouControl().equals(subject)
                 && Duration.WHILE_SOURCE_REMAINS.equals(e.duration())
                 && entry.getSourcePermanentId() != null) {
             Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
@@ -63,7 +64,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                     entry.getControllerId(),
                     new GrantActivatedAbilityEffect(
                             grantedAbility(e.ability(), entry).withGrantSource(entry.getSourcePermanentId()),
-                            GrantScope.TARGET,
+                            Subjects.target(),
                             e.filter(),
                             e.duration()),
                     null,
@@ -82,13 +83,13 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
             return;
         }
         int count = 0;
-        if (e.scope() == GrantScope.SELF) {
-            Permanent source = subjectResolutionService.permanent(gameData, entry, effect, GrantScope.SELF.subject());
+        if (subject instanceof PermanentSubject.Source) {
+            Permanent source = subjectResolutionService.permanent(gameData, entry, effect, subject);
             if (source != null) {
                 grantTo(gameData, entry, source, e);
                 count++;
             }
-        } else if (e.scope() == GrantScope.TARGET) {
+        } else if (subject instanceof PermanentSubject.Target) {
             if ((Duration.WHILE_SOURCE_REMAINS.equals(e.duration())
                     || Duration.WHILE_SOURCE_ON_BATTLEFIELD.equals(e.duration()))
                     && (entry.getSourcePermanentId() == null
@@ -96,28 +97,22 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                 return;
             }
             // "Target creature gains '[ability]' until end of turn" (e.g. Banishing Knack).
-            for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect,
-                    GrantScope.TARGET.subject())) {
+            for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, subject)) {
                 grantTo(gameData, entry, target, e);
                 count++;
             }
-        } else if (e.scope() == GrantScope.ENCHANTED_PERMANENT) {
-            // The Genju cycle: no creature check.
-            Permanent enchanted = subjectResolutionService.permanent(gameData, entry, effect,
-                    GrantScope.ENCHANTED_PERMANENT.subject());
+        } else if (subject instanceof PermanentSubject.Attached) {
+            // The Genju cycle: "enchanted land", no creature check.
+            Permanent enchanted = subjectResolutionService.permanent(gameData, entry, effect, subject);
             if (enchanted != null) {
                 grantTo(gameData, entry, enchanted, e);
                 count++;
             }
         } else {
-            GrantScope scope = switch (e.scope()) {
-                case ALL_CREATURES, ALL_CREATURES_INCLUDING_SELF, OWN_CREATURES, ALL_OWN_CREATURES, OWN_LANDS,
-                     OWN_PERMANENTS -> e.scope();
-                // Any other constant has always meant the creatures you control, the source included.
-                default -> GrantScope.ALL_OWN_CREATURES;
-            };
+            // Any other subject has always meant the creatures you control, the source included.
+            PermanentSubject set = subject.isSet() ? subject : Subjects.creaturesYouControl();
             for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
-                    Subjects.narrowed(scope.subject(), e.filter()))) {
+                    Subjects.narrowed(set, e.filter()))) {
                 grantTo(gameData, entry, permanent, e);
                 count++;
             }
@@ -131,9 +126,9 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                 ? "for as long as the source remains on the battlefield"
                 : Duration.PERMANENT.equals(duration) || Duration.STATIC.equals(duration) ? "indefinitely"
                 : "until end of turn";
-        String recipientText = e.scope() == GrantScope.SELF ? "permanent(s)" :
-                e.scope() == GrantScope.OWN_LANDS ? "land(s)" :
-                e.scope() == GrantScope.OWN_PERMANENTS ? "permanent(s)" : "creature(s)";
+        String recipientText = subject instanceof PermanentSubject.Source ? "permanent(s)" :
+                Subjects.landsYouControl().equals(subject) ? "land(s)" :
+                Subjects.permanentsYouControl().equals(subject) ? "permanent(s)" : "creature(s)";
         
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" grants \"" + e.ability().getDescription() + "\" to " + count + " " + recipientText + " " + durationText + ".").build());
         log.info("Game {} - {} grants activated ability to {} {} {}",
@@ -157,7 +152,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                     entry.getControllerId(),
                     new GrantActivatedAbilityEffect(
                             grantedAbility(grant.ability(), entry).withGrantSource(entry.getSourcePermanentId()),
-                            GrantScope.TARGET,
+                            Subjects.target(),
                             grant.filter(),
                             duration,
                             grant.expirationCardId() != null
@@ -173,7 +168,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
         }
         // Until end of turn, the one other duration a resolving grant states.
         gameData.addEffectOnPermanent(entry, new GrantActivatedAbilityEffect(grantedAbility(grant.ability(), entry),
-                GrantScope.TARGET, grant.filter(), Duration.UNTIL_END_OF_TURN), permanent.getId(),
+                Subjects.target(), grant.filter(), Duration.UNTIL_END_OF_TURN), permanent.getId(),
                 Duration.UNTIL_END_OF_TURN);
     }
 

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,6 +26,6 @@ public class DesperateSentry extends Card {
         // Delirium — This creature gets +3/+0 as long as there are four or more card types among
         // cards in your graveyard.
         addStaticEffect(new ConditionalEffect(
-                new Delirium(), new StaticBoostEffect(3, 0, GrantScope.SELF)));
+                new Delirium(), new StaticBoostEffect(3, 0, Subjects.source())));
     }
 }

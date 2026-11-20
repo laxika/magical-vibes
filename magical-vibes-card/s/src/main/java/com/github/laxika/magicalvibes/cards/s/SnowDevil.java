@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
@@ -24,7 +24,7 @@ public class SnowDevil extends Card {
         // Enchanted creature has flying.
         // Enchanted creature has first strike as long as it's blocking and you control a snow land.
         target(TargetFilters.creature())
-                .addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.attachedCreature()))
                 .addStaticEffect(new ConditionalEffect(
                         new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsLandPredicate(),
@@ -32,7 +32,7 @@ public class SnowDevil extends Card {
                         ))),
                         new GrantKeywordEffect(
                                 Keyword.FIRST_STRIKE,
-                                GrantScope.ENCHANTED_CREATURE,
+                                Subjects.attachedCreature(),
                                 new PermanentIsBlockingPredicate()
                         )
                 ));

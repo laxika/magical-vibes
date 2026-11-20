@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "WWK", collectorNumber = "57")
 @CardRegistration(set = "MM3", collectorNumber = "64")
@@ -18,6 +18,6 @@ public class DeathsShadow extends Card {
     public DeathsShadow() {
         Scaled lifeTotal = new Scaled(new ControllerLifeTotal(), -1);
         addStaticEffect(new DynamicStaticBoostEffect(
-                lifeTotal, lifeTotal, GrantScope.SELF));
+                lifeTotal, lifeTotal, Subjects.source()));
     }
 }

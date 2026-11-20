@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasCityBlessing;
 import com.github.laxika.magicalvibes.model.effect.AscendEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RIX", collectorNumber = "23")
 public class SnubhornSentry extends Card {
@@ -14,6 +14,6 @@ public class SnubhornSentry extends Card {
     public SnubhornSentry() {
         addStaticEffect(new AscendEffect());
         addStaticEffect(new ConditionalEffect(new ControllerHasCityBlessing(),
-                new StaticBoostEffect(3, 0, GrantScope.SELF)));
+                new StaticBoostEffect(3, 0, Subjects.source())));
     }
 }

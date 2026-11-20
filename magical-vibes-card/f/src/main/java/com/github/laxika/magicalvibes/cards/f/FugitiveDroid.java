@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -32,7 +32,7 @@ public class FugitiveDroid extends Card {
     public FugitiveDroid() {
         addStaticEffect(new ConditionalEffect(
                 new PermanentEnteredThisTurn(new CardTypePredicate(CardType.ARTIFACT), 1),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
 
         PermanentAllOfPredicate controlledArtifactOrCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentAnyOfPredicate(List.of(

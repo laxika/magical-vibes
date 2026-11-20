@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenSubtypeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class MistformWakecaster extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{U}{U}",
-                List.of(new TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(GrantScope.OWN_CREATURES, Set.of())),
+                List.of(new TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(Subjects.creaturesYouControl(), Set.of())),
                 "{2}{U}{U}, {T}: Choose a creature type. Each creature you control becomes that type until end of turn."
         ));
     }

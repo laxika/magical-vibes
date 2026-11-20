@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DevourEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ALA", collectorNumber = "116")
@@ -24,7 +24,7 @@ public class ThornThrashViashino extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{G}",
-                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())),
                 "{G}: This creature gains trample until end of turn."));
     }
 }

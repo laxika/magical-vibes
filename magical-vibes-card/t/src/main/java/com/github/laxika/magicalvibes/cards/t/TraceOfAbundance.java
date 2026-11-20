@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AddManaOnEnchantedLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ public class TraceOfAbundance extends Card {
         // Enchant land.
         target(TargetFilters.land())
                 // Enchanted land has shroud.
-                .addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.ENCHANTED_PERMANENT))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, Subjects.attached()))
                 // Whenever enchanted land is tapped for mana, its controller adds an additional one mana of any color.
                 .addTrigger(Triggers.enchantedLandTappedForMana(),
                         new AddManaOnEnchantedLandTapEffect(new AwardAnyColorManaEffect()));

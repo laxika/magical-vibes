@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -66,7 +66,7 @@ public class BoostSelfEffectHandler implements NormalEffectHandlerBean {
                     boosted.getId(), null, null, boost.duration(), 0));
         }
         if (!boost.keywords().isEmpty()) {
-            gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(boost.keywords(), GrantScope.TARGET),
+            gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(boost.keywords(), Subjects.target()),
                     boosted.getId(), boost.duration());
         }
         if (!(boost.subject() instanceof PermanentSubject.Source)) {

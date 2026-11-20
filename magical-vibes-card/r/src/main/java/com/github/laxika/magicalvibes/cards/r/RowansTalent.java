@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.AbilityTrigger;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -37,7 +37,7 @@ public class RowansTalent extends Card {
                                 new BoostTargetCreatureEffect(2, 0),
                                 new GrantKeywordEffect(
                                         Set.of(Keyword.FIRST_STRIKE, Keyword.TRAMPLE),
-                                        GrantScope.TARGET,
+                                        Subjects.target(),
                                         Duration.UNTIL_END_OF_TURN)),
                         "+1: Up to one target creature gets +2/+0 and gains first strike and trample until end of turn.",
                         null,
@@ -47,7 +47,7 @@ public class RowansTalent extends Card {
                         List.of(),
                         0,
                         1),
-                GrantScope.ENCHANTED_PERMANENT,
+                Subjects.attached(),
                 new PermanentIsPlaneswalkerPredicate()));
 
         addTrigger(Triggers.youActivateNonManaAbility()

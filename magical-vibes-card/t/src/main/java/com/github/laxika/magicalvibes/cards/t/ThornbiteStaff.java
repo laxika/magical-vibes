@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -34,7 +33,7 @@ public class ThornbiteStaff extends Card {
                         List.of(new DealDamageToAnyTargetEffect(1)),
                         "{2}, {T}: This creature deals 1 damage to any target."
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
 
         // Equipped creature has "Whenever a creature dies, untap this creature." The granted trigger
@@ -42,7 +41,7 @@ public class ThornbiteStaff extends Card {
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANY),
                 new UntapPermanentsEffect(Subjects.source())),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
 
         // Whenever a Shaman creature enters, you may attach this Equipment to it.

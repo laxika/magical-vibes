@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalCounterToTriggeringCreatureSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedControllerSpellCastTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -22,7 +22,7 @@ public class ArcaneArchery extends Card {
     public ArcaneArchery() {
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(3, 3))
-                .addSpellEffect(new GrantKeywordEffect(Set.of(Keyword.REACH, Keyword.TRAMPLE), GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Set.of(Keyword.REACH, Keyword.TRAMPLE), Subjects.target()));
 
         addSpellEffect(RegisterDelayedControllerSpellCastTriggerEffect.boon(
                         new CardTypePredicate(CardType.CREATURE),

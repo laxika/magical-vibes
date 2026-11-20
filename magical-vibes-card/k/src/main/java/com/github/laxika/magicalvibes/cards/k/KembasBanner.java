@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,7 +30,7 @@ public class KembasBanner extends Card {
         PermanentCount creaturesYouControl = new PermanentCount(
                 new PermanentIsCreaturePredicate(), CountScope.CONTROLLER);
         addStaticEffect(new AttachedBoostEffect(
-                creaturesYouControl, creaturesYouControl, GrantScope.EQUIPPED_CREATURE));
+                creaturesYouControl, creaturesYouControl, Subjects.attachedCreature()));
 
         addActivatedAbility(new EquipActivatedAbility("{2}{W}"));
     }

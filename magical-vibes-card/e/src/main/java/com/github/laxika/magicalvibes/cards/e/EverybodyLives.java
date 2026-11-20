@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CantWinGameEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantPlayerStaticEffectsUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantLoseLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersGainKeywordUntilEndOfTurnEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -22,7 +22,7 @@ public class EverybodyLives extends Card {
 
     public EverybodyLives() {
         addSpellEffect(new GrantKeywordEffect(
-                Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.ALL_CREATURES));
+                Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), Subjects.allCreatures()));
         addSpellEffect(new PlayersGainKeywordUntilEndOfTurnEffect(Keyword.HEXPROOF));
         addSpellEffect(new PlayersCantLoseLifeThisTurnEffect());
         addSpellEffect(new GrantPlayerStaticEffectsUntilEndOfTurnEffect(List.of(

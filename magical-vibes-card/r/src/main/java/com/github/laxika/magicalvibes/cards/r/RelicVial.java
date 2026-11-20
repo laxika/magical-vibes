@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -39,6 +38,6 @@ public class RelicVial extends Card {
                         SequenceEffect.of(
                                 new LoseLifeEffect(1, Subjects.eachOpponent()),
                                 new GainLifeEffect(1))),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetUntilRansomEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayRansomEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -64,7 +64,7 @@ public class GainControlOfTargetUntilRansomEffectHandler implements NormalEffect
             grantActivatedAbilityEffectHandler.resolve(gameData, entry,
                     new GrantActivatedAbilityEffect(
                             ransomAbility,
-                            GrantScope.TARGET,
+                            Subjects.target(),
                             null,
                             Duration.WHILE_SOURCE_REMAINS));
         }

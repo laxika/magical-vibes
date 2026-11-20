@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -32,6 +32,6 @@ public class RebelSalvo extends Card {
                 )),
                 "Target must be a creature or planeswalker"))
                 .addSpellEffect(new DealDamageToTargetCreatureOrPlaneswalkerEffect(5))
-                .addSpellEffect(new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
+                .addSpellEffect(new RemoveKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()));
     }
 }

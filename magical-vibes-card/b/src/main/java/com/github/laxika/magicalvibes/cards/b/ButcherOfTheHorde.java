@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "KTK", collectorNumber = "168")
@@ -23,13 +23,13 @@ public class ButcherOfTheHorde extends Card {
                         new ChooseOneEffect(List.of(
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Vigilance",
-                                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)),
+                                        new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source())),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Lifelink",
-                                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)),
+                                        new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source())),
                                 new ChooseOneEffect.ChooseOneOption(
                                         "Haste",
-                                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF))
+                                        new GrantKeywordEffect(Keyword.HASTE, Subjects.source()))
                         ))
                 ),
                 "Sacrifice another creature: This creature gains your choice of vigilance, lifelink, or haste until end of turn."

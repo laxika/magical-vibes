@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,7 +33,7 @@ public class DailyBugleBuilding extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.MENACE, Subjects.target())),
                 "Smear Campaign — {1}, {T}: Target legendary creature gains menace until end of turn. Activate only as a sorcery.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

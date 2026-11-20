@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,7 +24,7 @@ public class JarethLeonineTitan extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{W}",
-                List.of(new GrantProtectionChoiceUntilEndOfTurnEffect(GrantScope.SELF)),
+                List.of(new GrantProtectionChoiceUntilEndOfTurnEffect(Subjects.source())),
                 "{W}: Jareth gains protection from the color of your choice until end of turn."
         ));
     }

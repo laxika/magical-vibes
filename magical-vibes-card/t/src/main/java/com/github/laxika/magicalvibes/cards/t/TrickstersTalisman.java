@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeGrantingEquipmentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AFR", collectorNumber = "79")
@@ -19,13 +19,13 @@ public class TrickstersTalisman extends Card {
         // Invoke Duplicity — Equipped creature gets +1/+1 and has "Whenever this creature deals combat
         // damage to a player, you may sacrifice Trickster's Talisman. If you do, create a token that's a
         // copy of this creature." The granted ability is controlled by the creature's controller.
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                 new MayEffect(
                         new SacrificeGrantingEquipmentThenEffect(new CreateTokenCopyOfSourceEffect(false, 1)),
                         "You may sacrifice Trickster's Talisman. If you do, create a token that's a copy of this creature.")),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

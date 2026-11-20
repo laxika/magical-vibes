@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
@@ -25,10 +24,10 @@ public class SwordOfWarAndPeace extends Card {
 
     public SwordOfWarAndPeace() {
         // Static: equipped creature gets +2/+2
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()));
 
         // Static: equipped creature has protection from red and from white
-        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.RED, CardColor.WHITE), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.RED, CardColor.WHITE), Subjects.attachedCreature()));
 
         // Triggered: whenever equipped creature deals combat damage to a player,
         // Sword of War and Peace deals damage to that player equal to the number of cards in their hand

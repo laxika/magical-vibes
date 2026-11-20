@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAndTriggeredAbilitiesOfExiledCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import org.springframework.stereotype.Component;
@@ -39,7 +39,7 @@ public class GainActivatedAndTriggeredAbilitiesOfExiledCardsSelfEffectHandler
 
             for (TriggeredAbility ability : card.getTriggeredAbilities()) {
 
-                accumulator.addGrantedEffect(new GrantTriggeredAbilityEffect(ability, GrantScope.SELF));
+                accumulator.addGrantedEffect(new GrantTriggeredAbilityEffect(ability, Subjects.source()));
 
             }
         }

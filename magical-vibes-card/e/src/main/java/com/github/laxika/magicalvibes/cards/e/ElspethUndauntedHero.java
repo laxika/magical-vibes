@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -43,7 +43,7 @@ public class ElspethUndauntedHero extends Card {
                 -8,
                 List.of(
                         new BoostAllOwnCreaturesEffect(whiteDevotion, whiteDevotion),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES)),
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.otherCreaturesYouControl())),
                 "−8: Until end of turn, creatures you control gain flying and get +X/+X, where X is your devotion to white."));
     }
 }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileForEachLifeLostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ public class LichsMastery extends Card {
 
     public LichsMastery() {
         // "Hexproof"
-        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source()));
 
         // "You can't lose the game."
         addStaticEffect(new CantLoseGameEffect(false));

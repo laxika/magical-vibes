@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.ColorsAmongControlledPermanen
 import com.github.laxika.magicalvibes.model.condition.SourceIsAttached;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastOrActivateDuringYourTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SLD", collectorNumber = "1571")
 @CardRegistration(set = "2X2", collectorNumber = "302")
@@ -20,7 +20,7 @@ public class ConquerorsFlail extends Card {
     public ConquerorsFlail() {
         addStaticEffect(new AttachedBoostEffect(
                 new ColorsAmongControlledPermanents(), new ColorsAmongControlledPermanents(),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
         addStaticEffect(new ConditionalEffect(new SourceIsAttached(),
                 new OpponentsCantCastOrActivateDuringYourTurnEffect(false)));
         addActivatedAbility(new EquipActivatedAbility("{2}"));

@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class VenomEvilUnleashed extends Card {
                 List.of(
                         new ExileSelfFromGraveyardCost(),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
-                        new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target())
                 ),
                 "{2}{B}, Exile this card from your graveyard: Put two +1/+1 counters on target creature. "
                         + "It gains deathtouch until end of turn. Activate only as a sorcery.",

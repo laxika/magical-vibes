@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,7 +25,7 @@ public class MiriamHerdWhisperer extends Card {
                 new ControllerTurn(),
                 new GrantKeywordEffect(
                         Keyword.HEXPROOF,
-                        GrantScope.OWN_PERMANENTS,
+                        Subjects.permanentsYouControl(),
                         new PermanentHasAnySubtypePredicate(mountsAndVehicles))));
 
         addTrigger(Triggers.creatureYouControlAttacks()

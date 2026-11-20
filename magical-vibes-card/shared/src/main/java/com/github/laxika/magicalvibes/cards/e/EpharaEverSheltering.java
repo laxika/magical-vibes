@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsOtherPermanentCoun
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,7 +18,7 @@ public class EpharaEverSheltering extends Card {
     public EpharaEverSheltering() {
         addStaticEffect(new ConditionalEffect(
                 new ControlsOtherPermanentCount(3, new PermanentIsEnchantmentPredicate()),
-                new GrantKeywordEffect(Set.of(Keyword.LIFELINK, Keyword.INDESTRUCTIBLE), GrantScope.SELF)
+                new GrantKeywordEffect(Set.of(Keyword.LIFELINK, Keyword.INDESTRUCTIBLE), Subjects.source())
         ));
         addTrigger(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL), new DrawCardEffect(1));
     }

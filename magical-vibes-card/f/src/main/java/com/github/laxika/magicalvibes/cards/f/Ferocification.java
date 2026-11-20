@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,8 +25,8 @@ public class Ferocification extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature you control gains menace and haste until end of turn",
                         List.of(
-                                new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET),
-                                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.MENACE, Subjects.target()),
+                                new GrantKeywordEffect(Keyword.HASTE, Subjects.target())),
                         creatureYouControl)
         )));
     }

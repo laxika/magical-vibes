@@ -13,13 +13,13 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenForEachDestroyedPe
 import com.github.laxika.magicalvibes.model.effect.DestroyEachTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentNameEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -61,11 +61,11 @@ public class TheCurseOfFenric extends Card {
 
         addTrigger(Triggers.chapter(2),
                 new SetTargetPermanentNameEffect("Fenric"),
-                new SetCardTypesEffect(Set.of(CardType.CREATURE), GrantScope.TARGET),
-                new GrantSubtypeEffect(CardSubtype.HORROR, GrantScope.TARGET, true),
+                new SetCardTypesEffect(Set.of(CardType.CREATURE), Subjects.target()),
+                new GrantSubtypeEffect(CardSubtype.HORROR, Subjects.target(), true),
                 new SetTargetPermanentSupertypeEffect(CardSupertype.LEGENDARY, true),
-                new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT),
-                new SetBasePowerToughnessEffect(6, 6, GrantScope.TARGET, Duration.PERMANENT));
+                new LosesAllAbilitiesEffect(Subjects.target(), Duration.PERMANENT),
+                new SetBasePowerToughnessEffect(6, 6, Subjects.target(), Duration.PERMANENT));
         setSagaChapterTargetGroups(2,
                 List.of(new SagaChapterTargetGroup(new PermanentPredicateTargetFilter(
                         NONTOKEN_CREATURE, "Target must be a nontoken creature"), 1, 1)));

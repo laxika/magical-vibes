@@ -336,12 +336,12 @@ public final class TextChangeTransformer {
                 PermanentPredicate predicate = apply(protection.predicate(), substitution);
                 yield color == protection.color() && predicate == protection.predicate() ? protection
                         : new com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect(
-                                color, predicate, protection.scope(), protection.declaredTarget());
+                                color, predicate, protection.subject(), protection.declaredTarget());
             }
             case ProtectionFromColorsEffect protection -> {
                 Set<CardColor> colors = replaceColor(protection.colors(), substitution);
                 yield colors == protection.colors() ? protection
-                        : new ProtectionFromColorsEffect(colors, protection.scope());
+                        : new ProtectionFromColorsEffect(colors, protection.subject());
             }
             case PreventDamageFromChosenSourceEffect prevention -> {
                 PermanentPredicate filter = apply(prevention.sourceFilter(), substitution);
@@ -361,7 +361,7 @@ public final class TextChangeTransformer {
                         ? substitution.toColor() : grant.color();
                 PermanentPredicate filter = apply(grant.filter(), substitution);
                 yield color == grant.color() && filter == grant.filter() ? grant
-                        : new GrantColorEffect(color, grant.scope(), grant.overriding(), filter);
+                        : new GrantColorEffect(color, grant.subject(), grant.overriding(), filter);
             }
             case EnchantedPermanentBecomesTypeEffect becomes -> {
                 if (substitution.fromLandType() == null) {
@@ -380,7 +380,7 @@ public final class TextChangeTransformer {
                         ? substitution.toColor() : animate.color();
                 yield subtype == animate.requiredSubtype() && color == animate.color() ? animate
                         : new AllLandsAreCreaturesEffect(animate.power(), animate.toughness(), subtype, color,
-                        animate.scope());
+                        animate.subject());
             }
             case NonbasicLandsBecomeTypeEffect becomes ->
                     substitution.fromLandType() != null && becomes.subtype() == substitution.fromLandType()
@@ -390,20 +390,20 @@ public final class TextChangeTransformer {
                 CardSubtype subtype = replaceSubtype(grant.subtype(), substitution);
                 PermanentPredicate filter = apply(grant.filter(), substitution);
                 yield subtype == grant.subtype() && filter == grant.filter() ? grant
-                        : new GrantSubtypeEffect(subtype, grant.scope(), grant.overriding(), filter);
+                        : new GrantSubtypeEffect(subtype, grant.subject(), grant.overriding(), filter);
             }
             case StaticBoostEffect boost -> {
                 Set<Keyword> keywords = replaceLandwalk(boost.grantedKeywords(), substitution);
                 PermanentPredicate filter = apply(boost.filter(), substitution);
                 yield keywords == boost.grantedKeywords() && filter == boost.filter() ? boost
                         : new StaticBoostEffect(boost.powerBoost(), boost.toughnessBoost(),
-                        keywords, boost.scope(), filter, boost.scalingCounter(), boost.scalingCounterOnTarget());
+                        keywords, boost.subject(), filter, boost.scalingCounter(), boost.scalingCounterOnTarget());
             }
             case DynamicStaticBoostEffect boost -> {
                 PermanentPredicate filter = apply(boost.filter(), substitution);
                 yield filter == boost.filter() ? boost
                         : new DynamicStaticBoostEffect(boost.powerBoost(), boost.toughnessBoost(),
-                        boost.scope(), filter, boost.amountsFromTarget());
+                        boost.subject(), filter, boost.amountsFromTarget());
             }
             case GrantKeywordEffect grant -> {
                 Set<Keyword> keywords = replaceLandwalk(grant.keywords(), substitution);
@@ -411,13 +411,13 @@ public final class TextChangeTransformer {
                 PermanentPredicate condition = apply(grant.grantCondition(), substitution);
                 yield keywords == grant.keywords() && filter == grant.filter() && condition == grant.grantCondition()
                         ? grant
-                        : new GrantKeywordEffect(keywords, grant.scope(), filter, grant.duration(), condition);
+                        : new GrantKeywordEffect(keywords, grant.subject(), filter, grant.duration(), condition);
             }
             case GrantEffectEffect grant -> {
                 CardEffect wrapped = apply(grant.effect(), substitution);
                 PermanentPredicate filter = apply(grant.filter(), substitution);
                 yield wrapped == grant.effect() && filter == grant.filter() ? grant
-                        : new GrantEffectEffect(wrapped, grant.scope(), filter);
+                        : new GrantEffectEffect(wrapped, grant.subject(), filter);
             }
             case ConditionalEffect conditional -> {
                 Condition condition = apply(conditional.condition(), substitution);

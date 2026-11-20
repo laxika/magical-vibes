@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,7 +25,7 @@ public class ThrummingHivepool extends Card {
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SLIVER), CountScope.CONTROLLER)));
         addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.DOUBLE_STRIKE, Keyword.HASTE),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.SLIVER)));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CreateTokenEffect(
                 2,

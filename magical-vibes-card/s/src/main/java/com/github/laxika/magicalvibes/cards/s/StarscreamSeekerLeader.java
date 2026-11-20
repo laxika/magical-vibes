@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.NoMonarch;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagedPlayerBecomesMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
@@ -19,7 +19,7 @@ public class StarscreamSeekerLeader extends Card {
     public StarscreamSeekerLeader() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
-                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
+                new GrantCardTypeEffect(CardType.CREATURE, Subjects.source())));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 TriggerOptions.DEFAULT.withInterveningIf(new NoMonarch()),
                 new DamagedPlayerBecomesMonarchEffect());

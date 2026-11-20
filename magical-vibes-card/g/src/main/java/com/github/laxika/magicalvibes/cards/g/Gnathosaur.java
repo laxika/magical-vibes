@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class Gnathosaur extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false), new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF)),
+                List.of(new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false), new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())),
                 "Sacrifice an artifact: Gnathosaur gains trample until end of turn."
         ));
     }

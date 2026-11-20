@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsPaired;
 import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondChoosePartnerEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulbondPairWithEnteringEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPairedPredicate;
@@ -46,6 +46,6 @@ public class SpectralGateguards extends Card {
         // As long as this creature is paired with another creature, both creatures have vigilance.
         addStaticEffect(new ConditionalEffect(
                 new SourceIsPaired(),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF_AND_PAIRED)));
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.sourceAndPaired())));
     }
 }

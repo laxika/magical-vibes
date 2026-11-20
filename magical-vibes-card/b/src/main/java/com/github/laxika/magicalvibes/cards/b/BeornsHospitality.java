@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -37,7 +37,7 @@ public class BeornsHospitality extends Card {
                 "{5}{G}{G}",
                 List.of(
                         new AnimatePermanentsEffect(null, null, List.of(CardSubtype.BEAR), Set.of(), null,
-                                Set.of(), GrantScope.SELF, Duration.PERMANENT, null),
+                                Set.of(), Subjects.source(), Duration.PERMANENT, null),
                         new GrantStaticEffectToSourceEffect(
                                 new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl),
                                 Duration.PERMANENT)),

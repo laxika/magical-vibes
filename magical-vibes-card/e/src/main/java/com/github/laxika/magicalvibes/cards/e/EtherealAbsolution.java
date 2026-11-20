@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardCreateTokenIfCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -19,8 +19,8 @@ import java.util.Set;
 public class EtherealAbsolution extends Card {
 
     public EtherealAbsolution() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES));
-        addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.OPPONENT_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.creaturesYouControl()));
+        addStaticEffect(new StaticBoostEffect(-1, -1, Subjects.creaturesYourOpponentsControl()));
 
         CreateTokenEffect spirit = new CreateTokenEffect(
                 1, "Spirit", 1, 1, CardColor.WHITE,

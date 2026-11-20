@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -24,7 +24,7 @@ public class InvigoratingHotSpring extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(4)));
 
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.HASTE, GrantScope.ALL_OWN_CREATURES, new PermanentIsModifiedPredicate()));
+                Keyword.HASTE, Subjects.creaturesYouControl(), new PermanentIsModifiedPredicate()));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

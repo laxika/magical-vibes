@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenSubtypeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public class MistformWall extends Card {
 
     public MistformWall() {
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.DEFENDER, GrantScope.SELF, new PermanentHasSubtypePredicate(CardSubtype.WALL)));
+                Keyword.DEFENDER, Subjects.source(), new PermanentHasSubtypePredicate(CardSubtype.WALL)));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",

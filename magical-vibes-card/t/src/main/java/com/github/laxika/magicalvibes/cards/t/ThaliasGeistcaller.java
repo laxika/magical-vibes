@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -34,7 +34,7 @@ public class ThaliasGeistcaller extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.SPIRIT),
                                 "Sacrifice a Spirit",
                                 false),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())
                 ),
                 "Sacrifice a Spirit: This creature gains indestructible until end of turn."
         ));

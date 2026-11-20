@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M21", collectorNumber = "188")
 @CardRegistration(set = "M21", collectorNumber = "375")
@@ -35,8 +35,8 @@ public class HeroicIntervention extends Card {
 
     public HeroicIntervention() {
         addSpellEffect(new GrantKeywordEffect(
-                Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS, Duration.UNTIL_END_OF_TURN));
+                Keyword.HEXPROOF, Subjects.permanentsYouControl(), Duration.UNTIL_END_OF_TURN));
         addSpellEffect(new GrantKeywordEffect(
-                Keyword.INDESTRUCTIBLE, GrantScope.OWN_PERMANENTS, Duration.UNTIL_END_OF_TURN));
+                Keyword.INDESTRUCTIBLE, Subjects.permanentsYouControl(), Duration.UNTIL_END_OF_TURN));
     }
 }

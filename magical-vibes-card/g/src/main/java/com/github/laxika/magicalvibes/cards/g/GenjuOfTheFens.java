@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -37,11 +37,11 @@ public class GenjuOfTheFens extends Card {
         // "{B}: This creature gets +1/+1 until end of turn." It's still a land.
         addActivatedAbility(new ActivatedAbility(false, "{2}", List.of(
                 new AnimatePermanentsEffect(2, 2, List.of(CardSubtype.SPIRIT), Set.of(), CardColor.BLACK,
-                        Set.of(), GrantScope.ENCHANTED_PERMANENT, Duration.UNTIL_END_OF_TURN),
+                        Set.of(), Subjects.attached(), Duration.UNTIL_END_OF_TURN),
                 new GrantActivatedAbilityEffect(
                         new ActivatedAbility(false, "{B}", List.of(new BoostSelfEffect(1, 1)),
                                 "{B}: This creature gets +1/+1 until end of turn."),
-                        GrantScope.ENCHANTED_PERMANENT, null, Duration.UNTIL_END_OF_TURN)
+                        Subjects.attached(), null, Duration.UNTIL_END_OF_TURN)
         ), "{2}: Until end of turn, enchanted Swamp becomes a 2/2 black Spirit creature with "
                 + "\"{B}: This creature gets +1/+1 until end of turn.\" It's still a land."));
 

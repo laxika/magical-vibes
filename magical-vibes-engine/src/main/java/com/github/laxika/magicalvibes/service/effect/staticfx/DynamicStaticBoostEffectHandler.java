@@ -24,7 +24,7 @@ public class DynamicStaticBoostEffectHandler implements StaticEffectHandlerBean 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (DynamicStaticBoostEffect) effect;
-        if (!support.namesBeyondSource(context, boost.scope().subject(), boost.filter())) {
+        if (!support.namesBeyondSource(context, boost.subject(), boost.filter())) {
             return;
         }
         AmountContext amountContext = boost.amountsFromTarget()

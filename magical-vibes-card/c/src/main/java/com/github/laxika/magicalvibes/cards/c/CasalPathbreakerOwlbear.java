@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -27,7 +27,7 @@ public class CasalPathbreakerOwlbear extends Card {
 
         addTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS),
                 new BoostAllOwnCreaturesEffect(2, 2, otherLegendary),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES, legendary));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl(), legendary));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new TransformSelfEffect());
     }
 }

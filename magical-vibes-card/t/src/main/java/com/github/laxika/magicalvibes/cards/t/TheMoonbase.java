@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureCardsFromGraveyardToBattlefieldFaceDownAsCybermenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,11 +27,11 @@ public class TheMoonbase extends Card {
                 new ActivatedAbility(
                         false,
                         "{2}",
-                        List.of(new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF,
+                        List.of(new GrantKeywordEffect(Keyword.FLYING, Subjects.source(),
                                 Duration.UNTIL_END_OF_TURN)),
                         "{2}: This creature gains flying until end of turn. Activate only as a sorcery.",
                         ActivationTimingRestriction.SORCERY_SPEED),
-                GrantScope.ALL_CREATURES));
+                Subjects.otherCreatures()));
 
         CardTypePredicate creature = new CardTypePredicate(CardType.CREATURE);
         setMultiTargetConstraint(MultiTargetConstraint.AT_MOST_ONE_PER_CONTROLLER);

@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,7 +21,7 @@ public class MaleficScythe extends Card {
         addStaticEffect(new AttachedBoostEffect(
                 new CountersOnSource(CounterType.SOUL),
                 new CountersOnSource(CounterType.SOUL),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
         addTrigger(Triggers.creatureDies(ObjectRelation.EQUIPPED),
                 new PutCountersOnSelfEffect(CounterType.SOUL));
         addActivatedAbility(new EquipActivatedAbility("{1}"));

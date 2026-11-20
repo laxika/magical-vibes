@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
@@ -33,6 +33,6 @@ public class AlphaStatus extends Card {
         DynamicAmount boost = new Scaled(otherSharingCreatures, 2);
 
         addStaticEffect(new DynamicStaticBoostEffect(
-                boost, boost, GrantScope.ENCHANTED_CREATURE));
+                boost, boost, Subjects.attachedCreature()));
     }
 }

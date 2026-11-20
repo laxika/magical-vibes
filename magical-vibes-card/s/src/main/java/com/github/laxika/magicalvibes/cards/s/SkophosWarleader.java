@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -32,7 +32,7 @@ public class SkophosWarleader extends Card {
                                 new PermanentIsEnchantmentPredicate()
                         )), "another creature or an enchantment", false),
                         new BoostSelfEffect(1, 0),
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.MENACE, Subjects.source())
                 ),
                 "{R}, Sacrifice another creature or an enchantment: This creature gets +1/+0 and gains menace until end of turn."
         ));

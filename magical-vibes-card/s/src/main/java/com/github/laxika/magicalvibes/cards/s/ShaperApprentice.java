@@ -7,13 +7,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "XLN", collectorNumber = "75")
 public class ShaperApprentice extends Card {
 
     public ShaperApprentice() {
-        addStaticEffect(new ConditionalEffect(new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)), new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+        addStaticEffect(new ConditionalEffect(new ControlsAnotherPermanent(new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)), new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
     }
 }

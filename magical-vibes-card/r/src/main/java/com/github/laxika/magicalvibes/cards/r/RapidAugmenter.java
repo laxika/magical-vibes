@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentBasePowerEqualsPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -29,7 +29,7 @@ public class RapidAugmenter extends Card {
                                 Triggers.CREATURE,
                                 new PermanentBasePowerEqualsPredicate(1))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TRIGGERING_PERMANENT));
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.triggering()));
 
         // Whenever another creature you control enters, if it wasn't cast, put a +1/+1 counter on
         // this creature and this creature can't be blocked this turn.

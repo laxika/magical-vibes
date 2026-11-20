@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
 
 import java.util.List;
@@ -23,7 +23,7 @@ public class GruesomeSlaughter extends Card {
                         List.of(new DealDamageToTargetCreatureEffect(new SourcePower())),
                         "{T}: This creature deals damage equal to its power to target creature."
                 ),
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentIsColorlessPredicate(),
                 Duration.UNTIL_END_OF_TURN
         ));

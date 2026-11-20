@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutSacrificedPermanentCountersAndAttachEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 
@@ -27,7 +27,7 @@ public class ZackFair extends Card {
                 "{1}",
                 List.of(
                         SacrificeSelfCost.recordingPermanentSnapshot(),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()),
                         new PutSacrificedPermanentCountersAndAttachEquipmentEffect()),
                 "{1}, Sacrifice Zack Fair: Target creature you control gains indestructible until end of turn. "
                         + "Put Zack Fair's counters on that creature and attach an Equipment that was attached "

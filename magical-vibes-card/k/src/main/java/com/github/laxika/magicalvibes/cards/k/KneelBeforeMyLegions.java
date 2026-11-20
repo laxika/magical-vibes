@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -29,6 +29,6 @@ public class KneelBeforeMyLegions extends Card {
                         List.of(
                                 new BoostAllOwnCreaturesEffect(3, 3),
                                 new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE),
-                                        GrantScope.OWN_CREATURES))))));
+                                        Subjects.otherCreaturesYouControl()))))));
     }
 }

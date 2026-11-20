@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -38,7 +37,7 @@ public class ViviensTalent extends Card {
                         List.of(LookAtTopCardsEffect.mayRevealOneToHandRestOnBottomRandom(
                                 4, creatureOrLand)),
                         "+1: Look at the top four cards of your library. You may reveal a creature or land card from among them and put it into your hand. Put the rest on the bottom of your library in a random order."),
-                GrantScope.ENCHANTED_PERMANENT,
+                Subjects.attached(),
                 new PermanentIsPlaneswalkerPredicate()));
 
         addTrigger(Triggers.enters(Triggers.NONTOKEN_CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),

@@ -20,7 +20,6 @@ import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -39,7 +38,7 @@ import java.util.Set;
 public class BlacksmithsTalent extends Card {
 
     public BlacksmithsTalent() {
-        List<Ability> swordEffects = List.of(StaticAbility.of(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE)));
+        List<Ability> swordEffects = List.of(StaticAbility.of(new StaticBoostEffect(1, 1, Subjects.attachedCreature())));
         CreateTokenEffect swordToken = new CreateTokenEffect(
                 CardType.ARTIFACT, 1, "Sword", 0, 0,
                 null, null, List.of(CardSubtype.EQUIPMENT), Set.of(), Set.of(),
@@ -83,7 +82,7 @@ public class BlacksmithsTalent extends Card {
                         new ControllerTurn())),
                 new GrantKeywordEffect(
                         Set.of(Keyword.DOUBLE_STRIKE, Keyword.HASTE),
-                        GrantScope.OWN_CREATURES,
+                        Subjects.otherCreaturesYouControl(),
                         new PermanentIsEquippedPredicate())));
     }
 }

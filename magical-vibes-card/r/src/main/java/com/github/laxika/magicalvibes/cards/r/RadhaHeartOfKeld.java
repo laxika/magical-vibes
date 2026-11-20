@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class RadhaHeartOfKeld extends Card {
     public RadhaHeartOfKeld() {
         addStaticEffect(new ConditionalEffect(
                 new ControllerTurn(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())));
         addStaticEffect(new LookAtTopCardOfOwnLibraryEffect());
         addStaticEffect(new PlayLandsFromTopOfLibraryEffect());
 

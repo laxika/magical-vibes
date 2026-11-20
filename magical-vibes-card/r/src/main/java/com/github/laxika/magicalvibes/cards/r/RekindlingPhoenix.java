@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -49,7 +49,7 @@ public class RekindlingPhoenix extends Card {
                                 .filter(new CardNamedPredicate(NAME))
                                 .targetGraveyard(true)
                                 .battlefieldEffectGrants(List.of(
-                                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET)))
+                                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target())))
                                 .battlefieldEffectGrantDuration(Duration.UNTIL_END_OF_TURN)
                                 .build()
                 )))

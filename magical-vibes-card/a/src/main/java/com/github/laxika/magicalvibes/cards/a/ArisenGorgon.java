@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -23,6 +23,6 @@ public class ArisenGorgon extends Card {
                         new PermanentIsPlaneswalkerPredicate(),
                         new PermanentHasSubtypePredicate(CardSubtype.LILIANA)
                 ))),
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())));
     }
 }

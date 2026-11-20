@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCreatureDeathTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsHostOfSourceAuraPredicate;
 
@@ -19,7 +19,7 @@ public class TheMasamune extends Card {
     public TheMasamune() {
         addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentIsAttackingPredicate(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE),
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.attachedCreature()),
                 null));
         addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentIsAttackingPredicate(),

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.amount.LastDiscardedCardManaValue;
@@ -23,7 +22,7 @@ public class BloodPoet extends Card {
     public BloodPoet() {
         addActivatedAbility(new ActivatedAbility(
                 1,
-                List.of(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source())),
                 "+1: Blood Poet gains lifelink until end of turn."
         ).withSpark());
 

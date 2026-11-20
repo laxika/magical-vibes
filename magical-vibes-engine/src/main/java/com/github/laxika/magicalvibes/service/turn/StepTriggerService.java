@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
 import com.github.laxika.magicalvibes.model.effect.SkipKind;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
@@ -845,7 +844,7 @@ public class StepTriggerService {
                     && card.getId().equals(pending.card().getId())) {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), card.getName(), null, controllerId,
-                        new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.TARGET),
+                        new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.target()),
                         perm.getId(), null, null, Duration.UNTIL_END_OF_COMBAT, 0));
             }
             boolean isCreature = card.hasType(CardType.CREATURE)
@@ -884,7 +883,7 @@ public class StepTriggerService {
             }
             perm.setEnteredFromExile(true);
             if (pending.grantHaste()) {
-                gameData.addEffectOnPermanent(pending.card().getName(), null, controllerId, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), perm.getId(), Duration.UNTIL_END_OF_TURN);
+                gameData.addEffectOnPermanent(pending.card().getName(), null, controllerId, new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), perm.getId(), Duration.UNTIL_END_OF_TURN);
             }
             if (card.getId().equals(pending.card().getId())) {
                 primaryPermanent = perm;

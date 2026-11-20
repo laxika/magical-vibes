@@ -14,8 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -50,7 +50,7 @@ public class LavaclawReaches extends Card {
                                 new ActivatedAbility(false, "{X}",
                                         List.of(new BoostSelfEffect(new XValue(), new Fixed(0))),
                                         "{X}: This creature gets +X/+0 until end of turn."),
-                                GrantScope.SELF, null, Duration.UNTIL_END_OF_TURN)
+                                Subjects.source(), null, Duration.UNTIL_END_OF_TURN)
                 ),
                 "{1}{B}{R}: Until end of turn, this land becomes a 2/2 black and red Elemental creature "
                         + "with \"{X}: This creature gets +X/+0 until end of turn.\" It's still a land."

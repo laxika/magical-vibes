@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "SOI", collectorNumber = "24")
@@ -19,6 +19,6 @@ public class InquisitorsOx extends Card {
         // card types among cards in your graveyard.
         addStaticEffect(new ConditionalEffect(
                 new Delirium(),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.VIGILANCE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.VIGILANCE), Subjects.source())));
     }
 }

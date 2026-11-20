@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class ArmoredGuardian extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{U}{U}",
-                List.of(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.SHROUD, Subjects.source())),
                 "{1}{U}{U}: This creature gains shroud until end of turn."
         ));
     }

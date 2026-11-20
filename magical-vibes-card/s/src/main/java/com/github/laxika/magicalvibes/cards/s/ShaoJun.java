@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -23,7 +22,7 @@ public class ShaoJun extends Card {
         // During your turn, Shao Jun has flying and first strike.
         addStaticEffect(new ConditionalEffect(
                 new ControllerTurn(),
-                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE), GrantScope.SELF)));
+                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE), Subjects.source())));
 
         // Tap two untapped artifacts you control: Shao Jun deals 1 damage to each opponent.
         addActivatedAbility(new ActivatedAbility(

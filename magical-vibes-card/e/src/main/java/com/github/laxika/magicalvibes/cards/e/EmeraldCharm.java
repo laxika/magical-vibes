@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -41,7 +40,7 @@ public class EmeraldCharm extends Card {
                                 "Target must be a non-Aura enchantment.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature loses flying until end of turn",
-                        new RemoveKeywordEffect(Keyword.FLYING, GrantScope.TARGET),
+                        new RemoveKeywordEffect(Keyword.FLYING, Subjects.target()),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),
                                 "Target must be a creature."))

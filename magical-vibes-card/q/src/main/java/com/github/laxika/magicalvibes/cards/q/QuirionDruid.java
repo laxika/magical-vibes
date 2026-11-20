@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class QuirionDruid extends Card {
                         List.of(),
                         Set.of(),
                         CardColor.GREEN, Set.of(),
-                        GrantScope.TARGET, Duration.PERMANENT
+                        Subjects.target(), Duration.PERMANENT
                 )),
                 "{G}, {T}: Target land becomes a 2/2 green creature that's still a land.",
                 TargetFilters.land()

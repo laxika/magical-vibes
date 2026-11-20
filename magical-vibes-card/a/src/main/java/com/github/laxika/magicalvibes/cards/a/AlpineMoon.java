@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenNamePredicate;
 
 import java.util.List;
@@ -18,9 +18,9 @@ public class AlpineMoon extends Card {
     public AlpineMoon() {
         var chosenName = new PermanentHasSourceChosenNamePredicate();
         addStaticEffect(new ChooseCardNameOnEnterEffect(List.of(), ChooseCardNameOnEnterEffect.HandAccess.NONE, true));
-        addStaticEffect(new LoseAllLandTypesEffect(GrantScope.OPPONENT_LANDS, chosenName));
-        addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.OPPONENT_LANDS, chosenName));
+        addStaticEffect(new LoseAllLandTypesEffect(Subjects.landsYourOpponentsControl(), chosenName));
+        addStaticEffect(new LosesAllAbilitiesEffect(Subjects.landsYourOpponentsControl(), chosenName));
         addStaticEffect(new GrantActivatedAbilityEffect(
-                ManaAbilities.tapForAnyColor(), GrantScope.OPPONENT_LANDS, chosenName));
+                ManaAbilities.tapForAnyColor(), Subjects.landsYourOpponentsControl(), chosenName));
     }
 }

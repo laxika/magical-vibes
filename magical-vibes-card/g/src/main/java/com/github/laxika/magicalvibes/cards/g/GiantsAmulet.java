@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -37,10 +37,10 @@ public class GiantsAmulet extends Card {
                                 new AttachMatchingEquipmentToCreatedPermanentEffect(
                                         new PermanentIsSourcePermanentPredicate())),
                         "Pay {3}{U} to create a Giant Wizard token and attach Giant's Amulet to it?"));
-        addStaticEffect(new AttachedBoostEffect(new Fixed(0), new Fixed(1), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new AttachedBoostEffect(new Fixed(0), new Fixed(1), Subjects.attachedCreature()));
         addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentNotPredicate(new PermanentIsTappedPredicate()),
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.EQUIPPED_CREATURE),
+                        new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.attachedCreature()),
                         null));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

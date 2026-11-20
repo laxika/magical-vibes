@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -25,7 +25,7 @@ public class DraconauticsEngineer extends Card {
                 false,
                 "{R}",
                 List.of(
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES,
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.otherCreaturesYouControl(),
                                 new PermanentNotPredicate(new PermanentIsSourceCardPredicate())),
                         new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE)
                 ),

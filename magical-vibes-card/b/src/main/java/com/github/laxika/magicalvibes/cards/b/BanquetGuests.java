@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -35,7 +35,7 @@ public class BanquetGuests extends Card {
                 List.of(
                         new SacrificePermanentCost(
                                 new PermanentHasSubtypePredicate(CardSubtype.FOOD), "Sacrifice a Food"),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)),
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())),
                 "{2}, Sacrifice a Food: This creature gains indestructible until end of turn."
         ));
     }

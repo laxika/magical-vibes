@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfPowerToughnessFromTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -22,7 +22,7 @@ import java.util.UUID;
  * Resolves {@link SetSelfPowerToughnessFromTargetCreatureEffect}: reads the target creature's
  * current power and toughness once, then installs an until-end-of-turn layer-7b P/T setter on the
  * source permanent. The computed values are locked in at resolution, so the installed floating
- * effect is a plain {@link SetBasePowerToughnessEffect} with {@link GrantScope#SELF}.
+ * effect is a plain {@link SetBasePowerToughnessEffect} with {@link Subjects#source()}.
  */
 @Slf4j
 @Component
@@ -50,7 +50,7 @@ public class SetSelfPowerToughnessFromTargetCreatureEffectHandler implements Nor
         int power = gameQueryService.getEffectiveToughness(gameData, target) + e.powerFromTargetToughnessOffset();
         int toughness = gameQueryService.getEffectivePower(gameData, target) + e.toughnessFromTargetPowerOffset();
 
-        var setter = new SetBasePowerToughnessEffect(power, toughness, GrantScope.SELF);
+        var setter = new SetBasePowerToughnessEffect(power, toughness, Subjects.source());
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                 entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
                 setter, source.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));

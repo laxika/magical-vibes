@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -20,7 +20,7 @@ public class PitilessPontiff extends Card {
                 "{1}",
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new GrantKeywordEffect(Set.of(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE), GrantScope.SELF)
+                        new GrantKeywordEffect(Set.of(Keyword.DEATHTOUCH, Keyword.INDESTRUCTIBLE), Subjects.source())
                 ),
                 "{1}, Sacrifice another creature: Pitiless Pontiff gains deathtouch and indestructible until end of turn."
         ));

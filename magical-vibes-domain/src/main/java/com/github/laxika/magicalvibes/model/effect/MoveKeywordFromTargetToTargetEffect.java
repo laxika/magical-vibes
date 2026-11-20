@@ -22,8 +22,8 @@ public record MoveKeywordFromTargetToTargetEffect(Keyword keyword) implements Ke
     }
 
     @Override
-    public GrantScope scope() {
-        return GrantScope.TARGET;
+    public PermanentSubject subject() {
+        return Subjects.target();
     }
 
     @Override

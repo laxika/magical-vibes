@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.HostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHostedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,7 +20,7 @@ public class ImmersturmBattlefield extends Card {
 
     public ImmersturmBattlefield() {
         addStaticEffect(new StaticBoostEffect(
-                2, 0, Set.of(Keyword.HASTE), GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                2, 0, Set.of(Keyword.HASTE), Subjects.allCreatures(),
                 new PermanentHostedBySourcePredicate()));
 
         addActivatedAbility(new ActivatedAbility(

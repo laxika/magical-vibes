@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardMayRevealMatchingToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -66,6 +66,6 @@ public class DomriRade extends Card {
     }
 
     private static GrantKeywordEffect grantToCreatures(Keyword keyword) {
-        return new GrantKeywordEffect(keyword, GrantScope.OWN_PERMANENTS, new PermanentIsCreaturePredicate());
+        return new GrantKeywordEffect(keyword, Subjects.permanentsYouControl(), new PermanentIsCreaturePredicate());
     }
 }

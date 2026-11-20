@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -38,7 +38,7 @@ public class IrohDragonOfTheWest extends Card {
 
         PermanentHasCountersPredicate withAnyCounter = new PermanentHasCountersPredicate(CounterType.ANY);
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
-                new GrantKeywordEffect(Keyword.FIREBENDING, GrantScope.ALL_OWN_CREATURES, withAnyCounter),
+                new GrantKeywordEffect(Keyword.FIREBENDING, Subjects.creaturesYouControl(), withAnyCounter),
                 new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.attacks(),
                         new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 2)),

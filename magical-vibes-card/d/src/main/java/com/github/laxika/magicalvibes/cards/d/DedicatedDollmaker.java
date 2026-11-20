@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -42,7 +42,7 @@ public class DedicatedDollmaker extends Card {
                 "{1}{W}",
                 List.of(new GrantKeywordEffect(
                         Keyword.INDESTRUCTIBLE,
-                        GrantScope.OWN_PERMANENTS,
+                        Subjects.permanentsYouControl(),
                         new PermanentIsTokenPredicate())),
                 "{1}{W}: Tokens you control gain indestructible until end of turn. Activate only once."
         ).withMaxActivationsPerGame(1));

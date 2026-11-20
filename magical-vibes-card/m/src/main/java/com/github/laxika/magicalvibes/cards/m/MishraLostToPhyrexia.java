@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -76,8 +75,8 @@ public class MishraLostToPhyrexia extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you control gain menace and trample until end of turn",
                         List.of(
-                                new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES))),
+                                new GrantKeywordEffect(Keyword.MENACE, Subjects.creaturesYouControl()),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures you don't control get -1/-1 until end of turn",
                         new BoostAllCreaturesEffect(-1, -1,

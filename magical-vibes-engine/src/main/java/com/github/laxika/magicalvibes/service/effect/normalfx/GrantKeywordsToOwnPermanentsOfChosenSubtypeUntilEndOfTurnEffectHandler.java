@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToOwnPermanentsOfChosenSubtypeUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -69,7 +69,7 @@ public class GrantKeywordsToOwnPermanentsOfChosenSubtypeUntilEndOfTurnEffectHand
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
                         UUID.randomUUID(), entry.getCard().getName(), sourcePermanentId,
                         entry.getControllerId(),
-                        new GrantKeywordEffect(grant.keywords(), GrantScope.TARGET),
+                        new GrantKeywordEffect(grant.keywords(), Subjects.target()),
                         permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
                 count++;
             }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.Set;
@@ -15,7 +15,7 @@ public class CorrosiveMentor extends Card {
 
     public CorrosiveMentor() {
         // Corrosive Mentor is itself black, so ALL_OWN_CREATURES (source must pass the filter too).
-        addStaticEffect(new GrantKeywordEffect(Keyword.WITHER, GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new GrantKeywordEffect(Keyword.WITHER, Subjects.creaturesYouControl(),
                 new PermanentColorInPredicate(Set.of(CardColor.BLACK))));
     }
 }

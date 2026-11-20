@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -89,7 +88,7 @@ public class KarlachRagingTiefling extends Card {
                     new CreateTokenEffect(1, "Knight", 2, 2, CardColor.WHITE,
                             List.of(CardSubtype.KNIGHT), Set.of(), Set.of()),
                     new BoostAllOwnCreaturesEffect(1, 1),
-                    new GrantKeywordEffect(Keyword.HASTE, GrantScope.ALL_OWN_CREATURES));
+                    new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesYouControl()));
         };
     }
 

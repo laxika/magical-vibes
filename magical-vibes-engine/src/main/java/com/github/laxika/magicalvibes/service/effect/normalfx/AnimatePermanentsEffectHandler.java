@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -30,7 +31,7 @@ public class AnimatePermanentsEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (AnimatePermanentsEffect) effect;
         if (Duration.PERMANENT.equals(e.duration())) {
-            if (e.scope() == GrantScope.OWN_PERMANENTS && e.filter() != null) {
+            if (Subjects.permanentsYouControl().equals(e.subject()) && e.filter() != null) {
                 animationSupport.animateControlledPermanentsPermanently(gameData, entry, e);
             } else {
                 animationSupport.animatePermanentTarget(gameData, entry, e);
@@ -40,12 +41,17 @@ public class AnimatePermanentsEffectHandler implements NormalEffectHandlerBean {
         } else if (Duration.WHILE_SOURCE_REMAINS_TAPPED.equals(e.duration())) {
             animationSupport.animateWhileSourceRemainsTapped(gameData, entry, e);
         } else {
-            switch (e.scope()) {
-                case OWN_LANDS -> animationSupport.animateOwnLands(gameData, entry, e);
-                case ALL_LANDS -> animationSupport.animateAllLands(gameData, entry, e);
-                case TARGET_PLAYERS_LANDS -> animationSupport.animateTargetPlayersLands(gameData, entry, e);
-                case OWN_PERMANENTS -> animationSupport.animateControlledPermanents(gameData, entry, e);
-                default -> animationSupport.animateSingle(gameData, entry, e);
+            PermanentSubject subject = e.subject();
+            if (Subjects.landsYouControl().equals(subject)) {
+                animationSupport.animateOwnLands(gameData, entry, e);
+            } else if (Subjects.allLands().equals(subject) || Subjects.otherLands().equals(subject)) {
+                animationSupport.animateAllLands(gameData, entry, e);
+            } else if (subject.declaresPlayerTarget()) {
+                animationSupport.animateTargetPlayersLands(gameData, entry, e);
+            } else if (Subjects.permanentsYouControl().equals(subject)) {
+                animationSupport.animateControlledPermanents(gameData, entry, e);
+            } else {
+                animationSupport.animateSingle(gameData, entry, e);
             }
         }
     }

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -45,7 +45,7 @@ public class EzuriRenegadeLeader extends Card {
                 "{2}{G}{G}{G}",
                 List.of(
                         new BoostAllOwnCreaturesEffect(3, 3, new PermanentHasSubtypePredicate(CardSubtype.ELF)),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES,
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl(),
                                 new PermanentHasSubtypePredicate(CardSubtype.ELF))
                 ),
                 "{2}{G}{G}{G}: Elf creatures you control get +3/+3 and gain trample until end of turn."

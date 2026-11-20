@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -26,10 +26,10 @@ public class BahamutWardenOfLight extends Card {
     public BahamutWardenOfLight() {
         addTrigger(Triggers.chapter(1),
                 new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.otherCreaturesYouControl()));
         addTrigger(Triggers.chapter(2),
                 new PutCounterOnEachControlledPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 1, OTHER_CREATURES),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.otherCreaturesYouControl()));
         addTrigger(Triggers.chapter(3),
                 new DestroyTargetPermanentEffect(new PermanentTruePredicate()),
                 new ExileSelfAndReturnTransformedEffect());

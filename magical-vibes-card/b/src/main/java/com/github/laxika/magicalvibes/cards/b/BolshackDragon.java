@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsAttacking;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 
 @CardRegistration(set = "MB2", collectorNumber = "322")
@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 public class BolshackDragon extends Card {
 
     public BolshackDragon() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.SELF));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.source()));
 
         CardsInGraveyard redCards = new CardsInGraveyard(
                 new CardColorPredicate(CardColor.RED), CountScope.CONTROLLER);

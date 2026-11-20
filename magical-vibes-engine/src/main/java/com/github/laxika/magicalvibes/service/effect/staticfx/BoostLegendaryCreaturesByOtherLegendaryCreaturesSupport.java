@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
@@ -21,7 +22,7 @@ final class BoostLegendaryCreaturesByOtherLegendaryCreaturesSupport {
                       BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect effect,
                       StaticBonusAccumulator accumulator,
                       StaticEffectSupport support) {
-        if (!support.names(context, StaticEffectSupport.CREATURES_YOU_CONTROL, LEGENDARY)) {
+        if (!support.names(context, Subjects.creaturesYouControl(), LEGENDARY)) {
             return;
         }
 

@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAttachedToControlledCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -56,7 +55,7 @@ public class TwistedSewerWitch extends Card {
                 false,
                 false,
                 List.of(
-                        StaticAbility.of(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE)),
+                        StaticAbility.of(new StaticBoostEffect(1, 1, Subjects.attachedCreature())),
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new LoseLifeEffect(1, Subjects.eachOpponent()))),
                 List.of(),
                 false,

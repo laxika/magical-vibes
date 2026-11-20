@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,7 +26,7 @@ public class GeralfVisionaryStitcher extends Card {
 
     public GeralfVisionaryStitcher() {
         addStaticEffect(new StaticBoostEffect(0, 0, Set.of(Keyword.FLYING),
-                GrantScope.ALL_OWN_CREATURES, new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
+                Subjects.creaturesYouControl(), new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

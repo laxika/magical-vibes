@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentMinManaValuePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -20,7 +20,7 @@ import java.util.List;
 public class DocOcksTentacles extends Card {
 
     public DocOcksTentacles() {
-        addStaticEffect(new StaticBoostEffect(4, 4, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(4, 4, Subjects.attachedCreature()));
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(Triggers.CREATURE, new PermanentMinManaValuePredicate(5))),
                         ObjectRelation.ANOTHER_YOU_CONTROL),

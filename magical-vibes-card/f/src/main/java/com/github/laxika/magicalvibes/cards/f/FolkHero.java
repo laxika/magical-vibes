@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -22,7 +22,7 @@ public class FolkHero extends Card {
                         Triggers.youCastSpell().withFilter(new CardSharesCreatureTypeWithSourcePredicate()),
                         TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),
                         new DrawCardEffect(1)),
-                GrantScope.ALL_CREATURES,
+                Subjects.otherCreatures(),
                 new PermanentIsCommanderPredicate(true)));
     }
 }

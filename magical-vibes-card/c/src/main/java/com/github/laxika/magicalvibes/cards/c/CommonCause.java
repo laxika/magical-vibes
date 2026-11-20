@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AllNonartifactCreaturesShareColor;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -15,7 +15,7 @@ public class CommonCause extends Card {
     public CommonCause() {
         addStaticEffect(new ConditionalEffect(
                 new AllNonartifactCreaturesShareColor(),
-                new StaticBoostEffect(2, 2, GrantScope.ALL_CREATURES,
+                new StaticBoostEffect(2, 2, Subjects.allCreatures(),
                         new PermanentNotPredicate(new PermanentIsArtifactPredicate()))));
     }
 }

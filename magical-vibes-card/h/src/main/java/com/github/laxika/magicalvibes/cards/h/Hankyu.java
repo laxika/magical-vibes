@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersAsCostEffect;
 
 import java.util.List;
@@ -28,7 +27,7 @@ public class Hankyu extends Card {
                         List.of(new PutCounterOnTargetPermanentEffect(Subjects.granter(), CounterType.AIM)),
                         "{T}: Put an aim counter on Hankyu."
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
 
         // Equipped creature has "{T}, Remove all aim counters from Hankyu: This creature deals
@@ -43,7 +42,7 @@ public class Hankyu extends Card {
                         "{T}, Remove all aim counters from Hankyu: This creature deals damage to any target "
                                 + "equal to the number of aim counters removed this way."
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
 
         // Equip {4}

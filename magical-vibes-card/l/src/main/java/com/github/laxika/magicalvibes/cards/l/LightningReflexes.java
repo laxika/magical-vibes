@@ -1,12 +1,12 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.FlashCastWithCleanupSacrificeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,6 +20,6 @@ public class LightningReflexes extends Card {
         // step when cast at a time a sorcery couldn't have been cast.
         target(TargetFilters.creature())
                 .addStaticEffect(new FlashCastWithCleanupSacrificeEffect())
-                .addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.FIRST_STRIKE), GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(1, 0, Set.of(Keyword.FIRST_STRIKE), Subjects.attachedCreature()));
     }
 }

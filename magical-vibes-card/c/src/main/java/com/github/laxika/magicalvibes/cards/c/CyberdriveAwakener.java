@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -31,13 +31,13 @@ public class CyberdriveAwakener extends Card {
                 new PermanentIsArtifactPredicate(),
                 new PermanentIsCreaturePredicate()));
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.FLYING, GrantScope.OWN_CREATURES, artifactCreature));
+                Keyword.FLYING, Subjects.otherCreaturesYouControl(), artifactCreature));
 
         PermanentPredicate noncreatureArtifact = new PermanentAllOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
                 new PermanentNotPredicate(new PermanentIsCreaturePredicate())));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new AnimatePermanentsEffect(
                 new Fixed(4), new Fixed(4), List.of(), Set.of(), null, Set.of(CardType.ARTIFACT),
-                GrantScope.OWN_PERMANENTS, Duration.UNTIL_END_OF_TURN, noncreatureArtifact));
+                Subjects.permanentsYouControl(), Duration.UNTIL_END_OF_TURN, noncreatureArtifact));
     }
 }

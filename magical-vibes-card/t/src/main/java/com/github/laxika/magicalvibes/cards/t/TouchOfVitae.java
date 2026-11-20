@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -26,9 +25,9 @@ public class TouchOfVitae extends Card {
                 .withMaxActivationsPerGame(1);
 
         target(TargetFilters.creature())
-                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.target()))
                 .addSpellEffect(new GrantActivatedAbilityEffect(
-                        grantedAbility, GrantScope.TARGET, null, Duration.UNTIL_END_OF_TURN))
+                        grantedAbility, Subjects.target(), null, Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new RegisterDrawCardsAtNextUpkeepEffect());
     }
 }

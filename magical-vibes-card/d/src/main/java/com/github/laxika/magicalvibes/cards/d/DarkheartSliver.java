@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -27,12 +27,12 @@ public class DarkheartSliver extends Card {
 
         addStaticEffect(new GrantActivatedAbilityEffect(
                 gainLifeAbility,
-                GrantScope.ALL_PERMANENTS,
+                Subjects.otherPermanents(),
                 sliver
         ));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 gainLifeAbility,
-                GrantScope.SELF,
+                Subjects.source(),
                 sliver
         ));
     }

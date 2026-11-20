@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 /** Ainok Artillerist gains reach while it has a +1/+1 counter. */
 @CardRegistration(set = "DTK", collectorNumber = "171")
@@ -16,6 +16,6 @@ public class AinokArtillerist extends Card {
     public AinokArtillerist() {
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(1, CounterType.PLUS_ONE_PLUS_ONE),
-                new GrantKeywordEffect(Keyword.REACH, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.REACH, Subjects.source())));
     }
 }

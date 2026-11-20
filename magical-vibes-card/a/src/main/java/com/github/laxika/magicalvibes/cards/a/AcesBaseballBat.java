@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByMatchingCreatureIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -22,10 +22,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate
 public class AcesBaseballBat extends Card {
 
     public AcesBaseballBat() {
-        addStaticEffect(new StaticBoostEffect(3, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(3, 0, Subjects.attachedCreature()));
         addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentIsAttackingPredicate(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.EQUIPPED_CREATURE),
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.attachedCreature()),
                 null));
         addStaticEffect(new EnchantedPermanentConditionalEffect(
                 new PermanentIsAttackingPredicate(),

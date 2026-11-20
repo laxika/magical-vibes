@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
@@ -19,6 +18,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -810,7 +810,7 @@ public class CloneService {
         }
 
         if (grantHasteUntilEndOfTurn && copiedCard != null) {
-            gameData.addEffectOnPermanent(perm.getCard().getName(), null, controllerId, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), perm.getId(), Duration.UNTIL_END_OF_TURN);
+            gameData.addEffectOnPermanent(perm.getCard().getName(), null, controllerId, new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), perm.getId(), Duration.UNTIL_END_OF_TURN);
         }
 
         gameData.cloneOperation.entryRequest = entryRequest;

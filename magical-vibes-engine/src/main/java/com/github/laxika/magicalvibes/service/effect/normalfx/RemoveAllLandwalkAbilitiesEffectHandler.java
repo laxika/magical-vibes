@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllLandwalkAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -53,7 +53,7 @@ public class RemoveAllLandwalkAbilitiesEffectHandler implements NormalEffectHand
         for (Keyword landwalk : Keyword.LANDWALK_MAP.keySet()) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
-                    new RemoveKeywordEffect(landwalk, GrantScope.TARGET), targetId, null, null,
+                    new RemoveKeywordEffect(landwalk, Subjects.target()), targetId, null, null,
                     Duration.UNTIL_END_OF_TURN, 0));
         }
 

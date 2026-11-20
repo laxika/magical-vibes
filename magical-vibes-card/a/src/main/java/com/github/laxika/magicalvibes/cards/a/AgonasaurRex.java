@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,7 +35,7 @@ public class AgonasaurRex extends Card {
                                 PutCounterOnTargetPermanentEffect.withTargetRestriction(
                                         CounterType.PLUS_ONE_PLUS_ONE, 2, creatureOrVehicle),
                                 new GrantKeywordEffect(Set.of(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE),
-                                        GrantScope.TARGET, creatureOrVehicle)),
+                                        Subjects.target(), creatureOrVehicle)),
                         "Put two +1/+1 counters on target creature or Vehicle and grant trample and indestructible?"));
     }
 }

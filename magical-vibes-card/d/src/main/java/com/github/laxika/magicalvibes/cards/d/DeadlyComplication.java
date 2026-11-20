@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnsuspectEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -48,7 +48,7 @@ public class DeadlyComplication extends Card {
                                                 new PermanentControlledBySourceControllerPredicate(),
                                                 new PermanentIsSuspectedPredicate()
                                         ))),
-                                new MayEffect(new UnsuspectEffect(GrantScope.TARGET),
+                                new MayEffect(new UnsuspectEffect(Subjects.target()),
                                         "Have it become no longer suspected?")),
                         suspectedCreatureYouControl)
         )));

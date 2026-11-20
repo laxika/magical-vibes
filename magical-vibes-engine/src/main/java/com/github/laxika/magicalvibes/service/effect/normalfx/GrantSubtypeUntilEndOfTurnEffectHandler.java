@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -34,22 +33,21 @@ public class GrantSubtypeUntilEndOfTurnEffectHandler implements NormalEffectHand
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantSubtypeUntilEndOfTurnEffect) effect;
-        if (e.scope() == GrantScope.TARGET_PLAYERS_CREATURES) {
+        if (e.subject().declaresPlayerTarget()) {
             if (subjectResolutionService.players(gameData, entry, effect, Subjects.targetPlayer()).isEmpty()) {
                 return;
             }
-            grantToSet(gameData, entry, e, Subjects.narrowed(e.scope().subject(), e.filter()));
+            grantToSet(gameData, entry, e, Subjects.narrowed(e.subject(), e.filter()));
             return;
         }
 
-        if (e.scope() == GrantScope.OWN_CREATURES) {
-            // This one-shot "creatures you control" includes the source.
-            grantToSet(gameData, entry, e, Subjects.narrowed(GrantScope.ALL_OWN_CREATURES.subject(), e.filter()));
+        if (e.subject().isSet()) {
+            grantToSet(gameData, entry, e, Subjects.narrowed(e.subject(), e.filter()));
             return;
         }
 
-        if (e.scope() == GrantScope.SELF) {
-            Permanent self = subjectResolutionService.permanent(gameData, entry, effect, e.scope().subject());
+        if (e.subject() instanceof PermanentSubject.Source) {
+            Permanent self = subjectResolutionService.permanent(gameData, entry, effect, e.subject());
             if (self == null) {
                 return;
             }
@@ -66,7 +64,7 @@ public class GrantSubtypeUntilEndOfTurnEffectHandler implements NormalEffectHand
             return;
         }
         for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect,
-                GrantScope.TARGET.subject())) {
+                Subjects.target())) {
             applyEffect(gameData, entry, e, target);
             gameLogService.append(gameData, GameLog.builder().card(target.getCard())
                     .text(" becomes a " + e.subtype().getDisplayName()
@@ -90,7 +88,7 @@ public class GrantSubtypeUntilEndOfTurnEffectHandler implements NormalEffectHand
                              GrantSubtypeUntilEndOfTurnEffect effect, Permanent target) {
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
-                entry.getControllerId(), new GrantSubtypeEffect(effect.subtype(), GrantScope.TARGET),
+                entry.getControllerId(), new GrantSubtypeEffect(effect.subtype(), Subjects.target()),
                 target.getId(), null, null, effect.duration(), 0));
     }
 

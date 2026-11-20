@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.condition.DidntAttack;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttackedThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -36,7 +36,7 @@ public class BesiegedVikingVillage extends Card {
                         new NotCondition(new DidntAttack()),
                         "Activate only if this creature attacked this turn."
                 ).withBoast(),
-                GrantScope.ALL_CREATURES
+                Subjects.otherCreatures()
         ));
 
         PermanentPredicate targetCreatureYouControlThatAttacked = new PermanentAllOfPredicate(List.of(

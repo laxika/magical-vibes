@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -21,7 +21,7 @@ import java.util.List;
 public class IconicShield extends Card {
 
     public IconicShield() {
-        addStaticEffect(new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 2, Subjects.attachedCreature()));
 
         // The attack trigger is granted to the equipped creature, so that creature is its source and
         // its controller controls it.
@@ -37,7 +37,7 @@ public class IconicShield extends Card {
                 )),
                 "Target must be another attacking creature"
         )).addTrigger(Triggers.attacks(),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()));
 
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

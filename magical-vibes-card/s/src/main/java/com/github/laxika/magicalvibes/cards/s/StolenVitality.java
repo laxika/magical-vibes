@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MID", collectorNumber = "161")
@@ -19,8 +19,8 @@ public class StolenVitality extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new BoostTargetCreatureEffect(3, 1))
                 .addSpellEffect(new ConditionalEffect(new ControllerTurn(),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)))
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())))
                 .addSpellEffect(new ConditionalEffect(new NotControllerTurn(),
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET)));
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target())));
     }
 }

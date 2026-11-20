@@ -25,8 +25,8 @@ public record GrantLandwalkOfSacrificedLandToTargetEffect() implements KeywordGr
     }
 
     @Override
-    public GrantScope scope() {
-        return GrantScope.TARGET;
+    public PermanentSubject subject() {
+        return Subjects.target();
     }
 
     @Override

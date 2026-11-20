@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -29,7 +29,7 @@ public class AncestralAnger extends Card {
                 // X is 1 plus the number of cards named Ancestral Anger in your graveyard.
                 new Sum(new Fixed(1), new CardsInGraveyard(new CardNamedPredicate("Ancestral Anger"), CountScope.CONTROLLER)),
                 new Fixed(0)
-        )).addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET))
+        )).addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()))
           .addSpellEffect(new DrawCardEffect(1));
     }
 }

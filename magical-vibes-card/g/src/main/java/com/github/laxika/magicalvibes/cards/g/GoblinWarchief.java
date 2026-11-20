@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
@@ -26,7 +26,7 @@ public class GoblinWarchief extends Card {
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardSubtypePredicate(CardSubtype.GOBLIN), 1, CostModificationScope.SELF));
         // Goblins you control have haste
-        addStaticEffect(new StaticBoostEffect(0, 0, Set.of(Keyword.HASTE), GrantScope.ALL_OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(0, 0, Set.of(Keyword.HASTE), Subjects.creaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN))));
     }
 }

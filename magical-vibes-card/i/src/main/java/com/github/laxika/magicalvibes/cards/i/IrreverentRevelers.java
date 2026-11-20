@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -30,7 +30,7 @@ public class IrreverentRevelers extends Card {
                 ),
                 new ChooseOneEffect.ChooseOneOption(
                         "Irreverent Revelers gains haste until end of turn",
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.source())
                 )
         ))));
     }

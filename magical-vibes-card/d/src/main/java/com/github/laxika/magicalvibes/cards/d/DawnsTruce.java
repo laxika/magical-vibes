@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BLB", collectorNumber = "9")
 public class DawnsTruce extends Card {
@@ -19,8 +19,8 @@ public class DawnsTruce extends Card {
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
                 new EachOtherPlayerDrawsCardEffect(1)));
         addSpellEffect(new GrantControllerKeywordUntilEndOfTurnEffect(Keyword.HEXPROOF));
-        addSpellEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS));
+        addSpellEffect(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.permanentsYouControl()));
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.OWN_PERMANENTS)));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.permanentsYouControl())));
     }
 }

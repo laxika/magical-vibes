@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -22,7 +21,7 @@ import java.util.List;
 public class SwashbucklersWhip extends Card {
 
     public SwashbucklersWhip() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.REACH, Subjects.attachedCreature()));
 
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
@@ -38,7 +37,7 @@ public class SwashbucklersWhip extends Card {
                                 "Target must be an artifact or creature"
                         )
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
 
         addStaticEffect(new GrantActivatedAbilityEffect(
@@ -48,7 +47,7 @@ public class SwashbucklersWhip extends Card {
                         List.of(new DiscoverEffect(10)),
                         "{8}, {T}: Discover 10."
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
 
         addActivatedAbility(new EquipActivatedAbility("{1}"));

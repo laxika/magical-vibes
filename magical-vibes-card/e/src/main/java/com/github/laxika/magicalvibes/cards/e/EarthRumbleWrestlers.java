@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.PermanentEnteredThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,6 +28,6 @@ public class EarthRumbleWrestlers extends Card {
                                 new PermanentIsLandPredicate(),
                                 new PermanentIsCreaturePredicate()))),
                         new PermanentEnteredThisTurn(new CardTypePredicate(CardType.LAND), 1))),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE), Subjects.source())));
     }
 }

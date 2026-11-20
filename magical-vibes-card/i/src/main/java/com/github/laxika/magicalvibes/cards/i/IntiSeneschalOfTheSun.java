@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsMayPlayUntilNextEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class IntiSeneschalOfTheSun extends Card {
                                 PutCounterOnTargetPermanentEffect.withTargetRestriction(
                                         CounterType.PLUS_ONE_PLUS_ONE, 1,
                                         new PermanentIsAttackingPredicate()),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())),
                         "a card"),
                 "Discard a card to put a +1/+1 counter on target attacking creature and give it trample?"));
 

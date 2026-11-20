@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.Metalcraft;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -29,7 +29,7 @@ public class ToolcraftExemplar extends Card {
                 SequenceEffect.of(
                                 new BoostSelfEffect(2, 1),
                                 new ConditionalEffect(new Metalcraft(),
-                                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF))
+                                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source()))
                         ));
     }
 }

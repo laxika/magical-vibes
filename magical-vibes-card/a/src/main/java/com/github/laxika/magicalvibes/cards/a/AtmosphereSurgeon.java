@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -30,7 +30,7 @@ public class AtmosphereSurgeon extends Card {
                 null,
                 List.of(
                         new RemoveCounterFromSourceCost(1, CounterType.OIL),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target())
                 ),
                 "Remove an oil counter from this creature: Target creature gains flying until end of turn. Activate only as a sorcery.",
                 TargetFilters.creature(),

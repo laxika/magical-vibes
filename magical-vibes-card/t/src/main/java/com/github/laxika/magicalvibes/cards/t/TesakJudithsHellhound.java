@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockUnlessEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnleashEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -31,11 +31,11 @@ public class TesakJudithsHellhound extends Card {
 
         PermanentHasSubtypePredicate dogs = new PermanentHasSubtypePredicate(CardSubtype.DOG);
         addStaticEffect(new GrantEffectEffect(
-                new UnleashEffect(), GrantScope.OWN_CREATURES, dogs));
+                new UnleashEffect(), Subjects.otherCreaturesYouControl(), dogs));
         addStaticEffect(new GrantEffectEffect(
-                cantBlockUnlessHasNoPlusOnePlusOneCounter(), GrantScope.OWN_CREATURES, dogs));
+                cantBlockUnlessHasNoPlusOnePlusOneCounter(), Subjects.otherCreaturesYouControl(), dogs));
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.HASTE, GrantScope.ALL_OWN_CREATURES,
+                Keyword.HASTE, Subjects.creaturesYouControl(),
                 new PermanentHasCountersPredicate(CounterType.ANY)));
 
         addTrigger(Triggers.attacks(), new AwardManaEffect(

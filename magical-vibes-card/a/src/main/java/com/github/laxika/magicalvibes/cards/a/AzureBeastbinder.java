@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -38,7 +38,7 @@ public class AzureBeastbinder extends Card {
                 targetPermanent,
                 "Target must be an artifact, creature, or planeswalker an opponent controls"), 0, 1)
                 .addTrigger(Triggers.attacks(),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.UNTIL_YOUR_NEXT_TURN),
+                        new LosesAllAbilitiesEffect(Subjects.target(), Duration.UNTIL_YOUR_NEXT_TURN),
                         new SetBasePowerToughnessEffect(2, 2, Duration.UNTIL_YOUR_NEXT_TURN,
                                 new PermanentIsCreaturePredicate()));
     }

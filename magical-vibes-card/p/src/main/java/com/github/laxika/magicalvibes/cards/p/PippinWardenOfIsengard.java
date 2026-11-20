@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -52,7 +52,7 @@ public class PippinWardenOfIsengard extends Card {
                         new SacrificeMultiplePermanentsCost(4,
                                 new PermanentHasSubtypePredicate(CardSubtype.FOOD)),
                         new BoostAllOwnCreaturesEffect(3, 3, otherCreatures),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES, otherCreatures)
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.otherCreaturesYouControl(), otherCreatures)
                 ),
                 "{T}, Sacrifice four Foods: Other creatures you control get +3/+3 and gain haste until end of turn. "
                         + "Activate only as a sorcery.",

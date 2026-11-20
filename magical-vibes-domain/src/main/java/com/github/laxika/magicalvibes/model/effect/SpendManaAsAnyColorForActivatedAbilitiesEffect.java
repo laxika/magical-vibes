@@ -7,15 +7,15 @@ import java.util.Set;
 /**
  * Static permission to spend mana as though it were mana of any color for activated abilities.
  */
-public record SpendManaAsAnyColorForActivatedAbilitiesEffect(GrantScope scope)
+public record SpendManaAsAnyColorForActivatedAbilitiesEffect(PermanentSubject subject)
         implements ActivatedAbilityManaColorPermissionEffect {
 
     public SpendManaAsAnyColorForActivatedAbilitiesEffect() {
-        this(GrantScope.SELF);
+        this(Subjects.source());
     }
 
     public static SpendManaAsAnyColorForActivatedAbilitiesEffect controlledCreatures() {
-        return new SpendManaAsAnyColorForActivatedAbilitiesEffect(GrantScope.ALL_OWN_CREATURES);
+        return new SpendManaAsAnyColorForActivatedAbilitiesEffect(Subjects.creaturesYouControl());
     }
 
     @Override

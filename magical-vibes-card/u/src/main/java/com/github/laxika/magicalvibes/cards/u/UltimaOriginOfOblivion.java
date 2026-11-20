@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AddManaWhenLandOfColorTappedForManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectsToCounterBearersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,10 +27,10 @@ public class UltimaOriginOfOblivion extends Card {
         blightedLand.addTrigger(Triggers.attacks(),
                 new PutCounterOnTargetPermanentEffect(CounterType.BLIGHT),
                 new GrantEffectsToCounterBearersEffect(CounterType.BLIGHT, List.of(
-                        new LoseAllLandTypesEffect(GrantScope.ALL_LANDS, null),
-                        new LosesAllAbilitiesEffect(GrantScope.ALL_LANDS),
+                        new LoseAllLandTypesEffect(Subjects.otherLands(), null),
+                        new LosesAllAbilitiesEffect(Subjects.otherLands()),
                         new GrantActivatedAbilityEffect(
-                                ManaAbilities.tapFor(ManaColor.COLORLESS), GrantScope.ALL_LANDS)),
+                                ManaAbilities.tapFor(ManaColor.COLORLESS), Subjects.otherLands())),
                         true));
 
         addTrigger(Triggers.youTapLandForMana(),

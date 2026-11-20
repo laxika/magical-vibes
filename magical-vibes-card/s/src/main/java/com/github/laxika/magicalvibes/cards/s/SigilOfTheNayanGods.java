@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -19,7 +19,7 @@ public class SigilOfTheNayanGods extends Card {
                 .addStaticEffect(new AttachedBoostEffect(
                         new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
                         new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
-                        GrantScope.ENCHANTED_CREATURE));
+                        Subjects.attachedCreature()));
 
         // Cycling {G/W} ({G/W}, Discard this card: Draw a card.) — discard cost is intrinsic.
         addCycling("{G/W}");

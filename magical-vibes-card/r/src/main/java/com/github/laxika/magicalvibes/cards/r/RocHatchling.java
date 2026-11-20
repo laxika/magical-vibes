@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -36,9 +36,9 @@ public class RocHatchling extends Card {
         // As long as this creature has no shell counters on it, it gets +3/+2 and has flying.
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new SourceCounterThreshold(1, CounterType.SHELL)),
-                new StaticBoostEffect(3, 2, GrantScope.SELF)));
+                new StaticBoostEffect(3, 2, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new SourceCounterThreshold(1, CounterType.SHELL)),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
     }
 }

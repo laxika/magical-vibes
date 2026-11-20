@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -28,11 +28,11 @@ public class AshayaSoulOfTheWild extends Card {
         addStaticEffect(new SetPowerToughnessToAmountEffect(landsYouControl, landsYouControl));
 
         PermanentNotPredicate nontoken = new PermanentNotPredicate(new PermanentIsTokenPredicate());
-        addStaticEffect(new GrantCardTypeEffect(CardType.LAND, GrantScope.SELF, nontoken));
-        addStaticEffect(new GrantCardTypeEffect(CardType.LAND, GrantScope.OWN_CREATURES, nontoken));
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.FOREST, GrantScope.SELF, false, nontoken));
-        addStaticEffect(new GrantSubtypeEffect(CardSubtype.FOREST, GrantScope.OWN_CREATURES, false, nontoken));
+        addStaticEffect(new GrantCardTypeEffect(CardType.LAND, Subjects.source(), nontoken));
+        addStaticEffect(new GrantCardTypeEffect(CardType.LAND, Subjects.otherCreaturesYouControl(), nontoken));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.FOREST, Subjects.source(), false, nontoken));
+        addStaticEffect(new GrantSubtypeEffect(CardSubtype.FOREST, Subjects.otherCreaturesYouControl(), false, nontoken));
         addStaticEffect(new GrantActivatedAbilityEffect(
-                ManaAbilities.tapFor(ManaColor.GREEN), GrantScope.ALL_OWN_CREATURES, nontoken));
+                ManaAbilities.tapFor(ManaColor.GREEN), Subjects.creaturesYouControl(), nontoken));
     }
 }

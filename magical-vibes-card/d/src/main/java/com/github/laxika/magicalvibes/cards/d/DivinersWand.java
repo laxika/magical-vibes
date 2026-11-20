@@ -11,11 +11,11 @@ import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTarget
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -30,8 +30,8 @@ public class DivinersWand extends Card {
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.youDrawCard(),
                 SequenceEffect.of(new BoostSelfEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF))),
-                GrantScope.EQUIPPED_CREATURE));
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.source()))),
+                Subjects.attachedCreature()));
 
         // Equipped creature has "{4}: Draw a card."
         addStaticEffect(new GrantActivatedAbilityEffect(
@@ -41,7 +41,7 @@ public class DivinersWand extends Card {
                         List.of(new DrawCardEffect(1)),
                         "{4}: Draw a card."
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
 
         // Whenever a Wizard creature enters, you may attach this Equipment to it.

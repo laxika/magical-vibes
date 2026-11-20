@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DiscardRandomCardCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -20,7 +20,7 @@ public class DwarvenStrikeForce extends Card {
                 null,
                 List.of(
                         new DiscardRandomCardCost(),
-                        new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.HASTE), GrantScope.SELF)
+                        new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.HASTE), Subjects.source())
                 ),
                 "Discard a card at random: This creature gains first strike and haste until end of turn."
         ));

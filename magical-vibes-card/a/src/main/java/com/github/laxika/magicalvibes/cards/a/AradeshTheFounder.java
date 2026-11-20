@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.TriggeringPermanentPowerAt
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentEnlistedCreatureThisCombatPredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,7 +25,7 @@ public class AradeshTheFounder extends Card {
         addTrigger(Triggers.creatureYouControlAttacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new TriggeringPermanentMatches(new PermanentEnlistedCreatureThisCombatPredicate())),
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TRIGGERING_PERMANENT),
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.triggering()),
                 new ConditionalEffect(new TriggeringPermanentPowerAtLeast(4), new DrawCardEffect(1)));
     }
 }

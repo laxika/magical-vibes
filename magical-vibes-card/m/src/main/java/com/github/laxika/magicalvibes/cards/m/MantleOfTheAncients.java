@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -35,6 +35,6 @@ public class MantleOfTheAncients extends Card {
 
         Scaled onePerAttachment = new Scaled(new AttachmentsOnSource(true, true), 1);
         addStaticEffect(new AttachedBoostEffect(
-                onePerAttachment, onePerAttachment, GrantScope.ENCHANTED_CREATURE, true));
+                onePerAttachment, onePerAttachment, Subjects.attachedCreature(), true));
     }
 }

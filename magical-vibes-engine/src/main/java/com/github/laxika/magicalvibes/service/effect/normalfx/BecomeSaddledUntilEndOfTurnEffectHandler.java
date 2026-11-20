@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.rules.CrewEvent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -7,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -33,12 +34,13 @@ public class BecomeSaddledUntilEndOfTurnEffectHandler implements NormalEffectHan
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var saddle = (BecomeSaddledUntilEndOfTurnEffect) effect;
         // "It becomes saddled" (Kolodin) is the triggering permanent, where it is now.
-        if (saddle.scope() != GrantScope.SELF && saddle.scope() != GrantScope.TRIGGERING_PERMANENT
-                && saddle.scope() != GrantScope.TARGET) {
+        if (!(saddle.subject() instanceof PermanentSubject.Source)
+                && !(saddle.subject() instanceof PermanentSubject.Triggering)
+                && !(saddle.subject() instanceof PermanentSubject.Target)) {
             return;
         }
 
-        for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, saddle.scope().subject())) {
+        for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, saddle.subject())) {
             boolean becameSaddled = !target.isSaddled();
             target.setSaddled(true);
             if (becameSaddled) {

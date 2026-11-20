@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.ExileNCardsFromGraveyardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureBlockableOnlyByFilterThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -22,7 +22,7 @@ public class RunForYourLife extends Card {
     public RunForYourLife() {
         // One or two target creatures gain haste and can be blocked only by creatures with haste this turn.
         target(TargetFilters.creature(), 1, 2)
-                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET))
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.target()))
                 .addSpellEffect(new MakeCreatureBlockableOnlyByFilterThisTurnEffect(
                         new PermanentHasKeywordPredicate(Keyword.HASTE), "creatures with haste"));
 

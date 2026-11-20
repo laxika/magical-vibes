@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,11 +21,11 @@ public class DanceOfTheSkywise extends Card {
 
     public DanceOfTheSkywise() {
         target(TargetFilters.creatureYouControl())
-                .addSpellEffect(new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.UNTIL_END_OF_TURN))
+                .addSpellEffect(new LosesAllAbilitiesEffect(Subjects.target(), Duration.UNTIL_END_OF_TURN))
                 .addSpellEffect(new GrantColorUntilEndOfTurnEffect(CardColor.BLUE))
                 .addSpellEffect(new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(
                                 List.of(CardSubtype.DRAGON, CardSubtype.ILLUSION)))
                 .addSpellEffect(new SetBasePowerToughnessEffect(4, 4))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.target()));
     }
 }

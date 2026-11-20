@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -35,7 +34,7 @@ public class VitoThornOfTheDuskRose extends Card {
                 false,
                 "{3}{B}{B}",
                 List.of(
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ALL_OWN_CREATURES)
+                        new GrantKeywordEffect(Keyword.LIFELINK, Subjects.creaturesYouControl())
                 ),
                 "{3}{B}{B}: Creatures you control gain lifelink until end of turn."
         ));

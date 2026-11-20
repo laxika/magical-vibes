@@ -15,10 +15,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -81,7 +81,7 @@ class LayerDependencyTest extends BaseCardTest {
         card.setName(name);
         card.setType(CardType.LAND);
         card.addStaticEffect(new GrantSubtypeEffect(CardSubtype.SWAMP,
-                GrantScope.ALL_PERMANENTS, false, new PermanentIsLandPredicate()));
+                Subjects.otherPermanents(), false, new PermanentIsLandPredicate()));
         return card;
     }
 
@@ -91,14 +91,14 @@ class LayerDependencyTest extends BaseCardTest {
         card.setName(name);
         card.setType(CardType.LAND);
         card.addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING),
-                GrantScope.OWN_CREATURES));
+                Subjects.otherCreaturesYouControl()));
         return card;
     }
 
     private void addLoseAllFloatingEffect(Player controller, Permanent target) {
         gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Test Lose All",
                 null, controller.getId(),
-                new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.UNTIL_END_OF_TURN),
+                new LosesAllAbilitiesEffect(Subjects.target(), Duration.UNTIL_END_OF_TURN),
                 target.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
     }
 
@@ -201,7 +201,7 @@ class LayerDependencyTest extends BaseCardTest {
     void loseAllOnLordStripsGrantRegardlessOfTimestamps() {
         Card lordCard = creature("Test Lord", 2, 2, CardSubtype.HUMAN);
         lordCard.addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.FLYING),
-                GrantScope.OWN_CREATURES));
+                Subjects.otherCreaturesYouControl()));
         Permanent lord = addPermanent(player1, lordCard);
         Permanent bears = addPermanent(player1, new GrizzlyBears());
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isTrue(); // sanity
@@ -230,14 +230,14 @@ class LayerDependencyTest extends BaseCardTest {
         goblinsAreElves.setName("Goblins Are Elves");
         goblinsAreElves.setType(CardType.ENCHANTMENT);
         goblinsAreElves.addStaticEffect(new GrantSubtypeEffect(CardSubtype.ELF,
-                GrantScope.ALL_CREATURES, false, new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN))));
+                Subjects.otherCreatures(), false, new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.GOBLIN))));
         addPermanent(player1, goblinsAreElves);
 
         Card elvesAreGoblins = new Card();
         elvesAreGoblins.setName("Elves Are Goblins");
         elvesAreGoblins.setType(CardType.ENCHANTMENT);
         elvesAreGoblins.addStaticEffect(new GrantSubtypeEffect(CardSubtype.GOBLIN,
-                GrantScope.ALL_CREATURES, false, new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELF))));
+                Subjects.otherCreatures(), false, new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELF))));
         addPermanent(player1, elvesAreGoblins);
 
         // Each grant changes what the other applies to — a dependency loop. CR 613.8c ignores
@@ -265,7 +265,7 @@ class LayerDependencyTest extends BaseCardTest {
         Permanent bears = addPermanent(player1, new GrizzlyBears());
         addPermanent(player1, new AccordersShield()).setAttachedTo(bears.getId());
         Card wings = artifact("Test Wings", "{1}");
-        wings.addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
+        wings.addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.attachedCreature()));
         Permanent wingsPermanent = addPermanent(player1, wings);
         wingsPermanent.setAttachedTo(bears.getId());
         addPermanent(player1, new AccordersShield()).setAttachedTo(bears.getId());

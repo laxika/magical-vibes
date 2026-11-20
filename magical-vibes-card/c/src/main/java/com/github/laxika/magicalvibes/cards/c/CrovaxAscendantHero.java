@@ -4,10 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -21,12 +21,12 @@ import java.util.Set;
 public class CrovaxAscendantHero extends Card {
 
     public CrovaxAscendantHero() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreatures(),
                 new PermanentAllOfPredicate(List.of(
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE)),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
                 ))));
-        addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+        addStaticEffect(new StaticBoostEffect(-1, -1, Subjects.allCreatures(),
                 new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.WHITE)))));
 
         addActivatedAbility(new ActivatedAbility(false, null,

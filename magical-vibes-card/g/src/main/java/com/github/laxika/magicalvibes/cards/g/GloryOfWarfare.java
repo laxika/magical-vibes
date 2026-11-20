@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.condition.NotControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ARB", collectorNumber = "98")
 @CardRegistration(set = "HOP", collectorNumber = "88")
@@ -15,10 +15,10 @@ public class GloryOfWarfare extends Card {
     public GloryOfWarfare() {
         // During your turn, creatures you control get +2/+0.
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new StaticBoostEffect(2, 0, GrantScope.ALL_OWN_CREATURES)));
+                new StaticBoostEffect(2, 0, Subjects.creaturesYouControl())));
 
         // During turns other than yours, creatures you control get +0/+2.
         addStaticEffect(new ConditionalEffect(new NotControllerTurn(),
-                new StaticBoostEffect(0, 2, GrantScope.ALL_OWN_CREATURES)));
+                new StaticBoostEffect(0, 2, Subjects.creaturesYouControl())));
     }
 }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -26,7 +26,7 @@ public class FinalIteration extends Card {
 
     public FinalIteration() {
         // Wizards you control get +2/+1 and have flying.
-        addStaticEffect(new StaticBoostEffect(2, 1, Set.of(Keyword.FLYING), GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(2, 1, Set.of(Keyword.FLYING), Subjects.otherCreaturesYouControl(),
                 new PermanentHasSubtypePredicate(CardSubtype.WIZARD)));
 
         // Whenever you cast an instant or sorcery spell, create a 1/1 blue Human Wizard creature token.

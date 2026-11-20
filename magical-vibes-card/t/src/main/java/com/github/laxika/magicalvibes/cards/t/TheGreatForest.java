@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OHOP", collectorNumber = "14")
@@ -16,9 +16,9 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TheGreatForest extends Card {
 
     public TheGreatForest() {
-        addStaticEffect(new AssignCombatDamageWithToughnessEffect(GrantScope.ALL_CREATURES));
+        addStaticEffect(new AssignCombatDamageWithToughnessEffect(Subjects.otherCreatures()));
         addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
                 new BoostAllOwnCreaturesEffect(0, 2),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl())));
     }
 }

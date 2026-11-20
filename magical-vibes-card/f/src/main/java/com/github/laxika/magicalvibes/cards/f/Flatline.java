@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "WHO", collectorNumber = "43")
 @CardRegistration(set = "WHO", collectorNumber = "358")
@@ -12,6 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 public class Flatline extends Card {
 
     public Flatline() {
-        addSpellEffect(new SetBasePowerToughnessEffect(0, 1, GrantScope.OPPONENT_CREATURES));
+        addSpellEffect(new SetBasePowerToughnessEffect(0, 1, Subjects.creaturesYourOpponentsControl()));
     }
 }

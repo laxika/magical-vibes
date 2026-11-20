@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,6 +25,6 @@ public class CephalidSage extends Card {
                         SequenceEffect.of(
                                 new DrawCardEffect(3),
                                 new DiscardEffect(2, Subjects.you()))),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

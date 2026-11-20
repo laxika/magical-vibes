@@ -11,11 +11,11 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromEverythingEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -36,18 +36,18 @@ public class Hexdrinker extends Card {
                 new AllOf(List.of(
                         new SourceCounterThreshold(3, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(8, CounterType.LEVEL)))),
-                new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(4, 4, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(3, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(8, CounterType.LEVEL)))),
                 new GrantEffectEffect(
-                        new ProtectionFromCardTypesEffect(Set.of(CardType.INSTANT)), GrantScope.SELF)));
+                        new ProtectionFromCardTypesEffect(Set.of(CardType.INSTANT)), Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(6, 6, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(6, 6, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(8, CounterType.LEVEL),
-                new GrantEffectEffect(new ProtectionFromEverythingEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new ProtectionFromEverythingEffect(), Subjects.source())));
     }
 }

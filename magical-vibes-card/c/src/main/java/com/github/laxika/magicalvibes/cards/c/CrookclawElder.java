@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -32,7 +32,7 @@ public class CrookclawElder extends Card {
                 null,
                 List.of(
                         new TapMultiplePermanentsCost(2, new PermanentHasSubtypePredicate(CardSubtype.WIZARD)),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target())
                 ),
                 "Tap two untapped Wizards you control: Target creature gains flying until end of turn.",
                 TargetFilters.creature()

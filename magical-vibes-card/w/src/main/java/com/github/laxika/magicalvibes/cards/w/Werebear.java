@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ODY", collectorNumber = "282")
 @CardRegistration(set = "EMA", collectorNumber = "191")
@@ -18,6 +18,6 @@ public class Werebear extends Card {
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.GREEN));
         addStaticEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
-                new StaticBoostEffect(3, 3, GrantScope.SELF)));
+                new StaticBoostEffect(3, 3, Subjects.source())));
     }
 }

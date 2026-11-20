@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromGraveyardAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -23,8 +23,8 @@ public class CravingOfYeenoghu extends Card {
         // Enchant creature you control
         target(TargetFilters.creatureYouControl())
                 // Enchanted creature gets +3/+2, has haste, and attacks each combat if able.
-                .addStaticEffect(new StaticBoostEffect(3, 2, GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(3, 2, Subjects.attachedCreature()))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.attachedCreature()))
                 .addStaticEffect(new MustAttackEffect());
 
         // {R}: Return this card from your graveyard to the battlefield attached to target creature you
@@ -36,7 +36,7 @@ public class CravingOfYeenoghu extends Card {
                 List.of(
                         new ReturnSourceFromGraveyardAttachedToTargetEffect(),
                         new PerpetuallyGrantStaticEffectToSourceEffect(
-                                new StaticBoostEffect(-1, -1, GrantScope.ENCHANTED_CREATURE))),
+                                new StaticBoostEffect(-1, -1, Subjects.attachedCreature()))),
                 "{R}: Return this card from your graveyard to the battlefield attached to target creature "
                         + "you control. Craving of Yeenoghu perpetually gains \"Enchanted creature gets "
                         + "-1/-1.\" Activate only as a sorcery.",

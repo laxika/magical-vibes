@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
 import java.util.Set;
@@ -17,13 +17,13 @@ public class RighteousWar extends Card {
         // White creatures you control have protection from black.
         addStaticEffect(new GrantEffectEffect(
                 new ProtectionFromColorsEffect(Set.of(CardColor.BLACK)),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentColorInPredicate(Set.of(CardColor.WHITE))));
 
         // Black creatures you control have protection from white.
         addStaticEffect(new GrantEffectEffect(
                 new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentColorInPredicate(Set.of(CardColor.BLACK))));
     }
 }

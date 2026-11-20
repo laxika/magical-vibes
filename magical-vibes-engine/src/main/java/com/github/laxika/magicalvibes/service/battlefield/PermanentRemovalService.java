@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.battlefield;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesInsteadOfDyingThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileControlledPermanentsInsteadOfDyingThisTurnEffect;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
@@ -51,7 +52,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedByContro
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedBySourceInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantExileIfLeavesBattlefieldUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesInsteadOfDyingWithLifeLossEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNontokenCreaturesInsteadOfDyingWithBloodCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileOwnCreaturesOfSubtypeInsteadOfDyingEffect;
@@ -3680,7 +3680,7 @@ public class PermanentRemovalService {
             applyPendingReturnCounters(gameData, ownerId, pending, permanent, primary);
             if (pending.grantHaste()) {
                 gameData.addEffectOnPermanent(card.getName(), permanent.getId(), ownerId,
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), permanent.getId(),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), permanent.getId(),
                         Duration.PERMANENT);
             }
             if (primary) {

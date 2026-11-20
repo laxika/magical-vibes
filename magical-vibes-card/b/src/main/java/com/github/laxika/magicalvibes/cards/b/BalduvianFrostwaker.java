@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -31,7 +31,7 @@ public class BalduvianFrostwaker extends Card {
                         Set.of(Keyword.FLYING),
                         CardColor.BLUE,
                         Set.of(),
-                        GrantScope.TARGET,
+                        Subjects.target(),
                         Duration.PERMANENT)),
                 "{U}, {T}: Target snow land becomes a 2/2 blue Elemental creature with flying. It's still a land.",
                 new PermanentPredicateTargetFilter(

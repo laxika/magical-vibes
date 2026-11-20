@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,9 +29,9 @@ public class NyleasPresence extends Card {
                 new BasicLandGrant(CardSubtype.MOUNTAIN, ManaColor.RED),
                 new BasicLandGrant(CardSubtype.FOREST, ManaColor.GREEN)
         ).forEach(grant -> {
-            addStaticEffect(new GrantSubtypeEffect(grant.subtype(), GrantScope.ENCHANTED_PERMANENT));
+            addStaticEffect(new GrantSubtypeEffect(grant.subtype(), Subjects.attached()));
             addStaticEffect(new GrantActivatedAbilityEffect(
-                    ManaAbilities.tapFor(grant.color()), GrantScope.ENCHANTED_PERMANENT));
+                    ManaAbilities.tapFor(grant.color()), Subjects.attached()));
         });
     }
 

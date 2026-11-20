@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeSkanosEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -60,13 +59,13 @@ public class SkanosDragonVassal extends Card {
         CardEffect boost = new BoostTargetCreatureEffect(new SourcePower(), new Fixed(0));
         return switch (color) {
             case WHITE -> SequenceEffect.of(
-                    new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET), boost);
+                    new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target()), boost);
             case BLUE -> SequenceEffect.of(
-                    new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET), boost);
+                    new GrantKeywordEffect(Keyword.FLYING, Subjects.target()), boost);
             case BLACK -> SequenceEffect.of(
-                    new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET), boost);
+                    new GrantKeywordEffect(Keyword.MENACE, Subjects.target()), boost);
             case RED -> SequenceEffect.of(
-                    new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET), boost);
+                    new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target()), boost);
             case GREEN -> SequenceEffect.of(
                     new UntapPermanentsEffect(Subjects.target()), boost);
         };

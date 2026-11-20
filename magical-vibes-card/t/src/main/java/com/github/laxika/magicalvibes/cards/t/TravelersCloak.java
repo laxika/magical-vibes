@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderContro
 import com.github.laxika.magicalvibes.model.effect.ChooseBasicLandTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -23,6 +23,6 @@ public class TravelersCloak extends Card {
                 .addStaticEffect(new GrantEffectEffect(
                         new CantBeBlockedIfDefenderControlsMatchingPermanentEffect(
                                 new PermanentHasSourceChosenSubtypePredicate(), true),
-                        GrantScope.ENCHANTED_CREATURE));
+                        Subjects.attachedCreature()));
     }
 }

@@ -69,7 +69,7 @@ public class PerpetuallyRemoveKeywordEffectHandler implements NormalEffectHandle
             gameData.replaceFloatingEffect(floating, new FloatingContinuousEffect(
                     floating.id(), floating.sourceCardName(), floating.sourcePermanentId(),
                     floating.controllerId(),
-                    new GrantKeywordEffect(remaining, grant.scope(), grant.filter(), grant.duration(),
+                    new GrantKeywordEffect(remaining, grant.subject(), grant.filter(), grant.duration(),
                             grant.grantCondition()),
                     floating.affectedPermanentId(), floating.affectedPlayerId(), floating.scope(),
                     floating.duration(), floating.timestamp(), floating.expiresWhenScopeNoLongerMatches()));

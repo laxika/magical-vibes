@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -31,11 +31,11 @@ public class FavorOfJukai extends Card {
                 "Target must be an artifact or creature"))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         creature,
-                        new StaticBoostEffect(3, 3, GrantScope.ENCHANTED_CREATURE),
+                        new StaticBoostEffect(3, 3, Subjects.attachedCreature()),
                         null))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         creature,
-                        new GrantKeywordEffect(Keyword.REACH, GrantScope.ENCHANTED_CREATURE),
+                        new GrantKeywordEffect(Keyword.REACH, Subjects.attachedCreature()),
                         null));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
@@ -43,7 +43,7 @@ public class FavorOfJukai extends Card {
                 "{1}{G}",
                 List.of(
                         new BoostTargetCreatureEffect(3, 3),
-                        new GrantKeywordEffect(Keyword.REACH, GrantScope.TARGET)),
+                        new GrantKeywordEffect(Keyword.REACH, Subjects.target())),
                 "Channel — {1}{G}, Discard this card: Target creature gets +3/+3 and gains reach until end of turn.",
                 TargetFilters.creature()
         ));

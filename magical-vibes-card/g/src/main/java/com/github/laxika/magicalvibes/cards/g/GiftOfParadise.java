@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,7 +25,7 @@ public class GiftOfParadise extends Card {
                 .addStaticEffect(new GrantActivatedAbilityEffect(
                         new ActivatedAbility(true, null, List.of(new AwardAnyColorManaEffect(2)),
                                 "{T}: Add two mana of any one color."),
-                        GrantScope.ENCHANTED_PERMANENT
+                        Subjects.attached()
                 ))
                 // When this Aura enters, you gain 3 life.
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new GainLifeEffect(3));

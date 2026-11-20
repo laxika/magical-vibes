@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
@@ -64,20 +63,20 @@ public class SlivdraziMonstrosity extends Card {
 
     public SlivdraziMonstrosity() {
         addStaticEffect(new GrantSubtypeEffect(
-                CardSubtype.SLIVER, GrantScope.OWN_PERMANENTS, false, ELDRAZI));
+                CardSubtype.SLIVER, Subjects.permanentsYouControl(), false, ELDRAZI));
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.DEVOID, GrantScope.ALL_OWN_CREATURES, SLIVER));
+                Keyword.DEVOID, Subjects.creaturesYouControl(), SLIVER));
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.DEVOID, GrantScope.OWN_PERMANENTS,
+                Keyword.DEVOID, Subjects.otherPermanentsYouControl(),
                 new PermanentAllOfPredicate(List.of(
                         SLIVER, new PermanentNotPredicate(new PermanentIsCreaturePredicate())))));
         addStaticEffect(new BecomeColorlessEffect(
-                GrantScope.ALL_OWN_CREATURES, SLIVER));
+                Subjects.creaturesYouControl(), SLIVER));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.attacks(),
                 new SacrificePermanentsEffect(
                         1, new PermanentTruePredicate(), Subjects.defendingPlayer())),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 SLIVER));
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
  * Self pass for {@link GrantKeywordEffect}: grants the keyword(s) to the source permanent itself
  * when the effect's subject names it, filter permitting ("this creature", "creatures you control" while it is a
  * creature, "each land" while it is a land; never "other permanents you control",
- * {@link StaticEffectSupport#withOwnPermanentsAsOthers}). The non-self
+ * {@link com.github.laxika.magicalvibes.model.effect.Subjects#otherPermanentsYouControl()}). The non-self
  * {@link GrantKeywordEffectHandler} already covers other creatures — e.g. Sun Quan, Lord of Wu
  * grants horsemanship to himself as well as the rest of your board.
  */
@@ -35,7 +35,7 @@ public class GrantKeywordSelfEffectHandler implements StaticEffectHandlerBean {
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantKeywordEffect) effect;
         if (support.names(context,
-                StaticEffectSupport.withOwnPermanentsAsOthers(grant.scope()), grant.filter())) {
+                grant.subject(), grant.filter())) {
             accumulator.addKeywords(grant.keywords());
         }
     }

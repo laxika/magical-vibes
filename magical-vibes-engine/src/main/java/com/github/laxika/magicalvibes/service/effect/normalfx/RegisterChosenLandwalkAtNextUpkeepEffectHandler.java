@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenLandwalkEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -30,7 +30,7 @@ public class RegisterChosenLandwalkAtNextUpkeepEffectHandler implements NormalEf
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                 Triggers.upkeep(ActivePlayer.YOU), entry.getControllerId(), entry.getCard(),
                 entry.getSourcePermanentId(), entry.getSourcePermanentId(),
-                new GrantChosenLandwalkEffect(GrantScope.SELF)));
+                new GrantChosenLandwalkEffect(Subjects.source())));
         log.info("Game {} - {} registers chosen landwalk at their next upkeep",
                 gameData.id, entry.getCard().getName());
     }

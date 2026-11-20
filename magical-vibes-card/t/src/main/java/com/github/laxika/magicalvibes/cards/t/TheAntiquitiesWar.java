@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -42,7 +42,7 @@ public class TheAntiquitiesWar extends Card {
         // Chapter III: Artifacts you control become artifact creatures with base P/T 5/5 until end of turn
         addTrigger(Triggers.chapter(3),
                 new AnimatePermanentsEffect(new Fixed(5), new Fixed(5), List.of(), Set.of(), null, Set.of(),
-                        GrantScope.OWN_PERMANENTS, Duration.UNTIL_END_OF_TURN,
+                        Subjects.permanentsYouControl(), Duration.UNTIL_END_OF_TURN,
                         new PermanentIsArtifactPredicate()));
     }
 }

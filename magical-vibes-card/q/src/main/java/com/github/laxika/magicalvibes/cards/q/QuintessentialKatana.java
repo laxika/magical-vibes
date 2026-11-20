@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -25,13 +24,13 @@ import java.util.List;
 public class QuintessentialKatana extends Card {
 
     public QuintessentialKatana() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.dealsCombatDamage(),
                 SequenceEffect.of(
                         new UntapPermanentsEffect(Subjects.source()),
                         new GainLifeEffect(2))),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 Triggers.CREATURE,

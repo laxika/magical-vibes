@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,7 +17,7 @@ public class EthrimikImaginedFiend extends Card {
 
     public EthrimikImaginedFiend() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), ManifestDreadEffect.forController());
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl()));
         // Ethrimik can't attack or block as long as you control another creature.
         addStaticEffect(new CantAttackOrBlockUnlessEffect(
                 new NotCondition(new ControlsAnotherPermanent(new PermanentIsCreaturePredicate())),

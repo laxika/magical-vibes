@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllNonManaAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,6 +13,6 @@ public class BloodSun extends Card {
 
     public BloodSun() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1));
-        addStaticEffect(new LosesAllNonManaAbilitiesEffect(GrantScope.ALL_LANDS));
+        addStaticEffect(new LosesAllNonManaAbilitiesEffect(Subjects.otherLands()));
     }
 }

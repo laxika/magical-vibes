@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class HookSwords extends Card {
                 new LivingWeaponEffect(new CreateTokenEffect("Ally", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.ALLY), Set.of(), Set.of())));
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new StaticBoostEffect(1, 1, Set.of(Keyword.FIRST_STRIKE), GrantScope.EQUIPPED_CREATURE)));
+                new StaticBoostEffect(1, 1, Set.of(Keyword.FIRST_STRIKE), Subjects.attachedCreature())));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }
 }

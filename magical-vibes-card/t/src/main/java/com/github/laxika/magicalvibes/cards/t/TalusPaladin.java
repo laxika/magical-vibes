@@ -7,10 +7,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceMatchesPermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -31,11 +31,11 @@ public class TalusPaladin extends Card {
                         ObjectRelation.THIS_OR_ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
                         new MayEffect(SequenceEffect.of(
-                                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES, ally),
+                                new GrantKeywordEffect(Keyword.LIFELINK, Subjects.otherCreaturesYouControl(), ally),
                                 new ConditionalEffect(new SourceMatchesPermanentPredicate(
                                         new PermanentAllOfPredicate(List.of(ally,
                                                 new PermanentControlledBySourceControllerPredicate()))),
-                                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF))
+                                        new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source()))
                         ), "Have Ally creatures you control gain lifelink until end of turn?"),
                         new MayEffect(new PutCountersOnSourceEffect(1, 1, 1),
                                 "Put a +1/+1 counter on Talus Paladin?")));

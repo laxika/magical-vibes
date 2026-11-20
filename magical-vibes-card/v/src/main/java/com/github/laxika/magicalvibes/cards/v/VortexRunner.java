@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "STX", collectorNumber = "60")
@@ -17,8 +17,8 @@ public class VortexRunner extends Card {
         // As long as you control eight or more lands, this creature gets +1/+0 and can't be blocked.
         ControlsPermanentCount eightLands = new ControlsPermanentCount(8, new PermanentIsLandPredicate());
         addStaticEffect(new ConditionalEffect(eightLands,
-                new StaticBoostEffect(1, 0, GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Subjects.source())));
         addStaticEffect(new ConditionalEffect(eightLands,
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
     }
 }

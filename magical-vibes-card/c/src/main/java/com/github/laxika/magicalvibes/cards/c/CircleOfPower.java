@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -42,6 +41,6 @@ public class CircleOfPower extends Card {
         addSpellEffect(new LoseLifeEffect(2));
         addSpellEffect(wizardToken);
         addSpellEffect(new BoostAllOwnCreaturesEffect(1, 0, wizard));
-        addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.OWN_CREATURES, wizard));
+        addSpellEffect(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.otherCreaturesYouControl(), wizard));
     }
 }

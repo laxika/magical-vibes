@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -30,7 +29,7 @@ public class OriginOfCaptainAmerica extends Card {
         addTrigger(Triggers.chapter(1),
                 new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE),
                 new GrantKeywordEffect(
-                        Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE), GrantScope.TARGET));
+                        Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE), Subjects.target()));
         setSagaChapterTargetGroups(1, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creatureYouControl(), 1, 1)));
 
@@ -39,7 +38,7 @@ public class OriginOfCaptainAmerica extends Card {
                 1, "Sturdy Shield", List.of(CardSubtype.EQUIPMENT),
                 List.of(new EquipActivatedAbility("{2}")));
         addTrigger(Triggers.chapter(2),
-                sturdyShield.withTokenEffects(List.of(StaticAbility.of(new StaticBoostEffect(1, 2, GrantScope.EQUIPPED_CREATURE)))));
+                sturdyShield.withTokenEffects(List.of(StaticAbility.of(new StaticBoostEffect(1, 2, Subjects.attachedCreature())))));
 
         // Chapter III: Tap up to one target creature and put a stun counter on it.
         addTrigger(Triggers.chapter(3),

@@ -472,7 +472,7 @@ newest (maximum life, fixed land colour), the strictest (a spell limit), a sum (
 duration, "it becomes an artifact in addition to its other types", "it enters with haste" (CR 614.1c) and "target land
 becomes snow" are floating effects on the permanent with `Duration.PERMANENT` (CR 611.2a), stamped as they are made
 (CR 613.7b) and applied in their layer in timestamp order: `GrantSubtypeEffect`, `GrantColorEffect`, `GrantKeywordEffect`,
-`GrantCardTypeEffect` (mostly `GrantScope.TARGET`; a floating payload applies to the permanent it is on, whatever its `GrantScope`) and the resolving `SetTargetPermanentSupertypeEffect` itself. A site
+`GrantCardTypeEffect` (mostly `Subjects.target()`; a floating payload applies to the permanent it is on, whatever its `PermanentSubject`) and the resolving `SetTargetPermanentSupertypeEffect` itself. A site
 with no resolving entry at hand (a replacement as the permanent enters, a choice's continuation) uses
 `GameData.addEffectOnPermanent(sourceCardName, sourcePermanentId, controllerId, effect, permanentId, duration)`. The
 `Permanent` keeps none of them: an earlier "loses all abilities" (Humility) no longer removes a later grant, as it did
@@ -485,8 +485,8 @@ characteristics. Tests give and read these grants through `testutil.PermanentGra
 until your next turn", "gains protection from red / from artifacts / from colorless / from each of your opponents /
 from creatures your opponents control until end of turn" are floating effects on the permanent with the stated
 `Duration` (CR 611.2a), applied in layer 6 in timestamp order with the static ones (CR 613.1f, 613.7):
-`GrantKeywordEffect` and `RemoveKeywordEffect` (`GrantScope.TARGET`), `ProtectionFromColorsEffect(colors,
-GrantScope.TARGET)`, and `GrantEffectEffect(protection, GrantScope.TARGET)` for `ProtectionFromCardTypesEffect`,
+`GrantKeywordEffect` and `RemoveKeywordEffect` (`Subjects.target()`), `ProtectionFromColorsEffect(colors,
+Subjects.target())`, and `GrantEffectEffect(protection, Subjects.target())` for `ProtectionFromCardTypesEffect`,
 `ProtectionFromColorlessEffect`, `ProtectionFromPlayersEffect` (players fixed as it resolves),
 `ProtectionFromNonSubtypeCreaturesEffect` and `GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect` (its
 "opponents" are read at each check). A "loses all abilities" or "loses all protection" removes only the grants older
@@ -510,7 +510,7 @@ permanent's own. Tests give and read these through `testutil.PermanentGrants` (`
 with no stated duration (Cipher, Dread Wight's removal ability, a token copy's added death ability, a land's added mana
 ability) is a floating effect on the permanent (`GameData.grantAbilityToPermanent`, CR 611.2a), applied in layer 6 in
 timestamp order (CR 613.1f, 613.7): a triggered ability as `GrantTriggeredAbilityEffect`, each effect of a static one as
-`GrantEffectEffect`, an activated one as `GrantActivatedAbilityEffect` (`GrantScope.TARGET`). "Loses all abilities"
+`GrantEffectEffect`, an activated one as `GrantActivatedAbilityEffect` (`Subjects.target()`). "Loses all abilities"
 (`LosesAllAbilitiesEffect`) and the removal of one kind of static ability ("loses 'prevent all damage…'", "loses all
 'bands with other' abilities": the `SuppressStaticEffect…` records as payloads) are floating layer-6 effects too, so a
 grant older than a removal is gone and a newer one stays; a rules restriction added as a non-ability

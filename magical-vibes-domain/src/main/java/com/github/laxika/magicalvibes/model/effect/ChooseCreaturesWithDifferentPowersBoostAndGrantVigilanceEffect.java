@@ -18,8 +18,8 @@ public record ChooseCreaturesWithDifferentPowersBoostAndGrantVigilanceEffect()
     }
 
     @Override
-    public GrantScope scope() {
-        return GrantScope.TARGETS;
+    public PermanentSubject subject() {
+        return Subjects.target();
     }
 
     @Override

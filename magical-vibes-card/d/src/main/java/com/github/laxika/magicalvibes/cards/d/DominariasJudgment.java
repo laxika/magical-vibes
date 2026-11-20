@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "PLS", collectorNumber = "4")
@@ -24,6 +24,6 @@ public class DominariasJudgment extends Card {
     private void addConditionalProtection(CardSubtype landSubtype, CardColor color) {
         addSpellEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(landSubtype)),
-                new GrantProtectionFromColorUntilEndOfTurnEffect(color, GrantScope.OWN_CREATURES)));
+                new GrantProtectionFromColorUntilEndOfTurnEffect(color, Subjects.creaturesYouControl())));
     }
 }

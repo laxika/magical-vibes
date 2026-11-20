@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostCreaturesOfChosenSubtype
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenSubtypePredicate;
 
 @CardRegistration(set = "RIX", collectorNumber = "18")
@@ -21,7 +21,7 @@ public class RadiantDestiny extends Card {
         addStaticEffect(new ChooseSubtypeOnEnterEffect());
         addStaticEffect(new BoostCreaturesOfChosenSubtypeEffect(1, 1));
         addStaticEffect(new ConditionalEffect(new ControllerHasCityBlessing(),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.OWN_CREATURES,
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.otherCreaturesYouControl(),
                         new PermanentHasSourceChosenSubtypePredicate())));
     }
 }

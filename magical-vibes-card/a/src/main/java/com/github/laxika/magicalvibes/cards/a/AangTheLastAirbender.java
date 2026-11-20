@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AirbendTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -32,6 +32,6 @@ public class AangTheLastAirbender extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new AirbendTargetPermanentEffect());
 
         addTrigger(Triggers.youCastSpell().withFilter(new CardSubtypePredicate(CardSubtype.LESSON)),
-                new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.LIFELINK, Subjects.source()));
     }
 }

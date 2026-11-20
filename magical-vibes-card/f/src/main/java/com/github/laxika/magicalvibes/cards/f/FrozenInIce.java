@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBecomeUntappedEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -18,8 +17,8 @@ public class FrozenInIce extends Card {
     public FrozenInIce() {
         target(TargetFilters.creature())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new TapPermanentsEffect(Subjects.target()))
-                .addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new LosesAllAbilitiesEffect(Subjects.attachedCreature()))
                 .addStaticEffect(DoesntUntapEffect.enchanted())
-                .addStaticEffect(new CantBecomeUntappedEffect(GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new CantBecomeUntappedEffect(Subjects.attachedCreature()));
     }
 }

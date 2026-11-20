@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.OpponentGraveyardAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "ZNR", collectorNumber = "116")
@@ -15,6 +15,6 @@ public class NimanaSkitterSneak extends Card {
 
     public NimanaSkitterSneak() {
         addStaticEffect(new ConditionalEffect(new OpponentGraveyardAtLeast(8),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.MENACE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.MENACE), Subjects.source())));
     }
 }

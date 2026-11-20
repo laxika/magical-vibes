@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExperienceCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsColorlessPredicate;
@@ -44,7 +43,7 @@ public class AzlaskTheSwellingScourge extends Card {
                 "{W}{U}{B}{R}{G}",
                 List.of(
                         new BoostAllOwnCreaturesEffect(experienceCounters, experienceCounters),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_OWN_CREATURES,
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.creaturesYouControl(),
                                 scionsAndSpawns),
                         new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.attacks(),

@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class MyPrecious extends Card {
     public MyPrecious() {
         setBackFaceCard(new AllureOfPower());
         addCastingOption(new AdventureCast("{1}{B}"));
-        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.attachedCreature()));
         addStaticEffect(new CantBeBlockedEffect());
         addActivatedAbility(new ActivatedAbility(
                 false,

@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "150")
@@ -22,7 +22,7 @@ public class CartelAristocrat extends Card {
                 null,
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new GrantProtectionChoiceUntilEndOfTurnEffect(GrantScope.SELF)
+                        new GrantProtectionChoiceUntilEndOfTurnEffect(Subjects.source())
                 ),
                 "Sacrifice another creature: Cartel Aristocrat gains protection from the color of your choice until end of turn."
         ));

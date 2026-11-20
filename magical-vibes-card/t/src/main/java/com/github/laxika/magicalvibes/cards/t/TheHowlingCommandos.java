@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class TheHowlingCommandos extends Card {
                 "{5}",
                 List.of(
                         new BoostAllOwnCreaturesEffect(1, 1),
-                        new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES,
+                        new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl(),
                                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SOLDIER)))
                 ),
                 "{5}: Creatures you control get +1/+1 until end of turn. Soldiers you control gain vigilance until end of turn."

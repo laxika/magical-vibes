@@ -897,7 +897,7 @@ Ran green: the 6 card tests plus `TeferiHeroOfDominariaTest`, `GalvanicJuggernau
 
 **Shipped**
 ```java
-public record GrantChosenKeywordEffect(List<Keyword> options, GrantScope scope) implements CardEffect
+public record GrantChosenKeywordEffect(List<Keyword> options, PermanentSubject subject) implements CardEffect
 // compact ctor rejects every scope but SELF / TARGET
 
 public record GrantControllerKeywordEffect(Keyword keyword) implements CardEffect
@@ -909,9 +909,9 @@ public record GrantSpellCastingAbilityToSpellsEffect(Keyword grantedAbility, Car
 
 public record GrantProtectionChoiceUntilEndOfTurnEffect(boolean includeArtifacts,
                                                         boolean targetControllerChooses,
-                                                        GrantScope scope,
+                                                        PermanentSubject subject,
                                                         PermanentPredicate filter) implements CardEffect
-// + the four existing sugar ctors (filter = null) and a new (GrantScope, PermanentPredicate)
+// + the four existing sugar ctors (filter = null) and a new (PermanentSubject, PermanentPredicate)
 
 public record GrantNoMaximumHandSizeEffect(Duration duration) implements CardEffect
 // the step added enum NoMaximumHandSizeDuration { REST_OF_GAME, UNTIL_NEXT_TURN }; it is now model.effect.Duration
@@ -1636,7 +1636,7 @@ intervening "if" `TriggeringPermanentMatches` on the entering creature, so no wr
 **19b Target**
 ```java
 GrantEffectToTargetEffect(Ability grantedAbility, Duration duration,
-                          boolean skipIfAlreadyPresent, GrantScope scope, TargetPredicate declaredTarget)
+                          boolean skipIfAlreadyPresent, PermanentSubject subject, TargetPredicate declaredTarget)
 ```
 **Absorbs**: `GrantEffectToTargetUntilEndOfTurnEffect` (6),
 `GrantEffectToSourceUntilEndOfTurnEffect` (1), `GrantEffectToOwnCreaturesUntilEndOfTurnEffect` (2).
@@ -1799,7 +1799,7 @@ with `Duration.PERMANENT` — the merge is what the code already does by hand.
 **Gotcha** — the explicit `chooseColors` flag is load-bearing: `applyL5Instance:1734` currently uses
 `if (becomes.colors().isEmpty()) return;` to distinguish a prompting instance from an applied one,
 which is exactly why colorless needed its own record.
-**Leave out**: `BecomeColorlessEffect(GrantScope)` is a **staticfx** effect on a different dispatch path.
+**Leave out**: `BecomeColorlessEffect(PermanentSubject)` is a **staticfx** effect on a different dispatch path.
 **Follow-up**: `SetTargetColorEffect` (S slice) already handles colorless via `color() == null`
 (`:1745`) and should be folded in a later sweep.
 

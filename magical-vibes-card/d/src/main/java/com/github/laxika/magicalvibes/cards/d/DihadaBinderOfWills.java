@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
@@ -43,7 +42,7 @@ public class DihadaBinderOfWills extends Card {
                 null,
                 List.of(new GrantKeywordEffect(
                         Set.of(Keyword.VIGILANCE, Keyword.LIFELINK, Keyword.INDESTRUCTIBLE),
-                        GrantScope.TARGET,
+                        Subjects.target(),
                         null,
                         Duration.UNTIL_YOUR_NEXT_TURN,
                         null)),
@@ -81,7 +80,7 @@ public class DihadaBinderOfWills extends Card {
                 List.of(
                         new GainControlOfAllPermanentsMatchingEffect(nonlandPermanent, Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(Subjects.controlledBy(Subjects.you(), nonlandPermanent)),
-                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_PERMANENTS, nonlandPermanent)),
+                        new GrantKeywordEffect(Keyword.HASTE, Subjects.permanentsYouControl(), nonlandPermanent)),
                 "−11: Gain control of all nonland permanents until end of turn. Untap them. They gain haste until end of turn."));
     }
 }

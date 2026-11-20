@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -31,7 +31,7 @@ public class TheWorldTree extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(6, new PermanentIsLandPredicate()),
-                new GrantActivatedAbilityEffect(ManaAbilities.tapForAnyColor(), GrantScope.OWN_LANDS)));
+                new GrantActivatedAbilityEffect(ManaAbilities.tapForAnyColor(), Subjects.landsYouControl())));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

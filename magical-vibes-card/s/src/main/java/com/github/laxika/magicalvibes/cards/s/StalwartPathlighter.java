@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Coven;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,6 +19,6 @@ public class StalwartPathlighter extends Card {
         // with different powers, creatures you control gain indestructible until end of turn.
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new Coven()),
-                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.ALL_OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.creaturesYouControl()));
     }
 }

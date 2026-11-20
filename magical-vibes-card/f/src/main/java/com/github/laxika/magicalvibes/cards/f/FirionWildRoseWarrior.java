@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEquippedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -25,7 +25,7 @@ public class FirionWildRoseWarrior extends Card {
 
     public FirionWildRoseWarrior() {
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.HASTE, GrantScope.ALL_OWN_CREATURES, new PermanentIsEquippedPredicate()));
+                Keyword.HASTE, Subjects.creaturesYouControl(), new PermanentIsEquippedPredicate()));
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(
                                 Triggers.EQUIPMENT,

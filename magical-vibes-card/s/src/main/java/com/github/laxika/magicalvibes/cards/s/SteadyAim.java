@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,6 +16,6 @@ public class SteadyAim extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new UntapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(new BoostTargetCreatureEffect(1, 4))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.REACH, Subjects.target()));
     }
 }

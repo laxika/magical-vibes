@@ -8,10 +8,10 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseAllLandTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -25,17 +25,17 @@ public class LithoformBlight extends Card {
         target(TargetFilters.land());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect());
-        addStaticEffect(new LoseAllLandTypesEffect(GrantScope.ENCHANTED_PERMANENT, null));
-        addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.ENCHANTED_PERMANENT));
+        addStaticEffect(new LoseAllLandTypesEffect(Subjects.attached(), null));
+        addStaticEffect(new LosesAllAbilitiesEffect(Subjects.attached()));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapFor(ManaColor.COLORLESS),
-                GrantScope.ENCHANTED_PERMANENT));
+                Subjects.attached()));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
                         null,
                         List.of(new PayLifeCost(1), new AwardAnyColorManaEffect()),
                         "{T}, Pay 1 life: Add one mana of any color."),
-                GrantScope.ENCHANTED_PERMANENT));
+                Subjects.attached()));
     }
 }

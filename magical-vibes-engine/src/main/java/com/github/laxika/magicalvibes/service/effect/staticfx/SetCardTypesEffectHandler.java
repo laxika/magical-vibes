@@ -21,7 +21,7 @@ public class SetCardTypesEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var set = (SetCardTypesEffect) effect;
-        boolean matches = support.namesBeyondSource(context, set.scope().subject(), null);
+        boolean matches = support.namesBeyondSource(context, set.subject(), null);
         if (matches) {
             accumulator.setCardTypeOverriding(true);
             accumulator.setGrantedCardTypes(set.cardTypes());

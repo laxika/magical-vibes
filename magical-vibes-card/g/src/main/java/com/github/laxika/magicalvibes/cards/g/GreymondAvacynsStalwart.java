@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.ChooseModeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import java.util.List;
 import java.util.Set;
@@ -31,16 +31,16 @@ public class GreymondAvacynsStalwart extends Card {
         PermanentHasSubtypePredicate human = new PermanentHasSubtypePredicate(CardSubtype.HUMAN);
         addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(FIRST_STRIKE_VIGILANCE),
                 new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.VIGILANCE),
-                        GrantScope.ALL_OWN_CREATURES, human)));
+                        Subjects.creaturesYouControl(), human)));
         addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(FIRST_STRIKE_LIFELINK),
                 new GrantKeywordEffect(Set.of(Keyword.FIRST_STRIKE, Keyword.LIFELINK),
-                        GrantScope.ALL_OWN_CREATURES, human)));
+                        Subjects.creaturesYouControl(), human)));
         addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(VIGILANCE_LIFELINK),
                 new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.LIFELINK),
-                        GrantScope.ALL_OWN_CREATURES, human)));
+                        Subjects.creaturesYouControl(), human)));
 
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(4, human),
-                new StaticBoostEffect(2, 2, GrantScope.ALL_OWN_CREATURES, human)));
+                new StaticBoostEffect(2, 2, Subjects.creaturesYouControl(), human)));
     }
 }

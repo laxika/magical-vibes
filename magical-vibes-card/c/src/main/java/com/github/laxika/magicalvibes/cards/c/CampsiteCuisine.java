@@ -11,11 +11,11 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -39,7 +39,7 @@ public class CampsiteCuisine extends Card {
                 CreateTokenEffect.ofFoodToken(1));
 
         var grantKeywords = new GrantKeywordEffect(
-                Set.of(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE), GrantScope.TARGETS);
+                Set.of(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE), Subjects.triggeringSpellTargets());
         targetUpTo(new EventValue(), TargetFilters.attackingCreature(), 100)
                 .addTrigger(Triggers.youAttack(), new MayEffect(
                         SequenceEffect.of(

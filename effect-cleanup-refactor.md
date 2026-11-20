@@ -18,7 +18,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
-| 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | in progress: 6.1, 6.2a–6.2e done (`TapUntapScope` deleted in 6.2e) |
+| 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | in progress: 6.1–6.3 done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3); 6.4 open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
 | 9 | Sweep the single-card tail (repeatable) | open |
@@ -451,7 +451,7 @@ Ask for a full card-test run after sub-step 2 and again after sub-step 3. Run th
 | 6.2c | `LayerSystemService` + `GameQueryService`, the engine classifiers outside them | done |
 | 6.2d | the AI | done (the AI `TapUntapScope` reads go with 6.2e) |
 | 6.2e | the one-shot `TapUntapScope` restriction handlers, and the static ones 6.2b left (`UntapStepService`, `UntapPreventionSupport`) | done (the six records take a `PermanentSubject`, cards rewritten, `TapUntapScope` deleted) |
-| 6.3 | records take a `PermanentSubject`, cards rewritten, `GrantScope` deleted (`TapUntapScope` went in 6.2e) | open |
+| 6.3 | records take a `PermanentSubject`, cards rewritten, `GrantScope` deleted (`TapUntapScope` went in 6.2e) | done (every record converted, the four no-variant constants got variants, `GrantScope` deleted) |
 | 6.4 | the rule-4 tests | open |
 
 ### 7. Step results: one way for a step to tell the next what happened
@@ -3057,6 +3057,96 @@ files rewritten; the plan's run after sub-step 2 is due now).
 
 **For later runs.** 6.3 has only `GrantScope` left. `DoesntUntapWithCounterEffect` / `DoesntUntapEffect` static
 subjects are judged structurally (`source()` / `attached()`), not through `names(...)`: they need no characteristic reads.
+
+### Step 6, run 6.3 (2026-11-20)
+
+**Done: `GrantScope` is gone.** Every record that carried it (the 62 with the component and the interfaces/records that
+derived one: `KeywordGrantingEffect`, `StaticCreatureBoostEffect`, `CombatDamageAssignmentEffect`,
+`ProtectionGrantingEffect.protectionSubject()`, ...) now has `PermanentSubject subject` (accessor `subject()`); constructors
+and overloads keep their shapes with the type swapped. `targetSpec()` and validation are structural (`instanceof Target /
+Source / Triggering`, `subject.isSet()`, new `PermanentSubject.declaresPlayerTarget()` for "creatures target player
+controls", record `equals` against a named set where one constant was meant); each gives the old spec for every old
+constant. 5,582 card files were rewritten by a deleted scratch script (`GrantScope.X` → `Subjects.<named set>()`, imports
+fixed), 2 by hand (Mirror Entity, Volatile Claws: the no-argument `GrantAllCreatureTypesToOwnCreaturesEffect()` they used
+meant "creatures you control" on the one-shot path), comments in 8; 97 domain files, 253 engine/AI main files (most only an import or a `.subject()` read), 29 test
+files, 20 doc files.
+No record or handler deleted: ratchet unchanged.
+
+**Named sets** (`Subjects`, one shared instance each, predicates in the order `GrantScope` built them): `sourceAndPaired()`,
+`creaturesYouControl()` / `otherCreaturesYouControl()`, `otherTappedCreaturesYouControl()`,
+`otherUntappedCreaturesYouControl()`, `creaturesYourOpponentsControl()`, `permanentsYouControl()` /
+`otherPermanentsYouControl()`, `creaturesTargetPlayerControls()` / `landsTargetPlayerControls()`, `allCreatures()` /
+`otherCreatures()`, `allPermanents()` / `otherPermanents()`, `creaturesEnchantedPlayerControls()`, `landsYouControl()`,
+`landsYourOpponentsControl()`, `allLands()` / `otherLands()`. Default constant → set: OWN_X "other", ALL_OWN_CREATURES
+"creatures you control", ALL_CREATURES/ALL_PERMANENTS/ALL_LANDS "other", *_INCLUDING_SELF "all".
+
+**New variants** (each with a `SubjectResolutionServiceTest` nested class and a SUBJECTS_REFERENCE row; semantics copied
+from the old handler lookups): `attachedCreature()` = `Attached(creature = true)` for ENCHANTED_CREATURE /
+EQUIPPED_CREATURE (`attached()` stays ENCHANTED_PERMANENT; a resolving effect names the host only while it is a
+creature, the static path judges no type, as before; GQS `hasAttachmentRestriction` and the AI's
+`namesAttachedCreature` read the flag); `triggeringAttackers()` (DECLARED_ATTACKERS); `triggeringSpellTargets()`
+(GrantKeyword's TARGETS: the triggering spell's targets on the stack, else as recorded, else the effect's own targets;
+declares nothing); `createdThisResolution()` (TOKENS_CREATED_THIS_RESOLUTION: the entry's `createdPermanentIds`, live; no
+step-7 design was needed, it reads the existing channel like `returnedThisResolution()`); `bandmatesOf(source())`
+(BANDED_WITH_SELF); `withCreaturesSharingAColor(target())` (TARGET_AND_SHARING_CREATURES; declares the target through
+its part). TARGETS on GrantColorUEOT and SetCombatRequirement became `allTargets()` (only the branch choice: those
+handlers still read the effect's group, so the targets are as before; `targetSpec()` unchanged).
+
+**Per-verb mapping, applied per card by context.** A scratch census test (deleted) constructed every card class (31k)
+and recorded each `GrantScope`-bearing record instance with its path (static ability, conditional static, one-shot
+ability, emblem or other payload). The script mapped a constant by (record, constant, context) and the census was rerun
+after the rewrite: every instance got exactly the subject its old reader meant (7,552 instances, no mismatch). Remapped
+from the default: one-shot GrantKeyword ALL_CREATURES → `allCreatures()` (27) and ALL_LANDS → `allLands()` (1);
+RemoveKeyword ALL_CREATURES → `allCreatures()` (5), ALL_PERMANENTS → `allPermanents()` (10); GrantProtectionChoice,
+TargetCreatureBecomesChosenSubtype ALL_CREATURES → `allCreatures()`; one-shot OWN_CREATURES → `creaturesYouControl()` for
+GrantProtectionChoice, TargetCreatureBecomesChosenSubtype, LosesAllAbilities, GrantColorUEOT, GrantSubtypeUEOT,
+TemporaryCreatureTypes, TargetCreatureBecomesSubtype, GrantProtectionFromColorUEOT; AnimatePermanents one-shot ALL_LANDS
+→ `allLands()` (Natural Affinity); BoostAllCreaturesOfChosenSubtype's constructor defaults → `allCreatures()` /
+`creaturesYouControl()`; static GrantKeyword OWN_PERMANENTS → `otherPermanentsYouControl()` (32; inside a conditional
+static it stays `permanentsYouControl()`, since the conditional self path gave the source the keyword); BecomeColorless
+static ALL_PERMANENTS → `allPermanents()` (Thran Lens, Ghostflame Sliver: its self handler reused the including-source
+reading); conditional static StaticBoost ALL_CREATURES → `allCreatures()` (8 cards: Ivory Guardians, Nut Collector,
+Common Cause, Call to Arms, Jihad, Raph's Bravado, Tidal Influence, Watchdog; Oracle text says "creatures named ...",
+"all creatures", "nonartifact creatures", nothing "other"). `withAllPermanentsIncludingSource` turned out to matter only
+for BecomeColorless: the other verbs' non-self handlers never see the source for a printed ability and their self
+handlers (or the layer-4 pass) read the plain subject, so their ALL_PERMANENTS keeps "other permanents" (Crypt Sliver and
+the Sliver lords carry a separate `source()` grant; Zombie Master says "other Zombie creatures"). Emblems and payloads
+(`CreateEmblemEffect`, `GrantEffectsToCounterBearersEffect`, ...) keep the default (their readers used `subject()`).
+
+**Deleted readers.** `StaticEffectSupport.withAllPermanentsIncludingSource`, `withOwnPermanentsAsOthers`, the conditional
+path's ALL_CREATURES special case, `CREATURES_YOU_CONTROL` / `OTHER_PERMANENTS_YOU_CONTROL` /
+`ALL_PERMANENTS_INCLUDING_SOURCE` constants; `GrantSubjectShapes.subjectOf` (AI callers read `x.subject()`);
+`GrantScope.hasSubject()`; every one-shot handler's constant dispatch (6.2d's list) now dispatches on the subject's shape
+(`isSet()`, `declaresPlayerTarget()`, `instanceof`, or `equals` a named set where a branch was for one constant), and
+the private lookups for the bandmates, the sharing creatures, the tokens and the triggering spell's targets moved into
+the resolver. `Card.hasKeyword` (changeling self grant), GQS emblem/combat-damage/attachment readers,
+`AttackLegalityService.namesCreature` take a subject.
+
+**Behaviour changes** (accepted kinds; none changes a test): `attachedCreature()` on the one-shot path names nothing
+when the host is no longer a creature (SetCombatRequirement, Suspect and Unsuspect did not check before, the
+GrantKeyword handler did; an "enchant creature" Aura or an Equipment on a noncreature leaves it
+before anything resolves); the one-shot handlers whose unknown-constant default resolved something odd
+(GrantActivatedAbility: "creatures you control"; SetBasePT: the source) now use any set subject as given (no card had
+such a constant on those paths); GrantKeyword's set grants all log "N creature(s)/land(s)/permanent(s)" from the set's
+filter and their floating payloads carry the grant's filter (no reader).
+
+**Tests** (after the census test was removed): application selection (the `layers` package, `SubjectResolutionServiceTest`
+with new `$AttachedCreature`, `$TriggeringAttackers`, `$TriggeringSpellTargets`, `$CreatedThisResolution`,
+`$BandmatesOf`, `$WithCreaturesSharingAColor` and the static agreement check over the named sets, `GameQueryServiceTest`,
+`LayerClassifierTest`, `PredicateEvaluationServiceTest`, `BattlefieldPlacementServiceTest`, `AttackLegalityServiceTest`,
+`AuraAttachmentServiceTest`, `TextChangeTransformerTest`, `EffectCountRatchetTest` and every application test touched):
+193 suites, 3,731 test cases (30 skipped), all pass; card tests: every test class of a card whose constant was
+remapped by context, got a new variant, sits in a one-shot set/attached path of a converted handler, or names
+ALL_PERMANENTS / SELF_AND_PAIRED / GrantKeyword OWN_PERMANENTS, plus a 40-per-class sample of every converted record:
+1,681 suites, 14,170 test cases, all pass; the whole `magical-vibes-ai` test task: 115 suites, 1,649 test cases (4
+skipped), all pass. Application, AI, engine testFixtures and card-test `b`, `d`, `l`, `m`, `u` test sources compile,
+every card module compiles. **Ask for a full card-test run** (5,582 card files rewritten).
+
+**For later runs.** 6.4 (rule-4 tests) is open. Doc prose still names old constants in places (`ENCHANTED_CREATURE`,
+`ALL_CREATURES_INCLUDING_SELF` in EFFECTS_QUICK_REFERENCE / ORACLE_TEXT_EFFECT_MAP lines): read them as the named sets
+above. `scripts/effect-inventory.py` still prints a `GrantScope` row (now 0). `UntapTargetAndSharingCreatures` (5d,
+kept) could fold onto `withCreaturesSharingAColor(target())`; `TemporaryCreatureTypes`' no-argument constructor still
+means "other creatures you control" (static Maskwood Nexus).
 
 ## Prompt
 

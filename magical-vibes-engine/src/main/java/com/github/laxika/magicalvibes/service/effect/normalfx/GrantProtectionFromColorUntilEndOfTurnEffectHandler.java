@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
@@ -35,15 +36,14 @@ public class GrantProtectionFromColorUntilEndOfTurnEffectHandler implements Norm
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantProtectionFromColorUntilEndOfTurnEffect) effect;
-        if (e.scope() == GrantScope.OWN_CREATURES) {
-            // The one-shot "creatures you control" includes the source.
-            subjectResolutionService.permanents(gameData, entry, effect, GrantScope.ALL_OWN_CREATURES.subject())
+        if (e.subject().isSet()) {
+            subjectResolutionService.permanents(gameData, entry, effect, e.subject())
                     .forEach(permanent -> grantProtection(entry, permanent, e.color(), gameData));
             return;
         }
 
         Permanent target = subjectResolutionService.permanent(gameData, entry, effect,
-                e.scope() == GrantScope.SELF ? GrantScope.SELF.subject() : GrantScope.TARGET.subject());
+                e.subject() instanceof PermanentSubject.Source ? e.subject() : Subjects.target());
         if (target == null) {
             return;
         }
@@ -52,7 +52,7 @@ public class GrantProtectionFromColorUntilEndOfTurnEffectHandler implements Norm
     }
 
     private void grantProtection(StackEntry entry, Permanent target, CardColor color, GameData gameData) {
-        gameData.addEffectOnPermanent(entry, new ProtectionFromColorsEffect(Set.of(color), GrantScope.TARGET),
+        gameData.addEffectOnPermanent(entry, new ProtectionFromColorsEffect(Set.of(color), Subjects.target()),
                 target.getId(), Duration.UNTIL_END_OF_TURN);
 
         String colorName = color.name().toLowerCase();

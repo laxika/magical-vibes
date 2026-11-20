@@ -9,10 +9,10 @@ import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardMatchingToHandElseMayGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class NyleaKeenEyed extends Card {
     public NyleaKeenEyed() {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorAtLeast(ManaColor.GREEN, 5)),
-                new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, GrantScope.SELF)));
+                new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, Subjects.source())));
         addStaticEffect(new ReduceCastCostForMatchingSpellsEffect(
                 new CardTypePredicate(CardType.CREATURE), 1, CostModificationScope.SELF));
         addActivatedAbility(new ActivatedAbility(

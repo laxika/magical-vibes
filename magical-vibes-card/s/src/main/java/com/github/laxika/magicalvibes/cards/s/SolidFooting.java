@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -15,10 +15,10 @@ public class SolidFooting extends Card {
 
     public SolidFooting() {
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()))
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentHasKeywordPredicate(Keyword.VIGILANCE),
-                        new AssignCombatDamageWithToughnessEffect(GrantScope.ENCHANTED_CREATURE, true),
+                        new AssignCombatDamageWithToughnessEffect(Subjects.attachedCreature(), true),
                         null
                 ));
     }

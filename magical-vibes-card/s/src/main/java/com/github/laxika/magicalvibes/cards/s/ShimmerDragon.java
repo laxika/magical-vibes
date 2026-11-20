@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
@@ -25,7 +25,7 @@ public class ShimmerDragon extends Card {
         // As long as you control four or more artifacts, this creature has hexproof.
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanentCount(4, new PermanentIsArtifactPredicate()),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source())));
 
         // Tap two untapped artifacts you control: Draw a card.
         addActivatedAbility(new ActivatedAbility(

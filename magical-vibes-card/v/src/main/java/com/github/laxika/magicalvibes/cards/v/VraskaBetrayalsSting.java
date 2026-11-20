@@ -17,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
@@ -46,9 +45,9 @@ public class VraskaBetrayalsSting extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -2,
                 List.of(
-                        new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.TARGET),
+                        new SetCardTypesEffect(Set.of(CardType.ARTIFACT), Subjects.target()),
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.TREASURE),
-                        new LosesAllAbilitiesEffect(GrantScope.TARGET, Duration.PERMANENT),
+                        new LosesAllAbilitiesEffect(Subjects.target(), Duration.PERMANENT),
                         new GrantActivatedAbilityEffect(
                                 new ActivatedAbility(
                                         true,
@@ -56,7 +55,7 @@ public class VraskaBetrayalsSting extends Card {
                                         List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),
                                         "{T}, Sacrifice this artifact: Add one mana of any color."
                                 ),
-                                GrantScope.TARGET,
+                                Subjects.target(),
                                 null,
                                 Duration.PERMANENT
                         )

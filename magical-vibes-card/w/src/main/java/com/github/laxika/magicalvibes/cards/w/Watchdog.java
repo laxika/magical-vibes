@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingSourceControllerPredicate;
 
 @CardRegistration(set = "TMP", collectorNumber = "314")
@@ -20,7 +20,7 @@ public class Watchdog extends Card {
         // scope to creatures whose attack target is this creature's controller.
         addStaticEffect(new ConditionalEffect(
                 new SourceUntapped(),
-                new StaticBoostEffect(-1, 0, GrantScope.ALL_CREATURES,
+                new StaticBoostEffect(-1, 0, Subjects.allCreatures(),
                         new PermanentIsAttackingSourceControllerPredicate())));
     }
 }

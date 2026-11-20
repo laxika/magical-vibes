@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,12 +23,12 @@ public class BrightfieldGlider extends Card {
     public BrightfieldGlider() {
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
-                SequenceEffect.of(new BoostSelfEffect(1, 2), new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)));
+                SequenceEffect.of(new BoostSelfEffect(1, 2), new GrantKeywordEffect(Keyword.FLYING, Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SaddleCost(3), new BecomeSaddledUntilEndOfTurnEffect(GrantScope.SELF)),
+                List.of(new SaddleCost(3), new BecomeSaddledUntilEndOfTurnEffect(Subjects.source())),
                 "Saddle 3",
                 ActivationTimingRestriction.SORCERY_SPEED));
     }

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.BestowCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.Set;
@@ -20,6 +20,6 @@ public class PurphorossEmissary extends Card {
 
         target(TargetFilters.creature())
                 .addStaticEffect(new StaticBoostEffect(
-                        3, 3, Set.of(Keyword.MENACE), GrantScope.ENCHANTED_CREATURE));
+                        3, 3, Set.of(Keyword.MENACE), Subjects.attachedCreature()));
     }
 }

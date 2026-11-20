@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -36,7 +36,7 @@ public class DownInTheValley extends Card {
                 new SearchLibraryEffect(CardPredicateUtils.basicLand(), LibrarySearchDestination.HAND));
         addTrigger(Triggers.chapter(2), new GrantEffectToTargetEffect(
                 new TriggeredAbility(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL), ELF_TOKEN),
-                Duration.PERMANENT, false, GrantScope.SELF));
+                Duration.PERMANENT, false, Subjects.source()));
         addBuffChapter(3);
         addBuffChapter(4);
     }
@@ -44,6 +44,6 @@ public class DownInTheValley extends Card {
     private void addBuffChapter(int chapter) {
         addTrigger(Triggers.chapter(chapter),
                 new BoostAllOwnCreaturesEffect(1, 0, ELVES),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ALL_OWN_CREATURES, ELVES));
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.creaturesYouControl(), ELVES));
     }
 }

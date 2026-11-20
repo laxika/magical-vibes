@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class StormcallersBoon extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SacrificeSelfCost(), new GrantKeywordEffect(Keyword.FLYING, GrantScope.OWN_CREATURES)),
+                List.of(new SacrificeSelfCost(), new GrantKeywordEffect(Keyword.FLYING, Subjects.otherCreaturesYouControl())),
                 "Sacrifice this enchantment: Creatures you control gain flying until end of turn."
         ));
 

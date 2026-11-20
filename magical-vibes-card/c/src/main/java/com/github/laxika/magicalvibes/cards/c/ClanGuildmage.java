@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -33,7 +32,7 @@ public class ClanGuildmage extends Card {
                 List.of(new AnimatePermanentsEffect(
                         4, 4,
                         List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE),
-                        null, Set.of(), GrantScope.TARGET, Duration.UNTIL_END_OF_TURN
+                        null, Set.of(), Subjects.target(), Duration.UNTIL_END_OF_TURN
                 )),
                 "{2}{G}, {T}: Target land you control becomes a 4/4 Elemental creature with haste until end of turn. It's still a land.",
                 TargetFilters.landYouControl()

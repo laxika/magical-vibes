@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToOwnCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import org.springframework.stereotype.Component;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -33,7 +33,7 @@ public class GrantStaticEffectToOwnCreaturesUntilEndOfTurnEffectHandler implemen
             if (!gameQueryService.isCreature(gameData, permanent)) continue;
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
-                entry.getControllerId(), new GrantEffectEffect(grant.staticEffect(), GrantScope.TARGET),
+                entry.getControllerId(), new GrantEffectEffect(grant.staticEffect(), Subjects.target()),
                 permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
         }
     }

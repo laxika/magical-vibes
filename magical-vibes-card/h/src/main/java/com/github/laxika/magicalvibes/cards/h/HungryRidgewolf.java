@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsAnotherPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.Set;
@@ -21,6 +21,6 @@ public class HungryRidgewolf extends Card {
         // As long as you control another Wolf or Werewolf, this creature gets +1/+0 and has trample.
         addStaticEffect(new ConditionalEffect(
                 new ControlsAnotherPermanent(new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.WOLF, CardSubtype.WEREWOLF))),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.TRAMPLE), Subjects.source())));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "MRD", collectorNumber = "199")
 @CardRegistration(set = "DDE", collectorNumber = "19")
@@ -50,8 +50,8 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class LightningGreaves extends Card {
 
     public LightningGreaves() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.SHROUD, Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{0}"));
     }
 }

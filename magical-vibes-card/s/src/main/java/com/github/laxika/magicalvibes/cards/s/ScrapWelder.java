@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
@@ -31,7 +31,7 @@ public class ScrapWelder extends Card {
                                 .filter(new CardTypePredicate(CardType.ARTIFACT))
                                 .targetGraveyard(true)
                                 .battlefieldEffectGrants(List.of(
-                                        new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET, Duration.UNTIL_END_OF_TURN)))
+                                        new GrantKeywordEffect(Keyword.HASTE, Subjects.target(), Duration.UNTIL_END_OF_TURN)))
                                 .requiresManaValueAtMostX(true)
                                 .manaValueXOffset(-1)
                                 .build()),

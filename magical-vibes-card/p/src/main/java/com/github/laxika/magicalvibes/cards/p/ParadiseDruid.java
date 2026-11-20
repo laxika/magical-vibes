@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "WAR", collectorNumber = "171")
 @CardRegistration(set = "SLD", collectorNumber = "775")
@@ -20,7 +20,7 @@ public class ParadiseDruid extends Card {
 
     public ParadiseDruid() {
         addStaticEffect(new ConditionalEffect(new SourceUntapped(),
-                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source())));
         addActivatedAbility(ManaAbilities.tapForAnyColor());
     }
 }

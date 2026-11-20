@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -24,13 +24,13 @@ public class OcularHalo extends Card {
                                 List.of(new DrawCardEffect(1)),
                                 "{T}: Draw a card."
                         ),
-                        GrantScope.ENCHANTED_CREATURE
+                        Subjects.attachedCreature()
                 ));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{W}",
-                List.of(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ENCHANTED_CREATURE)),
+                List.of(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.attachedCreature())),
                 "{W}: Enchanted creature gains vigilance until end of turn."
         ));
     }

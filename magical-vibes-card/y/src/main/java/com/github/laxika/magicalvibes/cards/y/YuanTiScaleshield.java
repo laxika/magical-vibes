@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.OpponentCastSpellThisTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -18,7 +18,7 @@ import java.util.Set;
 public class YuanTiScaleshield extends Card {
 
     public YuanTiScaleshield() {
-        addSpellEffect(new GrantKeywordEffect(Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.OWN_PERMANENTS));
+        addSpellEffect(new GrantKeywordEffect(Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), Subjects.permanentsYouControl()));
         addSpellEffect(new ConditionalEffect(
                 new OpponentCastSpellThisTurn(new CardMaxManaValuePredicate(3, true)),
                 new SeekLibraryEffect(1, new CardTypePredicate(CardType.CREATURE))));

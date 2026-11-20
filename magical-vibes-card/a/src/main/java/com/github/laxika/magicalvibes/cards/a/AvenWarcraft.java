@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "JUD", collectorNumber = "2")
 public class AvenWarcraft extends Card {
@@ -15,6 +15,6 @@ public class AvenWarcraft extends Card {
         addSpellEffect(new BoostAllOwnCreaturesEffect(0, 2));
         addSpellEffect(new ConditionalEffect(
                 new GraveyardCardThreshold(7, null),
-                new GrantProtectionChoiceUntilEndOfTurnEffect(GrantScope.OWN_CREATURES)));
+                new GrantProtectionChoiceUntilEndOfTurnEffect(Subjects.creaturesYouControl())));
     }
 }

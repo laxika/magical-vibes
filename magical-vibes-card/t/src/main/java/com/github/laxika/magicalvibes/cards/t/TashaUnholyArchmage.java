@@ -10,11 +10,11 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTargetPlayerLibraryUntilPredicateCountToBattlefieldRestToGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentChoosesCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -43,10 +43,10 @@ public class TashaUnholyArchmage extends Card {
                         new CardTypePredicate(CardType.CREATURE),
                         List.of(
                                 new GrantKeywordEffect(Keyword.WARD,
-                                        GrantScope.SELF, Duration.PERMANENT),
+                                        Subjects.source(), Duration.PERMANENT),
                                 new GrantTriggeredAbilityEffect(
                                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
-                                        new CounterUnlessPaysEffect(2)), GrantScope.SELF)))),
+                                        new CounterUnlessPaysEffect(2)), Subjects.source())))),
                 "−2: Target opponent puts a creature card of their choice from their graveyard onto the battlefield under your control. That creature gains ward {2}.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

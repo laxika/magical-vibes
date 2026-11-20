@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "ROE", collectorNumber = "121")
@@ -32,10 +32,10 @@ public class NullChampion extends Card {
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(4, CounterType.LEVEL)))),
-                new SetBasePowerToughnessEffect(4, 2, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(4, 2, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(7, 3, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(7, 3, Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

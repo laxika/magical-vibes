@@ -12,8 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.ControllerSpellsCantBeCounter
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -29,7 +29,7 @@ public class GoldbugScrappyScout extends Card {
         // Living metal: during your turn, this Vehicle is also a creature.
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
-                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
+                new GrantCardTypeEffect(CardType.CREATURE, Subjects.source())));
         addStaticEffect(new ControllerSpellsCantBeCounteredEffect(
                 new CardSubtypePredicate(CardSubtype.HUMAN)));
         addTrigger(Triggers.youAttack(), TriggerOptions.DEFAULT.withEventCondition(

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -33,7 +33,7 @@ public class EnslavedDwarf extends Card {
                 List.of(
                         new SacrificeSelfCost(),
                         new BoostTargetCreatureEffect(1, 0, blackCreature),
-                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.TARGET, blackCreature)
+                        new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.target(), blackCreature)
                 ),
                 "{R}, Sacrifice this creature: Target black creature gets +1/+0 and gains first strike until end of turn.",
                 new PermanentPredicateTargetFilter(blackCreature, "Target must be a black creature")

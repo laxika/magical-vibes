@@ -12,9 +12,9 @@ import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnDyingOpponentCreatureAsTreasureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -77,7 +77,7 @@ public class ReturnDyingOpponentCreatureAsTreasureEffectHandler implements Norma
                 new GrantActivatedAbilityEffect(new ActivatedAbility(
                         true, null,
                         List.of(new SacrificeSelfCost(), new AwardAnyColorManaEffect()),
-                        "{T}, Sacrifice this artifact: Add one mana of any color."), GrantScope.TARGET),
+                        "{T}, Sacrifice this artifact: Add one mana of any color."), Subjects.target()),
                 permanent.getId(), null, null, Duration.PERMANENT, 0));
     }
 }

@@ -6,16 +6,19 @@ import com.github.laxika.magicalvibes.model.CardType;
  * Makes the target or source permanent lose the given card type until end of turn.
  *
  * @param cardType the card type to remove
- * @param scope whether to affect the target or the source permanent
+ * @param subject whether to affect the target or the source permanent
  */
-public record RemoveCardTypeFromTargetPermanentEffect(CardType cardType, GrantScope scope) implements CardEffect {
+public record RemoveCardTypeFromTargetPermanentEffect(CardType cardType, PermanentSubject subject)
+        implements CardEffect {
 
     public RemoveCardTypeFromTargetPermanentEffect(CardType cardType) {
-        this(cardType, GrantScope.TARGET);
+        this(cardType, Subjects.target());
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return scope == GrantScope.SELF ? TargetSpec.NONE : TargetSpec.benign(TargetPredicates.permanent());
+        return subject instanceof PermanentSubject.Source
+                ? TargetSpec.NONE
+                : TargetSpec.benign(TargetPredicates.permanent());
     }
 }

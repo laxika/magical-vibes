@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.rules.RulesObserver;
 import com.github.laxika.magicalvibes.model.rules.ZoneChangeCause;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardCantBePlayedFromHandEffect;
@@ -29,7 +31,6 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerPlaysAdditionalLand
 import com.github.laxika.magicalvibes.model.effect.PlayersWithChosenPlanarModePlayAdditionalLandEffect;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.OnlyChosenCreaturesCanAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipChosenStepOrPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.RenewExilePlayPermissionOnLoreCounterEffect;
@@ -4778,7 +4779,7 @@ public class GameData {
      */
     public static List<CardEffect> abilityGrantEffects(Ability ability,
                                                        Duration duration) {
-        GrantScope target = GrantScope.TARGET;
+        PermanentSubject target = Subjects.target();
         return switch (ability) {
             case TriggeredAbility triggered ->
                     List.of(new com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect(triggered, target));

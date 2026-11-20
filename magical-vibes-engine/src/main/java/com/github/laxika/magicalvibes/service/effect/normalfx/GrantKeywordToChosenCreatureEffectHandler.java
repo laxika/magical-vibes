@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -55,7 +55,7 @@ public class GrantKeywordToChosenCreatureEffectHandler implements NormalEffectHa
         Set<Keyword> keywords = Set.of(grant.keyword());
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
-                new GrantKeywordEffect(keywords, GrantScope.TARGET, duration), target.getId(), null,
+                new GrantKeywordEffect(keywords, Subjects.target(), duration), target.getId(), null,
                 null, duration, 0));
 
         gameLogService.append(gameData, GameLog.builder().card(target.getCard())

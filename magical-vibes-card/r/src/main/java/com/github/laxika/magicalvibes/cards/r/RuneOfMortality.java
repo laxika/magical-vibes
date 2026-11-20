@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -19,7 +19,7 @@ public class RuneOfMortality extends Card {
         target(TargetFilters.permanent())
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DrawCardEffect(1))
                 .addStaticEffect(new GrantKeywordEffect(
-                        Keyword.DEATHTOUCH, GrantScope.ENCHANTED_PERMANENT, new PermanentIsCreaturePredicate()))
+                        Keyword.DEATHTOUCH, Subjects.attached(), new PermanentIsCreaturePredicate()))
                 .addStaticEffect(new GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect(Keyword.DEATHTOUCH));
     }
 }

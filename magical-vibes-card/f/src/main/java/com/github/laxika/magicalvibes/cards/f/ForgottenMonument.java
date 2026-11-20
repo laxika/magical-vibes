@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -32,7 +32,7 @@ public class ForgottenMonument extends Card {
                         List.of(new PayLifeCost(1), new AwardAnyColorManaEffect()),
                         "{T}, Pay 1 life: Add one mana of any color."
                 ),
-                GrantScope.OWN_LANDS,
+                Subjects.landsYouControl(),
                 new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.CAVE),
                         new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())

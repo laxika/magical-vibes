@@ -24,8 +24,8 @@ public record BoostCreaturesOfChosenPlayerModeEffect(String mode, int powerBoost
     }
 
     @Override
-    public GrantScope scope() {
-        return GrantScope.ALL_CREATURES_INCLUDING_SELF;
+    public PermanentSubject subject() {
+        return Subjects.allCreatures();
     }
 
     @Override

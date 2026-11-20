@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockToTargetUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "JUD", collectorNumber = "105")
@@ -15,7 +15,7 @@ public class AnuridSwarmsnapper extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}",
-                List.of(new GrantAdditionalBlockToTargetUntilEndOfTurnEffect(1, GrantScope.SELF)),
+                List.of(new GrantAdditionalBlockToTargetUntilEndOfTurnEffect(1, Subjects.source())),
                 "{1}{G}: This creature can block an additional creature this turn."
         ));
     }

@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtMost;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -34,6 +34,6 @@ public class KrangMasterMind extends Card {
         PermanentCount otherArtifacts = new PermanentCount(
                 new PermanentIsArtifactPredicate(), CountScope.CONTROLLER, true);
         addStaticEffect(new DynamicStaticBoostEffect(
-                otherArtifacts, new Fixed(0), GrantScope.SELF));
+                otherArtifacts, new Fixed(0), Subjects.source()));
     }
 }

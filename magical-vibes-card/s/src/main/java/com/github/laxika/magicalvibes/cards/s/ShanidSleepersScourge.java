@@ -6,9 +6,9 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -28,7 +28,7 @@ public class ShanidSleepersScourge extends Card {
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
         ));
-        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES, otherLegendaryCreature));
+        addStaticEffect(new GrantKeywordEffect(Keyword.MENACE, Subjects.creaturesYouControl(), otherLegendaryCreature));
 
         CardSupertypePredicate legendaryCard = new CardSupertypePredicate(CardSupertype.LEGENDARY);
         SequenceEffect drawAndLoseLife = SequenceEffect.of(new DrawCardEffect(), new LoseLifeEffect(1));

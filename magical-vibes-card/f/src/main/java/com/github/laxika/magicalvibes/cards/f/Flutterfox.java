@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -22,7 +22,7 @@ public class Flutterfox extends Card {
                         new PermanentIsArtifactPredicate(),
                         new PermanentIsEnchantmentPredicate()
                 ))),
-                new GrantKeywordEffect(Keyword.FLYING, GrantScope.SELF)
+                new GrantKeywordEffect(Keyword.FLYING, Subjects.source())
         ));
     }
 }

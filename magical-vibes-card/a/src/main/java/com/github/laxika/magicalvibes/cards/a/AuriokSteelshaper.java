@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.Equipped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceEquipCostEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.Set;
@@ -19,7 +19,7 @@ public class AuriokSteelshaper extends Card {
         addStaticEffect(new ReduceEquipCostEffect(1));
         addStaticEffect(new ConditionalEffect(
                 new Equipped(),
-                new StaticBoostEffect(1, 1, GrantScope.ALL_OWN_CREATURES,
+                new StaticBoostEffect(1, 1, Subjects.creaturesYouControl(),
                         new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SOLDIER, CardSubtype.KNIGHT)))
         ));
     }

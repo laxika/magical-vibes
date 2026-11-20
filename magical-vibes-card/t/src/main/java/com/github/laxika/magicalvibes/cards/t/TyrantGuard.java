@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -40,7 +40,7 @@ public class TyrantGuard extends Card {
                         new SacrificeSelfCost(),
                         new GrantKeywordEffect(
                                 Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE),
-                                GrantScope.OWN_CREATURES,
+                                Subjects.otherCreaturesYouControl(),
                                 new PermanentHasCountersPredicate(CounterType.ANY))
                 ),
                 "Sacrifice this creature: Creatures you control with counters on them gain hexproof and indestructible until end of turn."

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureFightsTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,7 +27,7 @@ public class MeltstridersResolve extends Card {
                 )),
                 "Target must be a creature you control"
         ))
-                .addStaticEffect(new StaticBoostEffect(0, 2, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new StaticBoostEffect(0, 2, Subjects.attachedCreature()))
                 .addStaticEffect(new CanBeBlockedByAtMostNCreaturesEffect(1));
 
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)

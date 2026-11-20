@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAttachedToCreatureControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -22,13 +22,13 @@ import java.util.Set;
 public class GroomsFinery extends Card {
 
     public GroomsFinery() {
-        addStaticEffect(new StaticBoostEffect(2, 0, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 0, Subjects.attachedCreature()));
         addStaticEffect(new ConditionalEffect(
                 new AnyPlayerControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentHasSubtypePredicate(CardSubtype.EQUIPMENT),
                         new PermanentNamedPredicate("Bride's Gown"),
                         new PermanentAttachedToCreatureControlledBySourceControllerPredicate()))),
-                new StaticBoostEffect(0, 2, Set.of(Keyword.DEATHTOUCH), GrantScope.EQUIPPED_CREATURE)));
+                new StaticBoostEffect(0, 2, Set.of(Keyword.DEATHTOUCH), Subjects.attachedCreature())));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

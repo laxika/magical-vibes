@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,6 +24,6 @@ public class TenaciousHunter extends Card {
                 new AnyPlayerControlsPermanent(new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentHasCountersPredicate(CounterType.MINUS_ONE_MINUS_ONE)))),
-                new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.DEATHTOUCH), GrantScope.SELF)));
+                new GrantKeywordEffect(Set.of(Keyword.VIGILANCE, Keyword.DEATHTOUCH), Subjects.source())));
     }
 }

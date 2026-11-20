@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseTwoCreaturesByPowerDifferenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -68,7 +68,7 @@ public class ChooseTwoCreaturesByPowerDifferenceEffectHandler implements NormalE
                 : 0;
         playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(), x);
 
-        GrantKeywordEffect trampleGrant = new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET);
+        GrantKeywordEffect trampleGrant = new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target());
         String sourceCardName = entry.getCard() != null ? entry.getCard().getName() : "Spry and Mighty";
         for (Permanent permanent : chosen) {
             gameData.addPowerToughnessBoost(entry, permanent.getId(), x, x);

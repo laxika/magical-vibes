@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -31,7 +31,7 @@ public class PatriotShieldWielder extends Card {
                 "{2}",
                 List.of(
                         new BoostTargetCreatureEffect(2, 0),
-                        new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET)
+                        new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.target())
                 ),
                 "{2}, {T}: Another target creature you control gets +2/+0 and gains hexproof until end of turn. "
                         + "(It can't be the target of spells or abilities your opponents control.)",

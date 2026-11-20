@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -31,8 +31,8 @@ public class KarumonixTheRatKing extends Card {
         ));
 
         addStaticEffect(new ToxicEffect(1));
-        addStaticEffect(new GrantKeywordEffect(Keyword.TOXIC, GrantScope.OWN_CREATURES, rat));
-        addStaticEffect(new GrantEffectEffect(new ToxicEffect(1), GrantScope.OWN_CREATURES, rat));
+        addStaticEffect(new GrantKeywordEffect(Keyword.TOXIC, Subjects.otherCreaturesYouControl(), rat));
+        addStaticEffect(new GrantEffectEffect(new ToxicEffect(1), Subjects.otherCreaturesYouControl(), rat));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new LookAtTopCardsEffect(
                         new Fixed(5),

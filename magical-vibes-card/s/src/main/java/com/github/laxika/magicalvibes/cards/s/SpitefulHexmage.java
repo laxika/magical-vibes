@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -41,7 +41,7 @@ public class SpitefulHexmage extends Card {
                 Set.of(),
                 false,
                 false,
-                List.of(StaticAbility.of(new SetBasePowerToughnessEffect(1, 1, GrantScope.ENCHANTED_CREATURE))),
+                List.of(StaticAbility.of(new SetBasePowerToughnessEffect(1, 1, Subjects.attachedCreature()))),
                 List.of(),
                 false,
                 false,

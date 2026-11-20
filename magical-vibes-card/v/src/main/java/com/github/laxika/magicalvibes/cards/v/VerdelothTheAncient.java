@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -28,9 +28,9 @@ public class VerdelothTheAncient extends Card {
 
     public VerdelothTheAncient() {
         addStaticEffect(new KickerEffect("{X}"));
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreatures(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SAPROLING, CardSubtype.TREEFOLK))));
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.SELF,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.source(),
                 new PermanentHasSubtypePredicate(CardSubtype.SAPROLING)));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new Kicked()),

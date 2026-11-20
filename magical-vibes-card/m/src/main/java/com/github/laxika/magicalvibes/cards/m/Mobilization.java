@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.List;
@@ -19,7 +19,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 public class Mobilization extends Card {
 
     public Mobilization() {
-        addStaticEffect(new StaticBoostEffect(0, 0, Set.of(Keyword.VIGILANCE), GrantScope.ALL_CREATURES_INCLUDING_SELF,
+        addStaticEffect(new StaticBoostEffect(0, 0, Set.of(Keyword.VIGILANCE), Subjects.allCreatures(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.SOLDIER))));
         addActivatedAbility(new ActivatedAbility(false, "{2}{W}", List.of(CreateTokenEffect.whiteSoldier(1)), "{2}{W}: Create a 1/1 white Soldier creature token."));
     }

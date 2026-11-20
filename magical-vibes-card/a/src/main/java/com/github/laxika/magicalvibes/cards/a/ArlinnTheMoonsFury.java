@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesUntilEndOfTurnEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -28,7 +28,7 @@ public class ArlinnTheMoonsFury extends Card {
                 List.of(
                         new AnimatePermanentsEffect(5, 5, List.of(CardSubtype.WEREWOLF),
                                 Set.of(Keyword.TRAMPLE, Keyword.INDESTRUCTIBLE, Keyword.HASTE)),
-                        new SetCardTypesUntilEndOfTurnEffect(Set.of(CardType.CREATURE), GrantScope.SELF)
+                        new SetCardTypesUntilEndOfTurnEffect(Set.of(CardType.CREATURE), Subjects.source())
                 ),
                 "0: Until end of turn, Arlinn, the Moon's Fury becomes a 5/5 Werewolf creature "
                         + "with trample, indestructible, and haste."

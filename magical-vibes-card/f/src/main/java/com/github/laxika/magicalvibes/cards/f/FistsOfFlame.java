@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MH1", collectorNumber = "123")
@@ -21,6 +21,6 @@ public class FistsOfFlame extends Card {
                 .addSpellEffect(new DrawCardEffect())
                 .addSpellEffect(new BoostTargetCreatureEffect(
                         new CardsDrawnThisTurn(), new Fixed(0)))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));
     }
 }

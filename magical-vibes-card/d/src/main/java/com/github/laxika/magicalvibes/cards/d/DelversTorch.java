@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class DelversTorch extends Card {
 
     public DelversTorch() {
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.attachedCreature()));
         addTrigger(Triggers.attacks(), new VentureIntoDungeonEffect());
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

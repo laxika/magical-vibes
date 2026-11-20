@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -27,8 +26,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class AssaultSuit extends Card {
 
     public AssaultSuit() {
-        addStaticEffect(new StaticBoostEffect(2, 2, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new StaticBoostEffect(2, 2, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.attachedCreature()));
         addStaticEffect(new EnchantedCreatureCantAttackControllerEffect());
         addStaticEffect(new AttachedPermanentRestrictionEffect(new CantBeSacrificedEffect()));
         addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new MayEffect(

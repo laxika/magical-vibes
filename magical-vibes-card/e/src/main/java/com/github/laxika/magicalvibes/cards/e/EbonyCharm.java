@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -34,7 +33,7 @@ public class EbonyCharm extends Card {
                         new ExileCardsFromGraveyardEffect(3, 0)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature gains fear until end of turn",
-                        new GrantKeywordEffect(Keyword.FEAR, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.FEAR, Subjects.target()),
                         new PermanentPredicateTargetFilter(
                                 new PermanentIsCreaturePredicate(),
                                 "Target must be a creature."))

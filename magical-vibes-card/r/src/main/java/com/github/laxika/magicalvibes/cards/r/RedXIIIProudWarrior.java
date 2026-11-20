@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsAuraPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -25,7 +25,7 @@ public class RedXIIIProudWarrior extends Card {
     public RedXIIIProudWarrior() {
         addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.VIGILANCE, Keyword.TRAMPLE),
-                GrantScope.OWN_CREATURES,
+                Subjects.otherCreaturesYouControl(),
                 new PermanentIsModifiedPredicate()));
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),

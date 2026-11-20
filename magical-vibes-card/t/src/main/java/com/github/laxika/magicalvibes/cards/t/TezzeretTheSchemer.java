@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -52,7 +52,7 @@ public class TezzeretTheSchemer extends Card {
 
         AnimatePermanentsEffect animateArtifact = new AnimatePermanentsEffect(
                 new Fixed(5), new Fixed(5), List.of(), Set.of(), null, Set.of(CardType.CREATURE),
-                GrantScope.TARGET, Duration.PERMANENT,
+                Subjects.target(), Duration.PERMANENT,
                 new PermanentAllOfPredicate(List.of(
                         new PermanentIsArtifactPredicate(),
                         new PermanentControlledBySourceControllerPredicate())));

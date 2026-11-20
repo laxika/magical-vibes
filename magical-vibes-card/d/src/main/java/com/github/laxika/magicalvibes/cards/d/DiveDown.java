@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -22,6 +22,6 @@ public class DiveDown extends Card {
                 new PermanentIsCreaturePredicate(), new PermanentControlledBySourceControllerPredicate()));
         target(TargetFilters.creatureYouControl())
                 .addSpellEffect(new BoostTargetCreatureEffect(0, 3, targetPredicate))
-                .addSpellEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET, targetPredicate));
+                .addSpellEffect(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.target(), targetPredicate));
     }
 }

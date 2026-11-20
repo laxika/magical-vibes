@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.condition.ControllerSurveiledThisTur
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "GRN", collectorNumber = "164")
@@ -19,12 +19,12 @@ public class DarkbladeAgent extends Card {
         ControllerSurveiledThisTurn surveiledThisTurn = new ControllerSurveiledThisTurn();
         addStaticEffect(new ConditionalEffect(
                 surveiledThisTurn,
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 surveiledThisTurn,
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                         new DrawCardEffect(1)),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

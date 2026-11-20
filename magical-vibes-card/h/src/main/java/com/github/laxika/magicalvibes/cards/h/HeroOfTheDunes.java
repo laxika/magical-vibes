@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -35,6 +35,6 @@ public class HeroOfTheDunes extends Card {
 
         // Creatures you control with mana value 3 or less get +1/+0.
         addStaticEffect(new StaticBoostEffect(
-                1, 0, GrantScope.ALL_OWN_CREATURES, new PermanentMaxManaValuePredicate(3)));
+                1, 0, Subjects.creaturesYouControl(), new PermanentMaxManaValuePredicate(3)));
     }
 }

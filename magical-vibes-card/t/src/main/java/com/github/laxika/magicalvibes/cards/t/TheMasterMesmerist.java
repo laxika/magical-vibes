@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -41,7 +41,7 @@ public class TheMasterMesmerist extends Card {
                 true,
                 null,
                 List.of(
-                        new GrantKeywordEffect(Keyword.SKULK, GrantScope.TARGET),
+                        new GrantKeywordEffect(Keyword.SKULK, Subjects.target()),
                         new GoadTargetCreatureUntilNextTurnEffect()),
                 "{T}: Target creature an opponent controls with power less than or equal to The Master's power "
                         + "gains skulk until end of turn. Goad it.",

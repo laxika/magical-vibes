@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "MOR", collectorNumber = "112")
@@ -16,7 +16,7 @@ public class WarSpikeChangeling extends Card {
     public WarSpikeChangeling() {
         // {R}: This creature gains first strike until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{R}",
-                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())),
                 "{R}: War-Spike Changeling gains first strike until end of turn."));
     }
 }

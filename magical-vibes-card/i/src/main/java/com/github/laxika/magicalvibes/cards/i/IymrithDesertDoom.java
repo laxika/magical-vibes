@@ -15,9 +15,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceUntapped;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "AFR", collectorNumber = "62")
@@ -29,7 +29,7 @@ public class IymrithDesertDoom extends Card {
                 new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                         new CounterUnlessPaysEffect(4)),
-                        GrantScope.SELF)));
+                        Subjects.source())));
 
         CardsInHand controllerHand = new CardsInHand(CountScope.CONTROLLER);
         DynamicAmount additionalDraws = new Max(new Fixed(0),

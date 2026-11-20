@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "TLA", collectorNumber = "106")
@@ -20,7 +20,7 @@ public class JuneBountyHunter extends Card {
     public JuneBountyHunter() {
         addStaticEffect(new ConditionalEffect(
                 new ControllerDrewAtLeastCardsThisTurn(2),
-                new GrantEffectEffect(new CantBeBlockedEffect(), GrantScope.SELF)));
+                new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

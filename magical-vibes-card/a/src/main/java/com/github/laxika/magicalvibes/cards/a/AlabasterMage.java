@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -17,7 +17,7 @@ public class AlabasterMage extends Card {
     public AlabasterMage() {
         // {1}{W}: Target creature you control gains lifelink until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{1}{W}",
-                List.of(new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.LIFELINK, Subjects.target())),
                 "{1}{W}: Target creature you control gains lifelink until end of turn.",
                 TargetFilters.creatureYouControl()));
     }

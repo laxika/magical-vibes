@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M11", collectorNumber = "189")
 @CardRegistration(set = "MM2", collectorNumber = "153")
@@ -24,6 +24,6 @@ public class OverwhelmingStampede extends Card {
     public OverwhelmingStampede() {
         addSpellEffect(new BoostAllOwnCreaturesEffect(
                 new GreatestPowerAmongControlled(), new GreatestPowerAmongControlled()));
-        addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.OWN_CREATURES));
+        addSpellEffect(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.otherCreaturesYouControl()));
     }
 }

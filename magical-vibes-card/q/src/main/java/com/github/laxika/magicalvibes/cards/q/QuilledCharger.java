@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceIsSaddled;
 import com.github.laxika.magicalvibes.model.effect.BecomeSaddledUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SaddleCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
@@ -22,12 +22,12 @@ public class QuilledCharger extends Card {
     public QuilledCharger() {
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceIsSaddled()),
-                SequenceEffect.of(new BoostSelfEffect(1, 2), new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)));
+                SequenceEffect.of(new BoostSelfEffect(1, 2), new GrantKeywordEffect(Keyword.MENACE, Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 null,
-                List.of(new SaddleCost(2), new BecomeSaddledUntilEndOfTurnEffect(GrantScope.SELF)),
+                List.of(new SaddleCost(2), new BecomeSaddledUntilEndOfTurnEffect(Subjects.source())),
                 "Saddle 2",
                 ActivationTimingRestriction.SORCERY_SPEED));
     }

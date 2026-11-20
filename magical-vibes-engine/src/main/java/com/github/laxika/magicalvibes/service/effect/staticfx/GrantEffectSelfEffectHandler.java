@@ -26,7 +26,7 @@ public class GrantEffectSelfEffectHandler implements StaticEffectHandlerBean {
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var grant = (GrantEffectEffect) effect;
-        if (support.names(context, grant.scope().subject(), grant.filter())) {
+        if (support.names(context, grant.subject(), grant.filter())) {
             accumulator.addGrantedEffect(grant.effect());
         }
     }

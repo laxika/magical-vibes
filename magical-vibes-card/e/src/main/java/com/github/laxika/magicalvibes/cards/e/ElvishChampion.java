@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 
 import java.util.Set;
@@ -20,7 +20,7 @@ import java.util.Set;
 public class ElvishChampion extends Card {
 
     public ElvishChampion() {
-        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.FORESTWALK), GrantScope.ALL_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Set.of(Keyword.FORESTWALK), Subjects.otherCreatures(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.ELF))));
     }
 }

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantRandomKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformToFrontFaceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -24,11 +24,11 @@ public class BlitzwingAdaptiveAssailant extends Card {
         // Living metal: during your turn, this Vehicle is also a creature.
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new NotControllerTurn()),
-                new GrantCardTypeEffect(CardType.CREATURE, GrantScope.SELF)));
+                new GrantCardTypeEffect(CardType.CREATURE, Subjects.source())));
 
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withEventCondition(new ControllerTurn()),
-                        new GrantRandomKeywordEffect(List.of(Keyword.FLYING, Keyword.INDESTRUCTIBLE), GrantScope.SELF));
+                        new GrantRandomKeywordEffect(List.of(Keyword.FLYING, Keyword.INDESTRUCTIBLE), Subjects.source()));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new TransformToFrontFaceEffect());
     }
 }

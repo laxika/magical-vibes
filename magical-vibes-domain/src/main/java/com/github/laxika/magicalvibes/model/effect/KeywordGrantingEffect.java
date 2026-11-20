@@ -7,8 +7,8 @@ import java.util.Set;
 
 /**
  * Capability interface for effects that grant keyword(s) to permanents selected by a
- * {@link GrantScope}. Lets consumers — chiefly the AI evaluators/target selector — ask "which
- * keywords, to which scope" without knowing the concrete effect type, mirroring how
+ * {@link PermanentSubject}. Lets consumers — chiefly the AI evaluators/target selector — ask "which
+ * keywords, to which subject" without knowing the concrete effect type, mirroring how
  * {@link ManaProducingEffect} abstracts mana production.
  *
  * <p>Descriptive only: it states facts drawn from the record's existing components, never a score.
@@ -18,12 +18,12 @@ public interface KeywordGrantingEffect extends CardEffect {
     /** The keyword(s) granted. */
     Set<Keyword> keywords();
 
-    /** The scope of permanents that receive the keyword(s). */
-    GrantScope scope();
+    /** The subject of permanents that receive the keyword(s). */
+    PermanentSubject subject();
 
     /**
-     * An optional predicate narrowing which permanents within {@link #scope()} receive the
-     * keyword(s) (e.g. "other Goblins you control"), or {@code null} when every permanent in scope
+     * An optional predicate narrowing which permanents within {@link #subject()} receive the
+     * keyword(s) (e.g. "other Goblins you control"), or {@code null} when every permanent in subject
      * is affected. Mirrors {@link StaticCreatureBoostEffect#filter()}.
      */
     PermanentPredicate filter();

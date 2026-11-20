@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -42,7 +42,7 @@ public class DiscreetRetreat extends Card {
                                         false,
                                         false)),
                                 "{T}: Add two mana of any one color. Spend this mana only to cast outlaw spells or activate abilities of outlaw sources."),
-                        GrantScope.ENCHANTED_PERMANENT));
+                        Subjects.attached()));
         addTrigger(Triggers.youCastSpell().withFilter(OUTLAW).nthThisTurn(1),
                 new DrawCardEffect(),
                 new LoseLifeEffect(1));

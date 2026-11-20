@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
@@ -92,7 +91,7 @@ public class GaleConduitOfTheArcane extends Card {
                     new LoseLifeEffect(2, Subjects.eachOpponent()));
             case RED -> card.addTrigger(instantOrSorcery,
                     new PerpetuallyGrantStaticEffectToSourceEffect(
-                            new StaticBoostEffect(1, 0, GrantScope.ALL_OWN_CREATURES)));
+                            new StaticBoostEffect(1, 0, Subjects.creaturesYouControl())));
             case GREEN -> card.target(TargetFilters.creature()).addTrigger(instantOrSorcery,
                     new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2));
             default -> throw new IllegalArgumentException("Gale doesn't specialize into " + color);

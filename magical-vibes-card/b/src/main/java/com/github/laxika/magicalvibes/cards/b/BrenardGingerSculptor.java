@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureAndCreateTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -40,7 +40,7 @@ public class BrenardGingerSculptor extends Card {
                 2,
                 2,
                 Set.of(Keyword.TRAMPLE),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(Set.of(CardSubtype.FOOD, CardSubtype.GOLEM))
         ));
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL), new MayEffect(
@@ -67,7 +67,7 @@ public class BrenardGingerSculptor extends Card {
                 false,
                 List.of(
                         StaticAbility.of(List.of(
-                        new GrantActivatedAbilityEffect(FOOD_GOLEM_ABILITY, GrantScope.SELF)
+                        new GrantActivatedAbilityEffect(FOOD_GOLEM_ABILITY, Subjects.source())
                 ))),
                 List.of(),
                 false,

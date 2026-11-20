@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.DiscardCardCastingCost;
 import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class DemonicEmbrace extends Card {
                 new DiscardCardCastingCost())));
 
         target(TargetFilters.creature())
-                .addStaticEffect(new StaticBoostEffect(3, 1, Set.of(Keyword.FLYING), GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.DEMON, GrantScope.ENCHANTED_CREATURE));
+                .addStaticEffect(new StaticBoostEffect(3, 1, Set.of(Keyword.FLYING), Subjects.attachedCreature()))
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.DEMON, Subjects.attachedCreature()));
     }
 }

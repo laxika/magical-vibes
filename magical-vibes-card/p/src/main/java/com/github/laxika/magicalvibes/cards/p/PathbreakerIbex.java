@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.GreatestPowerAmongControlled;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SLD", collectorNumber = "307")
@@ -22,6 +22,6 @@ public class PathbreakerIbex extends Card {
         addTrigger(Triggers.attacks(),
                 new BoostAllOwnCreaturesEffect(
                 new GreatestPowerAmongControlled(), new GreatestPowerAmongControlled()),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.ALL_OWN_CREATURES));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.creaturesYouControl()));
     }
 }

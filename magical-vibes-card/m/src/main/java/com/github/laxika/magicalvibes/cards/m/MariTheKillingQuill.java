@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureWithHitCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveHitCounterFromExiledCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -30,7 +30,7 @@ public class MariTheKillingQuill extends Card {
 
         addTrigger(Triggers.creatureDies(ObjectRelation.OPPONENT_CONTROLS),
                 new ExileTriggeringCreatureWithHitCounterEffect());
-        addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.ALL_OWN_CREATURES, outlaw));
+        addStaticEffect(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.creaturesYouControl(), outlaw));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                         new MayEffect(
@@ -38,6 +38,6 @@ public class MariTheKillingQuill extends Card {
                                         SequenceEffect.of(new DrawCardEffect(1),
                                                 CreateTokenEffect.ofTreasureToken(2))),
                                 "Remove a hit counter from a card that player owns in exile?")),
-                        GrantScope.ALL_OWN_CREATURES, outlaw));
+                        Subjects.creaturesYouControl(), outlaw));
     }
 }

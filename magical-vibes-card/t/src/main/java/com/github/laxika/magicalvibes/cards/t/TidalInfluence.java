@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CantCastSpellsWithSourceNameEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAtLeastCountersPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -36,13 +36,13 @@ public class TidalInfluence extends Card {
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.TIDE),
                         new NotCondition(new SourceCounterThreshold(2, CounterType.TIDE)))),
-                new StaticBoostEffect(-2, 0, GrantScope.ALL_CREATURES,
+                new StaticBoostEffect(-2, 0, Subjects.allCreatures(),
                         new PermanentColorInPredicate(Set.of(CardColor.BLUE)))));
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(3, CounterType.TIDE),
                         new NotCondition(new SourceCounterThreshold(4, CounterType.TIDE)))),
-                new StaticBoostEffect(2, 0, GrantScope.ALL_CREATURES,
+                new StaticBoostEffect(2, 0, Subjects.allCreatures(),
                         new PermanentColorInPredicate(Set.of(CardColor.BLUE)))));
 
         addTrigger(Triggers.sourceState(new PermanentHasAtLeastCountersPredicate(CounterType.TIDE, 4)),

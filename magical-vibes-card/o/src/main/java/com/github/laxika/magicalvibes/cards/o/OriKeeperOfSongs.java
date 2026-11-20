@@ -5,10 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControllerHasEnduringStory;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.StoriedEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "HOB", collectorNumber = "23")
@@ -18,6 +18,6 @@ public class OriKeeperOfSongs extends Card {
         addStaticEffect(new StoriedEffect());
         addStaticEffect(new ConditionalEffect(
                 new ControllerHasEnduringStory(),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.VIGILANCE), GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.VIGILANCE), Subjects.source())));
     }
 }

@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,6 +21,6 @@ public class ElderLandWurm extends Card {
         // creatures in one declaration fires this once.
         addTrigger(Triggers.blocks(),
                 TriggerOptions.ONE_OR_MORE,
-                new RemoveKeywordEffect(Keyword.DEFENDER, GrantScope.SELF, Duration.PERMANENT));
+                new RemoveKeywordEffect(Keyword.DEFENDER, Subjects.source(), Duration.PERMANENT));
     }
 }

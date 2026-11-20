@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -24,7 +24,7 @@ public class SunhomeFortressOfTheLegion extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}{R}{W}",
-                List.of(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGET)),
+                List.of(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.target())),
                 "{2}{R}{W}, {T}: Target creature gains double strike until end of turn.",
                 TargetFilters.creature()
         ));

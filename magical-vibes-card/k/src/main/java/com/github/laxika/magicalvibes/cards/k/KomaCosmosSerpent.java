@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -63,7 +62,7 @@ public class KomaCosmosSerpent extends Card {
                         new SacrificePermanentCost(
                                 new PermanentHasSubtypePredicate(CardSubtype.SERPENT),
                                 "Sacrifice another Serpent"),
-                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, GrantScope.SELF)
+                        new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.source())
                 ),
                 "Sacrifice another Serpent: Koma, Cosmos Serpent gains indestructible until end of turn."
         ));

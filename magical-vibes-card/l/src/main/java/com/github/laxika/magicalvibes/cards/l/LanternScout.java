@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -28,6 +28,6 @@ public class LanternScout extends Card {
                                 new PermanentHasSubtypePredicate(CardSubtype.ALLY))),
                                 ObjectRelation.ANOTHER_YOU_CONTROL))),
                 TriggerOptions.DEFAULT, List.of(new EffectRegistration(
-                        new GrantKeywordEffect(Keyword.LIFELINK, GrantScope.ALL_OWN_CREATURES)))));
+                        new GrantKeywordEffect(Keyword.LIFELINK, Subjects.creaturesYouControl())))));
     }
 }

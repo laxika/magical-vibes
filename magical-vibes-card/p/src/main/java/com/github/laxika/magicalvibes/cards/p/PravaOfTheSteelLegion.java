@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class PravaOfTheSteelLegion extends Card {
 
     public PravaOfTheSteelLegion() {
         addStaticEffect(new ConditionalEffect(new ControllerTurn(),
-                new StaticBoostEffect(1, 4, GrantScope.ALL_OWN_CREATURES,
+                new StaticBoostEffect(1, 4, Subjects.creaturesYouControl(),
                         new PermanentIsTokenPredicate())));
 
         addActivatedAbility(new ActivatedAbility(

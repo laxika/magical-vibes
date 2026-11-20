@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -37,6 +37,6 @@ public class BehindTheMask extends Card {
     private static AnimatePermanentsEffect animate(int power, int toughness) {
         return new AnimatePermanentsEffect(
                 power, toughness, List.of(), Set.of(), null,
-                Set.of(CardType.ARTIFACT), GrantScope.TARGET, Duration.UNTIL_END_OF_TURN);
+                Set.of(CardType.ARTIFACT), Subjects.target(), Duration.UNTIL_END_OF_TURN);
     }
 }

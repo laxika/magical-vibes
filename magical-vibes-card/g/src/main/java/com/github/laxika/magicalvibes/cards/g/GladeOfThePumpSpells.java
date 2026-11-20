@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -51,7 +51,7 @@ public class GladeOfThePumpSpells extends Card {
         target(TargetFilters.creature(), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new BoostTargetCreatureEffect(2, 2),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,

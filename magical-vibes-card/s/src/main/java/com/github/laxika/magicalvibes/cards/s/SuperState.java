@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToEachOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,10 +17,10 @@ public class SuperState extends Card {
 
     public SuperState() {
         target(TargetFilters.creatureYouControl())
-                .addStaticEffect(new SetBasePowerToughnessEffect(9, 9, GrantScope.ENCHANTED_CREATURE))
+                .addStaticEffect(new SetBasePowerToughnessEffect(9, 9, Subjects.attachedCreature()))
                 .addStaticEffect(new GrantKeywordEffect(
                                 Set.of(Keyword.FLYING, Keyword.FIRST_STRIKE, Keyword.TRAMPLE, Keyword.HASTE),
-                                GrantScope.ENCHANTED_CREATURE))
+                                Subjects.attachedCreature()))
                 .addTrigger(Triggers.dealsCombatDamageToPlayer(),
                         new EnchantedCreatureDealsDamageToEachOpponentEffect());
     }

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostAndGrantKeywordToTrigger
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -74,7 +74,7 @@ public class BoostAndGrantKeywordToTriggeringAndSharingCreaturesUntilEndOfTurnEf
 
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
-                    new GrantKeywordEffect(grantableKeywords, GrantScope.TARGET),
+                    new GrantKeywordEffect(grantableKeywords, Subjects.target()),
                     permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
         }
     }

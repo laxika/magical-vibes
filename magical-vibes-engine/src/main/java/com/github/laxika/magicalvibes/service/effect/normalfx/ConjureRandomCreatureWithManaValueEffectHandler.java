@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CardPrinting;
@@ -16,6 +15,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureRandomCreatureWithManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -74,7 +74,7 @@ public class ConjureRandomCreatureWithManaValueEffectHandler implements NormalEf
         card.setOwnerId(entry.getControllerId());
         Permanent permanent = new Permanent(card);
         if (typed.temporary()) {
-            gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET),
+            gameData.addEffectOnPermanent(entry, new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
                     permanent.getId(), Duration.UNTIL_END_OF_TURN);
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, entry.getControllerId(), permanent);

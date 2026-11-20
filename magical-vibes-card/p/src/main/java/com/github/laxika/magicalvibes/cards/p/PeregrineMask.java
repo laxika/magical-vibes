@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 
 @CardRegistration(set = "RAV", collectorNumber = "268")
@@ -15,7 +15,7 @@ public class PeregrineMask extends Card {
     public PeregrineMask() {
         addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.DEFENDER, Keyword.FLYING, Keyword.FIRST_STRIKE),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

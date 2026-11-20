@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,13 +20,13 @@ public class RunesOfTheDeus extends Card {
                 // As long as enchanted creature is red, it gets +1/+1 and has double strike.
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.RED)),
-                        new StaticBoostEffect(1, 1, Set.of(Keyword.DOUBLE_STRIKE), GrantScope.ENCHANTED_CREATURE),
+                        new StaticBoostEffect(1, 1, Set.of(Keyword.DOUBLE_STRIKE), Subjects.attachedCreature()),
                         null
                 ))
                 // As long as enchanted creature is green, it gets +1/+1 and has trample.
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.GREEN)),
-                        new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), GrantScope.ENCHANTED_CREATURE),
+                        new StaticBoostEffect(1, 1, Set.of(Keyword.TRAMPLE), Subjects.attachedCreature()),
                         null
                 ));
     }

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantBlockMatchingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -35,7 +35,7 @@ public class KarganIntimidator extends Card {
                 TargetFilters.creature()).withMaxActivationsPerTurn(1));
 
         addActivatedAbility(new ActivatedAbility(
-                false, "{1}", List.of(new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)),
+                false, "{1}", List.of(new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())),
                 "Target Warrior gains trample until end of turn. Activate only once each turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentHasSubtypePredicate(CardSubtype.WARRIOR),

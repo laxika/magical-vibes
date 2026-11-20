@@ -21,7 +21,7 @@ public class BoostByAttackCountEffectHandler implements StaticEffectHandlerBean 
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostByAttackCountEffect) effect;
-        boolean inScope = support.names(context, boost.scope().subject(), boost.filter());
+        boolean inScope = support.names(context, boost.subject(), boost.filter());
         if (!inScope) {
             return;
         }

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Delirium;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,6 +20,6 @@ public class HandThatFeeds extends Card {
         addTrigger(Triggers.attacks(), TriggerOptions.DEFAULT.withEventCondition(
                 new Delirium()), SequenceEffect.of(
                         new BoostSelfEffect(2, 0),
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.SELF)));
+                        new GrantKeywordEffect(Keyword.MENACE, Subjects.source())));
     }
 }

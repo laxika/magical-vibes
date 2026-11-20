@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LivingWeaponEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -33,7 +32,7 @@ public class HexplateWallbreaker extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new LivingWeaponEffect(new CreateTokenEffect("Rebel", 2, 2, CardColor.RED,
                         List.of(CardSubtype.REBEL), Set.of(), Set.of())));
-        addStaticEffect(new AttachedBoostEffect(new Fixed(2), new Fixed(2), GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new AttachedBoostEffect(new Fixed(2), new Fixed(2), Subjects.attachedCreature()));
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withInterveningIf(new FirstCombatPhase()),
                 SequenceEffect.of(

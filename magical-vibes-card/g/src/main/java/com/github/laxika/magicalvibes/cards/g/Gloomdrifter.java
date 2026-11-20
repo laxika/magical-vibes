@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -27,6 +27,6 @@ public class Gloomdrifter extends Card {
                 new GrantTriggeredAbilityEffect(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
                         new BoostAllCreaturesEffect(-2, -2,
                         new PermanentNotPredicate(new PermanentColorInPredicate(Set.of(CardColor.BLACK))))),
-                        GrantScope.SELF)));
+                        Subjects.source())));
     }
 }

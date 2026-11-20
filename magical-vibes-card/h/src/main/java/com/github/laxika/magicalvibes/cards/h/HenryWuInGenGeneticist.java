@@ -11,10 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploitEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -29,17 +29,17 @@ public class HenryWuInGenGeneticist extends Card {
         PermanentHasSubtypePredicate human = new PermanentHasSubtypePredicate(CardSubtype.HUMAN);
         // "Henry Wu and other Human creatures you control have exploit." Henry itself has it regardless of
         // its creature types, so it is granted to the source separately from the Human filter on the others.
-        addStaticEffect(new GrantKeywordEffect(Keyword.EXPLOIT, GrantScope.SELF));
+        addStaticEffect(new GrantKeywordEffect(Keyword.EXPLOIT, Subjects.source()));
         addStaticEffect(new GrantKeywordEffect(
-                Keyword.EXPLOIT, GrantScope.OWN_CREATURES, human));
+                Keyword.EXPLOIT, Subjects.otherCreaturesYouControl(), human));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?")),
-                GrantScope.SELF));
+                Subjects.source()));
         addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
                 new MayEffect(new ExploitEffect(), "Sacrifice a creature?")),
-                GrantScope.OWN_CREATURES, human));
+                Subjects.otherCreaturesYouControl(), human));
 
         addTrigger(Triggers.creatureYouControlExploits()
                         .withFilter(new CardNotPredicate(new CardSubtypePredicate(CardSubtype.HUMAN))),

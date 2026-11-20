@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -32,7 +33,7 @@ public class RemoveCardTypeFromTargetPermanentEffectHandler implements NormalEff
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var remove = (RemoveCardTypeFromTargetPermanentEffect) effect;
         Permanent target = subjectResolutionService.permanent(gameData, entry, effect,
-                remove.scope() == GrantScope.SELF ? GrantScope.SELF.subject() : GrantScope.TARGET.subject());
+                remove.subject() instanceof PermanentSubject.Source ? remove.subject() : Subjects.target());
         if (target == null) {
             return;
         }

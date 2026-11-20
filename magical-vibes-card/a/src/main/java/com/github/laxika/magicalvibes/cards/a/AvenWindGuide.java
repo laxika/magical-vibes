@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 import java.util.Set;
@@ -18,7 +18,7 @@ public class AvenWindGuide extends Card {
 
         // Creature tokens you control have flying and vigilance.
         addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE),
-                GrantScope.OWN_CREATURES, new PermanentIsTokenPredicate()));
+                Subjects.otherCreaturesYouControl(), new PermanentIsTokenPredicate()));
 
         // Embalm {4}{W}{U} ({4}{W}{U}, Exile this card from your graveyard: Create a token that's a copy
         // of it, except it's a white Zombie Bird Warrior with no mana cost. Embalm only as a sorcery.)

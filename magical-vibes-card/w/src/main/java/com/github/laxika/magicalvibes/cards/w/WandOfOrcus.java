@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,8 +32,8 @@ public class WandOfOrcus extends Card {
 
     private SequenceEffect deathtouchGrant() {
         return SequenceEffect.of(
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TRIGGERING_PERMANENT),
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.OWN_CREATURES,
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.triggering()),
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.otherCreaturesYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE)));
     }
 }

@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -28,8 +28,8 @@ public class CrownOfSkemfar extends Card {
 
         target(TargetFilters.creature())
                 .addStaticEffect(new AttachedBoostEffect(
-                        elvesYouControl, elvesYouControl, GrantScope.ENCHANTED_CREATURE))
-                .addStaticEffect(new GrantKeywordEffect(Keyword.REACH, GrantScope.ENCHANTED_CREATURE));
+                        elvesYouControl, elvesYouControl, Subjects.attachedCreature()))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.REACH, Subjects.attachedCreature()));
 
         addActivatedAbility(AbilityZones.GRAVEYARD, new ActivatedAbility(
                 false,

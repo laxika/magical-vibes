@@ -2,8 +2,8 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
 @CardRegistration(set = "ATQ", collectorNumber = "78")
@@ -12,7 +12,7 @@ public class Weakstone extends Card {
 
     public Weakstone() {
         // Attacking creatures get -1/-0.
-        addStaticEffect(new StaticBoostEffect(-1, 0, GrantScope.ALL_CREATURES_INCLUDING_SELF,
+        addStaticEffect(new StaticBoostEffect(-1, 0, Subjects.allCreatures(),
                 new PermanentIsAttackingPredicate()));
     }
 }

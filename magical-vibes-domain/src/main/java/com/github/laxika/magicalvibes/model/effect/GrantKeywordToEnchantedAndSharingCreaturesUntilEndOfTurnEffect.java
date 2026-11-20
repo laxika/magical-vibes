@@ -21,8 +21,8 @@ public record GrantKeywordToEnchantedAndSharingCreaturesUntilEndOfTurnEffect(Set
     }
 
     @Override
-    public GrantScope scope() {
-        return GrantScope.ENCHANTED_CREATURE;
+    public PermanentSubject subject() {
+        return Subjects.attachedCreature();
     }
 
     @Override

@@ -39,7 +39,6 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
@@ -60,6 +59,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayCardFromHandByWordOfComma
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -2543,7 +2543,7 @@ public class CardChoiceHandlerService {
         }
         if (choice.grantHaste()) {
             gameData.addEffectOnPermanent(chosenCard.getName(), permanent.getId(), player.getId(),
-                    new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), permanent.getId(), Duration.PERMANENT);
+                    new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), permanent.getId(), Duration.PERMANENT);
         }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
         if (choice.enterAttacking()) {
@@ -3084,7 +3084,7 @@ public class CardChoiceHandlerService {
         }
         if (grantHaste) {
             gameData.addEffectOnPermanent(card.getName(), permanent.getId(), playerId,
-                    new GrantKeywordEffect(Keyword.HASTE, GrantScope.TARGET), permanent.getId(), Duration.PERMANENT);
+                    new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), permanent.getId(), Duration.PERMANENT);
         }
         UUID attackTargetId = enterAttacking && gameData.pendingEffectResolutionEntry != null
                 ? gameData.pendingEffectResolutionEntry.getAttackedTargetId() : null;

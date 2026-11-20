@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -34,6 +34,6 @@ public class TheImmortalWeapons extends Card {
         target(TargetFilters.creature()).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
                 new BoostTargetCreatureEffect(2, 0),
-                new GrantKeywordEffect(Keyword.MENACE, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.MENACE, Subjects.target()));
     }
 }

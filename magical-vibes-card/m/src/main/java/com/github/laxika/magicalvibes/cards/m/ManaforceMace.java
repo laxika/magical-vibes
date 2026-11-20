@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "CON", collectorNumber = "139")
 public class ManaforceMace extends Card {
@@ -15,7 +15,7 @@ public class ManaforceMace extends Card {
         addStaticEffect(new AttachedBoostEffect(
                 new BasicLandTypesAmongControlledLands(),
                 new BasicLandTypesAmongControlledLands(),
-                GrantScope.EQUIPPED_CREATURE));
+                Subjects.attachedCreature()));
 
         // Equip {3}
         addActivatedAbility(new EquipActivatedAbility("{3}"));

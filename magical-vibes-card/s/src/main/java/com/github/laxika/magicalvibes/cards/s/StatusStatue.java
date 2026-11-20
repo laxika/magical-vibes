@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,7 +35,7 @@ public class StatusStatue extends Card {
         );
         CardEffect status = SequenceEffect.of(
                 new BoostTargetCreatureEffect(1, 1),
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.TARGET));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.target()));
         CardEffect statue = new DestroyTargetPermanentEffect();
 
         addSpellEffect(new ChooseOneEffect(List.of(

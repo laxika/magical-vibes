@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.condition.ControlledPermanentCounterTotalAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
@@ -27,7 +27,7 @@ public class TomBombadil extends Card {
         addStaticEffect(new ConditionalEffect(
                 new ControlledPermanentCounterTotalAtLeast(
                         4, CounterType.LORE, new PermanentHasSubtypePredicate(CardSubtype.SAGA)),
-                new GrantKeywordEffect(Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), GrantScope.SELF)));
+                new GrantKeywordEffect(Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE), Subjects.source())));
 
         addTrigger(Triggers.finalChapterAbilityResolves(),
                 TriggerOptions.DEFAULT.withLimit(TriggerLimit.ONCE_EACH_TURN),

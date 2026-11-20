@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -54,6 +54,6 @@ public class GleamingOverseer extends Card {
         PermanentPredicate zombieToken = new PermanentAllOfPredicate(List.of(
                 new PermanentHasSubtypePredicate(CardSubtype.ZOMBIE),
                 new PermanentIsTokenPredicate()));
-        addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.HEXPROOF, Keyword.MENACE), GrantScope.ALL_OWN_CREATURES, zombieToken));
+        addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.HEXPROOF, Keyword.MENACE), Subjects.creaturesYouControl(), zombieToken));
     }
 }

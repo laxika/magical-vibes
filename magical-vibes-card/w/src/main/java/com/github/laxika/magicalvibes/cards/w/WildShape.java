@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -24,21 +24,21 @@ public class WildShape extends Card {
                         List.of(
                                 new SetBasePowerToughnessEffect(1, 3),
                                 new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.TURTLE),
-                                new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.target())),
                         TargetFilters.creatureYouControl()),
                 new ChooseOneEffect.ChooseOneOption(
                         "1/5 Spider with reach",
                         List.of(
                                 new SetBasePowerToughnessEffect(1, 5),
                                 new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.SPIDER),
-                                new GrantKeywordEffect(Keyword.REACH, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.REACH, Subjects.target())),
                         TargetFilters.creatureYouControl()),
                 new ChooseOneEffect.ChooseOneOption(
                         "3/3 Elephant with trample",
                         List.of(
                                 new SetBasePowerToughnessEffect(3, 3),
                                 new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.ELEPHANT),
-                                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET)),
+                                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target())),
                         TargetFilters.creatureYouControl())
         )));
     }

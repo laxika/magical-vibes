@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttacksAlone;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +17,6 @@ public class LunkErrant extends Card {
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new AttacksAlone()),
                 new BoostSelfEffect(1, 1),
-                new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.SELF));
+                new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source()));
     }
 }

@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,12 +23,12 @@ public class ReaperOfTheWilds extends Card {
 
         // {B}: This creature gains deathtouch until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{B}",
-                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())),
                 "{B}: This creature gains deathtouch until end of turn."));
 
         // {1}{G}: This creature gains hexproof until end of turn.
         addActivatedAbility(new ActivatedAbility(false, "{1}{G}",
-                List.of(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.SELF)),
+                List.of(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.source())),
                 "{1}{G}: This creature gains hexproof until end of turn."));
     }
 }

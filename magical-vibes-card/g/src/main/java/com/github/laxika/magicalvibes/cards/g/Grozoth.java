@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.SourceCardManaValue;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -37,7 +37,7 @@ public class Grozoth extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}",
-                List.of(new RemoveKeywordEffect(Keyword.DEFENDER, GrantScope.SELF)),
+                List.of(new RemoveKeywordEffect(Keyword.DEFENDER, Subjects.source())),
                 "{4}: This creature loses defender until end of turn."
         ));
 

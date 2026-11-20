@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -38,7 +37,7 @@ public class NissaVitalForce extends Card {
                         new UntapPermanentsEffect(Subjects.target()),
                         new AnimatePermanentsEffect(
                                 5, 5, List.of(CardSubtype.ELEMENTAL), Set.of(Keyword.HASTE), null,
-                                Set.of(), GrantScope.TARGET, Duration.UNTIL_YOUR_NEXT_TURN)
+                                Set.of(), Subjects.target(), Duration.UNTIL_YOUR_NEXT_TURN)
                 ),
                 "+1: Untap target land you control. Until your next turn, it becomes a 5/5 green "
                         + "Elemental creature with haste. It's still a land.",

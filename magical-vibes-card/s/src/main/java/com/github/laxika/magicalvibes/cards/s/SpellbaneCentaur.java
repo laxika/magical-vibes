@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 
 import java.util.Set;
@@ -14,6 +14,6 @@ public class SpellbaneCentaur extends Card {
 
     public SpellbaneCentaur() {
         addStaticEffect(new GrantEffectEffect(
-                TargetingRestrictionEffect.fromSourceColors(Set.of(CardColor.BLUE)), GrantScope.ALL_OWN_CREATURES));
+                TargetingRestrictionEffect.fromSourceColors(Set.of(CardColor.BLUE)), Subjects.creaturesYouControl()));
     }
 }

@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -62,7 +62,7 @@ public class SynthesizerLabship extends Card {
                 new SourceCounterThreshold(2, CounterType.CHARGE)),
                 new AnimatePermanentsEffect(
                         new Fixed(2), new Fixed(2), List.of(), Set.of(Keyword.FLYING), null,
-                        Set.of(CardType.CREATURE), GrantScope.TARGET, Duration.UNTIL_END_OF_TURN,
+                        Set.of(CardType.CREATURE), Subjects.target(), Duration.UNTIL_END_OF_TURN,
                         OTHER_ARTIFACT_YOU_CONTROL
                 ));
 
@@ -70,10 +70,10 @@ public class SynthesizerLabship extends Card {
                 new SourceCounterThreshold(9, CounterType.CHARGE),
                 new AnimatePermanentsEffect(
                         (DynamicAmount) null, (DynamicAmount) null, List.of(), Set.of(), null,
-                        Set.of(CardType.CREATURE), GrantScope.SELF, Duration.STATIC, null
+                        Set.of(CardType.CREATURE), Subjects.source(), Duration.STATIC, null
                 )));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(9, CounterType.CHARGE),
-                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE), GrantScope.SELF)));
+                new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.VIGILANCE), Subjects.source())));
     }
 }

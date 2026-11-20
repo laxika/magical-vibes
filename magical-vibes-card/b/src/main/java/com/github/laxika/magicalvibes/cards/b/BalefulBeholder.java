@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -27,7 +26,7 @@ public class BalefulBeholder extends Card {
                                 1, new PermanentIsEnchantmentPredicate(), Subjects.eachOpponent())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Fear Ray — Creatures you control gain menace until end of turn",
-                        new GrantKeywordEffect(Keyword.MENACE, GrantScope.ALL_OWN_CREATURES))
+                        new GrantKeywordEffect(Keyword.MENACE, Subjects.creaturesYouControl()))
         ))));
     }
 }

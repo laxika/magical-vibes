@@ -12,10 +12,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -51,7 +51,7 @@ public class ArchangelElspeth extends Card {
                 List.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
                         new GrantSubtypeToTargetCreatureEffect(CardSubtype.ANGEL),
-                        new GrantKeywordEffect(Keyword.FLYING, GrantScope.TARGET,
+                        new GrantKeywordEffect(Keyword.FLYING, Subjects.target(),
                                 Duration.PERMANENT)
                 ),
                 "−2: Put two +1/+1 counters on target creature. It becomes an Angel in addition to its other types and gains flying.",

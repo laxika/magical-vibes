@@ -5,9 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
@@ -23,12 +23,12 @@ public class DryadOfTheIlysianGrove extends Card {
 
         for (CardSubtype basicLandType : List.of(CardSubtype.PLAINS, CardSubtype.ISLAND,
                 CardSubtype.SWAMP, CardSubtype.MOUNTAIN, CardSubtype.FOREST)) {
-            addStaticEffect(new GrantSubtypeEffect(basicLandType, GrantScope.OWN_LANDS));
+            addStaticEffect(new GrantSubtypeEffect(basicLandType, Subjects.landsYouControl()));
         }
 
         addStaticEffect(new GrantActivatedAbilityEffect(
                 ManaAbilities.tapForAnyColor(),
-                GrantScope.OWN_PERMANENTS,
+                Subjects.permanentsYouControl(),
                 new PermanentIsLandPredicate()
         ));
     }

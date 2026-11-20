@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,6 +18,6 @@ public class TemurCharger extends Card {
         addMorphWithRevealCost(new CardColorPredicate(CardColor.GREEN), "green");
         target(TargetFilters.creature())
                 .addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
-                        new GrantKeywordEffect(Keyword.TRAMPLE, GrantScope.TARGET));
+                        new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.target()));
     }
 }

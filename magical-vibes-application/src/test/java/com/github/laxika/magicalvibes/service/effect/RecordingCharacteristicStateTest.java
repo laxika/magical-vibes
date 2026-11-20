@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.service.effect.DependencyFootprint.Characteristic;
 import org.junit.jupiter.api.DisplayName;
@@ -131,11 +131,11 @@ class RecordingCharacteristicStateTest {
         if (type.isEnum()) return type.getEnumConstants()[0];
         if (Collection.class.isAssignableFrom(type)) return List.of();
         if (type == Predicate.class) return (Predicate<Object>) ignored -> false;
-        if (type == CardEffect.class) return new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF);
+        if (type == CardEffect.class) return new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source());
         if (type == Class.class) return GrantKeywordEffect.class;
         if (type == ActivatedAbility.class) {
             return new ActivatedAbility(false, "{W}",
-                    List.of(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)), "Probe ability");
+                    List.of(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source())), "Probe ability");
         }
         throw new IllegalArgumentException("No probe argument for " + type
                 + " — add one so the new CharacteristicState method is checked");

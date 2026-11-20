@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.DynamicStaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -23,7 +23,7 @@ public class Necrosquito extends Card {
     public Necrosquito() {
         addStaticEffect(new EnterWithCountersEffect(CounterType.OIL, new Fixed(2)));
         addStaticEffect(new DynamicStaticBoostEffect(new CountersOnSource(CounterType.OIL),
-                        new CountersOnSource(CounterType.OIL), GrantScope.SELF));
+                        new CountersOnSource(CounterType.OIL), Subjects.source()));
         addTrigger(Triggers.dies(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,7 +27,7 @@ public class RelicsRoar extends Card {
                 "Target must be an artifact or creature"
         )).addSpellEffect(new AnimatePermanentsEffect(
                 4, 3, List.of(CardSubtype.DINOSAUR), Set.of(), null,
-                Set.of(CardType.ARTIFACT, CardType.CREATURE), GrantScope.TARGET,
+                Set.of(CardType.ARTIFACT, CardType.CREATURE), Subjects.target(),
                 Duration.UNTIL_END_OF_TURN));
     }
 }

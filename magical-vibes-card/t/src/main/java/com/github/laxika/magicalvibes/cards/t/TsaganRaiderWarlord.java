@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.MaxSpeed;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -37,8 +37,8 @@ public class TsaganRaiderWarlord extends Card {
                 new PermanentCount(CREATURE_WITH_FIRST_OR_DOUBLE_STRIKE, CountScope.CONTROLLER),
                 new Fixed(0)));
         addStaticEffect(new ConditionalEffect(new MaxSpeed(),
-                new GrantKeywordEffect(Keyword.DEATHTOUCH, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.DEATHTOUCH, Subjects.source())));
         addStaticEffect(new ConditionalEffect(new MaxSpeed(),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.OWN_CREATURES)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.otherCreaturesYouControl())));
     }
 }

@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.w.WildbloodPack;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.condition.NoSpellsCastLastTurn;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -20,8 +20,8 @@ public class InstigatorGang extends Card {
 
         // Attacking creatures you control get +1/+0.
         // OWN_CREATURES handles other creatures; SELF handles the source itself (no "other" in oracle text).
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.OWN_CREATURES, new PermanentIsAttackingPredicate()));
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.SELF, new PermanentIsAttackingPredicate()));
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.otherCreaturesYouControl(), new PermanentIsAttackingPredicate()));
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.source(), new PermanentIsAttackingPredicate()));
 
         // At the beginning of each upkeep, if no spells were cast last turn, transform Instigator Gang.
         addTrigger(Triggers.upkeep(ActivePlayer.ANY),

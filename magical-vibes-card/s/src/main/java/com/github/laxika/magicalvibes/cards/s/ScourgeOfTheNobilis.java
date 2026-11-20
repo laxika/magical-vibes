@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,7 +24,7 @@ public class ScourgeOfTheNobilis extends Card {
                 // As long as enchanted creature is red, it gets +1/+1...
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.RED)),
-                        new StaticBoostEffect(1, 1, Set.of(), GrantScope.ENCHANTED_CREATURE),
+                        new StaticBoostEffect(1, 1, Set.of(), Subjects.attachedCreature()),
                         null
                 ))
                 // ...and has "{R/W}: This creature gets +1/+0 until end of turn."
@@ -37,14 +37,14 @@ public class ScourgeOfTheNobilis extends Card {
                                         List.of(new BoostSelfEffect(1, 0)),
                                         "{R/W}: This creature gets +1/+0 until end of turn."
                                 ),
-                                GrantScope.ENCHANTED_CREATURE
+                                Subjects.attachedCreature()
                         ),
                         null
                 ))
                 // As long as enchanted creature is white, it gets +1/+1 and has lifelink.
                 .addStaticEffect(new EnchantedPermanentConditionalEffect(
                         new PermanentColorInPredicate(Set.of(CardColor.WHITE)),
-                        new StaticBoostEffect(1, 1, Set.of(Keyword.LIFELINK), GrantScope.ENCHANTED_CREATURE),
+                        new StaticBoostEffect(1, 1, Set.of(Keyword.LIFELINK), Subjects.attachedCreature()),
                         null
                 ));
     }

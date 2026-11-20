@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,9 +20,9 @@ public class ZoeticGlyph extends Card {
 
     public ZoeticGlyph() {
         target(TargetFilters.artifact())
-                .addStaticEffect(new GrantCardTypeEffect(CardType.CREATURE, GrantScope.ENCHANTED_PERMANENT))
-                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.GOLEM, GrantScope.ENCHANTED_PERMANENT))
-                .addStaticEffect(new SetBasePowerToughnessEffect(5, 4, GrantScope.ENCHANTED_PERMANENT));
+                .addStaticEffect(new GrantCardTypeEffect(CardType.CREATURE, Subjects.attached()))
+                .addStaticEffect(new GrantSubtypeEffect(CardSubtype.GOLEM, Subjects.attached()))
+                .addStaticEffect(new SetBasePowerToughnessEffect(5, 4, Subjects.attached()));
 
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.BATTLEFIELD, ObjectRelation.THIS), new DiscoverEffect(3));
     }

@@ -5,17 +5,17 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawDiscardAndConniveEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "MSH", collectorNumber = "106")
 public class MODOK extends Card {
 
     public MODOK() {
-        addStaticEffect(new StaticBoostEffect(-1, -1, GrantScope.OPPONENT_CREATURES));
+        addStaticEffect(new StaticBoostEffect(-1, -1, Subjects.creaturesYourOpponentsControl()));
         addActivatedAbility(new ActivatedAbility(
                 false, null,
                 List.of(new PayLifeCost(3), new DrawDiscardAndConniveEffect()),

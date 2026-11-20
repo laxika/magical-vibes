@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +23,7 @@ public class RiverfallMimic extends Card {
                                 new CardColorPredicate(CardColor.BLUE),
                                 new CardColorPredicate(CardColor.RED)
                         ))),
-                new SetBasePowerToughnessEffect(3, 3, GrantScope.SELF),
+                new SetBasePowerToughnessEffect(3, 3, Subjects.source()),
                 new MakeCreatureUnblockableEffect(true));
     }
 }

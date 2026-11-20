@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 @CardRegistration(set = "MSC", collectorNumber = "107")
@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 public class HulkbusterArmor extends Card {
 
     public HulkbusterArmor() {
-        addStaticEffect(new SetBasePowerToughnessEffect(9, 9, GrantScope.EQUIPPED_CREATURE));
-        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, GrantScope.EQUIPPED_CREATURE));
+        addStaticEffect(new SetBasePowerToughnessEffect(9, 9, Subjects.attachedCreature()));
+        addStaticEffect(new GrantKeywordEffect(Keyword.FLYING, Subjects.attachedCreature()));
 
         var hero = new PermanentHasSubtypePredicate(CardSubtype.HERO);
         addActivatedAbility(new EquipActivatedAbility(

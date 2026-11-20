@@ -3,9 +3,9 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -22,7 +22,7 @@ public class ValleyQuestcaller extends Card {
     public ValleyQuestcaller() {
         Set<CardSubtype> valleyCreatures = Set.of(
                 CardSubtype.RABBIT, CardSubtype.BAT, CardSubtype.BIRD, CardSubtype.MOUSE);
-        addStaticEffect(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES,
+        addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),
                 new PermanentHasAnySubtypePredicate(valleyCreatures)));
         addTrigger(new TriggerCondition(Triggers.enters(
                                 new PermanentAllOfPredicate(List.of(

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentCastFromZonePredicate;
@@ -44,6 +44,6 @@ public class ChainerNightmareAdept extends Card {
                                         Triggers.NONTOKEN,
                                         new PermanentNotPredicate(new PermanentCastFromZonePredicate(Zone.HAND)))))),
                         ObjectRelation.YOU_CONTROL),
-                new GrantKeywordEffect(Keyword.HASTE, GrantScope.TRIGGERING_PERMANENT, Duration.UNTIL_YOUR_NEXT_TURN));
+                new GrantKeywordEffect(Keyword.HASTE, Subjects.triggering(), Duration.UNTIL_YOUR_NEXT_TURN));
     }
 }

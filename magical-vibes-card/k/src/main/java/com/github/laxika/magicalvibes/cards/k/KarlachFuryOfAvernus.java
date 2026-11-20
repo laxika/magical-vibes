@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.FirstCombatPhase;
 import com.github.laxika.magicalvibes.model.effect.AdditionalCombatPhaseEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -28,7 +27,7 @@ public class KarlachFuryOfAvernus extends Card {
                                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
                                         new PermanentIsAttackingPredicate())))),
                         new GrantKeywordEffect(Keyword.FIRST_STRIKE,
-                                GrantScope.ALL_CREATURES_INCLUDING_SELF,
+                                Subjects.allCreatures(),
                                 new PermanentIsAttackingPredicate()),
                         new AdditionalCombatPhaseEffect(1)));
     }

@@ -10,8 +10,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -41,7 +41,7 @@ public class MoiraBrownGuideAuthor extends Card {
                         StaticAbility.of(new AttachedBoostEffect(
                                 questCountersAmongPermanentsYouControl,
                                 questCountersAmongPermanentsYouControl,
-                                GrantScope.EQUIPPED_CREATURE))));
+                                Subjects.attachedCreature()))));
         addTrigger(Triggers.enters(ObjectRelation.THIS), wastelandSurvivalGuide);
 
         target(new ControlledPermanentPredicateTargetFilter(

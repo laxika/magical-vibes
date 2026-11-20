@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -41,11 +40,11 @@ public class CatchOfTheDay extends Card {
                 List.of(SIX_TWO, FOUR_FOUR, TWO_SIX))));
 
         addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(VIGILANCE),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.source())));
         addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(WARD),
-                new GrantKeywordEffect(Keyword.WARD, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.WARD, Subjects.source())));
         addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(ISLANDWALK),
-                new GrantKeywordEffect(Keyword.ISLANDWALK, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.ISLANDWALK, Subjects.source())));
 
         addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceHasChosenMode(WARD)),
@@ -64,10 +63,10 @@ public class CatchOfTheDay extends Card {
                         new TapPermanentsEffect(Subjects.target(), opponentCreature.predicate()));
 
         addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(SIX_TWO),
-                new SetBasePowerToughnessEffect(6, 2, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(6, 2, Subjects.source())));
         addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(FOUR_FOUR),
-                new SetBasePowerToughnessEffect(4, 4, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(4, 4, Subjects.source())));
         addStaticEffect(new ConditionalEffect(new SourceHasChosenMode(TWO_SIX),
-                new SetBasePowerToughnessEffect(2, 6, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(2, 6, Subjects.source())));
     }
 }

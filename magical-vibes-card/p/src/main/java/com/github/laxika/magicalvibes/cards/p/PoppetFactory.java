@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,8 +22,8 @@ public class PoppetFactory extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentIsTokenPredicate()));
 
-        addStaticEffect(new LosesAllAbilitiesEffect(GrantScope.OWN_CREATURES, creatureToken));
-        addStaticEffect(new SetBasePowerToughnessEffect(3, 3, GrantScope.OWN_CREATURES, creatureToken));
+        addStaticEffect(new LosesAllAbilitiesEffect(Subjects.otherCreaturesYouControl(), creatureToken));
+        addStaticEffect(new SetBasePowerToughnessEffect(3, 3, Subjects.otherCreaturesYouControl(), creatureToken));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new MayEffect(new TransformSelfEffect(), "Transform Poppet Factory?"));
     }

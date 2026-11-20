@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ODY", collectorNumber = "241")
 public class GorillaTitan extends Card {
@@ -15,6 +15,6 @@ public class GorillaTitan extends Card {
         // This creature gets +4/+4 as long as there are no cards in your graveyard.
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new GraveyardCardThreshold(1, null)),
-                new StaticBoostEffect(4, 4, GrantScope.SELF)));
+                new StaticBoostEffect(4, 4, Subjects.source())));
     }
 }

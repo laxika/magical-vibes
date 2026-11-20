@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnyNumberOfPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -26,7 +26,7 @@ public class SwashbucklerExtraordinaire extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), CreateTokenEffect.ofTreasureToken(1));
 
         GrantKeywordEffect grantDoubleStrike =
-                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, GrantScope.TARGETS);
+                new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.triggeringSpellTargets());
         var targetGroup = targetUpTo(new EventValue(), TargetFilters.creature(), 100);
         targetGroup.addTrigger(Triggers.youAttack(), new MayEffect(
                 SequenceEffect.of(

@@ -10,9 +10,9 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -43,7 +43,7 @@ public class GideonAllyOfZendikar extends Card {
         addActivatedAbility(new ActivatedAbility(
                 -4,
                 List.of(new CreateEmblemEffect(
-                        List.of(new StaticBoostEffect(1, 1, GrantScope.OWN_CREATURES)),
+                        List.of(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl())),
                         "Creatures you control get +1/+1.")),
                 "-4: You get an emblem with \"Creatures you control get +1/+1.\""
         ));

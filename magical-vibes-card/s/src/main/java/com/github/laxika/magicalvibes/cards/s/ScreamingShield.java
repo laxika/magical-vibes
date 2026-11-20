@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 
 import java.util.List;
@@ -18,7 +17,7 @@ public class ScreamingShield extends Card {
 
     public ScreamingShield() {
         addStaticEffect(new AttachedBoostEffect(
-                new Fixed(0), new Fixed(3), GrantScope.EQUIPPED_CREATURE));
+                new Fixed(0), new Fixed(3), Subjects.attachedCreature()));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
                         true,
@@ -26,7 +25,7 @@ public class ScreamingShield extends Card {
                         List.of(new MillEffect(3, Subjects.targetPlayer())),
                         "{2}, {T}: Target player mills three cards."
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
         addActivatedAbility(new EquipActivatedAbility("{3}"));
     }

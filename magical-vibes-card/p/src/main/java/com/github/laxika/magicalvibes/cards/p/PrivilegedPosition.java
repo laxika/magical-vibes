@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RAV", collectorNumber = "251")
 @CardRegistration(set = "GK1", collectorNumber = "116")
@@ -13,6 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 public class PrivilegedPosition extends Card {
 
     public PrivilegedPosition() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, GrantScope.OWN_PERMANENTS));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HEXPROOF, Subjects.otherPermanentsYouControl()));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -21,7 +21,7 @@ public class WingnutBatOnTheBelfry extends Card {
     public WingnutBatOnTheBelfry() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new GrantChosenKeywordEffect(
-                        List.of(Keyword.FLYING, Keyword.MENACE, Keyword.HASTE), GrantScope.SELF));
+                        List.of(Keyword.FLYING, Keyword.MENACE, Keyword.HASTE), Subjects.source()));
 
         addTrigger(Triggers.attacks(), new BoostAllCreaturesEffect(1, 0,
                 new PermanentAllOfPredicate(List.of(

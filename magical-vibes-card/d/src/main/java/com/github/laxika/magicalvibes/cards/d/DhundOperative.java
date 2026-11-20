@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.Set;
@@ -17,6 +17,6 @@ public class DhundOperative extends Card {
     public DhundOperative() {
         addStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentIsArtifactPredicate()),
-                new StaticBoostEffect(1, 0, Set.of(Keyword.DEATHTOUCH), GrantScope.SELF)));
+                new StaticBoostEffect(1, 0, Set.of(Keyword.DEATHTOUCH), Subjects.source())));
     }
 }

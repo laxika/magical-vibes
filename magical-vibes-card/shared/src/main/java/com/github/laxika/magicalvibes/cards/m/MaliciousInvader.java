@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 public class MaliciousInvader extends Card {
@@ -13,6 +13,6 @@ public class MaliciousInvader extends Card {
     public MaliciousInvader() {
         addStaticEffect(new ConditionalEffect(
                 new OpponentControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.HUMAN)),
-                new StaticBoostEffect(2, 0, GrantScope.SELF)));
+                new StaticBoostEffect(2, 0, Subjects.source())));
     }
 }

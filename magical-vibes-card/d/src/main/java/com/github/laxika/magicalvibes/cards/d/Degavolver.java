@@ -12,12 +12,12 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatableAdditionalManaCost;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 
 @CardRegistration(set = "APC", collectorNumber = "6")
@@ -33,12 +33,12 @@ public class Degavolver extends Card {
                 new ActivatedAbility(false, null,
                         List.of(new PayLifeCost(3), new RegenerateEffect()),
                         "Pay 3 life: Regenerate Degavolver."),
-                GrantScope.SELF)));
+                Subjects.source())));
 
         addStaticEffect(new ConditionalEffect(
                 new RepeatedAdditionalCostPaid("{R}"),
                 new EnterWithCountersEffect(CounterType.PLUS_ONE_PLUS_ONE, new Fixed(1))));
         addStaticEffect(new ConditionalEffect(new RepeatedAdditionalCostPaid("{R}"),
-                new GrantKeywordEffect(Keyword.FIRST_STRIKE, GrantScope.SELF)));
+                new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.source())));
     }
 }

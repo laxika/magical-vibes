@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -32,7 +32,7 @@ public class DepthshakerTitan extends Card {
                 new PermanentIsCreaturePredicate()));
         addStaticEffect(new GrantKeywordEffect(
                 Set.of(Keyword.MELEE, Keyword.TRAMPLE, Keyword.HASTE),
-                GrantScope.ALL_OWN_CREATURES, artifactCreature));
+                Subjects.creaturesYouControl(), artifactCreature));
 
         PermanentPredicate noncreatureArtifact = new PermanentAllOfPredicate(List.of(
                 new PermanentIsArtifactPredicate(),
@@ -45,7 +45,7 @@ public class DepthshakerTitan extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new AnimatePermanentsEffect(
                         new Fixed(3), new Fixed(3), List.of(), Set.of(), null, Set.of(CardType.ARTIFACT),
-                        GrantScope.TARGET, Duration.PERMANENT, noncreatureArtifact),
+                        Subjects.target(), Duration.PERMANENT, noncreatureArtifact),
                         new SacrificeTargetPermanentAtEndStepEffect());
     }
 }

@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -27,7 +27,7 @@ public class VaultOfTheArchangel extends Card {
                 "{2}{W}{B}",
                 List.of(new GrantKeywordEffect(
                         Set.of(Keyword.DEATHTOUCH, Keyword.LIFELINK),
-                        GrantScope.ALL_OWN_CREATURES
+                        Subjects.creaturesYouControl()
                 )),
                 "{2}{W}{B}, {T}: Creatures you control gain deathtouch and lifelink until end of turn."
         ));

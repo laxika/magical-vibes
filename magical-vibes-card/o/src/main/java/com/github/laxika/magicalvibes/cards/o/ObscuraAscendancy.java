@@ -10,10 +10,10 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.condition.SpellManaValueEqualsSourceCounters;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -34,7 +34,7 @@ public class ObscuraAscendancy extends Card {
 
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(5, CounterType.SOUL),
-                new StaticBoostEffect(3, 3, GrantScope.OWN_CREATURES,
+                new StaticBoostEffect(3, 3, Subjects.otherCreaturesYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.SPIRIT))));
     }
 }

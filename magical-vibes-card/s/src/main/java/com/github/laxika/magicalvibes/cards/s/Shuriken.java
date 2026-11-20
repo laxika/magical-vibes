@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerGainsControlOfGrantingEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -33,7 +33,7 @@ public class Shuriken extends Card {
                                 + "That creature's controller gains control of Shuriken unless it was unattached from a Ninja.",
                         TargetFilters.creature()
                 ),
-                GrantScope.EQUIPPED_CREATURE
+                Subjects.attachedCreature()
         ));
 
         addActivatedAbility(new EquipActivatedAbility("{2}"));

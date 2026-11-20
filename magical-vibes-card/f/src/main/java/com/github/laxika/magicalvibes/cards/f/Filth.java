@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.WrappedGraveyardStaticEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
@@ -17,6 +17,6 @@ public class Filth extends Card {
     public Filth() {
         addStaticEffect(new WrappedGraveyardStaticEffect(new ConditionalEffect(
                 new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.SWAMP)),
-                new GrantKeywordEffect(Keyword.SWAMPWALK, GrantScope.ALL_OWN_CREATURES))));
+                new GrantKeywordEffect(Keyword.SWAMPWALK, Subjects.creaturesYouControl()))));
     }
 }

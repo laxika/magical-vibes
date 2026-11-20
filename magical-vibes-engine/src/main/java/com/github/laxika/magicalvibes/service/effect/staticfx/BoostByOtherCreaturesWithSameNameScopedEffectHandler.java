@@ -27,7 +27,7 @@ public class BoostByOtherCreaturesWithSameNameScopedEffectHandler implements Sta
     @Override
     public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
         var boost = (BoostByOtherCreaturesWithSameNameEffect) effect;
-        if (boost.scope() == null || !support.namesBeyondSource(context, boost.scope().subject(), boost.filter())) {
+        if (boost.subject() == null || !support.namesBeyondSource(context, boost.subject(), boost.filter())) {
             return;
         }
         Permanent boosted = context.target();

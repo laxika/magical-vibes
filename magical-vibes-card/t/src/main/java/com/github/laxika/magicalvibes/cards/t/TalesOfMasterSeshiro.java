@@ -8,8 +8,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -43,7 +43,7 @@ public class TalesOfMasterSeshiro extends Card {
         addTrigger(Triggers.chapter(chapter),
                 PutCounterOnTargetPermanentEffect.withTargetRestriction(
                         CounterType.PLUS_ONE_PLUS_ONE, 1, targetRestriction),
-                new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.TARGET, targetRestriction));
+                new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.target(), targetRestriction));
         setSagaChapterTargetRequired(chapter);
     }
 

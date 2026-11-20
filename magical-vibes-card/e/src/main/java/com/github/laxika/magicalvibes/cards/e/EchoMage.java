@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
@@ -39,18 +39,18 @@ public class EchoMage extends Card {
                 new AllOf(List.of(
                         new SourceCounterThreshold(2, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(4, CounterType.LEVEL)))),
-                new SetBasePowerToughnessEffect(2, 4, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(2, 4, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.LEVEL),
-                new SetBasePowerToughnessEffect(2, 5, GrantScope.SELF)));
+                new SetBasePowerToughnessEffect(2, 5, Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new AllOf(List.of(
                         new SourceCounterThreshold(2, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(4, CounterType.LEVEL)))),
-                new GrantActivatedAbilityEffect(copyAbility(1), GrantScope.SELF)));
+                new GrantActivatedAbilityEffect(copyAbility(1), Subjects.source())));
         addStaticEffect(new ConditionalEffect(
                 new SourceCounterThreshold(4, CounterType.LEVEL),
-                new GrantActivatedAbilityEffect(copyAbility(2), GrantScope.SELF)));
+                new GrantActivatedAbilityEffect(copyAbility(2), Subjects.source())));
     }
 
     private static ActivatedAbility copyAbility(int copyCount) {

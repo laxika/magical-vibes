@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,7 +27,7 @@ public class HonorThePast extends Card {
                         new CardMaxManaValuePredicate(6))))
                 .targetGraveyard(true)
                 .battlefieldEffectGrants(List.of(
-                        new SetCardTypesEffect(Set.of(CardType.ARTIFACT), GrantScope.TARGET)))
+                        new SetCardTypesEffect(Set.of(CardType.ARTIFACT), Subjects.target())))
                 .build());
     }
 }

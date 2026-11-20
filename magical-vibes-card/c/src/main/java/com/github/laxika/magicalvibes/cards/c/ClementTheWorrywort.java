@@ -9,9 +9,9 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AwardRestrictedManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -53,7 +53,7 @@ public class ClementTheWorrywort extends Card {
                         List.of(new AwardRestrictedManaEffect(
                                 ManaColor.GREEN, 1, new ManaRestriction.CreatureSpells())),
                         "{T}: Add {G}. Spend this mana only to cast a creature spell."),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 frogFilter));
         addStaticEffect(new GrantActivatedAbilityEffect(
                 new ActivatedAbility(
@@ -62,7 +62,7 @@ public class ClementTheWorrywort extends Card {
                         List.of(new AwardRestrictedManaEffect(
                                 ManaColor.BLUE, 1, new ManaRestriction.CreatureSpells())),
                         "{T}: Add {U}. Spend this mana only to cast a creature spell."),
-                GrantScope.ALL_OWN_CREATURES,
+                Subjects.creaturesYouControl(),
                 frogFilter));
     }
 }

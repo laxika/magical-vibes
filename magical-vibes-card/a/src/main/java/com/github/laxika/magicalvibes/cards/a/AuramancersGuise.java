@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "PLC", collectorNumber = "34")
@@ -17,7 +17,7 @@ public class AuramancersGuise extends Card {
         Scaled twicePerAura = new Scaled(new AttachmentsOnSource(true, false), 2);
         target(TargetFilters.creature())
                 .addStaticEffect(new AttachedBoostEffect(
-                        twicePerAura, twicePerAura, GrantScope.ENCHANTED_CREATURE, true))
-                .addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, GrantScope.ENCHANTED_CREATURE));
+                        twicePerAura, twicePerAura, Subjects.attachedCreature(), true))
+                .addStaticEffect(new GrantKeywordEffect(Keyword.VIGILANCE, Subjects.attachedCreature()));
     }
 }

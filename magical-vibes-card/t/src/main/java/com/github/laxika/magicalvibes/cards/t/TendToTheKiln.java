@@ -12,13 +12,13 @@ import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffec
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityToCreatedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsToOwnedCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -53,7 +53,7 @@ public class TendToTheKiln extends Card {
                                 new ConjureCardToBattlefieldEffect("ECL", "139"),
                                 new GrantKeywordEffect(
                                         Keyword.HASTE,
-                                        GrantScope.TOKENS_CREATED_THIS_RESOLUTION,
+                                        Subjects.createdThisResolution(),
                                         Duration.PERMANENT),
                                 new GrantTriggeredAbilityToCreatedPermanentsEffect(
                                         new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),

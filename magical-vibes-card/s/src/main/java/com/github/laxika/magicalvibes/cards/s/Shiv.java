@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class Shiv extends Card {
                         List.of(new BoostSelfEffect(1, 0)),
                         "{R}: This creature gets +1/+0 until end of turn."
                 ),
-                GrantScope.ALL_CREATURES
+                Subjects.otherCreatures()
         ));
         addTrigger(Triggers.chaosEnsues(), new CreateTokenEffect(
                 "Dragon", 5, 5, CardColor.RED, List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of()));

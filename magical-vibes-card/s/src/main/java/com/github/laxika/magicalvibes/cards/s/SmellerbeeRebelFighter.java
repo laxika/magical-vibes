@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class SmellerbeeRebelFighter extends Card {
 
     public SmellerbeeRebelFighter() {
-        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, GrantScope.OWN_CREATURES));
+        addStaticEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.otherCreaturesYouControl()));
         addTrigger(Triggers.attacks(), new MayEffect(
                 new DiscardOwnHandThenDrawEffect(
                         new PermanentCount(new PermanentIsAttackingPredicate(), CountScope.ANY_PLAYER)),

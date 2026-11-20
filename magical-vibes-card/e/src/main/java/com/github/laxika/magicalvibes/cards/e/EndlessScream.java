@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "TMP", collectorNumber = "132")
@@ -19,6 +19,6 @@ public class EndlessScream extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.SCREAM, new XValue()));
 
         // Enchanted creature gets +1/+0 for each scream counter on this Aura.
-        addStaticEffect(new StaticBoostEffect(1, 0, GrantScope.ENCHANTED_CREATURE, CounterType.SCREAM));
+        addStaticEffect(new StaticBoostEffect(1, 0, Subjects.attachedCreature(), CounterType.SCREAM));
     }
 }
