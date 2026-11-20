@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -33,6 +33,6 @@ public class BuzzardWaspColony extends Card {
         addTrigger(Triggers.creatureDies(
                         new PermanentHasCountersPredicate(CounterType.ANY),
                         ObjectRelation.ANOTHER_YOU_CONTROL),
-                new MoveDyingSourceCountersToSourceEffect());
+                MoveDyingSourceCountersToTargetCreatureEffect.toSource());
     }
 }

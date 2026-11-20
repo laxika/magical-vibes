@@ -17,7 +17,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
-| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a, 5b, 5c, 5e, 5f, 5g, 5h, 5i, 5j, 5k, 5l done; 5d partly done) |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5c, 5e–5l done; 5d partly done: its restriction readers move to step 6; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | open |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
@@ -389,7 +389,7 @@ only in subject, replace the verb's scope enum if it has one.
 | 5a | Destroy | `PermanentReference` users | `DestroyTargetPermanentEffect`, `DestroyReferencedPermanentEffect`, `--family Destroy` | done |
 | 5b | Exile a permanent | none | `Exile{TargetPermanent,Self,EnchantedCreature,EquippedCreature}Effect` | done |
 | 5c | Return to hand | `BounceScope` | `ReturnToHandEffect`, `Return*ToHand*` | done |
-| 5d | Tap and untap | `TapUntapScope` (1,419 cards) | `--family Tap`, `--family Untap` | partly done (the tap and untap verbs; the six restriction records still carry `TapUntapScope`) |
+| 5d | Tap and untap | `TapUntapScope` (1,419 cards) | `--family Tap`, `--family Untap` | partly done (the tap and untap verbs; the six restriction records still carry `TapUntapScope`: planned for step 6) |
 | 5e | Put counters | `PermanentReference` users | `PutCountersOnSelfEffect`, `PutCounterOnTargetPermanentEffect`, `PutCounterOnReferencedPermanentEffect`, `DoublePlusOneCountersOn{TargetCreature,Source,EnchantedCreature}Effect` | done |
 | 5f | Remove counters | `CounterRemovalSubject` | `--family RemoveCounter` | done |
 | 5g | Damage to permanents | `DamagedPermanentScope` | `DealDamageTo{TargetCreature,Source,TriggeringPermanent,EnchantedCreature,TargetPermanent}Effect` | done (`DealDamageToTargetPermanentEffect` kept: not a subject sibling) |
@@ -398,7 +398,7 @@ only in subject, replace the verb's scope enum if it has one.
 | 5j | Sacrifice a named permanent | none | `Sacrifice{Self,EnchantedCreature,TargetCreature}Effect` | done (3 folded into `SacrificeSelfEffect`; the delayed and Animate Dead records kept) |
 | 5k | Flicker, phase out, remove from combat | `FlickerScope`, `PhaseOutSubject`, `PhaseOutScope` | `Remove{Target,Self,Source}FromCombatEffect` | done (3 enums gone; 4 records folded into `RemoveTargetFromCombatEffect` and `PhaseOutEffect`) |
 | 5l | Attach and token copies | none | `Attach*EquipmentTo*` (5), `CreateTokenCopyOf*` (4), `CreateTokenAttachedTo*` (4) | done (9 folded into three survivors; `Copied` enum gone; the defending-player token and `CreateTokenCopyOfSourceEffect` kept) |
-| 5m | Whatever `--siblings` still lists | — | — | open |
+| 5m | Whatever `--siblings` still lists | `PermanentReference` | — | partly done (14 folded into 11 survivors; `PermanentReference` and `Subjects.of` gone; 135 sibling groups still have unaudited classes) |
 
 Notes for every run:
 
@@ -2554,6 +2554,108 @@ the probe; Esix, Mirrormind Crown, Moonlit Meditation; `DrawServiceTest`, `Libra
   resolution-time choice), `Attach*AuraTo*` (3), `CreateTokenCopyOf*For*` (4, a token controller subject),
   `CreateTokenFor*` (4).
 - `triggeringAll()` is the plural "them"; a one-permanent verb reads it for "one of them" (B, C).
+
+### Step 5, run 5m (2026-11-20, partly done)
+
+`--siblings` listed 151 groups with 332 unaudited classes at the start, 135 groups / 289 classes now. Worked largest
+group first, then the leftovers earlier runs named, and stopped at 14 folded classes because the next candidates each need
+a mechanism first (below). 5d's restriction readers (`SkipNextUntap`, `CantBlockThisTurn`, `CantAttackThisTurn`,
+`DoesntUntap`, `DoesntUntapWithCounter`, `UntapAllPermanentsYouControlDuringEachOtherPlayersStep`) are planned for step 6.
+
+**`PermanentReference` is gone**, with `Subjects.of`. Its nine readers now carry a `PermanentSubject` component of the same
+name and default: `ExploreEffect.subject`, `GoadTargetCreatureUntilNextTurnEffect.goaded`, `TurnSourceFaceUpEffect.subject`,
+`ShuffleReferencedPermanentIntoLibraryEffect.subject`, `MustBlockSourceEffect.blocked`, `DoesntUntapWithCounterEffect.counterBearer`,
+`PutOrRemoveCounterIfAttackedOrBlockedSinceLastUpkeepEffect.subject`, the fused
+`RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffect.subject` and
+`PermanentBlockingSourcePredicate.blocked` (domain filter). Each compact constructor keeps its old allowed set; the readers
+(`UntapStepService`, `PredicateEvaluationService`, six handlers) read the subject directly. 4 card files rewritten (Shape of
+the Wiitigo, Path of Discovery, Defossilize, Bomb Squad). Since `Subjects.of` returned the same constants, nothing resolves
+differently.
+
+**Survivors and what they absorbed** (14 records, 14 handlers deleted; ratchet 4,859 / 4,092):
+
+- `RemoveAllCountersFromTargetPermanentEffect(PermanentSubject subject, PermanentPredicate targetFilter)`: `target()` default,
+  `fromTargetCreature()` (benign `permanents(creature)` spec) absorbs `RemoveAllCountersFromTargetCreatureEffect` (Perfect
+  Intimidation, Thorna and Twigtooth); `(Subjects.attached())` absorbs `RemoveAllCountersFromEnchantedCreatureEffect`
+  (Enchanted River's Grasp, Honest Work). The handler resolves the subject and keeps the target handler's path for each.
+- Player verbs (4b/4c/4d/4a leftovers): `TargetSpellControllerLosesLifeEffect` → `LoseLifeEffect(n, controllerOf(targetSpell()))`
+  (Countersquall, Psychic Barrier, Deny the Witch, Punish Ignorance, Undermine) and `controllerOf(triggeringSpell())` (Forsaken
+  Wastes, whose old handler special-cased the triggering spell); `TargetSpellControllerGainsLifeEqualToManaValueEffect` →
+  `GainLifeEffect(new TargetSpellManaValue(), controllerOf(targetSpell()))` (Illumination);
+  `EachOpponentWithPoisonCountersLosesLifeEffect(m, n)` → `LoseLifeEffect(m, matching(eachOpponent(), new
+  PlayerHasPoisonCountersAtLeastPredicate(n)))` (Feed the Infection, Phyrexian Atlas; new `PlayerPredicate`, evaluated in
+  `TargetLegalityService`); `DrawCardForYouAndDamagedPlayerEffect` → `DrawCardEffect(n, allOf(you(), triggeringPlayer()))`
+  (Xyris, Black Widow; APNAP order and one draw for one player, as before). Its mock handler test is deleted; Xyris's
+  "active player draws first" card test covers the order.
+- `ShuffleReferencedPermanentIntoLibraryEffect` (`attached()` default, rejects a target) absorbs
+  `ShuffleEnchantedPermanentIntoOwnerLibraryEffect` (Watery Grasp, Stay Hidden, Stay Silent); `resolvesAgainstAttachedPermanent()`
+  keeps the activation-time host capture the old record's `AttachedPermanentSelfTargetingEffect` marker gave.
+- `AttachSourceEquipmentToTargetCreatureEffect.forCreatureYouControl()` absorbs `AttachCreatedEquipmentToTargetCreatureEffect`
+  (Dáin Ironfoot, Adaptive Armorer, Masterpiece Vault): the reflexive entry's source is the created or drafted Equipment, the
+  spec is the same, and the target's "creature you control" recheck is the resolution-time target legality check.
+- `ControllerLosesGameEffect(PlayerSubject player)` (`you()` default, rejects a target) absorbs `EnchantedPlayerLosesGameEffect`
+  → `(enchantedPlayer())` (Sinner's Judgment).
+- `PutTargetPermanentIntoLibraryNFromTopEffect(DynamicAmount position, PermanentSubject subject)` (`boolean self` became
+  `source()`; `self(n)` kept) absorbs `PutSourcePermanentIntoLibraryNFromTopEffect` (Braided Quipu) and
+  `PutEnchantedPermanentIntoLibraryNFromTopEffect` → `(attached(), n)` (Shattered Ego; keeps the self-targeting marker and the
+  attached capture). Positions are clamped at 0 for every form.
+- `DoubleCountersOnTargetPermanentEffect(CounterType, PermanentSubject)`: `onSource(t)` absorbs `DoubleCountersOnSourceEffect`
+  (The Millennium Calendar, Ascendant Acolyte); the target path is untouched.
+- `DoubleSelfPowerToughnessEffect(boolean powerOnly, PermanentSubject)`: `ofTargetCreature()` (benign creature spec, creature
+  recheck) absorbs `DoubleTargetCreaturePowerToughnessEffect` (World War Hulk, Nylea's Colossus) and replaces the source record on
+  the three spells that relied on its legacy source-to-`targetId` fallback (Epic Fight, Dragonclaw Strike, Choose Your Weapon);
+  `source()` is now strict (step 3).
+- `MoveDyingSourceCountersToTargetCreatureEffect(boolean controllerOnly, PermanentSubject)`: `toSource()` absorbs
+  `MoveDyingSourceCountersToSourceEffect` (Buzzard-Wasp Colony; keeps its self-targeting marker).
+
+36 card files rewritten (scratch scripts, deleted; 4 by hand), 30 engine (14 handlers deleted), 33 domain (14 records and
+`PermanentReference` deleted, the predicate added), 2 AI main, 1 AI test, 3 application test, 2 card test and 10 agent-docs
+files changed.
+
+**Behaviour changes.** (1) Removing all counters from target creature now runs the vanishing last-time-counter check and the
+battle defense check, as the target-permanent record did: "when the last time counter is removed from it, sacrifice it"
+(CR 702.63a). Test: `PerfectIntimidationTest.counterModeRemovingLastTimeCounterTriggersVanishing` (fails on the old handler).
+The Aura cards make their host lose all abilities, so vanishing does not reach them. (2) Feed the Infection / Phyrexian Atlas
+lose life in APNAP order (simultaneous; log order only). (3) "That spell's controller" also falls back to the controller the
+entry recorded as the spell left (`targetSpellController`), where the old handler did nothing. (4) Illumination gains through
+`GainLifeEffect` even for a mana value of 0 (no life changes: `completeGainLife` returns for 0). (5) Log lines are the
+survivors'. Test added for the dropped explicit check: `DainIronfootTest.axeDoesNotAttachToCreatureAnOpponentNowControls`.
+
+**AI parity.** `TargetPolarityClassifier`: the two remove-all name entries became a structural branch (HARMFUL with a filter,
+NEUTRAL without, none for `attached()`); `DoubleTargetCreaturePowerToughness`'s entry became a branch on
+`DoubleSelfPowerToughnessEffect` (BENEFICIAL for `target()`), so the three spells above now classify their target BENEFICIAL
+(was none). `SpellEvaluator.gainsForTargetPlayer` also excludes `controllerOf(targetSpell())`, so Illumination's gain for the
+countered spell's controller is not scored as the AI's own. `LoseLifeEffect` with `controllerOf` / `matching` players scores 0,
+as the absorbed records (never read) did. The created-Equipment attach now classifies BENEFICIAL (was none; its target must be
+a creature you control).
+
+**Tests**: 390 suites, 3,588 test cases, all pass: every test class of every card naming a survivor or a `PermanentReference`
+reader (or `PermanentBlockingSourcePredicate`), a 12-per-class sample of `LoseLifeEffect`, `GainLifeEffect`, `DrawCardEffect`,
+the rewritten cards, `EffectCountRatchetTest`, `SubjectResolutionServiceTest`, `CardEffectTargetingConsistencyTest`,
+`UntapStepServiceTest`, `TargetLegalityServiceTest`, `TriggeredAbilityStackServiceTest`, `EndTurnEffectHandlerTest`,
+`EtbEffectResolverTest`, `TargetPolarityGuardTest`, `SpellEvaluatorTest`.
+
+**For later runs (what 5m left).**
+
+- Ledgered here (`blocked-other` unless noted), each with the mechanism it waits for: the token-controller axis
+  (`CreateTokenFor{TargetPlayer,TriggeringPlayer,SourceController,Player}Effect`, `CreateTokenCopyOf*For*`: `CreateTokenEffect`
+  and `CreateTokenCopyOfTargetPermanentEffect` need a `PlayerSubject` token controller, whose `createForTargetController` flag is
+  `controllerOf(target())`; the creation paths differ in the Esix offer, the investigate event and the attack choice);
+  `AttachCreatedEquipmentToSourceEffect` (step-7 created subject), `AttachOneOfControlledEquipmentTo*` (step-7 picked subject),
+  `Attach*AuraTo*` (target groups for Aura Finesse; a player host); the static `GoadEquippedCreature` / `GoadSourceCreature`
+  (step 6); `TurnTarget{Creature,}FaceUpEffect` (two different turn-face-up paths: unify first); `ShuffleSelf…` /
+  `ShuffleTargetPermanentIntoLibraryEffect` (then-riders, step 8); `TargetPlayerLosesGameEffect` (folds into
+  `ControllerLosesGameEffect` with a per-card `triggeringPlayer()` mapping of its combat-damage cards); `GainControlOf*` (the
+  record is the floating control effect's payload); `*ExilesFromHand` (`blocked-player-loop`).
+- Still unaudited (`--siblings`, 135 groups / 289 classes), largest first: `GrantStaticEffectTo*UntilEndOfTurn` (6, a
+  `GrantScope` family: step 6), `*DrawsCard` (`EachPlayer`/`EachOtherPlayer`/`TargetPermanentController`; 4a's AI rule for
+  opponents' draws), the `*BecomesChosenSubtype*`, `*CantCastSpellsThisTurn`, `*CantGainLife*`, `*ChoosesCardFromGraveyardToBattlefield`,
+  `*CreatesToken`, `*MustAttack*`, `*SpellsCantBeCountered`, `BecomeCopyOf*`, `Choose*OnEnter`, `Controlled*DealPowerDamageTo*`,
+  `CopyThisSpellFor*`, `Double*Life`, `DoubleDamageFrom*`, `Exile*Until*Leaves`, `GrantEffectTo*UntilEndOfTurn`, `MoveCounter(s)From*To*`,
+  `RedirectNextDamageFromChosen*To*` groups of three, and the pairs. Many are player-scoped or static restrictions
+  (step 6 / a player-restriction run), not one-shot permanent verbs.
+- `PutTargetOnTopOfLibraryEffect.self()` is the same verb as `PutTargetPermanentIntoLibraryNFromTopEffect.self(0)`; not a
+  name sibling, not checked.
 
 ## Prompt
 

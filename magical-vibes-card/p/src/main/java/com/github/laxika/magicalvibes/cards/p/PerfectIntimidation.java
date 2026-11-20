@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -31,7 +31,7 @@ public class PerfectIntimidation extends Card {
                         opponentFilter),
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove all counters from target creature",
-                        new RemoveAllCountersFromTargetCreatureEffect(),
+                        RemoveAllCountersFromTargetPermanentEffect.fromTargetCreature(),
                         creatureFilter)
         )));
     }

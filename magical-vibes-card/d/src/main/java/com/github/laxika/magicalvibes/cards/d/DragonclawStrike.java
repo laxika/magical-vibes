@@ -11,7 +11,7 @@ public class DragonclawStrike extends Card {
 
     public DragonclawStrike() {
         target(TargetFilters.creatureYouControl())
-                .addSpellEffect(new DoubleSelfPowerToughnessEffect());
+                .addSpellEffect(DoubleSelfPowerToughnessEffect.ofTargetCreature());
         target(TargetFilters.creatureAnOpponentControls(), 0, 1)
                 .addSpellEffect(new FightTargetsEffect());
     }

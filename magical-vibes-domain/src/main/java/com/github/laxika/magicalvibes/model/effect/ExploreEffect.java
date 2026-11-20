@@ -12,11 +12,12 @@ import java.util.UUID;
  * into your graveyard (if you don't, it stays on top of your library).
  *
  * <p>The no-argument form applies to the source creature. The targeted form is used by
- * spells such as Enter the Unknown. A reference form applies to a non-targeted permanent
- * identified by the stack entry, such as a permanent returned by the preceding effect. The
+ * spells such as Enter the Unknown. A subject form applies to a non-targeted permanent
+ * named by {@code subject}, such as {@link Subjects#returned()} (a permanent returned by the
+ * preceding effect) or {@link Subjects#triggering()}. The
  * optional amount repeats the explore process that many times.
  */
-public record ExploreEffect(boolean targeted, PermanentReference reference, DynamicAmount amount,
+public record ExploreEffect(boolean targeted, PermanentSubject subject, DynamicAmount amount,
                             boolean replacementApplied, UUID permanentId, PermanentPredicate targetPredicate)
         implements CardEffect {
 
@@ -32,34 +33,34 @@ public record ExploreEffect(boolean targeted, PermanentReference reference, Dyna
         this(targeted, null, null, false, null, targetPredicate);
     }
 
-    public ExploreEffect(PermanentReference reference) {
-        this(false, reference, null, false, null, null);
+    public ExploreEffect(PermanentSubject subject) {
+        this(false, subject, null, false, null, null);
     }
 
-    public ExploreEffect(boolean targeted, PermanentReference reference) {
-        this(targeted, reference, null, false, null, null);
+    public ExploreEffect(boolean targeted, PermanentSubject subject) {
+        this(targeted, subject, null, false, null, null);
     }
 
     public ExploreEffect(DynamicAmount amount) {
         this(false, null, amount, false, null, null);
     }
 
-    public ExploreEffect(boolean targeted, PermanentReference reference, DynamicAmount amount) {
-        this(targeted, reference, amount, false, null, null);
+    public ExploreEffect(boolean targeted, PermanentSubject subject, DynamicAmount amount) {
+        this(targeted, subject, amount, false, null, null);
     }
 
-    public static ExploreEffect afterReplacement(boolean targeted, PermanentReference reference) {
-        return afterReplacement(targeted, reference, null, null);
+    public static ExploreEffect afterReplacement(boolean targeted, PermanentSubject subject) {
+        return afterReplacement(targeted, subject, null, null);
     }
 
-    public static ExploreEffect afterReplacement(boolean targeted, PermanentReference reference,
+    public static ExploreEffect afterReplacement(boolean targeted, PermanentSubject subject,
                                                  UUID permanentId) {
-        return afterReplacement(targeted, reference, permanentId, null);
+        return afterReplacement(targeted, subject, permanentId, null);
     }
 
-    public static ExploreEffect afterReplacement(boolean targeted, PermanentReference reference,
+    public static ExploreEffect afterReplacement(boolean targeted, PermanentSubject subject,
                                                  UUID permanentId, PermanentPredicate targetPredicate) {
-        return new ExploreEffect(targeted, reference, null, true, permanentId, targetPredicate);
+        return new ExploreEffect(targeted, subject, null, true, permanentId, targetPredicate);
     }
 
     /** Creates an untargeted explore instruction for a specific permanent in a mass effect. */

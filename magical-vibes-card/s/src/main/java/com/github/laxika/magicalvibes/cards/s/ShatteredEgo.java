@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.PutEnchantedPermanentIntoLibraryNFromTopEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,7 +21,7 @@ public class ShatteredEgo extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{U}{U}",
-                List.of(new PutEnchantedPermanentIntoLibraryNFromTopEffect(2)),
+                List.of(new PutTargetPermanentIntoLibraryNFromTopEffect(Subjects.attached(), 2)),
                 "{3}{U}{U}: Put enchanted creature into its owner's library third from the top."
         ));
     }

@@ -39,7 +39,7 @@ public class MustBlockSourceEffectHandler implements NormalEffectHandlerBean {
         // Activated abilities snapshot their source onto the effect; a triggered ability names it on the stack entry:
         // its source, or the permanent the trigger event was about (an Equipment's "block it", Grappling Hook).
         UUID sourceId = e.sourcePermanentId() != null ? e.sourcePermanentId()
-                : subjectResolutionService.permanentIds(gameData, entry, effect, Subjects.of(e.blocked())).stream()
+                : subjectResolutionService.permanentIds(gameData, entry, effect, e.blocked()).stream()
                         .findFirst().orElse(null);
         if (target == null || sourceId == null) {
             return;

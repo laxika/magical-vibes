@@ -9,11 +9,11 @@ import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffec
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.UUID;
 
 @Slf4j
 @Component
@@ -22,6 +22,7 @@ public class DoubleSelfPowerToughnessEffectHandler implements NormalEffectHandle
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -30,14 +31,16 @@ public class DoubleSelfPowerToughnessEffectHandler implements NormalEffectHandle
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID selfId = entry.getSourcePermanentId() != null ? entry.getSourcePermanentId() : entry.getTargetId();
-        Permanent self = gameQueryService.findPermanentById(gameData, selfId);
-        if (self == null) {
+        var e = (DoubleSelfPowerToughnessEffect) effect;
+        Permanent self = subjectResolutionService.permanent(gameData, entry, effect, e.subject());
+        // A target that stopped being a creature is no longer a legal "target creature"; the source form never
+        // checked.
+        if (self == null || e.subject().declaresTarget() && !gameQueryService.isCreature(gameData, self)) {
             return;
         }
 
         int currentPower = gameQueryService.getEffectivePower(gameData, self);
-        int currentToughness = ((DoubleSelfPowerToughnessEffect) effect).powerOnly()
+        int currentToughness = e.powerOnly()
                 ? 0 : gameQueryService.getEffectiveToughness(gameData, self);
 
         gameData.addPowerToughnessBoost(entry, self.getId(),

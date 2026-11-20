@@ -34,7 +34,7 @@ public class ShuffleReferencedPermanentIntoLibraryEffectHandler implements Norma
         ShuffleReferencedPermanentIntoLibraryEffect shuffleEffect =
                 (ShuffleReferencedPermanentIntoLibraryEffect) effect;
         Permanent referenced = subjectResolutionService.permanent(
-                gameData, entry, effect, Subjects.of(shuffleEffect.reference()));
+                gameData, entry, effect, shuffleEffect.subject());
         if (referenced == null) {
             return;
         }

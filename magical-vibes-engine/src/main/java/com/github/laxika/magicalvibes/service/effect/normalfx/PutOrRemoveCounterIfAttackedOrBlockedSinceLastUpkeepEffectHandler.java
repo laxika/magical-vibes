@@ -34,7 +34,7 @@ public class PutOrRemoveCounterIfAttackedOrBlockedSinceLastUpkeepEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutOrRemoveCounterIfAttackedOrBlockedSinceLastUpkeepEffect) effect;
-        Permanent permanent = subjectResolutionService.permanent(gameData, entry, effect, Subjects.of(e.reference()));
+        Permanent permanent = subjectResolutionService.permanent(gameData, entry, effect, e.subject());
         if (permanent == null) {
             return;
         }

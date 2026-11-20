@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.AttachCreatedEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
@@ -37,7 +37,7 @@ public class AdaptiveArmorer extends Card {
         @Override
         public CardEffect effect() {
             return QueueReflexiveAbilityEffect.aboutPickedPermanent(
-                    new AttachCreatedEquipmentToTargetCreatureEffect());
+                    AttachSourceEquipmentToTargetCreatureEffect.forCreatureYouControl());
         }
 
         @Override

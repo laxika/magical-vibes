@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermane
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ public class DoubleCountersOnTargetPermanentEffectHandler implements NormalEffec
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,6 +35,13 @@ public class DoubleCountersOnTargetPermanentEffectHandler implements NormalEffec
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var e = (DoubleCountersOnTargetPermanentEffect) effect;
+        if (!e.subject().declaresTarget()) {
+            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect, e.subject())) {
+                doubleCounters(gameData, entry, permanent.getId(), e);
+            }
+            return;
+        }
         List<UUID> targetIds = entry.getTargetIds();
         if (targetIds.isEmpty()) {
             if (entry.getTargetId() == null) {

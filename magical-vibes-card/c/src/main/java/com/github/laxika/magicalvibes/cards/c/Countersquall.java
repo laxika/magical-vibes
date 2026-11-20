@@ -1,10 +1,11 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
@@ -24,6 +25,6 @@ public class Countersquall extends Card {
                 "Target must be a noncreature spell."
         ))
                 .addSpellEffect(new CounterSpellEffect())
-                .addSpellEffect(new TargetSpellControllerLosesLifeEffect(2));
+                .addSpellEffect(new LoseLifeEffect(2, Subjects.controllerOf(Subjects.targetSpell())));
     }
 }

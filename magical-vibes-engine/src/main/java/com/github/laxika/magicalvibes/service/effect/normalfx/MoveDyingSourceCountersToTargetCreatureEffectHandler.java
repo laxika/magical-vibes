@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveDyingSourceCountersToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ public class MoveDyingSourceCountersToTargetCreatureEffectHandler implements Nor
 
     private final GameQueryService gameQueryService;
     private final PermanentCounterSupport permanentCounterSupport;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -26,7 +28,10 @@ public class MoveDyingSourceCountersToTargetCreatureEffectHandler implements Nor
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        var e = (MoveDyingSourceCountersToTargetCreatureEffect) effect;
+        Permanent target = e.subject().declaresTarget()
+                ? gameQueryService.findPermanentById(gameData, entry.getTargetId())
+                : subjectResolutionService.permanent(gameData, entry, effect, e.subject());
         if (target == null) {
             return;
         }

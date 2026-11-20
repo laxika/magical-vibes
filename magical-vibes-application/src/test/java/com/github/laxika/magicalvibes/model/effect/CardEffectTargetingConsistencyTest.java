@@ -68,8 +68,6 @@ class CardEffectTargetingConsistencyTest {
             // Triggers.drawStep(ActivePlayer.ANY) trigger is pushed in StepTriggerService (Maralen of the Mornsong);
             // it never enters the shared target-collection pipeline.
             "TargetPlayerLosesLifeAndSearchesLibraryToHandEffect",
-            // Piggyback: rides on a counterspell's existing target (e.g. Psychic Barrier).
-            "TargetSpellControllerLosesLifeEffect",
             // Piggyback: rides on the spell-level player target declared via the card's
             // target(PlayerPredicateTargetFilter) (Mana Short) — the handler reads the stack
             // entry's targetId and never enters trigger-target collection.
@@ -96,9 +94,6 @@ class CardEffectTargetingConsistencyTest {
             // Piggyback: rides on the counterspell's existing spell target (Dream Fracture) — reads
             // the targeted spell from entry.getTargetId(); never contributes a chosen player target.
             "TargetSpellControllerDrawsCardEffect",
-            // Piggyback: rides on Illumination's existing spell target and reads that spell's
-            // controller and mana value from the stack.
-            "TargetSpellControllerGainsLifeEqualToManaValueEffect",
             // Piggyback: rides on the ability's permanent target chosen for the sibling counter effect
             // (Gwafa Hazid, Profiteer) — reads the targeted permanent from entry.getTargetId(); never
             // contributes a chosen player target.

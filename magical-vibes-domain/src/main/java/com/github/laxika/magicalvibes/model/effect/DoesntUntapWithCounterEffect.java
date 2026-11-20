@@ -21,24 +21,24 @@ import com.github.laxika.magicalvibes.model.CounterType;
 public record DoesntUntapWithCounterEffect(
         CounterType counterType,
         TapUntapScope scope,
-        PermanentReference counterBearer
+        PermanentSubject counterBearer
 ) implements CardEffect {
 
     public DoesntUntapWithCounterEffect(CounterType counterType) {
-        this(counterType, TapUntapScope.SELF, PermanentReference.SOURCE);
+        this(counterType, TapUntapScope.SELF, Subjects.source());
     }
 
     public DoesntUntapWithCounterEffect(CounterType counterType, TapUntapScope scope) {
-        this(counterType, scope, PermanentReference.SOURCE);
+        this(counterType, scope, Subjects.source());
     }
 
     public static DoesntUntapWithCounterEffect enchanted(CounterType counterType) {
         return new DoesntUntapWithCounterEffect(
-                counterType, TapUntapScope.ENCHANTED, PermanentReference.SOURCE);
+                counterType, TapUntapScope.ENCHANTED, Subjects.source());
     }
 
     public static DoesntUntapWithCounterEffect enchantedWithCounterOnEnchantedPermanent(CounterType counterType) {
         return new DoesntUntapWithCounterEffect(
-                counterType, TapUntapScope.ENCHANTED, PermanentReference.ATTACHED);
+                counterType, TapUntapScope.ENCHANTED, Subjects.attached());
     }
 }

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -48,9 +48,9 @@ public class RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffect) effect;
-        Permanent referenced = subjectResolutionService.permanent(gameData, entry, effect, Subjects.of(e.reference()));
+        Permanent referenced = subjectResolutionService.permanent(gameData, entry, effect, e.subject());
         if (referenced == null) {
-            if (e.reference() == PermanentReference.TRIGGERING && entry.getDamageSourceCard() != null) {
+            if (e.subject() instanceof PermanentSubject.Triggering && entry.getDamageSourceCard() != null) {
                 dealDamage(gameData, entry.getTriggeringPermanentControllerId(), entry.getDamageSourceCard(),
                         entry.getTriggeringPermanentId(), e.damage());
             }

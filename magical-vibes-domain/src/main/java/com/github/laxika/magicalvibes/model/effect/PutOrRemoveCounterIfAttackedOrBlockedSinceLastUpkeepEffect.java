@@ -7,11 +7,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * since the relevant last upkeep; otherwise removes one counter of that type.
  */
 public record PutOrRemoveCounterIfAttackedOrBlockedSinceLastUpkeepEffect(
-        PermanentReference reference,
+        PermanentSubject subject,
         CounterType counterType
 ) implements CardEffect {
 
     public PutOrRemoveCounterIfAttackedOrBlockedSinceLastUpkeepEffect(CounterType counterType) {
-        this(PermanentReference.SOURCE, counterType);
+        this(Subjects.source(), counterType);
     }
 }

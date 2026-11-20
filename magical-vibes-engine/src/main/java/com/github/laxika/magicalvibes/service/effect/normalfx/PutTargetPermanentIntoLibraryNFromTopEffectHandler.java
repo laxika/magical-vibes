@@ -11,11 +11,10 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-
-import java.util.UUID;
 
 @Slf4j
 @Component
@@ -26,6 +25,7 @@ public class PutTargetPermanentIntoLibraryNFromTopEffectHandler implements Norma
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,12 +36,11 @@ public class PutTargetPermanentIntoLibraryNFromTopEffectHandler implements Norma
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutTargetPermanentIntoLibraryNFromTopEffect) effect;
 
-        UUID permanentId = e.self() ? entry.getSourcePermanentId() : entry.getTargetId();
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, e.subject());
         if (target == null) return;
 
-        int position = amountEvaluationService.evaluate(gameData, e.position(),
-                AmountContext.forStackEntry(entry, gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())));
+        int position = Math.max(0, amountEvaluationService.evaluate(gameData, e.position(),
+                AmountContext.forStackEntry(entry, gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()))));
         if (permanentRemovalService.removePermanentToLibraryPosition(gameData, target, position)) {
             String ordinal = switch (position) {
                 case 0 -> "on top of";

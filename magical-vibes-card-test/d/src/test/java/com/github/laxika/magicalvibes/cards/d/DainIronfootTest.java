@@ -71,6 +71,25 @@ class DainIronfootTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Axe stays unattached if the target creature changes control before the ability resolves")
+    void axeDoesNotAttachToCreatureAnOpponentNowControls() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        harness.setHand(player1, List.of(new DainIronfoot()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bears.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(bears);
+        gd.playerBattlefields.get(player2.getId()).add(bears);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Axe").getAttachedTo()).isNull();
+    }
+
+    @Test
     @DisplayName("ETB target selection excludes creatures an opponent controls")
     void onlyOwnCreaturesAreLegalAttachmentTargets() {
         harness.addToBattlefield(player2, new GrizzlyBears());

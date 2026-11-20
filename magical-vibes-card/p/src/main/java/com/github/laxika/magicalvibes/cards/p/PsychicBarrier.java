@@ -1,9 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
@@ -19,6 +20,6 @@ public class PsychicBarrier extends Card {
                 "Target must be a creature spell."
         ))
                 .addSpellEffect(new CounterSpellEffect())
-                .addSpellEffect(new TargetSpellControllerLosesLifeEffect(1));
+                .addSpellEffect(new LoseLifeEffect(1, Subjects.controllerOf(Subjects.targetSpell())));
     }
 }

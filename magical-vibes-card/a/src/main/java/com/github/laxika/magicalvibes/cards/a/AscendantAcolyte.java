@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCounterSum;
-import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -23,6 +23,6 @@ public class AscendantAcolyte extends Card {
                         new PermanentIsCreaturePredicate(),
                         CountScope.CONTROLLER)));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new DoubleCountersOnSourceEffect(CounterType.PLUS_ONE_PLUS_ONE));
+                DoubleCountersOnTargetPermanentEffect.onSource(CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

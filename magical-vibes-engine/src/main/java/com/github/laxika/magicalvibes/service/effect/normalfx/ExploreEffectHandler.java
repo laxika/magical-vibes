@@ -50,7 +50,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
                 && gameQueryService.findPermanentById(gameData, exploreEffect.permanentId()) == null) {
             return;
         }
-        if (exploreEffect.reference() != null && exploringPermanentId == null) {
+        if (exploreEffect.subject() != null && exploringPermanentId == null) {
             return;
         }
         Permanent exploringPermanent = exploringPermanentId == null
@@ -76,7 +76,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
                         replacementEffects.add(new ScryEffect(1));
                     }
                     replacementEffects.add(ExploreEffect.afterReplacement(
-                            exploreEffect.targeted(), exploreEffect.reference(), exploreEffect.permanentId(),
+                            exploreEffect.targeted(), exploreEffect.subject(), exploreEffect.permanentId(),
                             exploreEffect.targetPredicate()));
                 }
                 insertEffectsAfter(entry, effect, replacementEffects);
@@ -205,7 +205,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
                 List<CardEffect> remaining = new ArrayList<>(exploreCount - 1);
                 for (int j = 1; j < exploreCount; j++) {
                     remaining.add(exploreEffect.permanentId() == null
-                            ? new ExploreEffect(exploreEffect.targeted(), exploreEffect.reference(),
+                            ? new ExploreEffect(exploreEffect.targeted(), exploreEffect.subject(),
                             null, false, null, exploreEffect.targetPredicate())
                             : ExploreEffect.forPermanent(exploreEffect.permanentId()));
                 }
@@ -219,10 +219,10 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
         if (effect.permanentId() != null) {
             return effect.permanentId();
         }
-        if (effect.reference() != null) {
+        if (effect.subject() != null) {
             // A permanent that left still explores, by its last-known information (CR 701.44c).
             List<UUID> ids = subjectResolutionService.permanentIds(
-                    gameData, entry, effect, Subjects.of(effect.reference()));
+                    gameData, entry, effect, effect.subject());
             return ids.isEmpty() ? null : ids.getFirst();
         }
         return effect.targeted() ? entry.getTargetId() : entry.getSourcePermanentId();

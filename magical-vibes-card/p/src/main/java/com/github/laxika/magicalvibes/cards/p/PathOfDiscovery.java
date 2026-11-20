@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "RIX", collectorNumber = "142")
 @CardRegistration(set = "FIC", collectorNumber = "312")
@@ -18,7 +18,7 @@ public class PathOfDiscovery extends Card {
 
     public PathOfDiscovery() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new ExploreEffect(PermanentReference.TRIGGERING));
+                new ExploreEffect(Subjects.triggering()));
         // "Whenever a creature you control enters" includes Path itself when it enters as an animated creature.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withEventCondition(new SourceIsCreature()),

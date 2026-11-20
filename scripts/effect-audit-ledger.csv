@@ -47,15 +47,15 @@ PutStillExiledCardsIntoGraveyardAndCreateTokensEffect,blocked-other,2,"built at 
 ReboundCastFromExileEffect,blocked-other,2,"built at runtime by its handler's reboundAbility, called by StackResolutionService, ExileRandomInstantOrSorceryFromGraveyardAndCastNextUpkeepEffectHandler"
 TargetPlayerChoosesCardsFromHandThenMayCastOneEffect,blocked-other,2,"handler's handleCardSelection called by TargetPlayerChoosesCardsFromHandChoiceInteractionHandler; the whole flow (pending interaction, AI strategy, projection) looks dead"
 DestroyReferencedPermanentEffect,absorbed,5a,"DestroyTargetPermanentEffect(PermanentSubject): source() / attached() / attachedAtTrigger() / triggering()"
-ShuffleReferencedPermanentIntoLibraryEffect,blocked-other,3,"step 3 pilot: its PermanentReference resolves through SubjectResolutionService (Subjects.of); kept until run 5m gives it a PermanentSubject component"
-PutOrRemoveCounterIfAttackedOrBlockedSinceLastUpkeepEffect,blocked-other,3,"step 3 pilot: its PermanentReference resolves through SubjectResolutionService (Subjects.of); kept until run 5e gives it a PermanentSubject component"
-RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffect,blocked-other,3,"step 3 pilot: its PermanentReference resolves through SubjectResolutionService (Subjects.of); kept until run 8 gives it a PermanentSubject component"
-ExploreEffect,blocked-other,3,"step 3 pilot: its PermanentReference resolves through SubjectResolutionService (Subjects.of); kept until run 5m gives it a PermanentSubject component"
-MustBlockSourceEffect,blocked-other,3,"step 3 pilot: its PermanentReference resolves through SubjectResolutionService (Subjects.of); kept until run 5m gives it a PermanentSubject component"
-GoadTargetCreatureUntilNextTurnEffect,blocked-other,3,"step 3 pilot: its PermanentReference resolves through SubjectResolutionService (Subjects.of); kept until run 5m gives it a PermanentSubject component"
-TurnSourceFaceUpEffect,blocked-other,3,"step 3 pilot: its PermanentReference resolves through SubjectResolutionService (Subjects.of); kept until run 5m gives it a PermanentSubject component"
+ShuffleReferencedPermanentIntoLibraryEffect,survivor,5m,PermanentReference became PermanentSubject subject (default attached()); absorbed the enchanted-permanent shuffle
+PutOrRemoveCounterIfAttackedOrBlockedSinceLastUpkeepEffect,survivor,5m,"PermanentReference became PermanentSubject subject (source, attached)"
+RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffect,survivor,5m,PermanentReference became PermanentSubject subject; fused (step 8)
+ExploreEffect,survivor,5m,"PermanentReference became PermanentSubject subject (triggering, returned)"
+MustBlockSourceEffect,survivor,5m,"PermanentReference blocked became PermanentSubject (source, triggering)"
+GoadTargetCreatureUntilNextTurnEffect,survivor,5m,"PermanentReference goaded became PermanentSubject (null = target, triggering)"
+TurnSourceFaceUpEffect,survivor,5m,"PermanentReference became PermanentSubject subject (source, triggering)"
 SacrificeSelfEffect,survivor,5j,"PermanentSubject subject (source/triggering/attached/target) + PlayerSubject sacrificer + target filter; sacrificer must control it (CR 701.21a); Sigarda check for every sacrificer"
-DoesntUntapWithCounterEffect,blocked-other,3,"step 3 pilot: its PermanentReference resolves through SubjectResolutionService (Subjects.of); kept until run 5d gives it a PermanentSubject component"
+DoesntUntapWithCounterEffect,survivor,5m,"PermanentReference counterBearer became PermanentSubject (source, attached); its TapUntapScope is step 6"
 DrawCardEffect,survivor,4a,"gained a PlayerSubject player component (default you()); resolves it through SubjectResolutionService"
 DrawCardForOwnerEffect,absorbed,4a,"DrawCardEffect(amount, ownerOf(source()))"
 DrawCardForDefendingPlayerEffect,absorbed,4a,"DrawCardEffect(amount, defendingPlayer())"
@@ -63,7 +63,7 @@ DrawCardForTriggeringPlayerEffect,absorbed,4a,"DrawCardEffect(amount, controller
 DrawCardsForEachOpponentOfTriggeringPlayerEffect,absorbed,4a,"DrawCardEffect(amount, opponentsOf(triggeringPlayer()))"
 DrawCardForTargetPlayerEffect,absorbed,4a,"DrawCardEffect: targetPlayer([group]) where it declared; else per card targetPlayerDeclaredElsewhere(), triggeringPlayer() or controllerOf(triggering()); ownerOf(triggeringCard())"
 DrawCardForPlayerEffect,blocked-other,4a,"engine-built with a fixed player id (Seize the Spotlight, Cirdan the Shipwright); not a subject"
-DrawCardForYouAndDamagedPlayerEffect,blocked-other,4a,"needs a player union subject (you and that player, one draw if they are the same player)"
+DrawCardForYouAndDamagedPlayerEffect,absorbed,5m,"DrawCardEffect(n, allOf(you(), triggeringPlayer()))"
 EachOpponentDrawsCardEffect,blocked-other,4a,"is DrawCardEffect(eachOpponent()), but the AI would score it as its own card draw; fold with an AI rule for opponent draws"
 EachOpponentOfTriggeringPlayerMayDrawCardEffect,blocked-player-loop,4a,"asks each opponent its own may choice; its MayEffect now wraps DrawCardEffect(targetPlayerDeclaredElsewhere())"
 DrawUpToNCardsEffect,blocked-other,4a,"different verb (draw up to N, a choice); DrawUpToRecipient is engine-built only, OPPONENT needs a single-opponent read"
@@ -79,11 +79,11 @@ LoseLifeEqualToTriggeringSpellManaValueDifferenceEffect,unique,4b,"amount compar
 LoseLifeToOpponentsWhoCastNamedSpellThisTurnEffect,blocked-other,4b,"engine-built filtered each-opponent; needs a filtered each subject"
 SourcePermanentControllerLosesLifeEffect,blocked-other,4b,"engine-built with a fixed player id; not a subject"
 PlayersLoseLifeEffect,blocked-other,4b,"engine-internal step with players and amounts fixed; not a subject"
-TargetSpellControllerLosesLifeEffect,blocked-other,4b,"needs controllerOf(targetSpell())"
+TargetSpellControllerLosesLifeEffect,absorbed,5m,"LoseLifeEffect(n, controllerOf(targetSpell())); Forsaken Wastes controllerOf(triggeringSpell())"
 DrainLifeFromDyingCreatureOwnerEffect,blocked-other,4b,"is ownerOf(triggering()) plus a fixed gain (gains the amount even when no life is lost) and a graveyard-owner lookup; not LoseLifeEffect's drain"
 EachDestroyedPermanentControllerLosesLifeEffect,blocked-other,4b,"needs a step-7 result subject (players whose permanents were destroyed, once per permanent)"
 EachOpponentWithEmptyHandLosesLifeEffect,blocked-other,4b,"needs a filtered each subject (opponents with an empty hand)"
-EachOpponentWithPoisonCountersLosesLifeEffect,blocked-other,4b,"needs a filtered each subject (opponents with N poison counters)"
+EachOpponentWithPoisonCountersLosesLifeEffect,absorbed,5m,"LoseLifeEffect(m, matching(eachOpponent(), new PlayerHasPoisonCountersAtLeastPredicate(n)))"
 EachPlayerLosesLifePerCreatureControlledEffect,blocked-other,4b,"amount per receiving player; LoseLifeEffect evaluates one amount for each-player subjects"
 EachPlayerLosesLifePerPermanentControlledEffect,blocked-other,4b,"amount per receiving player; LoseLifeEffect evaluates one amount for each-player subjects"
 EachOpponentLosesLifeEqualToCardsInTheirGraveyardEffect,blocked-other,4b,"amount per receiving player; LoseLifeEffect evaluates one amount for each-player subjects"
@@ -96,7 +96,7 @@ GainLifeEqualToTargetCreatureStatEffect,unique,4c,"you gain; declares a creature
 GainLifeIfSacrificedCardMatchesEffect,unique,4c,"conditional on the sacrificed card; not a subject variant"
 GainLifePerChosenTypeCountEffect,unique,4c,"amount from a resolution-time type choice; not a subject variant"
 GainLifePerPermanentOfChosenColorEffect,unique,4c,"amount from a resolution-time colour choice; not a subject variant"
-TargetSpellControllerGainsLifeEqualToManaValueEffect,blocked-other,4c,"needs controllerOf(targetSpell())"
+TargetSpellControllerGainsLifeEqualToManaValueEffect,absorbed,5m,"GainLifeEffect(new TargetSpellManaValue(), controllerOf(targetSpell()))"
 EachDestroyedPermanentControllerGainsLifeEqualToManaValueEffect,blocked-other,4c,"needs a step-7 result subject (controllers of the destroyed permanents, per permanent)"
 DealDamageToPlayersEffect,survivor,4d,"DamageRecipient replaced by a PlayerSubject player component; resolves it through SubjectResolutionService; playerOrTheirPlaneswalker flag for Curse of the Pierced Heart"
 DamageRecipient,absorbed,4d,"enum deleted; DealDamageToPlayersEffect.player, SacrificeOtherCreatureOrDamageEffect.player, TargetCreatureDealsDamageToControllerEffect.player (PlayerSubject)"
@@ -570,3 +570,46 @@ CreateTokenAttachedToSourceEffect,absorbed,5l,"CreateTokenAttachedToTargetEffect
 CreateTokenAttachedToTriggeringPermanentEffect,absorbed,5l,"CreateTokenAttachedToTargetEffect(token, triggering())"
 CreateTokenAttachedToDefendingPlayerEffect,blocked-other,5l,"host is a player (defending player), not a PermanentSubject; folds once the attach verb takes a player host"
 CreateTokenCopyOfSourceEffect,blocked-other,5l,"head record (84 cards) with its own source-card copy path; merging with CreateTokenCopyOfTargetPermanentEffect is step 10"
+RemoveAllCountersFromTargetCreatureEffect,absorbed,5m,RemoveAllCountersFromTargetPermanentEffect.fromTargetCreature(); now runs the vanishing and battle defense checks
+RemoveAllCountersFromEnchantedCreatureEffect,absorbed,5m,RemoveAllCountersFromTargetPermanentEffect(Subjects.attached())
+RemoveAllCountersFromTargetPermanentEffect,survivor,5m,"gained PermanentSubject subject (target default, attached) and a target filter (fromTargetCreature)"
+ShuffleEnchantedPermanentIntoOwnerLibraryEffect,absorbed,5m,ShuffleReferencedPermanentIntoLibraryEffect() (attached())
+AttachCreatedEquipmentToTargetCreatureEffect,absorbed,5m,AttachSourceEquipmentToTargetCreatureEffect.forCreatureYouControl() (the reflexive source is the created Equipment)
+EnchantedPlayerLosesGameEffect,absorbed,5m,ControllerLosesGameEffect(Subjects.enchantedPlayer())
+ControllerLosesGameEffect,survivor,5m,gained a non-target PlayerSubject player (default you())
+PutEnchantedPermanentIntoLibraryNFromTopEffect,absorbed,5m,"PutTargetPermanentIntoLibraryNFromTopEffect(Subjects.attached(), n)"
+PutSourcePermanentIntoLibraryNFromTopEffect,absorbed,5m,PutTargetPermanentIntoLibraryNFromTopEffect.self(n)
+PutTargetPermanentIntoLibraryNFromTopEffect,survivor,5m,"boolean self became PermanentSubject subject (target, source, attached)"
+DoubleCountersOnSourceEffect,absorbed,5m,DoubleCountersOnTargetPermanentEffect.onSource(counterType)
+DoubleCountersOnTargetPermanentEffect,survivor,5m,"gained PermanentSubject subject (target default, source)"
+DoubleTargetCreaturePowerToughnessEffect,absorbed,5m,DoubleSelfPowerToughnessEffect.ofTargetCreature()
+DoubleSelfPowerToughnessEffect,survivor,5m,"gained PermanentSubject subject (source default, target); the three spells that used the source record with the targetId fallback now use target()"
+MoveDyingSourceCountersToSourceEffect,absorbed,5m,MoveDyingSourceCountersToTargetCreatureEffect.toSource()
+MoveDyingSourceCountersToTargetCreatureEffect,survivor,5m,"gained PermanentSubject subject (target default, source)"
+CreateTokenForTargetPlayerEffect,blocked-other,5m,"token-controller axis: CreateTokenEffect needs a PlayerSubject token controller first; paths differ (Esix offer via resolveForController vs direct applyCreateToken, investigate event, attack choice; triggering form reads triggeringPermanentController else targetId else controller)"
+CreateTokenForTriggeringPlayerEffect,blocked-other,5m,"token-controller axis: CreateTokenEffect needs a PlayerSubject token controller first; paths differ (Esix offer via resolveForController vs direct applyCreateToken, investigate event, attack choice; triggering form reads triggeringPermanentController else targetId else controller)"
+CreateTokenForSourceControllerEffect,blocked-other,5m,"token-controller axis: CreateTokenEffect needs a PlayerSubject token controller first; paths differ (Esix offer via resolveForController vs direct applyCreateToken, investigate event, attack choice; triggering form reads triggeringPermanentController else targetId else controller)"
+CreateTokenForPlayerEffect,blocked-other,5m,"token-controller axis: CreateTokenEffect needs a PlayerSubject token controller first; paths differ (Esix offer via resolveForController vs direct applyCreateToken, investigate event, attack choice; triggering form reads triggeringPermanentController else targetId else controller)"
+CreateTokenCopyOfTargetCreatureForTargetPlayerEffect,blocked-other,5m,token-controller axis of CreateTokenCopyOfTargetPermanentEffect (its createForTargetController flag is controllerOf(target())); the source copies belong with CreateTokenCopyOfSourceEffect (step 10); Echocasting Symposium reads player and creature by target index
+CreateTokenCopyOfSourceForEachOtherPlayerEffect,blocked-other,5m,token-controller axis of CreateTokenCopyOfTargetPermanentEffect (its createForTargetController flag is controllerOf(target())); the source copies belong with CreateTokenCopyOfSourceEffect (step 10); Echocasting Symposium reads player and creature by target index
+CreateTokenCopyOfSourceForTargetPlayerEffect,blocked-other,5m,token-controller axis of CreateTokenCopyOfTargetPermanentEffect (its createForTargetController flag is controllerOf(target())); the source copies belong with CreateTokenCopyOfSourceEffect (step 10); Echocasting Symposium reads player and creature by target index
+CreateTokenCopyOfTargetCreatureForEachOtherPlayerEffect,blocked-other,5m,token-controller axis of CreateTokenCopyOfTargetPermanentEffect (its createForTargetController flag is controllerOf(target())); the source copies belong with CreateTokenCopyOfSourceEffect (step 10); Echocasting Symposium reads player and creature by target index
+AttachCreatedEquipmentToSourceEffect,blocked-other,5m,attaches the entry createdPermanentIds Equipment: needs a step-7 created subject
+AttachOneOfControlledEquipmentToTargetCreatureEffect,blocked-other,5m,resolution-time choice of one Equipment you control (step-7 picked subject)
+AttachOneOfControlledEquipmentToSourceEffect,blocked-other,5m,resolution-time choice of one Equipment you control (step-7 picked subject)
+AttachSourceAuraToTargetCreatureEffect,blocked-other,5m,"Aura attach verb; fold the target-Aura record once it takes target groups (Aura Finesse reads [Aura, creature] by index) and a player host subject exists"
+AttachTargetAuraToTargetCreatureEffect,blocked-other,5m,"reads [Aura, creature] by target index with a playerOrPermanent spec; checks the Aura controller canEnchant and protection itself"
+AttachSourceAuraToTargetPlayerEffect,blocked-other,5m,player host (5l: an attach verb with a player host subject folds it with CreateTokenAttachedToDefendingPlayerEffect)
+GoadEquippedCreatureEffect,blocked-other,5m,static goad read through affectedPredicate (GrantScope-like): step 6
+GoadSourceCreatureEffect,blocked-other,5m,static goad read through affectedPredicate (GrantScope-like): step 6
+TurnTargetCreatureFaceUpEffect,blocked-other,5m,TurnFaceUpCopyService.turnFaceUpWithoutCost path (no isTurnFaceUpPrevented check) differs from GameService path of the other two; unify the path first
+TurnTargetFaceUpEffect,blocked-other,5m,GameService turn-face-up path with its own instant/sorcery check; fold with TurnSourceFaceUpEffect once TurnTargetCreatureFaceUpEffect shares the path
+ShuffleSelfIntoOwnerLibraryEffect,blocked-other,5m,"then-effect rider (fused, step 8), deferred shuffle for this-and-target, owner of a departed source"
+ShuffleTargetPermanentIntoLibraryEffect,blocked-other,5m,"then-effect rider (fused, step 8) and the deferred shuffle when ShuffleSelfIntoOwnerLibraryEffect follows"
+TargetPlayerLosesGameEffect,blocked-other,5m,targetPlayer() with combat-damage-baked targetId plus an engine-bound playerId; folds into ControllerLosesGameEffect with a per-card triggeringPlayer mapping
+GainControlOfTargetEffect,blocked-other,5m,"the record is the payload of the floating control effect (LayerClassifier, FloatingContinuousEffect, CreatureControlService read it): a fold changes the layer readers"
+GainControlOfEnchantedPermanentEffect,blocked-other,5m,"the record is the payload of the floating control effect (LayerClassifier, FloatingContinuousEffect, CreatureControlService read it): a fold changes the layer readers"
+GainControlOfEnchantedTargetEffect,blocked-other,5m,"the record is the payload of the floating control effect (LayerClassifier, FloatingContinuousEffect, CreatureControlService read it): a fold changes the layer readers"
+TargetPlayerExilesFromHandEffect,blocked-player-loop,5m,"each has its own per-player choose-then-exile loop and riders (play permission, return on leave, face down)"
+EachOpponentExilesFromHandEffect,blocked-player-loop,5m,"each has its own per-player choose-then-exile loop and riders (play permission, return on leave, face down)"
+EachPlayerExilesFromHandEffect,blocked-player-loop,5m,"each has its own per-player choose-then-exile loop and riders (play permission, return on leave, face down)"

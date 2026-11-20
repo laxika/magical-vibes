@@ -2961,7 +2961,7 @@ public class PredicateEvaluationService {
                                 .contains(sourcePermanentId);
             }
             case PermanentBlockingSourcePredicate blockingPredicate
-                    when blockingPredicate.blocked() == com.github.laxika.magicalvibes.model.effect.PermanentReference.TRIGGERING -> {
+                    when blockingPredicate.blocked() instanceof com.github.laxika.magicalvibes.model.effect.PermanentSubject.Triggering -> {
                 // "A creature that's blocking it": the permanent the trigger event was about, as it is now or as it
                 // last existed (CR 608.2h).
                 UUID blockedId = filterContext == null ? null : filterContext.triggeringPermanentId();

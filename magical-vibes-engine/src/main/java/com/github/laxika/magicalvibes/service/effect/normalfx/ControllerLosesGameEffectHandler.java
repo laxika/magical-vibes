@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.outcome.LossOutcome;
 import com.github.laxika.magicalvibes.service.outcome.LossReason;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,7 @@ public class ControllerLosesGameEffectHandler implements NormalEffectHandlerBean
     private final GameOutcomeService gameOutcomeService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -33,7 +35,8 @@ public class ControllerLosesGameEffectHandler implements NormalEffectHandlerBean
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID losingPlayerId = entry.getControllerId();
+        UUID losingPlayerId = subjectResolutionService.player(gameData, entry, effect,
+                ((ControllerLosesGameEffect) effect).player());
         if (losingPlayerId == null || !gameData.playerIds.contains(losingPlayerId)) {
             return;
         }

@@ -519,9 +519,13 @@ public class SpellEvaluator {
                 .sum();
     }
 
-    /** A life gain for a target player isn't scored as the AI's own (it was never a {@code LifeGainEffect}). */
+    /**
+     * A life gain for a target player, or for a targeted spell's controller (Illumination), isn't scored as the AI's
+     * own (neither was ever a {@code LifeGainEffect}).
+     */
     private static boolean gainsForTargetPlayer(LifeGainEffect gain) {
-        return gain.lifeGainingPlayer().declaresTarget();
+        return gain.lifeGainingPlayer().declaresTarget()
+                || gain.lifeGainingPlayer() instanceof PlayerSubject.ControllerOf(PermanentSubject.TargetSpell ignored);
     }
 
     private boolean hasLifeGainEffect(Card card) {

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
@@ -35,9 +35,9 @@ public class GoadTargetCreatureUntilNextTurnEffectHandler implements NormalEffec
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         List<UUID> targetIds;
-        PermanentReference goaded = ((GoadTargetCreatureUntilNextTurnEffect) effect).goaded();
+        PermanentSubject goaded = ((GoadTargetCreatureUntilNextTurnEffect) effect).goaded();
         if (goaded != null) {
-            targetIds = subjectResolutionService.permanentIds(gameData, entry, effect, Subjects.of(goaded));
+            targetIds = subjectResolutionService.permanentIds(gameData, entry, effect, goaded);
         } else {
             targetIds = entry.targetsForEffect(effect);
             if (targetIds.isEmpty() && entry.getTargetId() != null) {

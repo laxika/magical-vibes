@@ -5,22 +5,22 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@link #ofTriggeringPermanent()}, the permanent the trigger event was about ("turn that creature
  * face up", read from the stack entry's triggering permanent as the ability resolves).
  *
- * @param reference {@link PermanentReference#SOURCE} or {@link PermanentReference#TRIGGERING}
+ * @param subject {@link Subjects#source()} or {@link Subjects#triggering()}
  */
-public record TurnSourceFaceUpEffect(PermanentReference reference) implements CardEffect {
+public record TurnSourceFaceUpEffect(PermanentSubject subject) implements CardEffect {
 
     public TurnSourceFaceUpEffect {
-        if (reference != PermanentReference.SOURCE && reference != PermanentReference.TRIGGERING) {
-            throw new IllegalArgumentException("Turns the source or the triggering permanent face up: " + reference);
+        if (!(subject instanceof PermanentSubject.Source) && !(subject instanceof PermanentSubject.Triggering)) {
+            throw new IllegalArgumentException("Turns the source or the triggering permanent face up: " + subject);
         }
     }
 
     public TurnSourceFaceUpEffect() {
-        this(PermanentReference.SOURCE);
+        this(Subjects.source());
     }
 
     /** "Turn that creature face up": the stack entry's triggering permanent. */
     public static TurnSourceFaceUpEffect ofTriggeringPermanent() {
-        return new TurnSourceFaceUpEffect(PermanentReference.TRIGGERING);
+        return new TurnSourceFaceUpEffect(Subjects.triggering());
     }
 }

@@ -180,20 +180,6 @@ public final class Subjects {
         return new PermanentSubject.OneOf(List.of(options));
     }
 
-    /**
-     * The subject a {@link PermanentReference} names. A temporary adapter for the effects that still carry a
-     * {@code PermanentReference} component; it goes when the last of them takes a {@link PermanentSubject}.
-     */
-    public static PermanentSubject of(PermanentReference reference) {
-        return switch (reference) {
-            case SOURCE -> SOURCE;
-            case ATTACHED -> ATTACHED;
-            case ATTACHED_AT_TRIGGER -> ATTACHED_AT_TRIGGER;
-            case TRIGGERING -> TRIGGERING;
-            case RETURNED -> RETURNED;
-        };
-    }
-
     /** "You". */
     public static PlayerSubject you() {
         return YOU;

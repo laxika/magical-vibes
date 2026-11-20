@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerGainsLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCardTypeInPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
@@ -27,7 +29,7 @@ public class Illumination extends Card {
                 )),
                 "Target must be an artifact or enchantment spell."
         ))
-                .addSpellEffect(new TargetSpellControllerGainsLifeEqualToManaValueEffect())
+                .addSpellEffect(new GainLifeEffect(new TargetSpellManaValue(), Subjects.controllerOf(Subjects.targetSpell())))
                 .addSpellEffect(new CounterSpellEffect());
     }
 }

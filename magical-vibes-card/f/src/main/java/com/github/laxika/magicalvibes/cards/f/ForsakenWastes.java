@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,6 +19,6 @@ public class ForsakenWastes extends Card {
 
         // The trigger is queued against the spell that targeted this enchantment (STACK zone), so the
         // life loss hits that spell's controller.
-        addTrigger(Triggers.becomesTargetOfSpell(), new TargetSpellControllerLosesLifeEffect(5));
+        addTrigger(Triggers.becomesTargetOfSpell(), new LoseLifeEffect(5, Subjects.controllerOf(Subjects.triggeringSpell())));
     }
 }

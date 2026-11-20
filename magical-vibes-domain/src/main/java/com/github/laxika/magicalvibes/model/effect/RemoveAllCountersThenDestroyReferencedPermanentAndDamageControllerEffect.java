@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * permanent deal fixed damage to its controller.
  */
 public record RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffect(
-        PermanentReference reference, CounterType counterType, int damage)
+        PermanentSubject subject, CounterType counterType, int damage)
         implements RemovalEffect, DamageDealingEffect {
 
     @Override

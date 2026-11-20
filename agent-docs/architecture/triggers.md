@@ -268,7 +268,7 @@ Fells declares its groups with `CONTROLLED_BY_FIRST_TARGET`).
   N damage to it" (`DealDamageToTargetCreatureEffect(Subjects.triggering(), n)`), graft, Agent's Toolkit, soulbond, "it connives", endure,
   Madame Null, Mana
   Echoes, Eldrazi Mimic and the graveyard Auras and Equipment that return attached to "that creature" read the entry's
-  triggering permanent (`onTriggeringPermanent`, `PermanentReference.TRIGGERING`, `GrantScope.TRIGGERING_PERMANENT`,
+  triggering permanent (`onTriggeringPermanent`, `Subjects.triggering()`, `GrantScope.TRIGGERING_PERMANENT`,
   `ofTriggeringPermanent()`); the entering creature is recorded (Archon of Redemption, Hamletback Goliath, Cream of the
   Crop), never bound in.
 - Additional enter abilities on token copies are separate abilities with their own targets (CR 603.3).

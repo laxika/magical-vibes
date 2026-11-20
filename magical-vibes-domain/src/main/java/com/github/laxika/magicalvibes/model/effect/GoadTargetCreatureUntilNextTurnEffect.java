@@ -13,13 +13,13 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>The record itself is stored in the resulting floating effect, so readers of the goaded
  * designation see it through {@link GoadStatusEffect} and {@link CombatAttackRequirementEffect}.
  *
- * @param goaded null for the target, or {@link PermanentReference#TRIGGERING}
+ * @param goaded null for the target, or {@link Subjects#triggering()}
  */
-public record GoadTargetCreatureUntilNextTurnEffect(PermanentPredicate targetRestriction, PermanentReference goaded)
+public record GoadTargetCreatureUntilNextTurnEffect(PermanentPredicate targetRestriction, PermanentSubject goaded)
         implements CombatAttackRequirementEffect, GoadStatusEffect {
 
     public GoadTargetCreatureUntilNextTurnEffect {
-        if (goaded != null && goaded != PermanentReference.TRIGGERING) {
+        if (goaded != null && !(goaded instanceof PermanentSubject.Triggering)) {
             throw new IllegalArgumentException("Goads the target or the triggering permanent: " + goaded);
         }
         if (goaded != null && targetRestriction != null) {
@@ -37,7 +37,7 @@ public record GoadTargetCreatureUntilNextTurnEffect(PermanentPredicate targetRes
 
     /** "Goad it": the stack entry's triggering permanent. */
     public static GoadTargetCreatureUntilNextTurnEffect ofTriggeringPermanent() {
-        return new GoadTargetCreatureUntilNextTurnEffect(null, PermanentReference.TRIGGERING);
+        return new GoadTargetCreatureUntilNextTurnEffect(null, Subjects.triggering());
     }
 
     @Override

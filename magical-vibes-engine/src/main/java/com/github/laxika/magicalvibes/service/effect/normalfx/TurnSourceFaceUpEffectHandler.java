@@ -29,7 +29,7 @@ public class TurnSourceFaceUpEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = subjectResolutionService.permanent(
-                gameData, entry, effect, Subjects.of(((TurnSourceFaceUpEffect) effect).reference()));
+                gameData, entry, effect, ((TurnSourceFaceUpEffect) effect).subject());
         if (source == null || !source.isFaceDown()) {
             return;
         }

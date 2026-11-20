@@ -38,6 +38,8 @@ import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
@@ -411,6 +413,18 @@ public class TargetPolarityClassifier {
                     : TargetPolarity.NEUTRAL;
         }
 
+        if (effect instanceof DoubleSelfPowerToughnessEffect doubling) {
+            return doubling.subject().declaresTarget() ? TargetPolarity.BENEFICIAL : null;
+        }
+        // Stripping every counter: from a creature it is a debuff (old target-creature record), from any permanent
+        // it swings both ways; the non-target Aura form has no polarity.
+        if (effect instanceof RemoveAllCountersFromTargetPermanentEffect removeEvery) {
+            if (!removeEvery.subject().declaresTarget()) {
+                return null;
+            }
+            return removeEvery.targetFilter() != null ? TargetPolarity.HARMFUL : TargetPolarity.NEUTRAL;
+        }
+
         // Targeted P/T boosts are sign-aware: any negative component makes the shape a
         // debuff. Dynamic amounts evaluate in estimation context, matching SpellEvaluator.
         if (effect instanceof CreatureBoostEffect boost) {
@@ -598,7 +612,6 @@ public class TargetPolarityClassifier {
             entry("LockTargetPermanentEffect", TargetPolarity.HARMFUL),
             entry("LoseAllCreatureTypesEffect", TargetPolarity.HARMFUL),
             entry("RemoveAllCountersAndLockPermanentEffect", TargetPolarity.HARMFUL),
-            entry("RemoveAllCountersFromTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("LosesAllAbilitiesEffect", TargetPolarity.HARMFUL),
             entry("LosesAllNonManaAbilitiesEffect", TargetPolarity.HARMFUL),
             entry("EnchantedPermanentBecomesOnlyLandEffect", TargetPolarity.HARMFUL),
@@ -652,7 +665,6 @@ public class TargetPolarityClassifier {
             entry("DoubleCountersOnTargetPermanentEffect", TargetPolarity.BENEFICIAL),
             entry("DoublePlusOneCountersOnTargetCreatureEffect", TargetPolarity.BENEFICIAL),
             entry("DoubleTargetCreaturePowerEffect", TargetPolarity.BENEFICIAL),
-            entry("DoubleTargetCreaturePowerToughnessEffect", TargetPolarity.BENEFICIAL),
             entry("DrawDiscardAndConniveEffect", TargetPolarity.BENEFICIAL),
             entry("ConniveEachTargetEffect", TargetPolarity.BENEFICIAL),
             entry("PhaseOutChosenTargetCreaturesEffect", TargetPolarity.BENEFICIAL),
@@ -757,7 +769,6 @@ public class TargetPolarityClassifier {
             entry("GrantSubtypeUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("GrantSubtypeToTargetCreatureEffect", TargetPolarity.HARMFUL),
             entry("MoveCounterFromTargetCreatureToTargetCreatureEffect", TargetPolarity.NEUTRAL),
-            entry("RemoveAllCountersFromTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("RemoveCounterFromTargetPermanentEffect", TargetPolarity.NEUTRAL),
             entry("RegisterControlLossUnattachTriggerEffect", TargetPolarity.NEUTRAL),
             entry("SearchLibraryForTargetCreatureNameToBattlefieldEffect", TargetPolarity.NEUTRAL),

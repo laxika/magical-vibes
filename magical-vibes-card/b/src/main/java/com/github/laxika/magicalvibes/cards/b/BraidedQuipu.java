@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutSourcePermanentIntoLibraryNFromTopEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 
 import java.util.List;
@@ -19,7 +19,7 @@ public class BraidedQuipu extends Card {
                 List.of(
                         new DrawCardEffect(new PermanentCount(
                                 new PermanentIsArtifactPredicate(), CountScope.CONTROLLER)),
-                        new PutSourcePermanentIntoLibraryNFromTopEffect(2)
+                        PutTargetPermanentIntoLibraryNFromTopEffect.self(2)
                 ),
                 "{3}{U}, {T}: Draw a card for each artifact you control, then put Braided Quipu "
                         + "into its owner's library third from the top."));

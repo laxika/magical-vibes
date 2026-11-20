@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.m.MaelstromDjinn;
 import com.github.laxika.magicalvibes.cards.u.UnwelcomeSprite;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({PerfectIntimidation.class, UnwelcomeSprite.class})
+@CardUsed({PerfectIntimidation.class, UnwelcomeSprite.class, MaelstromDjinn.class})
 class PerfectIntimidationTest extends BaseCardTest {
 
     @Test
@@ -42,6 +43,30 @@ class PerfectIntimidationTest extends BaseCardTest {
 
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(creature.getCounterCount(CounterType.CHARGE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Removing the last time counter from a creature with vanishing makes its controller sacrifice it")
+    void counterModeRemovingLastTimeCounterTriggersVanishing() {
+        harness.setHand(player1, List.of(new MaelstromDjinn()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        Permanent djinn = findPermanent(player1, "Maelstrom Djinn");
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(djinn));
+        harness.passBothPriorities();
+        assertThat(djinn.getCounterCount(CounterType.TIME)).isEqualTo(2);
+
+        cast(new int[]{1}, List.of(djinn.getId()));
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Maelstrom Djinn");
+        harness.assertInGraveyard(player1, "Maelstrom Djinn");
     }
 
     @Test

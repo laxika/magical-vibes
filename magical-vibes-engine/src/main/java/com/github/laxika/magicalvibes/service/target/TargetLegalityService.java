@@ -69,6 +69,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerDamagedBySourceThisTurn
 import com.github.laxika.magicalvibes.model.filter.PlayerDamagedBySourceCombatThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerDealtDamageThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerCastSorceryThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerHasPoisonCountersAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerLostLifeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMoreCreaturesThanControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMoreLandsThanControllerPredicate;
@@ -6294,6 +6295,8 @@ public class TargetLegalityService {
                             .anyMatch(card -> card.hasType(CardType.SORCERY));
             case PlayerLostLifeThisTurnPredicate ignored ->
                     gameData.lifeLostThisTurn.getOrDefault(targetPlayerId, 0) > 0;
+            case PlayerHasPoisonCountersAtLeastPredicate poison ->
+                    gameData.playerPoisonCounters.getOrDefault(targetPlayerId, 0) >= poison.minimum();
             case OpponentPreviouslyDamagedBySourcePredicate ignored ->
                     controllerId != null && !controllerId.equals(targetPlayerId)
                             && sourcePermanentId != null

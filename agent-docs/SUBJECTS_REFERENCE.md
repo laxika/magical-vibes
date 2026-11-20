@@ -31,7 +31,6 @@ resolver's static entry point rejects the others).
 | `attachmentsOf(permanents, filter)` | "all Auras attached to target permanent" (each matching permanent attached to one of the named permanents still on the battlefield; the attachments are not targeted) | no | if `permanents` may |
 | `allOf(subjects...)` | "this creature and target creature" | if one part targets | if every part may |
 | `oneOf(options...)` | "exile this permanent or up to one target creature": one of the options, chosen by the controller as the effect resolves; the resolver refuses it, the verb's handler resolves each option and asks; a target option is declared by the ability (Kaya, Ghost Assassin) | no | no |
-| `of(PermanentReference)` | temporary adapter for effects that still carry a `PermanentReference` | no | `SOURCE`, `ATTACHED` |
 
 ## PlayerSubject
 

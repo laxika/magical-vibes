@@ -17,7 +17,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachOneOfControlledEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentsToTargetCreatureThenEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentOfSameTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturesByPositionEffect;
@@ -124,7 +124,7 @@ class TargetPolarityGuardTest {
         assertThat(classifier.classify(gd, new AttachTargetEquipmentsToTargetCreatureThenEffect(
                 new BoostTargetCreatureEffect(1, 1)), aiPlayerId))
                 .isEqualTo(TargetPolarity.BENEFICIAL);
-        assertThat(classifier.classify(gd, new RemoveAllCountersFromTargetCreatureEffect(), aiPlayerId))
+        assertThat(classifier.classify(gd, RemoveAllCountersFromTargetPermanentEffect.fromTargetCreature(), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL);
         assertThat(classifier.classifyCard(gd,
                 new com.github.laxika.magicalvibes.cards.t.ThievingSkydiver(), aiPlayerId))

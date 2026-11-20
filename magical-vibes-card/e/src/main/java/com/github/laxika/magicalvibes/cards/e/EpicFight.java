@@ -18,7 +18,7 @@ public class EpicFight extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Double target creature's power and toughness until end of turn",
-                        new DoubleSelfPowerToughnessEffect(),
+                        DoubleSelfPowerToughnessEffect.ofTargetCreature(),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature you control fights target creature an opponent controls",

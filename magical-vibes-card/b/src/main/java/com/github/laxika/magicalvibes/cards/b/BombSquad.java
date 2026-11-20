@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffect;
@@ -43,6 +43,6 @@ public class BombSquad extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentHasAtLeastCountersPredicate(CounterType.FUSE, 4)))),
                 new RemoveAllCountersThenDestroyReferencedPermanentAndDamageControllerEffect(
-                        PermanentReference.TRIGGERING, CounterType.FUSE, 4));
+                        Subjects.triggering(), CounterType.FUSE, 4));
     }
 }

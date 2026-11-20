@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEf
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.PermanentReference;
 import com.github.laxika.magicalvibes.model.effect.PutOrRemoveCounterIfAttackedOrBlockedSinceLastUpkeepEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -21,6 +20,6 @@ public class ShapeOfTheWiitigo extends Card {
                         new PutCounterOnTargetPermanentEffect(Subjects.attached(), CounterType.PLUS_ONE_PLUS_ONE, 6))
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                         new PutOrRemoveCounterIfAttackedOrBlockedSinceLastUpkeepEffect(
-                                PermanentReference.ATTACHED, CounterType.PLUS_ONE_PLUS_ONE));
+                                Subjects.attached(), CounterType.PLUS_ONE_PLUS_ONE));
     }
 }

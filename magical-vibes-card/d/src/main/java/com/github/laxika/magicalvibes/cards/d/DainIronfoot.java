@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
-import com.github.laxika.magicalvibes.model.effect.AttachCreatedEquipmentToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenThenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
@@ -35,7 +35,7 @@ public class DainIronfoot extends Card {
                 false, false, axeEffects, List.of(new EquipActivatedAbility("{2}")),
                 false, false, false, 0, Set.of());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                CreateTokenThenEffect.aboutThatToken(axe, new AttachCreatedEquipmentToTargetCreatureEffect()));
+                CreateTokenThenEffect.aboutThatToken(axe, AttachSourceEquipmentToTargetCreatureEffect.forCreatureYouControl()));
 
         var equippedAttackingCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

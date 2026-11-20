@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestDreadEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleEnchantedPermanentIntoOwnerLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleReferencedPermanentIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -27,7 +27,7 @@ public class StayHiddenStaySilent extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{U}{U}",
-                List.of(new ShuffleEnchantedPermanentIntoOwnerLibraryEffect(),
+                List.of(new ShuffleReferencedPermanentIntoLibraryEffect(),
                         ManifestDreadEffect.forController()),
                 "{4}{U}{U}: Shuffle enchanted creature into its owner's library, then manifest dread. "
                         + "Activate only as a sorcery.",

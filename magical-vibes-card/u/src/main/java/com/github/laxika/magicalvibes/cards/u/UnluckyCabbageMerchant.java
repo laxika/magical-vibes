@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -32,8 +33,8 @@ public class UnluckyCabbageMerchant extends Card {
                         SequenceEffect.of(
                                 new SearchLibraryEffect(CardPredicateUtils.basicLand(),
                                         LibrarySearchDestination.BATTLEFIELD_TAPPED),
-                                new PutTargetPermanentIntoLibraryNFromTopEffect(
-                                        new CardsInLibrary(CountScope.ANY_PLAYER), true),
+                                new PutTargetPermanentIntoLibraryNFromTopEffect(Subjects.source(),
+                                        new CardsInLibrary(CountScope.ANY_PLAYER)),
                                 new ShuffleLibraryEffect(false)),
                         "Search your library for a basic land card?"));
     }

@@ -746,7 +746,7 @@ public class UntapStepService {
         return effects.stream()
                 .anyMatch(e -> e instanceof DoesntUntapWithCounterEffect lock
                         && lock.scope() == scope
-                        && subjectResolutionService.permanents(gameData, source, Subjects.of(lock.counterBearer()))
+                        && subjectResolutionService.permanents(gameData, source, lock.counterBearer())
                                 .stream()
                                 .anyMatch(bearer -> bearer.getCounterCount(lock.counterType()) > 0));
     }

@@ -22,7 +22,7 @@ public class ChooseYourWeapon extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Double target creature's power and toughness until end of turn",
-                        new DoubleSelfPowerToughnessEffect(),
+                        DoubleSelfPowerToughnessEffect.ofTargetCreature(),
                         TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Choose Your Weapon deals 5 damage to target creature with flying",
