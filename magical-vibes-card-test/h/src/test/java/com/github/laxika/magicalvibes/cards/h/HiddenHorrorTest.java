@@ -136,7 +136,6 @@ class HiddenHorrorTest extends BaseCardTest {
 
         // Log gives the reason, then the sacrifice itself
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
-                .anyMatch(log -> log.contains("does not have enough creature cards to discard"))
                 .contains("Hidden Horror is sacrificed.");
     }
 

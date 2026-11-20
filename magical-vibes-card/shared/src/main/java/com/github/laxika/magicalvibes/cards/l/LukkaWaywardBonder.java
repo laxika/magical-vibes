@@ -4,20 +4,27 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
+import com.github.laxika.magicalvibes.model.condition.AllOf;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 public class LukkaWaywardBonder extends Card {
 
@@ -25,11 +32,16 @@ public class LukkaWaywardBonder extends Card {
             "Whenever a creature you control enters, it deals damage equal to its power to any target.";
 
     public LukkaWaywardBonder() {
+        CardPredicate creatureCard = new CardTypePredicate(CardType.CREATURE);
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new MayEffect(new DiscardCardThenEffect(
-                        null, new DrawCardEffect(1), "a card", null, false, CardType.CREATURE,
-                        new DrawCardEffect(2), Subjects.you(), true), "Discard a card?")),
+                List.of(new MayEffect(SequenceEffect.of(
+                        new DiscardEffect(1, Subjects.you()),
+                        new ConditionalEffect(new AllOf(List.of(HappenedThisWay.discarded(),
+                                new NotCondition(HappenedThisWay.toACard(StepKind.DISCARD, creatureCard)))),
+                                new DrawCardEffect(1)),
+                        new ConditionalEffect(HappenedThisWay.toACard(StepKind.DISCARD, creatureCard),
+                                new DrawCardEffect(2))), "Discard a card?")),
                 "+1: You may discard a card. If you do, draw a card. If a creature card was discarded this way, draw two cards instead."
         ));
 

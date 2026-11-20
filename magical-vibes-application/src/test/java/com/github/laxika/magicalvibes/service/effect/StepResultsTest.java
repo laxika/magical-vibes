@@ -196,6 +196,44 @@ class StepResultsTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("Pack Guardian: \"discard a land card\" offers only the land cards in hand")
+        void filteredDiscardOffersOnlyMatchingCards() {
+            harness.setHand(player1, List.of(new GrizzlyBears(), new Forest(), new HillGiant()));
+
+            resolve(player1, null, null,
+                    DiscardEffect.matching(1, Subjects.you(), new CardTypePredicate(CardType.LAND)));
+
+            assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class).validIndices())
+                    .containsExactly(1);
+        }
+
+        @Test
+        @DisplayName("Recruit: \"if you discarded a nonland card\" reads the card the discard step discarded")
+        void discardedCardIsJudgedByItsType() {
+            harness.setHand(player1, List.of(new Forest(), new GrizzlyBears()));
+
+            resolve(player1, null, null, new DiscardEffect(1, Subjects.you()),
+                    new ConditionalEffect(HappenedThisWay.toACard(StepKind.DISCARD,
+                            new CardTypePredicate(CardType.CREATURE)), new GainLifeEffect(3)));
+            harness.handleCardChosen(player1, 1);
+
+            harness.assertLife(player1, 23);
+        }
+
+        @Test
+        @DisplayName("A discarded land card is not a creature card discarded this way")
+        void discardedLandIsNotACreatureCard() {
+            harness.setHand(player1, List.of(new Forest(), new GrizzlyBears()));
+
+            resolve(player1, null, null, new DiscardEffect(1, Subjects.you()),
+                    new ConditionalEffect(HappenedThisWay.toACard(StepKind.DISCARD,
+                            new CardTypePredicate(CardType.CREATURE)), new GainLifeEffect(3)));
+            harness.handleCardChosen(player1, 0);
+
+            harness.assertLife(player1, 20);
+        }
+
+        @Test
         @DisplayName("Discarding from an empty hand discards nothing, so nothing is drawn for it")
         void emptyHandDrawsNothing() {
             harness.setLibrary(player1, List.of(new Forest()));

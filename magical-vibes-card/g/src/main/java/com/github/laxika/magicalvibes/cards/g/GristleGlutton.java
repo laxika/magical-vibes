@@ -3,9 +3,13 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.BlightXCost;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -18,7 +22,10 @@ public class GristleGlutton extends Card {
                 true,
                 null,
                 List.of(BlightXCost.fixed(1),
-                        DiscardCardThenEffect.continuing(null, new DrawCardEffect(1), "a card")),
+                        SequenceEffect.of(
+                                new DiscardEffect(1, Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.discarded(),
+                                        new DrawCardEffect(1)))),
                 "{T}, Blight 1: Discard a card. If you do, draw a card."
         ));
     }

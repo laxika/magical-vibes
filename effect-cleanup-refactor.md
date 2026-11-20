@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 21 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 22 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -540,6 +540,7 @@ cause under Findings.
 | 19 | run 18's next: `SacrificePermanentsEffect` gains an "any number" choice recording the SACRIFICE step and the two any-number records split; the sacrifice-or-discard and manifest-then-counters records; then the next fused families whose first half records a step | done (8 split, 3 survivors, 4 blocked-other; 24 card files rewritten; `SacrificePermanentsEffect.anyNumber`, `StepKind.MANIFEST`, `ChooseOneAtResolutionEffect` drops impossible sacrifice / discard options; `DiscardCardAndBoostSelfEffect` split with Furyblade Vampire) |
 | 20 | run 19's next: `MayEffectHandler`'s can't-sacrifice check reads a sequence's leading sacrifice with its count; `SacrificePermanentsThenEffect` split; `SacrificeAnyNumberOfPermanentsEffect` absorbed; `DiscardFollowUp`'s `boost*` dropped; then the Sacrifice family's "unless" / "or else" records and the remove-a-counter "if you do" record | done (4 split, 1 absorbed, 3 survivors, 1 unique, 5 blocked-other; 31 card files rewritten; `SacrificePermanentsEffect.upTo`, `HappenedThisWay.removedCounters()`, `RemoveCounterFromSourceEffect` records REMOVE_COUNTERS; a reflexive ability's dynamic target count reads its carried step results; `AmountThisWay` totals floor once, CR 107.1b) |
 | 21 | run 20's next: the rest of the counter family (the source removal's "then" record, vanishing's upkeep record, the put-counters reflexive records, the threshold transform); `DiscardEffect`'s card filter not reached | done (3 split, 1 absorbed, 4 survivors, 1 blocked-other; 33 card files rewritten; `RemoveCounterFromSourceEffect` takes `CounterType.ANY`, `GoadTargetCreatureUntilNextTurnEffect.ofCreaturesGivenCountersThisWay()`, a sequence's own target is chosen beside a reflexive step; Verazol and Spectacular Showdown fixed by Oracle text, vanishing's sacrifice left to vanishing, CR 702.63a) |
+| 22 | run 21's next: a card filter on `DiscardEffect` and a filter-aware can't-discard check; `SacrificeUnlessDiscardCardTypeEffect` and the "discard a … If you do" `DiscardCardThenEffect` cards; Spectacular Showdown's overload record; the threshold transform if it fits | done (1 split, 2 absorbed, 4 survivors, `DiscardCardThenEffect` blocked-other with 41 of its 70 cards split; 61 card files rewritten; `DiscardEffect.matching`, `HappenedThisWay.toACard(DISCARD, …)`, `DiscardCardThenEffect.withDiscardedManaValueAsX`; Great Desert Hellion fixed by Oracle text; the threshold transform not reached) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -5118,6 +5119,100 @@ AI, engine testFixtures and card-test `a b c d e f i k l m n o p r s t v w` test
 - **Remaining fused multi-card records** (no ledger row, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` /
   `OrElse` name): 112 (1,169 card uses), unchanged (this run's classes had ledger rows from 5e / 5f); by first word Exile 20,
   Search 10, Reveal 9, Counter 7, Prevent 7, Each 6, Cant 5, Choose 5, Boost 3, Creatures 3, Destroy 3, Draw 3, Put 3.
+
+### Step 8, run 22 (2026-11-20)
+
+Run 21's "Next run": (1) a card filter on `DiscardEffect`, a filter-aware can't-discard check in `MayEffectHandler`, then
+`SacrificeUnlessDiscardCardTypeEffect` and run 2's "discard a … If you do" `DiscardCardThenEffect` cards; (2) Spectacular Showdown's overload
+record. (3) The threshold transform was not reached. Verdicts (ledger, step `8`): **split 1** (`PutCounterOnEachMatchingPermanentThenGoadEffect`),
+**absorbed 2** (`SacrificeUnlessDiscardCardTypeEffect`, `ExileUnlessDiscardCardTypeEffect`, with their `normalfx` and `mayfx` handlers and
+`MayPenaltyChoiceHandlerService.handleSacrificeUnlessDiscardChoice` / `handleExileUnlessDiscardChoice`), **survivor 4** (`DiscardEffect`,
+`HappenedThisWay`, `PutCounterOnEachMatchingPermanentEffect`, `MayEffect`'s handler), **blocked-other 1** (`DiscardCardThenEffect`: 41 of its 70
+cards split, 30 users left). Ratchet 4,722 / 3,954 → 4,719 / 3,949. 61 card files rewritten (the 19 unless-discard cards by
+a deleted scratch script, 37 discard-then cards by another, 5 by hand: Spectacular Showdown, Old One Eye, Lord Windgrace, Lukka, Chandra Ablaze; read back by eye,
+imports sorted). Oracle text of every rewritten card checked with `get_card` (Alberix's MB2 playtest printing isn't on Scryfall; its own
+option text was used); rulings with `get_rulings` (Hidden Horror: you choose as it resolves, must sacrifice if you can't discard, may still
+discard once it left; Argentum Masticore: the reflexive target is chosen after the discard, discarding is allowed with no legal target;
+Ill-Timed Explosion; none for Avatar of Discord, Great Desert Hellion, Pillaging Horde; Lim-Dûl's Paladin's is about its attack trigger).
+CR 101.3, 118.3, 118.12, 118.12a, 603.12, 608.2c, 608.2d, 609.3, 701.9a and 701.9b checked with `get_rule` (2026-11-20).
+
+- **The discard filter.** `DiscardEffect` gained a `filter` component and `DiscardEffect.matching(n, player, CardPredicate)`: a chosen
+  discard offers only matching cards (the single-player path through `resolveDiscardCards(validIndices)`, the each-player path's choosable
+  indices); a player with fewer matching cards discards those they have (CR 609.3). It is refused with `random`, a declared player target,
+  the stop-after or drawn-this-resolution forms. `HappenedThisWay.toACard` accepts `StepKind.DISCARD` (the cards the step discarded, judged
+  wherever they went) and `HappenedThisWay.discarded()` is "if you do".
+- **The can't-discard check.** `MayEffectHandler` counts the discarder's matching cards against the leading `DiscardEffect`'s count
+  (evaluated as the choice is offered, at least one): fewer, and the choice isn't offered and the `elseEffect` happens (CR 608.2d; "you may
+  discard N. If you do" is a cost, CR 118.12, paid only in full, CR 118.3). Before, only an empty hand withheld it. A discard by a player
+  named without targeting ("that attacking player may discard", Curse of Chaos) is judged when that player is the deciding one. A leading
+  `DiscardCardThenEffect` of `you()` with an `elseEffect` is judged too (Argentum Masticore).
+- **Unless discard** (CR 118.12a): `MayEffect(new DiscardEffect(N, you()) | DiscardEffect.matching(1, you(), filter) | new DiscardEffect(1, you(),
+  true), prompt, new SacrificeSelfEffect())`: Thundering Wurm, Fallow Wurm, Cursed Monstrosity (land), Mercenary Knight, Hidden Horror (creature),
+  Drekavac (noncreature), Pillaging Horde, Minotaur Explorer, Balduvian Horde (random), Avatar of Discord (two), Solitary Confinement, the three
+  Masticores, Coral Net's granted ability; Lim-Dûl's Paladin's penalty is `SequenceEffect.of(SacrificeSelfEffect, DrawCardEffect(1))` (the draw
+  happens whether or not the sacrifice does, as before); Body Snatcher's is `ExileTargetPermanentEffect(source())`. Great Desert Hellion: the may
+  wraps `SequenceEffect.of(discard, ConditionalEffect(HappenedThisWay.discarded(), IntensifySourceCardEffect(1)))`. Argentum Masticore's "when you
+  discard a card this way" with the discarded card's mana value as the reflexive target's X is `DiscardCardThenEffect.withDiscardedManaValueAsX(destroy)`
+  inside the may: a new `discardedManaValueIsX` component that sets the existing `DiscardFollowUp.thenEffectUsesDiscardedManaValue`
+  (`withDiscardedManaValueAsX()`; `DiscardFollowUp.thenEffectWithDiscardedManaValue` deleted). That moves the one-card special case onto a record
+  that stays for the reflexive cards; it let the record, two handlers and the penalty method go.
+- **Discard, if you do.** "[You may] discard a [kind] card. If you do / If a [kind] card is discarded this way, X" is
+  `SequenceEffect.of(new DiscardEffect(1, P) | DiscardEffect.matching(1, P, filter), new ConditionalEffect(HappenedThisWay.discarded() |
+  HappenedThisWay.toACard(StepKind.DISCARD, kind), X))` (in its `MayEffect` / choose-one option); "discard a card, then X" is a plain sequence
+  (Rix Maadi Reveler). Split: the ten recruit cards (Bard's Company, Celebrate the Mountain-king, Esgaroth Garrison, Great Gilded Boat, Lake-town
+  Lookout, Long Lake Nuisance, Patient Instructor, The Mountain-king's Return, The Queen of Dale, Sound the Trumpets: "if you discarded a nonland
+  card"), Vohar, Chandra Ablaze ("if a red card"), Lord Windgrace (draw, then `toACard(land)` draws one more), Lukka ("draw two instead":
+  `AllOf(discarded, Not(toACard(creature)))` draws one, `toACard(creature)` draws two), Old One Eye (`DiscardEffect(2)` + `atLeast(DISCARD, 2)`),
+  Alberix, Artillery Enthusiast, Chandra Spark Hunter, Crucias, Crypt Lurker, Curse of Chaos (`triggeringPlayer()`), Disciple of Deceit, Erebos's
+  Titan, Formidable Speaker, Frenzied Geistblaster, Gert and Old Lace, Ghitu Embercoiler, Gigapede, Green Goblin, Gristle Glutton, Journey to the
+  Oracle, Melded Moxite, Olivia, Pack Guardian, Quintorius, Rank Officer, Rydia, Territorial Kavu, Truga Cliffcharger, Vision of Love. "The discarded
+  card's mana value" stays `LastDiscardedCardManaValue` (the discard completion stamps the entry's discarded-card snapshot).
+- **Spectacular Showdown's overload** is `SequenceEffect.of(new PutCounterOnEachMatchingPermanentEffect(DOUBLE_STRIKE, 1, creature, ALL_PLAYERS),
+  GoadTargetCreatureUntilNextTurnEffect.ofCreaturesGivenCountersThisWay())`: `PutCounterOnEachMatchingPermanentEffectHandler` records a
+  PUT_COUNTERS step (`counterCounts` / `counterChange`; it never prompts; `StepKind` Javadoc lists it).
+- **Behaviour changes.** Great Desert Hellion (YBRO 19) "If you discard a card this way, this creature intensifies by 1": the old record queued
+  a reflexive ability; it now intensifies as the upkeep ability resolves (`GreatDesertHellionTest.intensifiesDuringTheUpkeepAbilitysResolution`,
+  fails on the old card). A "you may discard [a kind of] card" with no such card is not offered (CR 608.2d): Disciple of Deceit, Gigapede,
+  Curse of Chaos, Melded Moxite, Quintorius, Pack Guardian, Truga Cliffcharger and the other split "you may" cards (before: asked, then nothing);
+  Ill-Timed Explosion with fewer than two cards isn't asked and its reflexive damage no longer happens off a one-card discard
+  (`IllTimedExplosionTest.fewerThanTwoCardsIsNotOffered`, fails on the old check; the Royal Scions reading of "when you [do N]"). Masticore's
+  "hand emptied while the prompt was open" test (unreachable in a game) became "with an empty hand the death replacement is asked before it is
+  sacrificed". The survivors' log lines win (Hidden Horror's "does not have enough creature cards to discard" line is gone; its test asserted
+  it). Missing `@DisplayName`s added in the Quintorius, Invasion of Ergamon and Great Desert Hellion tests.
+- **AI.** No AI class named a deleted record. `SpellEvaluator` scores only a targeted `DiscardEffect` (run 2's note that it scores a bare
+  `DiscardEffect(you())` as card loss no longer holds), so the split cards' own discards score 0 as the wrapper did.
+- **Blocked, by cause.** `DiscardCardThenEffect` keeps 22 reflexive "when you do" cards (Hypothesizzle, Glacial Dragonhunt, Dokuchi Silencer,
+  …; correct as they are), Argentum Masticore, and: a card subject for the discarded card (Malcolm, Silvan Reveler, Anguished Recollection,
+  Leonardo da Vinci), a card-filtered count of a discard step ("for each nonland card discarded this way", Seasoned Pyromancer, still two
+  single discards), the `MayPayManaEffect` wrapper with a target (Wolf of Devil's Breach) and a graveyard target (Toph). The threshold transform
+  (item 3) was not reached.
+
+**Tests** (one Gradle run, one `--tests` list per task, then the three modules a compile slip and the new Hellion test stopped): every
+rewritten card's test, every card test constructing a rewritten card (the helper sweep: 82 classes), Ill-Timed Explosion, `--tests-for
+DiscardEffect MayEffect PutCounterOnEachMatchingPermanentEffect DiscardCardThenEffect GoadTargetCreatureUntilNextTurnEffect --max-per-class 8`;
+application (`StepResultsTest` +3, `DiscardEffectHandlerTest`, `DiscardCardThenEffectHandlerTest`, `MayEffectHandlerTest`,
+`LoseLifeUnlessDiscardEffectHandlerTest`, `DiscardAndDrawCardEffectHandlerTest`, `FlipCoinWinEffectHandlerTest`, `ReflexiveRouteRecordTest`,
+`StepTriggerServiceTest`, `HandCardChoiceInteractionHandlersTest`, `ResolutionScratchpadAmountTest`, `EffectResolutionServiceTest`,
+`SubjectResolutionServiceTest`, `EffectCountRatchetTest`, `CardImmutabilityArchTest`) and AI (`TargetPolarityGuardTest`, `SpellEvaluatorTest`,
+`GameDataDeepCopyTest`): 207 result files, 1,741 test cases, all pass after 11 tests were updated for the unoffered prompts (above).
+`SacrificeUnlessDiscardCardTypeEffectHandlerTest` deleted with its handler (the cards' tests cover it). Application, AI, engine testFixtures
+and card-test `a b c d e f g h i j l m o p q r s t v` test sources compile.
+
+**For later runs.**
+
+- "Sacrifice / exile this unless you discard [N] [kind]" is `MayEffect(discard, prompt, penalty)`; "[you may] discard a [kind] card. If you
+  do / if a [kind] card is discarded this way" is the discard + `ConditionalEffect(HappenedThisWay.discarded() | toACard(DISCARD, kind), X)`.
+  Keep `DiscardCardThenEffect` for "when you do" (reflexive, CR 603.12) and for a rider that names the discarded card.
+- **Next run.** (1) The threshold transform (`PutCounterOnSelfThenTransformIfThresholdEffect`, 6 cards; run 21's blockers). (2)
+  `LoseLifeUnlessDiscardEffect` (Painful Quandary) and `EachOpponentMayDiscardOrLoseLifeEffect`: "that player loses N life unless they discard a
+  card" is `MayEffect(DiscardEffect(1, triggeringPlayer()), prompt, LoseLifeEffect(N, triggeringPlayer()), MayChoicePlayer…)` if a may chooser
+  names the triggering player and the each-opponent form has a player loop (else blocked-player-loop). (3) Seasoned Pyromancer needs
+  `AmountThisWay(DISCARD)` over a card filter. (4) Then the next fused multi-card families: Search 10, Reveal 9, Counter 7, Prevent 7.
+- The `DiscardCardThenEffect` reflexive cards inside a `MayEffect` are still asked with no matching card (then nothing happens); the check
+  covers that record only with an `elseEffect`. Widen it when the record is next touched.
+- **Remaining fused multi-card records** (no ledger row, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` / `OrElse`
+  name): 112 (1,169 card uses), unchanged (this run's classes had ledger rows); by first word Exile 20, Search 10, Reveal 9, Counter 7,
+  Prevent 7, Each 6, Cant 5, Choose 5, Boost 3, Creatures 3, Destroy 3, Draw 3, Put 3.
 
 ## Prompt
 

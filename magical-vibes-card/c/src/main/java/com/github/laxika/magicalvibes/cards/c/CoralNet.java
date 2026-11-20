@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -32,7 +34,9 @@ public class CoralNet extends Card {
                 "Target must be a green or white creature"
         )).addStaticEffect(new GrantTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
-                new SacrificeUnlessDiscardCardTypeEffect(null)),
+                new MayEffect(new DiscardEffect(1, Subjects.you()),
+                "Discard a card? If you don't, sacrifice this creature.",
+                new SacrificeSelfEffect())),
                 Subjects.attachedCreature()));
     }
 }

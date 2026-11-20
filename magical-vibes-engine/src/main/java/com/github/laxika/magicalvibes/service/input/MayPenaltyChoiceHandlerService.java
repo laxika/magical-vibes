@@ -53,7 +53,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardHandUnlessPaysLifeEffe
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessExileCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardUnlessReturnLandToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfPermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.OpponentGainsLifeCost;
@@ -75,7 +74,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.OpponentMayReturnExiledCardOrDrawEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnOwnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.StealDyingOpponentPermanentUnlessPaysLifeEffect;
@@ -811,141 +809,6 @@ public class MayPenaltyChoiceHandlerService {
                 .text(")");
         gameLogService.append(gameData, counterLog.build());
         log.info("Game {} - {} counters {}", gameData.id, sourceCard.getName(), targetEntry.getCard().getName());
-    }
-
-    public void handleSacrificeUnlessDiscardChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {
-        SacrificeUnlessDiscardCardTypeEffect effect = ability.effects().stream()
-                .filter(e -> e instanceof SacrificeUnlessDiscardCardTypeEffect)
-                .map(e -> (SacrificeUnlessDiscardCardTypeEffect) e)
-                .findFirst().orElseThrow();
-
-        Card sourceCard = ability.sourceCard();
-        UUID controllerId = ability.controllerId();
-
-        // Find the source permanent on the battlefield. A permanent that left and returned is a new object
-        // (CR 400.7), so the ability's own permanent id is matched when it is known, not just the card.
-        UUID sourcePermanentId = ability.sourcePermanentId();
-        Permanent sourcePermanent = null;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield != null) {
-            for (Permanent p : battlefield) {
-                boolean sameObject = sourcePermanentId != null
-                        ? p.getId().equals(sourcePermanentId)
-                        : p.getCard().getId().equals(sourceCard.getId());
-                if (sameObject) {
-                    sourcePermanent = p;
-                    break;
-                }
-            }
-        }
-
-        if (accepted) {
-            // Per ruling 2008-04-01: player may still discard even if the creature
-            // is no longer on the battlefield.
-            List<Card> hand = gameData.playerHands.get(controllerId);
-            List<Integer> validIndices = new ArrayList<>();
-            if (hand != null) {
-                for (int i = 0; i < hand.size(); i++) {
-                    if (predicateEvaluationService.matchesCardPredicate(hand.get(i), effect.discardPredicate(),
-                            sourceCard.getId(), gameData, controllerId)) {
-                        validIndices.add(i);
-                    }
-                }
-            }
-
-            if (validIndices.size() >= effect.discardCount()) {
-                String typeName = effect.discardDescription();
-                gameData.discardCausedByOpponent = false;
-
-                if (effect.random()) {
-                    // Pillaging Horde: the discard is at random, so no player choice is needed. A rerun
-                    // would discard again, so nothing after this point may stop for a death replacement.
-                    gameData.deathReplacementsCanRerunEffect = false;
-                    playerInteractionSupport.resolveRandomDiscardCards(gameData, controllerId, sourceCard.getName(), effect.discardCount());
-                    log.info("Game {} - {} accepts sacrifice-unless-discard (random) for {}", gameData.id, player.getUsername(), sourceCard.getName());
-                    inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-                    return;
-                }
-
-                DiscardFollowUp followUp = effect.thenEffect() == null
-                        ? DiscardFollowUp.NONE
-                        : DiscardFollowUp.thenEffectWithDiscardedManaValue(sourceCard, effect.thenEffect());
-                String discardDescription = effect.discardCount() == 1
-                        ? "a " + typeName
-                        : effect.discardCount() + " " + typeName + "s";
-                playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
-                        "Choose " + discardDescription + " to discard.", effect.discardCount(), followUp);
-
-                String logEntry = player.getUsername() + " chooses to discard " + discardDescription + ".";
-                gameLogService.append(gameData, GameLog.text(logEntry));
-                log.info("Game {} - {} accepts sacrifice-unless-discard for {}", gameData.id, player.getUsername(), sourceCard.getName());
-                return;
-            }
-
-            // Hand changed since trigger — no valid cards left, fall through to sacrifice
-        }
-
-        // Declined or no valid cards left — sacrifice if still on the battlefield
-        if (sourcePermanent != null) {
-            destructionSupport.sacrificeAndLog(gameData, sourcePermanent, controllerId);
-            gameLogService.append(gameData, GameLog.text(player.getUsername() + " declines to discard."));
-            log.info("Game {} - {} declines, {} sacrificed", gameData.id, player.getUsername(), sourceCard.getName());
-        } else {
-            String logEntry = player.getUsername() + " declines to discard.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
-            log.info("Game {} - {} is no longer on the battlefield, decline is a no-op", gameData.id, sourceCard.getName());
-        }
-
-        if (effect.drawCardIfNotDiscarded()) {
-            drawService.resolveDrawCard(gameData, controllerId);
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleExileUnlessDiscardChoice(GameData gameData, Player player, boolean accepted,
-            PendingMayAbility ability) {
-        ExileUnlessDiscardCardTypeEffect effect = ability.effects().stream()
-                .filter(e -> e instanceof ExileUnlessDiscardCardTypeEffect)
-                .map(e -> (ExileUnlessDiscardCardTypeEffect) e)
-                .findFirst().orElseThrow();
-
-        Card sourceCard = ability.sourceCard();
-        UUID controllerId = ability.controllerId();
-
-        Permanent sourcePermanent = gameQueryService.findPermanentById(gameData, ability.sourcePermanentId());
-
-        if (accepted) {
-            List<Card> hand = gameData.playerHands.get(controllerId);
-            List<Integer> validIndices = new ArrayList<>();
-            if (hand != null) {
-                for (int i = 0; i < hand.size(); i++) {
-                    if (effect.requiredType() == null || hand.get(i).hasType(effect.requiredType())) {
-                        validIndices.add(i);
-                    }
-                }
-            }
-
-            if (!validIndices.isEmpty()) {
-                String typeName = effect.requiredType() == null
-                        ? "card"
-                        : effect.requiredType().name().toLowerCase() + " card";
-                gameData.discardCausedByOpponent = false;
-                playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
-                        "Choose a " + typeName + " to discard.", 1);
-                gameLogService.append(gameData, GameLog.text(
-                        player.getUsername() + " chooses to discard a " + typeName + "."));
-                return;
-            }
-        }
-
-        if (sourcePermanent != null) {
-            permanentRemovalService.removePermanentToExile(gameData, sourcePermanent);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    player.getUsername() + " declines to discard. ", sourceCard, " is exiled."));
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleLoseLifeUnlessDiscardChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {

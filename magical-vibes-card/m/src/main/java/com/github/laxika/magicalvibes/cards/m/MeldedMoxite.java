@@ -5,11 +5,15 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,7 +25,10 @@ public class MeldedMoxite extends Card {
 
     public MeldedMoxite() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                DiscardCardThenEffect.continuing(null, new DrawCardEffect(2), "a card"),
+                SequenceEffect.of(
+                        new DiscardEffect(1, Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.discarded(),
+                                new DrawCardEffect(2))),
                 "Discard a card to draw two cards?"));
 
         addActivatedAbility(new ActivatedAbility(

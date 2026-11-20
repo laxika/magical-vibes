@@ -1,17 +1,19 @@
 package com.github.laxika.magicalvibes.cards.o;
 
-import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -24,14 +26,14 @@ public class OliviaMobilizedForWar extends Card {
     public OliviaMobilizedForWar() {
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 new MayEffect(
-                        DiscardCardThenEffect.continuing(
-                                null,
-                                SequenceEffect.of(
-                                        new PutCounterOnTargetPermanentEffect(
-                                                Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE),
-                                        new GrantKeywordEffect(Keyword.HASTE, Subjects.triggering()),
-                                        new GrantSubtypeEffect(CardSubtype.VAMPIRE, Subjects.triggering())),
-                                "a card"),
+                        SequenceEffect.of(
+                                new DiscardEffect(1, Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.discarded(),
+                                        SequenceEffect.of(
+                                                new PutCounterOnTargetPermanentEffect(
+                                                        Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE),
+                                                new GrantKeywordEffect(Keyword.HASTE, Subjects.triggering()),
+                                                new GrantSubtypeEffect(CardSubtype.VAMPIRE, Subjects.triggering())))),
                         "Discard a card to put a +1/+1 counter on that creature, give it haste, and make it a Vampire?"));
     }
 }

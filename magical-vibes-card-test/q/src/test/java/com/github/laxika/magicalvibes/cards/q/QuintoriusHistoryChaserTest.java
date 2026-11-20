@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -128,6 +129,7 @@ class QuintoriusHistoryChaserTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With an empty hand the discard isn't offered, so nothing is drawn or milled")
     void acceptingWithAnEmptyHandDoesNotDrawOrMill() {
         Permanent quintorius = addReadyQuintorius(player1, 5);
         Card top = new GrizzlyBears();
@@ -136,7 +138,6 @@ class QuintoriusHistoryChaserTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(top);

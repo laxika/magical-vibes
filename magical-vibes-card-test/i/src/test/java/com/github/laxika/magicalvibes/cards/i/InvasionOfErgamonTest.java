@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -179,14 +180,13 @@ class InvasionOfErgamonTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With an empty hand the back face's discard isn't offered and nothing is searched")
     void backFaceCannotSearchWithoutDiscardingFromAnEmptyHand() {
         Forest libraryCard = new Forest();
         harness.setHand(player1, List.of());
         harness.setLibrary(player1, List.of(libraryCard));
         harness.enterBattlefieldAndReturn(player1, new TrugaCliffcharger());
         harness.passBothPriorities();
-
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);

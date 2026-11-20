@@ -91,4 +91,18 @@ class IllTimedExplosionTest extends BaseCardTest {
         harness.assertLife(player1, 20);
         harness.assertLife(player2, 20);
     }
+
+    @Test
+    @DisplayName("With fewer than two cards in hand the discard isn't offered and nothing is damaged")
+    void fewerThanTwoCardsIsNotOffered() {
+        harness.addToBattlefield(player2, new HillGiant());
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+        harness.castFromHand(player1, new IllTimedExplosion(), "{2}{U}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.stack).isEmpty();
+        harness.assertOnBattlefield(player2, "Hill Giant");
+    }
 }

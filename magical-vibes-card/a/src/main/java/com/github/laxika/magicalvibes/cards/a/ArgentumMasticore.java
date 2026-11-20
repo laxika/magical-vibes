@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -23,8 +25,10 @@ public class ArgentumMasticore extends Card {
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                 new PermanentManaValueAtMostXPredicate()));
 
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificeUnlessDiscardCardTypeEffect(
-                null,
-                new DestroyTargetPermanentEffect(opponentNonlandPermanentAtMostDiscardedManaValue)));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
+                DiscardCardThenEffect.withDiscardedManaValueAsX(
+                        new DestroyTargetPermanentEffect(opponentNonlandPermanentAtMostDiscardedManaValue)),
+                "Discard a card? If you don't, sacrifice this creature.",
+                new SacrificeSelfEffect()));
     }
 }

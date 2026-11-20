@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
@@ -275,9 +276,27 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 ? discard.player() instanceof PlayerSubject.You ? entry.getControllerId()
                 : discard.player().declaresTarget() && !discard.random() && !entry.isNonTargeting() ? targetId : null
                 : null;
-        if (discarderId != null && gameData.playerHands.getOrDefault(discarderId, List.of()).isEmpty()) {
-            // Nothing can be discarded, so no discard choice is offered and "if you don't" applies. A random
-            // discard, or a discard by "that player" from a nontargeting combat damage trigger, is still asked (CR 603.5).
+        if (discarderId == null && optionalAction instanceof DiscardEffect namedDiscard
+                && !namedDiscard.player().declaresTarget() && !(namedDiscard.player() instanceof PlayerSubject.Each)) {
+            // "That player may discard a card": judged only when the deciding player is the one who discards.
+            UUID namedDiscarderId = subjectResolutionService.player(gameData, entry, namedDiscard, namedDiscard.player());
+            discarderId = choicePlayerId.equals(namedDiscarderId) ? namedDiscarderId : null;
+        }
+        if (discarderId != null && optionalAction instanceof DiscardEffect discard
+                && countDiscardable(gameData, entry, discarderId, discard.filter()) < requiredDiscards(gameData, entry, discard)) {
+            // "You may discard [N] [land] card(s)": a player with fewer such cards can't choose that option (CR 608.2d;
+            // the discard is a cost of "if you do", CR 118.12, paid only in full, CR 118.3), so no discard choice is
+            // offered and "if you don't" applies. A random discard, or a discard by "that player" from a nontargeting
+            // combat damage trigger, is still asked (CR 603.5).
+            gameData.resolvingMayEffectFromStack = false;
+            insertElseEffect(entry, e);
+            return;
+        }
+        if (optionalAction instanceof DiscardCardThenEffect discardThen && e.elseEffect() != null
+                && discardThen.player() instanceof PlayerSubject.You
+                && countDiscardable(gameData, entry, entry.getControllerId(), discardThen.filter()) == 0) {
+            // "Sacrifice this unless you discard a card. When you discard a card this way, ...": nothing can be
+            // discarded, so the choice isn't offered and the penalty happens (CR 118.12a, 608.2d).
             gameData.resolvingMayEffectFromStack = false;
             insertElseEffect(entry, e);
             return;
@@ -358,6 +377,29 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         ).withGrantingPermanentId(entry.getGrantingPermanentId())
                 .withTriggeringSpell(entry.getTriggeringSpellSnapshot())
                 .withSourceGraveyardEntryVersion(entry.getSourceGraveyardEntryVersion()));
+    }
+
+    /** How many cards in {@code playerId}'s hand a discard may choose: those matching {@code filter}, or all of them. */
+    private int countDiscardable(GameData gameData, StackEntry entry, UUID playerId,
+                                 com.github.laxika.magicalvibes.model.filter.CardPredicate filter) {
+        List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+        if (filter == null) {
+            return hand.size();
+        }
+        UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
+        return (int) hand.stream()
+                .filter(card -> predicateEvaluationService.matchesCardPredicate(
+                        card, filter, sourceCardId, gameData, entry.getControllerId()))
+                .count();
+    }
+
+    /** How many cards an optional discard asks for: its count as the choice is offered, at least one. */
+    private int requiredDiscards(GameData gameData, StackEntry entry, DiscardEffect discard) {
+        Permanent source = entry.getSourcePermanentId() == null ? null
+                : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        int amount = amountEvaluationService.evaluate(gameData, discard.amount(),
+                AmountContext.forStackEntry(entry, source != null ? source : entry.getSourcePermanentSnapshot()));
+        return Math.max(1, amount);
     }
 
     private boolean hasOwnGraveyardCardsToExile(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect exile) {

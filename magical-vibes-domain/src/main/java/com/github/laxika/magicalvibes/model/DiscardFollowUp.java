@@ -337,12 +337,6 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
                 alternateCardType, alternateThenEffect);
     }
 
-    /** Push a reflexive effect whose target filters use the discarded card's mana value as X. */
-    public static DiscardFollowUp thenEffectWithDiscardedManaValue(Card sourceCard, CardEffect thenEffect) {
-        return new DiscardFollowUp(0, null, List.of(), null, 0, 0, List.of(),
-                sourceCard, thenEffect, null, null, null, null, 0, null, false, 0, true);
-    }
-
     public static DiscardFollowUp thenEffectWithEventValue(Card sourceCard, CardEffect thenEffect,
                                                             int eventValue, UUID sourcePermanentId,
                                                             Permanent sourcePermanentSnapshot) {
@@ -385,6 +379,12 @@ public record DiscardFollowUp(int rummageDrawCount, UUID untapPermanentId,
     /** Selects whether the discard rider continues the current spell resolution. */
     public DiscardFollowUp withSameResolutionContinuation(boolean enabled) {
         return new DiscardFollowUp(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards, eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts, thenEffectSourceCard, thenEffect, thenEffectCondition, enteringPermanent, enteringControllerId, plusOnePlusOneCounterPermanentId, plusOnePlusOneCounterAmount, thenEffectTargetId, plaguecrafter, eachPlayerNoDiscardCount, thenEffectUsesDiscardedManaValue, rummageDrawPlayerId, thenEffectAlternateCardType, thenEffectAlternate, targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId, thenEffectSourcePermanentSnapshot, thenEffectEventValue, discardedCardSelectionControllerId, discardedCardIds, enabled, pendingSpellCast,
+                thenEffectTriggeringPlayerId);
+    }
+
+    /** The reflexive ability's X is the discarded card's mana value, for its target as for its effect. */
+    public DiscardFollowUp withDiscardedManaValueAsX() {
+        return new DiscardFollowUp(rummageDrawCount, untapPermanentId, remainingEachPlayerDiscards, eachPlayerControllerId, eachPlayerAmount, graveyardReturnCount, eachPlayerAmounts, thenEffectSourceCard, thenEffect, thenEffectCondition, enteringPermanent, enteringControllerId, plusOnePlusOneCounterPermanentId, plusOnePlusOneCounterAmount, thenEffectTargetId, plaguecrafter, eachPlayerNoDiscardCount, true, rummageDrawPlayerId, thenEffectAlternateCardType, thenEffectAlternate, targetOpponentsDiscardThenDraw, thenEffectSourcePermanentId, thenEffectSourcePermanentSnapshot, thenEffectEventValue, discardedCardSelectionControllerId, discardedCardIds, resolveThenDuringSameResolution, pendingSpellCast,
                 thenEffectTriggeringPlayerId);
     }
 

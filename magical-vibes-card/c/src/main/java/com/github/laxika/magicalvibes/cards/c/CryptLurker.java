@@ -1,17 +1,17 @@
 package com.github.laxika.magicalvibes.cards.c;
 
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -32,10 +32,10 @@ public class CryptLurker extends Card {
                                         new ConditionalEffect(HappenedThisWay.sacrificed(), new DrawCardEffect(1)))),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Discard a creature card",
-                                DiscardCardThenEffect.continuing(
-                                        new CardTypePredicate(CardType.CREATURE),
-                                        new DrawCardEffect(1),
-                                        "a creature card"))
+                                SequenceEffect.of(
+                                        DiscardEffect.matching(1, Subjects.you(), new CardTypePredicate(CardType.CREATURE)),
+                                        new ConditionalEffect(HappenedThisWay.discarded(),
+                                                new DrawCardEffect(1))))
                 )),
                 "Sacrifice a creature or discard a creature card to draw a card?"
         ));

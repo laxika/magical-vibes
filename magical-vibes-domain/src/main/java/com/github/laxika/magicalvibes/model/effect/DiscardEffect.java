@@ -29,11 +29,22 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                                     ordinary discard
  * @param onlyCardsDrawnThisResolution when {@code true}, choices are restricted to cards drawn
  *                                earlier while resolving the same stack entry
+ * @param filter                  "discard a land card", "discard a nonland card" ({@link #matching}): only cards
+ *                                matching it may be chosen, and a player with fewer of them discards those they
+ *                                have (CR 609.3); {@code null} for any card. Only a chosen discard by players the
+ *                                effect names without targeting them takes one
  */
 public record DiscardEffect(DynamicAmount amount, PlayerSubject player, boolean random,
                             CardType stopAfterDiscardingType, boolean onlyCardsDrawnThisResolution,
-                            CardPredicate stopAfterDiscardingPredicate)
+                            CardPredicate stopAfterDiscardingPredicate, CardPredicate filter)
         implements CardEffect {
+
+    public DiscardEffect(DynamicAmount amount, PlayerSubject player, boolean random,
+                         CardType stopAfterDiscardingType, boolean onlyCardsDrawnThisResolution,
+                         CardPredicate stopAfterDiscardingPredicate) {
+        this(amount, player, random, stopAfterDiscardingType, onlyCardsDrawnThisResolution,
+                stopAfterDiscardingPredicate, null);
+    }
 
     public DiscardEffect(DynamicAmount amount, PlayerSubject player, boolean random) {
         this(amount, player, random, null, false, null);
@@ -77,6 +88,17 @@ public record DiscardEffect(DynamicAmount amount, PlayerSubject player, boolean 
 
     public DiscardEffect {
         Objects.requireNonNull(player, "player");
+        if (filter != null && (random || player.declaresTarget() || onlyCardsDrawnThisResolution
+                || stopAfterDiscardingType != null || stopAfterDiscardingPredicate != null)) {
+            throw new IllegalArgumentException(
+                    "A card filter is for a plain chosen discard by a player named without targeting: " + player);
+        }
+    }
+
+    /** "Discard [amount] [land | nonland | creature] card(s)": a chosen discard of cards matching {@code filter}. */
+    public static DiscardEffect matching(int amount, PlayerSubject player, CardPredicate filter) {
+        return new DiscardEffect(new Fixed(amount), player, false, null, false, null,
+                Objects.requireNonNull(filter, "filter"));
     }
 
     public static DiscardEffect cardsDrawnThisResolution(int amount, PlayerSubject player) {

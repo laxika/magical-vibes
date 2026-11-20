@@ -127,7 +127,7 @@ class CurseOfChaosTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An attacker with an empty hand cannot draw")
+    @DisplayName("An attacker with an empty hand isn't offered the loot and draws nothing")
     void emptyHandDoesNotDraw() {
         GrizzlyBears drawn = new GrizzlyBears();
         placeCurseOnPlayer1();
@@ -136,9 +136,6 @@ class CurseOfChaosTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(drawn));
 
         declareAttackers(player2, List.of(0));
-        resolveAllTriggers();
-        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS,
-                () -> harness.handleMayAbilityChosen(player2, true));
         resolveAllTriggers();
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();

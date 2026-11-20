@@ -4,13 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsPermanent;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -34,10 +36,10 @@ public class ErebossTitan extends Card {
                 ObjectRelation.OPPONENT_OWNS),
                 AbilityZones.GRAVEYARD), TriggerOptions.DEFAULT,
                 new MayEffect(
-                        DiscardCardThenEffect.continuing(
-                                null,
-                                new ReturnSourceCardFromGraveyardToOwnerHandEffect(),
-                                "a card"),
+                        SequenceEffect.of(
+                                new DiscardEffect(1, Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.discarded(),
+                                        new ReturnSourceCardFromGraveyardToOwnerHandEffect())),
                         "Discard a card to return Erebos's Titan from your graveyard to your hand?"));
     }
 }

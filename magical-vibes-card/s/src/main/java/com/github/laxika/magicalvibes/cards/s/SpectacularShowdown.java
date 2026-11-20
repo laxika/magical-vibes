@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentThenGoadEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,9 +27,11 @@ public class SpectacularShowdown extends Card {
                 SequenceEffect.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.DOUBLE_STRIKE, 1),
                         GoadTargetCreatureUntilNextTurnEffect.ofCreaturesGivenCountersThisWay()),
-                new PutCounterOnEachMatchingPermanentThenGoadEffect(
-                        CounterType.DOUBLE_STRIKE, 1, new PermanentIsCreaturePredicate(),
-                        EachPermanentScope.ALL_PLAYERS)));
+                SequenceEffect.of(
+                        new PutCounterOnEachMatchingPermanentEffect(
+                                CounterType.DOUBLE_STRIKE, 1, new PermanentIsCreaturePredicate(),
+                                EachPermanentScope.ALL_PLAYERS),
+                        GoadTargetCreatureUntilNextTurnEffect.ofCreaturesGivenCountersThisWay())));
         target(TargetFilters.creature());
     }
 }

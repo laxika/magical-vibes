@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +19,9 @@ public class RazormaneMasticore extends Card {
         // First strike is auto-loaded from Scryfall
 
         // At the beginning of your upkeep, sacrifice this creature unless you discard a card.
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificeUnlessDiscardCardTypeEffect(null));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(new DiscardEffect(1, Subjects.you()),
+                "Discard a card? If you don't, sacrifice this creature.",
+                new SacrificeSelfEffect()));
 
         // At the beginning of your draw step, you may have this creature deal 3 damage to target creature.
         addTrigger(Triggers.drawStep(ActivePlayer.YOU), new MayEffect(

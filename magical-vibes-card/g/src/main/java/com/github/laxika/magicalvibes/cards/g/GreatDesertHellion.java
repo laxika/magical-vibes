@@ -3,10 +3,15 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.SourceIntensity;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardOwnHandThenDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.IntensifySourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +25,11 @@ public class GreatDesertHellion extends Card {
         // At the beginning of your upkeep, sacrifice this creature unless you discard a card.
         // If you discard a card this way, this creature intensifies by 1.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                new SacrificeUnlessDiscardCardTypeEffect(null, new IntensifySourceCardEffect(1)));
+                new MayEffect(SequenceEffect.of(
+                        new DiscardEffect(1, Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.discarded(), new IntensifySourceCardEffect(1))),
+                "Discard a card? If you don't, sacrifice this creature.",
+                new SacrificeSelfEffect()));
 
         // When this creature leaves the battlefield, you may discard your hand. If you do, draw
         // cards equal to its intensity.

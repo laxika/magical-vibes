@@ -100,9 +100,7 @@ class PackGuardianTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, true);
-
-        // No land to discard — no discard prompt, no token
+        // No land to discard: the discard isn't offered, no token
         assertThat(gd.interaction.activeInteraction(PendingInteraction.DiscardChoice.class)).isNull();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(nonlandInHand);
@@ -143,7 +141,6 @@ class PackGuardianTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Pack Guardian");
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
         harness.assertNotOnBattlefield(player1, "Wolf");
     }
 
@@ -156,7 +153,6 @@ class PackGuardianTest extends BaseCardTest {
         harness.castFromHand(player1, new PackGuardian(), "{2}{G}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
         harness.assertNotOnBattlefield(player1, "Wolf");

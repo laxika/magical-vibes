@@ -111,6 +111,9 @@ public class DiscardCardThenEffectHandler implements NormalEffectHandlerBean {
                 // "That player" of the reflexive ability ("destroy target creature that player controls") is the
                 // player this ability's trigger event was about; the reflexive target is chosen against it.
                 .withTriggeringPlayer(entry.getTriggeringPlayerId());
+        if (e.discardedManaValueIsX()) {
+            followUp = followUp.withDiscardedManaValueAsX();
+        }
         playerInputService.beginDiscardChoice(gameData, discardPlayerId, validIndices,
                 entry.getCard().getName() + " — Choose " + e.cardDescription() + " to discard.",
                 1, followUp);

@@ -57,16 +57,17 @@ class MeldedMoxiteTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Accepting the ETB ability with no card in hand does nothing")
+    @DisplayName("With no card in hand the ETB discard isn't offered and nothing is drawn")
     void acceptingEtbAbilityWithNoCardDoesNothing() {
         MeldedMoxite topCard = new MeldedMoxite();
         harness.setHand(player1, List.of(new MeldedMoxite()));
         harness.setLibrary(player1, List.of(topCard));
         addCastingMana();
 
-        castMeldedMoxite();
+        harness.castArtifact(player1, 0);
+        resolveAllTriggers();
 
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(topCard);

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -30,7 +31,7 @@ import org.springframework.stereotype.Component;
  * subject naming several players) make every player choose in APNAP order and then discard the chosen cards at once
  * (CR 101.4), while random discards run inline in APNAP order. The {@code discardCausedByOpponent} flag, read by
  * discard-punisher triggers (e.g. Raider's Wake), is {@code true} for each discarding player other than the
- * controller.
+ * controller. A card {@code filter} limits the cards each player may choose to those matching it.
  */
 @Component
 @RequiredArgsConstructor
@@ -41,6 +42,7 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
     private final AmountEvaluationService amountEvaluationService;
     private final GameLogService gameLogService;
     private final SubjectResolutionService subjectResolutionService;
+    private final PredicateEvaluationService predicateEvaluationService;
     private final com.github.laxika.magicalvibes.service.input.PlayerInputService playerInputService;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
@@ -121,6 +123,9 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
         if (e.random()) {
             playerInteractionSupport.resolveRandomDiscardCards(gameData, playerId,
                     entry.getCard().getName(), amount);
+        } else if (e.filter() != null) {
+            playerInteractionSupport.resolveDiscardCards(gameData, playerId, amount,
+                    matchingIndices(gameData, entry, e, playerId));
         } else if (e.onlyCardsDrawnThisResolution()) {
             List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
             List<Integer> validIndices = new ArrayList<>();
@@ -166,17 +171,19 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
         while (!state.remaining.isEmpty()) {
             UUID playerId = state.remaining.removeFirst();
             List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
-            if (hand.isEmpty()) {
+            List<Integer> choosable = e.filter() == null
+                    ? java.util.stream.IntStream.range(0, hand.size()).boxed().toList()
+                    : matchingIndices(gameData, entry, e, playerId);
+            if (choosable.isEmpty()) {
                 gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId) + " has no cards to discard."));
                 continue;
             }
             if (!playerId.equals(controllerId) && gameQueryService.isDiscardPrevented(gameData, playerId)) continue;
-            int count = Math.min(amount, hand.size());
+            int count = Math.min(amount, choosable.size());
             if (count <= 0) continue;
             state.currentPlayerId = playerId;
             gameData.rerunCurrentEffectAfterInteraction = true;
-            playerInputService.beginDiscardChoice(gameData, playerId,
-                    java.util.stream.IntStream.range(0, hand.size()).boxed().toList(),
+            playerInputService.beginDiscardChoice(gameData, playerId, choosable,
                     "Choose cards to discard.", count, DiscardFollowUp.NONE);
             return;
         }
@@ -184,5 +191,19 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
         state.reset();
         cardChoiceHandlerService.discardCollectedCards(gameData, selected, controllerId);
         gameData.rerunCurrentEffectAfterInteraction = false;
+    }
+
+    /** The indices of the cards in {@code playerId}'s hand that match the discard's card filter. */
+    private List<Integer> matchingIndices(GameData gameData, StackEntry entry, DiscardEffect e, UUID playerId) {
+        List<Card> hand = gameData.playerHands.getOrDefault(playerId, List.of());
+        UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
+        List<Integer> indices = new ArrayList<>();
+        for (int i = 0; i < hand.size(); i++) {
+            if (predicateEvaluationService.matchesCardPredicate(hand.get(i), e.filter(), sourceCardId,
+                    gameData, entry.getControllerId())) {
+                indices.add(i);
+            }
+        }
+        return indices;
     }
 }

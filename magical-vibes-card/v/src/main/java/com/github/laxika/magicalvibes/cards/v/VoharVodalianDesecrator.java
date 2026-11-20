@@ -6,14 +6,17 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -32,18 +35,12 @@ public class VoharVodalianDesecrator extends Card {
                 null,
                 List.of(
                         new DrawCardEffect(),
-                        new DiscardCardThenEffect(
-                                null,
-                                SequenceEffect.of(
-                                        new LoseLifeEffect(1, Subjects.eachOpponent()),
-                                        new GainLifeEffect(1)),
-                                "a card",
-                                INSTANT_OR_SORCERY,
-                                false,
-                                null,
-                                null,
-                                Subjects.you(),
-                                true)),
+                        SequenceEffect.of(
+                                new DiscardEffect(1, Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.toACard(StepKind.DISCARD, INSTANT_OR_SORCERY),
+                                        SequenceEffect.of(
+                                                new LoseLifeEffect(1, Subjects.eachOpponent()),
+                                                new GainLifeEffect(1))))),
                 "{T}: Draw a card, then discard a card. If you discarded an instant or sorcery card "
                         + "this way, each opponent loses 1 life and you gain 1 life."));
 

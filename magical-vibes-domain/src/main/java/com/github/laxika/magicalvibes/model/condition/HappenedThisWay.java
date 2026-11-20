@@ -25,14 +25,15 @@ import java.util.Objects;
  * ({@code minimum} is then 1). A permanent a sacrifice or destroy step removed is judged as it last existed on the
  * battlefield, with its layered characteristics (CR 608.2h).
  *
- * <p>{@code cardFilter} is "if it was a creature card", "when you exile a nonland card this way" ({@link #toACard}):
- * one of the cards an {@link StepKind#EXILE} step exiled from a graveyard, a library or a hand matches it, judged as
- * the card is now (a card keeps its characteristics in exile; CR 608.2h).
+ * <p>{@code cardFilter} is "if it was a creature card", "when you exile a nonland card this way", "if a land card is
+ * discarded this way" ({@link #toACard}): one of the cards an {@link StepKind#EXILE} step exiled from a graveyard, a
+ * library or a hand, or a {@link StepKind#DISCARD} step discarded, matches it, judged as the card is now wherever it
+ * went (a card keeps its characteristics in a graveyard or exile; CR 608.2h).
  *
  * @param kind       the kind of step read
  * @param minimum    the least amount the step must have recorded; at least 1
  * @param filter     a permanent the step recorded must match it; {@code null} for any outcome
- * @param cardFilter a card the step exiled must match it; {@code null} for any outcome
+ * @param cardFilter a card the step exiled or discarded must match it; {@code null} for any outcome
  */
 public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate filter, CardPredicate cardFilter)
         implements Condition {
@@ -48,8 +49,9 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
         if (filter != null && cardFilter != null) {
             throw new IllegalArgumentException("A step result is filtered as permanents or as cards, not both");
         }
-        if (cardFilter != null && kind != StepKind.EXILE) {
-            throw new IllegalArgumentException("Only an exile step's cards are judged by a card filter: " + kind);
+        if (cardFilter != null && kind != StepKind.EXILE && kind != StepKind.DISCARD) {
+            throw new IllegalArgumentException(
+                    "Only an exile or discard step's cards are judged by a card filter: " + kind);
         }
     }
 
@@ -62,8 +64,9 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
     }
 
     /**
-     * "If it was a creature card", "if a creature card was exiled this way", "when you exile a nonland card this way":
-     * the most recent {@code kind} step (an exile step) exiled a card that matches {@code filter}.
+     * "If it was a creature card", "if a creature card was exiled this way", "when you exile a nonland card this way",
+     * "if a creature card was discarded this way": the most recent {@code kind} step (an exile or discard step) exiled
+     * or discarded a card that matches {@code filter}.
      */
     public static HappenedThisWay toACard(StepKind kind, CardPredicate filter) {
         return new HappenedThisWay(kind, 1, null, Objects.requireNonNull(filter, "filter"));
@@ -101,6 +104,11 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
     /** "If you do" after a token step: it created a token. */
     public static HappenedThisWay created() {
         return new HappenedThisWay(StepKind.CREATE_TOKEN);
+    }
+
+    /** "If you do" after a discard step: it discarded a card. */
+    public static HappenedThisWay discarded() {
+        return new HappenedThisWay(StepKind.DISCARD);
     }
 
     /** "If you do" after a draw step: it drew a card. */

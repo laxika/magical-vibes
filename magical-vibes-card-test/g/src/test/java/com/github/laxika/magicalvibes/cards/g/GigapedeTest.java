@@ -66,7 +66,7 @@ class GigapedeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Cannot return Gigapede without a card to discard")
+    @DisplayName("Without a card to discard, the return isn't offered")
     void cannotReturnWithoutCardToDiscard() {
         Gigapede gigapede = new Gigapede();
         harness.setGraveyard(player1, List.of(gigapede));
@@ -74,7 +74,6 @@ class GigapedeTest extends BaseCardTest {
 
         advanceToUpkeep(player1);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInGraveyard(player1, "Gigapede");
         assertThat(gd.interaction.activeInteraction()).isNull();

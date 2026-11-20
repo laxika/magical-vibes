@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessDiscardCardTypeEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,6 +18,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class BalduvianHorde extends Card {
 
     public BalduvianHorde() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new SacrificeUnlessDiscardCardTypeEffect(null, true));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(new DiscardEffect(1, Subjects.you(), true),
+                "Discard a card at random? If you don't, sacrifice it.",
+                new SacrificeSelfEffect()));
     }
 }

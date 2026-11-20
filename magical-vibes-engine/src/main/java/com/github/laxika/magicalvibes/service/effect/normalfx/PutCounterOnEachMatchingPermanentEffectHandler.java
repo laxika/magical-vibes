@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
@@ -108,6 +109,8 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
                     : amount;
             amountsByPermanent.put(p, amountForPermanent);
         }
+        Map<UUID, Integer> before = permanentCounterSupport.counterCounts(gameData,
+                amountsByPermanent.keySet().stream().map(Permanent::getId).toList(), e.counterType());
         for (Map.Entry<Permanent, Integer> target : amountsByPermanent.entrySet()) {
             Permanent p = target.getKey();
             int amountForPermanent = target.getValue();
@@ -130,6 +133,10 @@ public class PutCounterOnEachMatchingPermanentEffectHandler implements NormalEff
                 minusOneTargets.put(p, placed);
             }
         }
+
+        // "Then goad each creature that had a counter put on it this way" reads the creatures that got one.
+        entry.recordStep(StepKind.PUT_COUNTERS,
+                permanentCounterSupport.counterChange(gameData, before, e.counterType(), true));
 
         String counterName = permanentCounterSupport.counterTypeName(e.counterType());
         String counterText = totalPlaced == 1

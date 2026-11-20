@@ -85,9 +85,9 @@ public class ExampleCard extends Card {
   - Example: `magical-vibes-card/o/src/main/java/com/github/laxika/magicalvibes/cards/o/OrcishArtillery.java`
 
 - Upkeep sacrifice-unless-discard (any card):
-  - `addTrigger(Triggers.upkeep(ActivePlayer.YOU), new SacrificeUnlessDiscardCardTypeEffect(null))`
-  - For a reflexive post-discard effect, use `new SacrificeUnlessDiscardCardTypeEffect(null, thenEffect)`; target filters on `thenEffect` receive the discarded card's mana value as X.
-  - Pass `CardType.X` instead of `null` to restrict to a specific card type
+  - `addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(new DiscardEffect(1, Subjects.you()), prompt, new SacrificeSelfEffect()))` ("unless" is "you may … If you don't", CR 118.12a)
+  - For a reflexive post-discard effect, wrap `DiscardCardThenEffect.withDiscardedManaValueAsX(thenEffect)` instead; target filters on `thenEffect` receive the discarded card's mana value as X.
+  - Use `DiscardEffect.matching(1, Subjects.you(), filter)` to restrict to a kind of card
   - Example: `magical-vibes-card/r/src/main/java/com/github/laxika/magicalvibes/cards/r/RazormaneMasticore.java`
 
 - Controller draw step may-trigger with targeting:

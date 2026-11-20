@@ -5,11 +5,15 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.CastMatchingInstantOrSorceryFromGraveyardWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -17,7 +21,6 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "ZEN", collectorNumber = "120")
 public class ChandraAblaze extends Card {
@@ -26,11 +29,9 @@ public class ChandraAblaze extends Card {
         CardPredicate redCard = new CardColorPredicate(CardColor.RED);
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DiscardCardThenEffect(
-                        null,
-                        new DealDamageToAnyTargetEffect(4),
-                        "a card",
-                        redCard, true, null, null, Subjects.you(), true)),
+                List.of(new DiscardEffect(1, Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.toACard(StepKind.DISCARD, redCard),
+                                new DealDamageToAnyTargetEffect(4))),
                 "+1: Discard a card. If a red card is discarded this way, Chandra deals 4 damage to any target."
         ));
 

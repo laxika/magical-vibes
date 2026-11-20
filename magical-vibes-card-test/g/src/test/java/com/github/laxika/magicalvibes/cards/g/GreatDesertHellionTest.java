@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GreatDesertHellionTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Starts at intensity 1 and intensifies when a card is discarded at upkeep")
     void startsAtIntensityOneAndIntensifiesWhenDiscardingAtUpkeep() {
         GreatDesertHellion hellionCard = new GreatDesertHellion();
         harness.setHand(player1, List.of(hellionCard, new GrizzlyBears()));
@@ -39,6 +41,7 @@ class GreatDesertHellionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining to discard sacrifices it")
     void decliningToDiscardSacrificesGreatDesertHellion() {
         Permanent hellion = harness.addToBattlefieldAndReturn(player1, new GreatDesertHellion());
         harness.setHand(player1, List.of(new GrizzlyBears()));
@@ -52,6 +55,7 @@ class GreatDesertHellionTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Leaving the battlefield may discard the hand and draw cards equal to its intensity")
     void leavingMayDiscardHandAndDrawItsIntensity() {
         GreatDesertHellion hellionCard = new GreatDesertHellion();
         Permanent hellion = harness.addToBattlefieldAndReturn(player1, hellionCard);
@@ -71,6 +75,20 @@ class GreatDesertHellionTest extends BaseCardTest {
         assertThat(gd.getCardIntensity(hellionCard.getId())).isEqualTo(3);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(3);
         harness.assertInGraveyard(player1, "Great Desert Hellion");
+    }
+
+    @Test
+    @DisplayName("Intensifies as the upkeep ability resolves, with no other ability put on the stack")
+    void intensifiesDuringTheUpkeepAbilitysResolution() {
+        Permanent hellion = harness.addToBattlefieldAndReturn(player1, new GreatDesertHellion());
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+
+        resolveUpkeepTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.getCardIntensity(hellion.getCard().getId())).isEqualTo(2);
+        assertThat(gd.stack).isEmpty();
     }
 
     private void resolveUpkeepTrigger() {

@@ -29,6 +29,9 @@ import com.github.laxika.magicalvibes.model.CardType;
  *                          instead of creating a trigger
  * @param thenWithoutDiscard when true, {@code thenEffect} still resolves when there is no card to
  *                          discard ("Discard a card, then draw a card" is not an "if you do" clause)
+ * @param discardedManaValueIsX the reflexive ability's X is the discarded card's mana value, for its target as for
+ *                          its effect ("destroy target nonland permanent an opponent controls with mana value less
+ *                          than or equal to the mana value of the discarded card", Argentum Masticore)
  */
 public record DiscardCardThenEffect(
         CardPredicate filter,
@@ -40,7 +43,8 @@ public record DiscardCardThenEffect(
         CardEffect alternateThenEffect,
         PlayerSubject player,
         boolean resolveThenDuringSameResolution,
-        boolean thenWithoutDiscard
+        boolean thenWithoutDiscard,
+        boolean discardedManaValueIsX
 ) implements CardEffect {
 
     public DiscardCardThenEffect {
@@ -48,6 +52,24 @@ public record DiscardCardThenEffect(
         if (player.declaresTarget()) {
             throw new IllegalArgumentException("A discard-then effect declares no player target: " + player);
         }
+    }
+
+    public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,
+                                 CardPredicate condition, boolean useEntryTarget,
+                                 CardType alternateCardType, CardEffect alternateThenEffect,
+                                 PlayerSubject player, boolean resolveThenDuringSameResolution,
+                                 boolean thenWithoutDiscard) {
+        this(filter, thenEffect, cardDescription, condition, useEntryTarget, alternateCardType,
+                alternateThenEffect, player, resolveThenDuringSameResolution, thenWithoutDiscard, false);
+    }
+
+    /**
+     * "Discard a card. When you discard a card this way, [thenEffect]" whose reflexive ability reads the discarded
+     * card's mana value as X.
+     */
+    public static DiscardCardThenEffect withDiscardedManaValueAsX(CardEffect thenEffect) {
+        return new DiscardCardThenEffect(null, thenEffect, "a card", null, false, null, null, Subjects.you(),
+                false, false, true);
     }
 
     public DiscardCardThenEffect(CardPredicate filter, CardEffect thenEffect, String cardDescription,

@@ -4,9 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -24,10 +27,10 @@ public class FormidableSpeaker extends Card {
 
     public FormidableSpeaker() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                DiscardCardThenEffect.continuing(
-                        null,
-                        new SearchLibraryEffect(new CardTypePredicate(CardType.CREATURE)),
-                        "a card"),
+                SequenceEffect.of(
+                        new DiscardEffect(1, Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.discarded(),
+                                new SearchLibraryEffect(new CardTypePredicate(CardType.CREATURE)))),
                 "Discard a card to search your library for a creature card?"));
 
         var anotherPermanent = new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate());

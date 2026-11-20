@@ -2,11 +2,14 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,12 +26,12 @@ public class AlberixTheTradePlanet extends Card {
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Discard a card. If you do, put two of Alberix's resources into its owner's hand.",
-                        DiscardCardThenEffect.continuing(
-                                null,
-                                SequenceEffect.of(
-                                        PutCardExiledWithSourceIntoHandEffect.returningToOwner(),
-                                        PutCardExiledWithSourceIntoHandEffect.returningToOwner()),
-                                "a card")),
+                        SequenceEffect.of(
+                                new DiscardEffect(1, Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.discarded(),
+                                        SequenceEffect.of(
+                                                PutCardExiledWithSourceIntoHandEffect.returningToOwner(),
+                                                PutCardExiledWithSourceIntoHandEffect.returningToOwner())))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Exile the top card of your library as a resource.",
                         new ExileTopCardsToSourceEffect(1, false)))));

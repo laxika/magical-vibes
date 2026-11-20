@@ -74,7 +74,7 @@ class DiscipleOfDeceitTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Inspired cannot discard a land")
+    @DisplayName("With only a land in hand, the nonland discard isn't offered")
     void inspiredCannotDiscardLand() {
         Card landInHand = new Island();
         addTappedDisciple();
@@ -83,7 +83,6 @@ class DiscipleOfDeceitTest extends BaseCardTest {
 
         resolveUntapTrigger();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(landInHand);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

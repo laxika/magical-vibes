@@ -6,13 +6,17 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.CardsInHandAtLeast;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
@@ -21,7 +25,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "40K", collectorNumber = "96")
 public class OldOneEye extends Card {
@@ -35,10 +38,10 @@ public class OldOneEye extends Card {
         addTrigger(new TriggerCondition(Triggers.precombatMainPhase(ActivePlayer.YOU), AbilityZones.GRAVEYARD),
                 TriggerOptions.DEFAULT, new MayEffect(
                 new ConditionalEffect(new CardsInHandAtLeast(2),
-                        new DiscardCardThenEffect(null, new DiscardCardThenEffect(
-                                null, new ReturnSourceCardFromGraveyardToOwnerHandEffect(), "a card",
-                                null, false, null, null, Subjects.you(), true), "a card",
-                                null, false, null, null, Subjects.you(), true)),
+                        SequenceEffect.of(
+                                new DiscardEffect(2, Subjects.you()),
+                                new ConditionalEffect(HappenedThisWay.atLeast(StepKind.DISCARD, 2),
+                                        new ReturnSourceCardFromGraveyardToOwnerHandEffect()))),
                 "Discard two cards to return Old One Eye to your hand?"));
     }
 }

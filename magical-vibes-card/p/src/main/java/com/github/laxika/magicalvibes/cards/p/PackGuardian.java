@@ -5,9 +5,13 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,12 +30,12 @@ public class PackGuardian extends Card {
         // Wolf creature token.
         // (Flash is loaded from Scryfall.)
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                DiscardCardThenEffect.continuing(
-                        new CardTypePredicate(CardType.LAND),
-                        new CreateTokenEffect("Wolf", 2, 2,
-                                CardColor.GREEN, List.of(CardSubtype.WOLF),
-                                Set.of(), Set.of()),
-                        "a land card"),
+                SequenceEffect.of(
+                        DiscardEffect.matching(1, Subjects.you(), new CardTypePredicate(CardType.LAND)),
+                        new ConditionalEffect(HappenedThisWay.discarded(),
+                                new CreateTokenEffect("Wolf", 2, 2,
+                                        CardColor.GREEN, List.of(CardSubtype.WOLF),
+                                        Set.of(), Set.of()))),
                 "Discard a land card to create a 2/2 green Wolf token?"
         ));
     }
