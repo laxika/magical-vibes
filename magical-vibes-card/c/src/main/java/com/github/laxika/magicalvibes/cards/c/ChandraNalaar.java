@@ -3,10 +3,13 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -44,7 +47,9 @@ public class ChandraNalaar extends Card {
         // and each creature that player or that planeswalker's controller controls.
         addActivatedAbility(new ActivatedAbility(
                 -8,
-                List.of(new DealDamageToTargetAndTheirCreaturesEffect(10)),
+                List.of(SequenceEffect.simultaneous(
+                        new DealDamageToTargetPlayerOrPlaneswalkerEffect(10),
+                        DealDamageToPermanentsTargetControlsEffect.toCreaturesOfTargetedPlayer(new Fixed(10)))),
                 "\u22128: Chandra Nalaar deals 10 damage to target player or planeswalker and each creature that player or that planeswalker's controller controls.",
                 new PermanentPredicateTargetFilter(
                         new PermanentIsPlaneswalkerPredicate(),

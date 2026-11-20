@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,6 +16,7 @@ import com.github.laxika.magicalvibes.model.SubgameResult;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject.OtherCreaturesSharing.SharedQuality;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
@@ -70,6 +72,7 @@ import static com.github.laxika.magicalvibes.model.effect.Subjects.oneOf;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.returned;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.returnedThisResolution;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.source;
+import static com.github.laxika.magicalvibes.model.effect.Subjects.otherCreaturesSharing;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.target;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayer;
 import static com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayerDeclaredElsewhere;
@@ -94,7 +97,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * Every subject variant resolved against a real game: while the object is on the battlefield, and after it left
  * (last-known information, CR 608.2h; nothing done to what left).
  */
-@CardUsed({Forest.class, GrizzlyBears.class, HillGiant.class, Pacifism.class, Bonesplitter.class, CurseOfStalkedPrey.class})
+@CardUsed({Forest.class, GrizzlyBears.class, HillGiant.class, Pacifism.class, RuneclawBear.class, Bonesplitter.class, CurseOfStalkedPrey.class})
 class SubjectResolutionServiceTest extends BaseCardTest {
 
     private static final CardEffect EFFECT = new DrawCardEffect(1);
@@ -635,6 +638,58 @@ class SubjectResolutionServiceTest extends BaseCardTest {
     }
 
     @Nested
+    @DisplayName("otherCreaturesSharing(target(), quality)")
+    class OtherCreaturesSharing {
+
+        @Test
+        @DisplayName("A color: every other creature sharing a color with the target, not the target, and declares no target")
+        void color() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent otherBears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent runeclaw = addCreatureReady(player1, new RuneclawBear());
+            addCreatureReady(player1, new HillGiant());
+            PermanentSubject subject = otherCreaturesSharing(target(), SharedQuality.COLOR);
+
+            assertThat(permanents(entry(player1, bears.getId(), null), subject))
+                    .containsExactlyInAnyOrder(otherBears, runeclaw);
+            assertThat(subject.declaresTarget()).isFalse();
+        }
+
+        @Test
+        @DisplayName("A name: only the other creatures with the target's name")
+        void name() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent otherBears = addCreatureReady(player1, new GrizzlyBears());
+            addCreatureReady(player1, new RuneclawBear());
+
+            assertThat(permanents(entry(player1, bears.getId(), null),
+                    otherCreaturesSharing(target(), SharedQuality.NAME))).containsExactly(otherBears);
+        }
+
+        @Test
+        @DisplayName("A creature type: the other creatures sharing one of the target's creature types")
+        void creatureType() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent runeclaw = addCreatureReady(player1, new RuneclawBear());
+            addCreatureReady(player1, new HillGiant());
+
+            assertThat(permanents(entry(player1, bears.getId(), null),
+                    otherCreaturesSharing(target(), SharedQuality.CREATURE_TYPE))).containsExactly(runeclaw);
+        }
+
+        @Test
+        @DisplayName("Is nothing once the target left the battlefield")
+        void targetLeft() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            addCreatureReady(player1, new GrizzlyBears());
+            StackEntry entry = entry(player1, bears.getId(), null);
+            leaveBattlefield(bears);
+
+            assertThat(permanents(entry, otherCreaturesSharing(target(), SharedQuality.COLOR))).isEmpty();
+        }
+    }
+
+    @Nested
     @DisplayName("oneOf(...)")
     class OneOf {
 
@@ -652,6 +707,18 @@ class SubjectResolutionServiceTest extends BaseCardTest {
     @Nested
     @DisplayName("controlledBy(...) and allOf(...)")
     class Sets {
+
+        @Test
+        @DisplayName("\"Each other creature\" leaves out the entry's target permanent as the effect resolves")
+        void otherThanTheTarget() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player2, new HillGiant());
+
+            assertThat(permanents(entry(player1, bears.getId(), null), controlledBy(eachPlayer(),
+                    new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                            new PermanentNotPredicate(new PermanentIsTargetCardPredicate()))))))
+                    .containsExactly(giant);
+        }
 
         @Test
         @DisplayName("Finds every matching permanent the players control")

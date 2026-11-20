@@ -1876,7 +1876,7 @@ Do these individually; each is self-contained. Reassess before starting — seve
 |---|---|---|
 | `DealDamageToTargetCreatureEffect(+ includePlaneswalkers, targetRestriction)` | `DealDamageToTargetCreatureOrPlaneswalkerEffect` (4) | Migrated cards gain group-binding + excess-damage tracking they lack today |
 | `DiscardOwnHandThenDrawEffect(new EventValue())` | `DiscardOwnHandThenDrawThatManyEffect` (4) | Handler must `entry.setEventValue(discardCount)` before evaluating; reconcile the empty-hand log |
-| `DealDamageToEachMatchingPermanentEffect(+ OPPONENTS scope)` | `DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect` (1) | Needs a new scope **and** the hard `isCreature` filter relaxed; touches 12 cards — do last |
+| `DealDamageToEachMatchingPermanentEffect(+ OPPONENTS scope)` | `DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect` (1) | Done another way (effect-cleanup step 8, run 5): absorbed by `DealDamageToPermanentsTargetControlsEffect` with `controlledBy(eachOpponent(), creature or planeswalker)` |
 | `EachPlayerDiscardsHandThenDrawsEffect(mode)` | 2 classes | **Surfaces a bug**: one handler sets `discardCausedByOpponent = false` unconditionally, the other `!playerId.equals(controllerId)`. The `false` looks wrong |
 | `MakeCreatureUnblockableEffect(+ massFilter)` | `MakeAllCreaturesUnblockableEffect` (1) | `targetSpec()` becomes three-way; 34 existing call sites must keep their current spec |
 | `SetPreparedEffect(boolean prepared)` | 2 classes | Pre-existing inconsistency: one is `benign(CREATURE)`, the other `benign(PERMANENT)`. Merging forces a decision |

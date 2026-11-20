@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -278,6 +279,26 @@ class ChandraNalaarTest extends BaseCardTest {
         assertThat(creature.getMarkedDamage()).isZero();
         harness.assertOnBattlefield(player2, "Woodland Changeling");
         harness.assertLife(player2, 20);
+    }
+
+    @Test
+    @DisplayName("-8 is one damage event: a next-damage shield on Chandra prevents the damage to the player and every creature")
+    void minusEightNextDamageShieldPreventsTheWholeEvent() {
+        Permanent chandra = addReadyChandra(player1);
+        chandra.setCounterCount(CounterType.LOYALTY, 9);
+        harness.addToBattlefield(player2, new WoodlandChangeling());
+        harness.addToBattlefield(player2, new WoodlandChangeling());
+        gd.addShield(new SourceNextDamageToAnyTargetShield(chandra.getId()));
+
+        harness.activateAbility(player1, 0, 2, null, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 20);
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Woodland Changeling"))
+                .hasSize(2)
+                .allSatisfy(changeling -> assertThat(changeling.getMarkedDamage()).isZero());
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     private Permanent addReadyChandra(Player player) {

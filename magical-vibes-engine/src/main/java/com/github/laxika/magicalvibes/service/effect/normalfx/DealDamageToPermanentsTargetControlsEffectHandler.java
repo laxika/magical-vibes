@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
@@ -13,14 +16,15 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.model.Permanent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link DealDamageToPermanentsTargetControlsEffect}: each permanent of its {@code controlledBy} subject, found
- * once through {@link SubjectResolutionService}, is dealt the damage; nothing happens when the subject's players name
- * nobody.
+ * Resolves {@link DealDamageToPermanentsTargetControlsEffect}: each permanent of its subject, found once through
+ * {@link SubjectResolutionService}, is dealt the damage, evaluated once; nothing happens when a {@code controlledBy}
+ * subject's players name nobody.
  */
 @Component
 @RequiredArgsConstructor
@@ -31,6 +35,7 @@ public class DealDamageToPermanentsTargetControlsEffectHandler implements Normal
     private final GameLogService gameLogService;
     private final GameOutcomeService gameOutcomeService;
     private final SubjectResolutionService subjectResolutionService;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -40,16 +45,26 @@ public class DealDamageToPermanentsTargetControlsEffectHandler implements Normal
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (DealDamageToPermanentsTargetControlsEffect) effect;
+        entry.recordStep(StepKind.DEAL_DAMAGE, StepOutcome.NONE);
 
-        var damaged = (PermanentSubject.ControlledBy) e.subject();
-        if (subjectResolutionService.players(gameData, entry, e, damaged.players()).isEmpty()) return;
+        if (e.subject() instanceof PermanentSubject.ControlledBy damaged
+                && subjectResolutionService.players(gameData, entry, e, damaged.players()).isEmpty()) {
+            return;
+        }
 
-        int rawDamage = e.damage();
+        Permanent source = entry.getSourcePermanentId() != null
+                ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId())
+                : null;
+        if (source == null) {
+            source = entry.getSourcePermanentSnapshot();
+        }
+        int rawDamage = amountEvaluationService.evaluate(gameData, e.damage(),
+                AmountContext.forStackEntry(entry, source));
         String cardName = entry.getCard().getName();
 
         if (damageSupport.isDamageSourcePreventedWithLog(gameData, entry)) return;
 
-        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, e, damaged)) {
+        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, e, e.subject())) {
             if (gameQueryService.isDamagePreventable(gameData) && gameQueryService.hasProtectionFromSource(gameData, permanent, entry.getCard(), entry.getControllerId())) {
                 gameLogService.append(gameData, GameLog.textCardText(cardName + "'s damage to ", permanent.getCard(), " is prevented."));
                 continue;

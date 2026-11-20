@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.effect.PreventionScope;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.model.AskedLifeLossDeparture;
 import com.github.laxika.magicalvibes.model.replacement.DamagePortion;
 import com.github.laxika.magicalvibes.model.DepartureBatch;
@@ -619,8 +621,11 @@ public class DamageSupport {
                 .toList();
         if (held.isEmpty()) return true;
         damageJournalService.beginSimultaneousDamage(gameData, open);
+        List<FloatingContinuousEffect> shieldsAtStart = gameData.shieldEffects(SourceNextDamageToAnyTargetShield.class);
+        List<FloatingContinuousEffect> restoredShields = new ArrayList<>();
         try {
             for (PendingSimultaneousDamage combined : combineSimultaneousDamage(held)) {
+                restoreNextDamageShields(gameData, shieldsAtStart, restoredShields);
                 StackEntry entry = combined.damage().entry();
                 boolean previousExiles = entry.isExilesCreaturesDamaged();
                 entry.setExilesCreaturesDamaged(combined.exilesDamagedCreatures());
@@ -631,6 +636,7 @@ public class DamageSupport {
                 }
             }
         } finally {
+            restoredShields.forEach(gameData::endFloatingEffect);
             damageJournalService.endEffect(gameData);
         }
         if (gameData.damageJournal != null) return false;
@@ -638,6 +644,22 @@ public class DamageSupport {
         gameData.sourceRedirectShieldsUsedInOpenEvent.clear();
         gameData.playerSourceShieldsUsedInOpenEvent.clear();
         return true;
+    }
+
+    /**
+     * The damage an event deals is one instance (CR 615.8): a "prevent the next time this source would deal damage"
+     * shield an earlier recipient of the event used still applies to the later ones, and ends with the event.
+     */
+    private void restoreNextDamageShields(GameData gameData, List<FloatingContinuousEffect> shieldsAtStart,
+                                          List<FloatingContinuousEffect> restoredShields) {
+        List<FloatingContinuousEffect> inForce = gameData.shieldEffects(SourceNextDamageToAnyTargetShield.class);
+        for (FloatingContinuousEffect fe : shieldsAtStart) {
+            if (((SourceNextDamageToAnyTargetShield) fe.effect()).remainingDamage() == Integer.MAX_VALUE
+                    && !inForce.contains(fe)) {
+                gameData.reinstateShield(fe);
+                restoredShields.add(fe);
+            }
+        }
     }
 
     private List<PendingSimultaneousDamage> combineSimultaneousDamage(List<PendingSimultaneousDamage> held) {

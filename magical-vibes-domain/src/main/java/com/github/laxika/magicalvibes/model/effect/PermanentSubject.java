@@ -24,7 +24,7 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         PermanentSubject.Named, PermanentSubject.ControlledBy, PermanentSubject.OwnedBy, PermanentSubject.AttachmentsOf,
         PermanentSubject.AllOf, PermanentSubject.OneOf, PermanentSubject.TriggeringAttackers,
         PermanentSubject.TriggeringSpellTargets, PermanentSubject.CreatedThisResolution, PermanentSubject.BandmatesOf,
-        PermanentSubject.WithCreaturesSharingAColor, PermanentSubject.ThisWay {
+        PermanentSubject.WithCreaturesSharingAColor, PermanentSubject.OtherCreaturesSharing, PermanentSubject.ThisWay {
 
     /** Whether this subject is the effect's own target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -499,6 +499,36 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         @Override
         public boolean declaresTarget() {
             return permanent.declaresTarget();
+        }
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "Each other creature that shares a color with it", "each other creature with the same name as that creature",
+     * "each other creature that shares a creature type with it": every creature other than the one {@code permanent}
+     * names that shares {@code quality} with it, found as the effect resolves; nothing when the named permanent is gone
+     * or no longer a creature. It only reads {@code permanent} (a {@code target()} there is the target another effect
+     * declares), so it declares no target; "target creature and …" is the target's own effect beside it.
+     */
+    record OtherCreaturesSharing(PermanentSubject permanent, SharedQuality quality) implements PermanentSubject {
+
+        /** What the other creatures share with the named one. */
+        public enum SharedQuality {
+            /** At least one color; a colorless creature shares a color with nothing. */
+            COLOR,
+            /** The name; a permanent with no name (face down, CR 708.2) shares it with nothing. */
+            NAME,
+            /** At least one creature type. */
+            CREATURE_TYPE
+        }
+
+        public OtherCreaturesSharing {
+            Objects.requireNonNull(permanent, "permanent");
+            Objects.requireNonNull(quality, "quality");
         }
 
         @Override

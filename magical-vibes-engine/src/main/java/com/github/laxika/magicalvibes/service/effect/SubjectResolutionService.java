@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Predicate;
 
 /**
  * The only code that turns a {@link PermanentSubject} or {@link PlayerSubject} into permanents or players. A handler
@@ -458,6 +459,7 @@ public class SubjectResolutionService {
             case PermanentSubject.ThisWay thisWay -> thisWayIds(ctx, thisWay);
             case PermanentSubject.BandmatesOf bandmates -> bandmateIds(ctx, bandmates.permanent());
             case PermanentSubject.WithCreaturesSharingAColor sharing -> sharingAColorIds(ctx, sharing.permanent());
+            case PermanentSubject.OtherCreaturesSharing sharing -> otherCreaturesSharingIds(ctx, sharing);
         };
     }
 
@@ -568,6 +570,39 @@ public class SubjectResolutionService {
             }
         });
         return sharing;
+    }
+
+    /**
+     * {@link PermanentSubject.OtherCreaturesSharing}: the other creatures sharing the quality with the one live creature
+     * the subject names.
+     */
+    private List<UUID> otherCreaturesSharingIds(Context ctx, PermanentSubject.OtherCreaturesSharing sharing) {
+        GameData gameData = ctx.gameData();
+        List<Permanent> named = livePermanents(ctx, sharing.permanent());
+        if (named.isEmpty() || !gameQueryService.isCreature(gameData, named.getFirst())) {
+            return List.of();
+        }
+        Permanent creature = named.getFirst();
+        Predicate<Permanent> shares = switch (sharing.quality()) {
+            case COLOR -> {
+                Set<CardColor> colors = gameQueryService.getEffectiveColors(gameData, creature);
+                yield candidate -> gameQueryService.getEffectiveColors(gameData, candidate).stream()
+                        .anyMatch(colors::contains);
+            }
+            case NAME -> {
+                String name = gameQueryService.getEffectiveName(gameData, creature);
+                yield candidate -> name != null && name.equals(gameQueryService.getEffectiveName(gameData, candidate));
+            }
+            case CREATURE_TYPE -> candidate -> gameQueryService.shareCreatureType(gameData, candidate, creature);
+        };
+        List<UUID> others = new ArrayList<>();
+        gameData.forEachPermanent((playerId, candidate) -> {
+            if (!candidate.getId().equals(creature.getId()) && gameQueryService.isCreature(gameData, candidate)
+                    && shares.test(candidate)) {
+                others.add(candidate.getId());
+            }
+        });
+        return others;
     }
 
     private List<UUID> targetIds(Context ctx, Integer group) {
@@ -682,6 +717,8 @@ public class SubjectResolutionService {
 
     private List<Permanent> controlledBy(Context ctx, PermanentSubject.ControlledBy subject) {
         FilterContext filterContext = filterContext(ctx);
+        PermanentPredicate filter = ctx.entry() != null && namesTargetCard(subject.filter())
+                ? bindTarget(ctx, subject.filter()) : subject.filter();
         List<Permanent> matching = new ArrayList<>();
         for (UUID playerId : players(ctx, subject.players())) {
             List<Permanent> battlefield = ctx.gameData().playerBattlefields.get(playerId);
@@ -689,13 +726,28 @@ public class SubjectResolutionService {
                 continue;
             }
             for (Permanent permanent : battlefield) {
-                if (predicateEvaluationService.matchesPermanentPredicate(permanent, subject.filter(),
-                        filterContext)) {
+                if (predicateEvaluationService.matchesPermanentPredicate(permanent, filter, filterContext)) {
                     matching.add(permanent);
                 }
             }
         }
         return matching;
+    }
+
+    /**
+     * Whether {@code predicate} has a {@link PermanentIsTargetCardPredicate} leaf ("each other creature that player
+     * controls"), which a resolving effect's set reads as the entry's target permanent.
+     */
+    private static boolean namesTargetCard(PermanentPredicate predicate) {
+        return switch (predicate) {
+            case PermanentIsTargetCardPredicate ignored -> true;
+            case PermanentAllOfPredicate allOf -> allOf.predicates().stream()
+                    .anyMatch(SubjectResolutionService::namesTargetCard);
+            case PermanentAnyOfPredicate anyOf -> anyOf.predicates().stream()
+                    .anyMatch(SubjectResolutionService::namesTargetCard);
+            case PermanentNotPredicate not -> namesTargetCard(not.predicate());
+            case null, default -> false;
+        };
     }
 
     /** Every matching permanent whose owner is one of the players, whoever controls it. */

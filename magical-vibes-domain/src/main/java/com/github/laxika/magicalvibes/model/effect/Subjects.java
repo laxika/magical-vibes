@@ -242,6 +242,15 @@ public final class Subjects {
     }
 
     /**
+     * "Each other creature that shares a color with it" (and a name, a creature type): the creatures other than the one
+     * {@code permanent} names that share {@code quality} with it as the effect resolves. Declares no target.
+     */
+    public static PermanentSubject otherCreaturesSharing(PermanentSubject permanent,
+                                                         PermanentSubject.OtherCreaturesSharing.SharedQuality quality) {
+        return new PermanentSubject.OtherCreaturesSharing(permanent, quality);
+    }
+
+    /**
      * "This creature and the creature it's paired with" (soulbond, CR 702.95): the source and its pair, judged as a
      * set.
      */

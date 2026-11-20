@@ -3,12 +3,14 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndCreaturesSharingCreatureTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject.OtherCreaturesSharing.SharedQuality;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
@@ -37,7 +39,9 @@ public class CowardKiller extends Card {
                 ).withManaCost("{1}{R}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Killer — Deals 3 damage to target creature and each other creature that shares a creature type with it",
-                        new DealDamageToTargetAndCreaturesSharingCreatureTypeEffect(3),
+                        SequenceEffect.simultaneous(new DealDamageToTargetCreatureEffect(3),
+                                new DealDamageToPermanentsTargetControlsEffect(3,
+                                        Subjects.otherCreaturesSharing(Subjects.target(), SharedQuality.CREATURE_TYPE))),
                         creature
                 ).withManaCost("{2}{R}{R}")
         )));

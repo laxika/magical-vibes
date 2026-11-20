@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.ChandraBoldPyromancer;
 import com.github.laxika.magicalvibes.cards.e.ElfhameDruid;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -211,6 +212,28 @@ class GoblinChainwhirlerTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Goblin Chainwhirler");
         harness.assertInGraveyard(player2, "Grizzly Bears");
         assertThat(attacker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("The damage to the opponent and their creatures is one event: a next-damage shield on it prevents all of it")
+    void etbDamageIsOneEventForANextDamageShield() {
+        harness.setLife(player2, 20);
+        GrizzlyBears smallCreature = new GrizzlyBears();
+        smallCreature.setPower(1);
+        smallCreature.setToughness(1);
+        harness.addToBattlefield(player2, smallCreature);
+
+        castChainwhirler();
+        harness.passBothPriorities(); // resolve creature spell
+        Permanent chainwhirler = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getName().equals("Goblin Chainwhirler"))
+                .findFirst().orElseThrow();
+        gd.addShield(new SourceNextDamageToAnyTargetShield(chainwhirler.getId()));
+        harness.passBothPriorities(); // resolve ETB trigger
+
+        harness.assertLife(player2, 20);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+        assertThat(gd.shields(SourceNextDamageToAnyTargetShield.class)).isEmpty();
     }
 
     private void castChainwhirler() {

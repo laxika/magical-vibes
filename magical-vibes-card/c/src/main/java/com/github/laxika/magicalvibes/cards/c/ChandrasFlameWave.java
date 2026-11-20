@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndTheirCreaturesEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPermanentsTargetControlsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryAndOrGraveyardForNamedCardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -16,7 +18,8 @@ public class ChandrasFlameWave extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         ));
-        addSpellEffect(new DealDamageToTargetAndTheirCreaturesEffect(2));
+        addSimultaneousSpellEffects(new DealDamageToTargetPlayerOrPlaneswalkerEffect(2),
+                DealDamageToPermanentsTargetControlsEffect.toCreaturesOfTargetedPlayer(new Fixed(2)));
         addSpellEffect(new SearchLibraryAndOrGraveyardForNamedCardToHandEffect("Chandra, Flame's Fury"));
     }
 }

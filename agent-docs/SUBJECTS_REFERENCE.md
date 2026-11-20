@@ -37,6 +37,7 @@ resolver's static entry point rejects the others).
 | `thisWay(StepKind)` | "those creatures", "if a creature is dealt damage this way, it ..." (Provoke the Trolls): the permanents the most recent step of that kind recorded on the entry's scratchpad, still on the battlefield as the same objects; only `PUT_COUNTERS`, `REMOVE_COUNTERS`, `DEAL_DAMAGE` (tokens: `createdThisResolution()`, returned permanents: `returnedThisResolution()`; other kinds are refused). `thisWay(kind, filter)` names only those matching `filter` as the reading effect is applied ("if a Dragon is dealt damage this way, destroy it", The Black Arrow; "a creature dealt damage this way can't block", Ballista Wielder). Step result | no | no |
 | `bandmatesOf(permanent)` | "each other creature banded with it" (CR 702.22): the other attacking creatures in the band of the permanent `permanent` names, `source()` as it is or last was; nothing outside a band (Icatian Skirmishers) | no | no |
 | `withCreaturesSharingAColor(permanent)` | "target creature and each other creature that shares a color with it": the named creature and every creature sharing a color with it as the effect resolves; nothing once the named permanent is gone or no longer a creature (Surge of Zeal; Rally the Righteous untaps them) | if `permanent` targets | no |
+| `otherCreaturesSharing(permanent, quality)` | "each other creature that shares a color with it", "each other creature with the same name as that creature", "each other creature that shares a creature type with it" (`SharedQuality.COLOR` / `NAME` / `CREATURE_TYPE`): every creature but the one `permanent` names sharing that with it as the effect resolves; nothing once the named permanent is gone or no longer a creature. It only reads `permanent`; the target is declared by the target's own effect beside it (Cleansing Beam, Homing Lightning, Killer) | no | no |
 
 Named sets, one shared instance each (a static ability's set is judged per permanent, so a card should use these rather
 than build its own): `creaturesYouControl()` / `otherCreaturesYouControl()`, `otherTappedCreaturesYouControl()`,
@@ -75,7 +76,8 @@ control" includes the source, "other creatures you control" does not; a one-shot
 | `matching(players, PlayerPredicate)` | "each player who controls the most lands": the players `players` names who match the filter as the effect is applied (`matching(eachPlayer(), new PlayerControlsMostLandsPredicate())`, Tectonic Hellion; the filter is a `PlayerPredicate`, evaluated with the effect's controller as the comparing player) | no | if `players` may |
 
 A `target()` inside `controllerOf` / `ownerOf` reads the entry's target without declaring one ("destroy target
-creature; its controller loses 2 life").
+creature; its controller loses 2 life"). A `PermanentIsTargetCardPredicate` leaf in a `controlledBy` filter is the entry's target permanent as the
+effect resolves ("each other creature that player controls").
 
 A resolving effect that changes no characteristics makes a rule of a set, not a locked set (CR 611.2c: "creatures
 target player controls can't block this turn" covers creatures arriving later): `SubjectResolutionService.lastingRule`

@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 4 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 5 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -523,6 +523,7 @@ cause under Findings.
 | 2 | the target "then" wrappers: `DestroyTargetPermanentThenEffect`, `ExileTargetPermanentThenEffect`, `ReturnTargetPermanentToHandThenEffect`, `DiscardCardThenEffect` | done (78 cards split: Destroy 54 of 89, Exile 15 of 25, Return 9 of 12; no wrapper emptied, all three kept as blocked-other; `DiscardCardThenEffect` audited, blocked-step-model; `ThenEffectRecipient` stays) |
 | 3 | the groups run 2 left on the target wrappers: "its controller may search" (`LibrarySearchPlayer` → `PlayerSubject`), "its controller creates a token" (`CreateTokenEffect` token controller), the layer-sensitive "if it was a …" checks | done (28 cards split: 15 search, 5 token, 8 layered; `LibrarySearchPlayer` deleted; `TargetPermanentMatches` reads a departed target's layered last-known card; no wrapper emptied: Destroy 14, Exile 5, Return 1 left; `ThenEffectRecipient` stays) |
 | 4 | `--unaudited --family Deal`, the damage-then families ("deals N damage … If a [creature] is dealt damage this way, …") | done (12 split, 4 blocked-other, 0 blocked-step-model, 0 unique; `thisWay(kind, filter)` and `HappenedThisWay.toA`; Smite the Deathless and The War Doctor fixed by Oracle text) |
+| 5 | `--unaudited --family Deal`, the rest: the "And" simultaneous sets, "Unless" and perpetual riders | done (3 split, 2 absorbed, 4 blocked-step-model, 6 blocked-other, 2 unique; 7 of `DealDamageToTargetAndTheirCreaturesEffect`'s 8 cards split; `otherCreaturesSharing` subject; next-damage shields cover a whole simultaneous event; Goblin Chainwhirler and Sarkhan's Unsealing made one damage event by Oracle text) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -3633,6 +3634,79 @@ Easy and Medium decision-engine tests): 305, all pass. Application, AI, engine t
   `SequenceEffect.simultaneous` with a set damage subject, after checking which mass-damage record takes a
   `controlledBy(targetPlayer())` subject. The same reading likely unlocks the `DealDamageToAnyTargetThenPerpetually…`
   pair once `Perpetually*` grants accept a step-result subject.
+
+### Step 8, run 5 (2026-11-20)
+
+The other 17 `--unaudited --family Deal` records restricted to `Then` / `And` / `IfYouDo` / `Unless` (run 4 left them). Ten are
+"damage to X and to a set": every first half is a damage primitive on step 7's earlier-step list, and the set half is
+`DealDamageToPermanentsTargetControlsEffect` with a set subject, added beside the target's damage as one damage event
+(CR 120.3 / 120.4 and 615.8 checked with `get_rule` 2026-11-20). Verdicts (ledger, step `8`): **split 3**, **absorbed 2**,
+**blocked-step-model 4**, **blocked-other 6**, **unique 2**, blocked-player-loop 0. Ratchet 4,840 / 4,073 → 4,835 / 4,068
+(5 records, 5 handlers deleted). No `Deal` record with those name parts is left unaudited.
+
+- **Split** (card text checked with `get_card`; spells `target(...).bindEffect(targetDamage)` + `addSimultaneousSpellEffects`,
+  abilities and modes `SequenceEffect.simultaneous`): `DealDamageToTargetAndSharingCreaturesEffect` (Cleansing Beam, Wojek
+  Embermage, Brightflame), `DealDamageToTargetCreatureAndAllWithSameNameEffect` (Homing Lightning, Izzet Staticaster),
+  `DealDamageToTargetAndCreaturesSharingCreatureTypeEffect` (Killer) → `DealDamageToTargetCreatureEffect(N)` +
+  `DealDamageToPermanentsTargetControlsEffect(N, otherCreaturesSharing(target(), COLOR | NAME | CREATURE_TYPE))`. Brightflame's
+  "you gain life equal to the damage dealt this way" is `GainLifeEffect(AmountThisWay(DEAL_DAMAGE))` (its ruling: the total
+  dealt to all creatures, prevented damage not counted), replacing the handler's `eventValue` write.
+- **Absorbed** (not fused; a set the survivor now names): `DealDamageToEachCreatureAndPlaneswalkerOpponentsControlEffect` →
+  `controlledBy(eachOpponent(), creature or planeswalker)` (creature only for Delayed Blast Fireball);
+  `DealDamageToEachCreatureAndPlaneswalkerDamagedPlayerControlsEffect` → `EventValue` with
+  `controlledBy(triggeringPlayer(), creature or planeswalker)` in Incinerator of the Guilty's reflexive ability (the baked
+  damaged player). The planeswalker check is now the layered predicate (the old one read the printed card's type).
+- **`DealDamageToTargetAndTheirCreaturesEffect`**: 7 of 8 cards split (Flame Wave, Lavalanche, Bonfire of the Damned, Chandra's
+  Flame Wave, and the Nalaar, Pyrogenius and Flame's Fury ultimates) into `DealDamageToTargetPlayerOrPlaneswalkerEffect(amount)` +
+  `DealDamageToPermanentsTargetControlsEffect.toCreaturesOfTargetedPlayer(amount)`, which leaves out the targeted planeswalker
+  (the old handler skipped it, so an animated planeswalker is dealt the damage once). The record stays for Heart of Bogardan:
+  `DestructionSupport.resolveForcedCostElseEffects` runs it synchronously with an untargeted opponent (blocked-other, like
+  Minion of Leshrac).
+- **Survivor changes.** `DealDamageToPermanentsTargetControlsEffect` takes a `DynamicAmount` (int constructors kept, evaluated
+  once with the source as it is or last was), accepts an `otherCreaturesSharing` subject as well as `controlledBy`, begins a
+  DEAL_DAMAGE step, and gained `toTargetedPlayers(DynamicAmount, …)` and `toCreaturesOfTargetedPlayer`. New subject
+  `PermanentSubject.OtherCreaturesSharing(permanent, SharedQuality)` / `Subjects.otherCreaturesSharing` (declares no target;
+  `withCreaturesSharingAColor` stays for Surge of Zeal and Rally the Righteous). `SubjectResolutionService` binds a
+  `PermanentIsTargetCardPredicate` leaf of a one-shot `controlledBy` filter to the entry's target (as `lastingRule` already did;
+  no one-shot user had it before). `DamageSupport.dealSimultaneousDamage` reinstates a "prevent the next time this source would
+  deal damage" shield (`SourceNextDamageToAnyTargetShield`, unlimited) for each later recipient of the event and ends it with
+  the event, which only `DealDamageToTargetAndTheirCreaturesEffectHandler` and combat damage did: a shield on Chandra's Fury's
+  or Chandra Nalaar's source now prevents the whole event. Tests: `SubjectResolutionServiceTest` (+5: the three qualities, a
+  gone target, the target-card binding), `ChandraNalaarTest.minusEightNextDamageShieldPreventsTheWholeEvent`.
+- **Behaviour change (Oracle text).** Goblin Chainwhirler and Sarkhan's Unsealing: "deals N damage to each opponent and each
+  creature and planeswalker they control" is one damage event; their two effects were added with `addTrigger` (two events)
+  and are now `addSimultaneousTrigger`. `GoblinChainwhirlerTest.etbDamageIsOneEventForANextDamageShield` fails on the old card.
+- **AI.** The split cards' target step is `DealDamageToTargetPlayerOrPlaneswalkerEffect` / `DealDamageToTargetCreatureEffect`,
+  so `SpellEvaluator` and the other `DamageDealingEffect` readers now score the player damage of the seven "their creatures"
+  cards (the fused record was not `DamageDealingEffect`) as they score Chandra's Fury; the set step is not `DamageDealingEffect`,
+  as before for that survivor. The sharing cards keep a `DamageDealingEffect` target step with the same amount. Target polarity
+  of the seven "their creatures" cards is now the primitive's `HARMFUL` (the record's name entry gave `HARMFUL_DAMAGE`), the
+  same as every other `DealDamageToTargetPlayerOrPlaneswalkerEffect` card; `TargetPolarityGuardTest` passes.
+- **Blocked, by cause.** Bespoke prompt before anything happens (blocked-step-model): the two "unless its controller has it deal
+  damage to them" records, Indoraptor's random opponent's sacrifice choice, Trial of Agony's which-creature choice. No
+  `PermanentSubject` on the `Perpetually*` grants (Melt Through, Switchgrass Grazer, Chaos Balor; fold those first, then read
+  `thisWay(DEAL_DAMAGE, creature)`); a multi-target-group damage primitive (Chandra Pyromaster / Ravager of the Fells / Soul of
+  Shandalar, with Shellshock); a per-controller amount for the set damage (Incite Rebellion); Heart of Bogardan's synchronous
+  else-effect path. Unique: The Fallen (recipients damaged by the source earlier), Antagonism (a condition on that player's
+  opponents).
+
+**Tests**: card tests of the 17 rewritten cards and Heart of Bogardan, every card naming `DealDamageToPermanentsTargetControlsEffect`,
+`withCreaturesSharingAColor` or `PermanentIsTargetCardPredicate`, Sanctum Guardian, a 12-per-class sample of
+`DealDamageToTargetCreatureEffect`, `DealDamageToTargetPlayerOrPlaneswalkerEffect`, `SequenceEffect` and `GrantKeywordEffect`,
+application (`SubjectResolutionServiceTest`, `StepResultsTest`, `EffectResolutionServiceTest`, `AbstractDamageHandlerTest`,
+`DealDamageToPlayersEffectHandlerTest`, `DealDamageToTargetCreatureEffectHandlerTest`, `PredicateEvaluationServiceTest`, the
+ratchets) and AI (`TargetPolarityGuardTest`, `SpellEvaluatorTest`): 163 suites, 1,250 test cases, all pass; then every card using
+`addSimultaneous*` or `SequenceEffect.simultaneous` (the shield change): 79 suites, 668 test cases, all pass.
+
+**For later runs.**
+
+- "Target X and each other creature that shares a …" is the target's damage + `otherCreaturesSharing(target(), quality)`; a verb
+  that should act on such a set needs only to accept the subject (the resolver has it). `DealDamageToDefendingPlayerCreaturesEffect`
+  (ledger 5g) was blocked on a `DynamicAmount`, which `DealDamageToPermanentsTargetControlsEffect` now has.
+- The `Perpetually*` grants are the next prerequisite for three damage riders; a `PermanentSubject` on
+  `PerpetuallyBoostTargetCreatureEffect` / `PerpetuallyGrantStaticEffectToTargetCreatureEffect` unlocks them.
+- Other cards that add "N damage to each opponent and each creature they control" with `addTrigger` (two events) may exist outside
+  this family; grep `addTrigger(` with two damage effects.
 
 ## Prompt
 
