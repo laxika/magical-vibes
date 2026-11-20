@@ -604,6 +604,27 @@ public class PermanentCounterSupport {
         };
     }
 
+    /**
+     * The kinds of counter {@code permanent} has at least {@code count} of, in {@link CounterType} order: what "remove
+     * {@code count} counters of any one kind from it" may remove.
+     */
+    public static List<CounterType> removableCounterKinds(Permanent permanent, int count) {
+        return java.util.Arrays.stream(CounterType.values())
+                .filter(kind -> kind != CounterType.ANY && kind != CounterType.SILVER)
+                .filter(kind -> permanent.getCounterCount(kind) >= Math.max(1, count))
+                .toList();
+    }
+
+    /**
+     * Whether {@code permanent} has {@code count} counters of {@code kind} to remove ("remove two oil counters from
+     * it" can't remove one), of any one kind for {@link CounterType#ANY}.
+     */
+    public static boolean hasCountersToRemove(Permanent permanent, CounterType kind, int count) {
+        return kind == CounterType.ANY
+                ? !removableCounterKinds(permanent, count).isEmpty()
+                : permanent.getCounterCount(kind) >= count;
+    }
+
     public void removeCounterFromPermanent(GameData gameData, Permanent target,
                                             CounterType counterType, int amount) {
         int current = target.getCounterCount(counterType);

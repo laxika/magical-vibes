@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.PowerToughnessForm;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -1149,7 +1150,8 @@ public class PlayerInputService {
             return true;
         }
         var source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        return source != null && source.getCounterCount(removal.counterType()) >= removal.amount();
+        return source != null && PermanentCounterSupport.hasCountersToRemove(
+                source, removal.counterType(), removal.amount());
     }
 
     public void beginChooseModeOnEnterChoice(GameData gameData, UUID controllerId, Card sourceCard,

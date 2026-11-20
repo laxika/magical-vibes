@@ -37,7 +37,7 @@ import com.github.laxika.magicalvibes.model.effect.ExilePermanentThenExileMatchi
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -113,7 +113,8 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
 
     enum Continuation {
         QUEUE_REFLEXIVE(QueueReflexiveAbilityEffect::new),
-        REMOVE_COUNTER(effect -> new RemoveCounterFromSourceThenEffect(CounterType.PLUS_ONE_PLUS_ONE, effect)),
+        REMOVE_COUNTER(effect -> SequenceEffect.of(new RemoveCounterFromSourceEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                new ConditionalEffect(HappenedThisWay.removedCounters(), new QueueReflexiveAbilityEffect(effect)))),
         EXILE_GRAVEYARD_CARDS(effect -> SequenceEffect.of(ExileGraveyardCardsEffect.fromOwnGraveyard(2, null),
                 new ConditionalEffect(HappenedThisWay.atLeast(StepKind.EXILE, 2), new QueueReflexiveAbilityEffect(effect)))),
         DRAW_THEN(effect -> SequenceEffect.of(new DrawCardEffect(1),

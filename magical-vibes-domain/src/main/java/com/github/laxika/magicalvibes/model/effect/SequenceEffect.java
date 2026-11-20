@@ -125,9 +125,15 @@ public record SequenceEffect(List<CardEffect> steps, boolean optionalTarget, boo
         return false;
     }
 
-    /** A step makes a reflexive ability that chooses the targets ("…, then when you do, …"). */
+    /**
+     * A step makes a reflexive ability that chooses the targets ("…, then when you do, …") and no other step declares
+     * a target of its own: "put two +1/+1 counters on target creature. When you do, destroy …" chooses the creature as
+     * the ability goes on the stack, and the reflexive ability its own target later.
+     */
     @Override
     public boolean targetsChosenByReflexiveAbility() {
-        return steps.stream().anyMatch(CardEffect::targetsChosenByReflexiveAbility);
+        return steps.stream().anyMatch(CardEffect::targetsChosenByReflexiveAbility)
+                && steps.stream().noneMatch(step -> !step.targetsChosenByReflexiveAbility()
+                && step.targetSpec().declaredTarget() != null);
     }
 }

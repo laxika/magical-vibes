@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class VerazolTheSplitCurrentTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Enters with a +1/+1 counter for each mana spent to cast it")
     void entersWithCountersForManaSpent() {
         castVerazol();
 
@@ -26,6 +28,7 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing two counters copies a kicked permanent spell as a token")
     void mayRemoveTwoCountersToCopyKickedPermanentSpellAsToken() {
         castVerazol();
         castKickedElite();
@@ -43,6 +46,7 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining removes no counters and copies nothing")
     void decliningDoesNotRemoveCountersOrCopySpell() {
         castVerazol();
         castKickedElite();
@@ -57,13 +61,13 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("\"If you do, copy that spell\": the copy is made as the trigger resolves, not by a reflexive ability")
     void createsCopyDuringCounterRemovalAbilityResolution() {
         castVerazol();
         castKickedElite();
         resolveAllTriggers();
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.passBothPriorities();
 
         assertThat(findPermanent(player1, "Verazol, the Split Current")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
@@ -73,6 +77,7 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The copy of a kicked creature spell is kicked too")
     void copiedPermanentRetainsKickedEntryCounters() {
         castVerazol();
         castKickedElite();
@@ -87,6 +92,7 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With one counter, accepting removes none and copies nothing")
     void insufficientCountersCannotPayForCopy() {
         castVerazol();
         findPermanent(player1, "Verazol, the Split Current")
@@ -102,6 +108,7 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An unkicked spell doesn't trigger the ability")
     void unkickedSpellDoesNotTriggerCopyAbility() {
         castVerazol();
         harness.setHand(player1, List.of(new LlanowarElite()));
@@ -117,6 +124,7 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With X of 0 it still counts the colored mana spent")
     void zeroXStillCountsTheColoredManaSpent() {
         harness.setHand(player1, List.of(new VerazolTheSplitCurrent()));
         harness.addMana(player1, ManaColor.GREEN, 1);
@@ -130,6 +138,7 @@ class VerazolTheSplitCurrentTest extends BaseCardTest {
 
 
     @Test
+    @DisplayName("Copies the kicked spell even if it was countered before the ability resolves")
     void copiesTheKickedSpellEvenIfItWasCounteredBeforeTheAbilityResolves() {
         castVerazol();
         LlanowarElite elite = new LlanowarElite();

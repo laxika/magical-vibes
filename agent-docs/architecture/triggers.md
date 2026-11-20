@@ -753,7 +753,7 @@ Matchers record the event whatever the effects are; effects read it as they reso
 
 - `setTriggeringSpell` (the spell's entry as it triggered): effects read the live spell, then
   `getTriggeringSpellSnapshot()` (CR 608.2h). Cast records take it as they trigger; a "you may" carries it
-  (`PendingMayAbility.withTriggeringSpell`); `RemoveCounterFromSourceThenEffect`'s reflexive entry copies it.
+  (`PendingMayAbility.withTriggeringSpell`); a `QueueReflexiveAbilityEffect`'s entry copies it.
 - Its mana value is `TargetSpellManaValue`, never `EventValue` (the event value is the kick count of a kicked-spell
   trigger, else the mana value as a fallback); cascade, Kellan, Living Breakthrough, Lady Loki, Ancient Cellarspawn, The
   Ruinous Powers, Baral and Kari Zev use it. A target restricted by it (`PermanentManaValueEqualsXPredicate`,
@@ -879,7 +879,7 @@ card's. Delayed graveyard returns use `CardIdSetPredicate` with entry versions.
   matcher gives a non-targeted "you may" entry the damaged player, `DiscardCardThenEffectHandler` gives `DiscardFollowUp`
   `withTriggeringPlayer`, the target is validated with it (`validateActivatedAbilityTargeting`'s triggering-player
   overload) and `MayAbilityTriggerTarget.withTriggeringPlayer` passes it on. Triggered modals and the reflexive effects
-  (`QueueReflexiveAbilityEffect`, `RemoveCounterFromSourceThenEffect`) reuse it the same way.
+  (`QueueReflexiveAbilityEffect`) reuse it the same way.
 - No value is bound into a reflexive effect or picked by effect class: a number paid on resolution is the record's X
   (`XValue`, `CardManaValueEqualsXPredicate`); what the preceding action determined ("that much", a die roll, a revealed
   card's mana value, excess damage) is the event value (`EventValue`, `CardManaValueEqualsEventValuePredicate`,

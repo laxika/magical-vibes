@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
@@ -13,17 +14,19 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>The record itself is stored in the resulting floating effect, so readers of the goaded
  * designation see it through {@link GoadStatusEffect} and {@link CombatAttackRequirementEffect}.
  *
- * @param goaded null for the target, or {@link Subjects#triggering()}
+ * @param goaded null for the target, {@link Subjects#triggering()} or a {@code thisWay} step result
  */
 public record GoadTargetCreatureUntilNextTurnEffect(PermanentPredicate targetRestriction, PermanentSubject goaded)
         implements CombatAttackRequirementEffect, GoadStatusEffect {
 
     public GoadTargetCreatureUntilNextTurnEffect {
-        if (goaded != null && !(goaded instanceof PermanentSubject.Triggering)) {
-            throw new IllegalArgumentException("Goads the target or the triggering permanent: " + goaded);
+        if (goaded != null && !(goaded instanceof PermanentSubject.Triggering)
+                && !(goaded instanceof PermanentSubject.ThisWay)) {
+            throw new IllegalArgumentException(
+                    "Goads the target, the triggering permanent or a step's permanents: " + goaded);
         }
         if (goaded != null && targetRestriction != null) {
-            throw new IllegalArgumentException("A triggering-permanent goad has no target restriction");
+            throw new IllegalArgumentException("A goad of a permanent it doesn't target has no target restriction");
         }
     }
 
@@ -33,6 +36,11 @@ public record GoadTargetCreatureUntilNextTurnEffect(PermanentPredicate targetRes
 
     public GoadTargetCreatureUntilNextTurnEffect() {
         this(null, null);
+    }
+
+    /** "Goad each creature that had a counter put on it this way": the latest put-counters step's permanents. */
+    public static GoadTargetCreatureUntilNextTurnEffect ofCreaturesGivenCountersThisWay() {
+        return new GoadTargetCreatureUntilNextTurnEffect(null, Subjects.thisWay(StepKind.PUT_COUNTERS));
     }
 
     /** "Goad it": the stack entry's triggering permanent. */

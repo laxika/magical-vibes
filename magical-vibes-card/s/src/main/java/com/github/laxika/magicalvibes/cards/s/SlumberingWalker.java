@@ -6,10 +6,14 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -35,7 +39,10 @@ public class SlumberingWalker extends Card {
                 .build();
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 new MayEffect(
-                        new RemoveCounterFromSourceThenEffect(CounterType.ANY, returnEffect),
+                        SequenceEffect.of(
+                                new RemoveCounterFromSourceEffect(CounterType.ANY, 1),
+                                new ConditionalEffect(HappenedThisWay.removedCounters(),
+                                        new QueueReflexiveAbilityEffect(returnEffect))),
                         "Remove a counter from this creature?"));
     }
 }

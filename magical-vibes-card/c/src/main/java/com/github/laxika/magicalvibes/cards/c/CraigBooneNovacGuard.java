@@ -4,11 +4,16 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureUnlessControllerTakesDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfThenReflexiveEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,12 +28,12 @@ public class CraigBooneNovacGuard extends Card {
         addStaticEffect(new GrantKeywordEffect(Set.of(Keyword.LIFELINK, Keyword.REACH), Subjects.source()));
         addTrigger(Triggers.youAttack(),
                 TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(2)),
-                new PutCountersOnSelfThenReflexiveEffect(
-                        CounterType.QUEST,
-                        2,
-                        new DealDamageToTargetCreatureUnlessControllerTakesDamageEffect(
-                                new CountersOnSource(CounterType.QUEST),
-                                new CountersOnSource(CounterType.QUEST)),
-                        true));
+                SequenceEffect.of(
+                        new PutCountersOnSelfEffect(CounterType.QUEST, 2),
+                        new ConditionalEffect(new HappenedThisWay(StepKind.PUT_COUNTERS), QueueReflexiveAbilityEffect.of(
+                                new DealDamageToTargetCreatureUnlessControllerTakesDamageEffect(
+                                        new CountersOnSource(CounterType.QUEST),
+                                        new CountersOnSource(CounterType.QUEST)),
+                                true))));
     }
 }

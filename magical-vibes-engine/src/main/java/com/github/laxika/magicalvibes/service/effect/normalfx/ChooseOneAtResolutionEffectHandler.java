@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -10,7 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -96,15 +96,17 @@ public class ChooseOneAtResolutionEffectHandler implements NormalEffectHandlerBe
                 default -> gameData.playerHands.getOrDefault(entry.getControllerId(), List.of()).isEmpty();
             };
         }
-        return effects.stream().anyMatch(optionEffect -> optionEffect instanceof RemoveCounterFromSourceThenEffect removal
-                && removal.counterType() != CounterType.ANY
+        return !effects.isEmpty() && effects.getFirst() instanceof RemoveCounterFromSourceEffect removal
+                && removal.subject() instanceof PermanentSubject.Source
+                && removal.dynamicAmount() == null
                 && entry.getSourcePermanentId() != null
-                && lacksCounters(gameData, entry, removal));
+                && lacksCounters(gameData, entry, removal);
     }
 
-    private boolean lacksCounters(GameData gameData, StackEntry entry, RemoveCounterFromSourceThenEffect removal) {
+    private boolean lacksCounters(GameData gameData, StackEntry entry, RemoveCounterFromSourceEffect removal) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        return source == null || source.getCounterCount(removal.counterType()) < removal.count();
+        return source == null
+                || !PermanentCounterSupport.hasCountersToRemove(source, removal.counterType(), removal.amount());
     }
 
     private static boolean isOwnSacrificeOrDiscard(CardEffect effect) {

@@ -5,10 +5,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantChosenKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -23,11 +27,13 @@ public class AtraxasSkitterfang extends Card {
         addStaticEffect(new EnterWithCountersEffect(CounterType.OIL, new Fixed(3)));
 
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
-                new RemoveCounterFromSourceThenEffect(CounterType.OIL,
-                        new GrantChosenKeywordEffect(
-                                List.of(Keyword.FLYING, Keyword.VIGILANCE, Keyword.DEATHTOUCH, Keyword.LIFELINK),
-                                Subjects.target(),
-                                new PermanentControlledBySourceControllerPredicate())),
+                SequenceEffect.of(
+                        new RemoveCounterFromSourceEffect(CounterType.OIL, 1),
+                        new ConditionalEffect(HappenedThisWay.removedCounters(), new QueueReflexiveAbilityEffect(
+                                new GrantChosenKeywordEffect(
+                                        List.of(Keyword.FLYING, Keyword.VIGILANCE, Keyword.DEATHTOUCH, Keyword.LIFELINK),
+                                        Subjects.target(),
+                                        new PermanentControlledBySourceControllerPredicate())))),
                 "Remove an oil counter from Atraxa's Skitterfang?"));
     }
 }

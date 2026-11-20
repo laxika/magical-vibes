@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SpectacularShowdownTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A targeted cast puts a double strike counter on the target and goads only it")
     void targetedCastAddsCounterAndGoadsOnlyTarget() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ExaltedAngel());
         Permanent other = harness.addToBattlefieldAndReturn(player2, new ExaltedAngel());
@@ -40,6 +42,20 @@ class SpectacularShowdownTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("\"Then goad\": the target is goaded as the spell resolves, with no ability left on the stack")
+    void targetIsGoadedAsTheSpellResolves() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new ExaltedAngel());
+        harness.setHand(player1, List.of(new SpectacularShowdown()));
+        harness.addMana(player1, ManaColor.RED, 2);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        assertThat(gqs.isGoaded(gd, target)).isTrue();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Overloaded, it goads only the creatures that got a counter")
     void overloadAddsCountersAndGoadsOnlyCreaturesThatReceiveThem() {
         Permanent ownCreature = harness.addToBattlefieldAndReturn(player1, new ExaltedAngel());
         Permanent opposingCreature = harness.addToBattlefieldAndReturn(player2, new ExaltedAngel());
@@ -63,6 +79,7 @@ class SpectacularShowdownTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A target that can't have counters isn't goaded")
     void targetedCreatureThatCannotReceiveCountersIsNotGoaded() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Tatterkite());
         harness.setHand(player1, List.of(new SpectacularShowdown()));
@@ -77,6 +94,7 @@ class SpectacularShowdownTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counters already on other creatures don't goad them")
     void existingDoubleStrikeCountersDoNotGoadUntargetedCreatures() {
         Permanent target = harness.addToBattlefieldAndReturn(player1, new ExaltedAngel());
         Permanent other = harness.addToBattlefieldAndReturn(player2, new ExaltedAngel());
@@ -96,6 +114,7 @@ class SpectacularShowdownTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Overloaded, it resolves with no creatures")
     void overloadCanResolveWithoutAnyCreatures() {
         harness.setHand(player1, List.of(new SpectacularShowdown()));
         harness.addMana(player1, ManaColor.RED, 7);
@@ -108,6 +127,7 @@ class SpectacularShowdownTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing the target in response leaves nothing to goad")
     void removingTheTargetInResponseLeavesNoGoadAbility() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ExaltedAngel());
         harness.setHand(player1, List.of(new SpectacularShowdown()));
@@ -126,6 +146,7 @@ class SpectacularShowdownTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The goad ends on the caster's next turn; the double strike counter stays")
     void overloadGoadExpiresOnCastersNextTurnButDoubleStrikeRemains() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new ExaltedAngel());
         harness.setHand(player2, List.of());

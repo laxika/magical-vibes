@@ -4,13 +4,16 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -37,7 +40,10 @@ public class ImmardTheStormcleaver extends Card {
                         new PutCountersOnSelfEffect(CounterType.CHARGE)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Remove a charge counter from Immard",
-                        new RemoveCounterFromSourceThenEffect(CounterType.CHARGE, removalMode))));
+                        List.of(
+                                new RemoveCounterFromSourceEffect(CounterType.CHARGE, 1),
+                                new ConditionalEffect(HappenedThisWay.removedCounters(),
+                                        new QueueReflexiveAbilityEffect(removalMode))))));
 
         var triggeredCounterMode = new ChooseOneAtResolutionEffect(counterMode);
         addTrigger(Triggers.enters(ObjectRelation.THIS), triggeredCounterMode);

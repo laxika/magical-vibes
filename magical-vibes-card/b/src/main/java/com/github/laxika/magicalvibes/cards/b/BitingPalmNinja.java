@@ -5,11 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,11 +28,12 @@ public class BitingPalmNinja extends Card {
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new MayEffect(
-                        new RemoveCounterFromSourceThenEffect(
-                                CounterType.MENACE,
-                                new ChooseCardsFromTargetHandEffect(
-                                        1, List.of(CardType.LAND), List.of(),
-                                        HandChoiceDestination.EXILE, false)),
+                        SequenceEffect.of(
+                                new RemoveCounterFromSourceEffect(CounterType.MENACE, 1),
+                                new ConditionalEffect(HappenedThisWay.removedCounters(),
+                                        new QueueReflexiveAbilityEffect(new ChooseCardsFromTargetHandEffect(
+                                                1, List.of(CardType.LAND), List.of(),
+                                                HandChoiceDestination.EXILE, false)))),
                         "Remove a menace counter from this creature?"));
     }
 }

@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 20 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 21 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -539,6 +539,7 @@ cause under Findings.
 | 18 | run 17's next: `DestroyEachTargetPermanentEffect` records a DESTROY step and its 9 rider cards split; then the draw-then-put-from-hand family (first half `DrawCardEffect`) | done (3 split, 1 absorbed, 1 amount absorbed, 4 survivors, 1 unique, 1 blocked-player-loop, 3 blocked-other; 27 card files rewritten; `AmountThisWay.destroyedManaValue()` / `.includingUnremoved()`, `TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect` takes a placement and a `PlayerSubject`; three stamped `StackEntry` fields deleted; Seeds of Innocence not split) |
 | 19 | run 18's next: `SacrificePermanentsEffect` gains an "any number" choice recording the SACRIFICE step and the two any-number records split; the sacrifice-or-discard and manifest-then-counters records; then the next fused families whose first half records a step | done (8 split, 3 survivors, 4 blocked-other; 24 card files rewritten; `SacrificePermanentsEffect.anyNumber`, `StepKind.MANIFEST`, `ChooseOneAtResolutionEffect` drops impossible sacrifice / discard options; `DiscardCardAndBoostSelfEffect` split with Furyblade Vampire) |
 | 20 | run 19's next: `MayEffectHandler`'s can't-sacrifice check reads a sequence's leading sacrifice with its count; `SacrificePermanentsThenEffect` split; `SacrificeAnyNumberOfPermanentsEffect` absorbed; `DiscardFollowUp`'s `boost*` dropped; then the Sacrifice family's "unless" / "or else" records and the remove-a-counter "if you do" record | done (4 split, 1 absorbed, 3 survivors, 1 unique, 5 blocked-other; 31 card files rewritten; `SacrificePermanentsEffect.upTo`, `HappenedThisWay.removedCounters()`, `RemoveCounterFromSourceEffect` records REMOVE_COUNTERS; a reflexive ability's dynamic target count reads its carried step results; `AmountThisWay` totals floor once, CR 107.1b) |
+| 21 | run 20's next: the rest of the counter family (the source removal's "then" record, vanishing's upkeep record, the put-counters reflexive records, the threshold transform); `DiscardEffect`'s card filter not reached | done (3 split, 1 absorbed, 4 survivors, 1 blocked-other; 33 card files rewritten; `RemoveCounterFromSourceEffect` takes `CounterType.ANY`, `GoadTargetCreatureUntilNextTurnEffect.ofCreaturesGivenCountersThisWay()`, a sequence's own target is chosen beside a reflexive step; Verazol and Spectacular Showdown fixed by Oracle text, vanishing's sacrifice left to vanishing, CR 702.63a) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -5026,6 +5027,97 @@ Sacred Mesa, Exemplar of Strength, Sun Droplet; none for Swashbuckler Extraordin
   name): 112 (1,169 card uses); by first word Exile 20, Search 10, Reveal 9, Counter 7, Prevent 7, Each 6, Cant 5, Choose 5, Boost 3,
   Creatures 3, Destroy 3, Draw 3, Put 3. The step-4/5 "step 8" deferrals with a ledger row (the discard-then-draw, mill-then and counter
   records above) are not in that count.
+
+### Step 8, run 21 (2026-11-20)
+
+Run 20's "Next run", item 1: the rest of the counter family now that the source removal records its step. Item 2 (a card
+filter on `DiscardEffect`) was not reached. Verdicts (ledger, step `8`): **split 3** (`RemoveCounterFromSourceThenEffect`,
+`PutCountersOnSelfThenReflexiveEffect`, `PutCountersOnTargetPermanentThenReflexiveEffect`), **absorbed 1**
+(`RemoveCounterAndSacrificeSelfOnLastEffect`), with their handlers; **survivor 4** (`RemoveCounterFromSourceEffect`,
+`GoadTargetCreatureUntilNextTurnEffect`, `ChooseOneAtResolutionEffect`, `SequenceEffect`), **blocked-other 1**
+(`PutCounterOnSelfThenTransformIfThresholdEffect`). Ratchet 4,726 / 3,958 → 4,722 / 3,954. 33 card files rewritten: the 18
+vanishing cards by a deleted scratch script, the 15 others by deleted per-card scripts (read back by eye, imports sorted).
+Oracle text of every split card checked with `get_card`; rulings with `get_rulings` (Verazol: "you can't remove just one
+counter from it if it has only one"; Spectacular Showdown: nothing on the goad). CR 702.63a, 603.12, 608.2c, 608.2d and 609.3
+checked with `get_rule` (2026-11-20); 118.12a for the next run.
+
+- **Any kind of counter.** `RemoveCounterFromSourceEffect` accepts `CounterType.ANY` (source subject, fixed amount only): it
+  records REMOVE_COUNTERS NONE, then removes the one kind the source has enough of, or begins a mode choice ("Remove N
+  [kind] counters", the old labels) whose chosen removal is spliced in as the next step and records the step.
+  `PermanentCounterSupport.removableCounterKinds` / `hasCountersToRemove` are shared with `PlayerInputService`'s greyed modes
+  and `ChooseOneAtResolutionEffectHandler`'s CR 608.2d option check, which now reads a mode that starts with a source
+  `RemoveCounterFromSourceEffect` (Immard). The removal also goes through `removeCounterFromPermanent` and
+  `notifyLastCounterRemoved` (the old record set the count directly).
+- **"Remove a counter from this. If you do / When you do"** is `SequenceEffect.of(RemoveCounterFromSourceEffect(type, 1),
+  ConditionalEffect(HappenedThisWay.removedCounters(), X | QueueReflexiveAbilityEffect(X)))`: Slumbering Walker and
+  Leatherhead (`ANY`), Kappa Tech-Wrecker, Biting-Palm Ninja, Atraxa's Skitterfang, Immard (the mode's two steps) reflexive;
+  Purestrain Genestealer, Noosegraf Mob "if you do". "Remove two … If you do" (Verazol) is
+  `ConditionalEffect(SourceCounterThreshold(2, +1/+1), SequenceEffect.of(remove 2, ConditionalEffect(atLeast(REMOVE_COUNTERS, 2),
+  copy)))`, the Mercurial Spelldancer / Forgehammer Centurion shape, so one counter is never removed (its ruling). The
+  old record's `onlyIfLastCounterRemoved` had no card. `ReflexiveRouteRecordTest`'s REMOVE_COUNTER continuation is the
+  sequence and still records the trigger event field by field.
+- **Vanishing.** The 18 vanishing upkeep abilities and `CloneService`'s granted one are `RemoveCounterFromSourceEffect(TIME, 1)`.
+  The sacrifice is vanishing's own third ability (CR 702.63a), which `PermanentCounterSupport.checkLastTimeCounterRemoved`
+  already put on the stack for a permanent with vanishing; the deleted handler's own sacrifice for one without it was
+  rules-wrong (`WaningWurmTest.notSacrificedAfterLosingVanishing`, fails on the old record). The last removal now also emits
+  LAST_REMOVED ("when you remove the last time counter"), which the old handler skipped.
+- **Put counters, then reflexive.** `PutCountersOnSelfEffect` / `PutCounterOnTargetPermanentEffect` record PUT_COUNTERS, so
+  "put N counters on X. When you do, Y" is `SequenceEffect.of(put, ConditionalEffect(new HappenedThisWay(PUT_COUNTERS),
+  QueueReflexiveAbilityEffect[.of(Y, true)]))`: Lockjaw, Auron, Craig Boone (up to one target), Dimension X Pizzasaur (up to
+  one); Earthbender Ascension's "when you do, if it has four or more quest counters" gates on `AllOf(HappenedThisWay(PUT_COUNTERS),
+  SourceCounterThreshold(4, QUEST))` and wraps the reflexive effect in the same threshold (judged as it triggers and as it
+  resolves, as the record did). **`SequenceEffect.targetsChosenByReflexiveAbility`** is now true only when no other step
+  declares a target of its own: Pizzasaur's sequence chose no counter target before this (its tests caught it). No card in
+  the 159-card `QueueReflexiveAbilityEffect` sweep changed.
+- **Behaviour changes (Oracle text).** Verazol "If you do, copy that spell": the copy is made as the trigger resolves, not by
+  a reflexive ability (`VerazolTheSplitCurrentTest.createsCopyDuringCounterRemovalAbilityResolution` rewritten; it fails on
+  the old card). Spectacular Showdown "then goad each creature that had a double strike counter put on it this way": the
+  targeted branch is `SequenceEffect.of(PutCounterOnTargetPermanentEffect(DOUBLE_STRIKE, 1),
+  GoadTargetCreatureUntilNextTurnEffect.ofCreaturesGivenCountersThisWay())` (a `thisWay(PUT_COUNTERS)` goad; no ability on
+  the stack: `SpectacularShowdownTest.targetIsGoadedAsTheSpellResolves`, fails on the old card); its overload branch keeps
+  `PutCounterOnEachMatchingPermanentThenGoadEffect`. The reflexive abilities' description is now "[card]'s reflexive
+  ability" (no test asserted the old "'s ability"). Missing `@DisplayName`s added in the Verazol, Waning Wurm, Leatherhead
+  and Spectacular Showdown tests.
+- **AI.** `TargetPolarityClassifier`'s branch for the put-then-reflexive record is gone: a sequence takes its strongest step
+  and a `QueueReflexiveAbilityEffect` classifies as nothing, so Pizzasaur stays BENEFICIAL (`TargetPolarityGuardTest`'s case
+  is the sequence). Spectacular Showdown's targeted branch is now HARMFUL (the goad's name entry) instead of NEUTRAL (a double
+  strike counter): the AI puts the counter on an opposing creature it goads. `EffectResolution.targetPredicateOf` lost the
+  record's branch.
+- **Blocked.** `PutCounterOnSelfThenTransformIfThresholdEffect` (6 cards): splitting into put + `SourceCounterThreshold`-gated
+  `RemoveAllCountersEffect` / `TransformSelfEffect` needs the source's last-known counters when it left (Treasure Map still
+  makes its Treasures), the handler's original-card transform path (`removeCountersAndTransform`) matched against
+  `TransformSelfEffect`'s `AnimationSupport` path, and Primal Amulet's optional "you may remove and transform".
+
+**Tests** (one Gradle run, one `--tests` list per task): every rewritten card's test and every card test constructing a
+rewritten card (60 classes with Flesh Duplicate, Timebender and the may-remove cards), every card naming
+`QueueReflexiveAbilityEffect` or `RemoveCounterFromSourceEffect`, `--tests-for PutCountersOnSelfEffect
+PutCounterOnTargetPermanentEffect GoadTargetCreatureUntilNextTurnEffect ChooseOneAtResolutionEffect CopyTriggeringSpellEffect
+--max-per-class 8`; application (`RemoveCounterFromSourceEffectTest`, `ReflexiveRouteRecordTest`, `LastCounterRemovedTriggerTest`,
+`StepResultsTest`, `EffectResolutionServiceTest`, `SubjectResolutionServiceTest`, `CardImmutabilityArchTest`,
+`CardEffectTargetingConsistencyTest`, `PlayerInputServiceTest`, `TriggerRouteRecordTest`, `CollectorAbilityStackObjectTest`,
+`ClassKeyedRecordCollectorTest`, `MayEffectHandlerTest`) and AI (`TargetPolarityGuardTest`, `SpellEvaluatorTest`,
+`GameDataDeepCopyTest`): 322 top-level classes (395 result files with the `@Nested` suites), 5,366 test cases, all pass
+(the first run's six Pizzasaur failures led to the `SequenceEffect` change); `EffectCountRatchetTest` passes. Application,
+AI, engine testFixtures and card-test `a b c d e f i k l m n o p r s t v w` test sources compile.
+
+**For later runs.**
+
+- "Remove a counter (of any kind) from this. If you do / When you do" and "put N counters on this / target creature. When
+  you do" are the removal or placement step + `ConditionalEffect(HappenedThisWay(REMOVE_COUNTERS | PUT_COUNTERS), …)`;
+  "remove N" needs `SourceCounterThreshold(N)` around the sequence (Verazol's ruling). "Then [verb] each creature that had a
+  counter put on it this way" is a `thisWay(PUT_COUNTERS)` subject.
+- **Next run.** (1) A card filter on `DiscardEffect` (the single-player chosen path already takes valid indices, as
+  `onlyCardsDrawnThisResolution` does; the each-player and random paths need it too or must refuse it), a filter-aware
+  "can't discard N matching" check in `MayEffectHandler` beside its sacrifice check (CR 608.2d), and the AI's
+  `SpellEvaluator` read of a filtered own discard; then `SacrificeUnlessDiscardCardTypeEffect` (18 cards) as
+  `MayEffect(DiscardEffect(N, you(), filter[, random]), prompt, SacrificeSelfEffect()[ + DrawCardEffect(1)])` (CR 118.12a's
+  "unless" is "you may … If you don't"), its `thenEffect` cards needing the discarded card's mana value from the DISCARD
+  result, and run 2's 26 "discard a … If you do" `DiscardCardThenEffect` cards. (2) `PutCounterOnEachMatchingPermanentThenGoadEffect`
+  (Spectacular Showdown's overload, and any other card) is now `PutCounterOnTargetPermanentEffect` over a set subject +
+  `ofCreaturesGivenCountersThisWay()` if the placement records each permanent; check it. (3) The threshold transform above.
+- **Remaining fused multi-card records** (no ledger row, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` /
+  `OrElse` name): 112 (1,169 card uses), unchanged (this run's classes had ledger rows from 5e / 5f); by first word Exile 20,
+  Search 10, Reveal 9, Counter 7, Prevent 7, Each 6, Cant 5, Choose 5, Boost 3, Creatures 3, Destroy 3, Draw 3, Put 3.
 
 ## Prompt
 

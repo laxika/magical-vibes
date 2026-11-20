@@ -35,7 +35,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MimeoplasmCopyOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -786,7 +786,7 @@ public class CloneService {
                     // Vanishing's upkeep ability: "if this permanent has a time counter on it" (CR 702.63a).
                     perm.getCard().addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                             TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.TIME)),
-                            new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME));
+                            new RemoveCounterFromSourceEffect(CounterType.TIME, 1));
                 }
                 if (addTypeAppropriateCounters) {
                     applyTypeAppropriateCounters(gameData, controllerId, perm);

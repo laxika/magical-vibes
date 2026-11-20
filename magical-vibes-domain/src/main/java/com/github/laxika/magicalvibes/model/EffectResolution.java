@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetPermanentThenReflexiveEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentIntoLibraryNFromTopEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerDiscardsByConvergeEffect;
@@ -339,8 +338,6 @@ public final class EffectResolution {
      */
     public static PermanentPredicate targetPredicateOf(CardEffect e) {
         return e instanceof PutCounterOnTargetPermanentEffect p
-                ? p.targetPredicate()
-                : e instanceof PutCountersOnTargetPermanentThenReflexiveEffect p
                 ? p.targetPredicate()
                 : e.targetSpec().predicate();
     }

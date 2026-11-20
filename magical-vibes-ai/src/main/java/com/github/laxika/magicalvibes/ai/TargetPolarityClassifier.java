@@ -44,7 +44,6 @@ import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantStaticEffectToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetPermanentThenReflexiveEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
@@ -375,12 +374,6 @@ public class TargetPolarityClassifier {
         }
 
         // Counters: -1/-1 hurts, +1/+1 helps, anything else carries no direction.
-        if (effect instanceof PutCountersOnTargetPermanentThenReflexiveEffect counter) {
-            // The reflexive ability chooses its own target later; only the initial counters
-            // determine which permanent should be targeted now.
-            return classify(gameData, new PutCounterOnTargetPermanentEffect(
-                    counter.counterType(), counter.count()), aiPlayerId);
-        }
         if (effect instanceof PutCounterOnTargetPermanentEffect counter) {
             if (counter.counterType() == CounterType.MINUS_ONE_MINUS_ONE) {
                 return TargetPolarity.HARMFUL;

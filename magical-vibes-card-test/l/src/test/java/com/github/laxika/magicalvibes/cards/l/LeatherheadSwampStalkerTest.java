@@ -79,6 +79,7 @@ class LeatherheadSwampStalkerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing a counter of another kind also destroys")
     void canRemoveAnotherKindOfCounterAndDestroyAfterCombatEnds() {
         Permanent leatherhead = addLeatherhead(player1);
         leatherhead.setCounterCount(CounterType.HEXPROOF, 0);
@@ -98,6 +99,7 @@ class LeatherheadSwampStalkerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With several kinds of counter, its controller chooses which to remove")
     void choosesWhichKindOfCounterToRemove() {
         Permanent leatherhead = addLeatherhead(player1);
         leatherhead.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
@@ -117,6 +119,7 @@ class LeatherheadSwampStalkerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Destroys an enchantment the damaged player controls")
     void destroysAnEnchantment() {
         Permanent leatherhead = addLeatherhead(player1);
         leatherhead.setAttacking(true);
@@ -133,6 +136,7 @@ class LeatherheadSwampStalkerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With no counter to remove, nothing is destroyed")
     void cannotDestroyWithoutRemovingACounter() {
         Permanent leatherhead = addLeatherhead(player1);
         leatherhead.setCounterCount(CounterType.HEXPROOF, 0);
@@ -149,6 +153,7 @@ class LeatherheadSwampStalkerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The counter is removed even with no legal target for the reflexive ability")
     void mayRemoveACounterEvenWithoutALegalTarget() {
         Permanent leatherhead = addLeatherhead(player1);
         leatherhead.setAttacking(true);
@@ -165,6 +170,7 @@ class LeatherheadSwampStalkerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The reflexive ability resolves after Leatherhead left the battlefield")
     void reflexiveTriggerSurvivesLeatherheadLeavingTheBattlefield() {
         Permanent leatherhead = addLeatherhead(player1);
         leatherhead.setAttacking(true);
@@ -182,6 +188,7 @@ class LeatherheadSwampStalkerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The target must still be controlled by the damaged player as the ability resolves")
     void targetMustStillBeControlledByTheDamagedPlayerAtResolution() {
         Permanent leatherhead = addLeatherhead(player1);
         leatherhead.setAttacking(true);

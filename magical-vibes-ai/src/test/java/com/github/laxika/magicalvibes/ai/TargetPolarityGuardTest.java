@@ -37,7 +37,12 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnTargetPermanentThenReflexiveEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterControlLossUnattachTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardOnDeathThisTurnEffect;
@@ -92,8 +97,10 @@ class TargetPolarityGuardTest {
                 CounterType.MINUS_ONE_MINUS_ONE, TargetPolarity.HARMFUL,
                 CounterType.CHARGE, TargetPolarity.NEUTRAL);
         expected.forEach((counterType, polarity) ->
-                assertThat(classifier.classify(gd, new PutCountersOnTargetPermanentThenReflexiveEffect(
-                        counterType, 2, ReturnToHandEffect.target()), aiPlayerId))
+                assertThat(classifier.classify(gd, SequenceEffect.of(
+                        new PutCounterOnTargetPermanentEffect(counterType, 2),
+                        new ConditionalEffect(new HappenedThisWay(StepKind.PUT_COUNTERS),
+                                new QueueReflexiveAbilityEffect(ReturnToHandEffect.target()))), aiPlayerId))
                         .as("initial %s counters, independently targeted reflexive removal", counterType)
                         .isEqualTo(polarity));
         assertThat(classifier.classifyCard(gd, new DimensionXPizzasaur(), aiPlayerId))

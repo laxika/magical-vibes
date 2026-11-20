@@ -4,10 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceThenEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
@@ -31,9 +35,10 @@ public class KappaTechWrecker extends Card {
                         new PermanentIsEnchantmentPredicate())),
                 new PermanentControlledByDefendingPlayerPredicate()));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(
-                new RemoveCounterFromSourceThenEffect(
-                        CounterType.DEATHTOUCH,
-                        new ExileTargetPermanentEffect(artifactOrEnchantmentControlledByDefendingPlayer)),
+                SequenceEffect.of(
+                        new RemoveCounterFromSourceEffect(CounterType.DEATHTOUCH, 1),
+                        new ConditionalEffect(HappenedThisWay.removedCounters(), new QueueReflexiveAbilityEffect(
+                                new ExileTargetPermanentEffect(artifactOrEnchantmentControlledByDefendingPlayer)))),
                 "Remove a deathtouch counter from this creature?"));
     }
 }

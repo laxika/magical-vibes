@@ -2,15 +2,21 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.t.Timebender;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -69,6 +75,24 @@ class WaningWurmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Isn't sacrificed when it lost vanishing before its upkeep trigger removes the last time counter")
+    void notSacrificedAfterLosingVanishing() {
+        Permanent wurm = addCreatureReady(player1, new WaningWurm());
+        wurm.setCounterCount(CounterType.TIME, 1);
+
+        advanceToUpkeep(player1);
+        assertThat(gd.stack).hasSize(1);
+        gd.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), "Test", null, player2.getId(),
+                new RemoveKeywordEffect(Keyword.VANISHING, Subjects.target()), wurm.getId(), null, null,
+                Duration.UNTIL_END_OF_TURN, 0));
+        resolveAllTriggers();
+
+        assertThat(wurm.getCounterCount(CounterType.TIME)).isZero();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(wurm);
+    }
+
+    @Test
+    @DisplayName("Has no upkeep trigger without a time counter")
     void noTimeCountersMeansNoUpkeepTrigger() {
         Permanent wurm = addCreatureReady(player1, new WaningWurm());
 
@@ -79,6 +103,7 @@ class WaningWurmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Removing the last time counter puts vanishing's sacrifice trigger on the stack")
     void lastCounterRemovalQueuesSeparateSacrificeTrigger() {
         Permanent wurm = addCreatureReady(player1, new WaningWurm());
         wurm.setCounterCount(CounterType.TIME, 1);
@@ -97,6 +122,7 @@ class WaningWurmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Another effect removing the last time counters triggers the sacrifice")
     void removingLastCountersWithTimebenderCausesSacrifice() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

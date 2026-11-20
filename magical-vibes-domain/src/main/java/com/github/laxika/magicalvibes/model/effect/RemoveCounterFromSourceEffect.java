@@ -14,6 +14,13 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
  * counter from that creature", {@link Subjects#attached()} for "enchanted creature", {@link Subjects#granter()} for an
  * ability an Aura grants that removes counters from the Aura (Heliod's Punishment; bound at activation). A target
  * subject is {@link RemoveCounterFromTargetPermanentEffect}'s.</p>
+ *
+ * <p>{@link CounterType#ANY} is "remove a counter from this creature" of any kind: only with the source subject and a
+ * fixed amount, of a kind the source has at least that many of; with several such kinds the controller chooses one as
+ * the effect resolves.</p>
+ *
+ * <p>It is a REMOVE_COUNTERS step: "If you do" / "When you do" after it is a {@code ConditionalEffect} of
+ * {@code HappenedThisWay.removedCounters()} (or {@code atLeast(REMOVE_COUNTERS, n)} for "remove N").</p>
  */
 public record RemoveCounterFromSourceEffect(CounterType counterType, int amount, DynamicAmount dynamicAmount,
                                             boolean targetsPlayer, PermanentSubject subject) implements CardEffect {
@@ -28,6 +35,10 @@ public record RemoveCounterFromSourceEffect(CounterType counterType, int amount,
         }
         if (targetsPlayer && !(subject instanceof PermanentSubject.Source)) {
             throw new IllegalArgumentException("Only the source form targets a player for its amount: " + subject);
+        }
+        if (counterType == CounterType.ANY
+                && (dynamicAmount != null || targetsPlayer || !(subject instanceof PermanentSubject.Source))) {
+            throw new IllegalArgumentException("A counter of any kind is removed only from the source, a fixed number");
         }
     }
 

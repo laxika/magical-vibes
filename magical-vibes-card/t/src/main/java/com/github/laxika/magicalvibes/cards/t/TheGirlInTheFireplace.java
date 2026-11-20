@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.RemoveCounterAndSacrificeSelfOnLastEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -37,7 +37,7 @@ public class TheGirlInTheFireplace extends Card {
                         StaticAbility.of(new EnterWithCountersEffect(CounterType.TIME, new Fixed(3))),
                         new TriggeredAbility(Triggers.upkeep(ActivePlayer.YOU),
                                 TriggerOptions.DEFAULT.withInterveningIf(new SourceCounterThreshold(1, CounterType.TIME)),
-                                new RemoveCounterAndSacrificeSelfOnLastEffect(CounterType.TIME)),
+                                new RemoveCounterFromSourceEffect(CounterType.TIME, 1)),
                         StaticAbility.of(new PreventAllDamageEffect()))));
 
         addTrigger(Triggers.chapter(2), new CreateTokenEffect(
