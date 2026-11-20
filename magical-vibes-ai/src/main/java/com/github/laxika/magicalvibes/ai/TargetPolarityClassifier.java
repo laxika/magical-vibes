@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsOrElseEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
@@ -260,6 +261,13 @@ public class TargetPolarityClassifier {
         if (effect instanceof ExileTargetCreaturesUntilSourceLeavesWithCounterEffect
                 || effect instanceof ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect
                 || effect instanceof PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffect) {
+            return TargetPolarity.HARMFUL_REMOVAL;
+        }
+
+        // "Target creature's controller sacrifices it" (Mercy Killing, Sarkhan the Mad, Arcum Dagsson): an edict aimed at
+        // the target, which leaves the battlefield.
+        if (effect instanceof SacrificeSelfEffect sacrifice && sacrifice.subject().declaresTarget()
+                && sacrifice.sacrificer() instanceof PlayerSubject.ControllerOf) {
             return TargetPolarity.HARMFUL_REMOVAL;
         }
 
@@ -550,7 +558,6 @@ public class TargetPolarityClassifier {
             entry("PutTargetSpellOrPermanentIntoLibraryNFromTopEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ReturnTargetPermanentToHandOrLibraryTopByPredicateEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ReturnTargetPermanentToHandThenEffect", TargetPolarity.HARMFUL_REMOVAL),
-            entry("SacrificeTargetCreatureThenCreateTokensEqualToPowerEffect", TargetPolarity.HARMFUL_REMOVAL),
             // Slave of Bolas: the stolen target is sacrificed at end step — net removal. Own-board
             // uses (Hazoret's Favor) are safe: their target filters restrict candidates anyway.
             entry("SacrificeTargetPermanentAtEndStepEffect", TargetPolarity.HARMFUL_REMOVAL),

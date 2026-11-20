@@ -28,8 +28,8 @@ class CometCrawlerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        PendingInteraction.MultiPermanentChoice choice =
+                (PendingInteraction.MultiPermanentChoice) gd.interaction.activeInteraction();
         assertThat(choice.validIds()).containsExactly(bears.getId(), spellbook.getId());
         assertThat(choice.validIds()).doesNotContain(crawler.getId());
     }
@@ -41,7 +41,6 @@ class CometCrawlerTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         attackAndAcceptMay();
-        harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(gqs.getEffectivePower(gd, crawler)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, crawler)).isEqualTo(3);
@@ -55,7 +54,6 @@ class CometCrawlerTest extends BaseCardTest {
         Permanent spellbook = harness.addToBattlefieldAndReturn(player1, new Spellbook());
 
         attackAndAcceptMay();
-        harness.handlePermanentChosen(player1, spellbook.getId());
 
         assertThat(gqs.getEffectivePower(gd, crawler)).isEqualTo(4);
         assertThat(gqs.getEffectiveToughness(gd, crawler)).isEqualTo(3);
@@ -84,7 +82,6 @@ class CometCrawlerTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
 
         attackAndAcceptMay();
-        harness.handlePermanentChosen(player1, bears.getId());
 
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
@@ -129,8 +126,8 @@ class CometCrawlerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        PendingInteraction.MultiPermanentChoice choice =
+                (PendingInteraction.MultiPermanentChoice) gd.interaction.activeInteraction();
         assertThat(choice.validIds()).containsExactlyInAnyOrder(bears.getId(), returned.getId());
     }
 
@@ -144,7 +141,7 @@ class CometCrawlerTest extends BaseCardTest {
         Permanent returned = returnCrawlerAsNewPermanent(crawler);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bears.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(bears.getId()));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears.getCard());
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(2);
@@ -158,7 +155,6 @@ class CometCrawlerTest extends BaseCardTest {
         Permanent spellbook = harness.addToBattlefieldAndReturn(player1, new Spellbook());
 
         attackAndAcceptMay();
-        harness.handlePermanentChosen(player1, spellbook.getId());
         resolveCombat();
 
         harness.assertLife(player1, 24);

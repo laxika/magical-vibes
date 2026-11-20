@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BrawlBashOgreTest extends BaseCardTest {
 
     @Test
-    @DisplayName("Attacking offers sacrificing another creature")
+    @DisplayName("Accepting sacrifices the only other creature you control, never Brawl-Bash Ogre or an opponent's")
     void attackingOffersSacrifice() {
         Permanent ogre = addCreatureReady(player1, new BrawlBashOgre());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
@@ -29,10 +29,9 @@ class BrawlBashOgreTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validIds()).containsExactly(bears.getId());
-        assertThat(choice.validIds()).doesNotContain(ogre.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ogre);
     }
 
     @Test
@@ -44,7 +43,6 @@ class BrawlBashOgreTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(gqs.getEffectivePower(gd, ogre)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, ogre)).isEqualTo(5);
@@ -89,7 +87,6 @@ class BrawlBashOgreTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(gqs.getEffectivePower(gd, ogre)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, ogre)).isEqualTo(5);
@@ -110,10 +107,7 @@ class BrawlBashOgreTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validIds()).containsExactly(otherOgre.getId());
-        harness.handlePermanentChosen(player1, otherOgre.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(attacker).doesNotContain(otherOgre);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherOgre.getCard());

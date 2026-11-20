@@ -2920,22 +2920,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                                   SacrificePermanentAndReturnTargetCardsFromGraveyardEffect effect)
             implements PermanentChoiceContext {}
 
-    /** "Sacrifice another permanent. If you do, this creature gets +X/+Y." */
-    record SacrificePermanentAndBoostSelf(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
-                                          int power, int toughness, String permanentDescription,
-                                          Set<Keyword> grantedKeywords) implements PermanentChoiceContext {
-        public SacrificePermanentAndBoostSelf(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
-                                              int power, int toughness, String permanentDescription) {
-            this(controllerId, sourceCard, sourcePermanentId, power, toughness,
-                    permanentDescription, Set.of());
-        }
-    }
-
-    /** "Sacrifice another permanent. If you do, this creature gains [keyword]." */
-    record SacrificePermanentAndGrantKeywordSelf(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
-                                                 Set<Keyword> keywords, String permanentDescription)
-            implements PermanentChoiceContext {}
-
     /** "Blight N. If you do, [effect]." */
     record BlightCreatureChoice(UUID controllerId, Card sourceCard, UUID sourcePermanentId,
                                 com.github.laxika.magicalvibes.model.effect.BlightEffect effect)

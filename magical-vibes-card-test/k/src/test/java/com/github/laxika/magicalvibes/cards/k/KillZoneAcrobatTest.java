@@ -27,7 +27,6 @@ class KillZoneAcrobatTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, otherCreature.getId());
 
         assertThat(gqs.hasKeyword(gd, acrobat, Keyword.FLYING)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherCreature.getCard());
@@ -42,7 +41,6 @@ class KillZoneAcrobatTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
 
         assertThat(gqs.hasKeyword(gd, acrobat, Keyword.FLYING)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());
@@ -71,7 +69,6 @@ class KillZoneAcrobatTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, otherCreature.getId());
         assertThat(gqs.hasKeyword(gd, acrobat, Keyword.FLYING)).isTrue();
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
@@ -96,7 +93,7 @@ class KillZoneAcrobatTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Sacrifice choices exclude the source and opposing creatures and artifacts")
+    @DisplayName("The only other permanent of yours that qualifies is sacrificed without a prompt; opposing ones are not eligible")
     void sacrificeChoicesOnlyIncludeOtherControlledPermanents() {
         Permanent acrobat = addCreatureReady(player1, new KillZoneAcrobat());
         Permanent ownArtifact = harness.addToBattlefieldAndReturn(player1, new EnergyRefractor());
@@ -107,13 +104,9 @@ class KillZoneAcrobatTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validPermanentIds()).containsExactly(ownArtifact.getId());
-
-        harness.handlePermanentChosen(player1, ownArtifact.getId());
-
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownArtifact.getCard());
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(acrobat);
         assertThat(gqs.hasKeyword(gd, acrobat, Keyword.FLYING)).isTrue();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingCreature, opposingArtifact);
     }
@@ -134,12 +127,12 @@ class KillZoneAcrobatTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validPermanentIds()).containsExactlyInAnyOrder(returned.getId(), artifact.getId());
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.MultiPermanentChoice choice =
+                (PendingInteraction.MultiPermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(returned.getId(), artifact.getId());
 
-        harness.handlePermanentChosen(player1, returned.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(returned.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(artifact).doesNotContain(returned);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(returned.getCard());
@@ -160,7 +153,7 @@ class KillZoneAcrobatTest extends BaseCardTest {
         assertThat(returned.getId()).isNotEqualTo(acrobat.getId());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, artifact.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(artifact.getCard());
         assertThat(gqs.hasKeyword(gd, returned, Keyword.FLYING)).isFalse();

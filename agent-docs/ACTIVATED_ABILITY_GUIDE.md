@@ -555,13 +555,14 @@ Cards: `VolrathsCurse`
 Chain `.withActivatableOnlyByOpponents()` instead for "Only your opponents may activate this
 ability" (Soul Ransom) — same two-flag shape, but the second flag rejects only the source
 permanent's own controller. Pair it with an effect that acts on the source's controller rather than
-the entry's controller (`SacrificeSelfAndControllerDrawsEffect`), since the activator is the opponent.
+the entry's controller (`SacrificeSelfEffect(source(), controllerOf(source()))` and `DrawCardEffect(2, controllerOf(source()))`), since the activator is the opponent.
 
 ```java
 // Discard two cards: this Aura's controller sacrifices it, then draws two cards.
 new ActivatedAbility(false, null,
     List.of(new DiscardCardTypeCost(null, null, 2),
-            new SacrificeSelfAndControllerDrawsEffect(2)), description)
+            new SacrificeSelfEffect(Subjects.source(), Subjects.controllerOf(Subjects.source())),
+            new DrawCardEffect(2, Subjects.controllerOf(Subjects.source()))), description)
     .withActivatableByAnyPlayer()
     .withActivatableOnlyByOpponents()
 ```

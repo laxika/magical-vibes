@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ControlEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndControllerDrawsEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-
 import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "198")
@@ -18,9 +19,11 @@ public class SoulRansom extends Card {
     public SoulRansom() {
         target(TargetFilters.creature())
                 .addStaticEffect(new ControlEnchantedCreatureEffect());
+        // An opponent activates it: the Aura's controller (as it is or last was) sacrifices it and draws.
         addActivatedAbility(new ActivatedAbility(false, null,
                         List.of(new DiscardCardTypeCost(null, null, 2),
-                                new SacrificeSelfAndControllerDrawsEffect(2)),
+                                new SacrificeSelfEffect(Subjects.source(), Subjects.controllerOf(Subjects.source())),
+                                new DrawCardEffect(2, Subjects.controllerOf(Subjects.source()))),
                         "Discard two cards: This Aura's controller sacrifices it, then draws two cards. "
                                 + "Only your opponents may activate this ability.")
                         .withActivatableByAnyPlayer()

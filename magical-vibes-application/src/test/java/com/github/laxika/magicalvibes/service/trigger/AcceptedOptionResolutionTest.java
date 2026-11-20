@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.service.trigger;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -14,7 +16,16 @@ import com.github.laxika.magicalvibes.model.effect.EachOpponentOfTriggeringPlaye
 import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTargetArtifactCreatureThenMaySearchLibraryForNoncreatureArtifactEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -87,7 +98,7 @@ class AcceptedOptionResolutionTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An accepted option that asks for a card parks the spell that offered it, which then finishes resolving")
+    @DisplayName("An accepted option that asks for a card pauses the spell that offered it, which then finishes resolving")
     void spellFinishesResolvingAfterAnAcceptedOptionThatAsked() {
         Card golem = creature("Fixture Golem");
         golem.setAdditionalTypes(java.util.Set.of(CardType.ARTIFACT));
@@ -96,7 +107,18 @@ class AcceptedOptionResolutionTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(trinket));
         harness.setLibrary(player1, List.of(new GrizzlyBears()));
         Card spell = card("Fixture Salvage", CardType.SORCERY);
-        spell.addSpellEffect(new SacrificeTargetArtifactCreatureThenMaySearchLibraryForNoncreatureArtifactEffect());
+        spell.addSpellEffect(SequenceEffect.of(
+                new SacrificeSelfEffect(Subjects.target(), Subjects.controllerOf(Subjects.target()),
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsArtifactPredicate(), new PermanentIsCreaturePredicate()))),
+                new MayEffect(new SearchLibraryEffect(
+                        new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.ARTIFACT),
+                                new CardNotPredicate(new CardTypePredicate(CardType.CREATURE)))),
+                        LibrarySearchDestination.BATTLEFIELD)
+                        .searchedBy(Subjects.controllerOf(Subjects.target())),
+                        "Search your library for a noncreature artifact card?", null,
+                        MayChoicePlayer.TARGET_PERMANENT_CONTROLLER)));
         spell.addSpellEffect(new DrawCardEffect(1));
         mainPhaseOf(player1);
         harness.setHand(player1, List.of(spell));
@@ -108,8 +130,8 @@ class AcceptedOptionResolutionTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
         assertThat(abilitiesOnStack()).isEmpty();
-        assertThat(gd.parkedOuterResolutions).hasSize(1);
-        assertThat(gd.parkedOuterResolutions.peek().entry().getCard()).isSameAs(spell);
+        assertThat(gd.pendingEffectResolutionEntry).isNotNull();
+        assertThat(gd.pendingEffectResolutionEntry.getCard()).isSameAs(spell);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
         harness.handleCardChosen(player2, 0);

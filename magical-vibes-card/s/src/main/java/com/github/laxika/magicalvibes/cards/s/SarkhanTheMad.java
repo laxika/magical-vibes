@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealPowerDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndDealDamageToSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeTargetCreatureThenCreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -33,9 +34,10 @@ public class SarkhanTheMad extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new SacrificeTargetCreatureThenCreateTokenEffect(
+                List.of(new SacrificeSelfEffect(Subjects.target(), Subjects.controllerOf(Subjects.target())),
                         new CreateTokenEffect("Dragon", 5, 5, CardColor.RED, List.of(CardSubtype.DRAGON),
-                                Set.of(Keyword.FLYING), Set.of()))),
+                                Set.of(Keyword.FLYING), Set.of())
+                                .forController(Subjects.controllerOf(Subjects.target()))),
                 "-2: Target creature's controller sacrifices it, then that player creates a 5/5 red Dragon creature token with flying.",
                 TargetFilters.creature()));
 

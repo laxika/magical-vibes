@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.FrilledOculus;
 import com.github.laxika.magicalvibes.cards.n.Naturalize;
+import com.github.laxika.magicalvibes.cards.t.TajuruPreserver;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SoulRansom.class, FrilledOculus.class, SimicGuildgate.class, Naturalize.class})
+@CardUsed({SoulRansom.class, FrilledOculus.class, SimicGuildgate.class, Naturalize.class, TajuruPreserver.class})
 class SoulRansomTest extends BaseCardTest {
 
     /** Casts Soul Ransom from player1 onto a fresh player2 creature and resolves it. */
@@ -67,6 +68,29 @@ class SoulRansomTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerBattlefields.get(player2.getId()))
+                .anyMatch(p -> p.getId().equals(creature.getId()));
+    }
+
+    @Test
+    @DisplayName("An opponent's ransom can't make a Tajuru Preserver controller sacrifice the Aura, but they still draw two")
+    void tajuruPreserverKeepsTheAuraButStillDraws() {
+        Permanent creature = stealCreature();
+        harness.addToBattlefield(player1, new TajuruPreserver());
+
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new FrilledOculus(), new SimicGuildgate()));
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new SimicGuildgate(), new SimicGuildgate(), new SimicGuildgate()));
+
+        harness.activateAbility(player2, auraIndex(), 0, null, null);
+        harness.handleCardChosen(player2, 0);
+        harness.handleCardChosen(player2, 0);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Soul Ransom");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(creature.getId()));
     }
 

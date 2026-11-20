@@ -3,15 +3,20 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificePermanentAndBoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
 import java.util.List;
 import java.util.Set;
 
@@ -20,15 +25,16 @@ public class DireFleetWarmonger extends Card {
 
     public DireFleetWarmonger() {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new MayEffect(
-                new SacrificePermanentAndBoostSelfEffect(
-                        new PermanentAllOfPredicate(List.of(
-                                new PermanentIsCreaturePredicate(),
-                                new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
-                        )),
-                        2,
-                        2,
-                        "another creature",
-                        Set.of(Keyword.TRAMPLE)),
+                SequenceEffect.of(
+                        new SacrificePermanentsEffect(1,
+                                new PermanentAllOfPredicate(List.of(
+                                        new PermanentIsCreaturePredicate(),
+                                        new PermanentNotPredicate(new PermanentIsSourceCardPredicate())
+                                )),
+                                Subjects.you()),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(),
+                                new BoostSelfEffect(Subjects.source(), new Fixed(2), new Fixed(2),
+                                        Set.of(Keyword.TRAMPLE)))),
                 "Sacrifice another creature?"));
     }
 }

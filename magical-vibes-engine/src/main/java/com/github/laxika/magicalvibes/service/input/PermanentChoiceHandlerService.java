@@ -452,8 +452,6 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.SacrificeOneOfTwoThenCounterOnOther
                 || context instanceof PermanentChoiceContext.SacrificeOneOfTwoThenReturnOtherToHand
                 || context instanceof PermanentChoiceContext.SacrificePermanentAndReturnTargetCards
-                || context instanceof PermanentChoiceContext.SacrificePermanentAndBoostSelf
-                || context instanceof PermanentChoiceContext.SacrificePermanentAndGrantKeywordSelf
                 || context instanceof PermanentChoiceContext.SacrificeCreatureCreateTokensEqualToToughness
                 || context instanceof PermanentChoiceContext.SacrificeAnotherCreatureDrawAndMayPutPermanent
                 || context instanceof PermanentChoiceContext.SacrificeCreatureCreateSizedTokenEqualToPower
@@ -568,10 +566,6 @@ public class PermanentChoiceHandlerService {
                     battlefieldHandler.handleSacrificeOneOfTwoThenReturnOtherToHand(gameData, permanentId, sacrificeOneOfTwo);
             case PermanentChoiceContext.SacrificePermanentAndReturnTargetCards spar ->
                     battlefieldHandler.handleSacrificePermanentAndReturnTargetCards(gameData, permanentId, spar);
-            case PermanentChoiceContext.SacrificePermanentAndBoostSelf spabs ->
-                    battlefieldHandler.handleSacrificePermanentAndBoostSelf(gameData, permanentId, spabs);
-            case PermanentChoiceContext.SacrificePermanentAndGrantKeywordSelf spagks ->
-                    battlefieldHandler.handleSacrificePermanentAndGrantKeywordSelf(gameData, permanentId, spagks);
             case PermanentChoiceContext.SacrificeCreatureCreateTokensEqualToToughness scct ->
                     battlefieldHandler.handleSacrificeCreatureCreateTokensEqualToToughness(gameData, permanentId, scct);
             case PermanentChoiceContext.SacrificeAnotherCreatureDrawAndMayPutPermanent venom ->

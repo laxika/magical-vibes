@@ -29,7 +29,6 @@ class DireFleetWarmongerTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, watchdog.getId());
 
         assertThat(gqs.getEffectivePower(gd, warmonger)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, warmonger)).isEqualTo(5);
@@ -87,7 +86,6 @@ class DireFleetWarmongerTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, watchdog.getId());
 
         assertThat(gqs.hasKeyword(gd, warmonger, Keyword.TRAMPLE)).isTrue();
 
@@ -112,10 +110,8 @@ class DireFleetWarmongerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validPermanentIds()).containsExactly(ownCreature.getId());
-        harness.handlePermanentChosen(player1, ownCreature.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(ownCreature.getCard());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(warmonger);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opponentCreature);
@@ -133,7 +129,7 @@ class DireFleetWarmongerTest extends BaseCardTest {
         advanceToCombat(player1);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrificed.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrificed.getId()));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(sacrificed.getCard());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(warmonger, remaining);
@@ -160,7 +156,7 @@ class DireFleetWarmongerTest extends BaseCardTest {
 
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrifice.getCard());
         assertThat(gqs.getEffectivePower(gd, returned)).isEqualTo(3);
@@ -185,11 +181,7 @@ class DireFleetWarmongerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validPermanentIds()).containsExactly(returned.getId());
-        harness.handlePermanentChosen(player1, returned.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(returned);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(returned.getCard());

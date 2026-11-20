@@ -41,7 +41,6 @@ class BloodcrazedSocialiteTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, blood.getId());
 
         assertThat(gqs.getEffectivePower(gd, socialite)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, socialite)).isEqualTo(5);
@@ -94,7 +93,7 @@ class BloodcrazedSocialiteTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
         }
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
         assertThat(gqs.getEffectivePower(gd, socialite)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, socialite)).isEqualTo(3);
     }
@@ -113,7 +112,7 @@ class BloodcrazedSocialiteTest extends BaseCardTest {
             harness.handleMayAbilityChosen(player1, true);
         }
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(blood);
         assertThat(gqs.getEffectivePower(gd, socialite)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, socialite)).isEqualTo(3);
@@ -128,7 +127,6 @@ class BloodcrazedSocialiteTest extends BaseCardTest {
         declareAttackers(List.of(0));
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, blood.getId());
         assertThat(gqs.getEffectivePower(gd, socialite)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, socialite)).isEqualTo(5);
 
@@ -160,9 +158,7 @@ class BloodcrazedSocialiteTest extends BaseCardTest {
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
-                .containsExactly(blood.getId());
-        harness.handlePermanentChosen(player1, blood.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(steel).doesNotContain(blood);
         assertThat(gqs.getEffectivePower(gd, socialite)).isEqualTo(5);
     }

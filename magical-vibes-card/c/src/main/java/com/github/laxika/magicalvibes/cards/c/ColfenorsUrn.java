@@ -2,10 +2,14 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsThreshold;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureAndTrackWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAndReturnCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentToughnessAtLeastPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -33,6 +37,8 @@ public class ColfenorsUrn extends Card {
         // owner's control.
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceExiledCardsThreshold(3)),
-                new SacrificeSelfAndReturnCardsExiledWithSourceEffect(3));
+                SequenceEffect.of(
+                        new SacrificeSelfEffect(),
+                        new ConditionalEffect(HappenedThisWay.sacrificed(), new ReturnAllCardsExiledWithSourceEffect())));
     }
 }

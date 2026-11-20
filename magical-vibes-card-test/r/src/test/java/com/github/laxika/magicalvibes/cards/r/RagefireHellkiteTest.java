@@ -13,7 +13,6 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({RagefireHellkite.class, EssenceFlux.class})
 class RagefireHellkiteTest extends BaseCardTest {
@@ -25,7 +24,6 @@ class RagefireHellkiteTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new RagefireHellkite());
 
         attackAndAcceptMay();
-        harness.handlePermanentChosen(player1, bears.getId());
 
         assertThat(gqs.hasKeyword(gd, hellkite, Keyword.DOUBLE_STRIKE)).isTrue();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears.getCard());
@@ -52,7 +50,6 @@ class RagefireHellkiteTest extends BaseCardTest {
         Permanent bears = addCreatureReady(player1, new RagefireHellkite());
 
         attackAndAcceptMay();
-        harness.handlePermanentChosen(player1, bears.getId());
         assertThat(gqs.hasKeyword(gd, hellkite, Keyword.DOUBLE_STRIKE)).isTrue();
 
         harness.forceStep(com.github.laxika.magicalvibes.model.TurnStep.END_STEP);
@@ -69,6 +66,7 @@ class RagefireHellkiteTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Only another creature you control qualifies, so it is sacrificed without a prompt")
     void cannotSacrificeItselfOrAnOpponentsCreature() {
         Permanent hellkite = addCreatureReady(player1, new RagefireHellkite());
         Permanent bears = addCreatureReady(player1, new RagefireHellkite());
@@ -76,18 +74,15 @@ class RagefireHellkiteTest extends BaseCardTest {
 
         attackAndAcceptMay();
 
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, hellkite.getId()))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, opposingHellkite.getId()))
-                .isInstanceOf(IllegalStateException.class);
-        harness.handlePermanentChosen(player1, bears.getId());
-
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(bears.getCard());
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(hellkite);
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(opposingHellkite);
         assertThat(gqs.hasKeyword(gd, hellkite, Keyword.DOUBLE_STRIKE)).isTrue();
     }
 
     @Test
+    @DisplayName("With no other creature to sacrifice, Ragefire Hellkite doesn't gain double strike")
     void noOtherCreatureMeansNoDoubleStrike() {
         Permanent hellkite = addCreatureReady(player1, new RagefireHellkite());
         addCreatureReady(player2, new RagefireHellkite());
@@ -102,6 +97,7 @@ class RagefireHellkiteTest extends BaseCardTest {
 
     @Test
     @CardUsed(EssenceFlux.class)
+    @DisplayName("A returned Hellkite doesn't gain double strike from its old attack trigger")
     void returnedHellkiteDoesNotGainDoubleStrikeFromItsOldAttackTrigger() {
         Permanent hellkite = addCreatureReady(player1, new RagefireHellkite());
         Permanent sacrifice = addCreatureReady(player1, new RagefireHellkite());
@@ -118,7 +114,7 @@ class RagefireHellkiteTest extends BaseCardTest {
 
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, sacrifice.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(sacrifice.getId()));
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(sacrifice.getCard());
         assertThat(gqs.hasKeyword(gd, returned, Keyword.DOUBLE_STRIKE)).isFalse();
@@ -126,6 +122,7 @@ class RagefireHellkiteTest extends BaseCardTest {
 
     @Test
     @CardUsed(EssenceFlux.class)
+    @DisplayName("A returned Hellkite is another creature for its old attack trigger and is sacrificed")
     void returnedHellkiteCanBeSacrificedToItsOldAttackTrigger() {
         Permanent hellkite = addCreatureReady(player1, new RagefireHellkite());
         harness.setHand(player1, List.of(new EssenceFlux()));
@@ -141,7 +138,6 @@ class RagefireHellkiteTest extends BaseCardTest {
 
         resolveAllTriggers();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, returned.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(returned);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(returned.getCard());

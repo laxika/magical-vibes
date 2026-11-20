@@ -73,12 +73,28 @@ public class SacrificeSelfEffectHandler implements NormalEffectHandlerBean, Asks
             return;
         }
 
+        if (sacrifice.subject().declaresTarget()) {
+            rememberTarget(gameData, entry, sacrificed, currentControllerId);
+        }
         if (sacrifice.tokenForSacrificingPlayer() == null) {
             departureService.departAsStep(gameData, entry, effect,
                     DepartureBatch.of(List.of(DepartureIntent.sacrifice(sacrificed.getId()))));
             return;
         }
         stepDepartureSupport.sacrificeThenContinue(gameData, entry, effect, sacrificed.getId(), this);
+    }
+
+    /**
+     * Records the target's controller, card, power and toughness as it is sacrificed, so "its controller" and "that
+     * creature's power" of a later step read them once it has left (the removal service records them only for entries
+     * on the stack, not for a resolving loyalty ability).
+     */
+    private void rememberTarget(GameData gameData, StackEntry entry, Permanent target, UUID controllerId) {
+        entry.getRemovedPermanentControllers().put(target.getId(), controllerId);
+        entry.rememberLastKnownPermanentCard(target.getId(), target.getCard());
+        entry.getLastKnownPermanentPowers().put(target.getId(), gameQueryService.getEffectivePower(gameData, target));
+        entry.getLastKnownPermanentToughnesses().put(target.getId(),
+                gameQueryService.getEffectiveToughness(gameData, target));
     }
 
     /**

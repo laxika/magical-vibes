@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 5 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 6 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -524,6 +524,7 @@ cause under Findings.
 | 3 | the groups run 2 left on the target wrappers: "its controller may search" (`LibrarySearchPlayer` → `PlayerSubject`), "its controller creates a token" (`CreateTokenEffect` token controller), the layer-sensitive "if it was a …" checks | done (28 cards split: 15 search, 5 token, 8 layered; `LibrarySearchPlayer` deleted; `TargetPermanentMatches` reads a departed target's layered last-known card; no wrapper emptied: Destroy 14, Exile 5, Return 1 left; `ThenEffectRecipient` stays) |
 | 4 | `--unaudited --family Deal`, the damage-then families ("deals N damage … If a [creature] is dealt damage this way, …") | done (12 split, 4 blocked-other, 0 blocked-step-model, 0 unique; `thisWay(kind, filter)` and `HappenedThisWay.toA`; Smite the Deathless and The War Doctor fixed by Oracle text) |
 | 5 | `--unaudited --family Deal`, the rest: the "And" simultaneous sets, "Unless" and perpetual riders | done (3 split, 2 absorbed, 4 blocked-step-model, 6 blocked-other, 2 unique; 7 of `DealDamageToTargetAndTheirCreaturesEffect`'s 8 cards split; `otherCreaturesSharing` subject; next-damage shields cover a whole simultaneous event; Goblin Chainwhirler and Sarkhan's Unsealing made one damage event by Oracle text) |
+| 6 | `--unaudited --family Sacrifice` (the family with the most first halves on step 7's earlier-step list: `SacrificeSelfEffect` and `SacrificePermanentsEffect`) | done (12 split, 8 blocked-other, 0 blocked-step-model, 0 blocked-player-loop, 0 unique; 17 cards rewritten; the blocked ones need the chosen sacrifice's last-known stats from `SacrificePermanentsEffect`, a granted ability's granter, or a delayed trigger that names a permanent) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -3713,6 +3714,84 @@ ratchets) and AI (`TargetPolarityGuardTest`, `SpellEvaluatorTest`): 163 suites, 
   Sarkhan, Dragonsoul (+2), Rockcaster Platoon, Rakdos Firewheeler, Omnath, Locus of Creation, Kumano Faces Kakkazan (I), Joyful
   Stormsculptor, Invasion of Regatha, Chandra, Bold Pyromancer (−7), Carnival // Carnage (Carnival), Avacyn, the Purifier, Claws
   of Wirewood; next-damage-shield tests on Warmonger, Rockcaster Platoon, Sarkhan, Dragonsoul and Claws of Wirewood.
+
+### Step 8, run 6 (2026-11-20)
+
+Family choice: of the candidate families, `--unaudited --family Sacrifice` restricted to `Then` / `And` / `IfYouDo` / `Unless` names
+or a nested `CardEffect` has 47 records, and the most of them start with a step on step 7's earlier-step list
+(`SacrificeSelfEffect` with a source, target, attached or triggering subject; `SacrificePermanentsEffect` for a chosen
+permanent). Exile has more names (193) but most start with a graveyard or library exile that has no recording primitive.
+Verdicts (ledger, step `8`): **split 12**, **blocked-other 8**, blocked-step-model 0, blocked-player-loop 0, unique 0. Ratchet
+4,835 / 4,068 → 4,823 / 4,056 (12 records, 12 handlers deleted). Card text of every rewritten card checked with `get_card`.
+
+- **Split** (spells and activated abilities flat, trigger slots one `SequenceEffect`, "you may" a `MayEffect` around the
+  sequence): Soul Ransom (`SacrificeSelfEffect(source(), controllerOf(source()))` + `DrawCardEffect(2, controllerOf(source()))`, the
+  draw ungated as its ruling says), Furnace Scamp (`DealDamageToPlayersEffect(3, triggeringPlayer())` gated on `sacrificed()`),
+  Sarkhan the Mad −2 and Mercy Killing (`SacrificeSelfEffect(target(), controllerOf(target()))` + `CreateTokenEffect…forController(controllerOf(target()))`,
+  Mercy Killing's count `TargetPower`: last-known once sacrificed, live if it couldn't be, as the handler did), Parasitic Implant
+  (`SacrificeSelfEffect(attached(), controllerOf(attached()))`, token ungated), Foot Chopper (`SacrificeSelfEffect(triggering())`, the creature that dealt the damage, even after the Equipment moved, as
+  `FootChopperTest` checks; `attachedAtTrigger()` sacrificed nothing behind the `MayEffect`; `DrawCardEffect(PermanentLeftThisWayPower)` gated),
+  Colfenor's Urn (`ReturnAllCardsExiledWithSourceEffect` gated), Whispering Specter (`DiscardEffect(TargetPlayerPoisonCounters,
+  triggeringPlayer())` gated; the trigger bakes the damaged player as the entry's target and triggering player), Flame-Kin War Scout
+  (`DealDamageToTargetCreatureEffect(triggering(), 4)` gated), Arcum Dagsson (run 3's may-search pattern after
+  `SacrificeSelfEffect(target(), controllerOf(target()), artifact creature)`), and the "you may sacrifice another … If you do, this
+  creature gets / gains …" seven (Brawl-Bash Ogre, Comet Crawler, Dire Fleet Warmonger, Bloodcrazed Socialite, Seraph of New
+  Phyrexia; Ragefire Hellkite, Kill-Zone Acrobat): `SacrificePermanentsEffect(1, filter, you())` + `ConditionalEffect(sacrificed(),
+  BoostSelfEffect | GrantKeywordEffect(source()))`; their `PermanentChoiceContext` records and completion methods are deleted.
+  Target specs are unchanged: the sacrifice step is the only one that declares a target, with the fused record's legal set.
+- **Survivor change.** `SacrificeSelfEffectHandler` records a target's controller, card, power and toughness before sacrificing
+  it (as `DestroyTargetPermanentEffectHandler` does): the removal service records them only for entries on the stack, so Sarkhan's
+  resolving loyalty ability read no controller (`SarkhanTheMadTest` caught it).
+- **Behaviour changes (Oracle text).** The seven "you may sacrifice another …" cards are gated on the sacrifice ("If you do"):
+  the fused handlers applied the bonus after `sacrificeAndLog` whether or not it happened, and offered permanents that can't be
+  chosen to be sacrificed; `SacrificePermanentsEffect` doesn't offer those, and sacrifices the only eligible permanent without a
+  prompt (several eligible: a multi-permanent choice for one). Their tests answer the new prompt shapes. Soul Ransom's, Parasitic
+  Implant's, Mercy Killing's and Sarkhan's sacrifices now respect "spells and abilities your opponents control can't cause you to
+  sacrifice" (`SacrificeSelfEffect`'s `canEffectCauseSacrifice` check); Soul Ransom is activated by an opponent, so a Tajuru
+  Preserver controller keeps the Aura and still draws (`SoulRansomTest.tajuruPreserverKeepsTheAuraButStillDraws`; the ruling
+  "you'll draw two cards even if you can't sacrifice Soul Ransom"). The survivors' log lines win (the "fizzles — source no longer
+  on the battlefield" lines are gone; no test asserted them).
+- **AI.** `TargetPolarityClassifier`: `SacrificeSelfEffect` with a target subject and `controllerOf` sacrificer is HARMFUL_REMOVAL
+  (Mercy Killing's name entry gave it that; Mercy Killing unchanged). **Target polarity changes** for Sarkhan the Mad −2 and Arcum
+  Dagsson: no polarity (their records had no entry; harmful target spec) → HARMFUL_REMOVAL. `SpellEvaluator` sums the steps: Mercy
+  Killing's and Sarkhan's tokens are the target controller's (`tokenController()` not `you()`), so not counted as the caster's.
+- **Test changes.** `SacrificeSelfAndTargetDiscardsPerPoisonCounterEffectHandlerTest` deleted with its handler (Whispering
+  Specter's card test covers the card). `AcceptedOptionResolutionTest`'s fixture spell used the Arcum record, which queued a
+  bespoke pending may ability and parked the spell; it now uses the split steps, so the spell stays the pending resolution while
+  the search is answered (assertion and display name changed); the parked-outer-resolution path lost that fixture.
+- **Blocked, by cause** (all blocked-other; none is the step model once the first half is a primitive):
+  - the chosen sacrifice's last-known stats: `SacrificePermanentsEffect` records which permanents left, not their power, toughness,
+    colours or types: `SacrificePermanentThenEffect` (121 cards; its continuation also snapshots colours and types, abandons a face-up
+    scheme and includes or excludes the granting permanent), Disciple of Bolas, Rupture (power), the Tribute to Hunger record
+    (toughness; Tribute to Hunger, Devour Flesh, Doomgape, Consuming Vapors). Make `SacrificePermanentsEffect`'s completions record
+    `DepartureResult`s on the step (`PermanentLeftThisWayPower` / `Toughness` then read them) and these split;
+  - a granted activated ability binds no `granter()` at activation and `controllerOf(granter())` has no last-known controller
+    (Hold for Ransom);
+  - no delayed end-step trigger names a permanent for a following `SacrificeSelfEffect` (Spinal Embrace's target, Goblin Crash
+    Pilot's Vehicle, which rides as the entry's `targetId`);
+  - Victimize: its cast-time graveyard targets are special-cased by class in `SpellCastingService`, `TargetLegalityService` and
+    `GameActionAvailabilityService`.
+- Not audited (read only in part): `SacrificePermanentsThenEffect` (sacrifices nothing when fewer than N match; check the
+  rules for "sacrifice N. If you do" first), `SacrificeArtifactThenDealDividedDamageEffect`,
+  `SacrificeTargetArtifactAndReturnTargetArtifactFromGraveyardEffect` (Goblin Welder's simultaneous swap), and the "Unless" /
+  "OrElse" records.
+
+**Tests** (one Gradle run, one `--tests` list per task): the 17 rewritten cards' tests (16 classes, Seraph of New Phyrexia has
+none), `--tests-for SacrificeSelfEffect SacrificePermanentsEffect ReturnAllCardsExiledWithSourceEffect --max-per-class 20`, Special
+Move and Ashling (the other target-subject sacrifices): 78 suites, 660 test cases, all pass; application (`StepResultsTest`,
+`EffectResolutionServiceTest`, `SubjectResolutionServiceTest`, `MayEffectHandlerTest`, `GameDataDeepCopyTest`, both ratchets,
+`AcceptedOptionResolutionTest`, `SacrificePermanentsEffectHandlerTest` and every test naming `SacrificeSelfEffect` or the
+permanent-choice services and contexts: 40 classes): 1,037 test cases, all pass; AI `TargetPolarityGuardTest`, `SpellEvaluatorTest`:
+98, all pass. Application, AI, engine testFixtures and card-test `a`, `b`, `c`, `d`, `f`, `k`, `m`, `p`, `r`, `s`, `w` test sources
+compile. A repeated `:module:test` task on one command line keeps only its last `--tests` list: give each task one merged list.
+
+**For later runs.**
+
+- "X's controller sacrifices it, then …" is `SacrificeSelfEffect(target(), controllerOf(target()))` plus the rider with
+  `controllerOf(target())` (it now reads the recorded controller even for a resolving loyalty ability); "you may sacrifice a/another
+  [filter]. If you do" is `SacrificePermanentsEffect(1, filter, you())` + `ConditionalEffect(HappenedThisWay.sacrificed(), …)`.
+- The next prerequisite for this family is last-known stats from `SacrificePermanentsEffect` (unlocks `SacrificePermanentThenEffect`
+  and four more records).
 
 ## Prompt
 
