@@ -1102,6 +1102,10 @@ public class TriggeredAbilityQueueService {
             if (!matchesFilters) {
                 continue;
             }
+            if (targetLegalityService.isPlayerUntargetable(
+                    gameData, playerId, pending.controllerId(), pending.sourceCard())) {
+                continue;
+            }
             validTargets.add(playerId);
         }
         return validTargets;
@@ -1965,7 +1969,8 @@ public class TriggeredAbilityQueueService {
                         && !predicateEvaluationService.matchesFilters(p, chapterFilters, filterContext)) {
                     continue;
                 }
-                if (validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, p, pending.controllerId())) {
+                if (targetLegalityService.checkTriggeredPermanentTargetableReason(
+                        gameData, p, pending.sourceCard(), pending.controllerId()).isPresent()) {
                     continue;
                 }
                 validPermanentTargets.add(p.getId());
@@ -2021,7 +2026,9 @@ public class TriggeredAbilityQueueService {
                     continue;
                 }
                 if (targetLegalityService.matchesPlayerPredicate(
-                        gameData, pending.controllerId(), playerId, playerFilter.predicate())) {
+                        gameData, pending.controllerId(), playerId, playerFilter.predicate())
+                        && !targetLegalityService.isPlayerUntargetable(
+                        gameData, playerId, pending.controllerId(), pending.sourceCard())) {
                     validTargets.add(playerId);
                 }
             }
@@ -2032,7 +2039,9 @@ public class TriggeredAbilityQueueService {
             for (UUID playerId : gameData.orderedPlayerIds) {
                 if (!pending.chosenTargetsSoFar().contains(playerId)
                         && targetLegalityService.matchesPlayerPredicate(
-                        gameData, pending.controllerId(), playerId, anyFilter.playerPredicate())) {
+                        gameData, pending.controllerId(), playerId, anyFilter.playerPredicate())
+                        && !targetLegalityService.isPlayerUntargetable(
+                        gameData, playerId, pending.controllerId(), pending.sourceCard())) {
                     validTargets.add(playerId);
                 }
             }
@@ -2045,8 +2054,8 @@ public class TriggeredAbilityQueueService {
                     if (!pending.chosenTargetsSoFar().contains(permanent.getId())
                             && predicateEvaluationService.matchesPermanentPredicate(
                             permanent, anyFilter.permanentPredicate(), filterContext)
-                            && !validTargetService.isBlockedByHexproofOrGrantedEffect(
-                            gameData, permanent, pending.controllerId())) {
+                            && targetLegalityService.checkTriggeredPermanentTargetableReason(
+                            gameData, permanent, pending.sourceCard(), pending.controllerId()).isEmpty()) {
                         validTargets.add(permanent.getId());
                     }
                 }
@@ -2091,7 +2100,8 @@ public class TriggeredAbilityQueueService {
                         && !predicateEvaluationService.matchesFilters(permanent, Set.of(group.filter()), filterContext)) {
                     continue;
                 }
-                if (validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, permanent, pending.controllerId())) {
+                if (targetLegalityService.checkTriggeredPermanentTargetableReason(
+                        gameData, permanent, pending.sourceCard(), pending.controllerId()).isPresent()) {
                     continue;
                 }
                 if (group.maxTotalManaValue() < Integer.MAX_VALUE

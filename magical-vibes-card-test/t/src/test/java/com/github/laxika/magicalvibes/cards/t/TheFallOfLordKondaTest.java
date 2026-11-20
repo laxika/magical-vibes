@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.BeholdTheUnspeakable;
+import com.github.laxika.magicalvibes.cards.c.CarnageTyrant;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FragmentOfKonda;
@@ -23,7 +24,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheFallOfLordKonda.class, FragmentOfKonda.class, DoomBlade.class, Forest.class,
+@CardUsed({TheFallOfLordKonda.class, CarnageTyrant.class, FragmentOfKonda.class, DoomBlade.class, Forest.class,
         GrizzlyBears.class, HillGiant.class, BeholdTheUnspeakable.class, VisionOfTheUnspeakable.class})
 class TheFallOfLordKondaTest extends BaseCardTest {
 
@@ -47,6 +48,20 @@ class TheFallOfLordKondaTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(opponentGiant);
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(opponentGiant.getCard());
+    }
+
+    @Test
+    @DisplayName("Chapter I does not offer an opponent's creature with hexproof")
+    void chapterIDoesNotOfferHexproofOpponentCreature() {
+        Permanent opponentGiant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent tyrant = harness.addToBattlefieldAndReturn(player2, new CarnageTyrant());
+        addSagaWithLore(0);
+
+        advanceToNextChapter();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(opponentGiant.getId()).doesNotContain(tyrant.getId());
     }
 
     @Test

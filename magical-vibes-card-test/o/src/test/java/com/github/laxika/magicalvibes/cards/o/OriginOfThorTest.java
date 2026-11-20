@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.o;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.cards.k.KorFirewalker;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -18,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({OriginOfThor.class, Forest.class, GrizzlyBears.class, HillGiant.class})
+@CardUsed({OriginOfThor.class, Forest.class, GrizzlyBears.class, HillGiant.class, KorFirewalker.class})
 class OriginOfThorTest extends BaseCardTest {
 
     @Test
@@ -80,6 +81,33 @@ class OriginOfThorTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(17);
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(source).doesNotContain(saga);
+    }
+
+    @Test
+    @DisplayName("Chapter III does not offer a creature with protection from red")
+    void chapterIIIDoesNotOfferProtectionFromRedCreature() {
+        Permanent giant = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        Permanent firewalker = harness.addToBattlefieldAndReturn(player1, new KorFirewalker());
+        addSaga(2);
+
+        triggerChapter();
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validPermanentIds()).contains(giant.getId()).doesNotContain(firewalker.getId());
+    }
+
+    @Test
+    @DisplayName("Chapter III is removed from the stack when the only creature has protection from red")
+    void chapterIIIRemovedWhenOnlyCreatureHasProtectionFromRed() {
+        harness.addToBattlefieldAndReturn(player1, new KorFirewalker());
+        Permanent saga = addSaga(2);
+
+        triggerChapter();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.getLife(player2.getId())).isEqualTo(20);
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(saga);
     }
 
     @Test

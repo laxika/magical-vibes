@@ -35,7 +35,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.trigger.TriggerTargetCollector;
-import com.github.laxika.magicalvibes.service.target.ValidTargetService;
+import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -122,7 +122,7 @@ public class StepTriggerService {
     private final GraveyardService graveyardService;
     private final TriggeredAbilityQueueService triggeredAbilityQueueService;
     private final TriggerTargetCollector triggerTargetCollector;
-    private final ValidTargetService validTargetService;
+    private final TargetLegalityService targetLegalityService;
     private final CreatureControlService creatureControlService;
     private final ETBTokenTargetService etbTokenTargetService;
     private final AmountEvaluationService amountEvaluationService;
@@ -143,7 +143,7 @@ public class StepTriggerService {
                               GraveyardService graveyardService,
                               TriggeredAbilityQueueService triggeredAbilityQueueService,
                               TriggerTargetCollector triggerTargetCollector,
-                              ValidTargetService validTargetService,
+                              @Lazy TargetLegalityService targetLegalityService,
                               CreatureControlService creatureControlService,
                               @Lazy ETBTokenTargetService etbTokenTargetService,
                               AmountEvaluationService amountEvaluationService,
@@ -163,7 +163,7 @@ public class StepTriggerService {
         this.graveyardService = graveyardService;
         this.triggeredAbilityQueueService = triggeredAbilityQueueService;
         this.triggerTargetCollector = triggerTargetCollector;
-        this.validTargetService = validTargetService;
+        this.targetLegalityService = targetLegalityService;
         this.creatureControlService = creatureControlService;
         this.etbTokenTargetService = etbTokenTargetService;
         this.amountEvaluationService = amountEvaluationService;
@@ -318,13 +318,14 @@ public class StepTriggerService {
         List<Permanent> battlefield = gameData.playerBattlefields.get(trigger.controllerId());
         if (battlefield != null) {
             for (Permanent own : battlefield) {
-                if (validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, own, trigger.controllerId())) continue;
+                if (targetLegalityService.checkTriggeredPermanentTargetableReason(
+                        gameData, own, trigger.sourceCard(), trigger.controllerId()).isPresent()) continue;
                 boolean hasPartner = byManaValue
                         ? !own.getCard().hasType(CardType.LAND)
-                        && hasOpponentNonlandAtMostManaValue(gameData, trigger.controllerId(),
+                        && hasOpponentNonlandAtMostManaValue(gameData, trigger.sourceCard(), trigger.controllerId(),
                         own.getCard().getManaValue())
                         : gameQueryService.isCreature(gameData, own)
-                        && hasOpponentCreatureAtMostPower(gameData, trigger.controllerId(),
+                        && hasOpponentCreatureAtMostPower(gameData, trigger.sourceCard(), trigger.controllerId(),
                         gameQueryService.getEffectivePower(gameData, own));
                 if (hasPartner) {
                     validOwnTargets.add(own.getId());
@@ -345,13 +346,15 @@ public class StepTriggerService {
                 ? "'s triggered ability triggers." : "'s enter-the-battlefield ability triggers."));
     }
 
-    private boolean hasOpponentNonlandAtMostManaValue(GameData gameData, UUID controllerId, int manaValue) {
+    private boolean hasOpponentNonlandAtMostManaValue(GameData gameData, Card sourceCard, UUID controllerId,
+                                                      int manaValue) {
         for (UUID pid : gameData.orderedPlayerIds) {
             if (pid.equals(controllerId)) continue;
             for (Permanent permanent : gameData.playerBattlefields.getOrDefault(pid, List.of())) {
                 if (!permanent.getCard().hasType(CardType.LAND)
                         && permanent.getCard().getManaValue() <= manaValue
-                        && !validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, permanent, controllerId)) {
+                        && targetLegalityService.checkTriggeredPermanentTargetableReason(
+                        gameData, permanent, sourceCard, controllerId).isEmpty()) {
                     return true;
                 }
             }
@@ -359,7 +362,7 @@ public class StepTriggerService {
         return false;
     }
 
-    private boolean hasOpponentCreatureAtMostPower(GameData gameData, UUID controllerId, int power) {
+    private boolean hasOpponentCreatureAtMostPower(GameData gameData, Card sourceCard, UUID controllerId, int power) {
         for (UUID pid : gameData.orderedPlayerIds) {
             if (pid.equals(controllerId)) continue;
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
@@ -367,7 +370,8 @@ public class StepTriggerService {
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.isCreature(gameData, permanent)
                         && gameQueryService.getEffectivePower(gameData, permanent) <= power
-                        && !validTargetService.isBlockedByHexproofOrGrantedEffect(gameData, permanent, controllerId)) {
+                        && targetLegalityService.checkTriggeredPermanentTargetableReason(
+                        gameData, permanent, sourceCard, controllerId).isEmpty()) {
                     return true;
                 }
             }

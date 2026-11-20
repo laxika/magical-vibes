@@ -61,7 +61,6 @@ public class PermanentChoiceTriggerHandlerService {
     private final EffectResolutionService effectResolutionService;
     private final InputCompletionService inputCompletionService;
     private final ETBTokenTargetService etbTokenTargetService;
-    private final com.github.laxika.magicalvibes.service.target.ValidTargetService validTargetService;
     private final CreatureControlService creatureControlService;
     private final LeastToughnessDamageSupport leastToughnessDamageSupport;
     private final CopySpellForEachOtherControlledCreatureEffectHandler copySpellHandler;
@@ -574,8 +573,8 @@ public class PermanentChoiceTriggerHandlerService {
                                 <= gameQueryService.getEffectivePower(gameData, ownTarget)
                         : !p.getCard().hasType(CardType.LAND)
                                 && p.getCard().getManaValue() <= ownManaValue)
-                        && !validTargetService.isBlockedByHexproofOrGrantedEffect(
-                                gameData, p, pmot.controllerId())) {
+                        && targetLegalityService.checkTriggeredPermanentTargetableReason(
+                                gameData, p, pmot.sourceCard(), pmot.controllerId()).isEmpty()) {
                     validOpponentTargets.add(p.getId());
                 }
             }

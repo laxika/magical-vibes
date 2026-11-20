@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.c.Cursecatcher;
 import com.github.laxika.magicalvibes.cards.d.DeepchannelMentor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GreaterAuramancy;
+import com.github.laxika.magicalvibes.cards.v.VoiceOfReason;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({PucasMischief.class, BriarberryCohort.class, Cursecatcher.class,
-        DeepchannelMentor.class, Forest.class, GreaterAuramancy.class})
+        DeepchannelMentor.class, Forest.class, GreaterAuramancy.class, VoiceOfReason.class})
 class PucasMischiefTest extends BaseCardTest {
 
     @Test
@@ -51,6 +52,24 @@ class PucasMischiefTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.validPermanentIds()).containsExactly(auramancy.getId());
         assertThat(choice.validPermanentIds()).doesNotContain(opponentPuca.getId());
+    }
+
+    @Test
+    @DisplayName("Does not offer an opponent creature with protection from blue as the second target")
+    void excludesOpponentCreatureWithProtectionFromBlue() {
+        harness.addToBattlefield(player1, new PucasMischief());
+        Permanent own = harness.addToBattlefieldAndReturn(player1, new DeepchannelMentor());
+        Permanent voice = harness.addToBattlefieldAndReturn(player2, new VoiceOfReason());
+        Permanent cursecatcher = harness.addToBattlefieldAndReturn(player2, new Cursecatcher());
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, own.getId());
+
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice).isNotNull();
+        assertThat(choice.validPermanentIds()).containsExactly(cursecatcher.getId())
+                .doesNotContain(voice.getId());
     }
 
     @Test
