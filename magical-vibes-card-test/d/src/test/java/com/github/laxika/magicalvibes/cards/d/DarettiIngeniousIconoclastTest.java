@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DarettiIngeniousIconoclastTest extends BaseCardTest {
 
     @Test
+    @DisplayName("+1 creates a 1/1 Construct artifact creature token with defender")
     void plusOneCreatesDefenderConstruct() {
         Permanent daretti = addReadyDaretti(6);
 
@@ -38,6 +40,7 @@ class DarettiIngeniousIconoclastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("-1 sacrifices an artifact, then destroys the target")
     void minusOneSacrificesArtifactThenDestroysTarget() {
         Permanent daretti = addReadyDaretti(6);
         harness.addToBattlefield(player1, new Spellbook());
@@ -55,6 +58,7 @@ class DarettiIngeniousIconoclastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("-1's sacrifice may be declined, and then nothing is destroyed")
     void minusOneMayBeDeclined() {
         Permanent daretti = addReadyDaretti(6);
         harness.addToBattlefield(player1, new Spellbook());
@@ -70,6 +74,7 @@ class DarettiIngeniousIconoclastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("-6 creates three copies of a target artifact on the battlefield")
     void ultimateCopiesBattlefieldArtifactThreeTimes() {
         addReadyDaretti(6);
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Spellbook());
@@ -81,6 +86,7 @@ class DarettiIngeniousIconoclastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("-6 creates three copies of a target artifact card in a graveyard")
     void ultimateCopiesArtifactFromAnyGraveyardThreeTimes() {
         addReadyDaretti(6);
         Spellbook target = new Spellbook();
@@ -94,6 +100,7 @@ class DarettiIngeniousIconoclastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("-1 can destroy a noncreature artifact")
     void minusOneDestroysNoncreatureArtifact() {
         addReadyDaretti(3);
         harness.addToBattlefield(player1, new Spellbook());
@@ -110,6 +117,7 @@ class DarettiIngeniousIconoclastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("-1 can sacrifice the artifact it targets")
     void minusOneCanSacrificeItsOwnTarget() {
         addReadyDaretti(3);
         Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Spellbook());
@@ -125,13 +133,13 @@ class DarettiIngeniousIconoclastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("-1 offers no sacrifice and destroys nothing without an artifact to sacrifice")
     void minusOneDoesNotDestroyWithoutAnArtifactToSacrifice() {
         addReadyDaretti(3);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
 
         harness.activateAbility(player1, 0, 1, null, target.getId());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
@@ -139,6 +147,7 @@ class DarettiIngeniousIconoclastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("-6 copies of an opponent's artifact enter under your control")
     void ultimateCopiesOpponentsArtifactUnderYourControl() {
         addReadyDaretti(6);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Spellbook());
@@ -156,6 +165,7 @@ class DarettiIngeniousIconoclastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("-6 can copy a Construct token")
     void ultimateCopiesConstructToken() {
         Permanent daretti = addReadyDaretti(6);
         harness.activateAbility(player1, 0, 0, null, null);
@@ -177,6 +187,7 @@ class DarettiIngeniousIconoclastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("-6 does not follow a battlefield target into the graveyard")
     void ultimateDoesNotFollowBattlefieldTargetIntoGraveyard() {
         addReadyDaretti(6);
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Spellbook());
@@ -191,6 +202,7 @@ class DarettiIngeniousIconoclastTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("-1 offers no sacrifice when its target is gone")
     void minusOneDoesNotOfferSacrificeWhenTargetIsGone() {
         addReadyDaretti(3);
         harness.addToBattlefield(player1, new Spellbook());

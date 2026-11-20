@@ -136,8 +136,8 @@ class DarettiRocketeerEngineerTest extends BaseCardTest {
 
         harness.handleMultipleCardsChosen(player1, List.of(returnTarget.getId()));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
         harness.assertInGraveyard(player1, "Spellbook");
         harness.assertNotOnBattlefield(player1, "Spellbook");
         harness.assertOnBattlefield(player2, "Spellbook");
