@@ -1525,6 +1525,23 @@ class SubjectResolutionServiceTest extends BaseCardTest {
         }
 
         @Test
+        @DisplayName("A countered spell's card is named where the counter put it, and nothing once it moved on")
+        void counteredSpellsCard() {
+            Card bears = new GrizzlyBears();
+            gd.addToExile(player2.getId(), bears);
+            StackEntry entry = entry(player1, null, null);
+            entry.recordStep(StepKind.COUNTER_SPELL, StepOutcome.ofObjects(List.of(bears.getId()),
+                    List.of(player2.getId()), List.of(new MovedCard(bears.getId(), bears.getId(), Zone.EXILE,
+                            player2.getId()))));
+
+            assertThat(subjects.locatedCards(gd, entry, EFFECT, Subjects.cardsThisWay(StepKind.COUNTER_SPELL)))
+                    .containsExactly(new SubjectResolutionService.LocatedCard(bears, Zone.EXILE, player2.getId()));
+
+            gd.removeFromExile(bears.getId());
+            assertThat(subjects.cards(gd, entry, EFFECT, Subjects.cardsThisWay(StepKind.COUNTER_SPELL))).isEmpty();
+        }
+
+        @Test
         @DisplayName("A target card is named while it is in a graveyard of its scope and matches its filter")
         void targetCard() {
             Card bears = new GrizzlyBears();

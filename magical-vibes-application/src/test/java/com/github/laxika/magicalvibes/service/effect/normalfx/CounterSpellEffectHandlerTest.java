@@ -124,7 +124,7 @@ class CounterSpellEffectHandlerTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        counterSpellHandler = new CounterSpellEffectHandler(counterSupport, interactionHandlerRegistry);
+        counterSpellHandler = new CounterSpellEffectHandler(counterSupport, interactionHandlerRegistry, gameQueryService);
 
     }
 

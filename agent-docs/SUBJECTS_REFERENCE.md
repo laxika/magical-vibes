@@ -86,11 +86,13 @@ its zone and the player whose zone it is). No variant is static.
 
 | Factory | Card wording | Targets |
 |---|---|---|
-| `cardsThisWay(StepKind)` | "create a token that's a copy of it" after "exile target card" (`EXILE`: the exiled cards, in exile), "return each card put into a graveyard this way" (`DESTROY` / `SACRIFICE`: the card each removed permanent became in the zone it went to, from the step's `StepOutcome.movedCards`; a token becomes none), "the discarded card" (`DISCARD`: in its graveyard, or in exile where a replacement put it). Other kinds are refused. Step result (The Scarab God, Sorin Lord of Innistrad, Malcolm, Silvan Reveler) | no |
+| `cardsThisWay(StepKind)` | "create a token that's a copy of it" after "exile target card" (`EXILE`: the exiled cards, in exile), "return each card put into a graveyard this way" (`DESTROY` / `SACRIFICE`: the card each removed permanent became in the zone it went to, from the step's `StepOutcome.movedCards`; a token becomes none), "the discarded card" (`DISCARD`: in its graveyard, or in exile where a replacement put it), "exile it instead … you may cast it" after a counter (`COUNTER_SPELL`: the countered spell's card in its graveyard or exile; a copy, an ability or a card put into a hidden zone becomes none). Other kinds are refused. Step result (The Scarab God, Sorin Lord of Innistrad, Malcolm, Silvan Reveler, Spelljack) | no |
 | `targetCard(filter, scope)` | "a copy of target creature card in your graveyard": the effect's targeted card while it is in a graveyard of `scope` and matches `filter`; the effect reading it declares the graveyard target (Feldon of the Third Path) | yes |
 
 Readers: `CreateTokenCopyOfCardEffect.of(cards, options)`, `ReturnCardFromGraveyardEffect.builder().returnAll(true).cards(...)`,
-`MayCastDiscardedCardWithoutPayingManaCostEffect(cards[, filter])` ("you may cast it without paying its mana cost"),
+`MayCastDiscardedCardWithoutPayingManaCostEffect(cards[, filter])` ("you may cast it without paying its mana cost": a card in exile whoever owns
+it, Transcendent Dragon; a graveyard card only from your own graveyard), `AllowPlayCardsWithoutPayingManaCostWhileExiledEffect(cards)` ("you may
+cast that card without paying its mana cost for as long as it remains exiled"),
 `CopyImprintedCardAndMayCastCopyEffect.of(cards)` ("copy it. You may cast the copy"), `ExileGraveyardCardsEffect.cards(cards)` ("exile it
 from your graveyard") and, in a filter, `CardSharesCardTypeWithCardsPredicate(cards)` ("a card that doesn't share a card type with the
 discarded card"; bound by `SubjectResolutionService.bindCardSubjects`).

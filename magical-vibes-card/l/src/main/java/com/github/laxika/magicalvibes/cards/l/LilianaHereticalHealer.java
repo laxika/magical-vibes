@@ -2,8 +2,11 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,10 +22,12 @@ public class LilianaHereticalHealer extends Card {
         // Whenever another nontoken creature you control dies, exile Liliana, Heretical Healer, then
         // return her to the battlefield transformed under her owner's control. If you do, create a
         // 2/2 black Zombie creature token.
-        // The token rides the transform as an "if you do" payload: if Liliana has already left the
-        // battlefield when the trigger resolves, nothing is exiled and no Zombie is created.
+        // If Liliana has already left the battlefield when the trigger resolves, nothing is exiled and
+        // no Zombie is created.
         addTrigger(Triggers.nontokenCreatureDies(ObjectRelation.ANOTHER_YOU_CONTROL),
-                new ExileSelfAndReturnTransformedEffect(CreateTokenEffect.blackZombie(1)));
+                SequenceEffect.of(
+                        new ExileSelfAndReturnTransformedEffect(),
+                        new ConditionalEffect(HappenedThisWay.returned(), CreateTokenEffect.blackZombie(1))));
     }
 
     @Override

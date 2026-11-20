@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CardDrawingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellingEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
@@ -61,6 +62,12 @@ public final class InstantCategoryClassifier {
     private static InstantCategory classifySingleEffect(CardEffect effect) {
         // Counter spells (highest priority — reactive by nature)
         if (effect instanceof CounterSpellingEffect) {
+            return InstantCategory.COUNTERSPELL;
+        }
+        // "Counter target spell. If a permanent spell is countered this way, exile it instead" (Thranduil's Decree):
+        // a counter either way, the condition choosing only where the card goes.
+        if (effect instanceof ConditionalReplacementEffect replacement
+                && replacement.baseEffect() instanceof CounterSpellingEffect) {
             return InstantCategory.COUNTERSPELL;
         }
 

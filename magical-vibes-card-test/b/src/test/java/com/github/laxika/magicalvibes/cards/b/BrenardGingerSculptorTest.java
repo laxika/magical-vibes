@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BrenardGingerSculptorTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Exiling the dead creature creates a Food Golem token copy with the anthem and the Food ability")
     void createsFoodGolemCopyWithAnthemAndFoodAbility() {
         harness.addToBattlefield(player1, new BrenardGingerSculptor());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -50,6 +52,7 @@ class BrenardGingerSculptorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining leaves the creature card in the graveyard")
     void decliningLeavesCreatureInGraveyard() {
         harness.addToBattlefield(player1, new BrenardGingerSculptor());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -64,6 +67,7 @@ class BrenardGingerSculptorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Triggers only for another nontoken creature you control")
     void triggersOnlyForAnotherControlledNontokenCreature() {
         harness.addToBattlefield(player1, new BrenardGingerSculptor());
 

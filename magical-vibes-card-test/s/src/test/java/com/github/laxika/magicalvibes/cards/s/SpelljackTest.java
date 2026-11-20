@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SpelljackTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Counters and exiles the target spell, granting its own controller a free play while it stays exiled")
     void countersAndExilesTargetSpellWithFreeCastPermissionForItsController() {
         SuntailHawk hawk = new SuntailHawk();
         Spelljack spelljack = new Spelljack();
@@ -38,6 +40,7 @@ class SpelljackTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Spelljack's controller can cast the countered spell from exile without paying mana")
     void controllerCanCastCounteredSpellFromExileWithoutMana() {
         SuntailHawk hawk = new SuntailHawk();
         Spelljack spelljack = new Spelljack();
@@ -60,6 +63,7 @@ class SpelljackTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't target a permanent on the battlefield")
     void cannotTargetPermanent() {
         var permanent = harness.addToBattlefieldAndReturn(player1, new SuntailHawk());
         harness.setHand(player2, List.of(new Spelljack()));
@@ -71,6 +75,7 @@ class SpelljackTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can't target an activated ability")
     void cannotTargetActivatedAbility() {
         harness.addToBattlefield(player1, new HaplessResearcher());
         harness.setHand(player2, List.of(new Spelljack()));
@@ -88,6 +93,7 @@ class SpelljackTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A countered X spell is cast from exile with X equal to 0")
     void castsCounteredXSpellWithXEqualToZero() {
         FirecatBlitz firecatBlitz = new FirecatBlitz();
         Spelljack spelljack = new Spelljack();
@@ -114,6 +120,7 @@ class SpelljackTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counters and exiles a noncreature spell")
     void countersAndExilesNoncreatureSpell() {
         MentalNote mentalNote = new MentalNote();
         Spelljack spelljack = new Spelljack();
@@ -132,6 +139,7 @@ class SpelljackTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The exiled creature keeps its timing, and a refused cast keeps the permission")
     void creatureCannotBeCastOnOpponentsTurnAndFailedAttemptPreservesPermission() {
         SuntailHawk hawk = new SuntailHawk();
         harness.castFromHand(player1, hawk, "{W}");
@@ -155,6 +163,7 @@ class SpelljackTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The countered card's owner can't use Spelljack's permission")
     void ownerCannotUseSpelljacksPermission() {
         SuntailHawk hawk = new SuntailHawk();
         harness.castFromHand(player1, hawk, "{W}");
@@ -172,6 +181,7 @@ class SpelljackTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A stolen instant can be cast on an opponent's turn and goes to its owner's graveyard")
     void stolenInstantCanBeCastOnOpponentsTurnAndResolvesToOwnersGraveyard() {
         MentalNote mentalNote = new MentalNote();
         harness.castFromHand(player1, mentalNote, "{U}");
@@ -195,6 +205,7 @@ class SpelljackTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A spell cast with flashback is countered into exile and can be cast again")
     void spellCastWithFlashbackCanBeCounteredAndCastAgainNormally() {
         FirecatBlitz firecatBlitz = new FirecatBlitz();
         harness.setGraveyard(player1, List.of(firecatBlitz));

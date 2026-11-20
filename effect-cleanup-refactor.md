@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 26 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 27 done; run 27's "counter unless" item waits for the human's decision) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -169,13 +169,13 @@ card it moved to a public zone, CR 400.7j). Variants:
 
 | Variant | Meaning |
 |---|---|
-| `cardsThisWay(StepKind)` | the cards the most recent step of that kind of the same resolution moved: `EXILE` the exiled cards in exile; `DESTROY` / `SACRIFICE` the card each removed permanent became in the zone it went to (`StepOutcome.movedCards`, recorded by the departure results and the destroy / exile handlers); `DISCARD` the discarded cards in the graveyard, or in exile where a replacement put them |
+| `cardsThisWay(StepKind)` | the cards the most recent step of that kind of the same resolution moved: `EXILE` the exiled cards in exile; `DESTROY` / `SACRIFICE` the card each removed permanent became in the zone it went to (`StepOutcome.movedCards`, recorded by the departure results and the destroy / exile handlers); `DISCARD` the discarded cards in the graveyard, or in exile where a replacement put them; `COUNTER_SPELL` (run 27) the countered spell's card in its graveyard or exile |
 | `targetCard(filter, scope)` | the effect's graveyard card target, declared by the effect reading it (added in run 23 for Feldon of the Third Path's copy without exiling) |
 
 Readers: `CreateTokenCopyOfCardEffect.of(cards, options)` (the token-copy step), `ReturnCardFromGraveyardEffect.returnAll(true).cards(...)`
 (the return step), `MayCastDiscardedCardWithoutPayingManaCostEffect(cards[, filter])` (the "cast it now for free" step),
 `CopyImprintedCardAndMayCastCopyEffect.of(cards)` (the may-cast-a-copy step, run 24), `ExileGraveyardCardsEffect.cards(cards)` (the
-exile step, run 24) and, inside a card filter, `CardSharesCardTypeWithCardsPredicate(cards)`, which a handler binds through
+exile step, run 24), `AllowPlayCardsWithoutPayingManaCostWhileExiledEffect(cards)` (the permission step, run 27) and, inside a card filter, `CardSharesCardTypeWithCardsPredicate(cards)`, which a handler binds through
 `SubjectResolutionService.bindCardSubjects` (the seek, run 24).
 
 ### One resolver
@@ -564,6 +564,7 @@ cause under Findings.
 | 24 | run 23's next: the trigger's event value in the graveyard exile's target filter, the may-cast-a-copy step and `ExileTargetCardFromGraveyardAndMayCastCopyEffect`'s 14 cards; an exile step and a seek filter over a card subject (Leonardo da Vinci, Anguished Recollection) | done (2 split, 1 absorbed, 3 survivors; 16 card files rewritten; `CopyImprintedCardAndMayCastCopyEffect.of(cards)` with `payingItsCosts` / `losingLifeOnCast` / `ifCastThen`, `ExileGraveyardCardsEffect.cards` / `oneTargetFromOpponentGraveyard`, `CardSharesCardTypeWithCardsPredicate`; no marker record kept; Hour of Eternity, The Ruinous Powers and the threshold transform not reached) |
 | 25 | run 24's next: the subject-path cast-copy restriction check (a rules bug), the X-target graveyard exile (Hour of Eternity, Midnight Ritual, Foggy Swamp Visions, Necromancer's Covenant), the threshold transform, The Ruinous Powers | done (2 split, 4 survivors, 1 blocked-other; 11 card files rewritten; `ExileFreeCastQueueSupport.castableFromExile` for both copy accept paths, `ExileCardsFromGraveyardEffect.exactlyXFromOwnGraveyard` / `exactlyXFromGraveyards` recording EXILE, `GraveyardCardChoosingEffect.choosesFromControllersGraveyardOnly`; Mizzix's Mastery fixed by a ruling, the threshold transforms made transform events; The Ruinous Powers kept; item 4 audited, not started) |
 | 26 | run 25's next: non-copy resolution casts from exile honour the card's own timing restriction, AnimationSupport's CR citation, Primal Amulet's departed-source question; the Counter family (a countered-ability-source subject, `LockTargetPermanentEffect` with a subject, the "and" records, the "unless" records); the next fused family | done (4 split, 3 survivors, 8 blocked-other, 1 blocked-step-model, 5 unique; 6 card files rewritten; `Subjects.targetAbilitySource([filter])`, `StackEntry.counteredAbilitySourceId`, `LockTargetPermanentEffect.activatedAbilitiesOf`; Chandra, Torch of Defiance's +1 and the other resolution casts from exile fixed by a ruling, Interdict and Ouphe Vandals by Oracle text; Primal Amulet kept by Treasure Map's ruling; the "unless" counters ledgered; no further fused family split) |
+| 27 | run 26's next: the "counter unless" records (investigate the ransom kind first, ask before changing ward), COUNTER_SPELL in `cardsThisWay` + a cast-permission step, the dying-creature exiles, verdicts for `ExileTargetPermanentAndTrackWithSourceEffect` and `ExileSelfAndReturnTransformedEffect` | done but item 1 (2 split, 4 survivors, 1 new step record, 1 blocked-other kept, 2 unique; 9 card files rewritten; `cardsThisWay(COUNTER_SPELL)`, `AllowPlayCardsWithoutPayingManaCostWhileExiledEffect`, `ExileSelfAndReturnTransformedEffect` records RETURN; the "counter unless" split held for the human: options in Findings) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -5632,6 +5633,109 @@ handler tests that wire `SubjectResolutionService`) and AI (`TargetPolarityGuard
 - **Remaining fused multi-card records** (no ledger row, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` / `OrElse`
   name): 100 (1,055 card uses); by first word Exile 17, Search 10, Reveal 9, Prevent 7, Each 6, Choose 5, Cant 5, Put 3, Destroy 3,
   Creatures 3, Boost 3, Shuffle 2, Grant 2, Create 2, and 23 first words with one each (Counter 1: `CounterUnlessPaysEffect`).
+
+### Step 8, run 27 (2026-11-20)
+
+Run 26's "Next run" items (2), (3) and (4) done; item (1) investigated and held for the human (below). Verdicts (ledger, step `8`):
+**split 2** (`CounterSpellAndExileThenGrantFreeCastPermissionEffect`, `ExileDyingCreatureAndCreateTokenCopyEffect`, with their handlers),
+**survivor 4** (`CounterSpellEffect`, `MayCastDiscardedCardWithoutPayingManaCostEffect`, `ExileSelfAndReturnTransformedEffect`, and the new step
+`AllowPlayCardsWithoutPayingManaCostWhileExiledEffect`), **blocked-other 4** (`ExileDyingCreatureCardAndCreateTokenEffect` kept for Timothar; the three
+"counter unless" records re-ledgered), **unique 2** (Delay's `CounterSpellAndExileWithSuspendCountersEffect`, `ExileTargetPermanentAndTrackWithSourceEffect`).
+Ratchet 4,706 / 3,935 → 4,705 / 3,934 (two records and handlers gone, one of each added). 9 card files rewritten by hand (Spelljack, Kheru
+Spellsnatcher, Thranduil's Decree, Transcendent Dragon, Nightmare Shepherd, Brenard, Unscythe, Liliana, Heretical Healer; read back by eye, imports
+sorted). Oracle text of every rewritten card checked with `get_card`, rulings with `get_rulings` (and Delay's). CR 118.12, 118.12a, 400.7, 607.2a,
+608.2c, 608.2d, 614.1a, 701.6a, 702.21a and 707.2 checked with `get_rule` (2026-11-20).
+
+- **The "counter unless" records (item 1): not split, the human decides.** Premise check: `CounterUnlessEffect.ransomKind()` /
+  `ransomMagnitude()` have no reader in `magical-vibes-ai` and none in ward detection. Their only readers are `MayPenaltyChoiceHandlerService`'s
+  own completions, which use the kind to find their record among a pending ability's effects (PAY_MANA, PAY_WATERBEND, DISCARD_HAND) and the
+  magnitude as a count. Ward is recognised by the WARD keyword plus `TargetTriggers.actsOnASpell` (the effect's `targetSpec` admits only a
+  spell or ability); `MayEffect.targetSpec()` falls through to its else-branch, so `MayEffect(pay, prompt, CounterSpellEffect(), TARGET_SPELL_CONTROLLER)`
+  would be recognised the same. The Hard AI scores a pending ransom with `SpellEvaluator.evaluateAbilityEffects` (0 for the old records and for an
+  untargeted `DiscardEffect`, so it declines either way). So the capability needs no new home, but the split changes rules behaviour, so it was
+  not done:
+  - *Pay life* (14 cards): the old handler offers no payment when the spell can't be countered (`findCounterTarget` respects counterability), and
+    counters at once when the life can't be paid. A `MayEffect` / `MayPayLifeEffect` asks in both cases (CR 118.12a lets a player pay an "unless"
+    cost though nothing would be countered), `MayPayLifeEffect` has no `DynamicAmount` (Phyrexian Fleshgorger's power) and no target-spell
+    payer, and the prompt text ("Pay 3 life to prevent X from being countered?") would lose the spell's name.
+  - *Discard* (14 cards): equivalent except that `DiscardEffect.matching`'s filter-aware check withholds the offer when no card matches (the old
+    handler asked, then countered), and a declined discard counters through `CounterSpellEffect`, which applies Guile's replacement.
+  - *Sacrifice* (9 cards): Mana Vortex and Blood Funnel counter the triggering spell (no target), which `CounterSpellEffect` can't name;
+    `MayEffectHandler`'s can't-sacrifice check covers only `you()` and a targeted player, not `controllerOf(targetSpell())`; the two-permanent
+    ward (Valgavoth, Terror Eater: three nonland permanents) uses a "choose none to decline" multi-choice.
+  - *A current rules bug either way*: `MayPenaltyChoiceHandlerService.counterUnlessCounter` (the declined discard and sacrifice ransoms) puts the
+    spell into its graveyard without Guile's "would counter a spell … exile it instead" replacement (`CounterSupport.applyControlledCounterExileReplacement`),
+    which the pay-mana path applies.
+  - *Options*: (A) split the discard kind now (`MayEffect(DiscardEffect(1, controllerOf(targetSpell())) | DiscardEffect.matching(…) | random,
+    prompt, CounterSpellEffect(), TARGET_SPELL_CONTROLLER)`), then pay life after giving `MayPayLifeEffect` a `DynamicAmount` and a target-spell
+    payer (or after making `MayEffectHandler` judge a leading pay-life step), accepting "asked even when it can't be countered" (CR 118.12a);
+    keep the sacrifice kind for its triggering-spell cards. Ward ends up two shapes: ward {N} (`CounterUnlessPaysEffect`, 308 cards, its X /
+    dynamic / rider forms) stays on the capability. (B) Leave all "counter unless" records as they are (one ward shape); fix only the Guile bug
+    in `counterUnlessCounter`. (C) A `CounterUnlessEffect`-shaped wrapper record (ransom step + counter) replacing all of them at once, including
+    ward {N}: a step-10-sized change.
+- **COUNTER_SPELL in `cardsThisWay`.** `CounterSpellEffectHandler` records the countered card where it went as `StepOutcome.movedCards`
+  (exile or graveyard; none for a copy, an ability or a hidden zone); `CardSubject.CardsThisWay` accepts COUNTER_SPELL. Under Guile's
+  replacement the counter step records NONE (as before, the spell is not "countered this way"). `SubjectResolutionServiceTest.counteredSpellsCard`.
+- **The permission step.** `AllowPlayCardsWithoutPayingManaCostWhileExiledEffect(CardSubject)`: a non-expiring play permission without paying
+  the mana cost (`ExileSupport.grantPlayWhileExiled` + `setExilePlayWithoutPayingManaCost`, as the old handler did) on each named card in exile; a
+  card in another zone gets none. Spelljack = `CounterSpellEffect(EXILE)` + it over `cardsThisWay(COUNTER_SPELL)` (two spell effects); Kheru
+  Spellsnatcher the same in a `SequenceEffect` on its turned-face-up trigger; Thranduil's Decree = `ConditionalReplacementEffect(TargetSpellMatches(
+  StackEntryTypeInPredicate(creature / artifact / enchantment / planeswalker / battle spell)), CounterSpellEffect(), SequenceEffect.of(CounterSpellEffect(EXILE),
+  permission))` (an Adventure cast is an instant or sorcery entry, as the old `spellFace` judged; the permission sits in the permanent branch so a
+  nonpermanent spell cast with flashback, exiled by the counter, gets none: `ThranduilsDecreeTest.flashbackNonpermanentSpellGetsNoCastingPermission`).
+  Transcendent Dragon = `CounterSpellEffect(EXILE)` + `MayCastDiscardedCardWithoutPayingManaCostEffect(cardsThisWay(COUNTER_SPELL))`, whose handler now
+  offers a card in exile whoever owns it (graveyard cards still only from the controller's own graveyard; Malcolm's and Hidetsugu and Kairi's cards
+  are their own, so nothing changes for them).
+- **Delay is unique.** "Exile it with three time counters on it instead of putting it into its owner's graveyard. If it doesn't have suspend, it
+  gains suspend" is one replacement of the countered card's destination (CR 614.1a), not a step after the counter, and no other card would use a
+  give-suspend step (`ExileTriggeringSpellWithSuspendCountersEffect` exiles a triggering spell, a different first half).
+- **The dying-creature exiles.** No new card subject: `ExileTriggeringCardFromGraveyardEffect` (run 9's survivor) already exiles the stack entry's
+  triggering card and records EXILE, and also checks the card is the same graveyard incarnation (CR 400.7), which the absorbed handlers did not.
+  Nightmare Shepherd / Brenard = `MayEffect(SequenceEffect.of(ExileTriggeringCardFromGraveyardEffect, ConditionalEffect(HappenedThisWay.exiled(),
+  copy.ofTriggeringPermanent())))`: the copy step reads the departed creature's copiable values (`PermanentCopierService.copiableCard` of the
+  departed snapshot), so a creature that was copying something is copied as that copy (Nightmare Shepherd's ruling, CR 707.2;
+  `NightmareShepherdTest` covers it). Unscythe = the exile + `ConditionalEffect(exiled(), CreateTokenEffect.blackZombie(1))` (its ruling: a card
+  removed in response, or a token, gives no Zombie). `ExileDyingCreatureCardAndCreateTokenEffect` stays for Timothar, Baron of Bats: its handler
+  binds the Bat token's "return the exiled card" to that card and links the exile to the token, which no step expresses.
+- **Item 4.** `ExileTargetPermanentAndTrackWithSourceEffect` (24 cards) is not fused: one exile whose card is linked to the source for its
+  "exiled with" ability (CR 607.2a); folding the link into `ExileTargetPermanentEffect` is step 9 work. `ExileSelfAndReturnTransformedEffect`
+  (54 cards) is one action except Liliana, Heretical Healer's `thenEffect` rider: the component and the handler's synchronous dispatch are
+  gone, the handler records RETURN (the permanent it became, its owner; NONE when the source is gone or has no back face), and Liliana =
+  `SequenceEffect.of(ExileSelfAndReturnTransformedEffect(), ConditionalEffect(HappenedThisWay.returned(), CreateTokenEffect.blackZombie(1)))`
+  (its ruling: only the first of several triggers makes a Zombie).
+- **Behaviour.** Thranduil's Decree, Spelljack and Kheru Spellsnatcher: none. Transcendent Dragon's prompt reads "Transcendent Dragon — Cast X
+  without paying its mana cost?". The dying-creature exiles' log lines are `ExileTriggeringCardFromGraveyardEffect`'s; their "does nothing"
+  line is gone. **AI:** `InstantCategoryClassifier` sees a `ConditionalReplacementEffect` whose base is a counter as a counterspell (Thranduil's
+  Decree stays COUNTERSPELL, `InstantCategoryClassifierTest`); Spelljack now carries `CounterSpellEffect`, which `SpellEvaluator` scores (the old
+  record scored 0). Transcendent Dragon was and stays FLASH_CREATURE (its intervening "if" wraps the trigger in a `ConditionalEffect`).
+  `@DisplayName`s added to every test method of the Spelljack, Kheru Spellsnatcher, Thranduil's Decree, Brenard, Unscythe and Liliana tests.
+
+**Tests** (per-card runs while converting, then one Gradle run, one `--tests` list per task): the 8 rewritten cards' tests and every card test
+constructing one (the helper sweep: Liliana, Defiant Necromancer), Timothar, Hofri, Delay, Gale's Redirection, Curse of Clinging Webs, `--tests-for
+MayCastDiscardedCardWithoutPayingManaCostEffect ExileTriggeringCardFromGraveyardEffect ExileDyingCreatureCardAndCreateTokenEffect` (all),
+`CounterSpellEffect ExileSelfAndReturnTransformedEffect CreateTokenCopyOfTargetPermanentEffect ConditionalReplacementEffect --max-per-class 8`;
+application (`SubjectResolutionServiceTest` +1, `CounterSpellEffectHandlerTest` (hand-built wiring gained `GameQueryService`), `EffectCountRatchetTest`,
+`CardImmutabilityArchTest`, `TargetSpecRatchetTest`, `StepResultsTest`, `EffectResolutionServiceTest`, `StackResolutionServiceTest`,
+`LibraryChoiceHandlerServiceTest`, `CounterUnlessPaysEffectHandlerTest` and every application test naming `CounterSupport` or a touched handler)
+and AI (`InstantCategoryClassifierTest` +1, `TargetPolarityGuardTest`, `AiDecisionEngineTest`, `SpellEvaluatorTest`, `GameDataDeepCopyTest`): 87 classes,
+200 result files, 3,779 test cases, all pass (Brenard and Unscythe from the earlier per-card run). Application, AI, engine testFixtures and
+card-test `b k l n s t u` test sources compile.
+
+**For later runs.**
+
+- "Counter target spell. If that spell is countered this way, exile it instead … You may cast it [for as long as it remains exiled]" is
+  `CounterSpellEffect(EXILE)` + `AllowPlayCardsWithoutPayingManaCostWhileExiledEffect` / `MayCastDiscardedCardWithoutPayingManaCostEffect` over
+  `Subjects.cardsThisWay(StepKind.COUNTER_SPELL)`; "exile it" of a dies trigger is `ExileTriggeringCardFromGraveyardEffect` (records EXILE), "a token
+  copy of that creature" after it `CreateTokenCopyOfTargetPermanentEffect.ofTriggeringPermanent()`; "if you do" after a transform is
+  `HappenedThisWay.returned()`.
+- **Next run.** (1) The human's answer on the "counter unless" options above (and the Guile fix in `counterUnlessCounter` whatever the
+  answer). (2) Then the largest unaudited fused names: `ForcedCostOrElseEffect` (158 cards; likely a cost-or-else wrapper, audit before
+  splitting), `CantAttackUnlessEffect` / `CantBlockUnlessEffect` / `CantAttackOrBlockUnlessEffect` (66 / 28 / 25; static restrictions, probably not
+  fused), `SearchLibraryAndOrGraveyardForNamedCardToHandEffect` (21), `PowerBoostForCrewAndSaddleEffect` (20),
+  `PreventDamageAndRemovePlusOnePlusOneCountersEffect` (18), `TransformSelfThenEffect` (5; RETURN-like gate now exists).
+- **Remaining fused multi-card records** (no ledger row, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` / `OrElse`
+  name): 98 (977 card uses); by first word Search 10, Reveal 9, Prevent 7, Each 6, Exile 15, Choose 5, Cant 5, Put 3, Destroy 3, Creatures 3,
+  Boost 3, Shuffle 2, Grant 2, Create 2, and 22 first words with one each (Counter 1: `CounterUnlessPaysEffect`).
 
 ## Prompt
 

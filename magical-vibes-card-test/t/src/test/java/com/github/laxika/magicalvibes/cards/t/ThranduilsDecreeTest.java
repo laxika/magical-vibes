@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.f.FirecatBlitz;
 import com.github.laxika.magicalvibes.cards.l.LargeBear;
 import com.github.laxika.magicalvibes.cards.s.SmaugTheGreatCalamity;
 import com.github.laxika.magicalvibes.cards.s.SpewFlame;
@@ -17,7 +18,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThranduilsDecree.class, LargeBear.class, TidingsOfWar.class})
+@CardUsed({FirecatBlitz.class, ThranduilsDecree.class, LargeBear.class, TidingsOfWar.class})
 class ThranduilsDecreeTest extends BaseCardTest {
 
     @Test
@@ -38,6 +39,27 @@ class ThranduilsDecreeTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Large Bear");
         assertThat(gd.findExiledCard(bears.getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("A nonpermanent spell cast with flashback is exiled by the counter but gets no casting permission")
+    void flashbackNonpermanentSpellGetsNoCastingPermission() {
+        FirecatBlitz blitz = new FirecatBlitz();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setGraveyard(player2, List.of(blitz));
+        harness.addMana(player2, ManaColor.RED, 2);
+        harness.setHand(player1, List.of(new ThranduilsDecree()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castFlashback(player2, 0, 0, null);
+        harness.passPriority(player2);
+        harness.castAndResolveInstant(player1, 0, blitz.getId());
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.findExiledCard(blitz.getId())).isNotNull();
+        assertThat(gd.exilePlayPermissionHolder(blitz.getId())).isNull();
     }
 
     @Test
@@ -63,6 +85,7 @@ class ThranduilsDecreeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A countered Adventure spell goes to the graveyard with no casting permission")
     @CardUsed({SmaugTheGreatCalamity.class, SpewFlame.class})
     void counteredAdventureGoesToGraveyardWithoutCastingPermission() {
         SmaugTheGreatCalamity smaug = new SmaugTheGreatCalamity();
@@ -85,6 +108,7 @@ class ThranduilsDecreeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Counters a noncreature permanent spell into exile and allows a free cast")
     @CardUsed(WizardsStaff.class)
     void countersNoncreaturePermanentAndAllowsFreeCast() {
         WizardsStaff staff = new WizardsStaff();
@@ -111,6 +135,7 @@ class ThranduilsDecreeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The countered card's owner doesn't get the Decree's permission")
     void ownerDoesNotReceiveDecreesCastingPermission() {
         LargeBear bears = new LargeBear();
         castDecreeAgainstCreature(bears);
@@ -123,6 +148,7 @@ class ThranduilsDecreeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The free cast keeps a creature's timing")
     void freeCastingPermissionDoesNotOverrideCreatureTiming() {
         LargeBear bears = new LargeBear();
         castDecreeAgainstCreature(bears);
@@ -135,6 +161,7 @@ class ThranduilsDecreeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The permission lasts past the end of the turn")
     void freeCastingPermissionSurvivesTurnChange() {
         LargeBear bears = new LargeBear();
         castDecreeAgainstCreature(bears);
@@ -148,6 +175,7 @@ class ThranduilsDecreeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The permission ends when the card leaves exile")
     void permissionEndsWhenCardLeavesExile() {
         LargeBear bears = new LargeBear();
         castDecreeAgainstCreature(bears);

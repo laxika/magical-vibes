@@ -6,8 +6,10 @@ import java.util.Objects;
 
 /**
  * "You may cast it without paying its mana cost", as the ability resolves: each card {@link #cards()} names that
- * matches {@link #filter()} and that the controller owns is offered for a free cast where it is (its graveyard or
- * exile). Malcolm, Alluring Scoundrel's "you may cast the discarded card" is {@code Subjects.cardsThisWay(DISCARD)};
+ * matches {@link #filter()} is offered for a free cast where it is: in exile, whoever owns it, or in the controller's
+ * own graveyard. Transcendent Dragon's "exile it instead …, then you may cast it" is
+ * {@code Subjects.cardsThisWay(COUNTER_SPELL)} after {@code CounterSpellEffect(EXILE)}. Malcolm, Alluring
+ * Scoundrel's "you may cast the discarded card" is {@code Subjects.cardsThisWay(DISCARD)};
  * Hidetsugu and Kairi's "if it's an instant or sorcery card, you may cast it" after its exile step is
  * {@code Subjects.cardsThisWay(EXILE)} with an instant-or-sorcery filter. A declined card stays where it is.
  *

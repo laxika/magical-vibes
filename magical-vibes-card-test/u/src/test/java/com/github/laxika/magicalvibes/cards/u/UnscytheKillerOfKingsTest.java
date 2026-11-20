@@ -91,6 +91,7 @@ class UnscytheKillerOfKingsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Equip costs {2} and moves the bonuses")
     void equipCostsTwoAndTransfersBonuses() {
         Permanent equipment = harness.addToBattlefieldAndReturn(player1, new UnscytheKillerOfKings());
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -116,6 +117,7 @@ class UnscytheKillerOfKingsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Equipment's controller gets the choice and the token, not the creature's controller")
     void equipmentControllerGetsChoiceAndTokenInsteadOfCreatureController() {
         Permanent blocker = setUpEquippedKill(player1, player2);
         Permanent equipment = findPermanent(player1, "Unscythe, Killer of Kings");
@@ -133,6 +135,7 @@ class UnscytheKillerOfKingsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No token is created if the dead creature's card has left the graveyard")
     void noTokenIfDyingCardHasLeftGraveyard() {
         Permanent blocker = setUpEquippedKill(player1, player2);
         runCombatUntilMayPrompt();
@@ -147,6 +150,7 @@ class UnscytheKillerOfKingsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Triggers for damage dealt this turn before the Equipment was attached")
     void triggersForDamageDealtBeforeEquipmentWasAttached() {
         Permanent blocker = setUpEquippedKill(player1, player2, new WallOfDenial());
         Permanent equipment = findPermanent(player1, "Unscythe, Killer of Kings");
@@ -168,6 +172,7 @@ class UnscytheKillerOfKingsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Doesn't trigger for damage dealt by a creature it no longer equips")
     void doesNotTriggerForDamageByPreviouslyEquippedCreature() {
         Permanent blocker = setUpEquippedKill(player1, player2, new WallOfDenial());
         Permanent equipment = findPermanent(player1, "Unscythe, Killer of Kings");
@@ -185,6 +190,7 @@ class UnscytheKillerOfKingsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Triggers when the equipped creature and the creature it damaged die at the same time")
     void triggersWhenEquipmentAndPreviouslyDamagedCreatureDieSimultaneously() {
         Permanent blocker = setUpEquippedKill(player1, player2, new WallOfDenial());
         Permanent equipment = findPermanent(player1, "Unscythe, Killer of Kings");
@@ -208,6 +214,7 @@ class UnscytheKillerOfKingsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Doesn't trigger while the Equipment has lost its abilities")
     void doesNotTriggerWhileEquipmentHasLostItsAbilities() {
         Permanent blocker = setUpEquippedKill(player1, player2, new WallOfDenial());
         Permanent equipment = findPermanent(player1, "Unscythe, Killer of Kings");

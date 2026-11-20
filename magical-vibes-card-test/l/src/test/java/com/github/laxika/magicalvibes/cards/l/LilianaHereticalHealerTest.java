@@ -62,6 +62,7 @@ class LilianaHereticalHealerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No Zombie is created when Liliana leaves before the trigger resolves")
     void noZombieWhenLilianaDiesBeforeTransformTriggerResolves() {
         addLiliana(player1);
         Permanent liliana = findPermanent(player1, "Liliana, Heretical Healer");
@@ -80,6 +81,7 @@ class LilianaHereticalHealerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Combat damage gains life through lifelink")
     void combatDamageGainsLifeThroughLifelink() {
         addCreatureReady(player1, new LilianaHereticalHealer());
         harness.setLife(player1, 20);
@@ -94,6 +96,7 @@ class LilianaHereticalHealerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Liliana's own death doesn't create a Zombie")
     void lilianasOwnDeathDoesNotCreateZombie() {
         addLiliana(player1);
         Permanent liliana = findPermanent(player1, "Liliana, Heretical Healer");
@@ -107,6 +110,7 @@ class LilianaHereticalHealerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A token you control dying doesn't transform Liliana")
     void alliedTokenDeathDoesNotTransformAnotherLiliana() {
         addLiliana(player1);
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());

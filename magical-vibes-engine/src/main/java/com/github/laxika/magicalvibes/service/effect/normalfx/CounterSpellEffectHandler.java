@@ -1,16 +1,20 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaCost;
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.RememberTargetPlayerEffect;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
@@ -23,6 +27,7 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
 
     private final CounterSupport counterSupport;
     private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -81,7 +86,28 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
             }
         };
         entry.recordStep(StepKind.COUNTER_SPELL, countered
-                ? StepOutcome.ofObjects(List.of(targetCardId), listOfController(targetEntry)) : StepOutcome.NONE);
+                ? StepOutcome.ofObjects(List.of(targetCardId), listOfController(targetEntry),
+                movedCard(gameData, targetCardId, targetEntry))
+                : StepOutcome.NONE);
+    }
+
+    /**
+     * The card the countered spell became in the public zone it was put into, its graveyard or exile, which "that
+     * card" after the counter names ({@code cardsThisWay(COUNTER_SPELL)}); none for a copy, an ability or a card put
+     * into a hidden zone.
+     */
+    private List<MovedCard> movedCard(GameData gameData, UUID objectId, StackEntry countered) {
+        if (countered.isCopy() || countered.getEntryType().isAbility() || countered.getPhysicalCard() == null) {
+            return List.of();
+        }
+        UUID cardId = countered.getPhysicalCard().getId();
+        ExiledCardEntry exiled = gameData.findExiledCard(cardId);
+        if (exiled != null) {
+            return List.of(new MovedCard(objectId, cardId, Zone.EXILE, exiled.ownerId()));
+        }
+        UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
+        return graveyardOwnerId == null ? List.of()
+                : List.of(new MovedCard(objectId, cardId, Zone.GRAVEYARD, graveyardOwnerId));
     }
 
     /**

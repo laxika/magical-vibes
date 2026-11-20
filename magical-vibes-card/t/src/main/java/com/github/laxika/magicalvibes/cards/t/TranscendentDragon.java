@@ -3,8 +3,13 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
-import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileThenGrantFreeCastPermissionEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.CounteredSpellDestination;
+import com.github.laxika.magicalvibes.model.effect.MayCastDiscardedCardWithoutPayingManaCostEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -31,6 +36,9 @@ public class TranscendentDragon extends Card {
                 "Target must be a spell."
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new WasCast(true)),
-                new CounterSpellAndExileThenGrantFreeCastPermissionEffect(false, true));
+                SequenceEffect.of(
+                        new CounterSpellEffect(CounteredSpellDestination.EXILE),
+                        new MayCastDiscardedCardWithoutPayingManaCostEffect(
+                                Subjects.cardsThisWay(StepKind.COUNTER_SPELL))));
     }
 }

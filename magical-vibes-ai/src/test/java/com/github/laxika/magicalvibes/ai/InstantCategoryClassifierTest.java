@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.a.AmbushViper;
 import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.t.ThranduilsDecree;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -40,6 +41,13 @@ class InstantCategoryClassifierTest {
         void classifiesLightningBoltAsRemoval() {
             assertThat(InstantCategoryClassifier.classify(new LightningBolt()))
                     .isEqualTo(InstantCategory.REMOVAL);
+        }
+
+        @Test
+        @DisplayName("Classifies a counter whose destination depends on the spell (Thranduil's Decree) as COUNTERSPELL")
+        void classifiesConditionalDestinationCounterAsCounterspell() {
+            assertThat(InstantCategoryClassifier.classify(new ThranduilsDecree()))
+                    .isEqualTo(InstantCategory.COUNTERSPELL);
         }
     }
 

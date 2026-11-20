@@ -29,16 +29,17 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
      * The cards an earlier step of the same resolution moved: for {@link StepKind#EXILE} the cards it exiled, in exile;
      * for {@link StepKind#DESTROY} and {@link StepKind#SACRIFICE} the cards the permanents it removed became in the
      * zone they went to (a token, which ceases to exist, becomes none); for {@link StepKind#DISCARD} the discarded
-     * cards, in the graveyard or the public zone a replacement put them in instead. The rest of the effect can find a
-     * card it moved to a public zone (CR 400.7j); a card that has left that zone since is a new object and is not
-     * named.
+     * cards, in the graveyard or the public zone a replacement put them in instead; for {@link StepKind#COUNTER_SPELL}
+     * the card the countered spell became in its graveyard or in exile (a copy, an ability or a card put into a hidden
+     * zone becomes none). The rest of the effect can find a card it moved to a public zone (CR 400.7j); a card that has
+     * left that zone since is a new object and is not named.
      */
     record CardsThisWay(StepKind kind) implements CardSubject {
 
         public CardsThisWay {
             Objects.requireNonNull(kind, "kind");
             switch (kind) {
-                case EXILE, DESTROY, SACRIFICE, DISCARD -> {
+                case EXILE, DESTROY, SACRIFICE, DISCARD, COUNTER_SPELL -> {
                 }
                 default -> throw new IllegalArgumentException("A " + kind + " step leaves no card for a card "
                         + "subject to name");

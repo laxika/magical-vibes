@@ -258,7 +258,8 @@ public final class Subjects {
     /**
      * "The exiled card", "each card put into a graveyard this way": the cards the most recent step of that kind of the
      * same resolution moved, in the zone it put them in ({@code EXILE}, {@code DESTROY}, {@code SACRIFICE},
-     * {@code DISCARD}: "the discarded card"). A step result.
+     * {@code DISCARD}: "the discarded card"; {@code COUNTER_SPELL}: "that card" after "counter target spell … exile it
+     * instead"). A step result.
      */
     public static CardSubject cardsThisWay(StepKind kind) {
         return new CardSubject.CardsThisWay(kind);

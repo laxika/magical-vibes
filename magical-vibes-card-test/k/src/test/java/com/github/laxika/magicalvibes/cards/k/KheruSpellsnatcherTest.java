@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class KheruSpellsnatcherTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Turning it face up counters the target spell, exiles it and grants a free cast")
     void turningFaceUpCountersSpellExilesItAndGrantsControllerFreeCastPermission() {
         KheruSpellsnatcher kheru = new KheruSpellsnatcher();
         GrizzlyBears bears = new GrizzlyBears();
@@ -61,6 +63,7 @@ class KheruSpellsnatcherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can counter its controller's own spell and cast it again without mana")
     void canCounterOwnSpellAndCastItAgainWithoutMana() {
         harness.setHand(player1, List.of(new KheruSpellsnatcher()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -88,6 +91,7 @@ class KheruSpellsnatcherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The free cast allows a delve spell but keeps sorcery timing")
     void freeCastingPermissionAllowsDelveSpellButPreservesSorceryTiming() {
         harness.setHand(player1, List.of(new KheruSpellsnatcher()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -122,6 +126,7 @@ class KheruSpellsnatcherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Turning it face up with no spell on the stack asks for no target")
     void turningFaceUpWithoutSpellDoesNotCreateTargetChoice() {
         harness.setHand(player1, List.of(new KheruSpellsnatcher()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

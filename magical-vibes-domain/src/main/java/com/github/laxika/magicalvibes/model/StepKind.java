@@ -19,12 +19,14 @@ package com.github.laxika.magicalvibes.model;
  *       {@link #EXILE} step that exiles cards from a graveyard, a library or a hand records those cards and their
  *       owners;</li>
  *   <li>{@link #RETURN}: the number of permanents or cards returned, the permanents (to a hand: by their id as the step
- *       acted on them; to the battlefield: the permanent each card became) or cards, their owners;</li>
+ *       acted on them; to the battlefield: the permanent each card became, the exile-and-return-transformed of the
+ *       source included) or cards, their owners;</li>
  *   <li>{@link #CREATE_TOKEN}: the number of tokens, the tokens, the players who got them;</li>
  *   <li>{@link #DEAL_DAMAGE}: the total damage dealt, the permanents dealt damage, the players dealt damage;</li>
  *   <li>{@link #GAIN_LIFE}, {@link #LOSE_LIFE}: the total life gained or lost, nothing, the players;</li>
  *   <li>{@link #PUT_COUNTERS}, {@link #REMOVE_COUNTERS}: the number of counters, the permanents, their controllers;</li>
- *   <li>{@link #COUNTER_SPELL}, {@link #COPY_SPELL}: 1 when the spell was countered or copied, else 0;</li>
+ *   <li>{@link #COUNTER_SPELL}, {@link #COPY_SPELL}: 1 when the spell was countered or copied, else 0; a countered
+ *       spell's {@link StepOutcome#movedCards()} name the card it became in its graveyard or in exile;</li>
  *   <li>{@link #MANIFEST}: the number of permanents manifested, those permanents, their controllers.</li>
  * </ul>
  *
@@ -32,7 +34,8 @@ package com.github.laxika.magicalvibes.model;
  * prompts, pauses by resolving itself again before it changes anything, or pauses at the end of its step with its
  * result recorded by then. The recording handlers: draw, gain and lose life, exile a permanent, exile the source's or
  * the triggering card or target cards from a graveyard ({@code ExileGraveyardCardsEffect} except where its player
- * chooses at a prompt), exile the top card of a library, destroy, copy, create a token, manifest and mill (never prompt, or
+ * chooses at a prompt), exile the top card of a library, destroy, copy, create a token, manifest, mill and exile the
+ * source and return it transformed ({@code ExileSelfAndReturnTransformedEffect}) (never prompt, or
  * rerun before any change); the self sacrifice ({@code departAsStep}), discard and
  * sacrifice (their prompts add to the result as they are answered, through {@code GameData.discarded} and
  * {@code DestructionSupport.sacrificeTogether}), the chosen return to hand
