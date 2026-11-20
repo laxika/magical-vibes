@@ -4,9 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnSelfThenTransformIfThresholdEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -40,7 +46,13 @@ public class PrimalAmulet extends Card {
         // Then if there are four or more charge counters on it, you may remove those counters
         // and transform it.
         addTrigger(Triggers.youCastSpell().withFilter(INSTANT_OR_SORCERY),
-                new PutCounterOnSelfThenTransformIfThresholdEffect(CounterType.CHARGE, 4, true));
+                SequenceEffect.of(
+                        new PutCountersOnSelfEffect(CounterType.CHARGE),
+                        new ConditionalEffect(new SourceCounterThreshold(4, CounterType.CHARGE), new MayEffect(
+                                SequenceEffect.of(
+                                        new RemoveAllCountersEffect(CounterType.CHARGE),
+                                        new TransformSelfEffect()),
+                                "Remove counters and transform?"))));
     }
 
     @Override

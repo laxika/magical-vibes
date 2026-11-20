@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
+import com.github.laxika.magicalvibes.cards.g.GorillaWarCry;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -14,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MizzixsMastery.class, CounselOfTheSoratami.class, GrizzlyBears.class})
+@CardUsed({MizzixsMastery.class, CounselOfTheSoratami.class, GrizzlyBears.class, GorillaWarCry.class})
 class MizzixsMasteryTest extends BaseCardTest {
 
     @Test
@@ -174,6 +175,24 @@ class MizzixsMasteryTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A copy whose own text says it can be cast only during combat can't be cast in a main phase")
+    void copyKeepsItsOwnCastOnlyDuringCombatRestriction() {
+        GorillaWarCry warCry = new GorillaWarCry();
+        harness.setGraveyard(player1, List.of(warCry));
+        harness.setHand(player1, List.of(new MizzixsMastery()));
+        addNormalMana();
+
+        harness.castAndResolveSorcery(player1, 0, List.of(warCry.getId()));
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .extracting(Card::getName)
+                .containsExactlyInAnyOrder("Gorilla War Cry", "Mizzix's Mastery");
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 
     private void addNormalMana() {

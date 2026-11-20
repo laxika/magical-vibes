@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 24 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 25 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -562,6 +562,7 @@ cause under Findings.
 | 22 | run 21's next: a card filter on `DiscardEffect` and a filter-aware can't-discard check; `SacrificeUnlessDiscardCardTypeEffect` and the "discard a … If you do" `DiscardCardThenEffect` cards; Spectacular Showdown's overload record; the threshold transform if it fits | done (1 split, 2 absorbed, 4 survivors, `DiscardCardThenEffect` blocked-other with 41 of its 70 cards split; 61 card files rewritten; `DiscardEffect.matching`, `HappenedThisWay.toACard(DISCARD, …)`, `DiscardCardThenEffect.withDiscardedManaValueAsX`; Great Desert Hellion fixed by Oracle text; the threshold transform not reached) |
 | 23 | the card subject (human decision 2026-11-20): `CardSubject`, `cardsThisWay(kind)` and the records blocked on it (token copy of an exiled card, destroy-then-return, Hidetsugu and Kairi, the discarded-card riders) | done (3 split, 1 absorbed, 7 survivors, 3 blocked-other; 20 card files rewritten; `CardSubject.cardsThisWay` / `targetCard`, `StepOutcome.movedCards`, `PermanentSubject.Except`, `CardPutIntoGraveyardThisTurnPredicate`; Mordor on the March and Sorin fixed by Oracle text, Gyrus by a ruling; the may-cast-a-copy record not split) |
 | 24 | run 23's next: the trigger's event value in the graveyard exile's target filter, the may-cast-a-copy step and `ExileTargetCardFromGraveyardAndMayCastCopyEffect`'s 14 cards; an exile step and a seek filter over a card subject (Leonardo da Vinci, Anguished Recollection) | done (2 split, 1 absorbed, 3 survivors; 16 card files rewritten; `CopyImprintedCardAndMayCastCopyEffect.of(cards)` with `payingItsCosts` / `losingLifeOnCast` / `ifCastThen`, `ExileGraveyardCardsEffect.cards` / `oneTargetFromOpponentGraveyard`, `CardSharesCardTypeWithCardsPredicate`; no marker record kept; Hour of Eternity, The Ruinous Powers and the threshold transform not reached) |
+| 25 | run 24's next: the subject-path cast-copy restriction check (a rules bug), the X-target graveyard exile (Hour of Eternity, Midnight Ritual, Foggy Swamp Visions, Necromancer's Covenant), the threshold transform, The Ruinous Powers | done (2 split, 4 survivors, 1 blocked-other; 11 card files rewritten; `ExileFreeCastQueueSupport.castableFromExile` for both copy accept paths, `ExileCardsFromGraveyardEffect.exactlyXFromOwnGraveyard` / `exactlyXFromGraveyards` recording EXILE, `GraveyardCardChoosingEffect.choosesFromControllersGraveyardOnly`; Mizzix's Mastery fixed by a ruling, the threshold transforms made transform events; The Ruinous Powers kept; item 4 audited, not started) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -5439,6 +5440,100 @@ Application, AI, engine testFixtures and card-test `a d e f i j k l m n r s t w`
 - **Remaining fused multi-card records** (no ledger row, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` / `OrElse`
   name): 110 (1,150 card uses); by first word Exile 19, Search 10, Reveal 9, Prevent 7, Counter 7, Each 6, Choose 5, Cant 5, Put 3, Draw 3,
   Destroy 3, Creatures 3, Boost 3, Shuffle 2, Grant 2, Create 2.
+
+### Step 8, run 25 (2026-11-20)
+
+Run 24's "Next run" items (4), (1), (2) and (3), in that order; item (4) of the brief (the next fused family) audited, not started.
+Verdicts (ledger, step `8`): **split 2** (`ExileCreaturesFromGraveyardAndCreateTokensEffect`, `PutCounterOnSelfThenTransformIfThresholdEffect`,
+with their handlers), **survivor 4** (`ExileCardsFromGraveyardEffect`, `GraveyardCardChoosingEffect`, `CopyImprintedCardAndMayCastCopyEffect`'s
+`mayfx` handler, `PermanentCounterSupport` lost `removeCountersAndTransform`), **blocked-other 1** (The Ruinous Powers' record, unchanged).
+Ratchet 4,712 / 3,941 → 4,710 / 3,939. 11 card files rewritten (Hour of Eternity, Midnight Ritual, Foggy Swamp Visions and Necromancer's
+Covenant by hand; the six threshold cards by a deleted scratch script, read back by eye, imports sorted; Mizzix's Mastery's test). Oracle text
+of every rewritten card checked with `get_card` (Edgar Markov's Coffin as Edgar, Charmed Groom's back face, VOW 236; Cult of the Waxing Moon);
+rulings with `get_rulings` for all of them and for Elite Arcanist (Midnight Ritual has none). CR 400.7, 601.2, 601.3, 608.2b, 608.2g, 608.2h,
+616.1, 701.27f, 701.27g, 707.10a and 707.12 checked with `get_rule` (2026-11-20).
+
+- **The cast-copy restriction bug (fixed).** A copy cast through the card-subject path (`CopyImprintedCardAndMayCastCopyEffect.of(cards)`: the
+  14 run-24 cards, Mizzix's Mastery overloaded, Wildfire Devils, The Tale of Tamiyo) ignored the copy's own "cast this spell only during …"
+  restriction: `SpellCastingService.playCardFromExileInternalOnce` checks `isSpellCastingAllowed` and the cast condition but never
+  `canCastWithSpellTimingRestriction` (the free-cast queue checks it for copies). Mizzix's Mastery's ruling: "Timing restrictions based on the
+  copy's type are ignored. Other restrictions (such as "Cast [this spell] only during combat") are not"; Elite Arcanist's says the same; CR
+  601.3 (a player begins to cast a spell only if no rule or effect prohibits it). The check is now `ExileFreeCastQueueSupport.castableFromExile`
+  (cast-only-from-graveyard, casting prohibitions, and for a copy its timing restriction), asked by the free-cast queue and by the subject
+  path's accept before the split / mode / X branches; a copy that fails it ceases to exist with "cannot be cast from exile."
+  (`MizzixsMasteryTest.copyKeepsItsOwnCastOnlyDuringCombatRestriction`, Gorilla War Cry in a main phase, fails on the old code: the copy
+  went on the stack). Only the check is shared; the two accept paths stay (the subject path pays costs, loses life and runs the rider; the queue
+  pays additional costs and escalate). A non-copy resolution cast from exile (Hidetsugu and Kairi's free cast, the queue's non-copy cards) still
+  skips the timing-restriction check; CR 601.3 applies to them too, so the next run that touches `playCardFromExileInternalOnce` should check it there.
+- **The X-target graveyard exile.** `ExileCardsFromGraveyardEffect.exactlyXFromOwnGraveyard(filter)` / `exactlyXFromGraveyards(filter)` (the
+  existing `ownGraveyardOnly` / `allGraveyardsForSpell` with `exactTargets`; `exactSpellGraveyardScope()`): both `SpellCastingService` cast
+  paths (hand and flashback) offer exactly X matching cards of that scope through `handleExactNGraveyardSpellTargeting` (X=0: no targets), and
+  the cast-time check refuses an X above the matching cards ("Not enough creature cards in graveyard", the old text; it replaces the
+  by-class `needsGraveyardCreatureTargeting` block). The handler now records the EXILE step (cards, graveyard owners; it never prompts) and
+  rechecks each target's scope and filter as it resolves (CR 608.2b; before, any card still in any graveyard was exiled). The AI's X cap
+  lost its by-class branch: `GraveyardCardChoosingEffect.choosesFromControllersGraveyardOnly()` makes the exact-X cap count only the caster's
+  graveyard (`AiDecisionEngineTest.doesNotCastMidnightRitualWithOnlyOpponentCreaturesInGraveyard`, new). Hour of Eternity =
+  `exactlyXFromOwnGraveyard(creature)` + `CreateTokenCopyOfCardEffect.of(cardsThisWay(EXILE), 4/4 black).withCreatureTypesInstead(ZOMBIE)`;
+  Foggy Swamp Visions = `exactlyXFromGraveyards(creature)` + the plain copy + `SacrificeCreatedPermanentsAtEndStepEffect(true)`; Midnight Ritual
+  = `exactlyXFromOwnGraveyard(creature)` + `CreateTokenEffect(new AmountThisWay(EXILE), Zombie)`; Necromancer's Covenant = `ExileGraveyardCardsEffect(0,
+  TARGET_PLAYER_ALL_MATCHING, creature)` + the same Zombies, in a `SequenceEffect` on its trigger slot.
+- **The threshold transform.** "Put a [kind] counter on this. Then if there are N or more, remove those counters and transform it" =
+  `PutCountersOnSelfEffect(kind)` + `ConditionalEffect(new SourceCounterThreshold(N, kind), SequenceEffect.of(new RemoveAllCountersEffect(kind), new
+  TransformSelfEffect()[, Treasure tokens]))`, a `MayEffect` around the sequence for Primal Amulet. Run 21's blockers held no longer: the condition
+  reads the entry's source snapshot once the source left (the old handler read the same snapshot; Treasure Map's ruling: three counters before it
+  left still make the Treasures); `TransformSelfEffect` has the old guards (transformed since the ability went on the stack, CR 701.27g; transform
+  prevented). Ludevic's Test Subject, Heirloom Mirror, Edgar Markov's Coffin, Brass's Tunnel-Grinder, Treasure Map, Primal Amulet.
+- **Behaviour changes.** The threshold transform was a bare face swap (`removeCountersAndTransform`): no transform event, no unattach, no
+  as-transforms abilities. It now transforms through `AnimationSupport`, so "whenever a permanent you control transforms into a non-Human
+  creature" sees it (CR 701.27f; `LudevicsTestSubjectTest.transformationTriggersTransformAbilities`, Cult of the Waxing Moon, which the old code
+  could not trigger: it emitted no `PermanentChangeEvent`). The activated threshold abilities declared the source as a target
+  (`selfTargeting`); they target nothing now. The counter-removal log line is `RemoveAllCountersEffect`'s. Primal Amulet's "you may" is asked
+  even when it left with four or more counters (then nothing happens; before, it was not asked). Hour of Eternity's and Midnight Ritual's
+  exile logs one line for all cards (the survivor's).
+- **The Ruinous Powers** stays (blocked-other): "choose an opponent at random. Exile the top card of that player's library" needs the random
+  choice made once and read by later steps (a recorded choose-player step; a random `PlayerSubject` resolved per step would pick again), and
+  "when you cast a spell this way" a delayed cast trigger bound to `cardsThisWay(EXILE)`. One card; build them when another record needs them
+  (`AttachSourceAuraToRandomOpponentEffect`, `ChooseRandomOpponentMustAttackThisCombatEffect`, `DealDamageToRandomOpponent*` are candidates).
+- **Item 4 audited, not started.** The Counter family's step-recording first halves: `CounterSpellOrAbilityAndDestroySourceEffect` (Teferi's
+  Response, Ouphe Vandals: "if a permanent's ability is countered this way, destroy that permanent") and `CounterAbilityAndLockSourceEffect`
+  (Interdict, Trickbind: "that permanent's activated abilities can't be activated") split into `CounterSpellEffect` + a step on "the source of
+  the countered spell or ability", which no subject names: add a `PermanentSubject` for it (the countered entry's `sourcePermanentId`, remembered
+  on the entry as it is countered, like `counteredSpellControllerId`; a new `StackEntry` field is copied for simulations) and a subject on
+  `LockTargetPermanentEffect` (31 cards; keep its target constructors). `CounterSpellAndExileThenGrantFreeCastPermissionEffect` (4) is
+  `CounterSpellEffect(EXILE)` + a permission over `cardsThisWay`-style countered cards (COUNTER_SPELL is not a `CardSubject` kind yet).
+- **Not changed, noted.** `AnimationSupport` cites "CR 701.27d" for the instant-or-sorcery face; that text is CR 701.27e now (701.27d is
+  "not a double-faced card"). `GraveyardReturnSupport` still holds about a dozen Javadoc blocks with no method under them.
+
+**Tests** (per-card runs while converting, then one Gradle run, one `--tests` list per task): the 10 rewritten cards' tests and
+every card test constructing one (the helper sweep: Deeproot Champion, Sorcerous Spyglass, Swashbuckling, The Ruinous Powers), Mizzix's
+Mastery, Cult of the Waxing Moon, Gorilla War Cry, Elite Arcanist, Wildfire Devils, The Tale of Tamiyo, `--tests-for
+ExileCardsFromGraveyardEffect` (all), `CopyImprintedCardAndMayCastCopyEffect` (all), `CreateTokenCopyOfCardEffect PutCountersOnSelfEffect
+TransformSelfEffect RemoveAllCountersEffect --max-per-class 8`, `ExileGraveyardCardsEffect --max-per-class 10`; application
+(`ExileCardsFromGraveyardEffectHandlerTest`, `ExileGraveyardCardsEffectHandlerTest`, `SpellCastingServiceTest`, `CollectorRouteRecordTest`,
+`LoneMayAbilityRecordTest`, `MayCastHandlerServiceTest`, `TargetLegalityServiceTest`, `StackResolutionServiceTest`, `SpellTriggersTest`,
+`LastCounterRemovedTriggerTest`, `LibraryChoiceHandlerServiceTest`, `CardImmutabilityArchTest`, `EffectCountRatchetTest`, `StepResultsTest`,
+`SubjectResolutionServiceTest`, `SimulationCopyCompletenessTest`, `CardEffectTargetingConsistencyTest`, `MayAbilityHandlerServiceTest`,
+`GraveyardTargetingServiceTest`, `EffectResolutionServiceTest`, `AbilityActivationServiceTest`, `ActivatedAbilityExecutionServiceTest` and
+three graveyard handler tests) and AI (`AiDecisionEngineTest` +1, `EasyAiDecisionEngineTest`, `MediumAiDecisionEngineTest`,
+`AiTargetSelectorTest`, `TargetPolarityGuardTest`, `GameDataDeepCopyTest`, `SpellEvaluatorTest`): 140 classes, 299 result files, 2,605 test
+cases, all pass (five Hour of Eternity / Midnight Ritual X-check tests failed on the new message text before it named the filter again).
+New tests: Mizzix's Mastery (fails on the old code), Ludevic's Test Subject, the AI cap. Application, AI, engine testFixtures and card-test
+`b e f h l m n p t` test sources compile.
+
+**For later runs.**
+
+- "Exile X target [filter] cards from your graveyard / from graveyards" on a spell is `ExileCardsFromGraveyardEffect.exactlyXFromOwnGraveyard` /
+  `exactlyXFromGraveyards`; "for each card exiled this way" after it is `new AmountThisWay(StepKind.EXILE)`, "a copy of it" is
+  `CreateTokenCopyOfCardEffect.of(cardsThisWay(EXILE), …)`. A counter-threshold transform composes from `PutCountersOnSelfEffect`,
+  `SourceCounterThreshold`, `RemoveAllCountersEffect` and `TransformSelfEffect`.
+- **Next run.** (1) The Counter family: the countered-source subject, `LockTargetPermanentEffect` with a subject, then
+  `CounterSpellOrAbilityAndDestroySourceEffect` and `CounterAbilityAndLockSourceEffect` (4 cards); `CounterSpellAndExileThenGrantFreeCastPermissionEffect`
+  if a COUNTER_SPELL card subject fits. (2) The timing-restriction check for non-copy resolution casts from exile (above). (3) The "unless"
+  counters (`CounterUnlessDiscardsEffect` 14, `CounterUnlessPaysLifeEffect` 14, `CounterUnlessSacrificesEffect` 9) need a `MayEffect` whose
+  chooser is the target spell's controller; check `MayEffect`'s chooser options first. (4) Then Search 10, Reveal 9, Prevent 7.
+- **Remaining fused multi-card records** (no ledger row, used by two or more cards, a `Then` / `And` / `IfYouDo` / `Unless` / `OrElse`
+  name): 110 (1,150 card uses), unchanged (this run's two classes had ledger rows); by first word Exile 19, Search 10, Reveal 9, Prevent 7,
+  Counter 7, Each 6, Choose 5, Cant 5, Put 3, Draw 3, Destroy 3, Creatures 3, Boost 3, Shuffle 2, Grant 2, Create 2.
 
 ## Prompt
 

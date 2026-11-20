@@ -115,7 +115,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileAnyNumberOfCardsFromHand
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromGraveyardAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardOrPayManaCost;
@@ -5737,13 +5736,12 @@ public class SpellCastingService {
             gameData.conspiredSpellCopyCounts.merge(card.getId(), conspireInstances, Integer::sum);
         }
 
-        // Validate graveyard targets for spells that target creature cards in graveyard
-        ExileCreaturesFromGraveyardAndCreateTokensEffect graveyardCreatureTargetingEffect =
-                card.getSpellEffects().stream()
-                        .filter(ExileCreaturesFromGraveyardAndCreateTokensEffect.class::isInstance)
-                        .map(ExileCreaturesFromGraveyardAndCreateTokensEffect.class::cast)
-                        .findFirst().orElse(null);
-        boolean needsGraveyardCreatureTargeting = graveyardCreatureTargetingEffect != null;
+        // "Exile X target creature cards from your graveyard": X can't exceed the cards there to target.
+        ExileCardsFromGraveyardEffect exactXGraveyardExile = filteredSpellEffects.stream()
+                .filter(ExileCardsFromGraveyardEffect.class::isInstance)
+                .map(ExileCardsFromGraveyardEffect.class::cast)
+                .filter(effect -> effect.xScaled() && effect.exactSpellGraveyardScope() != null)
+                .findFirst().orElse(null);
         ReturnTargetCardsFromGraveyardToBattlefieldEffect returnToBattlefieldEffect =
                 filteredSpellEffects.stream()
                         .filter(ReturnTargetCardsFromGraveyardToBattlefieldEffect.class::isInstance)
@@ -5754,14 +5752,20 @@ public class SpellCastingService {
                         .filter(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::isInstance)
                         .map(SacrificePermanentAndReturnTargetCardsFromGraveyardEffect.class::cast)
                         .findFirst().orElse(null);
-        if (needsGraveyardCreatureTargeting && effectiveXValue > 0) {
-            long creatureCount = graveyardCreatureTargetingEffect.graveyardScope()
+        if (exactXGraveyardExile != null && effectiveXValue > 0) {
+            int neededCount = exactXGraveyardExile.maxTargetsForX(effectiveXValue);
+            long matchingCount = exactXGraveyardExile.exactSpellGraveyardScope()
                     .graveyardOwners(gameData.orderedPlayerIds, playerId).stream()
-                    .flatMap(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream())
-                    .filter(c -> c.hasType(CardType.CREATURE))
-                    .count();
-            if (effectiveXValue > creatureCount) {
-                throw new IllegalStateException("Not enough creature cards in graveyard (need " + effectiveXValue + ", have " + creatureCount + ")");
+                    .mapToLong(ownerId -> gameData.playerGraveyards.getOrDefault(ownerId, List.of()).stream()
+                            .filter(c -> exactXGraveyardExile.filter() == null
+                                    || predicateEvaluationService.matchesCardPredicate(
+                                    c, exactXGraveyardExile.filter(), card.getId(), gameData, ownerId))
+                            .count())
+                    .sum();
+            if (neededCount > matchingCount) {
+                throw new IllegalStateException("Not enough "
+                        + CardPredicateUtils.describeFilter(exactXGraveyardExile.filter())
+                        + "s in graveyard (need " + neededCount + ", have " + matchingCount + ")");
             }
         }
         if (returnToBattlefieldEffect != null && returnToBattlefieldEffect.xScaled() && effectiveXValue > 0) {
@@ -7118,6 +7122,21 @@ public class SpellCastingService {
                         filteredSpellEffects, 0, graveyardToTopEffect.targetPlayer() ? targetId : null,
                         null, Map.of(), null, List.of(), List.of()
                 ));
+            } else if (exileFromGraveyardEffect != null
+                    && exileFromGraveyardEffect.exactSpellGraveyardScope() != null) {
+                int graveyardTargetCount = exileFromGraveyardEffect.maxTargetsForX(resolvedXValue);
+                if (graveyardTargetCount > 0) {
+                    graveyardTargetingService.handleExactNGraveyardSpellTargeting(gameData, playerId, card,
+                            entryType, graveyardTargetCount, exileFromGraveyardEffect.filter(), "to exile",
+                            filteredSpellEffects, exileFromGraveyardEffect.exactSpellGraveyardScope());
+                    return; // finishSpellCast handled in the graveyard targeting callback
+                }
+                // X=0: no targets, the spell resolves exiling nothing.
+                gameData.stack.add(new StackEntry(
+                        entryType, card, playerId, card.getName(),
+                        filteredSpellEffects, 0, null,
+                        null, null, null, List.of(), List.of()
+                ));
             } else if (exileFromGraveyardEffect != null) {
                 long matchingCount = 0;
                 for (UUID pid : gameData.orderedPlayerIds) {
@@ -7154,19 +7173,6 @@ public class SpellCastingService {
                         entryType, card, playerId, card.getName(),
                         filteredSpellEffects, 0, targetId,
                         null, Map.of(), null, List.of(), targetIds
-                ));
-            } else if (needsGraveyardCreatureTargeting && resolvedXValue > 0) {
-                // Prompt player to choose graveyard targets before putting spell on stack
-                graveyardTargetingService.handleGraveyardSpellTargeting(gameData, playerId, card,
-                        entryType, resolvedXValue, filteredSpellEffects,
-                        graveyardCreatureTargetingEffect.graveyardScope());
-                return; // finishSpellCast handled in graveyard targeting callback
-            } else if (needsGraveyardCreatureTargeting) {
-                // X=0: no targets needed, put spell on stack directly (resolves doing nothing)
-                gameData.stack.add(new StackEntry(
-                        entryType, card, playerId, card.getName(),
-                        filteredSpellEffects, 0, null,
-                        null, null, null, List.of(), List.of()
                 ));
             } else if (returnToBattlefieldEffect != null && !targetIds.isEmpty()
                     && card.getTargetGroups().stream().anyMatch(group ->
@@ -11848,7 +11854,26 @@ public class SpellCastingService {
                 .map(ExileCardsFromGraveyardEffect.class::cast)
                 .findFirst()
                 .orElse(null);
-        if (exileFromGraveyardEffect != null) {
+        if (exileFromGraveyardEffect != null && exileFromGraveyardEffect.exactSpellGraveyardScope() != null) {
+            int graveyardTargetCount = exileFromGraveyardEffect.maxTargetsForX(effectiveXValue);
+            if (graveyardTargetCount > 0) {
+                graveyardTargetingService.handleExactNGraveyardSpellTargeting(gameData, playerId, card, entryType,
+                        graveyardTargetCount, exileFromGraveyardEffect.filter(), "to exile", spellEffects,
+                        exileFromGraveyardEffect.exactSpellGraveyardScope());
+                gameData.graveyardTargetOperation.flashback = true;
+                return;
+            }
+            StackEntry noTargetStackEntry = new StackEntry(
+                    entryType, card, playerId, spellName,
+                    spellEffects, 0, null,
+                    null, Map.of(), null, List.of(), List.of()
+            );
+            noTargetStackEntry.setCastWithFlashback(true);
+            noTargetStackEntry.setSourceZone(Zone.GRAVEYARD);
+            gameData.stack.add(noTargetStackEntry);
+            finishSpellCast(gameData, playerId, player, graveyard, card, false);
+            return;
+        } else if (exileFromGraveyardEffect != null) {
             long matchingCount = gameData.orderedPlayerIds.stream()
                     .flatMap(playerIdToSearch -> gameData.playerGraveyards
                             .getOrDefault(playerIdToSearch, List.of()).stream())

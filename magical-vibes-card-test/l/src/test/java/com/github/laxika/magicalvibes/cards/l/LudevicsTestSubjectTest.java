@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.b.BoundByMoonsilver;
+import com.github.laxika.magicalvibes.cards.c.CultOfTheWaxingMoon;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,10 +16,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({LudevicsTestSubject.class})
 class LudevicsTestSubjectTest extends BaseCardTest {
-
-    // ===== Card structure =====
-
-    
 
     @Test
     @DisplayName("The transformed creature cannot activate the front face's ability")
@@ -35,7 +32,6 @@ class LudevicsTestSubjectTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Activated ability: put hatchling counter =====
 
     @Test
     @DisplayName("Activating ability puts a hatchling counter on the creature")
@@ -77,7 +73,6 @@ class LudevicsTestSubjectTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
     }
 
-    // ===== Transform at 5 counters =====
 
     @Test
     @DisplayName("Reaching 5 hatchling counters removes all and transforms into Ludevic's Abomination")
@@ -162,7 +157,6 @@ class LudevicsTestSubjectTest extends BaseCardTest {
         assertThat(subject.getCounterCount(CounterType.HATCHLING)).isEqualTo(2);
     }
 
-    // ===== Helpers =====
 
     private Permanent addReadySubject() {
         Permanent subject = harness.addToBattlefieldAndReturn(player1, new LudevicsTestSubject());
@@ -227,6 +221,25 @@ class LudevicsTestSubjectTest extends BaseCardTest {
         assertThat(subject.isTapped()).isTrue();
         assertThat(gqs.getEffectivePower(gd, subject)).isEqualTo(15);
         assertThat(gqs.getEffectiveToughness(gd, subject)).isEqualTo(15);
+    }
+
+    @Test
+    @CardUsed({CultOfTheWaxingMoon.class})
+    @DisplayName("Its transformation is a transform event: Cult of the Waxing Moon makes a Wolf")
+    void transformationTriggersTransformAbilities() {
+        harness.addToBattlefield(player1, new CultOfTheWaxingMoon());
+        Permanent subject = addReadySubject();
+        subject.setCounterCount(CounterType.HATCHLING, 4);
+        addAbilityMana();
+        int idx = gd.playerBattlefields.get(player1.getId()).indexOf(subject);
+        harness.activateAbility(player1, idx, null, null);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(subject.isTransformed()).isTrue();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Wolf"))
+                .hasSize(1);
     }
 
     @Test

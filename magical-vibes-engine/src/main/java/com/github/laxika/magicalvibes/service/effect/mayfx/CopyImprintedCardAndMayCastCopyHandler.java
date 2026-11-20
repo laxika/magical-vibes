@@ -40,7 +40,9 @@ import java.util.UUID;
 
 /**
  * Accept/decline half of {@link CopyImprintedCardAndMayCastCopyEffect}. A declined copy is removed from the exile zone
- * it was parked in, since a copy of a card outside the stack or battlefield ceases to exist (CR 707.10a). An accepted
+ * it was parked in, since a copy of a card outside the stack or battlefield ceases to exist (CR 707.10a). Both paths
+ * ask {@link ExileFreeCastQueueSupport#castableFromExile} first, so a copy keeps its own "cast this spell only during
+ * ..." restriction and a casting prohibition stops it (CR 601.3). An accepted
  * copy of an imprinted card is cast for free through the free-cast queue; a copy of a card a card subject named is cast
  * as part of the resolution with the effect's cast options (split halves, a modal spell's mode, X when its costs are
  * paid, the life loss and the "if you do" rider after the cast).
@@ -91,6 +93,12 @@ public class CopyImprintedCardAndMayCastCopyHandler implements MayEffectHandlerB
         ExiledCardEntry exiledEntry = gameData.findExiledCard(copy.getId());
         if (exiledEntry == null || copy.hasType(CardType.LAND)) {
             gameData.removeFromExile(copy.getId());
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (!exileFreeCastQueueSupport.castableFromExile(gameData, player.getId(), copy, true)) {
+            gameData.removeFromExile(copy.getId());
+            gameLogService.append(gameData, GameLog.cardThen(copy, " cannot be cast from exile."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

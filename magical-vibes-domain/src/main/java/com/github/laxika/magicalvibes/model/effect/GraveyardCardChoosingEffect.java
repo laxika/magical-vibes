@@ -59,6 +59,11 @@ public interface GraveyardCardChoosingEffect extends CardEffect {
         return false;
     }
 
+    /** Whether the cards are chosen from the controller's graveyard only ("from your graveyard"). */
+    default boolean choosesFromControllersGraveyardOnly() {
+        return false;
+    }
+
     /** The minimum number of selected cards; derived from exact-target choices by default. */
     default int graveyardChoiceMinTargets() {
         return graveyardChoiceExactTargets() ? graveyardChoiceMaxTargets() : 0;

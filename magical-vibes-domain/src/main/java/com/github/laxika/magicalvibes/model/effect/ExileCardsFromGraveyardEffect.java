@@ -1,10 +1,16 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
  * Exile up to {@code maxTargets} target cards from graveyard(s) and gain life for it. The targets
  * are chosen as the spell/ability goes on the stack; choosing zero cards covers a "you may" clause.
+ *
+ * <p>Records the {@code StepKind.EXILE} step: the cards exiled and the graveyards' owners, so "for each card exiled this
+ * way" ({@code AmountThisWay}) and "a copy of that card" ({@code Subjects.cardsThisWay(StepKind.EXILE)}) can follow
+ * it as later steps. A target that is no longer in a graveyard of the effect's scope or no longer matches
+ * {@code filter} is not exiled (CR 608.2b).
  *
  * @param maxTargets            how many graveyard cards may be chosen ("up to N target cards");
  *                              {@code 0} means the limit comes from the ability's X value
@@ -25,11 +31,13 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                                      once for each exiled card matching {@code conditionalFilter}
  * @param singleGraveyard whether all selected cards must come from one graveyard
  * @param trackWithSource whether the exiled cards are tracked with the source permanent
- * @param ownGraveyardOnly whether ETB targeting is restricted to the controller's graveyard
+ * @param ownGraveyardOnly whether the targets come from the controller's graveyard only (an ability's, and a spell's
+ *                         exact choice: {@link #exactlyXFromOwnGraveyard})
  * @param exactTargets whether a spell-cast selection must contain exactly {@code maxTargets}
  *                     cards instead of allowing any number up to that limit
  * @param xTargetMultiplier multiplier applied to the paid X value when {@code maxTargets} is zero
- * @param allGraveyardsForSpell whether a spell-cast selection may span multiple graveyards
+ * @param allGraveyardsForSpell whether a spell-cast selection may span multiple graveyards (up to N, or with
+ *                              {@code exactTargets} exactly N: {@link #exactlyXFromGraveyards})
  * @param maxTargetsFromMultikicker whether an ETB target limit is the number of multikicker
  *                                  payments made for the entering creature
  * @param putKickCountersOnExiledCards whether successfully exiled cards receive kick counters
@@ -137,6 +145,38 @@ public record ExileCardsFromGraveyardEffect(int maxTargets, int lifeGain, boolea
             int count, CardPredicate filter, boolean trackWithSource) {
         return new ExileCardsFromGraveyardEffect(count, 0, false, filter, false, null,
                 0, 0, true, false, trackWithSource, false, true, 1, false);
+    }
+
+    /** "Exile X target [filter] cards from your graveyard" on a spell (Hour of Eternity, Midnight Ritual). */
+    public static ExileCardsFromGraveyardEffect exactlyXFromOwnGraveyard(CardPredicate filter) {
+        return new ExileCardsFromGraveyardEffect(0, 0, false, filter, false, null, 0, 0,
+                false, false, false, true, true, 1, false);
+    }
+
+    /** "Exile X target [filter] cards from graveyards" on a spell, from any graveyards together (Foggy Swamp Visions). */
+    public static ExileCardsFromGraveyardEffect exactlyXFromGraveyards(CardPredicate filter) {
+        return new ExileCardsFromGraveyardEffect(0, 0, false, filter, false, null, 0, 0,
+                false, false, false, false, true, 1, true);
+    }
+
+    /**
+     * The graveyards a spell's exact choice ({@code exactTargets}) takes its cards from: the controller's
+     * ({@code ownGraveyardOnly}), every graveyard together ({@code allGraveyardsForSpell}), or {@code null} for
+     * "from a single graveyard" and for an up-to choice.
+     */
+    public GraveyardSearchScope exactSpellGraveyardScope() {
+        if (!exactTargets) {
+            return null;
+        }
+        if (ownGraveyardOnly) {
+            return GraveyardSearchScope.CONTROLLERS_GRAVEYARD;
+        }
+        return allGraveyardsForSpell ? GraveyardSearchScope.ALL_GRAVEYARDS : null;
+    }
+
+    @Override
+    public boolean choosesFromControllersGraveyardOnly() {
+        return ownGraveyardOnly;
     }
 
     /** Whether the maximum target count is supplied by the ability's X value. */

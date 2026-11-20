@@ -95,53 +95,6 @@ public class PermanentCounterSupport {
                 new ConditionEvaluationService(gameQueryService, predicateEvaluationService));
     }
 
-    public void removeCountersAndTransform(GameData gameData, Permanent self, CounterType counterType, String counterName,
-                                           boolean canTransform) {
-        // Remove all counters of that type
-        switch (counterType) {
-            case CHARGE -> self.setCounterCount(CounterType.CHARGE, 0);
-            case BLOODLINE -> self.setCounterCount(CounterType.BLOODLINE, 0);
-            case HATCHLING -> self.setCounterCount(CounterType.HATCHLING, 0);
-            case LANDMARK -> self.setCounterCount(CounterType.LANDMARK, 0);
-            case SLIME -> self.setCounterCount(CounterType.SLIME, 0);
-            case STUDY -> self.setCounterCount(CounterType.STUDY, 0);
-            case RITUAL -> self.setCounterCount(CounterType.RITUAL, 0);
-            case WISH -> self.setCounterCount(CounterType.WISH, 0);
-            case BORE -> self.setCounterCount(CounterType.BORE, 0);
-            case PLUS_ONE_PLUS_ONE -> self.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 0);
-            case MINUS_ONE_MINUS_ONE -> self.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 0);
-            default -> throw new IllegalStateException("Unsupported counter type: " + counterType);
-        }
-
-        gameLogService.append(gameData, GameLog.textCardText(
-                "All " + counterName + " counters removed from ", self.getCard(), "."));
-        log.info("Game {} - All {} counters removed from {}", gameData.id, counterName, self.getCard().getName());
-
-        if (!canTransform) {
-            return;
-        }
-
-        Card originalCard = self.getOriginalCard();
-        if (!self.isTransformed()) {
-            Card backFace = originalCard.getBackFaceCard();
-            if (backFace != null) {
-                Card frontCard = self.getCard();
-                String frontName = frontCard.getName();
-                self.setCard(backFace);
-                self.setTransformed(true);
-                gameLogService.append(gameData, GameLog.cardTextCard(frontCard, " transforms into ", backFace, "."));
-                log.info("Game {} - {} transforms into {}", gameData.id, frontName, backFace.getName());
-            }
-        } else {
-            Card backCard = self.getCard();
-            String backName = backCard.getName();
-            self.setCard(originalCard);
-            self.setTransformed(false);
-            gameLogService.append(gameData, GameLog.cardTextCard(backCard, " transforms into ", originalCard, "."));
-            log.info("Game {} - {} transforms into {}", gameData.id, backName, originalCard.getName());
-        }
-    }
-
     public void applyPlusOnePlusOneCounters(GameData gameData, StackEntry entry, Permanent target, int counters) {
         if (counters <= 0 || gameQueryService.cantHavePlusOnePlusOneCounters(gameData, target)) {
             return;

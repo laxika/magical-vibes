@@ -3117,15 +3117,6 @@ public class GraveyardReturnSupport {
      */
 
     /**
-     * Resolves an {@link ExileCreaturesFromGraveyardAndCreateTokensEffect} by exiling each pre-targeted
-     * creature card from graveyards and creating a 2/2 black Zombie creature token for each card
-     * successfully exiled.
-     *
-     * @param gameData the current game state
-     * @param entry    the stack entry being resolved
-     */
-
-    /**
      * Resolves an {@link ExileGraveyardCardsEffect} by exiling all cards in the target
      * player's graveyard. Does nothing beyond logging if the graveyard is already empty.
      *

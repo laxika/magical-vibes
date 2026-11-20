@@ -75,7 +75,6 @@ class CardImmutabilityArchTest {
             "TokenCopySupport",        // assembles fresh token-copy cards for copy-effect handlers
             "GraveyardReturnSupport",
             "LivingWeaponEffectHandler",
-            "ExileCreaturesFromGraveyardAndCreateTokensEffectHandler",
             "ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler", // decorates freshly assembled Spirit token-copy cards
             "ReturnDyingOpponentCreatureAsTreasureEffectHandler", // changes a fresh runtime copy into a Treasure card
             "ReturnOpponentCreaturesFromGraveyardAsFoodEffectHandler", // changes fresh runtime copies into Food cards

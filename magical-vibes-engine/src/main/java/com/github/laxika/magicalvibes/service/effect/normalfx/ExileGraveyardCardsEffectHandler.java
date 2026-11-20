@@ -602,7 +602,6 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         }
     }
 
-    /** Adds {@code cards}, exiled from {@code ownerId}'s graveyard, to the {@link StepKind#EXILE} step's outcome. */
     /**
      * An imprinting exile makes the card the source permanent's imprinted card ("the exiled card"); a resolving spell
      * with no source permanent remembers it on its own card, for its delayed trigger (Surge to Victory).
@@ -626,6 +625,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
         return entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY ? entry.getEventValue() : null;
     }
 
+    /** Adds {@code cards}, exiled from {@code ownerId}'s graveyard, to the {@link StepKind#EXILE} step's outcome. */
     private static void recordExiled(StackEntry entry, List<Card> cards, UUID ownerId) {
         if (cards.isEmpty()) {
             return;

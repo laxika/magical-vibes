@@ -1115,7 +1115,21 @@ class AiDecisionEngineTest {
         assertThat(gd.playerHands.get(aiPlayer.getId())).hasSize(1);
     }
 
-    // ===== Graveyard creature requirement (ExileCreaturesFromGraveyardAndCreateTokensEffect) =====
+    @Test
+    @DisplayName("AI does not cast Midnight Ritual when only an opponent's graveyard has creature cards")
+    void doesNotCastMidnightRitualWithOnlyOpponentCreaturesInGraveyard() {
+        giveAiPriority();
+        giveAiSwamps(4);
+
+        gd.playerGraveyards.get(human.getId()).add(new GrizzlyBears());
+
+        harness.setHand(aiPlayer, List.of(new com.github.laxika.magicalvibes.cards.m.MidnightRitual()));
+
+        ai.handleEvent(AiDecisionKind.GAME_STATE);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(aiPlayer.getId())).hasSize(1);
+    }
 
     @Test
     @DisplayName("AI does not cast Midnight Ritual when graveyard has no creature cards")

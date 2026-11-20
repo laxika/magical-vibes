@@ -1213,8 +1213,8 @@ the survivor rather than against it:
 - `DestructionSupport:560` gates its `ForcedCostOrElse` fallback on `subject == SOURCE` (Step 9's
   precedent), so a `TARGET` form there falls through to the existing unsupported-fallback
   `log.warn` instead of silently reading the payer as a permanent id. Rogue Skycaptain unchanged.
-- `PutCounterOnSelfThenTransformIfThresholdEffectHandler:101` **constructs** the record at runtime
-  for Primal Amulet's may-transform — a write site, not just a read site.
+- Primal Amulet's may-transform built the record at runtime in the counter-threshold handler (gone since
+  effect-cleanup step 8, run 25: the card composes it).
 - `AbilityActivationService` loses both charge-specific blocks (availability + payment) and its
   import; the generic remove-counter blocks already covered them.
 - `TargetPolarityClassifier:246` keys on `RemoveAllCountersEffect` **and** `subject == TARGET`, so

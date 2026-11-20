@@ -220,6 +220,18 @@ public class ExileFreeCastQueueSupport {
 
 
     /**
+     * Whether a card in exile may begin to be cast now as a resolution cast (CR 601.3): no casting prohibition applies
+     * and, for a copy, its own "cast this spell only during ..." restriction holds. A copy is still cast, so that
+     * restriction applies even though the effect ignores the timing of the copy's card type (the Elite Arcanist and
+     * Mizzix's Mastery rulings). Both accept paths of {@code CopyImprintedCardAndMayCastCopyEffect} ask this.
+     */
+    public boolean castableFromExile(GameData gameData, UUID playerId, Card card, boolean asCopy) {
+        return !card.isCastOnlyFromGraveyard()
+                && castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)
+                && (!asCopy || castingPermissionService.canCastWithSpellTimingRestriction(gameData, playerId, card));
+    }
+
+    /**
      * Casts the next queued exiled spell. When a spell requires a target this pauses for a target
      * choice and returns; the shared target handler resumes the queue via {@link #castNextFromQueue}
      * once the target is chosen.
@@ -251,10 +263,7 @@ public class ExileFreeCastQueueSupport {
             if (!gameData.interaction.isAwaitingInput()) castNextFromQueue(gameData, playerId);
             return;
         }
-        // A copy is still cast, so its own "cast only during ..." restriction still applies (Elite Arcanist ruling).
-        if (card.isCastOnlyFromGraveyard()
-                || !castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)
-                || (asCopy && !castingPermissionService.canCastWithSpellTimingRestriction(gameData, playerId, card))) {
+        if (!castableFromExile(gameData, playerId, card, asCopy)) {
             if (asCopy) {
                 gameData.removeFromExile(cardId);
             }

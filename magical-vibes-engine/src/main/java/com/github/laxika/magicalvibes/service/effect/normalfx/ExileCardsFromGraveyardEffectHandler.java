@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
@@ -22,6 +24,11 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Exiles the cards an {@link ExileCardsFromGraveyardEffect} targeted that are still legal targets (in a graveyard of its
+ * scope, matching its filter; CR 608.2b), then applies its life riders. Never prompts. Records the
+ * {@link StepKind#EXILE} step: the cards exiled and the owners of the graveyards they left.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -46,8 +53,10 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
         List<UUID> targetCardIds = entry.getTargetCardIds();
         String playerName = gameData.playerIdToName.get(controllerId);
 
+        entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
         // Exile targeted cards that are still in graveyards
         int exiledCount = 0;
+        List<UUID> exiledOwnerIds = new ArrayList<>();
         List<Card> exiledCards = new ArrayList<>();
         if (targetCardIds != null && !targetCardIds.isEmpty()) {
             List<String> exiledNames = new ArrayList<>();
@@ -60,6 +69,14 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
                         && !entry.getTargetId().equals(gameQueryService.findGraveyardOwnerById(gameData, cardId))) {
                     card = null;
                 }
+                UUID ownerId = card == null ? null : gameQueryService.findGraveyardOwnerById(gameData, cardId);
+                if (card != null && e.ownGraveyardOnly() && !controllerId.equals(ownerId)) {
+                    card = null;
+                }
+                if (card != null && e.filter() != null && !predicateEvaluationService.matchesCardPredicate(
+                        card, e.filter(), entry.getCard().getId())) {
+                    card = null;
+                }
                 if (card != null) {
                     exiledNames.add(card.getName());
                     exiledCards.add(card);
@@ -70,9 +87,14 @@ public class ExileCardsFromGraveyardEffectHandler implements NormalEffectHandler
                             && e.putKickCountersOnExiledCards()) {
                         gameData.exiledCardsWithKickCounters.add(card.getId());
                     }
+                    if (ownerId != null && !exiledOwnerIds.contains(ownerId)) {
+                        exiledOwnerIds.add(ownerId);
+                    }
                 }
             }
             exiledCount = exiledNames.size();
+            entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(
+                    exiledCards.stream().map(Card::getId).toList(), exiledOwnerIds));
             if (!exiledNames.isEmpty()) {
                 String logEntry = playerName + " exiles " + String.join(", ", exiledNames) + " from graveyard.";
                 gameLogService.append(gameData, GameLog.text(logEntry));
