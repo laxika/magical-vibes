@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CopyCardsExiledWithSourceAndMayCastCopiesEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -28,7 +28,8 @@ public class WizardsSpellbook extends Card {
                 true,
                 null,
                 List.of(
-                        new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(instantOrSorcery, allGraveyards),
+                        ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, instantOrSorcery, true)
+                                .imprintingOnSource(),
                         new RollD20Effect(
                                 CopyCardsExiledWithSourceAndMayCastCopiesEffect.oneForNormalCost(),
                                 CopyCardsExiledWithSourceAndMayCastCopiesEffect.oneForOneGeneric(),

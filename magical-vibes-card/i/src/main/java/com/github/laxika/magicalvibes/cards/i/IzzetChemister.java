@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.CastAllCardsExiledWithSourceWithoutPayingEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndTrackWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -28,8 +28,7 @@ public class IzzetChemister extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{R}",
-                List.of(new ExileTargetCardFromGraveyardAndTrackWithSourceEffect(
-                        instantOrSorcery, GraveyardSearchScope.CONTROLLERS_GRAVEYARD)),
+                List.of(ExileGraveyardCardsEffect.oneTargetFromControllerGraveyardWithSource(instantOrSorcery)),
                 "{R}, {T}: Exile target instant or sorcery card from your graveyard.",
                 new GraveyardCardPredicateTargetFilter(
                         instantOrSorcery, GraveyardSearchScope.CONTROLLERS_GRAVEYARD)));

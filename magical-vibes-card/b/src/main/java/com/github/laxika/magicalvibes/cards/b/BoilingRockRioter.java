@@ -4,11 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -27,8 +26,7 @@ public class BoilingRockRioter extends Card {
                 null,
                 List.of(
                         new TapCreatureCost(new PermanentHasSubtypePredicate(CardSubtype.ALLY)),
-                        new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
-                                null, GraveyardSearchScope.ALL_GRAVEYARDS)),
+                        ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, true).imprintingOnSource()),
                 "Tap an untapped Ally you control: Exile target card from a graveyard."
         ));
 

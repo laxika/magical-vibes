@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
@@ -1928,7 +1927,7 @@ class ValidTargetServiceTest {
             lenient().when(gameQueryService.findGraveyardOwnerById(eq(gameData), any(UUID.class)))
                     .thenReturn(player2Id);
 
-            // Stub matchesCardPredicate for ExileTargetCardFromGraveyardAndImprintOnSourceEffect tests
+            // Stub matchesCardPredicate for the filtered graveyard-exile tests
             lenient().when(predicateEvaluationService.matchesCardPredicate(any(Card.class), any(CardPredicate.class), any()))
                     .thenAnswer(inv -> {
                         Card c = inv.getArgument(0);
@@ -1995,15 +1994,15 @@ class ValidTargetServiceTest {
                             Set.of()
                     ),
                     Arguments.of(
-                            "ExileTargetCardFromGraveyardAndImprint(ARTIFACT) filters to artifacts only",
-                            new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
-                                    new CardTypePredicate(CardType.ARTIFACT), GraveyardSearchScope.ALL_GRAVEYARDS),
+                            "An imprinting ExileGraveyardCards(ARTIFACT) filters to artifacts only",
+                            ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(
+                                    1, new CardTypePredicate(CardType.ARTIFACT), true).imprintingOnSource(),
                             Set.of("GY Artifact")
                     ),
                     Arguments.of(
-                            "ExileTargetCardFromGraveyardAndImprint reaches no opponent's graveyard when controller-scoped",
-                            new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
-                                    new CardTypePredicate(CardType.ARTIFACT), GraveyardSearchScope.CONTROLLERS_GRAVEYARD),
+                            "An imprinting ExileGraveyardCards reaches no opponent's graveyard when controller-scoped",
+                            ExileGraveyardCardsEffect.oneTargetFromControllerGraveyardWithSource(
+                                    new CardTypePredicate(CardType.ARTIFACT)).imprintingOnSource(),
                             Set.of()
                     ),
                     Arguments.of(

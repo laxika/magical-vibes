@@ -33,6 +33,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *                                           may be played by the controller this turn
  * @param allowZeroTargets whether a targeted graveyard choice may contain zero cards
  * @param defendingPlayerOnly whether an attack trigger searches only the defending player's graveyard
+ * @param imprint          whether a targeted card exiled this way also becomes the source's imprinted card ("the exiled
+ *                         card", Mirror Golem's protection, Mourner's Shield's colour), tracked with the source permanent;
+ *                         a resolving spell with no source permanent remembers it on its own card instead, for a
+ *                         delayed trigger of the spell that copies "the exiled card" (Surge to Victory); see
+ *                         {@link #imprintingOnSource()}
  */
 public record ExileGraveyardCardsEffect(
         int count, GraveyardExileScope scope, CardPredicate filter,
@@ -40,7 +45,27 @@ public record ExileGraveyardCardsEffect(
         CardPredicate eventValueFilter, boolean grantPlayPermissionUntilEndOfTurn,
         boolean allowZeroTargets, boolean putKickCounters,
         boolean returnExiledCardsToGraveyardOnSourceLeave,
-        boolean defendingPlayerOnly) implements GraveyardCardChoosingEffect {
+        boolean defendingPlayerOnly, boolean imprint) implements GraveyardCardChoosingEffect {
+
+    public ExileGraveyardCardsEffect {
+        if (imprint && scope != GraveyardExileScope.TARGET_CARDS_ANY_GRAVEYARD
+                && scope != GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD
+                && scope != GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD) {
+            throw new IllegalArgumentException("Only a target-card scope imprints: " + scope);
+        }
+    }
+
+    public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
+                                     boolean exactTargetCount,
+                                     boolean trackWithSource, boolean fromBattlefieldThisTurn,
+                                     CardPredicate eventValueFilter, boolean grantPlayPermissionUntilEndOfTurn,
+                                     boolean allowZeroTargets, boolean putKickCounters,
+                                     boolean returnExiledCardsToGraveyardOnSourceLeave,
+                                     boolean defendingPlayerOnly) {
+        this(count, scope, filter, exactTargetCount, trackWithSource, fromBattlefieldThisTurn, eventValueFilter,
+                grantPlayPermissionUntilEndOfTurn, allowZeroTargets, putKickCounters,
+                returnExiledCardsToGraveyardOnSourceLeave, defendingPlayerOnly, false);
+    }
 
     public ExileGraveyardCardsEffect(int count, GraveyardExileScope scope, CardPredicate filter,
                                      boolean exactTargetCount,
@@ -182,6 +207,23 @@ public record ExileGraveyardCardsEffect(
     public static ExileGraveyardCardsEffect upToOneTargetFromControllerGraveyardWithSource(CardPredicate filter) {
         return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,
                 filter, false, true, false, null, false, true);
+    }
+
+    /** "Exile up to one target [filter] card from an opponent's graveyard", tracked with the source permanent. */
+    public static ExileGraveyardCardsEffect upToOneTargetFromOpponentGraveyardWithSource(CardPredicate filter) {
+        return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD,
+                filter, false, true, false, null, false, true);
+    }
+
+    /**
+     * This target exile, imprinting what it exiles: "Imprint — exile target card from a graveyard", whose card the
+     * source's other abilities read as "the exiled card". Tracks the card with the source permanent too ("cards exiled
+     * with this creature"). Only the target-card scopes imprint.
+     */
+    public ExileGraveyardCardsEffect imprintingOnSource() {
+        return new ExileGraveyardCardsEffect(count, scope, filter, exactTargetCount, true, fromBattlefieldThisTurn,
+                eventValueFilter, grantPlayPermissionUntilEndOfTurn, allowZeroTargets, putKickCounters,
+                returnExiledCardsToGraveyardOnSourceLeave, defendingPlayerOnly, true);
     }
 
     public static ExileGraveyardCardsEffect upToOneTargetFromOpponentGraveyard() {

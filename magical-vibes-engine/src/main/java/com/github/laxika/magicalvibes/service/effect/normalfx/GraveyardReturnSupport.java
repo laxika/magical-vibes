@@ -3049,17 +3049,6 @@ public class GraveyardReturnSupport {
      */
 
     /**
-     * Resolves an {@link ExileTargetCardFromGraveyardAndImprintOnSourceEffect} by exiling a targeted
-     * card from a graveyard and tracking it as imprinted on the source permanent. Validates the card
-     * still matches the required type (if any). Fizzles if the target is no longer in a graveyard or
-     * no longer matches the type requirement.
-     *
-     * @param gameData the current game state
-     * @param entry    the stack entry being resolved (source permanent receives the imprint)
-     * @param effect   the imprint effect configuration (includes optional type requirement)
-     */
-
-    /**
      * Resolves an {@link ExileGraveyardCardsEffect} by exiling a targeted card from a
      * graveyard. Unlike the imprint variant, this does NOT track the exiled card on the source
      * permanent. Validates the card still matches the required type (if any). Fizzles if the target

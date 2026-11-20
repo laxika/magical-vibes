@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndCreateTokenCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
@@ -1151,6 +1150,7 @@ public class ValidTargetService {
                 prompt = count == Integer.MAX_VALUE ? "Select any number of target cards from your graveyard"
                         : graveyardEffect.allowZeroTargets()
                         ? "Select up to " + count + " target cards from your graveyard"
+                        : count == 1 ? "Select target card from your graveyard"
                         : "Select " + count + " target cards from your graveyard";
                 break;
             }
@@ -2189,6 +2189,7 @@ public class ValidTargetService {
                 for (UUID playerId : List.of(controllerId)) {
                     for (Card c : gameData.playerGraveyards.getOrDefault(playerId, List.of())) {
                         if (!excludeIds.contains(c.getId())
+                                && !gameQueryService.isLandCardTargetRestricted(gameData, c, controllerId)
                                 && matchesGraveyardEffectTypeFilter(
                                 gameData, effect, c, sourceCardId, controllerId, effectiveXValue, null)) {
                             validIds.add(c.getId());
@@ -2276,8 +2277,6 @@ public class ValidTargetService {
             return c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY);
         } else if (effect instanceof GrantJumpStartToTargetGraveyardCardEffect) {
             return c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY);
-        } else if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect e && e.filter() != null) {
-            return predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId);
         } else if (effect instanceof ExileTargetCardFromGraveyardAndCreateTokenCopyEffect e && e.filter() != null) {
             if (!predicateEvaluationService.matchesCardPredicate(c, e.filter(), sourceCardId)) {
                 return false;

@@ -7,8 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndTrackWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -22,8 +21,7 @@ public class GhostVacuum extends Card {
     public GhostVacuum() {
         addActivatedAbility(new ActivatedAbility(
                 true, null,
-                List.of(new ExileTargetCardFromGraveyardAndTrackWithSourceEffect(
-                        GraveyardSearchScope.ALL_GRAVEYARDS)),
+                List.of(ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, true)),
                 "{T}: Exile target card from a graveyard."));
 
         addActivatedAbility(new ActivatedAbility(

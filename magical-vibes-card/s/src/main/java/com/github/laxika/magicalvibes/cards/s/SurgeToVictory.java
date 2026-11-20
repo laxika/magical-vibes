@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.TargetCardsManaValueSum;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndTrackWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -30,8 +30,9 @@ public class SurgeToVictory extends Card {
 
         target(new GraveyardCardPredicateTargetFilter(
                 instantOrSorcery, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
-                .addSpellEffect(new ExileTargetCardFromGraveyardAndTrackWithSourceEffect(
-                                instantOrSorcery, GraveyardSearchScope.CONTROLLERS_GRAVEYARD))
+                .addSpellEffect(
+                        ExileGraveyardCardsEffect.oneTargetFromControllerGraveyardWithSource(instantOrSorcery)
+                                .imprintingOnSource())
                 .addSpellEffect(new BoostAllOwnCreaturesEffect(new TargetCardsManaValueSum(), new Fixed(0)))
                 .addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.creatureYouControlDealsCombatDamageToPlayer(),

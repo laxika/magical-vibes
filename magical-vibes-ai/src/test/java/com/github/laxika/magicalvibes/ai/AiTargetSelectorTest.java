@@ -75,7 +75,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
@@ -732,15 +731,15 @@ class AiTargetSelectorTest {
                         Set.of()
                 ),
                 Arguments.of(
-                        "ExileTargetCardFromGraveyardAndImprint(ARTIFACT) filters to artifacts only",
-                        new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
-                                new CardTypePredicate(CardType.ARTIFACT), GraveyardSearchScope.ALL_GRAVEYARDS),
+                        "An imprinting ExileGraveyardCards(ARTIFACT) filters to artifacts only",
+                        ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(
+                                1, new CardTypePredicate(CardType.ARTIFACT), true).imprintingOnSource(),
                         Set.of("GY Artifact")
                 ),
                 Arguments.of(
-                        "ExileTargetCardFromGraveyardAndImprint ignores the opponent's graveyard when controller-scoped",
-                        new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
-                                new CardTypePredicate(CardType.ARTIFACT), GraveyardSearchScope.CONTROLLERS_GRAVEYARD),
+                        "An imprinting ExileGraveyardCards ignores the opponent's graveyard when controller-scoped",
+                        ExileGraveyardCardsEffect.oneTargetFromControllerGraveyardWithSource(
+                                new CardTypePredicate(CardType.ARTIFACT)).imprintingOnSource(),
                         Set.of()
                 ),
                 Arguments.of(

@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenSourceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -17,8 +16,7 @@ public class MournersShield extends Card {
 
     public MournersShield() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
-                        null, GraveyardSearchScope.ALL_GRAVEYARDS),
+                ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, true).imprintingOnSource(),
                 "Exile target card from a graveyard?"));
 
         addActivatedAbility(new ActivatedAbility(

@@ -20,7 +20,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
-| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 13 done) |
+| 8 | Split the fused effects (repeatable) | open (step 8: runs 1 to 14 done) |
 | 9 | Sweep the single-card tail (repeatable) | open |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
@@ -532,6 +532,7 @@ cause under Findings.
 | 11 | run 10's leftovers: permission durations on the library-exile primitive and the records they absorb; the recording choose-a-card graveyard exile and the "you may exile a card from your graveyard. If you do" records | done (4 split, 12 absorbed, 1 amount absorbed, 4 survivors; 39 card files rewritten; `until(Duration)`, `exiledFaceDown`, `payingLifeEqualToManaValue`, a count on `ExileTopCardOfOwnLibraryEffect`, `fromOwnGraveyard`) |
 | 12 | run 11's leftovers: `ExileTopCardsMayPlayUntilNextTurnEffect` and Curse of Hospitality's record (a who-may-play subject), `ExileTopCardsOfDefendingPlayerLibraryEffect`, `ExileTopCardMayPlayWhileExiledEffect`, `ExileNCardsFromGraveyardThenEffect` ("exactly N or none") | done (4 absorbed, 1 split, 1 unique, 2 survivors; 72 card files rewritten; `playableBy(PlayerSubject)`, `playableOnlyIf(Condition)`; Blightwing Bandit and Skywarp Skaab fixed by Oracle text) |
 | 13 | run 12's leftovers: the choose-one, cast-matching, random-opponent, token and Hidetsugu library records; Heated Argument's graveyard record; Raven Guild Master and Sire of Stagnation's player | done (6 absorbed, 2 split, 2 blocked-other, 1 unique; 32 card files rewritten; `mayOnlyCast(filter)`, `upTo(n)`, `choosingOne()`; Narset's Adventure fixed by a ruling; the four multi-card graveyard "and" records not reached) |
+| 14 | run 13's graveyard "and" records: the imprint and track-with-source target exiles, then the token-copy and may-cast-a-copy records | done (2 absorbed into `ExileGraveyardCardsEffect`, `imprintingOnSource()`; 16 card files rewritten; stopped at `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect`: no token-copy step copies a card an EXILE step recorded, a design decision; the may-cast-a-copy record not started) |
 
 ### 9. Sweep the single-card tail (repeatable)
 
@@ -4385,6 +4386,75 @@ below.
   `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect` (15, 20 components) needs a token-copy step reading the EXILE result;
   `ExileTargetCardFromGraveyardAndMayCastCopyEffect` (14, 321-line handler) a may-cast-a-copy step reading it. Each is probably a run.
 - A "you may cast the card exiled this way without paying its mana cost" step (now, at resolution) would unblock Hidetsugu and Kairi.
+
+### Step 8, run 14 (2026-11-20)
+
+Run 13's "Next for Exile", graveyard "and" records. Verdicts (ledger, step `8`): **absorbed 2**
+(`ExileTargetCardFromGraveyardAndImprintOnSourceEffect`, `ExileTargetCardFromGraveyardAndTrackWithSourceEffect`, with their handlers),
+**survivor 1** (`ExileGraveyardCardsEffect`), **blocked-other 1** (`ExileTargetCardFromGraveyardAndCreateTokenCopyEffect`, where the run stopped);
+`ExileTargetCardFromGraveyardAndMayCastCopyEffect` not started. Ratchet 4,762 / 3,995 → 4,760 / 3,993. 16 card files rewritten (a deleted
+scratch script); Oracle text of every one checked with `get_card`, rulings of Blue Mage's Cane, Surge to Victory and Mirror Golem (none) with
+`get_rulings`. No CR number is cited below.
+
+- **Neither record was fused.** Both were "exile target card from a graveyard", tracked with the source; the imprint record also called
+  `ExileService.setImprintedCardOnPermanent`, and the track record, for a spell (no source permanent), `GameData.setImprintedCard(spell card)`
+  (Surge to Victory's delayed trigger copies "the exiled card" through `CopyImprintedCardAndMayCastCopyEffect`). Every scope they used maps to a
+  target scope of `ExileGraveyardCardsEffect`: `ALL_GRAVEYARDS` → `exactTargetedFromAnyGraveyard(1, filter, true)`, `CONTROLLERS_GRAVEYARD` →
+  `oneTargetFromControllerGraveyardWithSource(filter)`, Blue Mage's Cane's up-to-one `OPPONENT_GRAVEYARD` → new
+  `upToOneTargetFromOpponentGraveyardWithSource(filter)`.
+- **Survivor.** `ExileGraveyardCardsEffect` gained a 13th component `imprint` (`imprintingOnSource()`, also sets `trackWithSource`; the compact
+  constructor refuses it on a scope with no target card; the old 12-argument constructor is kept): the handler's target paths imprint the
+  exiled card on the source permanent, or remember it on the resolving spell's card when there is no source permanent, exactly the two
+  records' branches. Imprint cards: Mirror Golem, Mourner's Shield, Myr Welder, Death-Mask Duplicant, Dino DNA, Rona, Wizard's Spellbook,
+  Dawnhand Dissident, Boiling Rock Rioter, Blue Mage's Cane, Surge to Victory; tracking only: Ghost Vacuum, Lazav, Izzet Chemister,
+  Underworld Sentinel, Trove Warden. The `TARGET_CARDS_OPPONENT_GRAVEYARD` path now honours `trackWithSource` (no existing user set it).
+  Target specs, prompts and target groups are unchanged: the survivor declares the same benign graveyard target with the filter, and
+  `GraveyardTargetingSupport`'s generic and `ExileGraveyardCardsEffect` branches give the same `Target` (min 1, or 0 for the Cane).
+- **Readers.** The imprint record's branches in `GraveyardTargetValidators`, `ValidTargetService.matchesGraveyardEffectTypeFilter`,
+  `GraveyardTargetingSupport`, `AiTargetSelector` and an orphan Javadoc in `GraveyardReturnSupport` are deleted (the survivor's branches cover
+  them; the AI's spell-target filter only ever saw spells, and no imprint card is one). The track record had no reader. Parity fixes kept for
+  the moved cards: `ValidTargetService`'s activated-ability controller-graveyard enumeration now skips land cards an opponent's Tomik makes
+  untargetable, as the generic path the two records used did (it applies to Quintorius Kand's −6 too), and `validateExileGraveyardCards`
+  falls back to the source permanent's controller when the context has none, as the imprint validator did.
+- **Behaviour.** No rules change. The survivor's log lines win; a controller-graveyard target exile also writes the exiled count to
+  `eventValue` (no rewritten card reads it), and every rewritten card now records an EXILE step. Death-Mask Duplicant's and Izzet Chemister's
+  activation prompt reads "Select 1 target cards from your graveyard" (the controller-graveyard branch's text; min and max still 1).
+- **AI.** `AiTargetSelectorTest` and `ValidTargetServiceTest`'s imprint cases now build the survivor; both pass. No capability interface
+  involved.
+- **Stopped at `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect`** (15 cards, 20 components; blocked-other in the ledger). The plan's
+  premise was "if the existing token-copy primitive can take the exiled card as its subject": it can't. `CreateTokenCopyOfTargetPermanentEffect`
+  resolves a `PermanentSubject` to permanent ids and copies a live permanent or its last-known snapshot; nothing names a card in exile, and
+  `thisWay(EXILE)` is refused as a permanent subject. `CreateTokenCopyOfCardEffect` holds a fixed `Card` (engine-built). Splitting needs a
+  decision first: a card-subject on the token-copy primitive (e.g. a `PermanentSubject` variant for "the cards an EXILE step recorded" that
+  the copy handler reads from exile), or a new token-copy-of-exiled-card primitive. The record's other parts then need: Feldon of the Third
+  Path's copy without exiling (a copy of a target graveyard card: the same card subject, read from the graveyard), Soul Separator's Zombie
+  (`CreateTokenEffect` with `AmountThisWay.exiledPower()` / `exiledToughness()` if it takes dynamic P/T), Abyssal Harvester's "exile all other
+  Nightmare tokens you control" (an exile of a set excluding `createdThisResolution()`), the tapped-and-attacking copy (Mordor on the March,
+  Gyrus), `targetPutIntoGraveyardFromAnywhereThisTurn` (a target filter; `ValidTargetService` and the validator special-case it by class).
+
+**Tests** (one Gradle run, one `--tests` list per task): the tests of the 16 rewritten cards and of the two other card tests that construct one
+(Doran, Besieged by Time; Dermotaxi), `--tests-for ExileGraveyardCardsEffect --max-per-class 12`, 14 more `ExileGraveyardCardsEffect` target-scope
+cards (Quintorius, Quintorius Kand, Nyla, Zethi, Rag Dealer, Deadeye Tracker, General Kudro, Ethereal Absolution, Zombie Cannibal, Spellweaver
+Helix, Graven Abomination, Sheoldred's Assimilator, Withered Wretch, Scrabbling Claws) and Tomik, application (`ExileGraveyardCardsEffectHandlerTest`
++4: an ability imprints on its source permanent, a spell remembers the card on itself, tracking alone doesn't imprint, a non-target scope
+refuses it; `ValidTargetServiceTest`, `TargetLegalityServiceTest`, `GraveyardTargetingServiceTest`, `StepResultsTest`, `EffectCountRatchetTest`,
+`CardImmutabilityArchTest`, `MayEffectHandlerTest`, `EffectResolutionServiceTest`, `MayAbilityHandlerServiceTest`,
+`ActivatedAbilityExecutionServiceTest`, `TriggeredAbilityStackServiceTest`), AI (`AiTargetSelectorTest`, `TargetPolarityGuardTest`): 58 top-level
+classes (124 result files with the `@Nested` suites), 1,153 test cases, all pass. Application, AI, engine testFixtures and card-test
+`b d g i l m r s t u w` test sources compile.
+
+**For later runs.**
+
+- "Imprint — exile target card from a graveyard" is `ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, filter, true).imprintingOnSource()`
+  (`oneTargetFromControllerGraveyardWithSource(filter)` for "from your graveyard"); "exile target card from a graveyard" whose card the source
+  later reads as "exiled with this" is the same without `imprintingOnSource()`.
+- Next for Exile: decide the card subject for token copies (above), then split `ExileTargetCardFromGraveyardAndCreateTokenCopyEffect`'s cards.
+  `ExileTargetCardFromGraveyardAndMayCastCopyEffect` (14 cards, 321-line handler plus a `mayfx` handler, 7 engine readers) needs a
+  "copy the card an EXILE step recorded; you may cast the copy" step, the same primitive run 13 named for Hidetsugu and Kairi
+  (`ExileTopCardLoseLifeEqualToManaValueAndMayCastInstantOrSorceryEffect`) and that `RandomPlayerExilesInstantOrSorceryAndMayCastCopyEffect`,
+  `ExileOwnGraveyardInstantsOrSorceriesAndMayCastCopiesEffect` and `ExileGraveyardCardsAndMayCastCopiesEffect` might share: one run to build it
+  and fold those, after the human signs off on its shape. Blue Mage's Cane says "defending player's graveyard" (its record kept the
+  opponent-graveyard scope; `fromDefendingPlayerGraveyard()`'s `defendingPlayerOnly` differs only with more than one opponent).
 
 ## Prompt
 

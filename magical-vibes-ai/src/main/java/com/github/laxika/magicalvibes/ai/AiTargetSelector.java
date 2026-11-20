@@ -42,7 +42,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
@@ -1192,9 +1191,6 @@ class AiTargetSelector {
                 } else if (effect instanceof GrantFlashbackToTargetGraveyardCardEffect e) {
                     candidates = candidates.stream()
                             .filter(c -> e.cardTypes().stream().anyMatch(c::hasType)).toList();
-                } else if (effect instanceof ExileTargetCardFromGraveyardAndImprintOnSourceEffect e && e.filter() != null) {
-                    candidates = candidates.stream()
-                            .filter(c -> predicateEvaluationService.matchesCardPredicate(c, e.filter(), card.getId())).toList();
                 } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect) {
                     candidates = candidates.stream()
                             .filter(c -> c.hasType(CardType.ARTIFACT) || c.hasType(CardType.CREATURE)).toList();

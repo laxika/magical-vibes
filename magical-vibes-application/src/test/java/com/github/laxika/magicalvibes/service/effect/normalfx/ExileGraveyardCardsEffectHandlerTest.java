@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -286,5 +288,77 @@ class ExileGraveyardCardsEffectHandlerTest {
         handler.resolve(gd, entry, effect);
 
         assertThat(entry.getEventValue()).isEqualTo(1);
+    }
+
+    @Nested
+    @DisplayName("Imprint — the exiled target card becomes the source's imprinted card")
+    class Imprint {
+
+        @Test
+        @DisplayName("An ability's target card is exiled with its source permanent and imprinted on it")
+        void abilityImprintsOnSourcePermanent() {
+            Card card = createCard("Grizzly Bears");
+            gd.playerGraveyards.get(player2Id).add(card);
+            UUID sourcePermanentId = UUID.randomUUID();
+            when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(card);
+            when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(player2Id);
+
+            ExileGraveyardCardsEffect effect = ExileGraveyardCardsEffect
+                    .exactTargetedFromAnyGraveyard(1, null, true).imprintingOnSource();
+            StackEntry entry = TestStackDoor.triggered(createCard("Mirror Golem"),
+                    player1Id, "Mirror Golem", List.of(effect), card.getId(), Zone.GRAVEYARD, sourcePermanentId);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(exileService).exileCard(eq(gd), eq(player2Id), eq(card), eq(sourcePermanentId));
+            verify(exileService).setImprintedCardOnPermanent(gd, sourcePermanentId, card);
+        }
+
+        @Test
+        @DisplayName("A spell with no source permanent remembers the exiled card on its own card")
+        void spellRemembersTheCardOnItself() {
+            Card card = createCard("Lightning Bolt");
+            gd.playerGraveyards.get(player1Id).add(card);
+            when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(card);
+            when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(player1Id);
+
+            ExileGraveyardCardsEffect effect = ExileGraveyardCardsEffect
+                    .oneTargetFromControllerGraveyardWithSource(null).imprintingOnSource();
+            Card spell = createCard("Surge to Victory");
+            StackEntry entry = TestStackDoor.triggered(spell, player1Id, "Surge to Victory", List.of(effect),
+                    card.getId(), Zone.GRAVEYARD);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(exileService).exileCard(gd, player1Id, card);
+            assertThat(gd.getImprintedCard(spell)).isSameAs(card);
+        }
+
+        @Test
+        @DisplayName("Without imprinting, a tracked target card is not imprinted")
+        void trackingAloneDoesNotImprint() {
+            Card card = createCard("Grizzly Bears");
+            gd.playerGraveyards.get(player2Id).add(card);
+            UUID sourcePermanentId = UUID.randomUUID();
+            when(gameQueryService.findCardInGraveyardById(gd, card.getId())).thenReturn(card);
+            when(gameQueryService.findGraveyardOwnerById(gd, card.getId())).thenReturn(player2Id);
+
+            ExileGraveyardCardsEffect effect = ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, true);
+            StackEntry entry = TestStackDoor.triggered(createCard("Ghost Vacuum"),
+                    player1Id, "Ghost Vacuum", List.of(effect), card.getId(), Zone.GRAVEYARD, sourcePermanentId);
+
+            handler.resolve(gd, entry, effect);
+
+            verify(exileService).exileCard(eq(gd), eq(player2Id), eq(card), eq(sourcePermanentId));
+            verify(exileService, never()).setImprintedCardOnPermanent(any(), any(), any());
+        }
+
+        @Test
+        @DisplayName("Imprinting is refused for a scope that takes no target card")
+        void refusedForNonTargetScope() {
+            assertThatThrownBy(() ->
+                            ExileGraveyardCardsEffect.ownAllMatchingWithSource(null).imprintingOnSource())
+                    .isInstanceOf(IllegalArgumentException.class);
+        }
     }
 }

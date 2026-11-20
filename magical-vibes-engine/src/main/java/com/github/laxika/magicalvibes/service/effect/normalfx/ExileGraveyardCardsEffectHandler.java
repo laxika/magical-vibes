@@ -279,6 +279,7 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
                 } else {
                     exileService.exileCard(gameData, graveyardOwnerId, targetCard);
                 }
+                imprint(gameData, entry, e, targetCard);
             }
             if (controllerGraveyard && e.grantPlayPermissionUntilEndOfTurn()) {
                 gameData.grantExilePlayPermission(targetCard.getId(), entry.getControllerId(), Duration.UNTIL_END_OF_TURN);
@@ -340,7 +341,9 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
                     && !predicateEvaluationService.matchesCardPredicate(card, effect.filter(), null)) {
                 continue;
             }
-            if (graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card)) {
+            UUID trackingPermanentId = effect.trackWithSource() ? entry.getSourcePermanentId() : null;
+            if (graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card, trackingPermanentId)) {
+                imprint(gameData, entry, effect, card);
                 exiledCards.add(card);
                 recordExiled(entry, List.of(card), graveyardOwnerId);
             }
@@ -553,6 +556,21 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
     }
 
     /** Adds {@code cards}, exiled from {@code ownerId}'s graveyard, to the {@link StepKind#EXILE} step's outcome. */
+    /**
+     * An imprinting exile makes the card the source permanent's imprinted card ("the exiled card"); a resolving spell
+     * with no source permanent remembers it on its own card, for its delayed trigger (Surge to Victory).
+     */
+    private void imprint(GameData gameData, StackEntry entry, ExileGraveyardCardsEffect e, Card card) {
+        if (!e.imprint()) {
+            return;
+        }
+        if (entry.getSourcePermanentId() != null) {
+            exileService.setImprintedCardOnPermanent(gameData, entry.getSourcePermanentId(), card);
+        } else {
+            gameData.setImprintedCard(entry.getCard(), card);
+        }
+    }
+
     private static void recordExiled(StackEntry entry, List<Card> cards, UUID ownerId) {
         if (cards.isEmpty()) {
             return;

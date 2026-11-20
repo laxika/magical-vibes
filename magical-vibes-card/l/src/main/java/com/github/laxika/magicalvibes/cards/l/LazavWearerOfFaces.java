@@ -3,10 +3,9 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndTrackWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -20,7 +19,7 @@ public class LazavWearerOfFaces extends Card {
 
     public LazavWearerOfFaces() {
         addTrigger(Triggers.attacks(), SequenceEffect.of(
-                new ExileTargetCardFromGraveyardAndTrackWithSourceEffect(GraveyardSearchScope.ALL_GRAVEYARDS),
+                ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, true),
                 CreateTokenEffect.ofClueToken(1)));
         addTrigger(Triggers.sacrificed(new PermanentHasSubtypePredicate(CardSubtype.CLUE), ObjectRelation.YOU_CONTROL),
                 new MayEffect(

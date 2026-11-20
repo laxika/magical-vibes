@@ -5,9 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -32,8 +31,7 @@ public class DawnhandDissident extends Card {
                 null,
                 List.of(
                         new PutCounterOnControlledCreatureCost(CounterType.MINUS_ONE_MINUS_ONE, 2),
-                        new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
-                                null, GraveyardSearchScope.ALL_GRAVEYARDS)),
+                        ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, true).imprintingOnSource()),
                 "{T}, Blight 2: Exile target card from a graveyard."
         ));
 

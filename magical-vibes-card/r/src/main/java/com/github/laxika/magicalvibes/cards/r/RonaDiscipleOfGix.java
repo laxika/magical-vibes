@@ -4,9 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
@@ -24,8 +23,8 @@ public class RonaDiscipleOfGix extends Card {
         // When Rona, Disciple of Gix enters the battlefield, you may exile target historic
         // card from your graveyard. (Artifacts, legendaries, and Sagas are historic.)
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
-                        new CardIsHistoricPredicate(), GraveyardSearchScope.CONTROLLERS_GRAVEYARD),
+                ExileGraveyardCardsEffect.oneTargetFromControllerGraveyardWithSource(new CardIsHistoricPredicate())
+                        .imprintingOnSource(),
                 "Exile a historic card from your graveyard?"));
 
         // You may cast spells from among cards exiled with Rona.

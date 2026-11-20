@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfExiledCreatureWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndImprintOnSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 
@@ -31,8 +31,9 @@ public class DinoDNA extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new ExileTargetCardFromGraveyardAndImprintOnSourceEffect(
-                        creatureCard, allGraveyards)),
+                List.of(
+                        ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, creatureCard, true)
+                                .imprintingOnSource()),
                 "{1}, {T}: Exile target creature card from a graveyard. Activate only as a sorcery.",
                 new GraveyardCardPredicateTargetFilter(creatureCard, allGraveyards),
                 null,

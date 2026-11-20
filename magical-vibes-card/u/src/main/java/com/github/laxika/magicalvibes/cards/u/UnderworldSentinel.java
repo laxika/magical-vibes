@@ -3,8 +3,7 @@ package com.github.laxika.magicalvibes.cards.u;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardAndTrackWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -15,9 +14,8 @@ public class UnderworldSentinel extends Card {
 
     public UnderworldSentinel() {
         addTrigger(Triggers.attacks(),
-                new ExileTargetCardFromGraveyardAndTrackWithSourceEffect(
-                        new CardTypePredicate(CardType.CREATURE),
-                        GraveyardSearchScope.CONTROLLERS_GRAVEYARD));
+                ExileGraveyardCardsEffect.oneTargetFromControllerGraveyardWithSource(
+                        new CardTypePredicate(CardType.CREATURE)));
         addTrigger(Triggers.dies(ObjectRelation.THIS), new ReturnAllCardsExiledWithSourceEffect(true));
     }
 }
