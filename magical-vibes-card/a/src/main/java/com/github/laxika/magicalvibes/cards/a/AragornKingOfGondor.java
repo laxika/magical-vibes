@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.condition.ControllerIsMonarch;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,13 +19,13 @@ public class AragornKingOfGondor extends Card {
     public AragornKingOfGondor() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new BecomeMonarchEffect());
 
-        var cantBlockThisTurn = new CantBlockThisTurnEffect(TapUntapScope.TARGET);
+        var cantBlockThisTurn = new CantBlockThisTurnEffect(Subjects.target());
         target(TargetFilters.creature(), 0, 1)
                 .bindEffect(cantBlockThisTurn);
         addTrigger(Triggers.attacks(),
                 cantBlockThisTurn,
                 new ConditionalEffect(
                 new ControllerIsMonarch(),
-                new CantBlockThisTurnEffect(TapUntapScope.ALL_CREATURES)));
+                new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.eachPlayer()))));
     }
 }

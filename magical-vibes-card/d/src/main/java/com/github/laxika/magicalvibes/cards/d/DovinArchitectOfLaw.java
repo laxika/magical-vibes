@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -32,7 +31,7 @@ public class DovinArchitectOfLaw extends Card {
                 -1,
                 List.of(
                         new TapPermanentsEffect(Subjects.target()),
-                        new SkipNextUntapEffect(TapUntapScope.TARGET)
+                        new SkipNextUntapEffect(Subjects.target())
                 ),
                 "−1: Tap target creature. It doesn't untap during its controller's next untap step.",
                 TargetFilters.creature()

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -35,7 +35,7 @@ public class AngelOfCondemnation extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, "{2}{W}",
                 List.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true, true),
+                        new SkipNextUntapEffect(Subjects.source(), 1, false, false, true, true),
                         new ExileTargetPermanentUntilSourceLeavesEffect()
                 ),
                 "{2}{W}, {T}, Exert Angel of Condemnation: Exile another target creature until this creature leaves the battlefield.",

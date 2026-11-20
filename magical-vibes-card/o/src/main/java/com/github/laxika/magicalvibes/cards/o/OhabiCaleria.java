@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,8 +17,8 @@ public class OhabiCaleria extends Card {
     public OhabiCaleria() {
         // Untap all Archers you control during each other player's untap step.
         addStaticEffect(new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
-                TurnStep.UNTAP, new PermanentHasSubtypePredicate(CardSubtype.ARCHER),
-                TapUntapScope.CONTROLLED));
+                TurnStep.UNTAP,
+                new PermanentHasSubtypePredicate(CardSubtype.ARCHER)));
 
         // Whenever an Archer you control deals damage to a creature, you may pay {2}. If you do,
         // draw a card.

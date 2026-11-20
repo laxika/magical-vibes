@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByTriggeringPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -23,6 +22,6 @@ public class ManaSkimmer extends Card {
                         new TapPermanentsEffect(Subjects.target(), new PermanentAllOfPredicate(List.of(
                                 new PermanentIsLandPredicate(),
                                 new PermanentControlledByTriggeringPlayerPredicate()))),
-                        new SkipNextUntapEffect(TapUntapScope.TARGET)));
+                        new SkipNextUntapEffect(Subjects.target())));
     }
 }

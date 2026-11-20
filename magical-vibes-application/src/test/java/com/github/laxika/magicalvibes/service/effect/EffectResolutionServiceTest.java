@@ -42,7 +42,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
@@ -227,7 +226,7 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Skips wrapped effect when metalcraft is not met")
         void skipsWrappedEffectWhenMetalcraftNotMet() {
-            CardEffect wrapped = new CantBlockThisTurnEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS);
+            CardEffect wrapped = new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.targetPlayer()));
             CardEffect conditional = new ConditionalEffect(new Metalcraft(), wrapped);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id, List.of(conditional));
 
@@ -241,7 +240,7 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Logs skip message when metalcraft is not met")
         void logsSkipMessageWhenMetalcraftNotMet() {
-            CardEffect wrapped = new CantBlockThisTurnEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS);
+            CardEffect wrapped = new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.targetPlayer()));
             CardEffect conditional = new ConditionalEffect(new Metalcraft(), wrapped);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id, List.of(conditional));
 
@@ -257,7 +256,7 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Resolves wrapped effect when metalcraft is met")
         void resolvesWrappedEffectWhenMetalcraftMet() {
-            CardEffect wrapped = new CantBlockThisTurnEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS);
+            CardEffect wrapped = new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.targetPlayer()));
             CardEffect conditional = new ConditionalEffect(new Metalcraft(), wrapped);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id, List.of(conditional));
 
@@ -272,7 +271,7 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Re-checks metalcraft condition at resolution time (intervening-if)")
         void rechecksMetalcraftConditionAtResolutionTime() {
-            CardEffect wrapped = new CantBlockThisTurnEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS);
+            CardEffect wrapped = new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.targetPlayer()));
             CardEffect conditional = new ConditionalEffect(new Metalcraft(), wrapped);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id, List.of(conditional));
 
@@ -288,7 +287,7 @@ class EffectResolutionServiceTest {
         @Test
         @DisplayName("Logs skip message when metalcraft lost before resolution")
         void logsSkipMessageWhenMetalcraftLostBeforeResolution() {
-            CardEffect wrapped = new CantBlockThisTurnEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS);
+            CardEffect wrapped = new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.targetPlayer()));
             CardEffect conditional = new ConditionalEffect(new Metalcraft(), wrapped);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id, List.of(conditional));
 
@@ -470,7 +469,7 @@ class EffectResolutionServiceTest {
         @DisplayName("All effects on a stack entry resolve in sequence")
         void allEffectsOnStackEntryResolveInSequence() {
             CardEffect damageEffect = new DealDamageToPlayersEffect(4, Subjects.targetPlayer());
-            CardEffect cantBlockEffect = new CantBlockThisTurnEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS);
+            CardEffect cantBlockEffect = new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.targetPlayer()));
             CardEffect conditional = new ConditionalEffect(new Metalcraft(), cantBlockEffect);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id,
                     List.of(damageEffect, conditional));
@@ -490,7 +489,7 @@ class EffectResolutionServiceTest {
         @DisplayName("Non-metalcraft effects still resolve when metalcraft conditional is skipped")
         void nonMetalcraftEffectsStillResolveWhenMetalcraftSkips() {
             CardEffect damageEffect = new DealDamageToPlayersEffect(4, Subjects.targetPlayer());
-            CardEffect cantBlockEffect = new CantBlockThisTurnEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS);
+            CardEffect cantBlockEffect = new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.targetPlayer()));
             CardEffect conditional = new ConditionalEffect(new Metalcraft(), cantBlockEffect);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id,
                     List.of(damageEffect, conditional));
@@ -604,7 +603,7 @@ class EffectResolutionServiceTest {
         @DisplayName("Clears pending state after multi-effect spell resolves")
         void clearsPendingStateAfterMultiEffectSpellResolves() {
             CardEffect damageEffect = new DealDamageToPlayersEffect(4, Subjects.targetPlayer());
-            CardEffect cantBlockEffect = new CantBlockThisTurnEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS);
+            CardEffect cantBlockEffect = new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.targetPlayer()));
             CardEffect conditional = new ConditionalEffect(new Metalcraft(), cantBlockEffect);
             StackEntry entry = createEntry(createCard("Concussive Bolt"), player1Id,
                     List.of(damageEffect, conditional));

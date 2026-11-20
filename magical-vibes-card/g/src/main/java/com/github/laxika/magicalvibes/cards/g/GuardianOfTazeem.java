@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,6 +20,6 @@ public class GuardianOfTazeem extends Card {
                 .addTrigger(Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL),
                         new TapPermanentsEffect(Subjects.target()),
                         new ConditionalEffect(new TriggeringPermanentHasSubtype(CardSubtype.ISLAND),
-                                new SkipNextUntapEffect(TapUntapScope.TARGET)));
+                                new SkipNextUntapEffect(Subjects.target())));
     }
 }

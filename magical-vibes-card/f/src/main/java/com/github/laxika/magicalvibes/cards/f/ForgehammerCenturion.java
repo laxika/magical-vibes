@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -35,7 +35,7 @@ public class ForgehammerCenturion extends Card {
                 new ConditionalEffect(new SourceCounterThreshold(2, CounterType.OIL),
                         SequenceEffect.of(
                                 new RemoveCounterFromSourceEffect(CounterType.OIL, 2),
-                                new CantBlockThisTurnEffect(TapUntapScope.TARGET))),
+                                new CantBlockThisTurnEffect(Subjects.target()))),
                 "Remove two oil counters from Forgehammer Centurion?"));
     }
 }

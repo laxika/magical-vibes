@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackNextTurnCombatOppon
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.effect.OnlyChosenCreaturesCanAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesCantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayForArtifactsOrCreaturesCantAttackThisCombatEffect;
@@ -690,8 +689,8 @@ public class AttackLegalityService {
     }
 
     /**
-     * "Creatures target player controls can't attack this turn" (CR 611.2c): the restriction follows the
-     * player's current creatures, so it covers creatures that came under that player's control after it
+     * "Creatures target player controls can't attack this turn" (CR 611.2c): the restriction is on the player, and the
+     * set's filter is judged against the player's current creatures, so it covers creatures that came under that player's control after it
      * resolved and no longer covers creatures that left.
      */
     private boolean isCantAttackByPlayerCreaturesRestriction(GameData gameData, Permanent creature) {
@@ -701,8 +700,8 @@ public class AttackLegalityService {
         }
         return gameData.floatingPlayerEffects(creatureController, CantAttackThisTurnEffect.class).stream()
                 .map(CantAttackThisTurnEffect.class::cast)
-                .anyMatch(restriction -> predicateEvaluationService.matchesPermanentPredicate(gameData, creature,
-                        restriction.filter() == null ? new PermanentIsCreaturePredicate() : restriction.filter()));
+                .anyMatch(restriction -> restriction.subject() instanceof PermanentSubject.ControlledBy set
+                        && predicateEvaluationService.matchesPermanentPredicate(gameData, creature, set.filter()));
     }
 
     private boolean isCantAttackDueToGlobalRestriction(GameData gameData, Permanent creature) {

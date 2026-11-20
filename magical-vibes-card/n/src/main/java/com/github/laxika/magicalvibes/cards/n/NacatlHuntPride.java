@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class NacatlHuntPride extends Card {
 
         // {R}, {T}: Target creature can't block this turn.
         addActivatedAbility(new ActivatedAbility(true, "{R}",
-                List.of(new CantBlockThisTurnEffect(TapUntapScope.TARGET)),
+                List.of(new CantBlockThisTurnEffect(Subjects.target())),
                 "{R}, {T}: Target creature can't block this turn.",
                 TargetFilters.creature()));
 

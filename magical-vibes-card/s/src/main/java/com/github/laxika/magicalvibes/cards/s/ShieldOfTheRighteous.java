@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ARB", collectorNumber = "11")
@@ -22,7 +22,7 @@ public class ShieldOfTheRighteous extends Card {
         // Whenever equipped creature blocks a creature, that creature doesn't untap during its
         // controller's next untap step. The card declares no target, so "that creature" is the blocked
         // attacker the stack entry records.
-        addTrigger(Triggers.blocks(), new SkipNextUntapEffect(TapUntapScope.TARGET));
+        addTrigger(Triggers.blocks(), new SkipNextUntapEffect(Subjects.target()));
 
         // Equip {2}
         addActivatedAbility(new EquipActivatedAbility("{2}"));

@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +21,7 @@ public class SmolderingSpires extends Card {
 
         // When this land enters, target creature can't block this turn.
         target(TargetFilters.creature())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new CantBlockThisTurnEffect(Subjects.target()));
 
         // {T}: Add {R}.
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.RED));

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -37,6 +36,6 @@ public class MatsuTribeSniper extends Card {
 
         addTrigger(Triggers.dealsDamageToCreature(),
                 new TapPermanentsEffect(Subjects.triggering()),
-                new SkipNextUntapEffect(TapUntapScope.TRIGGERING));
+                new SkipNextUntapEffect(Subjects.triggering()));
     }
 }

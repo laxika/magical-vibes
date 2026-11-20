@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -25,7 +25,7 @@ public class OasisRitualist extends Card {
                 true,
                 null,
                 List.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true, true),
+                        new SkipNextUntapEffect(Subjects.source(), 1, false, false, true, true),
                         new AwardAnyColorManaEffect(2)
                 ),
                 "{T}, Exert this creature: Add two mana of any one color."

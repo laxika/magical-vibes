@@ -1083,8 +1083,8 @@ public class SpellEvaluator {
     /**
      * Scores a "creatures can't block this turn" effect. Returns 0 when the AI has no
      * creatures that can attack this turn, or when no opponent blockers would be
-     * affected — so Panic Attack / Stun are never cast as empty board dumps. TARGET
-     * scope is capped at the spell's max targets; mass scopes score every matching
+     * affected — so Panic Attack / Stun are never cast as empty board dumps. A target()
+     * subject is capped at the spell's max targets; a set scores every matching
      * untapped opposing creature.
      */
     private double evaluateCantBlockValue(GameData gameData, Card card, CantBlockThisTurnEffect effect,
@@ -1094,18 +1094,23 @@ public class SpellEvaluator {
         if (!hasAttacker) return 0;
 
         FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(aiPlayerId);
+        PermanentPredicate setFilter = effect.subject() instanceof PermanentSubject.ControlledBy set
+                ? set.filter() : null;
         List<Permanent> blockers = oppBattlefield.stream()
                 .filter(p -> gameQueryService.isCreature(gameData, p) && !p.isTapped())
-                .filter(p -> effect.filter() == null
-                        || predicateEvaluationService.matchesPermanentPredicate(p, effect.filter(), filterContext))
+                .filter(p -> setFilter == null
+                        || predicateEvaluationService.matchesPermanentPredicate(p, setFilter, filterContext))
                 .sorted(Comparator.comparingDouble(
                         (Permanent p) -> boardEvaluator.creatureScore(gameData, p, opponentId, aiPlayerId)).reversed())
                 .toList();
         if (blockers.isEmpty()) return 0;
 
-        int maxNeutralized = switch (effect.scope()) {
-            case TARGET -> card != null && card.getMaxTargets() > 0 ? card.getMaxTargets() : 1;
-            case TARGET_PLAYERS_PERMANENTS, ALL_CREATURES -> blockers.size();
+        // A target player's or every player's creatures: all of them; the rest of a target's controller's creatures
+        // (Mark for Death) and an Aura's host are not scored.
+        int maxNeutralized = switch (effect.subject()) {
+            case PermanentSubject.Target ignored -> card != null && card.getMaxTargets() > 0 ? card.getMaxTargets() : 1;
+            case PermanentSubject.ControlledBy set when !(set.players() instanceof PlayerSubject.ControllerOf) ->
+                    blockers.size();
             default -> 0;
         };
         if (maxNeutralized <= 0) return 0;

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,7 +25,7 @@ public class SummonKujata extends Card {
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 2)));
 
         addTrigger(Triggers.chapter(2),
-                new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+                new CantBlockThisTurnEffect(Subjects.target()));
         setSagaChapterTargetGroups(2, List.of(
                 new SagaChapterTargetGroup(TargetFilters.creature(), 0, 3)));
 

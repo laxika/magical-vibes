@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEff
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AER", collectorNumber = "77")
@@ -18,6 +17,6 @@ public class ChandrasRevolution extends Card {
                 .addSpellEffect(new DealDamageToTargetCreatureEffect(4));
         target(TargetFilters.land())
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new SkipNextUntapEffect(Subjects.target()));
     }
 }

@@ -4,39 +4,35 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
- * Untap permanents during each other player's untap step.
+ * "Untap [these permanents] during each other player's untap step", a static ability: during the untap step of each
+ * player other than the controller of a permanent the subject names, that permanent untaps.
  *
- * @param step   the step during which this fires (always UNTAP)
- * @param filter optional filter for which permanents to untap (null = all permanents); ignored for
- *               {@link TapUntapScope#ENCHANTED} and {@link TapUntapScope#SELF}
- * @param scope  {@link TapUntapScope#CONTROLLED} for every matching permanent the source's
- *               controller controls (Seedborn Muse, Unwinding Clock),
- *               {@link TapUntapScope#ENCHANTED} for only the permanent this aura is attached to
- *               (Urban Burgeoning), or {@link TapUntapScope#SELF} for only the source permanent
- *               (Bender's Waterskin)
+ * @param step    the step during which this applies (always UNTAP)
+ * @param subject {@code controlledBy(you(), filter)} for every matching permanent the source's controller controls
+ *                (Seedborn Muse, Unwinding Clock; an emblem's too), {@code attached()} for the permanent this Aura
+ *                is attached to, whoever controls the Aura (Urban Burgeoning), or {@code source()} for the source
+ *                permanent itself (Bender's Waterskin)
  */
-public record UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep step,
-                                                                          PermanentPredicate filter,
-                                                                          TapUntapScope scope) implements CardEffect {
+public record UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep step, PermanentSubject subject)
+        implements CardEffect {
 
     public UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect {
-        if (scope != TapUntapScope.CONTROLLED && scope != TapUntapScope.ENCHANTED
-                && scope != TapUntapScope.SELF) {
-            throw new IllegalArgumentException("Unsupported scope for cross-player untap: " + scope);
+        boolean ownSet = subject instanceof PermanentSubject.ControlledBy set
+                && set.players() instanceof PlayerSubject.You;
+        if (!ownSet && !(subject instanceof PermanentSubject.Attached)
+                && !(subject instanceof PermanentSubject.Source)) {
+            throw new IllegalArgumentException("Unsupported subject for cross-player untap: " + subject);
         }
     }
 
-    /**
-     * Convenience constructor for the controller-scoped variant with an optional filter.
-     */
+    /** Every permanent the controller controls that matches {@code filter} ({@code null}: every permanent). */
     public UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep step, PermanentPredicate filter) {
-        this(step, filter, TapUntapScope.CONTROLLED);
+        this(step, filter == null ? Subjects.controlledBy(Subjects.you())
+                : Subjects.controlledBy(Subjects.you(), filter));
     }
 
-    /**
-     * Convenience constructor that untaps ALL permanents the controller controls (no filter).
-     */
+    /** Every permanent the controller controls. */
     public UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep step) {
-        this(step, null, TapUntapScope.CONTROLLED);
+        this(step, (PermanentPredicate) null);
     }
 }

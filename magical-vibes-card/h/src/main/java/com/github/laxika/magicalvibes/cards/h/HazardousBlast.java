@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,7 +25,6 @@ public class HazardousBlast extends Card {
     public HazardousBlast() {
         addSpellEffect(new DealDamageToEachMatchingPermanentEffect(
                 1, OPPONENT_CREATURE, EachPermanentScope.ALL_PLAYERS));
-        addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.ALL_CREATURES,
-                OPPONENT_CREATURE));
+        addSpellEffect(new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.eachPlayer(), OPPONENT_CREATURE)));
     }
 }

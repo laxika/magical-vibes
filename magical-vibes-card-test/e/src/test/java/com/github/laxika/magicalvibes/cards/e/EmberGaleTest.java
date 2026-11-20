@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.cards.d.DrownerInitiate;
 import com.github.laxika.magicalvibes.cards.g.GreaterAuramancy;
 import com.github.laxika.magicalvibes.cards.p.PyreCharger;
+import com.github.laxika.magicalvibes.cards.t.TezzeretAgentOfBolas;
 import com.github.laxika.magicalvibes.cards.z.ZealousGuardian;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({EmberGale.class, DrownerInitiate.class, GreaterAuramancy.class, PyreCharger.class,
-        ZealousGuardian.class})
+        TezzeretAgentOfBolas.class, ZealousGuardian.class})
 class EmberGaleTest extends BaseCardTest {
 
     @Test
@@ -155,6 +156,17 @@ class EmberGaleTest extends BaseCardTest {
         declareAttackersAndPrepareBlockers(player2, List.of(0));
 
         assertThatThrownBy(() -> gs.declareBlockers(gd, player1, List.of(new BlockerAssignment(0, 0))))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Can't target a planeswalker: the spell names only a target player")
+    void cannotTargetPlaneswalker() {
+        Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new TezzeretAgentOfBolas());
+        harness.setHand(player1, List.of(new EmberGale()));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, planeswalker.getId()))
                 .isInstanceOf(IllegalStateException.class);
     }
 

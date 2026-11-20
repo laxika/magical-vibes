@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -27,7 +26,7 @@ public class ManaclesOfDecay extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new CantBlockThisTurnEffect(TapUntapScope.ENCHANTED)),
+                List.of(new CantBlockThisTurnEffect(Subjects.attached())),
                 "{R}: Enchanted creature can't block this turn."
         ));
     }

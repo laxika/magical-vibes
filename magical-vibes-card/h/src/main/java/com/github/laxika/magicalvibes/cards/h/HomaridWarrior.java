@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import java.util.List;
 
@@ -23,7 +22,7 @@ public class HomaridWarrior extends Card {
         // {U}: This creature gains shroud until end of turn and doesn't untap during your next untap step. Tap it.
         addActivatedAbility(new ActivatedAbility(false, "{U}",
                 List.of(new GrantKeywordEffect(Keyword.SHROUD, GrantScope.SELF),
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true),
+                        new SkipNextUntapEffect(Subjects.source(), 1, false, false, true),
                         new TapPermanentsEffect(Subjects.source())),
                 "{U}: This creature gains shroud until end of turn and doesn't untap during your next untap step. Tap it."));
     }

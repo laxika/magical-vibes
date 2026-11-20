@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +25,7 @@ public class StewardOfSolidarity extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, "",
                 List.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true, true),
+                        new SkipNextUntapEffect(Subjects.source(), 1, false, false, true, true),
                         new CreateTokenEffect(
                                 "Warrior", 1, 1, CardColor.WHITE,
                                 List.of(CardSubtype.WARRIOR),

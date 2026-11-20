@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ public class RevekaWizardSavant extends Card {
                 "",
                 List.of(
                         new DealDamageToAnyTargetEffect(2),
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)
+                        new SkipNextUntapEffect(Subjects.source(), 1, false, false, true)
                 ),
                 "{T}: Reveka, Wizard Savant deals 2 damage to any target and doesn't untap during your next untap step."
         ));

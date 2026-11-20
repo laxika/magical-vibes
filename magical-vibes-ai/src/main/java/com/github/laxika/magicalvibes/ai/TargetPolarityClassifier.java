@@ -60,7 +60,6 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackSourcePermanentNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
@@ -312,18 +311,17 @@ public class TargetPolarityClassifier {
             return tap.subject() instanceof PermanentSubject.Target ? TargetPolarity.HARMFUL : null;
         }
         if (effect instanceof SkipNextUntapEffect skip) {
-            return skip.scope() == TapUntapScope.TARGET ? TargetPolarity.HARMFUL : null;
+            return skip.subject() instanceof PermanentSubject.Target ? TargetPolarity.HARMFUL : null;
         }
         if (effect instanceof CantAttackThisTurnEffect cantAttack) {
-            return cantAttack.scope() == TapUntapScope.TARGET ? TargetPolarity.HARMFUL : null;
+            return cantAttack.subject() instanceof PermanentSubject.Target ? TargetPolarity.HARMFUL : null;
         }
         if (effect instanceof CantBlockThisTurnEffect cantBlock) {
-            // TARGET_CONTROLLERS_OTHER_CREATURES (Mark for Death) shuts down the rest of the
-            // target's controller's defence, so it aims at the opponent just like TARGET does.
-            // TARGET_PLAYERS_PERMANENTS (Ember Gale) shuts down the targeted player's blockers.
-            return cantBlock.scope() == TapUntapScope.TARGET
-                    || cantBlock.scope() == TapUntapScope.TARGET_CONTROLLERS_OTHER_CREATURES
-                    || cantBlock.scope() == TapUntapScope.TARGET_PLAYERS_PERMANENTS
+            // A set whose players come from a target shuts down that player's blockers: the target player's (Ember
+            // Gale, Concussive Bolt) or the rest of the target creature's controller's (Mark for Death), so it aims at
+            // the opponent just like a target creature does.
+            return cantBlock.subject() instanceof PermanentSubject.Target
+                    || cantBlock.subject() instanceof PermanentSubject.ControlledBy set && namesTargetsPlayer(set.players())
                     ? TargetPolarity.HARMFUL
                     : null;
         }
@@ -800,5 +798,16 @@ public class TargetPolarityClassifier {
         if (a == null) return b;
         if (b == null) return a;
         return a.ordinal() <= b.ordinal() ? a : b;
+    }
+
+    /** Whether {@code players} is a target player, or the controller of a target, alone or together. */
+    private static boolean namesTargetsPlayer(PlayerSubject players) {
+        return switch (players) {
+            case PlayerSubject.TargetPlayer ignored -> true;
+            case PlayerSubject.ControllerOf controllerOf -> controllerOf.permanent() instanceof PermanentSubject.Target;
+            case PlayerSubject.AllOf allOf -> allOf.subjects().stream()
+                    .anyMatch(TargetPolarityClassifier::namesTargetsPlayer);
+            default -> false;
+        };
     }
 }

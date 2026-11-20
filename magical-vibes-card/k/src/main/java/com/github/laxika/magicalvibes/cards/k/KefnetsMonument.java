@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -32,6 +32,6 @@ public class KefnetsMonument extends Card {
         // during its controller's next untap step.
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.youCastSpell()
                         .withFilter(new CardTypePredicate(CardType.CREATURE)),
-                new SkipNextUntapEffect(TapUntapScope.TARGET));
+                new SkipNextUntapEffect(Subjects.target()));
     }
 }

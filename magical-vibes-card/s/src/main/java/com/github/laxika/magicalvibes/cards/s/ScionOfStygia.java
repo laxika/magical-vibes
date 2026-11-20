@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,6 +20,6 @@ public class ScionOfStygia extends Card {
                         new TapPermanentsEffect(Subjects.target()),
                         SequenceEffect.of(
                                 new TapPermanentsEffect(Subjects.target()),
-                                new SkipNextUntapEffect(TapUntapScope.TARGET))));
+                                new SkipNextUntapEffect(Subjects.target()))));
     }
 }

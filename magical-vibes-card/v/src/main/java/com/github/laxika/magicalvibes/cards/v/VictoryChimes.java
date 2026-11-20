@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.AwardManaToChosenPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 
 import java.util.List;
@@ -17,7 +17,8 @@ public class VictoryChimes extends Card {
     public VictoryChimes() {
         // Untap this artifact during each other player's untap step.
         addStaticEffect(new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
-                TurnStep.UNTAP, null, TapUntapScope.SELF));
+                TurnStep.UNTAP,
+                Subjects.source()));
 
         // {T}: A player of your choice adds {C}.
         addActivatedAbility(new ActivatedAbility(

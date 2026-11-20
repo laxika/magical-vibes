@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -27,7 +27,7 @@ public class BasriTomorrowsChampion extends Card {
                 true,
                 "{W}",
                 List.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, false, true),
+                        new SkipNextUntapEffect(Subjects.source(), 1, false, false, false, true),
                         new CreateTokenEffect(
                                 "Cat", 1, 1, CardColor.WHITE,
                                 List.of(CardSubtype.CAT), Set.of(Keyword.LIFELINK), Set.of()

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class YouComeToTheGnollCamp extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Intimidate Them — Up to two target creatures can't block this turn",
-                        List.of(new CantBlockThisTurnEffect(TapUntapScope.TARGET)),
+                        List.of(new CantBlockThisTurnEffect(Subjects.target())),
                         TargetFilters.creature(),
                         null,
                         0,

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -24,6 +23,6 @@ public class QuietContemplation extends Card {
                         .withFilter(new CardNotPredicate(new CardTypePredicate(CardType.CREATURE))),
                 new MayPayManaEffect("{1}", SequenceEffect.of(
                         new TapPermanentsEffect(Subjects.target()),
-                        new SkipNextUntapEffect(TapUntapScope.TARGET)), "Pay {1}?"));
+                        new SkipNextUntapEffect(Subjects.target())), "Pay {1}?"));
     }
 }

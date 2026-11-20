@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -20,7 +20,8 @@ public class Endbringer extends Card {
 
     public Endbringer() {
         addStaticEffect(new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
-                TurnStep.UNTAP, null, TapUntapScope.SELF));
+                TurnStep.UNTAP,
+                Subjects.source()));
 
         addActivatedAbility(new ActivatedAbility(true, null,
                 List.of(new DealDamageToAnyTargetEffect(1)),
@@ -28,8 +29,8 @@ public class Endbringer extends Card {
 
         addActivatedAbility(new ActivatedAbility(true, "{C}",
                 List.of(
-                        new CantAttackThisTurnEffect(TapUntapScope.TARGET),
-                        new CantBlockThisTurnEffect(TapUntapScope.TARGET)),
+                        new CantAttackThisTurnEffect(Subjects.target()),
+                        new CantBlockThisTurnEffect(Subjects.target())),
                 "{C}, {T}: Target creature can't attack or block this turn.",
                 TargetFilters.creature()));
 

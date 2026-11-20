@@ -18,6 +18,8 @@ import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetCardPredicate;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
@@ -542,6 +544,67 @@ class SubjectResolutionServiceTest extends BaseCardTest {
     }
 
     @Nested
+    @DisplayName("lastingRule: a set as a rule that reaches later arrivals")
+    class LastingRule {
+
+        private boolean matches(PermanentPredicate rule, Permanent permanent) {
+            return GameTestEngineContext.get().getBean(PredicateEvaluationService.class)
+                    .matchesPermanentPredicate(gd, permanent, rule);
+        }
+
+        private PermanentPredicate rule(StackEntry entry, PermanentSubject set) {
+            return subjects.lastingRule(gd, entry, EFFECT, (PermanentSubject.ControlledBy) set);
+        }
+
+        @Test
+        @DisplayName("Binds the target player now and judges the filter later, on creatures entering afterwards")
+        void bindsPlayersAndCoversLaterArrivals() {
+            StackEntry entry = entry(player1, player2.getId(), null);
+
+            PermanentPredicate rule = rule(entry, controlledBy(targetPlayer(), new PermanentIsCreaturePredicate()));
+            Permanent laterGiant = addCreatureReady(player2, new HillGiant());
+            Permanent ownBears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent theirForest = addCreatureReady(player2, new Forest());
+
+            assertThat(matches(rule, laterGiant)).isTrue();
+            assertThat(matches(rule, ownBears)).isFalse();
+            assertThat(matches(rule, theirForest)).isFalse();
+        }
+
+        @Test
+        @DisplayName("Every player's set binds no player: the rule is the set's filter")
+        void eachPlayerBindsNoPlayer() {
+            StackEntry entry = entry(player1, null, null);
+            PermanentPredicate creature = new PermanentIsCreaturePredicate();
+
+            assertThat(rule(entry, controlledBy(eachPlayer(), creature))).isSameAs(creature);
+        }
+
+        @Test
+        @DisplayName("Binds \"other than the target\" to the target permanent (\"other creatures that player controls\")")
+        void bindsTheTarget() {
+            Permanent marked = addCreatureReady(player2, new GrizzlyBears());
+            StackEntry entry = entry(player1, marked.getId(), null);
+
+            PermanentPredicate rule = rule(entry, controlledBy(controllerOf(target()), new PermanentAllOfPredicate(
+                    List.of(new PermanentIsCreaturePredicate(),
+                            new PermanentNotPredicate(new PermanentIsTargetCardPredicate())))));
+            Permanent laterGiant = addCreatureReady(player2, new HillGiant());
+
+            assertThat(matches(rule, marked)).isFalse();
+            assertThat(matches(rule, laterGiant)).isTrue();
+        }
+
+        @Test
+        @DisplayName("Is null when the set names no player")
+        void namesNoPlayer() {
+            StackEntry entry = entry(player1, null, null);
+
+            assertThat(rule(entry, controlledBy(targetPlayer()))).isNull();
+        }
+    }
+
+    @Nested
     @DisplayName("Player subjects")
     class Players {
 
@@ -849,6 +912,16 @@ class SubjectResolutionServiceTest extends BaseCardTest {
             assertThat(subjects.permanents(gd, pacifism, source())).containsExactly(pacifism);
             assertThat(subjects.permanents(gd, pacifism, attached())).containsExactly(bears);
             assertThat(subjects.players(gd, pacifism, you())).containsExactly(player1.getId());
+        }
+
+        @Test
+        @DisplayName("Resolves a set for a source off the battlefield whose controller the caller names (an emblem)")
+        void staticSourceWithKnownController() {
+            Permanent bears = addCreatureReady(player2, new GrizzlyBears());
+            addCreatureReady(player1, new HillGiant());
+            Permanent standIn = new Permanent(new Forest());
+
+            assertThat(subjects.permanents(gd, standIn, player2.getId(), controlledBy(you()))).containsExactly(bears);
         }
 
         @Test

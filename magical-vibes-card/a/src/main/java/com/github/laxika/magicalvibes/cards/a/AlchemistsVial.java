@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,8 +24,8 @@ public class AlchemistsVial extends Card {
                 true,
                 "{1}",
                 List.of(new SacrificeSelfCost(),
-                        new CantAttackThisTurnEffect(TapUntapScope.TARGET),
-                        new CantBlockThisTurnEffect(TapUntapScope.TARGET)),
+                        new CantAttackThisTurnEffect(Subjects.target()),
+                        new CantBlockThisTurnEffect(Subjects.target())),
                 "{1}, {T}, Sacrifice Alchemist's Vial: Target creature can't attack or block this turn.",
                 TargetFilters.creature()
         ));

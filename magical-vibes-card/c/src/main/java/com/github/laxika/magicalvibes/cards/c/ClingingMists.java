@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 
@@ -27,6 +26,8 @@ public class ClingingMists extends Card {
         addSpellEffect(new ConditionalEffect(new ControllerLifeAtMost(5), new TapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
                         new PermanentIsAttackingPredicate()))))));
-        addSpellEffect(new ConditionalEffect(new ControllerLifeAtMost(5), new SkipNextUntapEffect(TapUntapScope.ALL_CREATURES, new PermanentIsAttackingPredicate())));
+        addSpellEffect(new ConditionalEffect(new ControllerLifeAtMost(5), new SkipNextUntapEffect(
+                Subjects.controlledBy(Subjects.eachPlayer(), new PermanentAllOfPredicate(List.of(
+                        new PermanentIsCreaturePredicate(), new PermanentIsAttackingPredicate()))))));
     }
 }

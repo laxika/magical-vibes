@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlled
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivatedAbilityCostEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -31,7 +31,7 @@ public class RadhasFirebrand extends Card {
         target(new PermanentPredicateTargetFilter(
                 lowerPowerDefendingCreature,
                 "Target must be a creature defending player controls with power less than Radha's Firebrand's power"))
-                .addTrigger(Triggers.attacks(), new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+                .addTrigger(Triggers.attacks(), new CantBlockThisTurnEffect(Subjects.target()));
 
         addStaticEffect(new ReduceActivatedAbilityCostEffect(
                 new PermanentIsSourcePermanentPredicate(),

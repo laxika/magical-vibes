@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
@@ -22,6 +22,6 @@ public class RhonassLastStand extends Card {
 
         // Lands you control don't untap during your next untap step.
         // The lands are matched at untap time, so lands entering later are also held (CR 611.2c).
-        addSpellEffect(new SkipNextUntapEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate(), 1, true));
+        addSpellEffect(new SkipNextUntapEffect(Subjects.controlledBy(Subjects.you(), new PermanentIsLandPredicate()), 1, true));
     }
 }

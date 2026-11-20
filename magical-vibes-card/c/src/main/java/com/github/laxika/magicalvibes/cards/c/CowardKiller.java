@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndCreature
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TimeTravelEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -25,7 +25,7 @@ public class CowardKiller extends Card {
     public CowardKiller() {
         TargetFilter creature = TargetFilters.creature();
         CardEffect coward = SequenceEffect.of(
-                new CantBlockThisTurnEffect(TapUntapScope.TARGET),
+                new CantBlockThisTurnEffect(Subjects.target()),
                 new GrantSubtypeToTargetCreatureEffect(CardSubtype.COWARD, Duration.UNTIL_END_OF_TURN),
                 new TimeTravelEffect(1));
 

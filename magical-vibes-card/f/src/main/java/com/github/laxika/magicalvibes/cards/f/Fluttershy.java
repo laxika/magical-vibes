@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -25,8 +25,8 @@ public class Fluttershy extends Card {
                 "{1}",
                 List.of(
                         new PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect(),
-                        new CantAttackThisTurnEffect(TapUntapScope.TARGET),
-                        new CantBlockThisTurnEffect(TapUntapScope.TARGET)
+                        new CantAttackThisTurnEffect(Subjects.target()),
+                        new CantBlockThisTurnEffect(Subjects.target())
                 ),
                 "{1}, {T}: Put a +1/+1 counter on each creature with a tail target player controls. "
                         + "Stare down up to one target creature until end of turn.",

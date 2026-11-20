@@ -1,4 +1,5 @@
 package com.github.laxika.magicalvibes.service.turn;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameLog;
 
@@ -6,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.GameStatus;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsUntapDuringEachPlayersUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.StorageMatrixEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -106,8 +107,7 @@ class UntapStepServiceTest {
         // A real subject resolver over its own query mock, which finds permanents on gd's battlefields.
         GameQueryService subjectQueries = org.mockito.Mockito.mock(GameQueryService.class);
         org.springframework.test.util.ReflectionTestUtils.setField(sut, "subjectResolutionService",
-                new SubjectResolutionService(subjectQueries,
-                        org.mockito.Mockito.mock(PredicateEvaluationService.class),
+                new SubjectResolutionService(subjectQueries, predicateEvaluationService,
                         org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)));
         org.mockito.Mockito.lenient().when(subjectQueries.findPermanentById(org.mockito.ArgumentMatchers.any(),
                         org.mockito.ArgumentMatchers.any()))
@@ -116,6 +116,18 @@ class UntapStepServiceTest {
                         .filter(permanent -> permanent.getId().equals(invocation.getArgument(1)))
                         .findFirst()
                         .orElse(null));
+        org.mockito.Mockito.lenient().when(subjectQueries.findPermanentController(org.mockito.ArgumentMatchers.any(),
+                        org.mockito.ArgumentMatchers.any()))
+                .thenAnswer(invocation -> gd.findControllerOf((UUID) invocation.getArgument(1)));
+        // A set with no filter of its own ("every permanent you control") matches everything.
+        org.mockito.Mockito.lenient().when(predicateEvaluationService.matchesPermanentPredicate(
+                        any(Permanent.class), org.mockito.ArgumentMatchers.isA(PermanentTruePredicate.class),
+                        any(FilterContext.class)))
+                .thenReturn(true);
+        org.mockito.Mockito.lenient().when(predicateEvaluationService.matchesPermanentPredicate(
+                        any(GameData.class), any(Permanent.class),
+                        org.mockito.ArgumentMatchers.isA(PermanentTruePredicate.class)))
+                .thenReturn(true);
     }
 
     private static Card createCardWithName(String name) {
@@ -185,7 +197,7 @@ class UntapStepServiceTest {
     @Test
     void matchingRestrictionSurvivesSkippedStepAndIncludesLaterPermanents() {
         var restriction = new com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect(
-                com.github.laxika.magicalvibes.model.effect.TapUntapScope.TARGET_PLAYERS_PERMANENTS, null, 1, true);
+                com.github.laxika.magicalvibes.model.effect.Subjects.controlledBy(com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayer()), 1, true);
         gd.addFloatingEffect(com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect.onPlayer("Test", null,
                 player1Id, restriction, player1Id, com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT));
         Permanent permanent = addPermanent(player1Id, createCardWithName("Later permanent"));
@@ -332,8 +344,13 @@ class UntapStepServiceTest {
             Permanent perm = addPermanent(player1Id, createCardWithName("Grizzly Bears"));
             perm.tap();
 
-            when(gameQueryService.hasAuraWithEffect(gd, perm, DoesntUntapEffect.class))
-                    .thenReturn(true);
+            // The attached Aura's lock: an attached() DoesntUntapEffect counts, a source() one would lock the Aura.
+            when(gameQueryService.hasAuraWithEffect(eq(gd), eq(perm),
+                    org.mockito.ArgumentMatchers.<java.util.function.Predicate<CardEffect>>any()))
+                    .thenAnswer(invocation -> invocation.<java.util.function.Predicate<CardEffect>>getArgument(2)
+                            .test(DoesntUntapEffect.enchanted())
+                            && !invocation.<java.util.function.Predicate<CardEffect>>getArgument(2)
+                            .test(DoesntUntapEffect.self()));
 
             sut.untapPermanents(gd, player1Id);
 
@@ -432,7 +449,7 @@ class UntapStepServiceTest {
         void selfScopedEffectOnlyUntapsSource() {
             Card waterskinCard = createCardWithName("Bender's Waterskin");
             waterskinCard.addStaticEffect(new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
-                            TurnStep.UNTAP, null, TapUntapScope.SELF));
+                            TurnStep.UNTAP, Subjects.source()));
             Permanent waterskin = addPermanent(player2Id, waterskinCard);
             waterskin.tap();
             Permanent otherPermanent = addPermanent(player2Id, createCardWithName("Other Permanent"));
@@ -466,7 +483,8 @@ class UntapStepServiceTest {
         @DisplayName("Filtered untap effect only untaps matching permanents")
         void filteredEffectOnlyUntapsMatchingPermanents() {
             // Player 2 controls a permanent with a filtered untap effect
-            PermanentPredicate filter = new PermanentTruePredicate();
+            // A real filter: a set of every permanent you control is the unfiltered (Seedborn Muse) form.
+            PermanentPredicate filter = new com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate();
             Card effectCard = createCardWithName("Filtered Untapper");
             effectCard.addStaticEffect(new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(TurnStep.UNTAP, filter));
             addPermanent(player2Id, effectCard);

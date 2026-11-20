@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SeekInstantOrSorceryAndMayCastFreeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeKarlachEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -84,7 +83,7 @@ public class KarlachRagingTiefling extends Card {
                             "a creature", false, false),
                     "Sacrifice a creature?");
             case BLUE -> new SeekInstantOrSorceryAndMayCastFreeEffect();
-            case RED -> new CantBlockThisTurnEffect(TapUntapScope.TARGET);
+            case RED -> new CantBlockThisTurnEffect(Subjects.target());
             case GREEN -> new BoostTargetCreatureEffect(4, 4, anotherCreatureYouControl());
             case WHITE -> SequenceEffect.of(
                     new CreateTokenEffect(1, "Knight", 2, 2, CardColor.WHITE,

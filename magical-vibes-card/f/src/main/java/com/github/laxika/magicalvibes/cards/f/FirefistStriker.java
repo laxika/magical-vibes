@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,6 +16,6 @@ public class FirefistStriker extends Card {
         // target creature can't block this turn.
         addTrigger(Triggers.attacks(),
                 TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
-                new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+                new CantBlockThisTurnEffect(Subjects.target()));
     }
 }

@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSpellCastingAbilityToSpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect;
 import com.github.laxika.magicalvibes.model.condition.SourceRoomDoorUnlocked;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -36,6 +35,7 @@ public class DazzlingTheaterPropRoom extends Card {
         addStaticEffect(new ConditionalEffect(
                 new SourceRoomDoorUnlocked(1),
                 new UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(
-                        TurnStep.UNTAP, new PermanentIsCreaturePredicate(), TapUntapScope.CONTROLLED)));
+                        TurnStep.UNTAP,
+                        new PermanentIsCreaturePredicate())));
     }
 }

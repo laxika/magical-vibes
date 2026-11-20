@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
@@ -18,6 +18,8 @@ public class BontusLastReckoning extends Card {
 
         // Lands you control don't untap during your next untap step.
         addSpellEffect(new SkipNextUntapEffect(
-                TapUntapScope.CONTROLLED, new PermanentIsLandPredicate(), 1, true));
+                Subjects.controlledBy(Subjects.you(), new PermanentIsLandPredicate()),
+                1,
+                true));
     }
 }

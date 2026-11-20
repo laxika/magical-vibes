@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -27,11 +27,12 @@ public class Exhaustion extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addSpellEffect(new SkipNextUntapEffect(
-                TapUntapScope.TARGET_PLAYERS_PERMANENTS,
-                new PermanentAnyOfPredicate(List.of(
+                Subjects.controlledBy(Subjects.targetPlayer(), new PermanentAnyOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
                         new PermanentIsLandPredicate()
-                )), 1, true
+                ))),
+                1,
+                true
         ));
     }
 }

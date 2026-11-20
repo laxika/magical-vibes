@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -52,7 +52,7 @@ public class PiaNalaar extends Card {
                 "{1}",
                 List.of(
                         new SacrificePermanentCost(new PermanentIsArtifactPredicate(), "an artifact", false),
-                        new CantBlockThisTurnEffect(TapUntapScope.TARGET)
+                        new CantBlockThisTurnEffect(Subjects.target())
                 ),
                 "{1}, Sacrifice an artifact: Target creature can't block this turn.",
                 TargetFilters.creature()

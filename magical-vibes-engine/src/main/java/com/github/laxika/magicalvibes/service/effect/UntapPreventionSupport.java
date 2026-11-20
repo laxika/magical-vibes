@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.UntapLockCondition;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -17,7 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.UUID;
 import java.util.List;
 
-/** Resolves self-scoped untap locks, including locks gated by a static condition. */
+/**
+ * Resolves the untap locks a permanent has of its own (a {@code source()} {@link DoesntUntapEffect}, including one gated
+ * by a static condition) and the resolved locks on it.
+ */
 @Component
 @RequiredArgsConstructor
 public class UntapPreventionSupport {
@@ -61,7 +64,7 @@ public class UntapPreventionSupport {
     private boolean hasActiveSelfDoesntUntap(GameData gameData, Permanent permanent, UUID controllerId,
                                               CardEffect effect) {
         if (effect instanceof DoesntUntapEffect doesNotUntap) {
-            return doesNotUntap.scope() == TapUntapScope.SELF;
+            return doesNotUntap.subject() instanceof PermanentSubject.Source;
         }
         if (effect instanceof ConditionalEffect conditional) {
             return conditionEvaluationService.isMet(gameData, conditional.condition(),

@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpel
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
@@ -51,7 +50,7 @@ public class TamiyoCompleatedSage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false, null,
                 List.of(new TapPermanentsEffect(Subjects.target()),
-                        new SkipNextUntapEffect(TapUntapScope.TARGET)),
+                        new SkipNextUntapEffect(Subjects.target())),
                 "+1: Tap up to one target artifact or creature. It doesn't untap during its controller's next untap step.",
                 null, +1, null, null,
                 List.<TargetFilter>of(artifactOrCreature), 0, 1));

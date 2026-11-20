@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "ELD", collectorNumber = "61")
@@ -24,7 +23,7 @@ public class QueenOfIce extends Card {
         // Triggers.dealsCombatDamageToCreature() (non-targeting), so both halves act on it.
         addTrigger(Triggers.dealsCombatDamageToCreature(), SequenceEffect.of(
                 new TapPermanentsEffect(Subjects.target()),
-                new SkipNextUntapEffect(TapUntapScope.TARGET)));
+                new SkipNextUntapEffect(Subjects.target())));
     }
 
     @Override

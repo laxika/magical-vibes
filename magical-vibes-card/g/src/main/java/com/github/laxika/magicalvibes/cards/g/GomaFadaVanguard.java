@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -26,6 +26,6 @@ public class GomaFadaVanguard extends Card {
                         new PermanentPowerAtMostControlledSubtypeCountPredicate(CardSubtype.WARRIOR)
                 )),
                 "Target must be a creature an opponent controls with power less than or equal to the number of Warriors you control"
-        )).addTrigger(Triggers.attacks(), new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+        )).addTrigger(Triggers.attacks(), new CantBlockThisTurnEffect(Subjects.target()));
     }
 }

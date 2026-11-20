@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
- * Continuous static effect added as a static ability: the permanent identified by
- * {@code scope} doesn't untap during its controller's untap step for as long as the
+ * Continuous static effect added as a static ability: the permanent {@code subject} names ({@code source()} or
+ * {@code attached()}) doesn't untap during its controller's untap step for as long as the
  * {@code counterBearer} has at least one counter of the given type. The counter-conditional sibling
  * of {@link DoesntUntapEffect#self()} (which never untaps at all), read directly by
  * {@code UntapStepService} rather than through a handler.
@@ -15,30 +15,32 @@ import com.github.laxika.magicalvibes.model.CounterType;
  * fungus counters (Mindbender Spores) lock the blocked creature.
  *
  * @param counterType   the counter whose presence keeps the permanent tapped
- * @param scope         the permanent that is prevented from untapping
+ * @param subject       the permanent that is prevented from untapping
  * @param counterBearer the source or attached permanent whose counters control the lock
  */
 public record DoesntUntapWithCounterEffect(
         CounterType counterType,
-        TapUntapScope scope,
+        PermanentSubject subject,
         PermanentSubject counterBearer
 ) implements CardEffect {
 
-    public DoesntUntapWithCounterEffect(CounterType counterType) {
-        this(counterType, TapUntapScope.SELF, Subjects.source());
+    public DoesntUntapWithCounterEffect {
+        if (!(subject instanceof PermanentSubject.Source || subject instanceof PermanentSubject.Attached)) {
+            throw new IllegalArgumentException("A counter lock names source() or attached(), got " + subject);
+        }
     }
 
-    public DoesntUntapWithCounterEffect(CounterType counterType, TapUntapScope scope) {
-        this(counterType, scope, Subjects.source());
+    public DoesntUntapWithCounterEffect(CounterType counterType) {
+        this(counterType, Subjects.source(), Subjects.source());
     }
 
     public static DoesntUntapWithCounterEffect enchanted(CounterType counterType) {
         return new DoesntUntapWithCounterEffect(
-                counterType, TapUntapScope.ENCHANTED, Subjects.source());
+                counterType, Subjects.attached(), Subjects.source());
     }
 
     public static DoesntUntapWithCounterEffect enchantedWithCounterOnEnchantedPermanent(CounterType counterType) {
         return new DoesntUntapWithCounterEffect(
-                counterType, TapUntapScope.ENCHANTED, Subjects.attached());
+                counterType, Subjects.attached(), Subjects.attached());
     }
 }

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -28,10 +27,10 @@ public class SporeCloud extends Card {
                         new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
                                 new PermanentIsBlockingPredicate())))));
         addSpellEffect(PreventDamageEffect.allCombat());
-        addSpellEffect(new SkipNextUntapEffect(
-                TapUntapScope.ALL_CREATURES,
-                new PermanentAnyOfPredicate(List.of(
-                        new PermanentIsAttackingPredicate(),
-                        new PermanentIsBlockingPredicate()))));
+        addSpellEffect(new SkipNextUntapEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                        new PermanentAnyOfPredicate(List.of(
+                                new PermanentIsAttackingPredicate(),
+                                new PermanentIsBlockingPredicate())))))));
     }
 }

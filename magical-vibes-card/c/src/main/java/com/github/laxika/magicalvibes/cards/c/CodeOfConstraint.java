@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RNA", collectorNumber = "35")
@@ -25,6 +24,6 @@ public class CodeOfConstraint extends Card {
                 .addSpellEffect(new ConditionalEffect(new AllOf(List.of(new WasCast(), new ControllerMainPhase())),
                         new TapPermanentsEffect(Subjects.target())))
                 .addSpellEffect(new ConditionalEffect(new AllOf(List.of(new WasCast(), new ControllerMainPhase())),
-                        new SkipNextUntapEffect(TapUntapScope.TARGET)));
+                        new SkipNextUntapEffect(Subjects.target())));
     }
 }

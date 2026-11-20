@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
@@ -24,8 +24,7 @@ public class GruulCharm extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures without flying can't block this turn",
                         new CantBlockThisTurnEffect(
-                                TapUntapScope.ALL_CREATURES,
-                                new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))
+                                Subjects.controlledBy(Subjects.eachPlayer(), new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))
                         )
                 ),
                 new ChooseOneEffect.ChooseOneOption(

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.MinimumAttackers;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,6 +26,6 @@ public class SontaranGeneral extends Card {
                         TriggerOptions.DEFAULT.withEventCondition(new MinimumAttackers(3)),
                         SequenceEffect.of(
                                 new GoadTargetCreatureUntilNextTurnEffect(),
-                                new CantBlockThisTurnEffect(TapUntapScope.TARGET)));
+                                new CantBlockThisTurnEffect(Subjects.target())));
     }
 }

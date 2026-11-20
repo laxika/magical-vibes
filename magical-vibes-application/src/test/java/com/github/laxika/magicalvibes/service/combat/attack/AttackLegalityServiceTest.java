@@ -1,9 +1,14 @@
 package com.github.laxika.magicalvibes.service.combat.attack;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.service.effect.normalfx.CantAttackThisTurnEffectHandler;
+import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
+import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.testutil.FloatingCombatRules;
 import com.github.laxika.magicalvibes.model.effect.OtherCreaturesCantAttackThisTurnEffect;
@@ -232,9 +237,24 @@ class AttackLegalityServiceTest extends BaseCardTest {
     void cantAttackThisTurnFlagStopsAttacking() {
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
         gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("test", null, null,
-                new CantAttackThisTurnEffect(TapUntapScope.TARGET), bears.getId(), Duration.UNTIL_END_OF_TURN));
+                new CantAttackThisTurnEffect(Subjects.target()), bears.getId(), Duration.UNTIL_END_OF_TURN));
 
         assertThat(als.canAttack(gd, bears, player1.getId())).isFalse();
+    }
+
+    @Test
+    @DisplayName("A resolved \"creatures can't attack this turn\" rule also stops a creature entering afterwards")
+    void resolvedCantAttackRuleCoversLaterCreatures() {
+        var effect = new CantAttackThisTurnEffect(
+                Subjects.controlledBy(Subjects.eachPlayer(), new PermanentIsCreaturePredicate()));
+        StackEntry entry = TestStackDoor.triggered(new GrizzlyBears(), player2.getId(), "Test", List.of(effect),
+                null, (UUID) null);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(CantAttackThisTurnEffectHandler.class)
+                .resolve(gd, entry, effect));
+
+        Permanent later = addCreatureReady(player1, new GrizzlyBears());
+
+        assertThat(als.canAttack(gd, later, player1.getId())).isFalse();
     }
 
     @Test

@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfAllPermanentsMat
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -46,7 +45,7 @@ public class RowanFearlessSparkmage extends Card {
                 null,
                 List.of(
                         new DealDamageToEachTargetEffect(new Fixed(1), null, new PermanentIsCreaturePredicate()),
-                        new CantBlockThisTurnEffect(TapUntapScope.TARGET)
+                        new CantBlockThisTurnEffect(Subjects.target())
                 ),
                 "\u22122: Rowan deals 1 damage to each of up to two target creatures. Those creatures can't block this turn.",
                 null,

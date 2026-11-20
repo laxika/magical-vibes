@@ -1,33 +1,33 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
+/**
+ * Resolves {@link CantAttackThisTurnEffect}: each permanent a named subject finds gets the record as a floating effect
+ * for its duration; a set becomes a rule on each of its players, found as it resolves, whose creatures matching the
+ * set's filter can't attack whenever attackers are declared, those arriving later included (CR 611.2c; read by
+ * {@code AttackLegalityService}).
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class CantAttackThisTurnEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
-    private final PredicateEvaluationService predicateEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
     private final GameLogService gameLogService;
 
     @Override
@@ -38,89 +38,21 @@ public class CantAttackThisTurnEffectHandler implements NormalEffectHandlerBean 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CantAttackThisTurnEffect) effect;
-        FilterContext filterContext = FilterContext.of(gameData).withSourceControllerId(entry.getControllerId());
-        switch (e.scope()) {
-            case TARGET -> resolveTarget(gameData, entry, e);
-            case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e, filterContext);
-            case ALL_CREATURES -> resolveAllCreatures(gameData, entry, e, filterContext);
-            default -> throw new IllegalStateException("Unsupported can't-attack scope: " + e.scope());
-        }
-    }
-
-    private void resolveTarget(GameData gameData, StackEntry entry, CantAttackThisTurnEffect e) {
-        List<UUID> targetIds = entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()
-                ? entry.getTargetIds()
-                : entry.getTargetId() == null ? List.of() : List.of(entry.getTargetId());
-
-        for (UUID targetId : targetIds) {
-            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null) {
-                continue;
+        if (e.subject() instanceof PermanentSubject.ControlledBy set) {
+            for (UUID playerId : subjectResolutionService.players(gameData, entry, e, set.players())) {
+                gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                        entry.getSourcePermanentId(), entry.getControllerId(), e, playerId, e.duration()));
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameLogService.append(gameData, GameLog.text(
+                        "Creatures controlled by " + playerName + " can't attack this turn."));
+                log.info("Game {} - creatures controlled by {} can't attack this turn", gameData.id, playerName);
             }
-            applyRestriction(gameData, entry, target, e);
+            return;
+        }
+        for (Permanent target : subjectResolutionService.permanents(gameData, entry, e, e.subject())) {
+            gameData.addEffectOnPermanent(entry, e, target.getId(), e.duration());
             gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " can't attack this turn."));
             log.info("Game {} - {} can't attack this turn", gameData.id, target.getCard().getName());
-        }
-    }
-
-    private void resolveTargetPlayersPermanents(GameData gameData, StackEntry entry,
-                                                 CantAttackThisTurnEffect e, FilterContext filterContext) {
-        UUID targetId = entry.getTargetId();
-        if (targetId == null) return;
-
-        List<Permanent> battlefield = gameData.playerBattlefields.get(targetId);
-        if (battlefield == null) return;
-
-        String playerName = gameData.playerIdToName.get(targetId);
-        int count = 0;
-        if (Duration.UNTIL_END_OF_TURN.equals(e.duration())) {
-            gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
-                    entry.getSourcePermanentId(), entry.getControllerId(), e, targetId, Duration.UNTIL_END_OF_TURN));
-        }
-        for (Permanent p : battlefield) {
-            if (gameQueryService.isCreature(gameData, p)
-                    && (e.filter() == null
-                    || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))) {
-                if (!Duration.UNTIL_END_OF_TURN.equals(e.duration())) {
-                    applyRestriction(gameData, entry, p, e);
-                }
-                count++;
-            }
-        }
-
-        if (count > 0) {
-            gameLogService.append(gameData, GameLog.text(
-                    "Creatures controlled by " + playerName + " can't attack this turn."));
-            log.info("Game {} - {} creatures controlled by {} can't attack this turn",
-                    gameData.id, count, playerName);
-        }
-    }
-
-    private void applyRestriction(GameData gameData, StackEntry entry, Permanent permanent, CantAttackThisTurnEffect effect) {
-        if (!Duration.UNTIL_YOUR_NEXT_TURN.equals(effect.duration()) && !Duration.UNTIL_END_OF_TURN.equals(effect.duration())) {
-            throw new IllegalArgumentException("Unsupported attack restriction duration");
-        }
-        gameData.addEffectOnPermanent(entry, effect, permanent.getId(), effect.duration());
-    }
-
-    private void resolveAllCreatures(GameData gameData, StackEntry entry, CantAttackThisTurnEffect e, FilterContext filterContext) {
-        int count = 0;
-        for (UUID playerId : gameData.playerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            for (Permanent p : battlefield) {
-                if (gameQueryService.isCreature(gameData, p)
-                        && (e.filter() == null
-                            || predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext))) {
-                    applyRestriction(gameData, entry, p, e);
-                    count++;
-                }
-            }
-        }
-
-        if (count > 0) {
-            gameLogService.append(gameData, GameLog.text("Some creatures can't attack this turn."));
-            log.info("Game {} - {} creatures can't attack this turn", gameData.id, count);
         }
     }
 }

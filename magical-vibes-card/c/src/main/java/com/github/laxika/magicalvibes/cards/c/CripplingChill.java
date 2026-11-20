@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "AVR", collectorNumber = "46")
@@ -19,7 +18,7 @@ public class CripplingChill extends Card {
         // Draw a card.
         target(TargetFilters.creature())
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new SkipNextUntapEffect(Subjects.target()))
                 .addSpellEffect(new DrawCardEffect(1));
     }
 }

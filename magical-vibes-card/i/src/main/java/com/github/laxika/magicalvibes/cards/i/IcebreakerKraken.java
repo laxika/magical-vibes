@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMultiplePermanentsToHandCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -46,7 +46,7 @@ public class IcebreakerKraken extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new SkipNextUntapEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, ARTIFACT_OR_CREATURE, 1, true));
+                        new SkipNextUntapEffect(Subjects.controlledBy(Subjects.targetPlayer(), ARTIFACT_OR_CREATURE), 1, true));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

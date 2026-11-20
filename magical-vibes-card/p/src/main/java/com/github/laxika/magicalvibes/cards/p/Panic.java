@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "5ED", collectorNumber = "260")
@@ -18,7 +18,7 @@ public class Panic extends Card {
         setSpellCastTimingRestriction(SpellCastTimingRestriction.COMBAT_BEFORE_BLOCKERS);
 
         // Target creature can't block this turn.
-        target(TargetFilters.creature()).addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+        target(TargetFilters.creature()).addSpellEffect(new CantBlockThisTurnEffect(Subjects.target()));
 
         // Draw a card at the beginning of the next turn's upkeep.
         addSpellEffect(new RegisterDrawCardsAtNextUpkeepEffect());

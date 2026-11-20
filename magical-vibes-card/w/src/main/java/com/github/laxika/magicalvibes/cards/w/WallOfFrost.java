@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "M10", collectorNumber = "80")
@@ -18,6 +18,6 @@ public class WallOfFrost extends Card {
     public WallOfFrost() {
         // Whenever Wall of Frost blocks a creature, that creature doesn't untap
         // during its controller's next untap step.
-        addTrigger(Triggers.blocks(), new SkipNextUntapEffect(TapUntapScope.TARGET));
+        addTrigger(Triggers.blocks(), new SkipNextUntapEffect(Subjects.target()));
     }
 }

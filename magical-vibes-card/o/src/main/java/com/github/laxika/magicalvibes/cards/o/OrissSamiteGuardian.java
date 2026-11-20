@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastSpellTypesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -44,8 +44,7 @@ public class OrissSamiteGuardian extends Card {
                         ),
                         new TargetPlayerCantCastSpellTypesThisTurnEffect(EnumSet.allOf(CardType.class)),
                         new CantAttackThisTurnEffect(
-                                TapUntapScope.TARGET_PLAYERS_PERMANENTS,
-                                new PermanentIsCreaturePredicate())
+                                Subjects.controlledBy(Subjects.targetPlayer(), new PermanentIsCreaturePredicate()))
                 ),
                 "Grandeur — Discard another card named Oriss, Samite Guardian: Target player can't cast spells this turn, and creatures that player controls can't attack this turn.",
                 new PlayerPredicateTargetFilter(

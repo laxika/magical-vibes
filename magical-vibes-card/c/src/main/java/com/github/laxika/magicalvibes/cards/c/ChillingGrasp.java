@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.MadnessCast;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "EMN", collectorNumber = "50")
@@ -15,7 +14,7 @@ public class ChillingGrasp extends Card {
     public ChillingGrasp() {
         target(TargetFilters.creature(), 0, 2)
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new SkipNextUntapEffect(Subjects.target()));
         addCastingOption(new MadnessCast("{3}{U}"));
     }
 }

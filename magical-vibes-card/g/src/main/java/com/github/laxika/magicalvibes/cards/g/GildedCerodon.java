@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -31,6 +31,6 @@ public class GildedCerodon extends Card {
                                         new ControlsPermanent(new PermanentHasSubtypePredicate(CardSubtype.DESERT)),
                                         new GraveyardCardThreshold(1, new CardSubtypePredicate(CardSubtype.DESERT))
                                 ))),
-                new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+                new CantBlockThisTurnEffect(Subjects.target()));
     }
 }

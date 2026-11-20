@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,7 +18,7 @@ public class SkylineCascade extends Card {
         addStaticEffect(new EntersTappedEffect());
 
         target(TargetFilters.creatureAnOpponentControls())
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new SkipNextUntapEffect(TapUntapScope.TARGET));
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new SkipNextUntapEffect(Subjects.target()));
 
         addActivatedAbility(ManaAbilities.tapFor(ManaColor.BLUE));
     }

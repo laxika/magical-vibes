@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "LEG", collectorNumber = "79")
@@ -17,6 +16,6 @@ public class Telekinesis extends Card {
         target(TargetFilters.creature())
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
                 .addSpellEffect(PreventDamageEffect.allCombatByTargetCreatures())
-                .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET, 2));
+                .addSpellEffect(new SkipNextUntapEffect(Subjects.target(), 2));
     }
 }

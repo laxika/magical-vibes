@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +17,7 @@ public class PuppetMasterStringPuller extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.youAttack(),
                         new GoadTargetCreatureUntilNextTurnEffect(),
-                        new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+                        new CantBlockThisTurnEffect(Subjects.target()));
 
         addTrigger(Triggers.goadedCreaturesDealCombatDamageToOpponent(),
                 CreateTokenEffect.ofTreasureToken(1));

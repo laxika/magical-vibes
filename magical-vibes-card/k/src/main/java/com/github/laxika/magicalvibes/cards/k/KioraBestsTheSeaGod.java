@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -37,7 +36,7 @@ public class KioraBestsTheSeaGod extends Card {
         PermanentPredicate nonland = new PermanentNotPredicate(new PermanentIsLandPredicate());
         addTrigger(Triggers.chapter(2),
                 new TapPermanentsEffect(Subjects.controlledBy(Subjects.targetPlayer(), nonland)),
-                new SkipNextUntapEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, nonland));
+                new SkipNextUntapEffect(Subjects.controlledBy(Subjects.targetPlayer(), nonland)));
         setSagaChapterTargetFilter(2, Set.of(
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

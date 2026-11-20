@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -33,7 +32,7 @@ public class HopeTender extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, "{1}",
                 List.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true, true),
+                        new SkipNextUntapEffect(Subjects.source(), 1, false, false, true, true),
                         new UntapPermanentsEffect(Subjects.allTargets())
                 ),
                 "{1}, {T}, Exert this creature: Untap two target lands.",

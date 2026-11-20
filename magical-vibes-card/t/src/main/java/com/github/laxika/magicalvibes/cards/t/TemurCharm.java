@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.FightTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
@@ -43,8 +43,7 @@ public class TemurCharm extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures with power 3 or less can't block this turn",
                         new CantBlockThisTurnEffect(
-                                TapUntapScope.ALL_CREATURES,
-                                new PermanentPowerAtMostPredicate(3)))
+                                Subjects.controlledBy(Subjects.eachPlayer(), new PermanentPowerAtMostPredicate(3))))
         )));
     }
 }

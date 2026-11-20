@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -28,6 +27,6 @@ public class Sleep extends Card {
                 "Target must be a player"
         )).addSpellEffect(new TapPermanentsEffect(Subjects.controlledBy(Subjects.targetPlayer(),
                 new PermanentIsCreaturePredicate())))
-                .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET_PLAYERS_PERMANENTS, new PermanentIsCreaturePredicate()));
+                .addSpellEffect(new SkipNextUntapEffect(Subjects.controlledBy(Subjects.targetPlayer(), new PermanentIsCreaturePredicate())));
     }
 }

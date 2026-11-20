@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -68,7 +68,6 @@ public class TheMotherlodeExcavator extends Card {
                         List.of(new QueueReflexiveAbilityEffect(SequenceEffect.of(
                                 new DestroyTargetPermanentEffect(),
                                 new CantBlockThisTurnEffect(
-                                        TapUntapScope.ALL_CREATURES,
-                                        DEFENDING_PLAYER_NONFLYING_CREATURE))))));
+                                        Subjects.controlledBy(Subjects.eachPlayer(), DEFENDING_PLAYER_NONFLYING_CREATURE)))))));
     }
 }

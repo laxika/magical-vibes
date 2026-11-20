@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,7 +26,7 @@ public class MesmerizingBenthid extends Card {
 
     public MesmerizingBenthid() {
         List<Ability> illusionTokenEffects = List.of(new TriggeredAbility(Triggers.blocks(),
-                new SkipNextUntapEffect(TapUntapScope.TARGET)));
+                new SkipNextUntapEffect(Subjects.target())));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new CreateTokenEffect(
                 2, "Illusion", 0, 2, CardColor.BLUE, List.of(CardSubtype.ILLUSION),
                 Set.of(), Set.of(), illusionTokenEffects));

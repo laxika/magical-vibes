@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class OrderChaos extends Card {
                 ).withManaCost("{3}{W}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Chaos — Creatures can't block this turn",
-                        new CantBlockThisTurnEffect(TapUntapScope.ALL_CREATURES)
+                        new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.eachPlayer()))
                 ).withManaCost("{2}{R}")
         )));
     }

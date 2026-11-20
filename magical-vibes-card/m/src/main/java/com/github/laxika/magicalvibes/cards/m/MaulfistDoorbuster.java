@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,7 +23,7 @@ public class MaulfistDoorbuster extends Card {
                 new ConditionalEffect(new ControllerEnergyAtLeast(1),
                         SequenceEffect.of(
                                 new EnergyCountersEffect(-1),
-                                new CantBlockThisTurnEffect(TapUntapScope.TARGET))),
+                                new CantBlockThisTurnEffect(Subjects.target()))),
                 "Pay {E} so target creature can't block this turn?"));
     }
 }

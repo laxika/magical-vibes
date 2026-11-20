@@ -673,7 +673,7 @@ class ActivatedAbilityExecutionServiceTest {
             Permanent perm = addReadyPermanent(player1Id, card);
             List<CardEffect> effects = List.of(
                     new com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect(
-                            com.github.laxika.magicalvibes.model.effect.TapUntapScope.SELF),
+                            com.github.laxika.magicalvibes.model.effect.Subjects.source()),
                     new com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect(2));
             ActivatedAbility ability = new ActivatedAbility(true, null, effects,
                     "{T}, Exert this creature: Add two mana of any one color.");

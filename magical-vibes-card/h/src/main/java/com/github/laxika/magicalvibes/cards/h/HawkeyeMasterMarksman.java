@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayManaUpToNTimesEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -25,7 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 public class HawkeyeMasterMarksman extends Card {
 
     public HawkeyeMasterMarksman() {
-        CantBlockThisTurnEffect net = new CantBlockThisTurnEffect(TapUntapScope.TARGET);
+        CantBlockThisTurnEffect net = new CantBlockThisTurnEffect(Subjects.target());
         DealDamageToTargetPlayerOrPlaneswalkerEffect explosive =
                 new DealDamageToTargetPlayerOrPlaneswalkerEffect(2);
         SequenceEffect boomerang = SequenceEffect.of(

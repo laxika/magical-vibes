@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -40,7 +40,7 @@ public class SearingBarb extends Card {
                         new DealDamageToAnyTargetEffect(2),
                         SequenceEffect.of(
                                 new DealDamageToAnyTargetEffect(2),
-                                new CantBlockThisTurnEffect(TapUntapScope.TARGET))
+                                new CantBlockThisTurnEffect(Subjects.target()))
                 ));
 
         addSpellEffect(incubate(1));

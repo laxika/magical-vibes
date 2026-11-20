@@ -93,7 +93,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyar
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -1864,7 +1863,7 @@ class AiTargetSelectorTest {
             ActivatedAbility ability = new ActivatedAbility(true, "{W}{W}",
                     List.of(PreventDamageEffect.nextToTarget(4),
                             new TapPermanentsEffect(Subjects.target()),
-                            new SkipNextUntapEffect(TapUntapScope.TARGET)),
+                            new SkipNextUntapEffect(Subjects.target())),
                     "{W}{W}, {T}: Prevent the next 4 damage that would be dealt this turn to target "
                             + "creature you control. Tap that creature.",
                     new ControlledPermanentPredicateTargetFilter(

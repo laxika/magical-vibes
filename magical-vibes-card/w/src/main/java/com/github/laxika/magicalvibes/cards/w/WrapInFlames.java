@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "ROE", collectorNumber = "173")
@@ -16,6 +16,6 @@ public class WrapInFlames extends Card {
     public WrapInFlames() {
         target(TargetFilters.creature(), 0, 3)
                 .addSpellEffect(new DealDamageToEachTargetEffect(new Fixed(1)))
-                .addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new CantBlockThisTurnEffect(Subjects.target()));
     }
 }

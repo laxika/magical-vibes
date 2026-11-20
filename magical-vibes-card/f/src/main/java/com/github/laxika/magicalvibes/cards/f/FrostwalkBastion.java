@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -39,6 +38,6 @@ public class FrostwalkBastion extends Card {
         // its controller's next untap step.
         addTrigger(Triggers.dealsCombatDamageToCreature(), SequenceEffect.of(
                 new TapPermanentsEffect(Subjects.target()),
-                new SkipNextUntapEffect(TapUntapScope.TARGET)));
+                new SkipNextUntapEffect(Subjects.target())));
     }
 }

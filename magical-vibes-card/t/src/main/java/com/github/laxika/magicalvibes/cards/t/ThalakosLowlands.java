@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -24,7 +24,7 @@ public class ThalakosLowlands extends Card {
                 true,
                 null,
                 List.of(new AwardManaEffect(ManaColor.WHITE),
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)),
+                        new SkipNextUntapEffect(Subjects.source(), 1, false, false, true)),
                 "{T}: Add {W}. This land doesn't untap during your next untap step."
         ));
         // {T}: Add {U}. This land doesn't untap during your next untap step.
@@ -32,7 +32,7 @@ public class ThalakosLowlands extends Card {
                 true,
                 null,
                 List.of(new AwardManaEffect(ManaColor.BLUE),
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true)),
+                        new SkipNextUntapEffect(Subjects.source(), 1, false, false, true)),
                 "{T}: Add {U}. This land doesn't untap during your next untap step."
         ));
     }

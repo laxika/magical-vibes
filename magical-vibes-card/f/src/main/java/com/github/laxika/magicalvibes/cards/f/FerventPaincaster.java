@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -23,7 +23,7 @@ public class FerventPaincaster extends Card {
         // {T}, Exert this creature: It deals 1 damage to target creature. Exert is paid as part of
         // the activation cost (SkipNextUntapEffect with activationCost).
         addActivatedAbility(new ActivatedAbility(true, null,
-                List.of(new DealDamageToTargetCreatureEffect(1), new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true, true)),
+                List.of(new DealDamageToTargetCreatureEffect(1), new SkipNextUntapEffect(Subjects.source(), 1, false, false, true, true)),
                 "{T}, Exert Fervent Paincaster: It deals 1 damage to target creature."));
     }
 }

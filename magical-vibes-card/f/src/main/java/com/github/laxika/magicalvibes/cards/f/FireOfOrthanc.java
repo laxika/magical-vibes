@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -25,7 +25,6 @@ public class FireOfOrthanc extends Card {
 
         target(new PermanentPredicateTargetFilter(artifactOrLand, "Target must be an artifact or land"))
                 .addSpellEffect(new DestroyTargetPermanentEffect(false))
-                .addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.ALL_CREATURES,
-                        new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING))));
+                .addSpellEffect(new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.eachPlayer(), new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.FLYING)))));
     }
 }

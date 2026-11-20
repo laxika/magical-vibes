@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.AdaptEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,6 +27,6 @@ public class Sharktocrab extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addTrigger(Triggers.plusOneCountersPutOnThis(),
                         new TapPermanentsEffect(Subjects.target()),
-                        new SkipNextUntapEffect(TapUntapScope.TARGET));
+                        new SkipNextUntapEffect(Subjects.target()));
     }
 }

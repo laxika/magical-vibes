@@ -1,42 +1,44 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-
 /**
- * Marks creature(s) so they can't block for the remainder of the turn (a floating {@link CantBlockEffect} on each
- * until end of turn). The {@link TapUntapScope} selects which creature(s)
- * are affected; the optional {@link PermanentPredicate} narrows the scanned scopes
- * ({@link TapUntapScope#ALL_CREATURES}).
+ * "... can't block this turn". A named permanent ({@code target()}, {@code attached()}) gets a floating
+ * {@link CantBlockEffect} until end of turn. A set ({@code controlledBy(players, filter)}) is a rule, not a set of
+ * objects: the restriction doesn't change characteristics, so it also reaches creatures that come under those players'
+ * control later in the turn (CR 611.2c). Its players are found as it resolves ("target player", "that creature's
+ * controller"); which creatures it covers is checked whenever blockers are declared.
  *
- * <p>Replaces the former {@code TargetCreatureCantBlockThisTurnEffect} ({@code TARGET}),
- * {@code TargetPlayerCreaturesCantBlockThisTurnEffect} ({@code TARGET_PLAYERS_PERMANENTS}) and the
- * predicate-filtered mass {@code CantBlockThisTurnEffect(PermanentPredicate)} ({@code ALL_CREATURES}).
- * The {@link TapUntapScope#ENCHANTED} form marks the permanent attached to the source Aura.
+ * <p>Forms: {@code target()} (target creature, multi-target-group), {@code attached()} (enchanted creature),
+ * {@code controlledBy(targetPlayer())} ("creatures target player controls"), {@code controlledBy(eachPlayer(), filter)}
+ * ("creatures without flying can't block this turn"), {@code controlledBy(controllerOf(target()), creature ∧
+ * ¬PermanentIsTargetCardPredicate)} ("other creatures that player controls", Mark for Death).
  *
- * <p>Not to be confused with a static {@code CantBlockEffect} ("this creature can't block", an ability) or {@code CantBlockSourceEffect} ("can't block the
- * source permanent"), which remain separate.
+ * <p>Not to be confused with a static {@code CantBlockEffect} ("this creature can't block", an ability) or
+ * {@code CantBlockSourceEffect} ("can't block the source permanent"), which remain separate.
  *
- * @param scope  which creature(s) can't block this turn
- * @param filter optional predicate narrowing the scanned scopes (null = no restriction)
+ * @param subject which creature(s) can't block this turn
  */
-public record CantBlockThisTurnEffect(TapUntapScope scope, PermanentPredicate filter) implements CardEffect {
+public record CantBlockThisTurnEffect(PermanentSubject subject) implements CardEffect {
 
-    public CantBlockThisTurnEffect(TapUntapScope scope) {
-        this(scope, null);
+    public CantBlockThisTurnEffect {
+        if (!(subject instanceof PermanentSubject.Target || subject instanceof PermanentSubject.Attached
+                || subject instanceof PermanentSubject.ControlledBy)) {
+            throw new IllegalArgumentException("Unsupported can't-block subject: " + subject);
+        }
     }
 
     @Override
     public boolean resolvesAgainstAttachedPermanent() {
-        return scope == TapUntapScope.ENCHANTED;
+        return subject instanceof PermanentSubject.Attached;
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return switch (scope) {
-            case TARGET -> TargetSpec.benign(TargetPredicates.creature());
-            case TARGET_PLAYERS_PERMANENTS -> TargetSpec.benign(TargetPredicates.playerOrPlaneswalker());
-            case TARGET_CONTROLLERS_OTHER_CREATURES -> TargetSpec.benign(TargetPredicates.creature());
-            default -> TargetSpec.NONE;
-        };
+        if (subject instanceof PermanentSubject.Target) {
+            return TargetSpec.benign(TargetPredicates.creature());
+        }
+        if (subject instanceof PermanentSubject.ControlledBy set && set.players().declaresTarget()) {
+            return TargetSpec.benign(TargetPredicates.player());
+        }
+        return TargetSpec.NONE;
     }
 }

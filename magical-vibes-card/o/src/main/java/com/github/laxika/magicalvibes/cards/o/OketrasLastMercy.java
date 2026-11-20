@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.StartingLifeTotal;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 @CardRegistration(set = "HOU", collectorNumber = "18")
@@ -16,6 +16,6 @@ public class OketrasLastMercy extends Card {
         addSpellEffect(new SetLifeTotalEffect(new StartingLifeTotal()));
 
         // Lands you control don't untap during your next untap step.
-        addSpellEffect(new SkipNextUntapEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate(), 1, true));
+        addSpellEffect(new SkipNextUntapEffect(Subjects.controlledBy(Subjects.you(), new PermanentIsLandPredicate()), 1, true));
     }
 }

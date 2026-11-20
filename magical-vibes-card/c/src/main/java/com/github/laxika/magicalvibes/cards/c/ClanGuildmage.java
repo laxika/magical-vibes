@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantScope;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class ClanGuildmage extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}{R}",
-                List.of(new CantBlockThisTurnEffect(TapUntapScope.TARGET)),
+                List.of(new CantBlockThisTurnEffect(Subjects.target())),
                 "{1}{R}, {T}: Target creature can't block this turn.",
                 TargetFilters.creature()
         ));

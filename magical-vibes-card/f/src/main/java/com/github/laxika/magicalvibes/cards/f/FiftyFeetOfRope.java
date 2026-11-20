@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.VentureIntoDungeonEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -22,7 +22,7 @@ public class FiftyFeetOfRope extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new CantBlockThisTurnEffect(TapUntapScope.TARGET)),
+                List.of(new CantBlockThisTurnEffect(Subjects.target())),
                 "{T}: Target Wall can't block this turn.",
                 new PermanentPredicateTargetFilter(
                         new PermanentHasSubtypePredicate(CardSubtype.WALL),
@@ -31,7 +31,7 @@ public class FiftyFeetOfRope extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{3}",
-                List.of(new SkipNextUntapEffect(TapUntapScope.TARGET)),
+                List.of(new SkipNextUntapEffect(Subjects.target())),
                 "{3}, {T}: Target creature doesn't untap during its controller's next untap step.",
                 TargetFilters.creature()
         ));

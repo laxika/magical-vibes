@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
@@ -11,6 +11,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 public class RuthlessInvasion extends Card {
 
     public RuthlessInvasion() {
-        addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.ALL_CREATURES, new PermanentNotPredicate(new PermanentIsArtifactPredicate())));
+        addSpellEffect(new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.eachPlayer(), new PermanentNotPredicate(new PermanentIsArtifactPredicate()))));
     }
 }

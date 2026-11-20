@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +16,6 @@ public class EntanglingTrap extends Card {
     public EntanglingTrap() {
         target(TargetFilters.creatureAnOpponentControls()).addTrigger(Triggers.youClash(),
                 new TapPermanentsEffect(Subjects.target()),
-                new ConditionalEffect(new EventValueAtLeast(1), new SkipNextUntapEffect(TapUntapScope.TARGET)));
+                new ConditionalEffect(new EventValueAtLeast(1), new SkipNextUntapEffect(Subjects.target())));
     }
 }

@@ -105,7 +105,6 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSourceEquipmentCost;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SourcePermanentControllerLosesLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.TargetCardGroupEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerGainsControlOfGrantingEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.UnattachSourceEquipmentCost;
@@ -976,7 +975,7 @@ public class ActivatedAbilityExecutionService {
 
         for (CardEffect effect : abilityEffects) {
             if (effect instanceof SkipNextUntapEffect skip
-                    && skip.scope() == TapUntapScope.SELF && skip.activationCost()) {
+                    && skip.subject() instanceof PermanentSubject.Source && skip.activationCost()) {
                 gameData.skipNextUntapSteps(permanent.getCard().getName(), permanent.getId(), playerId,
                         permanent.getId(), skip.untapSteps(), playerId);
                 ActionEvents.exerted(gameData, playerId, permanent.getId());
@@ -1342,7 +1341,7 @@ public class ActivatedAbilityExecutionService {
                 continue;
             }
             if (effect instanceof SkipNextUntapEffect skip
-                    && skip.scope() == TapUntapScope.SELF && skip.activationCost()) {
+                    && skip.subject() instanceof PermanentSubject.Source && skip.activationCost()) {
                 continue;
             }
             if (effect instanceof ActivationCostCardReferenceEffect referenceEffect) {
@@ -2005,9 +2004,9 @@ public class ActivatedAbilityExecutionService {
                             player.getUsername() + " puts " + counterText + " on ", permanent.getCard(), "."));
                 }
             } else if (effect instanceof SkipNextUntapEffect skip
-                    && skip.scope() == TapUntapScope.SELF) {
+                    && skip.subject() instanceof PermanentSubject.Source) {
                 // "{T}, Exert this creature: Add …" (Oasis Ritualist). Exert is modeled as
-                // SkipNextUntapEffect(SELF); on a mana ability it must apply inline here because
+                // SkipNextUntapEffect(source()); on a mana ability it must apply inline here because
                 // mana abilities never hit the stack / NormalEffectHandlerBean path.
                 gameData.skipNextUntapSteps(permanent.getCard().getName(), permanent.getId(), player.getId(),
                         permanent.getId(), skip.untapSteps(), skip.controllerStepOnly() ? player.getId() : null);

@@ -6,9 +6,14 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTargetCardPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
+
+import java.util.List;
 
 @CardRegistration(set = "GTC", collectorNumber = "99")
 public class MarkForDeath extends Card {
@@ -19,6 +24,9 @@ public class MarkForDeath extends Card {
         target(TargetFilters.creatureAnOpponentControls())
                 .addSpellEffect(new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_BLOCK))
                 .addSpellEffect(new UntapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.TARGET_CONTROLLERS_OTHER_CREATURES));
+                .addSpellEffect(new CantBlockThisTurnEffect(Subjects.controlledBy(
+                        Subjects.controllerOf(Subjects.target()),
+                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentIsTargetCardPredicate()))))));
     }
 }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 /**
@@ -18,7 +18,7 @@ public class Rubble extends Card {
     public Rubble() {
         // Up to three target lands don't untap during their controller's next untap step.
         target(TargetFilters.land(), 0, 3)
-                .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new SkipNextUntapEffect(Subjects.target()));
 
         // Aftermath cost equals this half's mana cost; exile after leaving the stack.
         addCastingOption(new FlashbackCast("{2}{R}"));

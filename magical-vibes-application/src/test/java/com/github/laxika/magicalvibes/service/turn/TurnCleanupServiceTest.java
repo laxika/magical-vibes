@@ -60,7 +60,7 @@ class TurnCleanupServiceTest {
     @Test
     void cleanupPreservesUpcomingUntapRestrictions() {
         var untapping = new com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect(
-                com.github.laxika.magicalvibes.model.effect.TapUntapScope.TARGET_PLAYERS_PERMANENTS, null, 1, true);
+                com.github.laxika.magicalvibes.model.effect.Subjects.controlledBy(com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayer()), 1, true);
         gd.addFloatingEffect(com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect.onPlayer("Test", null,
                 player1Id, untapping, player1Id, com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT));
 

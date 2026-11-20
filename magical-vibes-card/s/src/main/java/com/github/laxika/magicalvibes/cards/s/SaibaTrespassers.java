@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -22,7 +21,7 @@ public class SaibaTrespassers extends Card {
                 "{3}{U}",
                 List.of(
                         new TapPermanentsEffect(Subjects.target()),
-                        new SkipNextUntapEffect(TapUntapScope.TARGET)),
+                        new SkipNextUntapEffect(Subjects.target())),
                 "Channel — {3}{U}, Discard this card: Tap up to two target creatures you don't control. "
                         + "Those creatures don't untap during their controller's next untap step.",
                 List.<TargetFilter>of(

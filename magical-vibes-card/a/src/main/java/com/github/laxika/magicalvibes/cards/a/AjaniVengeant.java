@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 
 import java.util.List;
@@ -21,7 +21,7 @@ public class AjaniVengeant extends Card {
         // +1: Target permanent doesn't untap during its controller's next untap step.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new SkipNextUntapEffect(TapUntapScope.TARGET)),
+                List.of(new SkipNextUntapEffect(Subjects.target())),
                 "+1: Target permanent doesn't untap during its controller's next untap step."));
 
         // −2: Ajani Vengeant deals 3 damage to any target and you gain 3 life. The fixed 3 life is

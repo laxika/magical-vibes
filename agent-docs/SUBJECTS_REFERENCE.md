@@ -59,6 +59,14 @@ resolver's static entry point rejects the others).
 A `target()` inside `controllerOf` / `ownerOf` reads the entry's target without declaring one ("destroy target
 creature; its controller loses 2 life").
 
+A resolving effect that changes no characteristics makes a rule of a set, not a locked set (CR 611.2c: "creatures
+target player controls can't block this turn" covers creatures arriving later): `SubjectResolutionService.lastingRule`
+binds the set's players as the effect resolves (`eachPlayer()` binds none) and a `PermanentIsTargetCardPredicate` leaf to
+the effect's target permanent, and returns a predicate judged later without a stack entry. A rule kept per player
+(can't attack, "don't untap during that player's next untap step") registers on each player the subject names and judges
+the set's filter when the rule is checked. A static ability whose source is off the battlefield (an emblem's) resolves a
+set with `permanents(GameData, source, controllerId, subject)`.
+
 `Subjects.narrowed(set, filter)` narrows a set subject (`controlledBy`, `ownedBy`, `attachmentsOf`) by an effect's own
 filter. `GrantScope.subject()` gives a `GrantScope` constant's subject while the effects still carry the enum; a one-shot
 handler that reads a constant including the source names the including-self constant's subject.

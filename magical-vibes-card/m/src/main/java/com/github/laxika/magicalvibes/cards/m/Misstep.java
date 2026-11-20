@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -17,7 +17,8 @@ public class Misstep extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
         )).addSpellEffect(new SkipNextUntapEffect(
-                TapUntapScope.TARGET_PLAYERS_PERMANENTS,
-                new PermanentIsCreaturePredicate(), 1, true));
+                Subjects.controlledBy(Subjects.targetPlayer(), new PermanentIsCreaturePredicate()),
+                1,
+                true));
     }
 }

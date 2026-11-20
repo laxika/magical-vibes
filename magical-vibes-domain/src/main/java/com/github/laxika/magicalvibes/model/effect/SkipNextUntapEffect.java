@@ -1,76 +1,57 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-
 /**
- * Marks permanent(s) so they don't untap during their controller's next untap step (a one-shot
- * "skip next untap": a {@link DoesntUntapDuringNextUntapStepsEffect} floating effect on each permanent, which the
- * untap step uses up). The {@link TapUntapScope} selects which permanent(s) are affected; the
- * optional {@link PermanentPredicate} narrows the scanned scopes ({@link TapUntapScope#ALL_CREATURES},
- * {@link TapUntapScope#TARGET_PLAYERS_PERMANENTS}). The {@link TapUntapScope#SELF} scope keeps the
- * source permanent itself tapped through its next untap step (e.g. an attack trigger on Lead Golem).
+ * "... doesn't untap during its controller's next untap step". A named permanent ({@code target()}, {@code source()},
+ * {@code attached()}, {@code triggering()}) and each permanent of a set found as it resolves
+ * ({@code controlledBy(players, filter)} without {@code matchAtUntap}: "tap all creatures target player controls. Those
+ * creatures don't untap ...", "each attacking creature doesn't untap ...", whose creatures are fixed as it resolves, as
+ * Tangle's ruling says) get a {@link DoesntUntapDuringNextUntapStepsEffect} floating effect, which the untap step uses
+ * up. With {@code source()} it keeps the source itself tapped (Lead Golem's attack trigger, exert).
  *
- * <p>Replaces the former {@code SkipNextUntapOnTargetEffect}, {@code SkipNextUntapAllAttackingCreaturesEffect}
- * and {@code SkipNextUntapPermanentsOfTargetPlayerEffect}.
- * When {@code matchAtUntap} is true, the target-player and controlled scopes store a player-wide
- * restriction and evaluate matching permanents during that player's upcoming untap steps, including
- * later arrivals (the affected set is not fixed at resolution, CR 611.2c).
+ * <p>With {@code matchAtUntap} the effect is a rule ("lands you control don't untap during your next untap step"): it
+ * is registered on each player of the set, found as it resolves, and the set's filter is checked against that
+ * player's permanents as their untap step begins, so permanents arriving later are held too and a permanent that left
+ * their control is not (CR 611.2c). With {@code allPlayersAtUntap} too it holds every matching permanent during that
+ * player's untap step, whoever controls it.
  *
- * The {@link TapUntapScope#OPPONENTS_PERMANENTS} scope marks the matching permanents each opponent of
- * the controller currently controls and, when {@code matchAtUntap} is true, also registers the
- * restriction for each opponent's next untap step so permanents arriving later are held too
- * (Pollen Lullaby, CR 611.2c).
+ * <p>With {@code target()} on a {@code Triggers.blocks()} ability whose card declares no target for it, the target is
+ * "that creature", the blocked attacker, which the collector records as the entry's non-targeting target: a creature's
+ * own (Wall of Frost) or an Aura's or Equipment's (Shield of the Righteous).
  *
- * <p>With {@link TapUntapScope#TARGET} on a {@code Triggers.blocks()} ability whose card declares no target
- * for it, the target is "that creature", the blocked attacker, which the collector records as the entry's
- * non-targeting target: a creature's own (Wall of Frost) or an Aura's or Equipment's (Shield of the
- * Righteous). Other scopes ignore the entry's target.
- *
- * @param scope      which permanent(s) to keep tapped through their next untap step
- * @param filter     optional predicate narrowing the scanned scopes (null = no restriction)
- * @param untapSteps number of upcoming untap steps to skip
- * @param matchAtUntap whether the target player's matching permanents are determined at untap
- * @param allPlayersAtUntap whether matching permanents controlled by any player are affected
- *                          during the target player's untap step
- * @param controllerStepOnly whether the restriction expires during the resolving controller's
- *                           next untap step, even if the permanent changes controllers (exert)
- * @param activationCost whether a self restriction is paid as exert during activation and
- *                       omitted from the ability's resolution effects
+ * @param subject            which permanent(s) to keep tapped through their next untap step
+ * @param untapSteps         number of upcoming untap steps to skip
+ * @param matchAtUntap       whether the set's permanents are determined at each player's untap step
+ * @param allPlayersAtUntap  whether matching permanents controlled by any player are affected during the set's
+ *                           players' untap step
+ * @param controllerStepOnly whether the restriction expires during the resolving controller's next untap step, even
+ *                           if the permanent changes controllers (exert)
+ * @param activationCost     whether a {@code source()} restriction is paid as exert during activation and omitted from
+ *                           the ability's resolution effects
  */
-public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps,
-                                  boolean matchAtUntap, boolean allPlayersAtUntap, boolean controllerStepOnly,
-                                  boolean activationCost)
+public record SkipNextUntapEffect(PermanentSubject subject, int untapSteps, boolean matchAtUntap,
+                                  boolean allPlayersAtUntap, boolean controllerStepOnly, boolean activationCost)
         implements CardEffect {
 
-    public SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps,
-                               boolean matchAtUntap, boolean allPlayersAtUntap, boolean controllerStepOnly) {
-        this(scope, filter, untapSteps, matchAtUntap, allPlayersAtUntap, controllerStepOnly, false);
+    public SkipNextUntapEffect(PermanentSubject subject, int untapSteps, boolean matchAtUntap,
+                               boolean allPlayersAtUntap, boolean controllerStepOnly) {
+        this(subject, untapSteps, matchAtUntap, allPlayersAtUntap, controllerStepOnly, false);
     }
 
-    public SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps,
-                               boolean matchAtUntap, boolean allPlayersAtUntap) {
-        this(scope, filter, untapSteps, matchAtUntap, allPlayersAtUntap, false);
+    public SkipNextUntapEffect(PermanentSubject subject, int untapSteps, boolean matchAtUntap,
+                               boolean allPlayersAtUntap) {
+        this(subject, untapSteps, matchAtUntap, allPlayersAtUntap, false);
     }
 
-    public SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps,
-                               boolean matchAtUntap) {
-        this(scope, filter, untapSteps, matchAtUntap, false);
+    public SkipNextUntapEffect(PermanentSubject subject, int untapSteps, boolean matchAtUntap) {
+        this(subject, untapSteps, matchAtUntap, false);
     }
 
-    public SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter, int untapSteps) {
-        this(scope, filter, untapSteps, false);
+    public SkipNextUntapEffect(PermanentSubject subject, int untapSteps) {
+        this(subject, untapSteps, false);
     }
 
-    public SkipNextUntapEffect(TapUntapScope scope) {
-        this(scope, null, 1);
-    }
-
-    public SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter) {
-        this(scope, filter, 1);
-    }
-
-    public SkipNextUntapEffect(TapUntapScope scope, int untapSteps) {
-        this(scope, null, untapSteps);
+    public SkipNextUntapEffect(PermanentSubject subject) {
+        this(subject, 1);
     }
 
     /**
@@ -79,16 +60,18 @@ public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter
      * ExertAsItAttacksEffect} as the creature attacks; the "when you do" is {@code Triggers.exertedAsItAttacks()}.
      */
     public static SkipNextUntapEffect exert() {
-        return new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true);
+        return new SkipNextUntapEffect(Subjects.source(), 1, false, false, true);
     }
 
     public SkipNextUntapEffect {
-        if (matchAtUntap && scope != TapUntapScope.TARGET_PLAYERS_PERMANENTS
-                && scope != TapUntapScope.CONTROLLED && scope != TapUntapScope.OPPONENTS_PERMANENTS) {
-            throw new IllegalArgumentException("Matching at untap requires a target player");
+        if (matchAtUntap && !(subject instanceof PermanentSubject.ControlledBy)) {
+            throw new IllegalArgumentException("Matching at untap requires a set of some players' permanents");
         }
         if (allPlayersAtUntap && !matchAtUntap) {
             throw new IllegalArgumentException("All-player matching requires matching at untap");
+        }
+        if (activationCost && !(subject instanceof PermanentSubject.Source)) {
+            throw new IllegalArgumentException("Only the source is exerted as an activation cost");
         }
         if (untapSteps < 1) {
             throw new IllegalArgumentException("untapSteps must be positive");
@@ -97,15 +80,21 @@ public record SkipNextUntapEffect(TapUntapScope scope, PermanentPredicate filter
 
     /** Whether this is the exertion of "you may exert this creature as it attacks" ({@link #exert()}). */
     public boolean exertsAsItAttacks() {
-        return scope == TapUntapScope.SELF && controllerStepOnly && !activationCost;
+        return subject instanceof PermanentSubject.Source && controllerStepOnly && !activationCost;
+    }
+
+    /** This restriction with one untap step fewer to go, for a rule registered on a player. */
+    public SkipNextUntapEffect withOneStepFewer() {
+        return new SkipNextUntapEffect(subject, untapSteps - 1, matchAtUntap, allPlayersAtUntap, controllerStepOnly,
+                activationCost);
     }
 
     @Override
     public TargetSpec targetSpec() {
-        if (scope == TapUntapScope.TARGET) {
+        if (subject instanceof PermanentSubject.Target) {
             return TargetSpec.benign(TargetPredicates.permanent());
         }
-        if (scope == TapUntapScope.TARGET_PLAYERS_PERMANENTS) {
+        if (subject instanceof PermanentSubject.ControlledBy set && set.players().declaresTarget()) {
             return TargetSpec.benign(TargetPredicates.player());
         }
         return TargetSpec.NONE;

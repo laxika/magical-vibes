@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.GraveyardCast;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -18,7 +17,7 @@ public class SleepOfTheDead extends Card {
     public SleepOfTheDead() {
         target(TargetFilters.creature())
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new SkipNextUntapEffect(Subjects.target()));
 
         addCastingOption(new GraveyardCast(null, "{2}{U}",
                 List.of(new ExileNCardsFromGraveyardCastingCost(null, "other cards", 3)),

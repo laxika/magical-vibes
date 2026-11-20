@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -38,8 +37,10 @@ public class BlindingBeam extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Creatures don't untap during target player's next untap step",
                         new SkipNextUntapEffect(
-                                TapUntapScope.TARGET_PLAYERS_PERMANENTS,
-                                new PermanentIsCreaturePredicate(), 1, true, true),
+                                Subjects.controlledBy(Subjects.targetPlayer(), new PermanentIsCreaturePredicate()),
+                                1,
+                                true,
+                                true),
                         playerFilter)
         )));
     }

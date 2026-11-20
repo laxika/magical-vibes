@@ -17,8 +17,8 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
-| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5c, 5e–5l done; 5d partly done: its restriction readers move to step 6; 5m partly done) |
-| 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | in progress: 6.1, 6.2a, 6.2b, 6.2c, 6.2d done (6.2b: `GrantScope` part; the static `TapUntapScope` readers moved to 6.2e) |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
+| 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | in progress: 6.1, 6.2a–6.2e done (`TapUntapScope` deleted in 6.2e) |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
 | 9 | Sweep the single-card tail (repeatable) | open |
@@ -389,7 +389,7 @@ only in subject, replace the verb's scope enum if it has one.
 | 5a | Destroy | `PermanentReference` users | `DestroyTargetPermanentEffect`, `DestroyReferencedPermanentEffect`, `--family Destroy` | done |
 | 5b | Exile a permanent | none | `Exile{TargetPermanent,Self,EnchantedCreature,EquippedCreature}Effect` | done |
 | 5c | Return to hand | `BounceScope` | `ReturnToHandEffect`, `Return*ToHand*` | done |
-| 5d | Tap and untap | `TapUntapScope` (1,419 cards) | `--family Tap`, `--family Untap` | partly done (the tap and untap verbs; the six restriction records still carry `TapUntapScope`: planned for step 6) |
+| 5d | Tap and untap | `TapUntapScope` (1,419 cards) | `--family Tap`, `--family Untap` | done (the tap and untap verbs; the six restriction records finished in 6.2e) |
 | 5e | Put counters | `PermanentReference` users | `PutCountersOnSelfEffect`, `PutCounterOnTargetPermanentEffect`, `PutCounterOnReferencedPermanentEffect`, `DoublePlusOneCountersOn{TargetCreature,Source,EnchantedCreature}Effect` | done |
 | 5f | Remove counters | `CounterRemovalSubject` | `--family RemoveCounter` | done |
 | 5g | Damage to permanents | `DamagedPermanentScope` | `DealDamageTo{TargetCreature,Source,TriggeringPermanent,EnchantedCreature,TargetPermanent}Effect` | done (`DealDamageToTargetPermanentEffect` kept: not a subject sibling) |
@@ -450,8 +450,8 @@ Ask for a full card-test run after sub-step 2 and again after sub-step 3. Run th
 | 6.2b | `staticfx` + `StaticEffectSupport`, the static `TapUntapScope` readers | done for `GrantScope`; the static `TapUntapScope` readers moved to 6.2e |
 | 6.2c | `LayerSystemService` + `GameQueryService`, the engine classifiers outside them | done |
 | 6.2d | the AI | done (the AI `TapUntapScope` reads go with 6.2e) |
-| 6.2e | the one-shot `TapUntapScope` restriction handlers, and the static ones 6.2b left (`UntapStepService`, `UntapPreventionSupport`) | open |
-| 6.3 | records take a `PermanentSubject`, cards rewritten, `GrantScope` / `TapUntapScope` deleted | open |
+| 6.2e | the one-shot `TapUntapScope` restriction handlers, and the static ones 6.2b left (`UntapStepService`, `UntapPreventionSupport`) | done (the six records take a `PermanentSubject`, cards rewritten, `TapUntapScope` deleted) |
+| 6.3 | records take a `PermanentSubject`, cards rewritten, `GrantScope` deleted (`TapUntapScope` went in 6.2e) | open |
 | 6.4 | the rule-4 tests | open |
 
 ### 7. Step results: one way for a step to tell the next what happened
@@ -2978,6 +2978,85 @@ EQUIPPED_CREATURE, and `hasSubject()` goes with the enum.
 (4 skipped), all pass (it includes `HardAiDecisionEngineTest`, `SpellEvaluatorTest`, `BoardEvaluatorTest`,
 `GameSimulatorTest`, `AiTargetSelectorTest`, `TargetPolarityGuardTest`, `InstantCategoryClassifierTest`). Application, AI
 and engine testFixtures test sources compile. No card file changed, nothing folded: no ledger rows, ratchet unchanged.
+
+### Step 6, run 6.2e (2026-11-20)
+
+**Done: `TapUntapScope` is gone.** The six records that still carried it take a `PermanentSubject` (a set's filter
+lives in the subject, as in 5d): `SkipNextUntapEffect(subject, untapSteps, matchAtUntap, allPlayersAtUntap,
+controllerStepOnly, activationCost)` (overloads drop trailing arguments; `withOneStepFewer()` for the untap step),
+`CantBlockThisTurnEffect(subject)`, `CantAttackThisTurnEffect(subject[, duration])`, `DoesntUntapEffect(subject,
+condition)` (factories unchanged), `DoesntUntapWithCounterEffect(counterType, subject, counterBearer)` (the
+`(CounterType, TapUntapScope)` overload went: no caller), `UntapAllPermanentsYouControlDuringEachOtherPlayersStepEffect(step,
+subject)` (the `(step[, filter])` forms build `controlledBy(you()[, filter])`). Compact constructors reject subjects the
+handlers can't resolve. 268 card files were rewritten by a deleted scratch script, 8 by hand (Tangle, Spore Cloud,
+Clinging Mists, Breaching Leviathan, Oriss, Ember Gale, Concussive Bolt, Mark for Death); 10 test files, 13 engine/AI
+files. No record deleted: ratchet unchanged.
+
+Constants mapped: TARGET `target()`; SELF `source()`; TRIGGERING `triggering()`; ENCHANTED `attached()`; CONTROLLED
+`controlledBy(you(), f)`; TARGET_PLAYERS_PERMANENTS `controlledBy(targetPlayer(), f)` (Concussive Bolt:
+`controlledBy(allOf(targetPlayerDeclaredElsewhere(), controllerOf(target())))`, "that player or that planeswalker's
+controller", declared by the damage); OPPONENTS_PERMANENTS `controlledBy(eachOpponent(), f)`; ALL_CREATURES
+`controlledBy(eachPlayer(), f)` for can't-block (the old rule had no creature part), `controlledBy(eachPlayer(),
+AllOf(creature, f))` for skip-untap; TARGET_CONTROLLERS_OTHER_CREATURES `controlledBy(controllerOf(target()),
+AllOf(creature, Not(PermanentIsTargetCardPredicate)))`. `targetSpec()`: `target()` as before; a set whose players
+declare a target is a benign player target; else none.
+
+**Lasting rules vs locked sets (CR 611.2c, checked with `get_rule`).** A rule is expressed as the subject judged when
+the rule is checked: its players are bound as it resolves, its filter later. New
+`SubjectResolutionService.lastingRule(gameData, entry, effect, ControlledBy)` binds the players (`eachPlayer()`: none)
+and a `PermanentIsTargetCardPredicate` leaf to the effect's target permanent; `CantBlockThisTurnEffectHandler` makes its
+floating `MatchingCreaturesCantBlockMatchingCreaturesEffect` from it (same predicates as before). Can't-attack sets are
+an `onPlayer` floating effect per bound player; `AttackLegalityService` judges the set's filter. Skip-untap
+`matchAtUntap` sets register `restrictNextUntapStep` per bound player; `UntapStepService` judges the set's filter. Sets
+fixed as they resolve: skip-untap without `matchAtUntap` (Sleep, Kiora Bests the Sea God: "those creatures" / "they";
+Tangle, Spore Cloud, Clinging Mists, Breaching Leviathan: the attacking / nonblue creatures, Tangle's ruling "determined
+at the time this spell resolves"). Oracle text and rulings were checked for every set card. `CantAttackThisTurnEffect`
+ALL_CREATURES had no card (only TARGET and Oriss's TARGET_PLAYERS_PERMANENTS), so no card needed the 6.1 fix; a set is
+now always the per-player rule (`AttackLegalityServiceTest.resolvedCantAttackRuleCoversLaterCreatures`).
+
+**Handlers.** All four one-shot handlers resolve through the resolver and lost their private lookups:
+`SkipNextUntap` (named subjects marked; every set marks what it finds now, owner = the permanent's controller unless
+the set is every player's; `matchAtUntap` also registers the rule), `CantBlock`, `CantAttack`, `DoesntUntap`
+(`permanentIds`). Static readers: `UntapStepService`'s three cross-player routines are one
+(`untapDuringOtherPlayersStep`): it collects every active ability (permanents of any battlefield, conditionals unwrapped,
+emblems' sets), resolves each subject with the static entry point (new overload `permanents(gameData, source,
+controllerId, subject)` for an emblem), untaps a set's permanents with the per-player Seedborn / filtered log and a
+named permanent with its per-permanent log; the CR 502.3 lock-at-start, restricted-ids and lost-abilities checks are
+kept per subject shape. Counter locks and the attached `DoesntUntapEffect` check ask whether the lock's subject names
+the permanent (`namesOwnOrHost`); `UntapPreventionSupport` and `ActivatedAbilityExecutionService` test `instanceof
+Source`. AI: `TargetPolarityClassifier` (target, or a set whose players come from a target) and `SpellEvaluator`
+(`Target` capped at max targets, a set not of `controllerOf` players scores every blocker) see what they saw.
+
+**Behaviour changes.** (1) Ember Gale ("creatures target player controls") declared a player-or-planeswalker target;
+now a player (`EmberGaleTest.cannotTargetPlaneswalker`). (2) Pollen Lullaby's marks were for "whichever untap step comes
+next"; now for that player's step, so a creature stolen before it untaps under its new controller ("creatures that
+player controls don't untap during the player's next untap step"; `PollenLullabyTest.frozenCreatureUntapsUnderNewController`,
+fails on the old code). (3) A `matchAtUntap` target-player set also marks the permanents found now (Exhaustion, Misstep,
+Imaginary Threats...), as CONTROLLED and OPPONENTS already did: redundant with the rule, but Static Orb no longer counts
+them as untap candidates. (4) Kinds 5d accepted: `target()` reads the effect's group before `getTargetId()` (CantAttack read
+the flat list); `attached()` falls back to last-known information where CantBlock ENCHANTED read the activation-captured
+target; logs: a can't-attack player rule logs even with no creature, the skip-untap every-player set says
+"permanent(s)" not "creature(s)", cross-player untap logs are grouped per player. A temporary probe (thrown where
+`triggering()` would differ from the old skip-untap TRIGGERING fallback to `getTargetId()`) never fired over the tests
+below and was removed.
+
+**Tests**, all pass: every test class of every card naming the six records (all of them, no sample: 505 card-test
+classes, which include every "this turn" rule card: `CreaturesCantAttackThisTurn`, `CreaturesOfChosenManaValueParity...`,
+`CreaturesWithToughnessGreaterThanPower...`, `OtherCreaturesCantAttackThisTurn`, `MatchingCreaturesCantBlock...`,
+`MatchingPermanentsDoesntUntap`, `TapAndLockOtherPermanents`, exert cards) and the AI test classes reading them
+(`TargetPolarityGuardTest`, `HardAiDecisionEngineTest`, `EasyAiDecisionEngineTest`, `SpellEvaluatorTest`,
+`AiTargetSelectorTest`, ...): 563 suites, 5,148 test cases (1 skipped); then, after the probe was removed, the
+application selection (`UntapStepServiceTest`, `TurnCleanupServiceTest`, `TapTriggersTest`, `SpellCastingServiceTest`,
+`EffectResolutionServiceTest`, `AttackLegalityServiceTest`, `ActivatedAbilityExecutionServiceTest`,
+`SubjectResolutionServiceTest` with new `$LastingRule` and the emblem overload, `EffectCountRatchetTest`, the `layers`
+package) and the four `triggering()` cards: 101 suites, 541 test cases (1 skipped). `UntapStepServiceTest`'s hand-built
+resolver now uses the test's predicate mock and finds controllers on the board; its "filtered" case uses a creature
+filter (a `PermanentTruePredicate` set is the unfiltered Seedborn form) and the attached-lock case checks the subject.
+Application, AI, testFixtures and card-test `e`, `p`, `s` test sources compile. Ask for a full card-test run (276 card
+files rewritten; the plan's run after sub-step 2 is due now).
+
+**For later runs.** 6.3 has only `GrantScope` left. `DoesntUntapWithCounterEffect` / `DoesntUntapEffect` static
+subjects are judged structurally (`source()` / `attached()`), not through `names(...)`: they need no characteristic reads.
 
 ## Prompt
 

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -19,8 +19,8 @@ public class ThundersongTrumpeter extends Card {
                 true,
                 null,
                 List.of(
-                        new CantAttackThisTurnEffect(TapUntapScope.TARGET),
-                        new CantBlockThisTurnEffect(TapUntapScope.TARGET)
+                        new CantAttackThisTurnEffect(Subjects.target()),
+                        new CantBlockThisTurnEffect(Subjects.target())
                 ),
                 "{T}: Target creature can't attack or block this turn.",
                 TargetFilters.creature()

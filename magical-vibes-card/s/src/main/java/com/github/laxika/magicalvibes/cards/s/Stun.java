@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "10E", collectorNumber = "240")
 @CardRegistration(set = "TMP", collectorNumber = "207")
@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 public class Stun extends Card {
 
     public Stun() {
-        addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+        addSpellEffect(new CantBlockThisTurnEffect(Subjects.target()));
         addSpellEffect(new DrawCardEffect());
     }
 }

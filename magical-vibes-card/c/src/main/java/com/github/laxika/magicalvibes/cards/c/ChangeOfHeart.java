@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.BuybackEffect;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "STH", collectorNumber = "3")
@@ -16,7 +16,7 @@ public class ChangeOfHeart extends Card {
     public ChangeOfHeart() {
         addStaticEffect(new BuybackEffect("{3}"));
         target(TargetFilters.creature())
-                .addSpellEffect(new CantAttackThisTurnEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new CantAttackThisTurnEffect(Subjects.target()));
         addSpellEffect(new ConditionalEffect(new BuybackPaid(), ReturnToHandEffect.selfSpell()));
     }
 }

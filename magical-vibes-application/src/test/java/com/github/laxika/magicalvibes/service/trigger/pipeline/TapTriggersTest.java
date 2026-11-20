@@ -37,7 +37,6 @@ import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetCreatureAnd
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -245,7 +244,7 @@ class TapTriggersTest {
         void skipUntapWaitsOnTheStack() {
             Permanent vorinclex = createPermanent("Vorinclex, Voice of Hunger");
             Permanent forest = createLandPermanent("Forest", ManaColor.GREEN);
-            var effect = new SkipNextUntapEffect(TapUntapScope.TRIGGERING);
+            var effect = new SkipNextUntapEffect(Subjects.triggering());
 
             assertThat(tapLand(vorinclex, player1Id, effect, player2Id, forest.getId())).isTrue();
 

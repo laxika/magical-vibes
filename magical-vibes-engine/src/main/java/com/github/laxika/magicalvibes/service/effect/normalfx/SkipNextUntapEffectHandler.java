@@ -5,29 +5,30 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
-import java.util.ArrayList;
 import java.util.UUID;
 
+/**
+ * Resolves {@link SkipNextUntapEffect}: each permanent the resolver finds as it resolves is marked; with
+ * {@code matchAtUntap} a set is also a rule registered on each of its players (found as it resolves), whose filter the
+ * untap step checks against that player's permanents, so later arrivals are held too (CR 611.2c).
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
 
-    private final GameQueryService gameQueryService;
-    private final PredicateEvaluationService predicateEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
     private final GameLogService gameLogService;
 
     @Override
@@ -38,197 +39,57 @@ public class SkipNextUntapEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (SkipNextUntapEffect) effect;
-        switch (e.scope()) {
-            case TARGET -> resolveTarget(gameData, entry, e);
-            case SELF -> resolveSelf(gameData, entry, e);
-            case ENCHANTED -> resolveEnchanted(gameData, entry, e);
-            case TRIGGERING -> resolveTriggering(gameData, entry, e);
-            case CONTROLLED -> resolveControlled(gameData, entry, e);
-            case TARGET_PLAYERS_PERMANENTS -> resolveTargetPlayersPermanents(gameData, entry, e);
-            case ALL_CREATURES -> resolveAllCreatures(gameData, entry, e);
-            case OPPONENTS_PERMANENTS -> resolveOpponentsPermanents(gameData, entry, e);
-            default -> throw new IllegalStateException("Unsupported skip-next-untap scope: " + e.scope());
-        }
-    }
-
-    private void resolveSelf(GameData gameData, StackEntry entry, SkipNextUntapEffect e) {
-        Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (source == null) {
+        if (e.subject() instanceof PermanentSubject.ControlledBy set) {
+            resolveSet(gameData, entry, e, set);
             return;
         }
-
-        gameData.skipNextUntapSteps(entry, source.getId(), e.untapSteps(),
-                e.controllerStepOnly() ? entry.getControllerId() : null);
-        if (e.controllerStepOnly()) {
-            // Exert (CR 701.43a): the creature is exerted now, which is what "whenever you exert a creature" watches.
-            ActionEvents.exerted(gameData, entry.getControllerId(), source.getId());
-            if (e.exertsAsItAttacks()) {
-                ActionEvents.exertedAsItAttacks(gameData, entry.getControllerId(), source);
-            }
-        }
-
-        gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " won't untap during its controller's next untap step."));
-        log.info("Game {} - {} skip next untap set (self)", gameData.id, source.getCard().getName());
-    }
-
-    private void resolveEnchanted(GameData gameData, StackEntry entry, SkipNextUntapEffect e) {
-        Permanent attachment = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (attachment == null || attachment.getAttachedTo() == null) {
-            return;
-        }
-
-        Permanent host = gameQueryService.findPermanentById(gameData, attachment.getAttachedTo());
-        if (host == null) {
-            return;
-        }
-
-        lockTarget(gameData, entry, host, e.untapSteps(), e.controllerStepOnly() ? entry.getControllerId() : null);
-    }
-
-    private void resolveTriggering(GameData gameData, StackEntry entry, SkipNextUntapEffect e) {
-        UUID triggeringId = entry.getTriggeringPermanentId() != null
-                ? entry.getTriggeringPermanentId() : entry.getTargetId();
-        Permanent triggering = triggeringId == null ? null : gameQueryService.findPermanentById(gameData, triggeringId);
-        if (triggering == null) {
-            return;
-        }
-        lockTarget(gameData, entry, triggering, e.untapSteps(), e.controllerStepOnly() ? entry.getControllerId() : null);
-    }
-
-    private void resolveTarget(GameData gameData, StackEntry entry, SkipNextUntapEffect effect) {
-        // Multi-target: lock each valid target of this effect's target group — the group's slice of
-        // the flat target list for effects bound via target(...).addEffect(...) (e.g. Decision
-        // Paralysis: "Tap up to two target creatures. Those creatures don't untap …"), or the whole
-        // flat list for unbound effects. An empty group (optional target omitted) locks nothing.
-        List<UUID> targetIds = entry.targetsForEffect(effect);
-        if (!targetIds.isEmpty()) {
-            for (UUID targetId : targetIds) {
-                Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-                if (target == null) {
-                    continue;
+        UUID stepOwnerId = e.controllerStepOnly() ? entry.getControllerId() : null;
+        for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, e, e.subject())) {
+            gameData.skipNextUntapSteps(entry, permanent.getId(), e.untapSteps(), stepOwnerId);
+            if (e.subject() instanceof PermanentSubject.Source && e.controllerStepOnly()) {
+                // Exert (CR 701.43a): the creature is exerted now, which is what "whenever you exert a creature" watches.
+                ActionEvents.exerted(gameData, entry.getControllerId(), permanent.getId());
+                if (e.exertsAsItAttacks()) {
+                    ActionEvents.exertedAsItAttacks(gameData, entry.getControllerId(), permanent);
                 }
-                lockTarget(gameData, entry, target, effect.untapSteps(), effect.controllerStepOnly() ? entry.getControllerId() : null);
             }
-            return;
+            gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(),
+                    " won't untap during its controller's next untap step."));
+            log.info("Game {} - {} skip next untap set", gameData.id, permanent.getCard().getName());
         }
-
-        // Single-target fallback
-        Permanent target = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (target == null) {
-            return;
-        }
-
-        lockTarget(gameData, entry, target, effect.untapSteps(), effect.controllerStepOnly() ? entry.getControllerId() : null);
     }
 
-    private void lockTarget(GameData gameData, StackEntry entry, Permanent target, int untapSteps,
-                            UUID controllerStepOwnerId) {
-        gameData.skipNextUntapSteps(entry, target.getId(), untapSteps, controllerStepOwnerId);
-
-        gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " won't untap during its controller's next untap step."));
-        log.info("Game {} - {} skip next untap set", gameData.id, target.getCard().getName());
-    }
-
-    private void resolveControlled(GameData gameData, StackEntry entry, SkipNextUntapEffect e) {
-        UUID controllerId = entry.getControllerId();
+    /**
+     * A set: each permanent found now is marked, for its controller's next untap step when the set names particular
+     * players' permanents ("during that player's next untap step", "your next untap step"; a permanent that changes
+     * control before then untaps normally under its new controller), else for whichever untap step of its controller
+     * comes next ("their controller's next untap step"). With {@code matchAtUntap} the set is also a rule registered on
+     * each of its players, which holds whatever matches as that player's untap step begins.
+     */
+    private void resolveSet(GameData gameData, StackEntry entry, SkipNextUntapEffect e,
+                            PermanentSubject.ControlledBy set) {
         if (e.matchAtUntap()) {
-            gameData.restrictNextUntapStep(entry, controllerId, e);
-        }
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return;
-
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
-
-        int count = 0;
-        for (Permanent p : battlefield) {
-            if (e.filter() != null
-                    && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
-
-            // The restriction is for the controller's next untap step, so a permanent that changes control
-            // before then untaps normally during its new controller's untap step.
-            gameData.skipNextUntapSteps(entry, p.getId(), e.untapSteps(), e.matchAtUntap() ? controllerId : null);
-            count++;
-        }
-
-        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" prevents " + count + " permanent(s) you control from untapping during your next untap step.").build());
-        log.info("Game {} - {} skip next untap set on {} controlled permanent(s)", gameData.id, entry.getCard().getName(), count);
-    }
-
-    private void resolveTargetPlayersPermanents(GameData gameData, StackEntry entry, SkipNextUntapEffect e) {
-        UUID targetPlayerId = entry.getTargetId();
-        if (targetPlayerId == null || !gameData.playerIds.contains(targetPlayerId)) {
-            return;
-        }
-
-        if (e.matchAtUntap()) {
-            gameData.restrictNextUntapStep(entry, targetPlayerId, e);
-        }
-
-        List<Permanent> battlefield = gameData.playerBattlefields.get(targetPlayerId);
-        if (battlefield == null) return;
-
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
-
-        int count = 0;
-        for (Permanent p : battlefield) {
-            if (e.filter() != null
-                    && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
-
-            if (!e.matchAtUntap()) {
-                gameData.skipNextUntapSteps(entry, p.getId(), e.untapSteps(), targetPlayerId);
-            }
-            count++;
-        }
-
-        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" prevents matching permanents from untapping during the target player's next untap step.").build());
-        log.info("Game {} - {} skip next untap set on {} permanent(s)", gameData.id, entry.getCard().getName(), count);
-    }
-
-    private void resolveOpponentsPermanents(GameData gameData, StackEntry entry, SkipNextUntapEffect e) {
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
-
-        int count = 0;
-        for (UUID playerId : gameData.playerIds) {
-            if (playerId.equals(entry.getControllerId())) continue;
-            if (e.matchAtUntap()) {
+            for (UUID playerId : subjectResolutionService.players(gameData, entry, e, set.players())) {
                 gameData.restrictNextUntapStep(entry, playerId, e);
             }
-            for (Permanent p : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-                if (e.filter() != null
-                        && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) continue;
-
-                gameData.skipNextUntapSteps(entry, p.getId(), e.untapSteps(), null);
-                count++;
-            }
         }
-
-        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" prevents " + count + " permanent(s) from untapping during their controller's next untap step.").build());
-        log.info("Game {} - {} skip next untap set on {} opponent permanent(s)", gameData.id, entry.getCard().getName(), count);
-    }
-
-    private void resolveAllCreatures(GameData gameData, StackEntry entry, SkipNextUntapEffect e) {
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId());
-
-        final int[] count = {0};
-        gameData.forEachPermanent((playerId, p) -> {
-            if (!gameQueryService.isCreature(gameData, p)) return;
-            if (e.filter() != null
-                    && !predicateEvaluationService.matchesPermanentPredicate(p, e.filter(), filterContext)) return;
-
-            gameData.skipNextUntapSteps(entry, p.getId(), e.untapSteps(), null);
-            count[0]++;
-        });
-
-        
-        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" prevents " + count[0] + " creature(s) from untapping during their controller's next untap step.").build());
-        log.info("Game {} - {} skip next untap set on {} creature(s)", gameData.id, entry.getCard().getName(), count[0]);
+        boolean everyPlayer = set.players() instanceof PlayerSubject.Each each
+                && each.relation() == PlayerSubject.Relation.ALL;
+        List<Permanent> permanents = subjectResolutionService.permanents(gameData, entry, e, set);
+        for (Permanent permanent : permanents) {
+            gameData.skipNextUntapSteps(entry, permanent.getId(), e.untapSteps(),
+                    everyPlayer ? null : gameData.findControllerOf(permanent));
+        }
+        String text = switch (set.players()) {
+            case PlayerSubject.You ignored -> " prevents " + permanents.size()
+                    + " permanent(s) you control from untapping during your next untap step.";
+            case PlayerSubject.TargetPlayer ignored ->
+                    " prevents matching permanents from untapping during the target player's next untap step.";
+            default -> " prevents " + permanents.size()
+                    + " permanent(s) from untapping during their controller's next untap step.";
+        };
+        gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(text).build());
+        log.info("Game {} - {} skip next untap set on {} permanent(s)", gameData.id, entry.getCard().getName(),
+                permanents.size());
     }
 }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayersCreaturesMustAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -23,7 +23,9 @@ public class ImaginaryThreats extends Card {
                 "Target must be an opponent"
         )).addSpellEffect(new TargetPlayersCreaturesMustAttackThisTurnEffect())
                 .addSpellEffect(new SkipNextUntapEffect(
-                        TapUntapScope.TARGET_PLAYERS_PERMANENTS, new PermanentIsCreaturePredicate(), 1, true));
+                        Subjects.controlledBy(Subjects.targetPlayer(), new PermanentIsCreaturePredicate()),
+                        1,
+                        true));
 
         // Cycling {2} ({2}, Discard this card: Draw a card.) — discard cost is intrinsic.
         addCycling("{2}");

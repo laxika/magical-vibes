@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -30,7 +30,7 @@ public class UntimelyMalfunction extends Card {
                                 "Target spell or ability must have a single target.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "One or two target creatures can't block this turn",
-                        List.of(new CantBlockThisTurnEffect(TapUntapScope.TARGET)),
+                        List.of(new CantBlockThisTurnEffect(Subjects.target())),
                         TargetFilters.creature(), null, 1, 2, false, null)
         )));
     }

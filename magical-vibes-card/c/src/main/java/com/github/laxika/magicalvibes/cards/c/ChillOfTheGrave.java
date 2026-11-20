@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -25,7 +24,7 @@ public class ChillOfTheGrave extends Card {
                 new ReduceOwnCastCostEffect(new Fixed(1))));
         target(TargetFilters.creature())
                 .addSpellEffect(new TapPermanentsEffect(Subjects.target()))
-                .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.TARGET))
+                .addSpellEffect(new SkipNextUntapEffect(Subjects.target()))
                 .addSpellEffect(new DrawCardEffect(1));
     }
 }

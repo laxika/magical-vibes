@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
@@ -34,6 +33,6 @@ public class KashiTribeElite extends Card {
 
         addTrigger(Triggers.dealsCombatDamageToCreature(), SequenceEffect.of(
                 new TapPermanentsEffect(Subjects.target()),
-                new SkipNextUntapEffect(TapUntapScope.TARGET)));
+                new SkipNextUntapEffect(Subjects.target())));
     }
 }

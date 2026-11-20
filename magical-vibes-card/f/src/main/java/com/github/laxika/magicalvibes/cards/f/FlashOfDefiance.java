@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.LifeCastingCost;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 
@@ -18,10 +18,9 @@ import java.util.Set;
 public class FlashOfDefiance extends Card {
 
     public FlashOfDefiance() {
-        addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.ALL_CREATURES,
-                new PermanentAnyOfPredicate(List.of(
+        addSpellEffect(new CantBlockThisTurnEffect(Subjects.controlledBy(Subjects.eachPlayer(), new PermanentAnyOfPredicate(List.of(
                         new PermanentColorInPredicate(Set.of(CardColor.GREEN)),
-                        new PermanentColorInPredicate(Set.of(CardColor.WHITE))))));
+                        new PermanentColorInPredicate(Set.of(CardColor.WHITE)))))));
         addCastingOption(new FlashbackCast(List.of(
                 new ManaCastingCost("{1}{R}"),
                 new LifeCastingCost(3))));

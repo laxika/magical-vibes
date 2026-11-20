@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -19,6 +19,6 @@ public class WintersNight extends Card {
         // That land doesn't untap during its controller's next untap step.
         addTrigger(Triggers.playerTapsLandForMana().withFilter(new PermanentHasSupertypePredicate(CardSupertype.SNOW)),
                 SequenceEffect.of(new AddOneOfEachManaTypeProducedByLandEffect(),
-                        new SkipNextUntapEffect(TapUntapScope.TRIGGERING)));
+                        new SkipNextUntapEffect(Subjects.triggering())));
     }
 }

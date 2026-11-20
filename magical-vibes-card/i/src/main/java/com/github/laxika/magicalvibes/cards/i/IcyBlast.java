@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -29,7 +28,7 @@ public class IcyBlast extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentPowerAtLeastPredicate(4)
                         ))),
-                        new SkipNextUntapEffect(TapUntapScope.TARGET)
+                        new SkipNextUntapEffect(Subjects.target())
                 ));
     }
 }

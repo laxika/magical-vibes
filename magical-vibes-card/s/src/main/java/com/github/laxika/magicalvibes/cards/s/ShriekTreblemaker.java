@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -20,7 +19,7 @@ public class ShriekTreblemaker extends Card {
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU), new MayEffect(
                 new DiscardCardThenEffect(
                         null,
-                        new CantBlockThisTurnEffect(TapUntapScope.TARGET),
+                        new CantBlockThisTurnEffect(Subjects.target()),
                         "a card"),
                 "Discard a card to have target creature unable to block this turn?"));
 

@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.amount.TimesSourceMutated;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +16,6 @@ public class Archipelagore extends Card {
     public Archipelagore() {
         targetUpTo(new TimesSourceMutated(), TargetFilters.creature(), 100)
                 .addTrigger(Triggers.mutates(), new TapPermanentsEffect(Subjects.target()),
-                        new SkipNextUntapEffect(TapUntapScope.TARGET));
+                        new SkipNextUntapEffect(Subjects.target()));
     }
 }

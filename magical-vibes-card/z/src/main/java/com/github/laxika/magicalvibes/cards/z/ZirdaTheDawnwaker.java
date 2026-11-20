@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceNonManaActivatedAbilityCostEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -22,7 +22,7 @@ public class ZirdaTheDawnwaker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new CantBlockThisTurnEffect(TapUntapScope.TARGET)),
+                List.of(new CantBlockThisTurnEffect(Subjects.target())),
                 "{1}, {T}: Target creature can't block this turn.",
                 TargetFilters.creature()));
     }

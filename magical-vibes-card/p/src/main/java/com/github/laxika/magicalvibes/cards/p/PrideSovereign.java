@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -32,7 +32,7 @@ public class PrideSovereign extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, "{W}",
                 List.of(
-                        new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true, true),
+                        new SkipNextUntapEffect(Subjects.source(), 1, false, false, true, true),
                         new CreateTokenEffect(
                                 2, "Cat", 1, 1, CardColor.WHITE,
                                 List.of(CardSubtype.CAT),

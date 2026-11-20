@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.spell;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
@@ -52,7 +53,6 @@ import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -629,7 +629,7 @@ class SpellCastingServiceTest {
         Card front = createCreature("Test Creature", "{4}{R}");
         Card adventure = createSorcery("Test Adventure", "{2}{R}");
         adventure.target(TargetFilters.creature(), 0, 2)
-                .addSpellEffect(new CantBlockThisTurnEffect(TapUntapScope.TARGET));
+                .addSpellEffect(new CantBlockThisTurnEffect(Subjects.target()));
         front.setBackFaceCard(adventure);
         front.addCastingOption(new AdventureCast("{2}{R}"));
         setHand(player1Id, List.of(front));

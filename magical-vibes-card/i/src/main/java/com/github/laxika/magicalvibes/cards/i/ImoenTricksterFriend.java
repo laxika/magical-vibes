@@ -26,7 +26,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeImoenEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
@@ -87,7 +86,7 @@ public class ImoenTricksterFriend extends Card {
                 PermanentPredicate opponentCreature = TargetFilters.creatureAnOpponentControls().predicate();
                 yield new QueueReflexiveAbilityEffect(SequenceEffect.of(
                         new TapPermanentsEffect(Subjects.target(), opponentCreature),
-                        new SkipNextUntapEffect(TapUntapScope.TARGET, opponentCreature)));
+                        new SkipNextUntapEffect(Subjects.target())));
             }
             case BLACK -> CreateTokenEffect.blackZombie(1);
             case RED -> new DealDamageToPlayersEffect(2, Subjects.eachOpponent());

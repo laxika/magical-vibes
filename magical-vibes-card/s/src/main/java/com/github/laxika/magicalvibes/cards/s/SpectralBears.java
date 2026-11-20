@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -31,6 +31,6 @@ public class SpectralBears extends Card {
                                         new PermanentColorInPredicate(Set.of(CardColor.BLACK)),
                                         new PermanentNotPredicate(new PermanentIsTokenPredicate())
                                 ))))),
-                new SkipNextUntapEffect(TapUntapScope.SELF, null, 1, false, false, true));
+                new SkipNextUntapEffect(Subjects.source(), 1, false, false, true));
     }
 }

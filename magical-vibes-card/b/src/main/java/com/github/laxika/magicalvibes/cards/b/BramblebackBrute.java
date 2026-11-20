@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class BramblebackBrute extends Card {
                 "{1}{R}",
                 List.of(
                         new RemoveCounterFromSourceCost(),
-                        new CantBlockThisTurnEffect(TapUntapScope.TARGET)
+                        new CantBlockThisTurnEffect(Subjects.target())
                 ),
                 "{1}{R}, Remove a counter from this creature: Target creature can't block this turn. Activate only as a sorcery.",
                 TargetFilters.creature(),

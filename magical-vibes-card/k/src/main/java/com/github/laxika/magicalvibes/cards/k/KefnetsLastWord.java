@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -30,6 +30,6 @@ public class KefnetsLastWord extends Card {
         ))
                 .addSpellEffect(new GainControlOfTargetEffect(Duration.PERMANENT))
                 // Lands you control don't untap during your next untap step.
-                .addSpellEffect(new SkipNextUntapEffect(TapUntapScope.CONTROLLED, new PermanentIsLandPredicate(), 1, true));
+                .addSpellEffect(new SkipNextUntapEffect(Subjects.controlledBy(Subjects.you(), new PermanentIsLandPredicate()), 1, true));
     }
 }

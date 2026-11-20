@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -36,6 +35,7 @@ public class BreachingLeviathan extends Card {
                 SequenceEffect.of(
                         new TapPermanentsEffect(Subjects.controlledBy(Subjects.eachPlayer(),
                                 new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), NONBLUE)))),
-                        new SkipNextUntapEffect(TapUntapScope.ALL_CREATURES, NONBLUE)));
+                        new SkipNextUntapEffect(Subjects.controlledBy(Subjects.eachPlayer(),
+                                new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate(), NONBLUE))))));
     }
 }

@@ -122,6 +122,23 @@ class PollenLullabyTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A frozen creature that comes under the caster's control untaps during the caster's untap step")
+    void frozenCreatureUntapsUnderNewController() {
+        // "Creatures that player controls don't untap during the player's next untap step": only that player's step.
+        harness.setLibrary(player1, List.of(new KithkinGreatheart()));
+        harness.setLibrary(player2, List.of(new Forest()));
+        Permanent opponentCreature = addCreatureReady(player2, new KithkinGreatheart());
+        opponentCreature.tap();
+
+        castPollenLullaby();
+        gd.playerBattlefields.get(player2.getId()).remove(opponentCreature);
+        gd.playerBattlefields.get(player1.getId()).add(opponentCreature);
+        harness.performUntapStep(player1);
+
+        assertThat(opponentCreature.isTapped()).isFalse();
+    }
+
+    @Test
     @DisplayName("Winning the clash does not freeze the opponent's noncreatures")
     void wonClashLeavesOpponentNoncreaturesAlone() {
         harness.setLibrary(player1, List.of(new KithkinGreatheart()));

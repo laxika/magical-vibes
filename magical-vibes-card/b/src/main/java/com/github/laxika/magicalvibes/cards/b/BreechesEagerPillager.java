@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBlockThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class BreechesEagerPillager extends Card {
                                 "Create a Treasure token", CreateTokenEffect.ofTreasureToken(1)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Target creature can't block this turn",
-                                new CantBlockThisTurnEffect(TapUntapScope.TARGET),
+                                new CantBlockThisTurnEffect(Subjects.target()),
                                 TargetFilters.creature()),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Exile the top card of your library. You may play it this turn.",

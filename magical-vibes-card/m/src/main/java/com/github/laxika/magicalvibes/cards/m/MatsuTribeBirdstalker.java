@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.TapUntapScope;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -21,7 +20,7 @@ public class MatsuTribeBirdstalker extends Card {
     public MatsuTribeBirdstalker() {
         addTrigger(Triggers.dealsCombatDamageToCreature(), SequenceEffect.of(
                 new TapPermanentsEffect(Subjects.target()),
-                new SkipNextUntapEffect(TapUntapScope.TARGET)));
+                new SkipNextUntapEffect(Subjects.target())));
 
         addActivatedAbility(new ActivatedAbility(false, "{G}",
                 List.of(new GrantKeywordEffect(Keyword.REACH, GrantScope.SELF)),
