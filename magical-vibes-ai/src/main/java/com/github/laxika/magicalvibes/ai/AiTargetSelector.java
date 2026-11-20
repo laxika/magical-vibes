@@ -47,7 +47,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSa
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
@@ -197,8 +196,9 @@ class AiTargetSelector {
         if (card.isAura()) {
             for (CardEffect effect : card.getStaticEffects()) {
                 if ((effect instanceof StaticCreatureBoostEffect boost
-                        && (boost.scope() == GrantScope.ENCHANTED_CREATURE || boost.scope() == GrantScope.EQUIPPED_CREATURE))
-                        || (effect instanceof KeywordGrantingEffect grant && grant.scope() == GrantScope.ENCHANTED_CREATURE)) {
+                        && GrantSubjectShapes.namesAttachedCreature(boost.scope()))
+                        || (effect instanceof KeywordGrantingEffect grant
+                        && GrantSubjectShapes.namesAttachedCreature(grant.scope()))) {
                     isBeneficial = true;
                     break;
                 }
@@ -1517,9 +1517,7 @@ class AiTargetSelector {
                 (e instanceof CreatureBoostEffect boost
                         && amountEvaluationService.evaluate(gameData, boost.powerBoost(), AmountContext.forEstimation(aiPlayerId)) >= 0)
                         || e instanceof RegenerationEffect
-                        || (e instanceof KeywordGrantingEffect grant
-                        && (grant.scope() == GrantScope.TARGET
-                        || grant.scope() == GrantScope.TARGET_AND_SHARING_CREATURES)));
+                        || (e instanceof KeywordGrantingEffect grant && GrantSubjectShapes.grantsToItsTarget(grant)));
 
         if (canTargetPermanent) {
             if (isBeneficial) {

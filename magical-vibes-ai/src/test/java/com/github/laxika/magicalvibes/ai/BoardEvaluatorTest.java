@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.b.BogWraith;
 import com.github.laxika.magicalvibes.cards.d.DarksteelMyr;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GoblinKing;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
@@ -499,6 +500,18 @@ class BoardEvaluatorTest {
             double baseScore = evaluator.creatureScore(gd, marshal, player1.getId(), player2.getId());
 
             // No other creatures to pump, so lord bonus is 0
+            assertThat(threatScore).isEqualTo(baseScore);
+        }
+
+        @Test
+        @DisplayName("An \"other creatures\" lord does not count itself as a creature it pumps")
+        void otherCreaturesLordDoesNotCountItself() {
+            // Goblin King: "Other Goblins get +1/+1" — it is a Goblin, but the engine never boosts it
+            Permanent goblinKing = harness.addToBattlefieldAndReturn(player1, new GoblinKing());
+
+            double threatScore = evaluator.creatureThreatScore(gd, goblinKing, player1.getId(), player2.getId());
+            double baseScore = evaluator.creatureScore(gd, goblinKing, player1.getId(), player2.getId());
+
             assertThat(threatScore).isEqualTo(baseScore);
         }
 

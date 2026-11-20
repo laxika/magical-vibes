@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.ai.interaction.ReplacementOrderChoice;
 import com.github.laxika.magicalvibes.ai.AiManaManager;
 import com.github.laxika.magicalvibes.ai.AiUtils;
+import com.github.laxika.magicalvibes.ai.GrantSubjectShapes;
 import com.github.laxika.magicalvibes.ai.BoardEvaluator;
 import com.github.laxika.magicalvibes.ai.CombatDamageAssignmentHeuristic;
 import com.github.laxika.magicalvibes.ai.CombatSimulator;
@@ -46,7 +47,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrSacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardXCardsCost;
 import com.github.laxika.magicalvibes.model.effect.ExileNCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAnyNumberOfPermanentsToHandCost;
@@ -1685,8 +1685,9 @@ public class GameSimulator {
             boolean isBeneficial = false;
             for (CardEffect effect : card.getStaticEffects()) {
                 if ((effect instanceof StaticCreatureBoostEffect boost
-                        && (boost.scope() == GrantScope.ENCHANTED_CREATURE || boost.scope() == GrantScope.EQUIPPED_CREATURE))
-                        || (effect instanceof KeywordGrantingEffect grant && grant.scope() == GrantScope.ENCHANTED_CREATURE)) {
+                        && GrantSubjectShapes.namesAttachedCreature(boost.scope()))
+                        || (effect instanceof KeywordGrantingEffect grant
+                        && GrantSubjectShapes.namesAttachedCreature(grant.scope()))) {
                     isBeneficial = true;
                     break;
                 }

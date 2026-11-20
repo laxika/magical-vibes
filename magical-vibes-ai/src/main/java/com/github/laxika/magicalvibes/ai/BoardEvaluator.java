@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +21,6 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
@@ -356,12 +356,12 @@ public class BoardEvaluator {
 
         for (CardEffect effect : perm.getCard().getStaticEffects()) {
             if (effect instanceof StaticCreatureBoostEffect boost) {
-                GrantScope scope = boost.scope();
-                if (scope != GrantScope.OWN_CREATURES && scope != GrantScope.ALL_OWN_CREATURES
-                        && scope != GrantScope.ALL_CREATURES) {
+                PermanentSubject subject = GrantSubjectShapes.subjectOf(boost.scope());
+                if (!GrantSubjectShapes.namesAnthemSet(subject)) {
                     continue;
                 }
-                int buffedCount = countBuffedCreatures(gameData, perm, controllerBattlefield, boost.filter(), scope);
+                int buffedCount = countBuffedCreatures(gameData, perm, controllerId, controllerBattlefield,
+                        boost.filter(), subject);
                 // Use same weights as creatureScore: power*3 + toughness*1.5
                 double perCreatureValue = boost.powerBoost() * 3.0 + boost.toughnessBoost() * 1.5;
                 if (boost.grantedKeywords() != null) {
@@ -369,12 +369,12 @@ public class BoardEvaluator {
                 }
                 bonus += buffedCount * perCreatureValue;
             } else if (effect instanceof KeywordGrantingEffect grant) {
-                GrantScope scope = grant.scope();
-                if (scope != GrantScope.OWN_CREATURES && scope != GrantScope.ALL_OWN_CREATURES
-                        && scope != GrantScope.ALL_CREATURES) {
+                PermanentSubject subject = GrantSubjectShapes.subjectOf(grant.scope());
+                if (!GrantSubjectShapes.namesAnthemSet(subject)) {
                     continue;
                 }
-                int buffedCount = countBuffedCreatures(gameData, perm, controllerBattlefield, grant.filter(), scope);
+                int buffedCount = countBuffedCreatures(gameData, perm, controllerId, controllerBattlefield,
+                        grant.filter(), subject);
                 double perCreatureValue = grant.keywords().size() * 3.0;
                 bonus += buffedCount * perCreatureValue;
             }
@@ -382,16 +382,18 @@ public class BoardEvaluator {
         return bonus;
     }
 
-    private int countBuffedCreatures(GameData gameData, Permanent source,
+    /**
+     * How many of the controller's creatures the static ability's set names (the engine's static membership check,
+     * so an "other creatures" set leaves out the source) and its own filter matches.
+     */
+    private int countBuffedCreatures(GameData gameData, Permanent source, UUID controllerId,
                                      List<Permanent> battlefield,
                                      com.github.laxika.magicalvibes.model.filter.PermanentPredicate filter,
-                                     GrantScope scope) {
+                                     PermanentSubject subject) {
         int count = 0;
         FilterContext ctx = FilterContext.of(gameData);
         for (Permanent p : battlefield) {
-            if (!gameQueryService.isCreature(gameData, p)) continue;
-            // OWN_CREATURES excludes the source itself
-            if (scope == GrantScope.OWN_CREATURES && p.getId().equals(source.getId())) continue;
+            if (!gameQueryService.staticSubjectNames(gameData, source, controllerId, controllerId, p, subject)) continue;
             if (filter != null && !predicateEvaluationService.matchesPermanentPredicate(p, filter, ctx)) continue;
             count++;
         }

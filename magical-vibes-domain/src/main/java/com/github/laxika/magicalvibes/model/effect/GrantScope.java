@@ -129,6 +129,11 @@ public enum GrantScope {
         return subject;
     }
 
+    /** Whether {@link #subject()} has a variant for this constant (it throws for the four that have none yet). */
+    public boolean hasSubject() {
+        return SUBJECTS[ordinal()] != null;
+    }
+
     private static PermanentSubject[] subjects() {
         GrantScope[] scopes = values();
         PermanentSubject[] subjects = new PermanentSubject[scopes.length];

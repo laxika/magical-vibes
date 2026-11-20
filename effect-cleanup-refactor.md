@@ -18,7 +18,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
 | 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5c, 5e–5l done; 5d partly done: its restriction readers move to step 6; 5m partly done) |
-| 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | in progress: 6.1, 6.2a, 6.2b, 6.2c done (6.2b: `GrantScope` part; the static `TapUntapScope` readers moved to 6.2e) |
+| 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | in progress: 6.1, 6.2a, 6.2b, 6.2c, 6.2d done (6.2b: `GrantScope` part; the static `TapUntapScope` readers moved to 6.2e) |
 | 7 | Step results: one way for a step to tell the next what happened | open |
 | 8 | Split the fused effects (repeatable) | open |
 | 9 | Sweep the single-card tail (repeatable) | open |
@@ -449,7 +449,7 @@ Ask for a full card-test run after sub-step 2 and again after sub-step 3. Run th
 | 6.2a | the one-shot `normalfx` readers | done |
 | 6.2b | `staticfx` + `StaticEffectSupport`, the static `TapUntapScope` readers | done for `GrantScope`; the static `TapUntapScope` readers moved to 6.2e |
 | 6.2c | `LayerSystemService` + `GameQueryService`, the engine classifiers outside them | done |
-| 6.2d | the AI | open |
+| 6.2d | the AI | done (the AI `TapUntapScope` reads go with 6.2e) |
 | 6.2e | the one-shot `TapUntapScope` restriction handlers, and the static ones 6.2b left (`UntapStepService`, `UntapPreventionSupport`) | open |
 | 6.3 | records take a `PermanentSubject`, cards rewritten, `GrantScope` / `TapUntapScope` deleted | open |
 | 6.4 | the rule-4 tests | open |
@@ -2896,6 +2896,88 @@ GrantTriggeredAbility, StaticBoost, DynamicStaticBoost, GrantKeyword, plus every
 GrantActivatedAbility OWN_PERMANENTS, an emblem, a static AnimatePermanents set, riot, a scoped MustAttack, a changeling
 grant, SELF_AND_PAIRED, ENCHANTED_PLAYER_CREATURES or OWN_(UN)TAPPED_CREATURES: 1,065 suites, 9,161 test cases (1 skipped), all pass. Hand-built test wiring sets
 the resolver on LSS and GQS. Ratchet unchanged; no ledger rows (nothing folded).
+
+### Step 6, run 6.2d (2026-11-20)
+
+**Done.** The AI's `GrantScope` readers ask structural questions of the subject through one new AI helper,
+`GrantSubjectShapes` (`magical-vibes-ai`): `subjectOf(scope)` (`null` for the four no-variant constants, via the new
+`GrantScope.hasSubject()`, so no reader throws on Valor's Reach or Tend to the Kiln), `namesTarget` (`Target`),
+`namesAttached` (`Attached`), `namesCreaturesYouControl` (`ControlledBy` with `You` and a predicate that is creature, or
+creature and not-the-source, nothing else), `namesEachPlayersOtherCreatures` (`Each(ALL)`, creature and not-the-source),
+`namesAnthemSet` (either), `namesAttachedCreature(scope)` and `grantsToItsTarget(effect)` (the effect's `targetSpec()`
+admits a permanent: only a `target()` subject declares one, and it also covers TARGET_AND_SHARING_CREATURES, which has no
+variant). Readers moved: `BoardEvaluator.lordBonus` / `countBuffedCreatures`, `SpellEvaluator` (equipment-with-evasion,
+anthem-on-wide-board, `evaluateAura`), `HardAiDecisionEngine` (3 "creatures you control" pump checks), `AiTargetSelector`
+(Aura beneficial check, ability beneficial grant), `GameSimulator` (Aura candidates), `TargetPolarityClassifier`
+(keyword grant, Suspect). `countBuffedCreatures` now counts with `GameQueryService.staticSubjectNames` (the engine's
+static membership check) plus the effect's own filter, as before.
+
+**How parity was checked.** (1) A scratch census test drove every registered card class (31,682) through the old
+constant gate and the new structural gate of every site, with the card's Aura / Equipment status and the effect's
+location (static for the scorers, activated for the ability selector, spell / ETB nested for the classifier). (2) The
+6.2b probe: each converted site computed old and new side by side and logged differences while the whole AI test task
+ran. Both are removed. Differences found and how they were settled:
+- TARGETS (Myojin of Towering Might, Swashbuckler Extraordinaire, the choose-different-powers records) and EQUIPPED_CREATURE
+  / ENCHANTED_PERMANENT grants are `target()` / `attached()` too: a plain `instanceof` would have widened the ability
+  selector and the classifier. `grantsToItsTarget` (declared permanent target) and `namesAttachedCreature` match the old
+  answer for every card.
+- ENCHANTED_PERMANENT vs ENCHANTED_CREATURE: the subject has no creature-only form, so `namesAttachedCreature` still
+  names `ENCHANTED_PERMANENT` (`GrantSubjectShapes`:49), as GQS `hasAttachmentRestriction` does. Without it 23 Auras
+  (Zendikons, Indestructibility, Silken Strength, Clawing Torment, ...) would become "beneficial creature Auras".
+- Tidal Flats: `GrantKeywordToBlockingCreaturesUnlessAttackerPaysEffect` reports scope TARGET but declares no target;
+  `grantsToItsTarget` is false where the old check was true. Unobservable: the ability can target nothing, so
+  `canTargetPermanent` / `canTargetPlayer` are false and the flag is never read.
+- **One scoring change, old AI inconsistent with the engine**: `lordBonus` counted the lord itself for ALL_CREATURES
+  ("other Goblins get +1/+1": Goblin King, Lord of Atlantis, Zombie Master, ... 37 cards, planes included), which the
+  engine never boosts (the subject excludes the source). The count now asks the engine.
+  `BoardEvaluatorTest.otherCreaturesLordDoesNotCountItself` fails on the old code (the probe fired there, and only there).
+
+**Constant reads left in main code** (scratch grep of `==`/`!=`/`case` on a scope and `GrantScope.X.subject()`,
+2026-11-20; constructions of a `GrantScope.TARGET` payload are not listed). Networking, webservice, websocket,
+application main: none.
+- AI: `GrantSubjectShapes`:49 (ENCHANTED_PERMANENT, above). Not `GrantScope` but in the AI and due before 6.3 deletes
+  `TapUntapScope`: `TargetPolarityClassifier`:315, 318, 324-326 and `SpellEvaluator`:1106-1108 (`switch` on
+  `CantBlockThisTurnEffect.scope()`), for 6.2e once `TapUntapScope` has a subject.
+- Engine: GQS `GameQueryService`:4871 (ENCHANTED_PERMANENT creature check); `StaticEffectSupport`:119, 127, 301-302 (the
+  per-verb including-source / other readings); the one-shot handlers' dispatch and per-verb readings, which 6.3 turns
+  into the cards' subjects: `GrantKeywordEffectHandler` 57-58, 83, 86, 105, 124, 132, 138, 158, 163-168, 196-201, 221,
+  225, 248-257; `GrantActivatedAbilityEffectHandler` 47, 85-107, 134-136; `GrantColorUntilEndOfTurnEffectHandler` 40, 55,
+  70, 74, 83, 95, 112; `AnimationSupport` 340, 389, 421, 442, 490, 527; `AnimatePermanentsEffectHandler` 33, 44-47;
+  `LosesAllAbilitiesEffectHandler` 39, 41, 53-55, 68; `SetBasePowerToughnessEffectHandler` 40, 56, 70, 90-91, 109;
+  `SetBasePowerToughnessToAmountEffectHandler` 34, 45; `TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler`
+  49-81; `TargetCreatureBecomesSubtypeUntilEndOfTurnEffectHandler` 38, 54, 58, 68; `GrantSubtypeUntilEndOfTurnEffectHandler`
+  37, 45, 47, 51, 69; `GrantSubtypeEffectResolutionHandler` 37-38, 43; `TemporaryCreatureTypesEffectHandler` 34-39;
+  `LoseAllCreatureTypesEffectHandler` 36, 50; `RemoveKeywordEffectHandler` 43-47; `RemoveAllProtectionUntilEndOfTurnEffectHandler`
+  46, 48, 53; `RemoveCardTypeFromTargetPermanentEffectHandler` 35; `SetCombatRequirementThisTurnEffectHandler` 48, 56, 128;
+  `CantBecomeUntappedEffectHandler` 41, 49; `BecomeSaddledUntilEndOfTurnEffectHandler` 36-37;
+  `TargetCreatureDealsDamageToControllerEffectHandler` 48, 76; `GrantEffectToTargetEffectHandler` 48-69;
+  `SetCardTypesUntilEndOfTurnEffectHandler` 31; `SetCardTypesEffectHandler` 33; `GrantSupertypeUntilEndOfTurnEffectHandler`
+  35-36; `GrantProtectionFromColorUntilEndOfTurnEffectHandler` 38, 40, 46; `GrantProtectionChoiceUntilEndOfTurnEffectHandler`
+  60-63; `GrantColorEffectResolutionHandler` 31; `GrantChosenLandwalkEffectHandler` 34-39; `GrantChosenKeywordEffectHandler`
+  31; `GrantAdditionalBlockToTargetUntilEndOfTurnEffectHandler` 36; `BoostAllCreaturesOfChosenSubtypeEffectHandler` 76-78.
+- Domain (the records' own `targetSpec()` / validation / `isAttached`-style accessors, rewritten with the records in
+  6.3): `Card`:2712; `GrantKeywordEffect` 61-63; `GrantActivatedAbilityEffect` 34, 43; `AnimatePermanentsEffect` 176-178,
+  190; `SetCombatRequirementThisTurnEffect` 64-85; `SetBasePowerToughnessEffect` 108, 111; `GrantProtectionChoiceUntilEndOfTurnEffect`
+  36-42, 97-98; `TargetCreatureDealsDamageToControllerEffect` 26, 34, 49; `RemoveKeywordEffect` 31-37; `LoseAllCreatureTypesEffect`
+  29, 32; `LosesAllAbilitiesEffect` 40-42; `GrantSubtypeUntilEndOfTurnEffect` 32-34; `GrantColorUntilEndOfTurnEffect` 47, 50;
+  `TargetCreatureBecomesSubtypeUntilEndOfTurnEffect` 47-48; `TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect` 35;
+  `SuspectEffect` 9-10; `UnsuspectEffect` 9-10; `SetCardTypesUntilEndOfTurnEffect` 18-19; `SetCardTypesEffect` 21;
+  `RemoveCardTypeFromTargetPermanentEffect` 19; `RemoveAllProtectionUntilEndOfTurnEffect` 18-19; `LosesAllNonManaAbilitiesEffect`
+  21; `GrantSupertypeUntilEndOfTurnEffect` 19-20; `GrantSubtypeEffect` 32; `GrantRandomKeywordEffect` 23, 41;
+  `GrantProtectionFromColorUntilEndOfTurnEffect` 49-50; `GrantEffectToTargetEffect` 62; `GrantColorEffect` 31;
+  `GrantChosenLandwalkEffect` 15, 32; `GrantChosenKeywordEffect` 34, 44; `GrantAllCreatureTypesToOwnCreaturesEffect` 28;
+  `GrantAdditionalBlockToTargetUntilEndOfTurnEffect` 21; `BecomeSaddledUntilEndOfTurnEffect` 9-10;
+  `CreateTokenCopyOfTargetPermanentEffect` 85; `AnimateReturnedPermanentsEffect` 15; `AnimateReturnedPermanentIfNotCreatureEffect` 14.
+  The grep misses reads split oddly across lines; 6.3 deletes the enum and lets the compiler find the rest.
+
+6.3 note: when the records expose `subject()`, the AI callers change `GrantSubjectShapes.subjectOf(x.scope())` to
+`x.subject()`; `namesAttachedCreature` needs the creature-only attached form 6.3 gives ENCHANTED_CREATURE /
+EQUIPPED_CREATURE, and `hasSubject()` goes with the enum.
+
+**Tests**: the whole `magical-vibes-ai` test task (3 min), after the probes were removed: 115 suites, 1,649 test cases
+(4 skipped), all pass (it includes `HardAiDecisionEngineTest`, `SpellEvaluatorTest`, `BoardEvaluatorTest`,
+`GameSimulatorTest`, `AiTargetSelectorTest`, `TargetPolarityGuardTest`, `InstantCategoryClassifierTest`). Application, AI
+and engine testFixtures test sources compile. No card file changed, nothing folded: no ledger rows, ratchet unchanged.
 
 ## Prompt
 

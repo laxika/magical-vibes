@@ -47,7 +47,6 @@ import com.github.laxika.magicalvibes.model.effect.RemovalKind;
 import com.github.laxika.magicalvibes.model.effect.ControlStealingEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeGainEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaProducingEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -914,7 +913,7 @@ public class SpellEvaluator {
         double equipBoost = 0;
         for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof StaticCreatureBoostEffect boost
-                    && boost.scope() == GrantScope.EQUIPPED_CREATURE) {
+                    && GrantSubjectShapes.namesAttachedCreature(boost.scope())) {
                 equipBoost += boost.powerBoost() * 3.0 + boost.toughnessBoost() * 1.5;
             }
         }
@@ -972,18 +971,14 @@ public class SpellEvaluator {
         double perCreatureBoost = 0;
         for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof StaticCreatureBoostEffect boost) {
-                GrantScope scope = boost.scope();
-                if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_OWN_CREATURES
-                        || scope == GrantScope.ALL_CREATURES) {
+                if (GrantSubjectShapes.namesAnthemSet(GrantSubjectShapes.subjectOf(boost.scope()))) {
                     perCreatureBoost += boost.powerBoost() * 3.0 + boost.toughnessBoost() * 1.5;
                     if (boost.grantedKeywords() != null) {
                         perCreatureBoost += boost.grantedKeywords().size() * 3.0;
                     }
                 }
             } else if (effect instanceof KeywordGrantingEffect grant) {
-                GrantScope scope = grant.scope();
-                if (scope == GrantScope.OWN_CREATURES || scope == GrantScope.ALL_OWN_CREATURES
-                        || scope == GrantScope.ALL_CREATURES) {
+                if (GrantSubjectShapes.namesAnthemSet(GrantSubjectShapes.subjectOf(grant.scope()))) {
                     perCreatureBoost += grant.keywords().size() * 3.0;
                 }
             }
@@ -1062,12 +1057,12 @@ public class SpellEvaluator {
 
         for (CardEffect effect : card.getStaticEffects()) {
             if (effect instanceof StaticCreatureBoostEffect boost
-                    && (boost.scope() == GrantScope.ENCHANTED_CREATURE || boost.scope() == GrantScope.EQUIPPED_CREATURE)) {
+                    && GrantSubjectShapes.namesAttachedCreature(boost.scope())) {
                 isBeneficial = true;
                 value += boost.powerBoost() * 2.0 + boost.toughnessBoost();
             }
             if (effect instanceof KeywordGrantingEffect grant
-                    && grant.scope() == GrantScope.ENCHANTED_CREATURE) {
+                    && GrantSubjectShapes.namesAttachedCreature(grant.scope())) {
                 isBeneficial = true;
                 value += 3;
             }

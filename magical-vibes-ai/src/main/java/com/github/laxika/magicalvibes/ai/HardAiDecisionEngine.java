@@ -38,7 +38,6 @@ import com.github.laxika.magicalvibes.model.effect.CostEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCardsFromGraveyardCost;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalKind;
@@ -527,8 +526,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
                     int totalBoost = 0;
                     for (CardEffect effect : card.getStaticEffects()) {
                         if (effect instanceof StaticCreatureBoostEffect boost && boost.powerBoost() > 0
-                                && (boost.scope() == GrantScope.OWN_CREATURES
-                                    || boost.scope() == GrantScope.ALL_OWN_CREATURES)) {
+                                && GrantSubjectShapes.namesCreaturesYouControl(
+                                        GrantSubjectShapes.subjectOf(boost.scope()))) {
                             for (Permanent attacker : attackers) {
                                 if (boost.filter() == null
                                         || predicateEvaluationService.matchesPermanentPredicate(
@@ -684,8 +683,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
             int totalBoost = 0;
             for (CardEffect effect : card.getStaticEffects()) {
                 if (effect instanceof StaticCreatureBoostEffect boost && boost.powerBoost() > 0
-                        && (boost.scope() == GrantScope.OWN_CREATURES
-                            || boost.scope() == GrantScope.ALL_OWN_CREATURES)) {
+                        && GrantSubjectShapes.namesCreaturesYouControl(
+                                GrantSubjectShapes.subjectOf(boost.scope()))) {
                     for (Permanent attacker : attackers) {
                         if (boost.filter() == null
                                 || predicateEvaluationService.matchesPermanentPredicate(
@@ -919,8 +918,8 @@ public class HardAiDecisionEngine extends AiDecisionEngine {
 
             for (CardEffect effect : card.getStaticEffects()) {
                 if (effect instanceof StaticCreatureBoostEffect boost && boost.powerBoost() > 0
-                        && (boost.scope() == GrantScope.OWN_CREATURES
-                            || boost.scope() == GrantScope.ALL_OWN_CREATURES)) {
+                        && GrantSubjectShapes.namesCreaturesYouControl(
+                                GrantSubjectShapes.subjectOf(boost.scope()))) {
                     return CombatRelevance.PUMP;
                 }
             }

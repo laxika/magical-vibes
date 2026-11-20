@@ -32,7 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSour
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantScope;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -445,14 +444,14 @@ public class TargetPolarityClassifier {
             return explore.targeted() ? TargetPolarity.BENEFICIAL : null;
         }
         if (effect instanceof KeywordGrantingEffect grant) {
-            return grant.scope() == GrantScope.TARGET
-                    || grant.scope() == GrantScope.TARGET_AND_SHARING_CREATURES
-                    || grant.scope() == GrantScope.ENCHANTED_CREATURE
+            return GrantSubjectShapes.grantsToItsTarget(grant)
+                    || GrantSubjectShapes.namesAttachedCreature(grant.scope())
                     ? TargetPolarity.BENEFICIAL
                     : null;
         }
         if (effect instanceof SuspectEffect suspect) {
-            return suspect.scope() == GrantScope.TARGET ? TargetPolarity.NEUTRAL : null;
+            return GrantSubjectShapes.namesTarget(GrantSubjectShapes.subjectOf(suspect.scope()))
+                    ? TargetPolarity.NEUTRAL : null;
         }
 
         // Base-P/T setters swing both ways: Diminish (1/1) shrinks the opponent's fatty,
