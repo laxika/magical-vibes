@@ -2,15 +2,18 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.b.BenalishCavalry;
 import com.github.laxika.magicalvibes.cards.f.FathomSeer;
+import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkablePlaytest;
 import com.github.laxika.magicalvibes.cards.h.HoodedHydra;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.i.Ixidron;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({VesuvanShapeshifter.class, BenalishCavalry.class, FathomSeer.class, Island.class,
-        HoodedHydra.class, Ixidron.class})
+        HoodedHydra.class, Ixidron.class, GlimpseTheUnthinkablePlaytest.class})
 class VesuvanShapeshifterTest extends BaseCardTest {
 
     @Test
@@ -268,5 +271,24 @@ class VesuvanShapeshifterTest extends BaseCardTest {
         assertThat(shapeshifter.isFaceDown()).isFalse();
         assertThat(shapeshifter.getCard().getName()).isEqualTo("Fathom Seer");
         assertThat(gd.playerHands.get(player1.getId())).contains(firstDraw, secondDraw);
+    }
+
+    @Test
+    @DisplayName("As it's turned face up it doesn't offer a creature that can't be chosen")
+    void faceUpCopyChoiceSkipsUnchoosableCreature() {
+        Permanent cavalry = addCreatureReady(player2, new BenalishCavalry());
+        Permanent glimpse = addCreatureReady(player2, new GlimpseTheUnthinkablePlaytest());
+        harness.setHand(player1, List.of(new VesuvanShapeshifter()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+        Permanent shapeshifter = findPermanent(player1, "Vesuvan Shapeshifter");
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(shapeshifter));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .contains(cavalry.getId()).doesNotContain(glimpse.getId());
     }
 }

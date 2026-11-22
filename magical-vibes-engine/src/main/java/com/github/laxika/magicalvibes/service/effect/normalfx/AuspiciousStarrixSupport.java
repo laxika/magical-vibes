@@ -46,6 +46,7 @@ public class AuspiciousStarrixSupport {
 
             List<UUID> validPermanentIds = existingPermanents.stream()
                     .filter(permanent -> auraAttachmentService.canEnchant(gameData, card, controllerId, permanent))
+                    .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                     .map(Permanent::getId)
                     .toList();
             List<UUID> validPlayerIds = gameData.orderedPlayerIds.stream()

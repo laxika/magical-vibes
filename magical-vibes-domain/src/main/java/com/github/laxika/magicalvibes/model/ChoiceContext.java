@@ -1998,19 +1998,6 @@ public sealed interface ChoiceContext {
                                                 String sourceSetCode) implements ChoiceContext {}
 
     /**
-     * The controller chooses a color at resolution, then creates one token from {@code tokenTemplate}
-     * for each permanent of that color on the battlefield (any controller; lands excluded, mirroring
-     * Oona). Rith, the Awakener.
-     *
-     * @param controllerId  controller that chooses the color and creates the tokens
-     * @param tokenTemplate one token created per permanent of the chosen color
-     * @param sourceSetCode set code of the source card (token art/set)
-     */
-    record CreateTokensPerPermanentOfChosenColorChoice(UUID controllerId,
-                                                       com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
-                                                       String sourceSetCode) implements ChoiceContext {}
-
-    /**
      * Jinnie Fay's Cat, Dog or original tokens choice as her replacement applies to {@code event}, a token creation
      * event (blueprint or token-copy) whose other replacements are ordered with hers (CR 616.1); the event continues
      * with the chosen tokens through the replacement order once the player answers.

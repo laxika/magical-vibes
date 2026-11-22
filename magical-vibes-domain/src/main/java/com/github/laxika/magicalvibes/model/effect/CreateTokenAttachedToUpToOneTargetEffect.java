@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
-/** Creates the supplied token profile attached to zero or one target creature. */
+/** Creates the supplied token profile attached to up to one target creature: with no target chosen, none (CR 303.4g). */
 public record CreateTokenAttachedToUpToOneTargetEffect(CreateTokenEffect token,
                                                        PlayerRelation targetControllerRelation,
                                                        PermanentPredicate targetFilter)

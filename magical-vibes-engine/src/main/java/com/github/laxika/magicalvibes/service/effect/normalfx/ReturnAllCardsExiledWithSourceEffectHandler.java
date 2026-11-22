@@ -255,7 +255,8 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
     List<UUID> legalAuraHosts(GameData gameData, Card auraCard, UUID auraControllerId) {
         List<UUID> hosts = new ArrayList<>();
         gameData.forEachPermanent((ignored, candidate) -> {
-            if (auraAttachmentService.canEnchant(gameData, auraCard, auraControllerId, candidate)) {
+            if (auraAttachmentService.canEnchant(gameData, auraCard, auraControllerId, candidate)
+                    && !gameQueryService.cantBeChosen(gameData, candidate)) {
                 hosts.add(candidate.getId());
             }
         });

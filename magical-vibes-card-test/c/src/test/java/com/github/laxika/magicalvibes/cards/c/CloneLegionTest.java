@@ -1,13 +1,16 @@
 package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.a.AinokSurvivalist;
+import com.github.laxika.magicalvibes.cards.e.EsixFractalBloom;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +20,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CloneLegion.class, Forest.class, GrizzlyBears.class, SerraAngel.class, AinokSurvivalist.class})
+@CardUsed({CloneLegion.class, Forest.class, GrizzlyBears.class, SerraAngel.class, AinokSurvivalist.class, EsixFractalBloom.class})
 class CloneLegionTest extends BaseCardTest {
 
     @Test
@@ -109,5 +112,18 @@ class CloneLegionTest extends BaseCardTest {
                 .map(permanent -> permanent.getCard())
                 .filter(Card::isToken)
                 .count();
+    }
+
+    @Test
+    @DisplayName("Esix can replace the copies: they are the first tokens created on its controller's turn")
+    void esixIsOfferedTheCopies() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new EsixFractalBloom());
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castCloneLegion(player2);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 }

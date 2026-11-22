@@ -116,6 +116,7 @@ public class ReturnSourceCardFromGraveyardToBattlefieldEffectHandler implements 
                 " to the battlefield" + (e.tapped() ? " tapped" : "") + "."));
         log.info("Game {} - {} returns to the battlefield from the graveyard", gameData.id, card.getName());
 
+        entry.rememberReturnedPermanent(permanent.getId());
         graveyardReturnSupport.handleCreatureEtbAndLegendRule(gameData, ownerId, permanent, card);
         if (e.useReturnedPermanentAsSource()) {
             entry.useReturnedPermanentAsSource(permanent, ownerId);

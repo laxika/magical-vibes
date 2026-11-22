@@ -6,10 +6,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,11 +28,11 @@ public class CurseOfTheWerefox extends Card {
 
     public CurseOfTheWerefox() {
         target(TargetFilters.creatureYouControl())
-                .addSpellEffect(new CreateTokenAttachedToTargetThenEffect(
-                        monsterRoleToken(),
-                        new EnteringCreatureFightsTargetCreatureEffect(
-                                new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
-                                true)));
+                .addSpellEffect(new CreateTokenAttachedToTargetEffect(monsterRoleToken()));
+        addSpellEffect(new ConditionalEffect(HappenedThisWay.created(), QueueReflexiveAbilityEffect.aboutEntryTarget(
+                new EnteringCreatureFightsTargetCreatureEffect(
+                        new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
+                        true))));
     }
 
     private static CreateTokenEffect monsterRoleToken() {

@@ -6,8 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.CountersOnTriggeringPermanent;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourceCounterPTEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,8 +23,8 @@ public class UnwillingVessel extends Card {
         addTrigger(List.of(Triggers.enters(Triggers.ENCHANTMENT, ObjectRelation.ANOTHER_YOU_CONTROL),
                 Triggers.youFullyUnlockRoom()), possessionCounter);
 
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenWithDyingSourceCounterPTEffect(
-                new CreateTokenEffect("Spirit", 0, 0, CardColor.BLUE, List.of(CardSubtype.SPIRIT),
-                        Set.of(Keyword.FLYING), Set.of())));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect("Spirit",
+                new CountersOnTriggeringPermanent(), new CountersOnTriggeringPermanent(),
+                CardColor.BLUE, List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of()));
     }
 }

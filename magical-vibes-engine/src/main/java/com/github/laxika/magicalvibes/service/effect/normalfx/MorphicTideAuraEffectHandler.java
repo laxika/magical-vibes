@@ -56,7 +56,8 @@ public class MorphicTideAuraEffectHandler implements NormalEffectHandlerBean {
         List<UUID> validPermanentIds = new ArrayList<>();
         gameData.forEachPermanent((ignored, permanent) -> {
             if (!auraEffect.batchAuraCardIds().contains(permanent.getCard().getId())
-                    && auraAttachmentService.canEnchant(gameData, auraCard, controllerId, permanent)) {
+                    && auraAttachmentService.canEnchant(gameData, auraCard, controllerId, permanent)
+                    && !gameQueryService.cantBeChosen(gameData, permanent)) {
                 validPermanentIds.add(permanent.getId());
             }
         });

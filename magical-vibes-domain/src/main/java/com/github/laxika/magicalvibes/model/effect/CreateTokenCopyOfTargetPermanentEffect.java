@@ -76,9 +76,12 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 && !(subject instanceof PermanentSubject.TriggeringAll)
                 && !(subject instanceof PermanentSubject.Attached)
                 && !(subject instanceof PermanentSubject.Named)
-                && !(subject instanceof PermanentSubject.ThisWay)) {
+                && !(subject instanceof PermanentSubject.ThisWay)
+                && !(subject instanceof PermanentSubject.ControlledBy)
+                && !(subject instanceof PermanentSubject.Returned)
+                && !(subject instanceof PermanentSubject.Except)) {
             throw new IllegalArgumentException("A token copy copies target(), triggering(), triggeringAll(), attached() "
-                    + "named(id) or thisWay(kind): " + subject);
+                    + "named(id), thisWay(kind), controlledBy(players, filter), returned() or except(...): " + subject);
         }
         if (animateIfNotCreature != null
                 && (!(animateIfNotCreature.power() instanceof Fixed)
@@ -688,6 +691,9 @@ public record CreateTokenCopyOfTargetPermanentEffect(
 
     @Override
     public TargetSpec targetSpec() {
+        if (subject instanceof PermanentSubject.ControlledBy set && set.players().declaresTarget()) {
+            return TargetSpec.benign(TargetPredicates.player());
+        }
         return subject.declaresTarget() ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
     }
 }

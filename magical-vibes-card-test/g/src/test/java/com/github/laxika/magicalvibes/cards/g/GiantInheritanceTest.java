@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -51,7 +52,8 @@ class GiantInheritanceTest extends BaseCardTest {
     }
 
     @Test
-    void attackTriggerCanBeDeclinedAndUnattachedRoleIsPutIntoGraveyard() {
+    @DisplayName("With no target attacking creature chosen, no Monster Role is created (ruling)")
+    void attackTriggerWithoutATargetCreatesNoRole() {
         Permanent creature = addCreatureReady(player1, new GrizzlyBears());
         Permanent aura = harness.addToBattlefieldAndReturn(player1, new GiantInheritance());
         aura.setAttachedTo(creature.getId());
@@ -61,8 +63,8 @@ class GiantInheritanceTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player1.getId());
         resolveAllTriggers();
 
-        // The Role is created unattached, so it is put into the graveyard (CR 704.5m).
-        assertThat(gameLogContains("A Monster enchantment token enters the battlefield")).isTrue();
+        // "If you don't choose a target attacking creature ..., the Monster Role token won't be created." (2023-09-01)
+        assertThat(gameLogContains("A Monster enchantment token enters the battlefield")).isFalse();
         assertThat(countPermanents(player1, "Monster")).isZero();
     }
 

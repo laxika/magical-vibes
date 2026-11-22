@@ -1,17 +1,19 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkablePlaytest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({MaestrosTotallySafeHideout.class, GrizzlyBears.class, Memnite.class})
+@CardUsed({MaestrosTotallySafeHideout.class, GrizzlyBears.class, Memnite.class, GlimpseTheUnthinkablePlaytest.class})
 class MaestrosTotallySafeHideoutTest extends BaseCardTest {
 
     @Test
@@ -123,5 +125,17 @@ class MaestrosTotallySafeHideoutTest extends BaseCardTest {
         }
         assertThat(findPermanent(player1, "Maestros' Totally Safe Hideout").isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature that can't be chosen can't be sacrificed for land casualty")
+    void unchoosableCreatureCannotPayLandCasualty() {
+        harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
+        harness.setHand(player1, List.of(new MaestrosTotallySafeHideout()));
+
+        harness.playLand(player1, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(countPermanents(player1, "Maestros' Totally Safe Hideout")).isEqualTo(1);
     }
 }

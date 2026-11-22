@@ -845,7 +845,8 @@ public class CloneService {
         if (perm.getCard().isAura() && !perm.isAttached()) {
             List<UUID> hosts = new ArrayList<>();
             gameData.forEachPermanent((ignored, permanent) -> {
-                if (auraAttachmentService.canEnchant(gameData, perm.getCard(), controllerId, permanent)) {
+                if (auraAttachmentService.canEnchant(gameData, perm.getCard(), controllerId, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)) {
                     hosts.add(permanent.getId());
                 }
             });

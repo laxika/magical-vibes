@@ -18,7 +18,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetThenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreatureBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageDealingEffect;
@@ -252,19 +251,23 @@ public class TargetPolarityClassifier {
         // A token copy of an Aura's or Equipment's host or of a replacement's creature (formerly their own records) had no
         // polarity; the target and triggering forms kept the name entry's NEUTRAL.
         if (effect instanceof CreateTokenCopyOfTargetPermanentEffect copy) {
-            return copy.subject() instanceof PermanentSubject.Attached || copy.subject() instanceof PermanentSubject.Named
-                    ? null : TargetPolarity.NEUTRAL;
+            return switch (copy.subject()) {
+                case PermanentSubject.Attached ignored -> null;
+                case PermanentSubject.Named ignored -> null;
+                // The copies of a player's creatures, and of the returned creature, had no polarity either.
+                case PermanentSubject.ControlledBy ignored -> null;
+                case PermanentSubject.Returned ignored -> null;
+                case PermanentSubject.Except ignored -> null;
+                default -> TargetPolarity.NEUTRAL;
+            };
         }
         if (effect instanceof CreateTokenAttachedToTargetEffect attachToken) {
-            if (attachToken.subject() instanceof PermanentSubject.Source) {
+            if (attachToken.subject() instanceof PermanentSubject.Source
+                    || attachToken.subject() instanceof PermanentSubject.Returned
+                    || attachToken.subject() instanceof PermanentSubject.ReturnedThisResolution) {
                 return null;
             }
             return attachToken.targetControllerRelation() == PlayerRelation.OPPONENT
-                    ? TargetPolarity.HARMFUL
-                    : TargetPolarity.BENEFICIAL;
-        }
-        if (effect instanceof CreateTokenAttachedToTargetThenEffect attachTokenThen) {
-            return attachTokenThen.targetControllerRelation() == PlayerRelation.OPPONENT
                     ? TargetPolarity.HARMFUL
                     : TargetPolarity.BENEFICIAL;
         }

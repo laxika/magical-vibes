@@ -3,14 +3,18 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenFromHalfLifeTotalAndDealDamageEffect;
+import com.github.laxika.magicalvibes.model.amount.DeterminedOnce;
+import com.github.laxika.magicalvibes.model.amount.HalfControllerLifeRoundedUp;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Chainer's Torment — {3}{B} Enchantment — Saga
@@ -35,10 +39,11 @@ public class ChainersTorment extends Card {
                 new GainLifeEffect(2));
 
         // Chapter III: create X/X black Nightmare Horror token, it deals X damage to you
-        addTrigger(Triggers.chapter(3), new CreateTokenFromHalfLifeTotalAndDealDamageEffect(
-                "Nightmare Horror",
-                CardColor.BLACK,
-                List.of(CardSubtype.NIGHTMARE, CardSubtype.HORROR)
-        ));
+        var halfYourLife = new DeterminedOnce(new HalfControllerLifeRoundedUp());
+        addTrigger(Triggers.chapter(3),
+                new CreateTokenEffect("Nightmare Horror", halfYourLife, halfYourLife, CardColor.BLACK,
+                        List.of(CardSubtype.NIGHTMARE, CardSubtype.HORROR), Set.of(), Set.of()),
+                new TargetCreatureDealsDamageToControllerEffect(halfYourLife,
+                        Subjects.createdThisResolution(), Subjects.you()));
     }
 }

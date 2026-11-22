@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.StaticAbility;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenAndAttachToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.AttachCreatedEquipmentToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -22,6 +22,6 @@ public class USAgentJohnWalker extends Card {
                 1, "Sturdy Shield", List.of(CardSubtype.EQUIPMENT), List.of(new EquipActivatedAbility("{2}")))
                 .withTokenEffects(List.of(StaticAbility.of(new StaticBoostEffect(1, 2, Subjects.attachedCreature()))));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new CreateTokenAndAttachToSourceEffect(sturdyShield));
+                sturdyShield, new AttachCreatedEquipmentToSourceEffect());
     }
 }

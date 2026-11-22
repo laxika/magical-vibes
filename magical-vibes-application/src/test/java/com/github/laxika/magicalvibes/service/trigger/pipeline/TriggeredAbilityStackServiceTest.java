@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.trigger.pipeline;
 
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.testutil.TestStackDoor;
 
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityRequest.TriggerRecord;
@@ -42,7 +44,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToBlockedAttackersOnDeathEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongControlledCreaturesEffect;
@@ -210,7 +211,8 @@ class TriggeredAbilityStackServiceTest {
     void usesDyingPowerSnapshotForIncubate() {
         Card card = createCreature("Furnace Gremlin", 1, 2);
         Permanent perm = new Permanent(card);
-        var effect = new CreateTokenWithDyingSourcePowerCountersEffect(null);
+        var effect = new CreateXTokenWithXCountersEffect(
+                null, new EventValue(), CounterType.PLUS_ONE_PLUS_ONE, true);
         var ctx = dies(card, PLAYER1_ID, perm, 2);
 
         trigger(ctx, effect);

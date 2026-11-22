@@ -4,9 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect;
+import com.github.laxika.magicalvibes.model.effect.ClearChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenPerPermanentOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenSpellColorPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -24,9 +29,13 @@ public class RithTheAwakener extends Card {
         // color, then create a 1/1 green Saproling creature token for each permanent of that color.
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 new MayPayManaEffect("{2}{G}",
-                        new CreateTokenPerPermanentOfChosenColorEffect(new CreateTokenEffect(
-                                "Saproling", 1, 1, CardColor.GREEN,
-                                List.of(CardSubtype.SAPROLING), Set.of(), Set.of())),
+                        SequenceEffect.of(
+                                new ChooseColorAtResolutionEffect(),
+                                new CreateTokenEffect("Saproling", 1, 1, CardColor.GREEN,
+                                        List.of(CardSubtype.SAPROLING), Set.of(), Set.of())
+                                        .withAmount(new PermanentCount(new PermanentHasChosenSpellColorPredicate(),
+                                                CountScope.ANY_PLAYER)),
+                                new ClearChosenColorEffect()),
                         "Pay {2}{G}?"));
     }
 }

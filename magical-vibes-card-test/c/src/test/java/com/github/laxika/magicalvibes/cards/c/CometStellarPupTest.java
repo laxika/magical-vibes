@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkablePlaytest;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
@@ -26,7 +27,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CometStellarPup.class, GrizzlyBears.class})
+@CardUsed({CometStellarPup.class, GrizzlyBears.class, GlimpseTheUnthinkablePlaytest.class})
 class CometStellarPupTest extends BaseCardTest {
 
     private RollD6EffectHandler rollHandler;
@@ -246,5 +247,19 @@ class CometStellarPupTest extends BaseCardTest {
             harness.handlePermanentChosen(player1, target.getId());
             harness.passBothPriorities();
         }
+    }
+
+    @Test
+    @DisplayName("The damage roll doesn't offer a creature that can't be chosen")
+    void damageRollSkipsUnchoosableCreature() {
+        setRoll(4);
+        addComet(5);
+        Permanent glimpse = addCreatureReady(player2, new GlimpseTheUnthinkablePlaytest());
+
+        beginActivation();
+
+        PendingInteraction.PermanentChoice choice =
+                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validPermanentIds()).doesNotContain(glimpse.getId());
     }
 }

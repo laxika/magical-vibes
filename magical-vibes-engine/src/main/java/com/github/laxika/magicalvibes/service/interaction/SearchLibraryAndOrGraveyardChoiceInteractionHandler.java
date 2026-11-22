@@ -135,6 +135,7 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
                             .getOrDefault(battlefieldPlayerId, List.of()).stream())
                     .filter(permanent -> auraAttachmentService.canEnchant(
                             gameData, chosen, playerId, permanent))
+                    .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                     .map(Permanent::getId)
                     .toList();
             attachPlayerIds = chosen.isEnchantPlayer()

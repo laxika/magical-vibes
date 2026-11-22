@@ -57,8 +57,11 @@ public record CreateTokenAttachedToTargetEffect(CreateTokenEffect token,
                 ? PlayerRelation.SELF : targetControllerRelation;
         subject = subject == null ? Subjects.target() : subject;
         if (!(subject instanceof PermanentSubject.Target) && !(subject instanceof PermanentSubject.Source)
-                && !(subject instanceof PermanentSubject.Triggering)) {
-            throw new IllegalArgumentException("A token is attached to target(), source() or triggering(): " + subject);
+                && !(subject instanceof PermanentSubject.Triggering)
+                && !(subject instanceof PermanentSubject.Returned)
+                && !(subject instanceof PermanentSubject.ReturnedThisResolution)) {
+            throw new IllegalArgumentException("A token is attached to target(), source(), triggering(), returned() or "
+                    + "returnedThisResolution(): " + subject);
         }
     }
 

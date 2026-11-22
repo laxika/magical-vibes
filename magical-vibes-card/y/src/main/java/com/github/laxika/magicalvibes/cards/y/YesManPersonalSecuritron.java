@@ -5,12 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensForEachLeavingSourceCounterForOwnerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -28,8 +29,9 @@ public class YesManPersonalSecuritron extends Card {
 
     public YesManPersonalSecuritron() {
         addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS),
-                new CreateTokensForEachLeavingSourceCounterForOwnerEffect(
-                        CounterType.QUEST, CreateTokenEffect.whiteSoldier(1).withTapped(true)));
+                CreateTokenEffect.whiteSoldier(1).withTapped(true)
+                        .withAmount(new CountersOnSource(CounterType.QUEST))
+                        .forController(Subjects.ownerOf(Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

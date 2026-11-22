@@ -5,10 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfExiledCostCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromGraveyardCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -32,7 +35,8 @@ public class OsgirTheReconstructor extends Card {
                 "{X}",
                 List.of(
                         ExileCardFromGraveyardCost.withManaValueEqualsX(CardType.ARTIFACT, true),
-                        new CreateTokenCopyOfExiledCostCardEffect(2)),
+                        CreateTokenCopyOfCardEffect.of(Subjects.exiledAsCost(),
+                                new CreateTokenCopyOfTargetPermanentEffect(new Fixed(2)))),
                 "{X}, {T}, Exile an artifact card with mana value X from your graveyard: Create two tokens that are copies of the exiled card. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED));
     }

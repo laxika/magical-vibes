@@ -1840,6 +1840,7 @@ public class BattlefieldPlacementService {
 
         List<UUID> sacrificeable = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.permanentFilter()))
+                .filter(p -> !gameQueryService.cantBeChosenToSacrifice(gameData, p))
                 .map(Permanent::getId)
                 .toList();
         if (sacrificeable.size() < effect.count()) {
@@ -1869,6 +1870,7 @@ public class BattlefieldPlacementService {
                                               EntryCostReplacementEffect effect) {
         List<UUID> sacrificeable = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(p -> predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.permanentFilter()))
+                .filter(p -> !gameQueryService.cantBeChosenToSacrifice(gameData, p))
                 .map(Permanent::getId)
                 .toList();
         if (sacrificeable.isEmpty()) {

@@ -2828,7 +2828,8 @@ public class MultiPermanentChoiceHandlerService {
         if (remainingProliferates > 0) {
             List<UUID> eligiblePermanentIds = new ArrayList<>();
             gameData.forEachPermanent((pid, p) -> {
-                if (p.getCounters().values().stream().anyMatch(count -> count > 0)) {
+                if (p.getCounters().values().stream().anyMatch(count -> count > 0)
+                        && !gameQueryService.cantBeChosen(gameData, p)) {
                     eligiblePermanentIds.add(p.getId());
                 }
             });

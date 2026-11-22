@@ -26,7 +26,7 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
         CardSubject.TriggeringCards, CardSubject.SourceCard, CardSubject.InYourGraveyard,
         CardSubject.InGraveyards, CardSubject.InExile, CardSubject.ExiledWithSource, CardSubject.Except,
         CardSubject.TargetExiledCard, CardSubject.TopOfGraveyard, CardSubject.InHand, CardSubject.InLibrary,
-        CardSubject.InCommandZone {
+        CardSubject.InCommandZone, CardSubject.ExiledAsCost {
 
     /** Whether this subject declares a target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -101,6 +101,13 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
      * stack (CR 400.7).
      */
     record SourceCard() implements CardSubject {
+    }
+
+    /**
+     * "The exiled card" of an ability whose cost exiled it: the card this ability or spell exiled to pay for itself,
+     * while it is in exile (CR 400.7j, 608.2h), whatever the source imprinted or exiled before or since.
+     */
+    record ExiledAsCost() implements CardSubject {
     }
 
     /**

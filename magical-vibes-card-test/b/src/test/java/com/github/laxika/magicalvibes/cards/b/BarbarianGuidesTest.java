@@ -180,7 +180,8 @@ class BarbarianGuidesTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice =
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.options()).contains("DESERT", "GATE", "LOCUS", "LAIR");
+        assertThat(choice.options()).contains("DESERT", "GATE", "LOCUS", "LAIR")
+                .doesNotContain("CLOUD", "ULAMOGS", "OMEN");
         harness.handleListChoice(player1, "DESERT");
     }
 

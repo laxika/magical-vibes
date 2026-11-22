@@ -315,6 +315,11 @@ public final class Subjects {
         return new CardSubject.TriggeringCards(null);
     }
 
+    /** "The exiled card" after "exile a card from your graveyard" as a cost: {@link CardSubject.ExiledAsCost}. */
+    public static CardSubject exiledAsCost() {
+        return new CardSubject.ExiledAsCost();
+    }
+
     /** "This card" in an ability that works from a graveyard. */
     public static CardSubject sourceCard() {
         return new CardSubject.SourceCard();

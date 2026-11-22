@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToReturnedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
@@ -42,7 +42,8 @@ public class ReturnTriumphant extends Card {
                         .filter(creatureCard)
                         .targetGraveyard(true)
                         .build())
-                .addSpellEffect(new CreateTokenAttachedToReturnedPermanentEffect(youngHeroRoleToken()));
+                .addSpellEffect(new CreateTokenAttachedToTargetEffect(
+                        youngHeroRoleToken(), Subjects.returned()));
     }
 
     private static CreateTokenEffect youngHeroRoleToken() {

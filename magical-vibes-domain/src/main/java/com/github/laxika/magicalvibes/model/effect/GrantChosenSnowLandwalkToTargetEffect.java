@@ -14,9 +14,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * fixed-type form of the same evasion is
  * {@link CantBeBlockedIfDefenderControlsMatchingPermanentEffect} (Legions of Lim-Dûl).
  *
- * <p>Only the five basic land types are offered, matching every other land-type choice in the
- * engine ({@code PlayerInputService.beginBasicLandTypeChoice} and siblings). CR 702.14a allows
- * any land type, but no snow land outside the basic types exists in the implemented sets.
+ * <p>Every land type of CR 205.3i is offered, not only the basic ones ("choose a land type", CR 702.14a).
  *
  * <p>Used by Barbarian Guides.
  */

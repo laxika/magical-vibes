@@ -592,7 +592,8 @@ public class MayMiscHandlerService {
     private boolean hasLegalAuraHost(GameData gameData, Card aura, UUID controllerId) {
         boolean permanentHost = gameData.orderedPlayerIds.stream()
                 .flatMap(playerId -> gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream())
-                .anyMatch(candidate -> auraAttachmentService.canEnchant(gameData, aura, controllerId, candidate));
+                .anyMatch(candidate -> auraAttachmentService.canEnchant(gameData, aura, controllerId, candidate)
+                        && !gameQueryService.cantBeChosen(gameData, candidate));
         boolean playerHost = aura.isEnchantPlayer() && gameData.orderedPlayerIds.stream()
                 .anyMatch(playerId -> auraAttachmentService.canEnchantPlayer(gameData, aura, controllerId, playerId));
         return permanentHost || playerHost;
@@ -618,6 +619,7 @@ public class MayMiscHandlerService {
                 List<UUID> permanentIds = gameData.orderedPlayerIds.stream()
                         .flatMap(playerId -> gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream())
                         .filter(candidate -> auraAttachmentService.canEnchant(gameData, topCard, controllerId, candidate))
+                        .filter(candidate -> !gameQueryService.cantBeChosen(gameData, candidate))
                         .map(Permanent::getId).toList();
                 List<UUID> playerIds = topCard.isEnchantPlayer() ? gameData.orderedPlayerIds.stream()
                         .filter(playerId -> auraAttachmentService.canEnchantPlayer(gameData, topCard, controllerId, playerId))

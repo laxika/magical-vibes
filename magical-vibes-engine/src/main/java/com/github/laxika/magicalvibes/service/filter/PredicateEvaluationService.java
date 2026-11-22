@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.filter;
 
 import com.github.laxika.magicalvibes.model.filter.CardHasChosenSpellColorPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasMemoryCounterPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNameChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasVoidCounterPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsCommanderPredicate;
@@ -700,6 +701,8 @@ public class PredicateEvaluationService {
                     gameQueryService.cardHasSubtype(card, p.subtype(), gameData, cardOwnerId);
             case CardHasStudyCounterPredicate ignored ->
                     gameData != null && gameData.exiledCardsWithStudyCounters.contains(card.getId());
+            case CardHasMemoryCounterPredicate ignored ->
+                    gameData != null && gameData.exiledCardsWithMemoryCounters.contains(card.getId());
             case CardHasVoidCounterPredicate ignored ->
                     gameData != null && gameData.exiledCardsWithVoidCounters.contains(card.getId());
             case CardHasChosenSpellColorPredicate ignored ->

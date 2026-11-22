@@ -150,4 +150,16 @@ class CutRibbonsTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.castInstant(player2, 0, spellId))
                 .isInstanceOf(IllegalStateException.class);
     }
+
+    @Test
+    @DisplayName("An aftermath card in a hand isn't hinted playable for the cost of its second half")
+    void handHintIgnoresTheAftermathHalfsCost() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player2, new DuneBeetle());
+        harness.setHand(player1, List.of(new CutRibbons()));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+
+        assertThat(harness.getGameActionAvailabilityService().getPlayableCardIndices(gd, player1.getId())).isEmpty();
+    }
 }

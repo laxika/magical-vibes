@@ -2592,3 +2592,75 @@ GrantTurnFaceUpAbilityToOwnFaceDownCreaturesEffect,unique,9,run 18: binds a turn
 GrantUnearthToGraveyardCardsEffect,unique,9,run 18: the one temporary non-flashback grant to every matching graveyard card (Ghost Ark)
 GrantWarpToChosenCardUntilEndOfTurnEffect,unique,9,"run 18: warp until end of turn on the sought card in hand, its only grant (Gravitic Herald)"
 GrantedCardAbilityEffect,unique,9,"run 18: the floating payload of the granted graveyard and hand abilities, which three cards now name for its Ability"
+CreateTokenAttachedToReturnedPermanentEffect,absorbed,9,"run 19: CreateTokenAttachedToTargetEffect(token, returned() / returnedThisResolution()); the source return now records the returned permanent (Return Triumphant, Not Dead After All)"
+CreateTokenCopyOfEachCreatureTargetPlayerControlsEffect,absorbed,9,"run 19: CreateTokenCopyOfTargetPermanentEffect.withSubject(controlledBy(targetPlayer(), creature)): one event, Esix offered (Clone Legion)"
+CreateTokenCopyOfReturnedPermanentEffect,absorbed,9,"run 19: CreateTokenCopyOfTargetPermanentEffect(1/1).withSubject(except(returned(), legendary)) (Coiling Rebirth)"
+CreateTokenCopyOfExiledCostCardEffect,absorbed,9,"run 19: CreateTokenCopyOfCardEffect.of(exiledAsCost(), amount): new card subject; Osgir two copies one event"
+CreateTokenWithDyingSourceCounterPTEffect,absorbed,9,"run 19: CreateTokenEffect P/T CountersOnTriggeringPermanent([type]) (Unwilling Vessel, Grakmaw)"
+CreateTokenWithDyingSourcePowerCountersEffect,absorbed,9,"run 19: CreateXTokenWithXCountersEffect(incubator, EventValue, +1/+1, enters with) (Furnace Gremlin, Bloated Processor)"
+CreateTokenWithDyingSourcePowerEffect,absorbed,9,"run 19: CreateTokenEffect P/T Max(0, EventValue) (Flesh Carver)"
+CreateTokenWithTotalDyingCreaturesPowerEffect,absorbed,9,run 19: CreateTokenEffect P/T EventValue (The Skullspore Nexus)
+CreateFractalTokenWithCountersFromCardsDrawnThisTurnEffect,absorbed,9,"run 19: CreateXTokenWithXCountersEffect(Fractal, CardsDrawnThisTurn); a replacing token gets the counters (Fractal Anomaly)"
+CreateTokenAndAttachToSourceEffect,absorbed,9,run 19: CreateTokenEffect + AttachCreatedEquipmentToSourceEffect (U.S.Agent)
+CreateXTokenWithXCountersAndAttachToSourceEffect,absorbed,9,"run 19: CreateXTokenWithXCountersEffect + AttachMatchingEquipmentToCreatedPermanentEffect(source, choose) (Fractal Harness)"
+CreateTokenFromHalfLifeTotalAndDealDamageEffect,absorbed,9,"run 19: CreateTokenEffect P/T DeterminedOnce(HalfControllerLifeRoundedUp) + TargetCreatureDealsDamageToControllerEffect(same, createdThisResolution(), you()) (Chainer's Torment)"
+CreateTokensForEachLeavingSourceCounterForOwnerEffect,absorbed,9,run 19: CreateTokenEffect.withAmount(CountersOnSource).forController(ownerOf(source())) (Yes Man)
+CreateTokenAtRandomEffect,absorbed,9,"run 19: ChooseOneAtRandomEffect: the mode is chosen as the trigger goes on the stack, ruling (Outlaws' Merriment)"
+CreateTokensAttachedToOpposingCreaturesEffect,absorbed,9,"run 19: CreateTokensAttachedToControlledCreaturesEffect(token, creature, eachOpponent()) (Asinine Antics)"
+CreateTokenAttachedToTargetThenEffect,split,9,"run 19: CreateTokenAttachedToTargetEffect (records CREATE_TOKEN) + ConditionalEffect(created(), QueueReflexiveAbilityEffect.aboutEntryTarget(fight)) (Curse of the Werefox)"
+CreateTokenPerPermanentOfChosenColorEffect,split,9,"run 19: ChooseColorAtResolutionEffect + CreateTokenEffect(PermanentCount(chosen colour, ANY_PLAYER)) + ClearChosenColorEffect; its choice context deleted (Rith)"
+CreateTokenPerChosenTypeCountEffect,split,9,run 19: ChooseCreatureTypeAtResolutionEffect + Treasure(PermanentCount(creature of type chosen this resolution)) (Orcrist)
+CreateTokensForEachOpponentEffect,absorbed,9,"run 19: CreateTokenEffect.withAmount(Sum(PlayersInGame, -1)): one event (Turn Stones)"
+CreateTokenCopiesOfMemoryCounterExiledCreaturesEffect,absorbed,9,"run 19: CreateTokenCopyOfCardEffect.of(exiledCards(you(), creature + new CardHasMemoryCounterPredicate), attacking choice) (Altaïr)"
+CreateTokenCopyOfEachControlledCreatureTokenEffect,blocked-other,9,"run 19: copies the tokens' own cards: a token copy of a face-down permanent waits for the owner (with five more Create records); else controlledBy(you(), token) (Rhys, Second Harvest)"
+CreateTokenCopyOfSacrificedPermanentEffect,blocked-other,9,"run 19: copies the sacrificed snapshot's card (face-down copies wait for the owner) and has two shapes (cost sacrifice, trigger with rider)"
+CreateTokenCopyAndLinkToSourceEffect,blocked-other,9,"run 19: copies the target's card, not its copiable values (face-down copies wait for the owner); the source link (Dance of Many)"
+CreateTokenCopiesOfAttackingModifiedCreaturesEffect,blocked-other,9,run 19: copies the attackers' cards (face-down copies wait for the owner) (Mirror-Style Master)
+CreateTokenCopyOfEachCreatureOfChosenTypeEffect,blocked-other,9,run 19: copies the creatures' cards (face-down copies wait for the owner); else the type step + a set subject (Kindred Charge)
+CreateTokenCopyOfEachTokenEnteredThisTurnEffect,blocked-other,9,run 19: copies the tokens' cards (face-down copies wait for the owner) (Redoubled Stormsinger)
+CreateTokenCopyOfEachTokenOfChosenSubtypeEnteredThisTurnEffect,blocked-other,9,run 19: copies the tokens' cards (face-down copies wait for the owner) (Renewed Solidarity)
+CreateTokenForImprintedCardOwnerEffect,blocked-other,9,run 19: no player subject for the owner of the source's linked exiled card; two classes with the per-owner sibling (Severance Priest)
+CreateTokensForExiledCardsWithSourceEffect,blocked-other,9,run 19: no player subject for the owners of the cards exiled with the source; a token per owner sized by that owner's cards (Skyclave Apparition)
+CreateTokensForEachTargetPlayerCreatureEffect,blocked-other,9,run 19: an amount over the target players' creatures (subjects inside DynamicAmount are not in this plan) (Call the Coppercoats)
+CreateTokenBlockingCombatOpponentEffect,unique,9,"run 19: tokens that enter blocking the target attacker; no blocking step (Flash Foliage, Brimaz)"
+CreateTokenCopyOfTargetedSpellPermanentEffect,unique,9,"run 19: a choice among the triggering spell's permanent targets, with Orvar's still-controlled rule"
+CreateTokensAttackingEachOpponentEffect,unique,9,"run 19: one creation per opponent, each attacking that opponent"
+CreateTokensForEachOpponentAttackingEffect,unique,9,"run 19: one creation per opponent, each token bound to attack that opponent"
+CreateEmblemAsEntersEffect,unique,9,"run 19: an emblem as the permanent enters (replacement) (Tibalt, Cosmic Impostor)"
+CreateCardCopyAndCastWithoutPayingManaCostEffect,unique,9,run 19: a copy of a card from outside the game cast for free (The Heron Moon)
+CreateEmblemWithChosenSubtypeEffect,unique,9,"run 19: an emblem whose static binds the type chosen as it resolves (Oko, Shadowmoor Scion)"
+CreateModalDoubleFacedCardFromTopTwoEffect,unique,9,run 19: combines two library cards into a modal double-faced card (Blurry Visionary)
+CreateRandomCardCopyAndMayCastEffect,unique,9,run 19: a random card copy offered for a free cast (Jund 'Em Out)
+CreateTokenAndAttachTriggeringAuraEffect,unique,9,run 19: may attach the triggering Aura to the created token (Ajani's Chosen)
+CreateTokenAttachedToUpToOneTargetEffect,unique,9,run 19: the optional target of a granted trigger; no target now creates no Role (ruling) (Giant Inheritance)
+CreateTokenCardsInGraveyardEffect,unique,9,run 19: token cards put into a graveyard (Bone Rattler)
+CreateTokenCopiesOfAttachedAurasAndEquipmentEffect,unique,9,run 19: copies of the source's attachments attached to the created token (Stangg)
+CreateTokenCopiesOfChosenDistinctControlledTokensEffect,unique,9,run 19: a choice of tokens with different names (Battle for Bretagard)
+CreateTokenCopiesOfExiledCardAttackingOpponentsEffect,unique,9,"run 19: copies of the linked exiled card attacking each opponent, else the source card from a graveyard (Mardu Siegebreaker)"
+CreateTokenCopiesOfSacrificedAuraAttachedToOtherAttackingCreaturesEffect,unique,9,run 19: Aura copies attached to each other attacker (Three Dog)
+CreateTokenCopiesOfSaddledCreatureEffect,unique,9,run 19: a repeated choice among the creatures that saddled the source (Calamity)
+CreateTokenCopiesOfTargetArtifactOrGraveyardCardEffect,unique,9,run 19: a target on the battlefield or in a graveyard (Daretti)
+CreateTokenCopyOfAttackingCreaturesBlockingEffect,unique,9,run 19: each copy blocks the creature it copies (Mirror Match)
+CreateTokenCopyOfCommanderEffect,unique,9,run 19: a copy of a commander wherever it is (I Am Never Alone)
+CreateTokenCopyOfEachCreatureTokenOnBattlefieldEffect,unique,9,run 19: each controller creates copies of their own creature tokens (Parallel Evolution)
+CreateTokenCopyOfEnteringTokenForTargetPlayerEffect,unique,9,"run 19: the target player creates the copy, then you draw (Lucy MacLean)"
+CreateTokenCopyOfRandomCardEffect,unique,9,run 19: a copy of a random card from outside the game (Who's That Praetor?)
+CreateTokenCopyOfTargetPermanentUnlessPayEnergyEqualToManaValueEffect,unique,9,run 19: a per-token delayed pay-energy-or-sacrifice (Satya)
+CreateTokenThenMillControllerAndRepeatIfMilledEffect,unique,9,run 19: a create-mill loop with a loyalty counter (Grist)
+CreateTokenWithAttachedCountCountersEffect,unique,9,"run 19: counters for the Auras and Equipment on the creature, the granting one excluded (Animal Friend)"
+CreateTokenWithChosenNameEffect,unique,9,run 19: a token named by a card-name choice (A Girl and Her Dogs)
+CreateTokenWithDyingSourceCountersEffect,unique,9,run 19: the dying creature's counters of every kind on the token (Ambitious Augmenter)
+CreateTokenWithSourceCounterPTEffect,unique,9,run 19: P/T linked to the source's live counters (Saproling Burst)
+CreateTokenWithTriggeredAbilitiesOfExiledCardsEffect,unique,9,run 19: the triggered abilities of the cards exiled as the cost (The Book of Vile Darkness)
+CreateTokensAndAttachAurasEffect,unique,9,"run 19: three tokens, then Auras from hand or graveyard attached to each (Liberated Livestock)"
+CreateTokensForDistinctDiscardedCardTypesEffect,unique,9,run 19: the inline discard follow-up that counts the discarded card types (Occult Epiphany)
+CreateTokensForEachChosenCardTypeCardInTargetHandEffect,unique,9,"run 19: a card type choice, then a reveal and count of the target hand (Fertile Imagination)"
+CreateTokensWithChosenCountersEffect,unique,9,run 19: a counter kind chosen for each token (Invoke the Ancients)
+CreateTokensWithCountersFromControlledCreaturesEffect,unique,9,run 19: a counter kind among your creatures' for each token (Exotic Pets)
+CreateTokenCopyOfChosenCreatureEffect,unique,9,"run 19: Esix's replacement, built by the engine; its choice now skips what can't be chosen"
+CreateTokensAttachedToControlledCreaturesEffect,survivor,9,run 19: takes a PlayerSubject of whose creatures; absorbed the opposing-creatures record
+CreateTokenCopyOfTargetPermanentEffect,survivor,9,"run 19: accepts controlledBy, returned() and except(...) subjects; a controlledBy over a target player declares it"
+CreateTokenAttachedToTargetEffect,survivor,9,run 19: accepts returned() / returnedThisResolution() and records CREATE_TOKEN
+CreateXTokenWithXCountersEffect,survivor,9,run 19: implements TokenCreatingEffect (the absorbed Fractal records' AI marker)
+CreateTokenCopyOfCardEffect,survivor,9,run 19: reads the new exiledAsCost() card subject
+AttachCreatedEquipmentToSourceEffect,survivor,9,run 19: absorbed CreateTokenAndAttachToSourceEffect's attach half (it reads the entry's created permanents)

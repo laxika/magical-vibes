@@ -736,7 +736,8 @@ public class StepTriggerService {
     private void beginAuraReturnChoice(GameData gameData, Card auraCard, UUID ownerId) {
         List<UUID> permanentTargets = new ArrayList<>();
         gameData.forEachPermanent((ignored, candidate) -> {
-            if (auraAttachmentService.canEnchant(gameData, auraCard, ownerId, candidate)) {
+            if (auraAttachmentService.canEnchant(gameData, auraCard, ownerId, candidate)
+                    && !gameQueryService.cantBeChosen(gameData, candidate)) {
                 permanentTargets.add(candidate.getId());
             }
         });

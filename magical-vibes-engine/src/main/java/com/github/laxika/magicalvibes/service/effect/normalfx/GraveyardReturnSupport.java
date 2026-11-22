@@ -290,7 +290,8 @@ public class GraveyardReturnSupport {
                     continue;
                 }
                 for (Permanent permanent : battlefield) {
-                    if (auraAttachmentService.canEnchant(gameData, targetCard, auraControllerId, permanent)) {
+                    if (auraAttachmentService.canEnchant(gameData, targetCard, auraControllerId, permanent)
+                            && !gameQueryService.cantBeChosen(gameData, permanent)) {
                         attachTargetIds.add(permanent.getId());
                     }
                 }
@@ -329,6 +330,7 @@ public class GraveyardReturnSupport {
             if (controllerBf != null) {
                 for (Permanent p : controllerBf) {
                     if (predicateEvaluationService.matchesPermanentPredicate(gameData, p, effect.attachmentTarget())
+                            && !gameQueryService.cantBeChosen(gameData, p)
                             && (equipment != null
                                     ? equipSupport.canAttachEquipment(gameData, equipment, p)
                                     : auraAttachmentService.canEnchant(gameData, targetCard, controllerId, p))) {
@@ -1596,7 +1598,8 @@ public class GraveyardReturnSupport {
                 List<UUID> attachments = new ArrayList<>();
                 if (card.isAura()) {
                     gameData.forEachPermanent((ignored, candidate) -> {
-                        if (auraAttachmentService.canEnchant(gameData, card, controllerId, candidate)) {
+                        if (auraAttachmentService.canEnchant(gameData, card, controllerId, candidate)
+                                && !gameQueryService.cantBeChosen(gameData, candidate)) {
                             attachments.add(candidate.getId());
                         }
                     });
@@ -1651,6 +1654,7 @@ public class GraveyardReturnSupport {
 
         gameData.forEachPermanent((ignored, candidate) -> {
             if (!predicateEvaluationService.matchesPermanentPredicate(gameData, candidate, attachmentTarget)
+                    || gameQueryService.cantBeChosen(gameData, candidate)
                     || !canEnchant(gameData, auraCard, auraControllerId, candidate)) {
                 return;
             }
@@ -2556,7 +2560,8 @@ public class GraveyardReturnSupport {
     private List<UUID> findAuraAttachmentCandidates(GameData gameData, Card auraCard, UUID auraControllerId) {
         List<UUID> attachments = new ArrayList<>();
         gameData.forEachPermanent((ignored, candidate) -> {
-            if (auraAttachmentService.canEnchant(gameData, auraCard, auraControllerId, candidate)) {
+            if (auraAttachmentService.canEnchant(gameData, auraCard, auraControllerId, candidate)
+                    && !gameQueryService.cantBeChosen(gameData, candidate)) {
                 attachments.add(candidate.getId());
             }
         });

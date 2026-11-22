@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.a.AltarOfTheBrood;
 import com.github.laxika.magicalvibes.cards.b.BronzeGuardian;
 import com.github.laxika.magicalvibes.cards.c.Cloudshift;
 import com.github.laxika.magicalvibes.cards.d.DarksteelRelic;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({OsgirTheReconstructor.class, DarksteelRelic.class, GrizzlyBears.class,
-        SolRing.class, Spellbook.class, BronzeGuardian.class, Cloudshift.class})
+        SolRing.class, Spellbook.class, BronzeGuardian.class, Cloudshift.class, AltarOfTheBrood.class})
 class OsgirTheReconstructorTest extends BaseCardTest {
 
     @Test
@@ -233,5 +234,23 @@ class OsgirTheReconstructorTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().isToken())
                 .filter(permanent -> permanent.getCard().getName().equals("Sol Ring")))
                 .hasSize(2);
+    }
+
+    @Test
+    @DisplayName("The two copies are created in one event, so each sees the other enter")
+    void bothCopiesAreOneCreationEvent() {
+        Permanent osgir = harness.addToBattlefieldAndReturn(player1, new OsgirTheReconstructor());
+        osgir.setSummoningSick(false);
+        harness.setGraveyard(player1, List.of(new AltarOfTheBrood()));
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, 1, null);
+        harness.handleGraveyardCardChosen(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(2);
     }
 }

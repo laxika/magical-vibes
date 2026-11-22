@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 18: Exile, Each, Return, Put, Reveal, Choose and Grant closed; 2,082 rare records left, Create next) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 19: Exile, Each, Return, Put, Reveal, Choose, Grant and Create closed; 2,015 rare records left, Prevent next) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -624,6 +624,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 16 | Run 15's defects (exile-by-name searches, as-enters copy log, APNAP draws, the AI's dig), the chosen name's remaining users, the choose-permanents step per player and at random, then Choose's rare records | done for the defects and those parts, Choose open (28 rows: 1 absorbed, 8 split, 4 survivors, 15 unique, 9 records deleted; 20 card files changed; `ExileCardsWithSameNameEffect` by the chosen name, `CantPlayChosenNameUntilNextTurnEffect`, `ChoosePermanentsEffect.oneForEach` / `.atRandom`; 43 rare Choose records left) |
 | 17 | Run 16's small defects and dead code (Mindblaze's shuffle, split names), its shared parts, then the rest of Choose's rare records | done, Choose closed (50 rows: 2 absorbed, 12 split, 6 survivors, 8 blocked-other, 22 unique; 14 records deleted; 27 card files changed, 16 rewritten; `RegisterDelayedStepTriggerEffect.aboutPutOntoBattlefield`, subjects on four survivors, `ChoosePermanentOnEnterEffect`) |
 | 18 | Run 17's four small defects, the Grant family's waiting rows' shared parts (the Crowns' host set, the searched permanent), then its rare records | done, Grant closed (108 rare records: 29 absorbed, 2 split, 1 dead, 12 blocked-other, 64 unique; with the other rows 37 records deleted; 41 card files rewritten; `GrantGraveyardAbilityToCardsEffect`, `GrantSupertypeEffect`, `GrantAbilityToNextSpellThisTurnEffect`, `searched()`, `attachedAndSharingCreatureType()`) |
+| 19 | Run 18's small defects (Room spell names, mayhem types, unchoosable candidates of the non-target choices), then the Create family's rare records | done, Create closed (67 rare records: 17 absorbed, 3 split, 1 survivor, 10 blocked-other, 37 unique (one is Esix's engine-built record); 20 records deleted; 24 card files rewritten; `exiledAsCost()`, `CardHasMemoryCounterPredicate`, subjects on the token copy and the attached token, CREATE_TOKEN from the attached token) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -7992,6 +7993,113 @@ cards outside the samples, the sampled heads' card text.
 - `searched()` exists: grep the Search, Untap and Put rows waiting for the searched permanent before giving that blocker.
 - The graveyard-ability grant and the scavenge record, and the supertype grant and its enchanted twin, are step 10 pairs.
 - Seven `step-9` ledger rows are left, as run 17 listed them; the can't-be-countered trio settles Grant's two blocked rows.
+
+### Step 9, run 19 (2026-11-22, Create closed)
+
+Run 18's small defects, then a verdict for each of the Create family's 67 rare records and the engine-built Esix record: Create has
+none left. Ratchet 4,174 / 3,409 → 4,154 / 3,389 records / handlers (20 records and 20 handlers deleted; one card predicate and one
+card subject variant added outside the counted packages). 24 card files rewritten by scratch scripts; Oracle text checked with
+`get_card` for 23 of them (Turn Stones, a prepared spell, is not in the feeds: by its record) and for none of the defects' cards
+(Rooms, Green Goblin and the aftermath cards by rule); rulings with
+`get_rulings` for Coiling Rebirth, Osgir, Flesh Carver, The Skullspore Nexus, Fractal Anomaly, Chainer's Torment, Altaïr, Outlaws'
+Merriment, Return Triumphant, Not Dead After All and Giant Inheritance. The unique and blocked verdicts come from reading each record,
+handler and card. CR 101.2, 107.1b, 115.1, 115.10a, 205.3i, 301.5, 303.4f, 303.4g, 406.3a, 508.4, 603.12, 608.2c, 608.2d, 608.2h,
+614.1a, 614.6, 616.1, 701.7a, 701.34a, 701.53a, 702.2b, 702.2d, 702.127a, 707.2, 709.3a, 709.3b, 709.4, 709.5, 709.5b and 709.5d
+702.14a checked with `get_rule` (2026-11-22).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | `step-9` | Left unaudited |
+|---|---|---|---|---|---|---|---|---|
+| Create | 72 rows (67 rare records, Esix's engine-built record, 4 survivors) | 17 | 3 | 5 (one of them rare) | 10 other (face-down copies waiting for the owner 7, the owner of a linked exiled card 2, an amount over target players 1) | 37 | 0 | no rare record (8 records of three or more cards) |
+| Other families | 1 row (`AttachCreatedEquipmentToSourceEffect`, a survivor now) | 0 | 0 | 1 | 0 | 0 | 0 | Attach 18. All families: 2,015 rare records without a row |
+
+- **Subjects.** The token copy takes `controlledBy(...)` (declaring a target player as the effect's target), `returned()` and
+  `except(...)`; the attached token takes `returned()` and `returnedThisResolution()` and records `CREATE_TOKEN`; the attached-to-each
+  record takes whose creatures (`PlayerSubject`). New card subject `exiledAsCost()` (the card the ability's own cost exiled) and
+  predicate `CardHasMemoryCounterPredicate`. The source return (`ReturnSourceCardFromGraveyardToBattlefieldEffect`) now remembers the
+  permanent it returned, so `returnedThisResolution()` names it.
+- **Face-down copies.** Seven Create records copy a permanent's `getCard()` instead of its copiable values (CR 707.2): a token copy of
+  a face-down permanent is the owner's decision, so they are ledgered blocked and keep their face-down behaviour. The converted copy
+  records (Clone Legion, Coiling Rebirth) already read copiable values; their face-down behaviour is unchanged.
+- **AI.** `CreateXTokenWithXCountersEffect` is now a `TokenCreatingEffect` (the absorbed Fractal records' marker), so its 22 cards count
+  as token makers in the AI's estimates; the copy and attach polarity keeps the absorbed records' (none for the set, returned and
+  source forms).
+
+**Behaviour changes.** "Failed before" means the new test failed on HEAD's sources (run before the change).
+
+1. A Room spell has only the cast door's name on the stack (CR 709.3b); the permanent it becomes, a countered spell and a copy's token
+   have both halves' names again (CR 709.4, 709.5b). `BottomlessPoolLockerRoomTest.spellHasOnlyTheCastDoorsName` (failed before),
+   `counteredRoomIsTheWholeCardAgain` (a guard).
+2. Green Goblin's mayhem judges a graveyard card by its current types: `NormanOsbornTest.mayhemReadsCurrentTypes` (failed before).
+3. A permanent that can't be chosen (Glimpse) isn't counted or offered in these choices (not targets, CR 115.10a): proliferate (both
+   prompts, CR 701.34a), the as-enters sacrifices (Devour, Dracoplasm-style, sacrifice-for-counters) and the land-casualty and
+   sacrifice-to-enter costs (with "can't be sacrificed", CR 101.2), the power-based tap cost's extra creatures, every Aura host choice
+   of an Aura entering without being cast (CR 303.4f) on the paths that list hosts (entry batch, selected Auras, Auspicious Starrix,
+   graveyard returns, Morphic Tide, exile returns, top of library, search, end-step returns, token copies, Clone, hand puts, Aura
+   sources), Vesuvan Shapeshifter's face-up copy and Aura host, Comet's damage roll, the token Equipment choice, Esix's copy, the
+   saddler, Battle for Bretagard's tokens and Orvar's spell targets. Tests: `SteadyProgressTest` (2), `DracoplasmTest`,
+   `MaestrosTotallySafeHideoutTest`, `ReplenishTest`, `VesuvanShapeshifterTest`, `CometStellarPupTest`, `EsixFractalBloomTest`
+   (all failed before).
+4. Giant Inheritance creates no Role without a target (ruling, CR 303.4g). `GiantInheritanceTest` (failed before; see Tests edited).
+5. Outlaws' Merriment's token is chosen at random as the ability goes on the stack (ruling): `OutlawsMerrimentTest` (failed before).
+6. Osgir's two copies are one creation event (CR 701.7a, 616.1), each of the exiled card the ability's own cost exiled:
+   `OsgirTheReconstructorTest.bothCopiesAreOneCreationEvent` (failed before).
+7. Fractal Anomaly puts the counters on the token a replacement creates instead ("it"): `FractalAnomalyTest` (failed before).
+8. Clone Legion's and Coiling Rebirth's copies offer Esix's replacement (CR 614.1a): `CloneLegionTest`, `CoilingRebirthTest` (failed
+   before). Clone Legion's copies are one event.
+9. Return Triumphant's Role follows the returned creature whoever controls it (Oracle "attached to it"):
+   `ReturnTriumphantTest.roleFollowsACreatureThatEnteredUnderAnOpponentsControl` (failed before).
+10. Turn Stones' Pests are one creation event; Rith's and Orcrist's choices are the colour and creature-type steps (Rith's
+    "chooses green" log line is gone); Curse of the Werefox's fight waits for a created Role through `created()`; Yes Man's tokens go
+    to its owner through `ownerOf(source())`; prompts and log lines are the survivors'.
+11. Barbarian Guides already offered more than the five basic types (run 18's premise was false; only the record's Javadoc said
+    five); it offered the playtest-only types too, and now offers the land types of CR 205.3i: `BarbarianGuidesTest.canChooseNonbasicLandType`
+    (an assertion added; by reading it failed before, not run on HEAD).
+
+**What a player sees.** The new card subject names a card in exile, the memory filter exiled face-up cards; the Room spell's name is
+the cast door's, which is public.
+
+**Seen, not changed** (for the owner's decision where it is a leak). Run 18's other items stand.
+
+- Pestilent Spirit (1f): no fix without a new mechanism. A stack entry doesn't record whether its source was a spell, and the
+  carriers of a resolving spell are triggered-ability entries like a cycling trigger's, so `sourceHasKeyword` can't tell an instant's
+  own damage from an ability of an instant card (CR 702.2d is about zones, not spells). Needs a "source is a spell" fact on the entry.
+- The aftermath hint (1d): premise false: an aftermath card's mana cost is its first half's, and its modes have no cost of their own,
+  so a hand is hinted only for that cost (`CutRibbonsTest.handHintIgnoresTheAftermathHalfsCost` guards it).
+- The other prompt callers (1e) that count before the prompt drops an unchoosable permanent (about 400 calls of the permanent and
+  multi-permanent prompts) weren't swept; targets are excluded by shroud and targeting rules already.
+- Battle for Bretagard copies each chosen token as its own event (CR 616.1); Liberated Livestock creates its three tokens as three
+  events.
+- `CreateTokensAttachedToControlledCreaturesEffect` pairs tokens to creatures by the token multiplier, so an added token
+  (Queen Allenal) can be attached to the wrong creature.
+- Gather Specimens doesn't redirect a creature returned from a graveyard (`resolveGatherSpecimensController` covers spells and some
+  puts).
+- Several Create handlers name a choice's source by `entry.getCard().getName()`.
+
+**Tests edited.** The new cases above. Contradicted a ruling: `GiantInheritanceTest.attackTriggerCanBeDeclinedAndUnattachedRoleIsPutIntoGraveyard`
+became `attackTriggerWithoutATargetCreatesNoRole` (it asserted the Role entered unattached). Named a deleted record:
+`TriggeredAbilityStackServiceTest.usesDyingPowerSnapshotForIncubate` (same assertions on the survivor). `EffectCountRatchetTest`'s
+baselines.
+
+**Tests run.** The final sources but the Barbarian Guides change in one Gradle run with every test task forced (`--rerun`), one
+`--tests` list per task, counted from that run's XML by the test cases' class names: 549 classes (991 suites, 10,155 cases, 29 skipped:
+`TriggerRouteRecordTest`'s assumption; 0 failures): the 28 test classes that name one of the 24 rewritten cards, Green Goblin or Giant
+Inheritance, every changed test class, the 57 Room and the split-card name tests, `--tests-for` the changed survivors and handlers (all
+cards; at most 12 each for the token copy, proliferate, graveyard and exile returns, the as-enters sacrifices, the entry costs and
+`CreateTokenEffect`), and 186 application and AI classes naming a changed class (architecture with `EffectCountRatchetTest`). Then
+`BarbarianGuidesTest` and `EffectCountRatchetTest` after the last change (11 cases, 0 failures); every project's main and test Java
+sources compile on the final tree. No deleted handler asked death replacements first, so `Mastery|DeathReplacement` wasn't selected.
+The new cases failed on HEAD's sources but the two guards. Not run: the full suites, the AI fuzz and stress tests, the frontend. Not
+verified: the AI's estimates with the new marker, more than two players (Turn Stones' count), MCTS over the converted effects, the
+sweep's aura-host paths but Replenish's by a test of their own.
+
+**For the next run (run 20: Prevent 66; then May 58, Perpetually 55, Conjure 49, Register 48, Target 48).**
+
+- Seven Create records copy a permanent's card and wait for the owner's decision on face-down copies; when it is made, they fold into
+  the token copy with a set subject (`controlledBy`), with Dance of Many's link and the sacrificed copy's two shapes.
+- The owner of a linked exiled card (Severance Priest, Skyclave Apparition) has two classes; a third in Return or Exile builds it.
+- Pestilent Spirit needs a "source is a spell" fact on the stack entry; the remaining prompt callers that count before dropping an
+  unchoosable permanent wait for a sweep of their own.
+- Seven `step-9` ledger rows are left, as run 17 listed them.
 
 ## Prompt
 

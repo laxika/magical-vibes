@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkablePlaytest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JadeMage;
 import com.github.laxika.magicalvibes.cards.s.SpittingImage;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({EsixFractalBloom.class, GrizzlyBears.class, JadeMage.class, SpittingImage.class})
+@CardUsed({EsixFractalBloom.class, GrizzlyBears.class, JadeMage.class, SpittingImage.class, GlimpseTheUnthinkablePlaytest.class})
 class EsixFractalBloomTest extends BaseCardTest {
 
     @Test
@@ -148,5 +149,21 @@ class EsixFractalBloomTest extends BaseCardTest {
                 .filteredOn(permanent -> permanent.getCard().isToken())
                 .singleElement()
                 .satisfies(permanent -> assertThat(permanent.getCard().getName()).isEqualTo("Jade Mage"));
+    }
+
+    @Test
+    @DisplayName("The creature choice doesn't open when the only other creature can't be chosen")
+    void unchoosableCreatureIsNoCopyCandidate() {
+        Permanent esix = harness.addToBattlefieldAndReturn(player1, new EsixFractalBloom());
+        harness.addToBattlefield(player1, new JadeMage());
+        Permanent glimpse = harness.addToBattlefieldAndReturn(player1, new GlimpseTheUnthinkablePlaytest());
+        addJadeMageMana();
+        harness.activateAbility(player1, 1, 0, null);
+        harness.passBothPriorities();
+        gd.playerBattlefields.get(player1.getId()).removeIf(permanent -> permanent != esix && permanent != glimpse);
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -21,6 +23,7 @@ import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -45,13 +48,17 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CreateTokenAttachedToTargetEffect) effect;
+        int createdBefore = entry.getCreatedPermanentIds().size();
         if (e.subject() instanceof PermanentSubject.Triggering) {
-            resolveOneOfTriggeringPermanents(gameData, entry, e);
+            if (resolveOneOfTriggeringPermanents(gameData, entry, e)) {
+                recordCreated(gameData, entry, createdBefore);
+            }
             return;
         }
         if (!(e.subject() instanceof PermanentSubject.Target)) {
             subjectResolutionService.permanents(gameData, entry, e, e.subject())
                     .forEach(host -> createAttachedToken(gameData, entry, e, host.getId()));
+            recordCreated(gameData, entry, createdBefore);
             return;
         }
         List<UUID> targetIds = entry.targetsForEffect(e);
@@ -61,14 +68,31 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
             targetIds = List.of(entry.getTargetId());
         }
         resolve(gameData, entry, e, targetIds);
+        recordCreated(gameData, entry, createdBefore);
+    }
+
+    /** The step's result: the tokens it created and their controllers ("when you do", Curse of the Werefox). */
+    private void recordCreated(GameData gameData, StackEntry entry, int createdBefore) {
+        List<UUID> created = List.copyOf(entry.getCreatedPermanentIds()
+                .subList(createdBefore, entry.getCreatedPermanentIds().size()));
+        List<UUID> controllers = new ArrayList<>();
+        for (UUID tokenId : created) {
+            UUID controllerId = gameQueryService.findPermanentController(gameData, tokenId);
+            if (controllerId != null) {
+                controllers.add(controllerId);
+            }
+        }
+        entry.recordStep(StepKind.CREATE_TOKEN, StepOutcome.ofObjects(created, controllers));
     }
 
     /**
      * "Attached to that creature" / "to one of them": the token is attached to the permanent whose event made the ability
      * trigger, or to one of them that still fits it, which its controller chooses as it resolves when there are several
      * (not a target).
+     *
+     * @return whether the step finished without asking
      */
-    private void resolveOneOfTriggeringPermanents(GameData gameData, StackEntry entry,
+    private boolean resolveOneOfTriggeringPermanents(GameData gameData, StackEntry entry,
                                                   CreateTokenAttachedToTargetEffect e) {
         List<UUID> candidates = triggeringCandidates(gameData, entry, e);
         if (candidates.size() > 1) {
@@ -76,9 +100,10 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
                     new PermanentChoiceContext.CreateTokenAttachedToOneOfTriggeringPermanents(e));
             playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), candidates,
                     "Choose one of the creatures that entered to attach the token to.");
-            return;
+            return false;
         }
         candidates.forEach(candidateId -> createAttachedToken(gameData, entry, e, candidateId));
+        return true;
     }
 
     /** Attaches the token of the effect waiting in {@code context} to the chosen {@code chosenPermanentId}. */
@@ -92,7 +117,9 @@ public class CreateTokenAttachedToTargetEffectHandler implements NormalEffectHan
         if (!triggeringCandidates(gameData, entry, context.effect()).contains(chosenPermanentId)) {
             throw new IllegalStateException("Choose one of the creatures that entered");
         }
+        int createdBefore = entry.getCreatedPermanentIds().size();
         createAttachedToken(gameData, entry, context.effect(), chosenPermanentId);
+        recordCreated(gameData, entry, createdBefore);
     }
 
     private List<UUID> triggeringCandidates(GameData gameData, StackEntry entry,

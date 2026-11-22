@@ -76,7 +76,8 @@ public class CreateTokenCopyOfChosenCreatureEffectHandler implements NormalEffec
         for (UUID playerId : gameData.orderedPlayerIds) {
             for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
                 if (!permanent.getId().equals(excludedPermanentId)
-                        && gameQueryService.isCreature(gameData, permanent)) {
+                        && gameQueryService.isCreature(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)) {
                     ids.add(permanent.getId());
                 }
             }

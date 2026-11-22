@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.Humble;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -281,5 +282,18 @@ class NormanOsbornTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+    }
+
+    @Test
+    @DisplayName("Mayhem judges a graveyard card by its current types: one that became a land doesn't have it")
+    void mayhemReadsCurrentTypes() {
+        addBackReady(player1);
+        MindStone stone = new MindStone();
+        harness.setGraveyard(player1, List.of(stone));
+        gd.cardsDiscardedOrCycledThisTurn.put(player1.getId(), new HashSet<>(Set.of(stone.getId())));
+        gd.perpetualCardTypes.put(stone.getId(), Set.of(CardType.LAND));
+        prepareMainPhase();
+
+        assertThatThrownBy(() -> harness.castFromGraveyard(player1, 0)).isInstanceOf(IllegalStateException.class);
     }
 }

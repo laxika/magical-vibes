@@ -642,6 +642,7 @@ public class AsEntersInteractionService {
         if (devour != null) {
             List<UUID> sacrificeable = enteringBattlefieldForDevour.stream()
                     .filter(p -> p != devourEnteringPermanent && gameQueryService.isCreature(gameData, p))
+                    .filter(p -> !gameQueryService.cantBeChosenToSacrifice(gameData, p))
                     .map(Permanent::getId)
                     .toList();
             if (!sacrificeable.isEmpty()) {
@@ -664,6 +665,7 @@ public class AsEntersInteractionService {
             Permanent justEntered = bf.get(bf.size() - 1);
             List<UUID> sacrificeable = bf.stream()
                     .filter(p -> p != justEntered && gameQueryService.isCreature(gameData, p))
+                    .filter(p -> !gameQueryService.cantBeChosenToSacrifice(gameData, p))
                     .map(Permanent::getId)
                     .toList();
             if (!sacrificeable.isEmpty()) {
@@ -692,6 +694,7 @@ public class AsEntersInteractionService {
                     .filter(p -> p != justEntered)
                     .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
                             p, sacrificeForPowerToughness.filter(), filterContext))
+                    .filter(p -> !gameQueryService.cantBeChosenToSacrifice(gameData, p))
                     .map(Permanent::getId)
                     .toList();
             if (!sacrificeable.isEmpty()) {
@@ -723,6 +726,7 @@ public class AsEntersInteractionService {
                     .filter(p -> p != justEntered)
                     .filter(p -> predicateEvaluationService.matchesPermanentPredicate(
                             p, sacForCounters.filter(), filterContext))
+                    .filter(p -> !gameQueryService.cantBeChosenToSacrifice(gameData, p))
                     .map(Permanent::getId)
                     .toList();
             if (!sacrificeable.isEmpty()) {

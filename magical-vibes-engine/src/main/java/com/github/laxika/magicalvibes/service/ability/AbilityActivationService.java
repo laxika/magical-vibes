@@ -6447,7 +6447,12 @@ public class AbilityActivationService {
         }
 
         if (context.costEffect() instanceof PowerBasedTapCost && remaining <= 0) {
-            List<UUID> additionalChoices = handler.getValidChoiceIds(gameData, playerId);
+            List<UUID> additionalChoices = handler.getValidChoiceIds(gameData, playerId).stream()
+                    .filter(id -> {
+                        Permanent candidate = gameQueryService.findPermanentById(gameData, id);
+                        return candidate == null || !gameQueryService.cantBeChosen(gameData, candidate);
+                    })
+                    .toList();
             if (!additionalChoices.isEmpty()) {
                 gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ActivatedAbilityCostChoice(
                         playerId, context.sourcePermanentId(), context.abilityIndex(), context.xValue(),

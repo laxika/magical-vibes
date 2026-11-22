@@ -1223,6 +1223,9 @@ public class SpellCastingService {
                 }
 
                 if (card.getRoomDoorManaCosts().size() == 2 && chosenModeIndices.size() == 1) {
+                    // Only the door being cast gives the spell its name (CR 709.3b).
+                    card.rememberSplitWholeCard();
+                    card.setName(chosenModes.getFirst().label());
                     card.setSelectedRoomDoor(chosenModeIndices.getFirst());
                 }
 

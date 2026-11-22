@@ -3,10 +3,13 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.b.BarkformHarvester;
 import com.github.laxika.magicalvibes.cards.b.BaylenTheHaymaker;
 import com.github.laxika.magicalvibes.cards.d.DaggerfangDuo;
+import com.github.laxika.magicalvibes.cards.e.EsixFractalBloom;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -17,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CoilingRebirth.class, BarkformHarvester.class, BaylenTheHaymaker.class, DaggerfangDuo.class})
+@CardUsed({CoilingRebirth.class, BarkformHarvester.class, BaylenTheHaymaker.class, DaggerfangDuo.class, EsixFractalBloom.class})
 class CoilingRebirthTest extends BaseCardTest {
 
     @Test
@@ -187,5 +190,22 @@ class CoilingRebirthTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("Esix can replace the copy of the returned creature")
+    void esixIsOfferedTheCopy() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new EsixFractalBloom());
+        Card creature = new BarkformHarvester();
+        harness.setGraveyard(player1, List.of(creature));
+        harness.setHand(player1, List.of(new CoilingRebirth()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+
+        harness.castSorceryWithGift(player1, 0, List.of(creature.getId()), true);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
     }
 }

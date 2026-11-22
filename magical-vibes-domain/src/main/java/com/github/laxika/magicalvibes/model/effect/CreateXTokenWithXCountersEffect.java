@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.XValue;
@@ -20,7 +21,27 @@ public record CreateXTokenWithXCountersEffect(
         DynamicAmount counterAmount,
         CounterType counterType,
         boolean entersWithCounters
-) implements CardEffect {
+) implements CardEffect, TokenCreatingEffect {
+
+    @Override
+    public DynamicAmount tokenAmount() {
+        return tokenTemplate.amount();
+    }
+
+    @Override
+    public CardType tokenType() {
+        return tokenTemplate.primaryType();
+    }
+
+    @Override
+    public int tokenPower() {
+        return tokenTemplate.tokenPower();
+    }
+
+    @Override
+    public int tokenToughness() {
+        return tokenTemplate.tokenToughness();
+    }
 
     public CreateXTokenWithXCountersEffect(CreateTokenEffect tokenTemplate, DynamicAmount counterAmount,
                                            CounterType counterType) {

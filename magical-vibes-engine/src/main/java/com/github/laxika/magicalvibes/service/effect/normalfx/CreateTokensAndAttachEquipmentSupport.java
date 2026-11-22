@@ -87,6 +87,7 @@ public class CreateTokensAndAttachEquipmentSupport {
         for (Permanent equipment : gameData.playerBattlefields.getOrDefault(context.controllerId(), List.of())) {
             if (!equipment.getCard().getSubtypes().contains(CardSubtype.EQUIPMENT)
                     || context.chosenEquipmentIds().contains(equipment.getId())
+                    || gameQueryService.cantBeChosen(gameData, equipment)
                     || !equipSupport.canAttachEquipment(gameData, equipment, token)) {
                 continue;
             }

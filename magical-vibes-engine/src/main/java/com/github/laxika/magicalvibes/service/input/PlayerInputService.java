@@ -866,19 +866,6 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a color (Oona-style exile/token)", gameData.id, playerName);
     }
 
-    public void beginCreateTokensPerPermanentOfChosenColorChoice(GameData gameData, UUID controllerId,
-            com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate, String sourceSetCode) {
-        ChoiceContext.CreateTokensPerPermanentOfChosenColorChoice ctx =
-                new ChoiceContext.CreateTokensPerPermanentOfChosenColorChoice(controllerId, tokenTemplate, sourceSetCode);
-
-        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                controllerId, null, null, ctx, colors, "Choose a color."));
-
-        String playerName = gameData.playerIdToName.get(controllerId);
-        log.info("Game {} - Awaiting {} to choose a color (Rith token-per-permanent)", gameData.id, playerName);
-    }
-
     /**
      * Asks for Jinnie Fay's Cat, Dog or original tokens as her replacement applies to a token creation event,
      * queued behind any prompt already awaiting an answer.
@@ -2278,9 +2265,10 @@ public class PlayerInputService {
     public void beginSnowLandwalkTypeChoice(GameData gameData, UUID playerId, UUID targetId) {
         ChoiceContext.SnowLandwalkGrantChoice choiceContext = new ChoiceContext.SnowLandwalkGrantChoice(targetId);
 
-        List<String> basicLandTypes = CardSubtype.landTypes().stream().map(Enum::name).toList();
+        // The land types of CR 205.3i, not the playtest-only ones.
+        List<String> landTypes = CardSubtype.rulesLandTypes().stream().map(Enum::name).toList();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                playerId, null, null, choiceContext, basicLandTypes, "Choose a land type for snow landwalk."));
+                playerId, null, null, choiceContext, landTypes, "Choose a land type for snow landwalk."));
 
         String playerName = gameData.playerIdToName.get(playerId);
         log.info("Game {} - Awaiting {} to choose a land type for snow landwalk", gameData.id, playerName);

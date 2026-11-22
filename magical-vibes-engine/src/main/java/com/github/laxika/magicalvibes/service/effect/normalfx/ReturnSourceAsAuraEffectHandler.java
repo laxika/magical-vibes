@@ -61,7 +61,8 @@ public class ReturnSourceAsAuraEffectHandler implements NormalEffectHandlerBean 
         List<Permanent> controlledPermanents = gameData.playerBattlefields.get(controllerId);
         if (controlledPermanents != null) {
             for (Permanent permanent : controlledPermanents) {
-                if (auraAttachmentService.canEnchant(gameData, auraCard, controllerId, permanent)) {
+                if (auraAttachmentService.canEnchant(gameData, auraCard, controllerId, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)) {
                     validTargetIds.add(permanent.getId());
                 }
             }

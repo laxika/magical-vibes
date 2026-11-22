@@ -41,6 +41,7 @@ public class CreateTokenCopiesOfChosenDistinctControlledTokensEffectHandler impl
 
         List<UUID> validIds = battlefield.stream()
                 .filter(permanent -> permanent.getCard().isToken())
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .filter(permanent -> gameQueryService.isArtifact(gameData, permanent)
                         || gameQueryService.isCreature(gameData, permanent))
                 .map(Permanent::getId)

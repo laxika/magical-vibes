@@ -6,15 +6,24 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
-/** Creates one token attached to each matching creature controlled by the effect controller. */
+/**
+ * Creates one token attached to each creature matching {@code filter} that one of {@code controllers} controls ("for
+ * each Rat you control", "for each creature your opponents control"), under the effect's controller's control.
+ */
 public record CreateTokensAttachedToControlledCreaturesEffect(
         CreateTokenEffect token,
-        PermanentPredicate filter
+        PermanentPredicate filter,
+        PlayerSubject controllers
 ) implements CardEffect, TokenCreatingEffect {
+
+    public CreateTokensAttachedToControlledCreaturesEffect(CreateTokenEffect token, PermanentPredicate filter) {
+        this(token, filter, Subjects.you());
+    }
 
     @Override
     public DynamicAmount tokenAmount() {
-        return new PermanentCount(filter, CountScope.CONTROLLER);
+        return new PermanentCount(filter,
+                controllers instanceof PlayerSubject.You ? CountScope.CONTROLLER : CountScope.OPPONENTS);
     }
 
     @Override

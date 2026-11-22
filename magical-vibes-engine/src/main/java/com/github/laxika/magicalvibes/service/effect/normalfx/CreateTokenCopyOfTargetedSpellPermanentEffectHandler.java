@@ -78,7 +78,7 @@ public class CreateTokenCopyOfTargetedSpellPermanentEffectHandler implements Nor
                     ? target != null && !targetId.equals(entry.getSourcePermanentId())
                     && entry.getControllerId().equals(gameData.findControllerOf(target))
                     : target != null || departedPermanent(gameData, targetId) != null;
-            if (copiable) {
+            if (copiable && (target == null || !gameQueryService.cantBeChosen(gameData, target))) {
                 validIds.add(targetId);
             }
         }

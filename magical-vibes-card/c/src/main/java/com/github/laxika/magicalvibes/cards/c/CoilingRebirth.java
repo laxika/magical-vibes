@@ -8,14 +8,17 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfReturnedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @CardRegistration(set = "BLB", collectorNumber = "86")
 public class CoilingRebirth extends Card {
@@ -33,7 +36,8 @@ public class CoilingRebirth extends Card {
                         .targetGraveyard(true)
                         .build())
                 .addSpellEffect(new ConditionalEffect(new GiftPromised(),
-                        new CreateTokenCopyOfReturnedPermanentEffect(
-                                new PermanentNotPredicate(new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY)), 1, 1)));
+                        new CreateTokenCopyOfTargetPermanentEffect(List.of(), Set.of(), 1, 1, Map.of())
+                                .withSubject(Subjects.except(Subjects.returned(), Subjects.controlledBy(Subjects.eachPlayer(),
+                                        new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY))))));
     }
 }

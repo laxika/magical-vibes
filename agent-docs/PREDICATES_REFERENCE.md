@@ -578,6 +578,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardHasTypeChosenThisResolutionPredicate` | `()` | cards of the creature type chosen earlier in the same resolution, changeling included; needs the `GameData` |
 | `CardHasStudyCounterPredicate` | `()` | an exiled card with a study counter; needs the `GameData` |
 | `CardHasVoidCounterPredicate` | `()` | an exiled card with a void counter; needs the `GameData` (Dauthi Voidwalker) |
+| `CardHasMemoryCounterPredicate` | `()` | an exiled card with a memory counter; needs the `GameData` (Altaïr Ibn-La'Ahad) |
 | `CardHasChosenSpellColorPredicate` | `()` | a card of the color a `ChooseColorAtResolutionEffect` of this resolution chose, as effects leave its colors; needs the `GameData`. Put `ClearChosenColorEffect` after the last reader (Addle) |
 | `CardKeywordPredicate` | `(Keyword)` or `(Keyword, TargetingRestrictionEffect)` | a card with the named keyword, including `MUTATE` for creature cards with a mutate ability; the optional restriction selects the corresponding restricted hexproof variant without matching unrestricted hexproof |
 | `CardHasCascadePredicate` | `()` | a card whose spell has a `CascadeEffect` in its `Triggers.youCastThisSpell()` ability; use for "cast a spell with cascade" triggers |

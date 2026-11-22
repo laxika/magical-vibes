@@ -27,6 +27,18 @@ public final class RoomNameSupport {
                         : Set.of(card.getName()));
     }
 
+    /** The name of a Room with both its halves, also for a spell or copy of one named for the door being cast. */
+    public static String combinedName(Card card) {
+        return card.getSpellEffects().stream()
+                .filter(ChooseOneEffect.class::isInstance)
+                .map(ChooseOneEffect.class::cast)
+                .findFirst()
+                .map(modal -> modal.options().stream()
+                        .map(ChooseOneEffect.ChooseOneOption::label)
+                        .collect(java.util.stream.Collectors.joining(" // ")))
+                .orElseGet(card::getName);
+    }
+
     public static Set<String> unlockedDoorNames(Permanent permanent) {
         List<String> doorNames = permanent.getCard().getSpellEffects().stream()
                 .filter(ChooseOneEffect.class::isInstance)

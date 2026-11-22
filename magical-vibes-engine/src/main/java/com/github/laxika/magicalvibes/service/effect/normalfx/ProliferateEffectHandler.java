@@ -64,7 +64,8 @@ public class ProliferateEffectHandler implements NormalEffectHandlerBean {
         // Collect all permanents with counters (any player's battlefield).
         List<UUID> eligiblePermanentIds = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
-            if (p.getCounters().values().stream().anyMatch(count -> count > 0)) {
+            if (p.getCounters().values().stream().anyMatch(count -> count > 0)
+                    && !gameQueryService.cantBeChosen(gameData, p)) {
                 eligiblePermanentIds.add(p.getId());
             }
         });

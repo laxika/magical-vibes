@@ -13,10 +13,12 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,6 +29,7 @@ public class CreateTokensAttachedToControlledCreaturesEffectHandler implements N
     private final PermanentControlSupport permanentControlSupport;
     private final DurationClock durationClock;
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final AmountEvaluationService amountEvaluationService;
     private final AuraAttachmentService auraAttachmentService;
     private final PredicateEvaluationService predicateEvaluationService;
@@ -39,9 +42,9 @@ public class CreateTokensAttachedToControlledCreaturesEffectHandler implements N
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (CreateTokensAttachedToControlledCreaturesEffect) effect;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
-        if (battlefield == null || battlefield.isEmpty()) {
-            return;
+        List<Permanent> candidates = new ArrayList<>();
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, e, e.controllers())) {
+            candidates.addAll(gameData.playerBattlefields.getOrDefault(playerId, List.of()));
         }
 
         FilterContext filterContext = FilterContext.of(gameData)
@@ -49,7 +52,7 @@ public class CreateTokensAttachedToControlledCreaturesEffectHandler implements N
                 .withSourceControllerId(entry.getControllerId())
                 .withSourcePermanentId(entry.getSourcePermanentId())
                 .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
-        List<Permanent> matchingCreatures = List.copyOf(battlefield).stream()
+        List<Permanent> matchingCreatures = candidates.stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
                 .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         permanent, e.filter(), filterContext))

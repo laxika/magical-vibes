@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.c.CarapaceForger;
+import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkablePlaytest;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SteadyProgress.class, CarapaceForger.class})
+@CardUsed({SteadyProgress.class, CarapaceForger.class, GlimpseTheUnthinkablePlaytest.class})
 class SteadyProgressTest extends BaseCardTest {
 
     @Test
@@ -171,5 +173,34 @@ class SteadyProgressTest extends BaseCardTest {
         assertThat(gd.playerPoisonCounters.get(player2.getId())).isEqualTo(2);
         assertThat(gd.playerPoisonCounters.getOrDefault(player1.getId(), 0)).isZero();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+
+    @Test
+    @DisplayName("Proliferate doesn't offer a permanent that can't be chosen next to a player")
+    void proliferateSkipsUnchoosablePermanent() {
+        Permanent glimpse = harness.addToBattlefieldAndReturn(player1, new GlimpseTheUnthinkablePlaytest());
+        glimpse.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        gd.playerPoisonCounters.put(player2.getId(), 1);
+        harness.setHand(player1, List.of(new SteadyProgress()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
+                .doesNotContain(glimpse.getId());
+    }
+
+    @Test
+    @DisplayName("Proliferate asks nothing when the only permanent with counters can't be chosen")
+    void proliferateWithOnlyAnUnchoosablePermanent() {
+        Permanent glimpse = harness.addToBattlefieldAndReturn(player1, new GlimpseTheUnthinkablePlaytest());
+        glimpse.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.setHand(player1, List.of(new SteadyProgress()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 }

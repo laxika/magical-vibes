@@ -9,12 +9,13 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokensAttachedToOpposingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokensAttachedToControlledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "WOE", collectorNumber = "42")
 @CardRegistration(set = "WOE", collectorNumber = "330")
@@ -22,7 +23,8 @@ public class AsinineAntics extends Card {
 
     public AsinineAntics() {
         addCastingOption(new AlternateHandCast(List.of(new ManaCastingCost("{4}{U}{U}")), null, true));
-        addSpellEffect(new CreateTokensAttachedToOpposingCreaturesEffect(cursedRoleToken()));
+        addSpellEffect(new CreateTokensAttachedToControlledCreaturesEffect(
+                cursedRoleToken(), new PermanentIsCreaturePredicate(), Subjects.eachOpponent()));
     }
 
     private static CreateTokenEffect cursedRoleToken() {

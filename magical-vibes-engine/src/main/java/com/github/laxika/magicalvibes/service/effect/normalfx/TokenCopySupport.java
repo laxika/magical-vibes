@@ -799,6 +799,7 @@ public class TokenCopySupport {
             List<UUID> hosts = new ArrayList<>();
             gameData.forEachPermanent((controller, permanent) -> {
                 if (!gameQueryService.cantBeEnchantedByOtherAuras(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)
                         && auraAttachmentService.canEnchant(gameData, token.getCard(), tokenControllerId, permanent)) {
                     hosts.add(permanent.getId());
                 }

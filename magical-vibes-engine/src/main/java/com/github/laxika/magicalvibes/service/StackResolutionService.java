@@ -70,6 +70,7 @@ import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.paradigm.ParadigmService;
+import com.github.laxika.magicalvibes.service.room.RoomNameSupport;
 import com.github.laxika.magicalvibes.service.state.StateBasedActionService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -464,6 +465,12 @@ public class StackResolutionService {
         if (bestowAsAura) {
             perm.setCard(characteristics);
             perm.setBestow(true);
+        } else if (!entry.isCastFaceDown() && card.getRoomDoorManaCosts().size() == 2) {
+            // A Room spell is named for the door being cast; the permanent has both halves (CR 709.5, 709.5b).
+            Card room = characteristics.createRuntimeCopy();
+            room.setName(RoomNameSupport.combinedName(card));
+            room.freeze();
+            perm.setCard(room);
         } else if (entry.getPhysicalCard() != card) {
             perm.setCard(characteristics);
             if (entry.isCastTransformed() || entry.isCastWithDisturb()) {

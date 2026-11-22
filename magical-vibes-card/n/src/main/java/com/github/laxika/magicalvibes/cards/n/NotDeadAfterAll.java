@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToReturnedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenAttachedToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -15,7 +15,6 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -32,8 +31,8 @@ public class NotDeadAfterAll extends Card {
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
                         SequenceEffect.of(
                                 new ReturnSourceCardFromGraveyardToBattlefieldEffect(true),
-                                new CreateTokenAttachedToReturnedPermanentEffect(
-                                        wickedRoleToken(), PlayerRelation.ANY)))));
+                                new CreateTokenAttachedToTargetEffect(
+                                        wickedRoleToken(), Subjects.returnedThisResolution())))));
     }
 
     private static CreateTokenEffect wickedRoleToken() {

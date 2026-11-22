@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.b.BloodArtist;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
+import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkablePlaytest;
 import com.github.laxika.magicalvibes.cards.g.GoblinKing;
 import com.github.laxika.magicalvibes.cards.g.GoblinPiker;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Dracoplasm.class, GrizzlyBears.class, GiantSpider.class, HillGiant.class,
-        GoblinKing.class, GoblinPiker.class, BloodArtist.class})
+        GoblinKing.class, GoblinPiker.class, BloodArtist.class, GlimpseTheUnthinkablePlaytest.class})
 class DracoplasmTest extends BaseCardTest {
 
     private void castDracoplasm() {
@@ -176,5 +177,16 @@ class DracoplasmTest extends BaseCardTest {
         Permanent dracoplasm = findPermanent(player1, "Dracoplasm");
         assertThat(gqs.getEffectivePower(gd, dracoplasm)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, dracoplasm)).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Asks nothing as it enters when the only other creature can't be chosen to sacrifice")
+    void unchoosableCreatureIsNoSacrificeCandidate() {
+        harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
+
+        castDracoplasm();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Dracoplasm");
     }
 }

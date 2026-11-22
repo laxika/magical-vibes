@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.cards.d.DivineVisitation;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.cards.d.DoublingSeason;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +13,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FractalAnomaly.class, DoublingSeason.class})
+@CardUsed({FractalAnomaly.class, DoublingSeason.class, DivineVisitation.class})
 class FractalAnomalyTest extends BaseCardTest {
 
     @Test
@@ -103,5 +104,17 @@ class FractalAnomalyTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Fractal")).filteredOn(p -> p != earlier)
                 .singleElement().satisfies(fractal ->
                         assertThat(fractal.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3));
+    }
+
+    @Test
+    @DisplayName("The token a replacement creates instead gets the counters")
+    void replacedTokenGetsTheCounters() {
+        harness.addToBattlefield(player1, new DivineVisitation());
+        gd.cardsDrawnThisTurn.put(player1.getId(), 3);
+
+        harness.castFromHand(player1, new FractalAnomaly(), "{U}");
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Angel").getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);
     }
 }

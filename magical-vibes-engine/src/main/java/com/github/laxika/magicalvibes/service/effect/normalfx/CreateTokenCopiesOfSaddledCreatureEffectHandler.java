@@ -112,6 +112,7 @@ public class CreateTokenCopiesOfSaddledCreatureEffectHandler implements NormalEf
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(permanent -> permanent != null
                         && gameQueryService.isCreature(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)
                         && !gameQueryService.hasEffectiveSupertype(
                                 gameData, permanent, CardSupertype.LEGENDARY))
                 .map(Permanent::getId)

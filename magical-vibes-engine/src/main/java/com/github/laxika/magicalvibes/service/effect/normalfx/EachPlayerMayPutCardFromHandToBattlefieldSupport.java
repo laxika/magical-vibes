@@ -144,6 +144,7 @@ public class EachPlayerMayPutCardFromHandToBattlefieldSupport {
         if (!aura.isEnchantPlayer()) {
             gameData.forEachPermanent((controllerId, permanent) -> {
                 if (!gameQueryService.cantBeEnchantedByOtherAuras(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)
                         && auraAttachmentService.canEnchant(gameData, aura, playerId, permanent)) {
                     hosts.add(permanent.getId());
                 }

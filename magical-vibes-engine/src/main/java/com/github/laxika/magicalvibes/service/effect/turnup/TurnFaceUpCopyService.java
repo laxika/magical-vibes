@@ -87,6 +87,7 @@ public class TurnFaceUpCopyService {
             List<UUID> hosts = new ArrayList<>();
             gameData.forEachPermanent((ignored, permanent) -> {
                 if (!permanent.getId().equals(source.getId())
+                        && !gameQueryService.cantBeChosen(gameData, permanent)
                         && auraAttachmentService.canEnchant(gameData, source.getCard(), controllerId, permanent)) {
                     hosts.add(permanent.getId());
                 }
@@ -109,6 +110,7 @@ public class TurnFaceUpCopyService {
         List<UUID> validTargets = new ArrayList<>();
         gameData.forEachPermanent((ignored, permanent) -> {
             if (!permanent.getId().equals(source.getId())
+                    && !gameQueryService.cantBeChosen(gameData, permanent)
                     && predicateEvaluationService.matchesPermanentPredicate(
                     permanent, effect.filter(), filterContext)) {
                 validTargets.add(permanent.getId());

@@ -154,6 +154,7 @@ public class SubjectResolutionService {
             case CardSubject.SourceCard ignored -> sourceCard(gameData, entry);
             case CardSubject.InGraveyards in -> inGraveyards(gameData, entry, effect, in);
             case CardSubject.InExile in -> inExile(gameData, entry, effect, in);
+            case CardSubject.ExiledAsCost ignored -> exiledAsCost(gameData, entry);
             case CardSubject.ExiledWithSource with -> exiledWithSource(gameData, entry, effect, with);
             case CardSubject.Except except -> {
                 Set<UUID> excluded = new LinkedHashSet<>();
@@ -447,6 +448,12 @@ public class SubjectResolutionService {
                     .filter(exiled -> owners == null || owners.contains(exiled.ownerId())).toList();
         }
         return exiledMatching(gameData, entry, inZone, with.filter());
+    }
+
+    private List<LocatedCard> exiledAsCost(GameData gameData, StackEntry entry) {
+        UUID cardId = entry.getExiledCostCardId();
+        ExiledCardEntry held = cardId == null ? null : gameData.findExiledCard(cardId);
+        return held == null ? List.of() : exiledMatching(gameData, entry, List.of(held), null);
     }
 
     private List<LocatedCard> exiledMatching(GameData gameData, StackEntry entry, List<ExiledCardEntry> exiled,

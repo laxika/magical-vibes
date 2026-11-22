@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -127,5 +128,16 @@ class OutlawsMerrimentTest extends BaseCardTest {
         return gd.playerBattlefields.get(player.getId()).stream()
                 .filter(permanent -> permanent.getCard().isToken())
                 .toList();
+    }
+
+    @Test
+    @DisplayName("The token's mode is chosen at random as the ability is put on the stack")
+    void modeIsKnownWhileTheAbilityIsOnTheStack() {
+        harness.addToBattlefield(player1, new OutlawsMerriment());
+
+        advanceToUpkeep(player1);
+
+        // Players can respond knowing which token will be created (ruling, 2019-10-04).
+        assertThat(gd.stack.getLast().getEffectsToResolve()).singleElement().isInstanceOf(CreateTokenEffect.class);
     }
 }

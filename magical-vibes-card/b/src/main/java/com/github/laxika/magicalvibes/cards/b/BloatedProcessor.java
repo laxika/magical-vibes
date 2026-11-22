@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -35,7 +36,8 @@ public class BloatedProcessor extends Card {
                 "Sacrifice another Phyrexian: Put a +1/+1 counter on this creature."
         ));
 
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenWithDyingSourcePowerCountersEffect(incubatorToken()));
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateXTokenWithXCountersEffect(
+                incubatorToken(), new EventValue(), CounterType.PLUS_ONE_PLUS_ONE, true));
     }
 
     private static CreateTokenEffect incubatorToken() {

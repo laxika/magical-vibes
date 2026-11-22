@@ -65,7 +65,7 @@ package com.github.laxika.magicalvibes.model;
  * ({@code ExileAllPermanentsEffect}), exile the source's or
  * the triggering card or target cards from a graveyard ({@code ExileGraveyardCardsEffect} except where its player
  * chooses at a prompt), exile the top card of a library, a hand or a spell ({@code ExileTargetPlayerHandEffect},
- * {@code ExileTargetSpellEffect}), seek cards to a hand, put exiled cards into a graveyard, destroy, copy, create a token, manifest, mill and exile the
+ * {@code ExileTargetSpellEffect}), seek cards to a hand, put exiled cards into a graveyard, destroy, copy, create a token (also attached to a permanent, {@code CreateTokenAttachedToTargetEffect}, whose choice among triggering creatures adds the token as it is answered), manifest, mill and exile the
  * source and return it transformed ({@code ExileSelfAndReturnTransformedEffect}), transform the source
  * ({@code TransformSelfEffect}) (never prompt, or
  * rerun before any change); the self sacrifice ({@code departAsStep}), discard and

@@ -103,6 +103,7 @@ public class BattlefieldEntryBatchSupport {
         if (!aura.isEnchantPlayer()) {
             gameData.forEachPermanent((ownerId, permanent) -> {
                 if (!gameQueryService.cantBeEnchantedByOtherAuras(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)
                         && auraAttachmentService.canEnchant(gameData, aura, controllerId, permanent)) {
                     permanentIds.add(permanent.getId());
                 }
@@ -172,6 +173,7 @@ public class BattlefieldEntryBatchSupport {
             if (!enteringCard.isEnchantPlayer()) {
                 gameData.forEachPermanent((controllerId, permanent) -> {
                     if (!gameQueryService.cantBeEnchantedByOtherAuras(gameData, permanent)
+                            && !gameQueryService.cantBeChosen(gameData, permanent)
                             && auraAttachmentService.canEnchant(gameData, enteringCard, candidate.controllerId(), permanent)) {
                         hosts.add(permanent.getId());
                     }

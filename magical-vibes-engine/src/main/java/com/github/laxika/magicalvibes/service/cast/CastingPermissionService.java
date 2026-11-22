@@ -2229,7 +2229,8 @@ public class CastingPermissionService {
             }
             for (CardEffect effect : permanent.getCard().getStaticEffects()) {
                 if (effect instanceof GrantMayhemToGraveyardCardsEffect mayhem
-                        && predicateEvaluationService.matchesCardPredicate(card, mayhem.filter(), null)) {
+                        && predicateEvaluationService.matchesCardPredicate(
+                                card, mayhem.filter(), null, gameData, playerId)) {
                     return Optional.of(new GraveyardCast(
                             null, null, List.of(), new CardDiscardedThisTurn()));
                 }

@@ -36,7 +36,10 @@ public class DealDamageToTargetCreatureOrPlayerEffectHandler implements NormalEf
             List<UUID> creatures = new ArrayList<>();
             for (UUID playerId : gameData.orderedPlayerIds) {
                 for (Permanent permanent : gameData.playerBattlefields.getOrDefault(playerId, List.of())) {
-                    if (gameQueryService.isCreature(gameData, permanent)) creatures.add(permanent.getId());
+                    if (gameQueryService.isCreature(gameData, permanent)
+                            && !gameQueryService.cantBeChosen(gameData, permanent)) {
+                        creatures.add(permanent.getId());
+                    }
                 }
             }
             gameData.rerunCurrentEffectAfterInteraction = true;

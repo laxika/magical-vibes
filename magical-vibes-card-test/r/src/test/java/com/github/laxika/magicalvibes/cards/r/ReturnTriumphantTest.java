@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.c.CentaurCourser;
+import com.github.laxika.magicalvibes.cards.g.GatherSpecimens;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.t.TitanicGrowth;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -18,7 +20,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ReturnTriumphant.class, CentaurCourser.class, SerraAngel.class, TitanicGrowth.class})
+@CardUsed({ReturnTriumphant.class, CentaurCourser.class, SerraAngel.class, TitanicGrowth.class, GatherSpecimens.class})
 class ReturnTriumphantTest extends BaseCardTest {
 
     @Test
@@ -146,5 +148,24 @@ class ReturnTriumphantTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("The Role is attached to the returned creature also when it entered under an opponent's control")
+    void roleFollowsACreatureThatEnteredUnderAnOpponentsControl() {
+        CentaurCourser centaur = new CentaurCourser();
+        harness.setGraveyard(player1, List.of(centaur));
+        harness.setHand(player1, List.of(new ReturnTriumphant()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.castSorcery(player1, 0, List.of(centaur.getId()));
+        harness.setHand(player2, List.of(new GatherSpecimens()));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+        harness.passPriority(player1);
+        harness.castInstant(player2, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        Permanent returned = findPermanent(player2, "Centaur Courser");
+        assertThat(findPermanent(player1, "Young Hero").getAttachedTo()).isEqualTo(returned.getId());
     }
 }

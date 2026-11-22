@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.c.CapashenKnight;
+import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkablePlaytest;
 import com.github.laxika.magicalvibes.cards.p.PatternOfRebirth;
 import com.github.laxika.magicalvibes.cards.s.Sanctimony;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 
-@CardUsed({Replenish.class, Sanctimony.class, CapashenKnight.class, PatternOfRebirth.class})
+@CardUsed({Replenish.class, Sanctimony.class, CapashenKnight.class, PatternOfRebirth.class, GlimpseTheUnthinkablePlaytest.class})
 class ReplenishTest extends BaseCardTest {
 
     @Test
@@ -164,5 +165,18 @@ class ReplenishTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentEnchantment);
         harness.assertNotOnBattlefield(player1, "Sanctimony");
+    }
+
+    @Test
+    @DisplayName("An Aura returned without targeting can't enchant a permanent that can't be chosen")
+    void auraHostMustBeChoosable() {
+        harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
+        Card aura = new PatternOfRebirth();
+        harness.setGraveyard(player1, List.of(aura));
+
+        castReplenish();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(aura);
     }
 }

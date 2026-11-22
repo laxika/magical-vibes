@@ -17,7 +17,6 @@ import java.util.UUID;
 public class CreateTokenAttachedToUpToOneTargetEffectHandler implements NormalEffectHandlerBean {
 
     private final CreateTokenAttachedToTargetEffectHandler delegate;
-    private final CreateTokenEffectHandler createTokenEffectHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,10 +33,9 @@ public class CreateTokenAttachedToUpToOneTargetEffectHandler implements NormalEf
             targetIds = List.of(entry.getTargetId());
         }
         // Declining the optional target (choosing yourself) leaves only a player id behind. That is
-        // zero targets, so the token is still created, just not attached.
+        // zero targets, so there is nothing to attach the token to and it isn't created (CR 303.4g; ruling, 2023-09-01).
         boolean declined = targetIds.stream().allMatch(gameData.orderedPlayerIds::contains);
         if (targetIds.isEmpty() || declined) {
-            createTokenEffectHandler.resolve(gameData, entry, optionalEffect.token());
             return;
         }
         delegate.resolve(gameData, entry, new CreateTokenAttachedToTargetEffect(

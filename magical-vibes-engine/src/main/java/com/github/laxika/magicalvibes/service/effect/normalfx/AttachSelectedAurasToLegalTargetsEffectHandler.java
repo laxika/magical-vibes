@@ -79,6 +79,7 @@ public class AttachSelectedAurasToLegalTargetsEffectHandler implements NormalEff
             List<UUID> permanentIds = new ArrayList<>();
             gameData.forEachPermanent((ignored, permanent) -> {
                 if (!gameQueryService.cantBeEnchantedByOtherAuras(gameData, permanent)
+                        && !gameQueryService.cantBeChosen(gameData, permanent)
                         && auraAttachmentService.canEnchant(
                         gameData, aura.getCard(), auraControllerId, permanent)) {
                     permanentIds.add(permanent.getId());

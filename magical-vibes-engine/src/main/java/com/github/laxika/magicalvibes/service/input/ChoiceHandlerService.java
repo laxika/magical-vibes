@@ -1084,10 +1084,6 @@ public class ChoiceHandlerService {
             handleExileTopCardsChosenColorTokensChoice(gameData, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.CreateTokensPerPermanentOfChosenColorChoice ctx) {
-            handleCreateTokensPerPermanentOfChosenColorChoice(gameData, colorName, ctx);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.JinnieFayTokenChoice ctx) {
             handleJinnieFayTokenChoice(gameData, player, colorName, colorChoice, ctx);
             return;
@@ -5053,45 +5049,6 @@ public class ChoiceHandlerService {
             permanentControlSupport.applyCreateToken(gameData, controllerId, ctx.tokenTemplate(), matches, ctx.sourceSetCode());
             gameLogService.append(gameData, GameLog.text(controllerName + " creates " + matches
                     + " Faerie Rogue token" + (matches != 1 ? "s" : "") + "."));
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Rith, the Awakener: the controller chose a color; count every permanent of that color on the
-     * battlefield (any controller) and create one token per match. A permanent is "of the chosen
-     * color" per its effective colors, with lands excluded (an oracle-loaded land derives its colors
-     * from color identity, so a colorless Forest would otherwise wrongly count as green — mirrors
-     * Oona's handling).
-     */
-    private void handleCreateTokensPerPermanentOfChosenColorChoice(GameData gameData, String chosenValue,
-            ChoiceContext.CreateTokensPerPermanentOfChosenColorChoice ctx) {
-        CardColor color = CardColor.valueOf(chosenValue);
-
-        gameData.interaction.clearAwaitingInput();
-
-        UUID controllerId = ctx.controllerId();
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        String colorLabel = color.name().charAt(0) + color.name().substring(1).toLowerCase();
-
-        int[] matches = {0};
-        gameData.forEachPermanent((playerId, permanent) -> {
-            if (gameQueryService.getEffectiveColors(gameData, permanent).contains(color)) {
-                matches[0]++;
-            }
-        });
-
-        int count = matches[0];
-        gameLogService.append(gameData, GameLog.text(controllerName + " chooses "
-                + colorLabel.toLowerCase() + "."));
-        log.info("Game {} - Rith: chosen colour {}, {} matching permanent(s)",
-                gameData.id, colorLabel.toLowerCase(), count);
-
-        if (count > 0) {
-            permanentControlSupport.applyCreateToken(gameData, controllerId, ctx.tokenTemplate(), count, ctx.sourceSetCode());
-            gameLogService.append(gameData, GameLog.text(controllerName + " creates " + count
-                    + " Saproling token" + (count != 1 ? "s" : "") + "."));
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

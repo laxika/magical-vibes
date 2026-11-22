@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Max;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenWithDyingSourcePowerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -30,9 +32,8 @@ public class FleshCarver extends Card {
                 "{1}{B}, Sacrifice another creature: Put two +1/+1 counters on this creature."
         ));
 
-        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenWithDyingSourcePowerEffect(
-                new CreateTokenEffect("Horror", 0, 0, CardColor.BLACK,
-                        List.of(CardSubtype.HORROR), Set.of(), Set.of())
-        ));
+        var power = new Max(new Fixed(0), new EventValue());
+        addTrigger(Triggers.dies(ObjectRelation.THIS), new CreateTokenEffect("Horror", power, power, CardColor.BLACK,
+                List.of(CardSubtype.HORROR), Set.of(), Set.of()));
     }
 }
