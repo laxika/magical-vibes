@@ -504,6 +504,20 @@ class BoardEvaluatorTest {
         }
 
         @Test
+        @DisplayName("A face-down lord has none of its card's abilities, so no lord bonus")
+        void faceDownLordHasNoLordBonus() {
+            Permanent marshal = harness.addToBattlefieldAndReturn(player2, new BenalishMarshal());
+            marshal.setFaceDown(2, 2, java.util.Set.of(CardType.CREATURE));
+            harness.addToBattlefield(player2, new GrizzlyBears());
+            harness.addToBattlefield(player2, new GrizzlyBears());
+
+            double threatScore = evaluator.creatureThreatScore(gd, marshal, player2.getId(), player1.getId());
+            double baseScore = evaluator.creatureScore(gd, marshal, player2.getId(), player1.getId());
+
+            assertThat(threatScore).isEqualTo(baseScore);
+        }
+
+        @Test
         @DisplayName("An \"other creatures\" lord does not count itself as a creature it pumps")
         void otherCreaturesLordDoesNotCountItself() {
             // Goblin King: "Other Goblins get +1/+1" — it is a Goblin, but the engine never boosts it

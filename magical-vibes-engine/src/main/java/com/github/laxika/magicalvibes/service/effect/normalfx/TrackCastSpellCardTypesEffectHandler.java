@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -42,6 +43,7 @@ public class TrackCastSpellCardTypesEffectHandler implements NormalEffectHandler
         StackEntry spell = entry.getTriggeringSpellSnapshot() != null ? entry.getTriggeringSpellSnapshot()
                 : CopySupport.triggeringSpell(gameData, entry);
         if (spell == null || spell.getCard() == null) return;
+        spell = CastingPermissionService.spellAsEffectsSeeIt(spell);
         boolean markedNewType = false;
         for (var type : tracker.trackedTypes()) {
             if (spell.getCard().hasType(type)) {

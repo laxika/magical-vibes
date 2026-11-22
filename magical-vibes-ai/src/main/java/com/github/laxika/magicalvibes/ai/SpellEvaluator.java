@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
@@ -849,7 +850,9 @@ public class SpellEvaluator {
         if (effect instanceof CounterSpellEffect) {
             // Counter spells are reactive - value depends on what's on the stack
             if (!gameData.stack.isEmpty()) {
-                return gameData.stack.getFirst().getCard().getManaValue() * 5.0;
+                // A face-down spell is judged by its face-down characteristics, mana value 0 (CR 708.4).
+                return CastingPermissionService.spellAsEffectsSeeIt(gameData.stack.getFirst()).getCard()
+                        .getManaValue() * 5.0;
             }
             return 0;
         }

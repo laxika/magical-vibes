@@ -8148,11 +8148,11 @@ public class GameQueryService {
             if (battlefield == null) continue;
             for (Permanent candidate : battlefield) {
                 if (isCreature(gameData, candidate)) {
-                    greatest = Math.max(greatest, candidate.getCard().getManaValue());
+                    greatest = Math.max(greatest, getPermanentManaValue(candidate));
                 }
             }
         }
-        return permanent.getCard().getManaValue() == greatest;
+        return getPermanentManaValue(permanent) == greatest;
     }
 
     /**
@@ -8195,11 +8195,11 @@ public class GameQueryService {
             if (battlefield == null) continue;
             for (Permanent candidate : battlefield) {
                 if (isArtifact(gameData, candidate)) {
-                    greatest = Math.max(greatest, candidate.getCard().getManaValue());
+                    greatest = Math.max(greatest, getPermanentManaValue(candidate));
                 }
             }
         }
-        return permanent.getCard().getManaValue() == greatest;
+        return getPermanentManaValue(permanent) == greatest;
     }
 
     /**
@@ -10696,7 +10696,7 @@ public class GameQueryService {
      * AND the entering card is a creature.
      */
     public boolean areCreatureETBTriggersSuppressed(GameData gameData, Card enteringCard) {
-        if (!wouldEnterAsCreature(gameData, enteringCard)) {
+        if (!wouldEnterAsCreature(gameData, enteringCharacteristics(gameData, enteringCard))) {
             return false;
         }
         return anyBattlefieldHasStaticEffect(gameData, CreatureEnteringDontCauseTriggersEffect.class)
@@ -10704,11 +10704,27 @@ public class GameQueryService {
     }
 
     /**
+     * The characteristics {@code enteringCard} has on the battlefield for an entry rule to judge: those its face-down
+     * status lists when it entered face down (CR 708.2), else the card's.
+     */
+    private static Card enteringCharacteristics(GameData gameData, Card enteringCard) {
+        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
+            for (Permanent permanent : battlefield) {
+                if (permanent.isFaceDown() && permanent.getCard().getId().equals(enteringCard.getId())) {
+                    return PermanentCopierService.faceDownCopiableCard(permanent);
+                }
+            }
+        }
+        return enteringCard;
+    }
+
+    /**
      * Returns whether an entering artifact or creature is prevented from causing triggered abilities.
      */
     public boolean areArtifactOrCreatureETBTriggersSuppressed(GameData gameData, Card enteringCard) {
-        if (!hasCardType(enteringCard, CardType.ARTIFACT)
-                && !wouldEnterAsCreature(gameData, enteringCard)) {
+        Card entered = enteringCharacteristics(gameData, enteringCard);
+        if (!hasCardType(entered, CardType.ARTIFACT)
+                && !wouldEnterAsCreature(gameData, entered)) {
             return false;
         }
         return anyBattlefieldHasStaticEffect(gameData, ArtifactOrCreatureEnteringDontCauseTriggersEffect.class)

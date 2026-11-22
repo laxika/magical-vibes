@@ -109,7 +109,7 @@ public final class FaceDownVisibility {
     /** The name of {@code entry}'s card as {@code viewerId}, or everybody when null, may be told it. */
     public static String nameShownTo(GameData gameData, StackEntry entry, UUID viewerId) {
         if (maySeeOnStack(gameData, entry, viewerId)) {
-            return entry.getCard().getName();
+            return Permanent.displayName(entry.getCard());
         }
         return entry.isCastFaceDown() ? StackEntry.FACE_DOWN_SPELL : FACE_DOWN_CARD;
     }
@@ -128,7 +128,7 @@ public final class FaceDownVisibility {
     /** {@code card}'s name where everybody reads it, for a card that may be a face-down spell or permanent. */
     public static String publicName(GameData gameData, Card card) {
         String hidden = faceDownLabel(gameData, card.getId());
-        return hidden == null ? card.getName() : hidden;
+        return hidden == null ? Permanent.displayName(card) : hidden;
     }
 
     /**
@@ -143,7 +143,8 @@ public final class FaceDownVisibility {
      * (CR 708.5). Once it has left, its card's name, which its owner reveals as it moves (CR 708.9).
      */
     public static String publicName(GameData gameData, Permanent permanent) {
-        return permanent.isFaceDown() ? publicName(gameData, permanent.getCard()) : permanent.getCard().getName();
+        return permanent.isFaceDown() ? publicName(gameData, permanent.getCard())
+                : Permanent.displayName(permanent.getCard());
     }
 
     /** {@link #publicName(GameData, Permanent)} for a permanent that is on the battlefield as the text is built. */
@@ -153,7 +154,7 @@ public final class FaceDownVisibility {
 
     /**
      * {@code logEntry} as the log, which every player reads, keeps it: with no card of a face-down spell on the stack
-     * or of a face-down permanent. A card carries its printing, so even a nameless copy of its face-down
+     * or of a face-down permanent, and a card with no name described ({@link Permanent#displayName}). A card carries its printing, so even a nameless copy of its face-down
      * characteristics would identify it.
      */
     static GameLogEntry redact(GameData gameData, GameLogEntry logEntry) {
@@ -168,6 +169,9 @@ public final class FaceDownVisibility {
         for (int i = 0; i < segments.size(); i++) {
             if (segments.get(i) instanceof GameLogSegment.CardSegment segment) {
                 String hidden = faceDownLabel(gameData, segment.card().getId());
+                if (hidden == null && !Objects.equals(segment.card().getName(), Permanent.displayName(segment.card()))) {
+                    hidden = Permanent.displayName(segment.card());
+                }
                 if (hidden != null) {
                     boolean startsSentence = i == 0
                             || segments.get(i - 1) instanceof GameLogSegment.Text text && text.value().endsWith(". ");

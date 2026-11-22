@@ -68,6 +68,16 @@ Anything judging a spell on the stack by color, type, subtype, name, mana value,
 Owner: `CastingPermissionService.spellAsEffectsSeeIt`.
 Why: the real characteristics are wrong, and which spells can be targeted gives the card away.
 
+### A copy of a face-down permanent copies only its face-down characteristics (CR 707.2, 708.2)
+A token or permanent copying one, live or as it last existed, copies `PermanentCopierService.cardToCopy`/`lastKnownCardToCopy`: a face-up nameless card with the status's types and P/T, ward {2} when disguised or cloaked, no printing.
+Owner: `PermanentCopierService.faceDownCopiableCard`.
+Why: the hidden card's name, abilities or printing would reach the copy and every player who sees it.
+
+### Effect labels of a face-down source name no card (CR 708.5)
+A floating effect labelled with the resolving entry's card while that entry's source is a face-down permanent is relabelled as it is added, whichever handler built it.
+Owner: `GameData.addFloatingEffect`.
+Why: the label reaches every player through modifier lines and prompts.
+
 ### Spell copies choose targets before entering the stack (CR 707.10c)
 A copy with a retarget prompt waits in `GameData.stagedSpellCopies`; copy and becomes-the-target triggers fire only when it is committed with its final targets. Ability copies are not staged.
 Owner: `CopySupport` (`addCopyToStack`, `commitDecidedStagedCopies`).

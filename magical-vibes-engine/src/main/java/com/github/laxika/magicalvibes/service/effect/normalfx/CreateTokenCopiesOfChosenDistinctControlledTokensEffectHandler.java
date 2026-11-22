@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -71,7 +72,7 @@ public class CreateTokenCopiesOfChosenDistinctControlledTokensEffectHandler impl
                 continue;
             }
             if (names.add(permanent.getCard().getName())) {
-                sourceCards.add(permanent.getCard());
+                sourceCards.add(PermanentCopierService.cardToCopy(permanent));
             }
         }
 

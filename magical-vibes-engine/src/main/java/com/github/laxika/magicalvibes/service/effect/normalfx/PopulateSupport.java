@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -57,7 +58,7 @@ public class PopulateSupport {
                         ? CreateTokenCopyOfTargetPermanentEffect.tappedTokenCopy()
                         : new CreateTokenCopyOfTargetPermanentEffect();
         log.info("Game {} - Populate creates a token copy of {}", gameData.id, sourceToken.getCard().getName());
-        tokenCopySupport.getObject().createTokenCopies(gameData, entry, List.of(sourceToken.getCard()), null,
+        tokenCopySupport.getObject().createTokenCopies(gameData, entry, List.of(PermanentCopierService.cardToCopy(sourceToken)), null,
                 controllerId, copyEffect);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.cards.w.Willbender;
 import com.github.laxika.magicalvibes.cards.c.Cathodion;
 import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.c.Counterspell;
@@ -24,7 +25,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OpalTitan.class, WoollyThoctar.class, GorillaWarrior.class, Cathodion.class,
+@CardUsed({Willbender.class, OpalTitan.class, WoollyThoctar.class, GorillaWarrior.class, Cathodion.class,
         VoltaicKey.class, HussarPatrol.class, Counterspell.class, Clone.class, Thoughtlace.class})
 class OpalTitanTest extends BaseCardTest {
 
@@ -275,5 +276,20 @@ class OpalTitanTest extends BaseCardTest {
         assertThat(gqs.isCreature(gd, opal)).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, opal, CardColor.BLUE)).isTrue();
         assertThat(gqs.hasProtectionFrom(gd, opal, CardColor.GREEN)).isFalse();
+    }
+
+    @Test
+    @DisplayName("A face-down creature spell is colorless, so Opal Titan gains protection from no color")
+    void faceDownSpellGivesNoProtection() {
+        Permanent opal = addOpalTitan();
+        prepareOpponentCast();
+        harness.setHand(player2, List.of(new Willbender()));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.getEffectivePower(gd, opal)).isEqualTo(4);
+        assertThat(gqs.hasProtectionFrom(gd, opal, CardColor.BLUE)).isFalse();
     }
 }

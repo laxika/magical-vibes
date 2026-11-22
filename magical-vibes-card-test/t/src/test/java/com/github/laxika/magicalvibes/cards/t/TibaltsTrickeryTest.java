@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.e.ExaltedAngel;
 import com.github.laxika.magicalvibes.cards.a.AxgardCavalry;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.r.RavenWings;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TibaltsTrickery.class, AxgardCavalry.class, RavenWings.class, Forest.class,
+@CardUsed({TibaltsTrickery.class, AxgardCavalry.class, ExaltedAngel.class, RavenWings.class, Forest.class,
         VillageRites.class, ToskiBearerOfSecrets.class})
 class TibaltsTrickeryTest extends BaseCardTest {
 
@@ -172,5 +173,31 @@ class TibaltsTrickeryTest extends BaseCardTest {
         harness.setHand(player1, List.of(target));
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+    }
+
+    @Test
+    @DisplayName("A face-down spell has no name, so a card with the hidden card's name is a different-name card")
+    void faceDownSpellHasNoNameToMatch() {
+        ExaltedAngel target = new ExaltedAngel();
+        ExaltedAngel sameNameCard = new ExaltedAngel();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(target));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player2, List.of(new TibaltsTrickery()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), sameNameCard,
+                new RavenWings()));
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(target);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(sameNameCard.getId());
     }
 }

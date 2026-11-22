@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -58,7 +59,7 @@ public class CreateTokenCopyOfEachCreatureOfChosenTypeEffectHandler implements N
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
                 .filter(permanent -> predicateEvaluationService.matchesPermanentPredicate(
                         permanent, subtypePredicate, filterContext))
-                .map(Permanent::getCard)
+                .map(PermanentCopierService::cardToCopy)
                 .toList();
 
         tokenCopySupport.createTokenCopies(

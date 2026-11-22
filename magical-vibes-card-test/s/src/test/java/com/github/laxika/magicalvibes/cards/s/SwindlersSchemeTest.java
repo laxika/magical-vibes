@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LumithreadField;
 import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SwindlersScheme.class, GrizzlyBears.class, CounselOfTheSoratami.class,
-        Cancel.class, RuleOfLaw.class})
+        Cancel.class, LumithreadField.class, RuleOfLaw.class})
 class SwindlersSchemeTest extends BaseCardTest {
 
     @Test
@@ -199,5 +200,48 @@ class SwindlersSchemeTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(spell);
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(revealed);
+    }
+
+    @Test
+    @DisplayName("A face-down spell is only a creature, so a revealed card of its real card type doesn't counter it")
+    void faceDownSpellDoesNotShareItsRealCardType() {
+        harness.addToBattlefield(player1, new SwindlersScheme());
+        RuleOfLaw revealed = new RuleOfLaw();
+        LumithreadField spell = new LumithreadField();
+        harness.setLibrary(player1, List.of(revealed));
+
+        castOpponentFaceDown(spell);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).doesNotContain(spell);
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(revealed);
+    }
+
+    @Test
+    @DisplayName("A revealed creature card shares the creature type of a face-down spell and counters it")
+    void revealedCreatureCountersFaceDownSpell() {
+        harness.addToBattlefield(player1, new SwindlersScheme());
+        GrizzlyBears revealed = new GrizzlyBears();
+        LumithreadField spell = new LumithreadField();
+        harness.setLibrary(player1, List.of(revealed));
+
+        castOpponentFaceDown(spell);
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(spell);
+    }
+
+    private void castOpponentFaceDown(Card spell) {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player2, List.of(spell));
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player2, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
+                .isEqualTo(player1.getId());
     }
 }

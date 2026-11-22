@@ -4574,11 +4574,11 @@ public class PredicateEvaluationService {
             if (battlefield == null) continue;
             for (Permanent candidate : battlefield) {
                 if (matchesStaticLeaf(candidate, STATIC_CREATURE_LEAF)) {
-                    greatest = Math.max(greatest, candidate.getCard().getManaValue());
+                    greatest = Math.max(greatest, gameQueryService.getPermanentManaValue(candidate));
                 }
             }
         }
-        return target.getCard().getManaValue() == greatest;
+        return gameQueryService.getPermanentManaValue(target) == greatest;
     }
 
     private boolean hasGreatestManaValueAmongAllArtifactsStatic(Permanent target, FilterContext context) {
@@ -4592,11 +4592,11 @@ public class PredicateEvaluationService {
             if (battlefield == null) continue;
             for (Permanent candidate : battlefield) {
                 if (matchesStaticLeaf(candidate, new PermanentIsArtifactPredicate())) {
-                    greatest = Math.max(greatest, candidate.getCard().getManaValue());
+                    greatest = Math.max(greatest, gameQueryService.getPermanentManaValue(candidate));
                 }
             }
         }
-        return target.getCard().getManaValue() == greatest;
+        return gameQueryService.getPermanentManaValue(target) == greatest;
     }
 
     private boolean hasGreatestManaValueAmongControllerCreaturesOrPlaneswalkersStatic(

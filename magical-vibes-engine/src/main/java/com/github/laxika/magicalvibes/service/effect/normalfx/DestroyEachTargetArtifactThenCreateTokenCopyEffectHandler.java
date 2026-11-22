@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -53,7 +54,7 @@ public class DestroyEachTargetArtifactThenCreateTokenCopyEffectHandler implement
             return;
         }
 
-        List<Card> sourceCards = destroyed.stream().map(Permanent::getCard).toList();
+        List<Card> sourceCards = destroyed.stream().map(PermanentCopierService::cardToCopy).toList();
         tokenCopySupport.createTokenCopies(
                 gameData,
                 entry,

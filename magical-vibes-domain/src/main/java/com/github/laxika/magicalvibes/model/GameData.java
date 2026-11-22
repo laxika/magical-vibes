@@ -4043,7 +4043,7 @@ public class GameData {
      * kept in {@link #scheduledFloatingEffects} until it begins.
      */
     public FloatingContinuousEffect addFloatingEffect(FloatingContinuousEffect effect) {
-        FloatingContinuousEffect stamped = effect.withTimestamp(nextTimestamp());
+        FloatingContinuousEffect stamped = withPublicSourceName(effect).withTimestamp(nextTimestamp());
         if (stamped.duration() != null && !stamped.duration().startsNow()) {
             scheduledFloatingEffects.add(stamped);
             return stamped;
@@ -4054,6 +4054,21 @@ public class GameData {
         }
         observeFloatingEffect(stamped, true);
         return stamped;
+    }
+
+    /**
+     * {@code effect} as every player is shown it: labelled with the card of the spell or ability resolving now, while
+     * that ability's source is a face-down permanent or last was one, it names no card (CR 708.2, 708.5). Every label
+     * that names the resolving entry's card comes through here, whichever handler built it.
+     */
+    private FloatingContinuousEffect withPublicSourceName(FloatingContinuousEffect effect) {
+        StackEntry entry = resolvingEntry != null ? resolvingEntry : pendingEffectResolutionEntry;
+        if (entry == null || entry.getCard() == null || effect.sourceCardName() == null
+                || !effect.sourceCardName().equals(entry.getCard().getName())) {
+            return effect;
+        }
+        String shown = effectSourceName(entry);
+        return shown == null || shown.equals(effect.sourceCardName()) ? effect : effect.withSourceCardName(shown);
     }
 
     /**

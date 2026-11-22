@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.CoilingStalker;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
@@ -16,6 +18,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -215,5 +218,27 @@ class KairiTheSwirlingSkyTest extends BaseCardTest {
                 .orElseThrow();
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, kairi));
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("A face-down permanent counts with mana value 0 toward the total")
+    void faceDownPermanentHasManaValueZero() {
+        Permanent hidden = harness.addToBattlefieldAndReturn(player2, new YavimayaWurm());
+        hidden.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent giant = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.addToBattlefield(player1, new KairiTheSwirlingSky());
+
+        killKairi();
+        harness.handleListChoice(player1, RETURN_MODE);
+        harness.handlePermanentChosen(player1, hidden.getId());
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .contains(giant.getId(), bears.getId());
+        harness.handlePermanentChosen(player1, giant.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getId)
+                .contains(hidden.getCard().getId(), giant.getCard().getId(), bears.getCard().getId());
     }
 }

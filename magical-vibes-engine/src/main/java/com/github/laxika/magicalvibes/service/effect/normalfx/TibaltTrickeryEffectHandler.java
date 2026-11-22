@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -47,7 +48,8 @@ public class TibaltTrickeryEffectHandler implements NormalEffectHandlerBean {
         StackEntry targetSpell = findTargetSpell(gameData, entry.getTargetId());
         if (targetSpell != null) {
             targetControllerId = targetSpell.getControllerId();
-            targetSpellName = targetSpell.getCard().getName();
+            // A face-down spell has no name, so every card with a name has a different one (CR 708.4, 201.2c).
+            targetSpellName = CastingPermissionService.spellAsEffectsSeeIt(targetSpell).getCard().getName();
         } else {
             // The preceding counter effect already moved the spell off the stack; use its last known state.
             Card lastKnown = entry.getTargetId() == null ? null : entry.lastKnownPermanentCard(entry.getTargetId());

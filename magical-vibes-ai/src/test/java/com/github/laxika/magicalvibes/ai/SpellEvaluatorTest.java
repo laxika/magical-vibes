@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.cards.a.ActOfTreason;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.a.AltarsReap;
@@ -445,6 +447,20 @@ class SpellEvaluatorTest {
         double scry3 = spellEvaluator.evaluateAbilityEffects(
                 gd, List.of(new ScryEffect(3)), player1.getId());
         assertThat(scry3).isEqualTo(6.0);
+    }
+
+    @Test
+    @DisplayName("Countering a face-down spell is worth what its face-down mana value of 0 says")
+    void counteringFaceDownSpellIsValuedByFaceDownManaValue() {
+        StackEntry spell = new StackEntry(StackEntryType.CREATURE_SPELL, new SerraAngel(), player2.getId(),
+                "a face-down spell", new java.util.ArrayList<>(), 0);
+        spell.setCastFaceDown(true);
+        gd.stack.add(spell);
+
+        double value = spellEvaluator.evaluateAbilityEffects(
+                gd, List.of(new com.github.laxika.magicalvibes.model.effect.CounterSpellEffect()), player1.getId());
+
+        assertThat(value).isZero();
     }
 
     @Test

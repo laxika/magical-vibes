@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -39,7 +40,7 @@ public class CreateTokenCopyOfEachCreatureTokenOnBattlefieldEffectHandler implem
             List<Card> sourceCards = battlefieldEntry.getValue().stream()
                     .filter(permanent -> permanent.getCard().isToken())
                     .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
-                    .map(Permanent::getCard)
+                    .map(PermanentCopierService::cardToCopy)
                     .toList();
             if (!sourceCards.isEmpty()) {
                 sourceCardsByController.put(battlefieldEntry.getKey(), sourceCards);

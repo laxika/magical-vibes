@@ -7,6 +7,8 @@ import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
+import com.github.laxika.magicalvibes.cards.l.LumithreadField;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.f.FiresOfUndeath;
 import com.github.laxika.magicalvibes.cards.h.HeadlessSkaab;
 import com.github.laxika.magicalvibes.cards.t.TragicSlip;
@@ -26,7 +28,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Counterlash.class, Divination.class, GrizzlyBears.class, HillGiant.class,
-        LightningBolt.class, FiresOfUndeath.class, HeadlessSkaab.class, TragicSlip.class, YoungWolf.class})
+        LightningBolt.class, LumithreadField.class, Pacifism.class, FiresOfUndeath.class, HeadlessSkaab.class, TragicSlip.class, YoungWolf.class})
 class CounterlashTest extends BaseCardTest {
 
     @Test
@@ -433,5 +435,27 @@ class CounterlashTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Fires of Undeath");
         harness.assertInGraveyard(player2, "Fires of Undeath");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A face-down spell is only a creature: a card sharing its real card type isn't offered")
+    void faceDownSpellOffersOnlyCreatures() {
+        LumithreadField field = new LumithreadField();
+        HillGiant hillGiant = new HillGiant();
+        harness.setHand(player1, List.of(field));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.setHand(player2, List.of(new Counterlash(), new Pacifism(), hillGiant));
+        harness.addMana(player2, ManaColor.BLUE, 6);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, field.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(field);
+        PendingInteraction.MayAbilityChoice offer =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(offer.description()).contains("Hill Giant");
+        harness.handleMayAbilityChosen(player2, false);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
     }
 }

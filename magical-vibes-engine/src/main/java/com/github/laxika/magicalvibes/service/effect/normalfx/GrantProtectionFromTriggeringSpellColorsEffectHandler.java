@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -39,7 +40,8 @@ public class GrantProtectionFromTriggeringSpellColorsEffectHandler implements No
         }
 
         Set<CardColor> colors = triggeringSpell != null
-                ? gameQueryService.getEffectiveCardColors(gameData, triggeringSpell.getCard())
+                ? gameQueryService.getEffectiveCardColors(gameData,
+                        CastingPermissionService.spellAsEffectsSeeIt(triggeringSpell).getCard())
                 : lastKnownSpellColors(gameData, entry);
         if (colors == null) {
             colors = Set.of();
@@ -72,6 +74,7 @@ public class GrantProtectionFromTriggeringSpellColorsEffectHandler implements No
             }
         }
         StackEntry spell = entry.getTriggeringSpellSnapshot();
-        return spell == null ? null : Set.copyOf(spell.getCard().getColors());
+        return spell == null ? null
+                : Set.copyOf(CastingPermissionService.spellAsEffectsSeeIt(spell).getCard().getColors());
     }
 }

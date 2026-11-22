@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -47,7 +48,7 @@ public class CreateTokenCopiesOfTargetArtifactOrGraveyardCardEffectHandler imple
             if (targetPermanent == null || !gameQueryService.isArtifact(gameData, targetPermanent)) {
                 return;
             }
-            targetCard = targetPermanent.getCard();
+            targetCard = PermanentCopierService.cardToCopy(targetPermanent);
         }
 
         Permanent sourcePermanent = entry.getSourcePermanentId() == null

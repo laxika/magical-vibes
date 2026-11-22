@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import org.junit.jupiter.api.DisplayName;
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
@@ -146,4 +149,17 @@ class SummonValeforTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
+    @Test
+    @DisplayName("Chapter I judges a face-down creature by its mana value of 0")
+    void chapterIJudgesFaceDownCreatureByManaValueZero() {
+        Permanent hidden = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        hidden.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addSagaWithLore(0);
+
+        advanceToNextChapter();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(hidden).doesNotContain(bears);
+        assertThat(gd.playerHands.get(player2.getId())).contains(bears.getCard());
+    }
 }

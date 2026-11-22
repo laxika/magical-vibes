@@ -270,33 +270,6 @@ competing with a source-tracked exile. Run only touched test classes by FQCN. Do
 
 ---
 
-## 76. Swindler's Scheme compares a face-down spell's real card types
-
-**Status:** open · **Found:** 2026-11-19, Triggering-class audit
-
-**Failing tests:**
-- None yet. Add one: an opponent casts a face-down creature spell from hand and Swindler's Scheme reveals a noncreature
-  card of one of its real types; the spell must not be countered (and a revealed creature card must counter it).
-
-**What the rules require.** CR 708.4: effects that care about a face-down spell's characteristics see only the face-down
-characteristics (a 2/2 creature with no name or mana cost). In
-`RevealTopCardAndCounterTriggeringSpellIfMatchesEffectHandler.matches`, the `SAME_MANA_VALUE` branch treats a
-face-down spell as mana value 0, but the `SHARES_CARD_TYPE` branch reads `spellCard.getType()` /
-`getAdditionalTypes()` of the real card.
-
-**Why it's large.** Not large: one branch and a test.
-
-**Prompt to start it:**
-
-```
-Do missing-features-to-do.md entry 76: make the SHARES_CARD_TYPE branch of
-RevealTopCardAndCounterTriggeringSpellIfMatchesEffectHandler use {CREATURE} for a face-down spell
-(StackEntry.isCastFaceDown()), per CR 708.4 (verify with get_rule). Add Swindler's Scheme tests. Don't commit until I
-say so.
-```
-
----
-
 ## 77. "Cast from your hand" triggers match a spell cast from another player's hand
 
 **Status:** open · **Found:** 2026-11-19, Triggering-class audit

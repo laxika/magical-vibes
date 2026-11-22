@@ -20,6 +20,22 @@ public class Permanent {
 
     /** What a face-down permanent, which has no name (CR 708.2), is called wherever a name would be shown. */
     public static final String FACE_DOWN_PERMANENT = "a face-down permanent";
+    /** What a face-up token with no name, such as a copy of a face-down permanent, is called in text (CR 201.2a). */
+    public static final String NAMELESS_TOKEN = "a nameless token";
+    /** What a face-up nontoken object with no name, such as a Clone of a face-down creature, is called in text. */
+    public static final String NAMELESS_PERMANENT = "a nameless permanent";
+
+    /**
+     * {@code card}'s name for text, or a description when it has none: the card keeps no name, so rules comparing
+     * names still see none (CR 201.2a).
+     */
+    public static String displayName(Card card) {
+        String name = card.getName();
+        if (name != null && !name.isEmpty()) {
+            return name;
+        }
+        return card.isToken() ? NAMELESS_TOKEN : NAMELESS_PERMANENT;
+    }
 
     private final UUID id;
     private Card card;
@@ -788,7 +804,7 @@ public class Permanent {
 
     /** This permanent's name as everybody may read it while it's on the battlefield (CR 708.2, 708.5). */
     public String getPublicName() {
-        return faceDown ? FACE_DOWN_PERMANENT : getCard().getName();
+        return faceDown ? FACE_DOWN_PERMANENT : displayName(getCard());
     }
 
     public void setFaceDown(int power, int toughness, Set<CardType> cardTypes) {

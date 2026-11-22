@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -55,7 +56,7 @@ public class CreateTokenCopyOfSacrificedPermanentEffectHandler implements Normal
                     ? entry.getSourcePermanentSnapshot()
                     : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
             tokenCopySupport.createTokenCopies(gameData, entry,
-                    Collections.nCopies(copyEffect.amount(), sacrificed.getCard()),
+                    Collections.nCopies(copyEffect.amount(), PermanentCopierService.cardToCopy(sacrificed)),
                     sourcePermanent, new CreateTokenCopyOfTargetPermanentEffect());
             return;
         }
@@ -64,7 +65,7 @@ public class CreateTokenCopyOfSacrificedPermanentEffectHandler implements Normal
         // the event creates, added ones such as Queen Allenal's Soldier included.
         UUID controllerId = entry.getControllerId();
         tokenCopySupport.createTokenCopiesWithTokenRider(gameData, entry,
-                Collections.nCopies(copyEffect.amount(), sacrificedByTrigger.getCard()), controllerId,
+                Collections.nCopies(copyEffect.amount(), PermanentCopierService.cardToCopy(sacrificedByTrigger)), controllerId,
                 new CreateTokenCopyOfTargetPermanentEffect(true, false).withHasteUntilEndOfTurn(),
                 token -> gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                         Triggers.endStep(ActivePlayer.YOU), controllerId, entry.getCard(),

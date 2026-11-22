@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -61,7 +62,7 @@ public class CreateTokenCopyOfTargetPermanentUnlessPayEnergyEqualToManaValueEffe
             // not be what the source attacks (CR 508.4). "That token" covers every token the event creates, added
             // ones such as Queen Allenal's Soldier included.
             tokenCopySupport.createTokenCopiesChoosingAttackTargets(gameData, entry,
-                    Collections.singletonList(targetPermanent.getCard()), sourcePermanent, controllerId,
+                    Collections.singletonList(PermanentCopierService.cardToCopy(targetPermanent)), sourcePermanent, controllerId,
                     copyEffect.copyEffect(), token -> gameData.temporaryGlobalTriggeredAbilities.add(
                             TemporaryGlobalTriggeredAbility.atNextStep(Triggers.endStep(ActivePlayer.ANY),
                                     controllerId, entry.getCard(), token.getId(), token.getId(),

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -35,7 +36,7 @@ public class DestroyTargetCreatureThenCreateTokenCopiesWithHalfPowerToughnessEff
             return;
         }
 
-        Card sourceCard = target.getCard();
+        Card sourceCard = PermanentCopierService.cardToCopy(target);
         var targetControllerId = gameQueryService.findPermanentController(gameData, target.getId());
         int power = gameQueryService.getEffectivePower(gameData, target);
         int toughness = gameQueryService.getEffectiveToughness(gameData, target);

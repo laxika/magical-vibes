@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -51,11 +52,16 @@ public class CreateTokenCopyOfAttackingCreaturesBlockingEffectHandler implements
         // Jinnie Fay Cat or Dog substituted for it (her substitutes keep the creating effect's instructions); a token
         // a replacement adds (Queen Allenal's Soldier) follows those instructions too, so it blocks the first attacker.
         Map<Card, UUID> attackerByCard = new IdentityHashMap<>();
-        attackers.forEach(attacker -> attackerByCard.put(attacker.getCard(), attacker.getId()));
+        List<Card> copiedCards = new java.util.ArrayList<>();
+        for (Permanent attacker : attackers) {
+            Card copied = PermanentCopierService.cardToCopy(attacker);
+            copiedCards.add(copied);
+            attackerByCard.put(copied, attacker.getId());
+        }
         UUID firstAttackerId = attackers.getFirst().getId();
         Map<UUID, UUID> blockedAttackerByToken = new ConcurrentHashMap<>();
         tokenCopySupport.createTokenCopiesThen(gameData, entry,
-                attackers.stream().map(Permanent::getCard).toList(), controllerId,
+                copiedCards, controllerId,
                 CreateTokenCopyOfTargetPermanentEffect.exiledAtEndOfCombat(),
                 (copiedCard, token) -> blockedAttackerByToken.put(token.getId(),
                         copiedCard == null ? firstAttackerId : attackerByCard.get(copiedCard)),

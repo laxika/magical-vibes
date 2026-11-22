@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -39,7 +40,8 @@ public class CounterSpellAndPerpetuallyIncreaseSameNameCastCostEffectHandler
             return;
         }
 
-        String spellName = targetEntry.getCard().getName();
+        // A face-down spell has no name, so no card has the same name (CR 708.4, 201.2a).
+        String spellName = CastingPermissionService.spellAsEffectsSeeIt(targetEntry).getCard().getName();
         UUID spellControllerId = targetEntry.getControllerId();
         StackEntry counterableTarget = counterSupport.findCounterTarget(gameData, targetCardId, entry);
         if (counterableTarget != null) {
@@ -52,6 +54,9 @@ public class CounterSpellAndPerpetuallyIncreaseSameNameCastCostEffectHandler
     }
 
     private void rememberMatchingCards(GameData gameData, UUID playerId, String name, int amount) {
+        if (name == null || name.isEmpty()) {
+            return;
+        }
         rememberMatchingCards(gameData, gameData.playerGraveyards.get(playerId), name, amount);
         rememberMatchingCards(gameData, gameData.playerHands.get(playerId), name, amount);
         rememberMatchingCards(gameData, gameData.playerDecks.get(playerId), name, amount);

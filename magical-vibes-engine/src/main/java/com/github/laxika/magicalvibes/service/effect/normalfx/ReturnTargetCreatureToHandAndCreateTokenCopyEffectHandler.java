@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -44,7 +45,7 @@ public class ReturnTargetCreatureToHandAndCreateTokenCopyEffectHandler implement
         }
 
         Card sourceCard = target.getCard();
-        boolean copiesFaceDown = target.isFaceDown();
+        Card copySource = PermanentCopierService.cardToCopy(target);
         if (!permanentRemovalService.removePermanentToHand(gameData, target)) {
             return;
         }
@@ -62,7 +63,7 @@ public class ReturnTargetCreatureToHandAndCreateTokenCopyEffectHandler implement
         List<Permanent> simultaneouslyEntered = new ArrayList<>();
         for (int copy = 0; copy < tokenMultiplier; copy++) {
             Card tokenCard = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
-                    copiesFaceDown ? faceDownCopiableValues() : sourceCard, copyEffect);
+                    copySource, copyEffect);
             Permanent tokenPermanent = new Permanent(tokenCard);
             battlefieldEntryService.putPermanentOntoBattlefield(
                     gameData, entry.getControllerId(), tokenPermanent,
@@ -76,15 +77,5 @@ public class ReturnTargetCreatureToHandAndCreateTokenCopyEffectHandler implement
             battlefieldEntryService.handleCreatureEnteredBattlefield(
                     gameData, entry.getControllerId(), tokenCard, null, false);
         }
-    }
-
-    /** The copiable values of a face-down permanent: a 2/2 creature with no name, types, or abilities (CR 707.2). */
-    static Card faceDownCopiableValues() {
-        Card faceDown = new Card();
-        faceDown.setName("");
-        faceDown.setType(CardType.CREATURE);
-        faceDown.setPower(2);
-        faceDown.setToughness(2);
-        return faceDown;
     }
 }

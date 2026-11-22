@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -39,21 +40,12 @@ public class CreateTokenCopyOfTargetCreatureForEachOtherPlayerEffectHandler impl
         if (targetControllerId == null) return;
 
         CreateTokenCopyOfTargetPermanentEffect copyProfile = new CreateTokenCopyOfTargetPermanentEffect();
-        Card copiedCard = targetCreature.isFaceDown() ? faceDownCopiableCard(targetCreature) : targetCreature.getCard();
+        Card copiedCard = PermanentCopierService.cardToCopy(targetCreature);
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(targetControllerId)) {
                 tokenCopySupport.createTokenCopies(
                         gameData, entry, List.of(copiedCard), null, playerId, copyProfile);
             }
         }
-    }
-
-    /** CR 707.2: a copy of a face-down permanent copies only its face-down characteristics. */
-    private static Card faceDownCopiableCard(Permanent faceDownPermanent) {
-        Card copiable = new Card();
-        copiable.setType(CardType.CREATURE);
-        copiable.setPower(faceDownPermanent.getFaceDownPower());
-        copiable.setToughness(faceDownPermanent.getFaceDownToughness());
-        return copiable;
     }
 }

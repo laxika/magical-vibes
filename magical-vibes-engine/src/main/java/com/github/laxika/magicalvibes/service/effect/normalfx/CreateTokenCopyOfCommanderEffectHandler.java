@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -73,7 +74,7 @@ public class CreateTokenCopyOfCommanderEffectHandler implements NormalEffectHand
                 if (permanent.getOriginalCard() != null
                         && commander.getId().equals(permanent.getOriginalCard().getId())) {
                     commanderPermanent = permanent;
-                    sourceCard = permanent.getCard();
+                    sourceCard = PermanentCopierService.cardToCopy(permanent);
                     break;
                 }
             }

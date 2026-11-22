@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -112,7 +113,7 @@ public class EachPlayerChoosesOneOrTwoCreaturesCreatesTokenCopyEffectHandler
             }
             int next = i + 1;
             tokenCopySupport.createTokenCopiesThen(gameData, new StackEntry(sourceCard, playerId),
-                    List.of(copiedCreature.getCard()), playerId, TOKEN_PROFILE, null,
+                    List.of(PermanentCopierService.cardToCopy(copiedCreature)), playerId, TOKEN_PROFILE, null,
                     (game, tokens) -> {
                         tokenIdsByPlayer.put(playerId, tokens.stream().map(Permanent::getId).toList());
                         createCopyForPlayer(game, choices, next, tokenIdsByPlayer, sourceCard);

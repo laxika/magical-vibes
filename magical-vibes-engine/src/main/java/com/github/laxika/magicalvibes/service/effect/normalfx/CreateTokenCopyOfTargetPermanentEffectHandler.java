@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -339,7 +340,8 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
      */
     private Card lastKnownCopySource(GameData gameData, StackEntry entry, CreateTokenCopyOfTargetPermanentEffect effect,
                                      UUID permanentId) {
-        Card lastKnownCard = entry.lastKnownPermanentCard(permanentId);
+        Card lastKnownCard = PermanentCopierService.lastKnownCardToCopy(gameData, entry, permanentId,
+                entry.lastKnownPermanentCard(permanentId));
         if (lastKnownCard != null || effect.subject() instanceof PermanentSubject.Target) {
             return lastKnownCard;
         }

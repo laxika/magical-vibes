@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -146,13 +147,7 @@ public class EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEf
     /** Copies visible characteristics, omitting abilities that define the overridden color and types. */
     private Card copySource(Permanent source) {
         if (source.isFaceDown()) {
-            Card visible = new Card();
-            visible.setName("");
-            visible.setManaCost("");
-            visible.setType(CardType.CREATURE);
-            visible.setPower(2);
-            visible.setToughness(2);
-            return visible;
+            return PermanentCopierService.faceDownCopiableCard(source);
         }
         Card original = source.getCard();
         Card copy = original.createRuntimeCopy();

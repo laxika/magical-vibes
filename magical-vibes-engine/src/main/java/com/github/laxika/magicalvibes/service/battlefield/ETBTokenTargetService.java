@@ -364,7 +364,8 @@ public class ETBTokenTargetService {
                     validPermanentTargets.removeIf(id -> {
                         Permanent candidate = gameQueryService.findPermanentById(gameData, id);
                         return first == null || candidate == null
-                                || candidate.getCard().getManaValue() > first.getCard().getManaValue();
+                                || gameQueryService.getPermanentManaValue(candidate)
+                                > gameQueryService.getPermanentManaValue(first);
                     });
                 }
             }
@@ -384,12 +385,12 @@ public class ETBTokenTargetService {
                 int selectedManaValue = currentGroupTargetIds(pending).stream()
                         .map(id -> gameQueryService.findPermanentById(gameData, id))
                         .filter(java.util.Objects::nonNull)
-                        .mapToInt(permanent -> permanent.getCard().getManaValue())
+                        .mapToInt(gameQueryService::getPermanentManaValue)
                         .sum();
                 validPermanentTargets.removeIf(id -> {
                     Permanent candidate = gameQueryService.findPermanentById(gameData, id);
                     return candidate != null
-                            && selectedManaValue + candidate.getCard().getManaValue() > aggregateManaValueLimit;
+                            && selectedManaValue + gameQueryService.getPermanentManaValue(candidate) > aggregateManaValueLimit;
                 });
             }
 

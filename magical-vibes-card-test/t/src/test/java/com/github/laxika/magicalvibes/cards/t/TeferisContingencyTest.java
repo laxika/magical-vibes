@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.e.ExaltedAngel;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.service.cast.PerpetualCardCastCostSupport;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -11,7 +14,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TeferisContingency.class, ThinkTwice.class})
+@CardUsed({TeferisContingency.class, ThinkTwice.class, ExaltedAngel.class})
 class TeferisContingencyTest extends BaseCardTest {
 
     @Test
@@ -118,5 +121,25 @@ class TeferisContingencyTest extends BaseCardTest {
         harness.castFlashback(player1, 0);
         assertThat(gd.stack).anySatisfy(entry ->
                 assertThat(entry.getCard().getId()).isEqualTo(graveyardCopy.getId()));
+    }
+
+    @Test
+    @DisplayName("A face-down spell has no name, so no card gets the tax")
+    void faceDownSpellTaxesNoCard() {
+        ExaltedAngel castCopy = new ExaltedAngel();
+        ExaltedAngel handCopy = new ExaltedAngel();
+        harness.setHand(player1, List.of(castCopy, handCopy));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreatureWithMorph(player1, 0);
+
+        harness.setHand(player2, List.of(new TeferisContingency()));
+        harness.addMana(player2, ManaColor.WHITE, 1);
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, castCopy.getId());
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).contains(castCopy);
+        assertThat(PerpetualCardCastCostSupport.increaseFor(gd, castCopy)).isZero();
+        assertThat(PerpetualCardCastCostSupport.increaseFor(gd, handCopy)).isZero();
     }
 }

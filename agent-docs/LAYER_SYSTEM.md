@@ -410,7 +410,8 @@ Tilonalli ruling (2017-09-29): an effect that began to apply before the permanen
 continues to apply — true structurally because pre-copy effects live on the `Permanent` (7c
 modifiers/counters) or in `GameData.floatingEffects`, not on the swapped card
 (`pumpBeforeCopyPersistsOnTheCopy` in `TilonallisSkinshifterTest`). **Out of scope / known
-gaps:** face-down/manifest copying, tokens copying permanents, "enters as a copy"
+gaps:** tokens copying permanents (a face-down one's copiable values are
+`PermanentCopierService.faceDownCopiableCard`), "enters as a copy"
 replacement-effect timing beyond the current implementation
 (`CloneService.prepareCloneReplacementEffect` resolves the choice mid-entry), stacking a UEOT
 copy and an until-next-turn copy on the SAME permanent (the per-duration pre-copy card fields
@@ -850,7 +851,7 @@ where the code stands. Open limitations:
 - **Unmanaged L5/L6 sources** (conditional wrappers, emblems) still apply additively,
   outside timestamp order. Conditional wrappers are admitted to layer 4 only, and only for
   fingerprint-stable conditions (`admitsConditionalWrapper`); layers 5-7 are untouched.
-- **L1 gaps**: face-down/manifest copying, tokens copying permanents, enters-as-copy replacement
+- **L1 gaps**: tokens copying permanents (face-down ones: `PermanentCopierService.faceDownCopiableCard`), enters-as-copy replacement
   timing, and the unfrozen runtime copy card
   (`Card.freeze` hardening gap — also the board cache's one blind spot).
 - **L2**: equipment auto-unattach on control revert happens only for reverts to the default controller.

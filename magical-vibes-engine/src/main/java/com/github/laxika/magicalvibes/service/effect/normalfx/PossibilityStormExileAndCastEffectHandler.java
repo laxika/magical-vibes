@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -69,8 +70,12 @@ public class PossibilityStormExileAndCastEffectHandler implements NormalEffectHa
         if (originalCard == null) {
             return;
         }
-        EnumSet<CardType> spellTypes = EnumSet.of(originalCard.getType());
-        spellTypes.addAll(originalCard.getAdditionalTypes());
+        // The spell's card types as it was on the stack: a face-down spell's are its face-down ones (CR 708.4).
+        StackEntry seenSpell = originalSpell != null ? originalSpell : entry.getTriggeringSpellSnapshot();
+        Card typedCard = seenSpell == null ? originalCard
+                : CastingPermissionService.spellAsEffectsSeeIt(seenSpell).getCard();
+        EnumSet<CardType> spellTypes = EnumSet.of(typedCard.getType());
+        spellTypes.addAll(typedCard.getAdditionalTypes());
 
         Card match = exileUntilSharedType(gameData, castingPlayerId, sourcePermanentId, spellTypes);
 

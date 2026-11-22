@@ -76,12 +76,14 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
         if (spellCardId != null) {
             for (StackEntry spell : gameData.stack) {
                 if (spell.getCard() != null && spellCardId.equals(spell.getCard().getId())) {
-                    return spell.getCard().getName();
+                    return spell.isCastFaceDown() ? null : spell.getCard().getName();
                 }
             }
         }
         StackEntry snapshot = entry.getTriggeringSpellSnapshot();
-        return snapshot == null || snapshot.getCard() == null ? null : snapshot.getCard().getName();
+        // A face-down spell has no name (CR 708.4).
+        return snapshot == null || snapshot.getCard() == null || snapshot.isCastFaceDown()
+                ? null : snapshot.getCard().getName();
     }
 
     private void doResolve(GameData gameData, StackEntry entry,

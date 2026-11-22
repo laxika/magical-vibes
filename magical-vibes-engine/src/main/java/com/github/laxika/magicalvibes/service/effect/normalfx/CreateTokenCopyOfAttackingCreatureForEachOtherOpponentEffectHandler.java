@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -134,12 +135,12 @@ public class CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffectHandler
                 : CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingCopy(
                         effect.removeLegendary(), effect.exileAtEndStep());
         if (!effect.exileAtEndOfCombat()) {
-            tokenCopySupport.createTokenCopiesAttackingEachOpponent(gameData, entry, List.of(attacker.getCard()),
+            tokenCopySupport.createTokenCopiesAttackingEachOpponent(gameData, entry, List.of(PermanentCopierService.cardToCopy(attacker)),
                     controllerId, tokenCopyEffect, opponents, null);
             return;
         }
         tokenCopySupport.createTokenCopiesAttackingEachOpponentOrTheirPlaneswalkers(gameData, entry,
-                List.of(attacker.getCard()), controllerId, tokenCopyEffect, opponents);
+                List.of(PermanentCopierService.cardToCopy(attacker)), controllerId, tokenCopyEffect, opponents);
     }
 
     private Permanent copyableAttacker(GameData gameData, Permanent liveAttacker, StackEntry entry) {

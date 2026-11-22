@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -45,10 +46,10 @@ public class ExileTargetPermanentAndCreateTokenCopyForEachOtherPlayerEffectHandl
         }
 
         Card exiledCard = target.getCard();
+        Card copySource = PermanentCopierService.cardToCopy(target);
         permanentRemovalService.removePermanentToExile(gameData, target);
         gameLogService.append(gameData, GameLog.cardThen(exiledCard, " is exiled."));
 
-        Card copySource = target.isFaceDown() ? faceDownCopySource() : exiledCard;
         CreateTokenCopyOfTargetPermanentEffect copyProfile = new CreateTokenCopyOfTargetPermanentEffect();
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(targetControllerId)) {
@@ -58,16 +59,5 @@ public class ExileTargetPermanentAndCreateTokenCopyForEachOtherPlayerEffectHandl
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
-    }
-
-    /** A face-down permanent's copiable values are those of a nameless 2/2 creature with no abilities (CR 707.2). */
-    private Card faceDownCopySource() {
-        Card visible = new Card();
-        visible.setName("");
-        visible.setManaCost("");
-        visible.setType(CardType.CREATURE);
-        visible.setPower(2);
-        visible.setToughness(2);
-        return visible;
     }
 }

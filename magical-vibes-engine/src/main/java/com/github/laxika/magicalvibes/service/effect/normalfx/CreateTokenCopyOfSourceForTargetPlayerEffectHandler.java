@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -36,7 +37,7 @@ public class CreateTokenCopyOfSourceForTargetPlayerEffectHandler implements Norm
         Permanent sourcePermanent = entry.getSourcePermanentId() == null
                 ? entry.getSourcePermanentSnapshot()
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        Card sourceCard = sourcePermanent != null ? sourcePermanent.getCard() : entry.getCard();
+        Card sourceCard = sourcePermanent != null ? PermanentCopierService.cardToCopy(sourcePermanent) : entry.getCard();
         if (sourceCard == null) {
             return;
         }

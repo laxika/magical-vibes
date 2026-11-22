@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.l.LumithreadField;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.d.Demolish;
 import com.github.laxika.magicalvibes.cards.f.Forest;
@@ -17,7 +20,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PossibilityStorm.class, CounselOfTheSoratami.class, Forest.class, GrizzlyBears.class, Demolish.class})
+@CardUsed({LumithreadField.class, Pacifism.class, PossibilityStorm.class, CounselOfTheSoratami.class, Forest.class, GrizzlyBears.class, Demolish.class})
 class PossibilityStormTest extends BaseCardTest {
 
     private UUID setUpStorm(List<Card> player1Library) {
@@ -164,5 +167,20 @@ class PossibilityStormTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(untouched);
         assertThat(gd.getCardsExiledByPermanent(stormId)).isEmpty();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A spell cast face down is only a creature, so the dig passes a card of its real card type")
+    void faceDownSpellSharesOnlyTheCreatureType() {
+        UUID stormId = setUpStorm(List.of(new Pacifism(), new GrizzlyBears()));
+        harness.setHand(player1, List.of(new LumithreadField()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreatureWithMorph(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.getCardsExiledByPermanent(stormId)).hasSize(3);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).description())
+                .contains("Grizzly Bears");
     }
 }

@@ -48,7 +48,7 @@ public class ReturnTargetPermanentsWithinTotalManaValueEffectHandler implements 
                     gameData, target, returnEffect.filter()))) {
                 continue;
             }
-            int manaValue = target.getCard().getManaValue();
+            int manaValue = gameQueryService.getPermanentManaValue(target);
             if (totalManaValue + manaValue > returnEffect.maxTotalManaValue()) {
                 continue;
             }

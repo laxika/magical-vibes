@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -117,7 +118,7 @@ public class TemptingOfferCreateTokenCopyEffectHandler implements NormalEffectHa
         }
         Permanent sourcePermanent = entry.getSourcePermanentId() == null
                 ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        tokenCopySupport.createTokenCopies(gameData, entry, List.of(target.getCard()), sourcePermanent,
+        tokenCopySupport.createTokenCopies(gameData, entry, List.of(PermanentCopierService.cardToCopy(target)), sourcePermanent,
                 tokenControllerId, offer.tokenCopyEffect());
     }
 }

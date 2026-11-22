@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -36,8 +37,11 @@ public class CreateTokenCopyOfEnteringPermanentEffectHandler implements NormalEf
             entering = entry.getAttachedPermanentSnapshot();
         }
         if (entering == null && entry.lastKnownPermanentCard(enteringPermanentId) != null) {
+            var lastKnownCard = entry.lastKnownPermanentCard(enteringPermanentId);
+            var copied = PermanentCopierService.lastKnownCardToCopy(gameData, entry, enteringPermanentId,
+                    lastKnownCard);
             entering = new com.github.laxika.magicalvibes.model.Permanent(
-                    entry.lastKnownPermanentCard(enteringPermanentId).createCardCopy());
+                    copied == lastKnownCard ? lastKnownCard.createCardCopy() : copied);
         }
         if (entering == null) {
             // The permanent left the battlefield: copy it as it last existed there (CR 608.2h).

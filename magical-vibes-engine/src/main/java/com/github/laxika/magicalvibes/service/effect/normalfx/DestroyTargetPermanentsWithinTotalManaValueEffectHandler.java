@@ -70,7 +70,7 @@ public class DestroyTargetPermanentsWithinTotalManaValueEffectHandler implements
                     target, destroy.filter(), filterContext)) {
                 continue;
             }
-            int targetManaValue = target.getCard().getManaValue();
+            int targetManaValue = gameQueryService.getPermanentManaValue(target);
             if (selectedManaValue + targetManaValue > manaValueLimit) {
                 continue;
             }

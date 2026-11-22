@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -48,9 +49,11 @@ public class CounterlashEffectHandler implements NormalEffectHandlerBean {
             return;
         }
 
+        // "Shares a card type with it": a face-down spell's types are its face-down ones (CR 708.4).
+        Card seenSpell = CastingPermissionService.spellAsEffectsSeeIt(targetEntry).getCard();
         Set<CardType> matchingTypes = new HashSet<>();
-        matchingTypes.add(targetEntry.getCard().getType());
-        matchingTypes.addAll(targetEntry.getCard().getAdditionalTypes());
+        matchingTypes.add(seenSpell.getType());
+        matchingTypes.addAll(seenSpell.getAdditionalTypes());
 
         if (gameQueryService.isUncounterable(gameData, targetEntry.getCard())) {
             log.info("Game {} - {} cannot be countered", gameData.id, targetEntry.getCard().getName());

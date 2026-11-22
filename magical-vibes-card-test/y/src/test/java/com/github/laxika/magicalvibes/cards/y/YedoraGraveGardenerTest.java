@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import com.github.laxika.magicalvibes.cards.t.TorporOrb;
+import com.github.laxika.magicalvibes.cards.r.RampagingBaloths;
 import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.s.SteppeLynx;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -17,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({YedoraGraveGardener.class, GrizzlyBears.class, HallowedMoonlight.class})
+@CardUsed({YedoraGraveGardener.class, RampagingBaloths.class, TorporOrb.class, GrizzlyBears.class, HallowedMoonlight.class})
 class YedoraGraveGardenerTest extends BaseCardTest {
 
     @Test
@@ -224,5 +226,21 @@ class YedoraGraveGardenerTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(gqs.getEffectivePower(gd, lynx)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("A creature card returned face down as a Forest is a land, so Torpor Orb doesn't stop its landfall")
+    void faceDownForestIsNotJudgedAsACreatureByTorporOrb() {
+        harness.addToBattlefield(player1, new YedoraGraveGardener());
+        harness.addToBattlefield(player1, new TorporOrb());
+        harness.addToBattlefield(player1, new RampagingBaloths());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).anyMatch(entry -> entry.getCard().getName().equals("Rampaging Baloths"));
     }
 }

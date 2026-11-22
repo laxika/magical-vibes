@@ -3044,7 +3044,7 @@ public class TargetLegalityService {
                 }
                 Permanent target = gameQueryService.findPermanentById(gameData, targetIds.get(i));
                 if (target != null) {
-                    totalManaValue += target.getCard().getManaValue();
+                    totalManaValue += gameQueryService.getPermanentManaValue(target);
                 }
             }
             if (totalManaValue > limit) {

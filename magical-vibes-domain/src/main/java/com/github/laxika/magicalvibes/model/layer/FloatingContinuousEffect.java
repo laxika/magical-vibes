@@ -142,6 +142,13 @@ public record FloatingContinuousEffect(
                 affectedCardId, affectedCardZone);
     }
 
+    /** This effect shown as made by {@code sourceCardName}, keeping its identity and timestamp. */
+    public FloatingContinuousEffect withSourceCardName(String sourceCardName) {
+        return new FloatingContinuousEffect(id, sourceCardName, sourcePermanentId, controllerId,
+                effect, affectedPermanentId, affectedPlayerId, scope, duration, timestamp, expiresWhenScopeNoLongerMatches,
+                affectedCardId, affectedCardZone);
+    }
+
     /** This effect carrying the given CR 613.7 timestamp ({@code GameData.addFloatingEffect} stamps it on insertion). */
     public FloatingContinuousEffect withTimestamp(long timestamp) {
         return new FloatingContinuousEffect(id, sourceCardName, sourcePermanentId, controllerId,

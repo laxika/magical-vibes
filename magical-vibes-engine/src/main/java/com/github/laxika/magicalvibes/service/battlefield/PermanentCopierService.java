@@ -7,11 +7,14 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.SourceHasChosenMode;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.ChooseIndependentModesOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ResolvedCopyEffect;
@@ -43,15 +46,70 @@ public class PermanentCopierService {
         return printedCopiableCard(permanent);
     }
 
+    /**
+     * The copiable values of face-down {@code permanent}: only the characteristics its face-down status lists
+     * (CR 707.2, 708.2, 708.2a), so no name, mana cost, text or printing of the hidden card. A disguised or cloaked
+     * one has ward {2} (CR 702.168a, 701.58a). A copy of it is face up (CR 707.2). A face-down permanent that is
+     * itself a copy keeps these values too (CR 708.10).
+     */
+    public static Card faceDownCopiableCard(Permanent permanent) {
+        Card visible = new Card();
+        visible.setName("");
+        Set<CardType> types = permanent.getFaceDownCardTypes().isEmpty()
+                ? EnumSet.of(CardType.CREATURE) : EnumSet.copyOf(permanent.getFaceDownCardTypes());
+        CardType primary = types.contains(CardType.CREATURE) ? CardType.CREATURE : types.iterator().next();
+        types.remove(primary);
+        visible.setType(primary);
+        visible.setAdditionalTypes(types);
+        visible.setSubtypes(List.copyOf(permanent.getFaceDownSubtypes()));
+        visible.setManaCost("");
+        visible.setPower(permanent.getFaceDownPower());
+        visible.setToughness(permanent.getFaceDownToughness());
+        if (permanent.isCloaked() || permanent.isFaceDownWard()) {
+            withWardTwo(visible);
+        }
+        return visible;
+    }
+
+    /** Gives {@code card} ward {2}: the keyword and its triggered ability (CR 702.21a). */
+    public static Card withWardTwo(Card card) {
+        card.setKeywords(EnumSet.of(Keyword.WARD));
+        card.addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        return card;
+    }
+
+    /**
+     * The card a copy of {@code permanent}, live or as it last existed, copies when the copying effect reads the
+     * permanent's card: the face-down copiable values while it is face down ({@link #faceDownCopiableCard}), else its
+     * card.
+     */
+    public static Card cardToCopy(Permanent permanent) {
+        return permanent.isFaceDown() ? faceDownCopiableCard(permanent) : permanent.getCard();
+    }
+
+    /**
+     * The card a copy of {@code permanentId}, which has left the battlefield, copies when the effect recorded
+     * {@code lastKnownCard} for it: the face-down copiable values when it was face down as it last existed there
+     * (CR 608.2h, 707.2), as {@code entry}'s or the game's last-known snapshots of it show, else {@code lastKnownCard}.
+     */
+    public static Card lastKnownCardToCopy(GameData gameData, StackEntry entry, UUID permanentId, Card lastKnownCard) {
+        if (lastKnownCard == null || permanentId == null) {
+            return lastKnownCard;
+        }
+        Permanent lastKnown = java.util.stream.Stream.concat(
+                        java.util.stream.Stream.of(entry.getTriggeringPermanentSnapshot(),
+                                entry.getSourcePermanentSnapshot(), entry.getSacrificedPermanentSnapshot()),
+                        gameData.departedPermanentSnapshots.values().stream())
+                .filter(java.util.Objects::nonNull)
+                .filter(snapshot -> permanentId.equals(snapshot.getId()))
+                .findFirst()
+                .orElse(null);
+        return lastKnown != null && lastKnown.isFaceDown() ? faceDownCopiableCard(lastKnown) : lastKnownCard;
+    }
+
     private Card printedCopiableCard(Permanent permanent) {
         if (permanent.isFaceDown()) {
-            Card visible = new Card();
-            visible.setName("");
-            visible.setType(CardType.CREATURE);
-            visible.setManaCost("");
-            visible.setPower(permanent.getBasePower());
-            visible.setToughness(permanent.getBaseToughness());
-            return visible;
+            return faceDownCopiableCard(permanent);
         }
         // The Aura characteristics a bestowed creature has are type-changing, so they are not copiable (CR 707.2).
         Card original = permanent.getBecomeCreatureBaseCard() != null

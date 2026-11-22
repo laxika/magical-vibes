@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -39,7 +40,9 @@ public class CreateTokenCopyOfEnteringTokenForTargetPlayerEffectHandler implemen
         // last known information (CR 608.2h).
         Permanent enteringToken = gameQueryService.findPermanentById(gameData, enteringTokenId);
         Card enteringCard = enteringToken != null
-                ? enteringToken.getCard() : entry.lastKnownPermanentCard(enteringTokenId);
+                ? PermanentCopierService.cardToCopy(enteringToken)
+                : PermanentCopierService.lastKnownCardToCopy(gameData, entry, enteringTokenId,
+                        entry.lastKnownPermanentCard(enteringTokenId));
         if (enteringCard == null) {
             return;
         }

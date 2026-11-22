@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -49,7 +50,8 @@ public class GandalfWestwardVoyagerEffectHandler implements NormalEffectHandlerB
             }
         }
 
-        Card spellCard = triggeringSpell.getCard();
+        // A face-down spell's card types are its face-down ones (CR 708.4).
+        Card spellCard = CastingPermissionService.spellAsEffectsSeeIt(triggeringSpell).getCard();
         UUID spellControllerId = triggeringSpell.getControllerId();
         boolean sharesCardType = false;
         for (UUID playerId : gameData.orderedPlayerIds) {

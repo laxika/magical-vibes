@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -52,7 +53,7 @@ public class CreateTokenCopiesOfAttackingModifiedCreaturesEffectHandler
         }
         // The effect doesn't say what the tokens attack, so their controller chooses for each one (CR 508.4).
         tokenCopySupport.createTokenCopiesChoosingAttackTargets(
-                gameData, entry, attackers.stream().map(Permanent::getCard).toList(), attackers.getFirst(),
+                gameData, entry, attackers.stream().map(PermanentCopierService::cardToCopy).toList(), attackers.getFirst(),
                 controllerId, TOKEN_COPY_PROFILE);
     }
 }

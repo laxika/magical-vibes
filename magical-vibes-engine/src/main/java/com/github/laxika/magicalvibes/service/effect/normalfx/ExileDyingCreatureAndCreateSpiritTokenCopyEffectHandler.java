@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -64,7 +65,8 @@ public class ExileDyingCreatureAndCreateSpiritTokenCopyEffectHandler implements 
         if (ownerId == null || dyingCard == null) {
             return;
         }
-        Card copySource = departed != null && departed.getCard() != null ? departed.getCard() : dyingCard;
+        Card copySource = departed != null && departed.getCard() != null
+                ? PermanentCopierService.cardToCopy(departed) : dyingCard;
 
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, graveyardCardId);
         exileService.exileCard(gameData, ownerId, dyingCard);

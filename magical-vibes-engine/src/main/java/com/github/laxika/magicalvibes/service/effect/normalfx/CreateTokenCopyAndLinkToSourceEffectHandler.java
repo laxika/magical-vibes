@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -60,7 +61,7 @@ public class CreateTokenCopyAndLinkToSourceEffectHandler implements NormalEffect
         var copyOptions = new CreateTokenCopyOfTargetPermanentEffect(List.of(), Set.of(), null, null, Map.of(),
                 false, false, false, false, linked, false, null, Set.of(), false, List.of(), List.of(), false, false,
                 new Fixed(1), false, Set.of(), false);
-        tokenCopySupport.createTokenCopiesWithTokenRider(gameData, entry, List.of(targetCreature.getCard()),
+        tokenCopySupport.createTokenCopiesWithTokenRider(gameData, entry, List.of(PermanentCopierService.cardToCopy(targetCreature)),
                 entry.getControllerId(), copyOptions, null);
         log.info("Game {} - Dance of Many creates a token copy of {}", gameData.id,
                 targetCreature.getCard().getName());

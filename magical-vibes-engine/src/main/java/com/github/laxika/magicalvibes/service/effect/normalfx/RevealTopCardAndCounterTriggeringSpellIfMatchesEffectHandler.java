@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -86,7 +87,8 @@ public class RevealTopCardAndCounterTriggeringSpellIfMatchesEffectHandler
 
     private boolean matches(RevealTopCardAndCounterTriggeringSpellIfMatchesEffect reveal, Card topCard,
                             StackEntry triggeringSpell) {
-        Card spellCard = triggeringSpell.getCard();
+        // A face-down spell has only its face-down characteristics (CR 708.4).
+        Card spellCard = CastingPermissionService.spellAsEffectsSeeIt(triggeringSpell).getCard();
         return switch (reveal.match()) {
             case SAME_MANA_VALUE -> {
                 int spellManaValue = triggeringSpell.isCastFaceDown() ? 0 : spellCard.getManaValue()

@@ -339,9 +339,13 @@ public class BoardEvaluator {
      */
     public double creatureThreatScore(GameData gameData, Permanent perm, UUID controllerId, UUID opponentId) {
         double score = creatureScore(gameData, perm, controllerId, opponentId);
+        score += evasionContextBonus(gameData, perm, opponentId);
+        if (perm.isFaceDown()) {
+            // A face-down permanent has none of its card's abilities (CR 708.2), and an opponent can't see them.
+            return score;
+        }
         score += lordBonus(gameData, perm, controllerId);
         score += activatedAbilityThreat(gameData, perm, controllerId);
-        score += evasionContextBonus(gameData, perm, opponentId);
         score += growthThreatBonus(perm);
         return score;
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -532,7 +533,7 @@ public class CounterSupport {
         emitCounteredOrFizzled(gameData, target);
         if (!target.isCopy()
                 && target.getCard() != null
-                && target.getCard().hasType(CardType.CREATURE)
+                && CastingPermissionService.spellAsEffectsSeeIt(target).getCard().hasType(CardType.CREATURE)
                 && counteringPlayerId != null
                 && !counteringPlayerId.equals(target.getControllerId())) {
             gameData.recordCreatureSpellCounteredByOpponentThisTurn(target.getControllerId());

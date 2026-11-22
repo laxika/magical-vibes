@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -39,20 +40,22 @@ public class ExileTargetPermanentAndCreateTokenCopyEffectHandler implements Norm
         }
 
         Card exiledCard = target.getCard();
+        // The token copies the creature as it last existed (Nemesis Trap rulings), so a face-down one's copiable values.
+        Card copySource = PermanentCopierService.cardToCopy(target);
         UUID tokenControllerId = e.createForTargetController()
                 ? gameQueryService.findPermanentController(gameData, target.getId())
                 : entry.getControllerId();
         permanentRemovalService.removePermanentToExile(gameData, target);
         gameLogService.append(gameData, GameLog.cardThen(exiledCard, " is exiled."));
 
-        if (!e.skipTokenCopyIfAura() || !exiledCard.isAura()) {
+        if (!e.skipTokenCopyIfAura() || !copySource.isAura()) {
             CreateTokenCopyOfTargetPermanentEffect tokenProfile =
                     new CreateTokenCopyOfTargetPermanentEffect(
                             e.additionalSubtypes(), e.additionalTypes(), e.powerOverride(), e.toughnessOverride(),
                             java.util.Map.of(), false, e.exileTokenAtEndStep(), false, false,
                             false, false, e.colorOverride(), e.additionalKeywords(), e.removeLegendary());
             tokenCopySupport.createTokenCopies(
-                    gameData, entry, java.util.List.of(exiledCard), null, tokenControllerId, tokenProfile);
+                    gameData, entry, java.util.List.of(copySource), null, tokenControllerId, tokenProfile);
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);

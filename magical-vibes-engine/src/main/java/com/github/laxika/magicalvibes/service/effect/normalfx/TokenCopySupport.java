@@ -907,7 +907,10 @@ public class TokenCopySupport {
             }
 
             Card sourceCard = tokenPermanent.getCard();
-            gameLogService.append(gameData, GameLog.textCardText("A token copy of ", sourceCard, " is created."));
+            // A copy with no name copies a face-down permanent's values (CR 707.2), described as that source was.
+            gameLogService.append(gameData, "".equals(sourceCard.getName())
+                    ? GameLog.text("A token copy of " + Permanent.FACE_DOWN_PERMANENT + " is created.")
+                    : GameLog.textCardText("A token copy of ", sourceCard, " is created."));
         }
         List<Permanent> enteredTokens = tokens;
         Runnable entryNotifications = () -> {

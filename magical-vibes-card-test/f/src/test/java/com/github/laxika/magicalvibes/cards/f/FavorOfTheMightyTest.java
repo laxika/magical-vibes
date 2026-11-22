@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.cards.c.CennsHeir;
 import com.github.laxika.magicalvibes.cards.o.OakgnarlWarrior;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
@@ -160,5 +162,17 @@ class FavorOfTheMightyTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player2, "Cenn's Heir");
         assertThat(creature.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("A face-down creature has mana value 0, so it doesn't have the greatest and doesn't hide the greatest")
+    void faceDownCreatureIsJudgedByManaValueZero() {
+        addFavor();
+        Permanent hidden = harness.addToBattlefieldAndReturn(player2, new PloverKnights());
+        hidden.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent heir = harness.addToBattlefieldAndReturn(player1, new CennsHeir());
+
+        assertThat(gqs.hasProtectionFrom(gd, hidden, CardColor.RED)).isFalse();
+        assertThat(gqs.hasProtectionFrom(gd, heir, CardColor.RED)).isTrue();
     }
 }

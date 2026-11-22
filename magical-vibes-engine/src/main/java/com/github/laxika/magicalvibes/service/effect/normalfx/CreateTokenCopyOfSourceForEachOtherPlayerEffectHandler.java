@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -42,10 +44,11 @@ public class CreateTokenCopyOfSourceForEachOtherPlayerEffectHandler implements N
                 : entry.getControllerId();
         if (sourceControllerId == null) return;
 
+        Card copied = PermanentCopierService.cardToCopy(source);
         for (UUID playerId : gameData.orderedPlayerIds) {
             if (!playerId.equals(sourceControllerId)) {
                 tokenCopySupport.createTokenCopies(
-                        gameData, entry, List.of(source.getCard()), source, playerId,
+                        gameData, entry, List.of(copied), source, playerId,
                         copyEffect.copyProfile());
             }
         }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -52,8 +53,10 @@ public class CounterSpellEffectHandler implements NormalEffectHandlerBean {
             entry.setCounteredSpellControllerId(targetOnStack.getControllerId());
             entry.setCounteredAbilitySourceId(StackEntryType.ABILITIES.contains(targetOnStack.getEntryType())
                     ? targetOnStack.getSourcePermanentId() : null);
-            entry.rememberLastKnownPermanentCard(counterTargetId, targetOnStack.getCard());
-            Card targetingCard = targetOnStack.getTargetingCard();
+            // The spell as effects see it: a face-down one only has its face-down characteristics (CR 708.4).
+            entry.rememberLastKnownPermanentCard(counterTargetId,
+                    CastingPermissionService.spellAsEffectsSeeIt(targetOnStack).getCard());
+            Card targetingCard = CastingPermissionService.spellAsEffectsSeeIt(targetOnStack).getTargetingCard();
             if (targetingCard == null) {
                 // An ability with no source object (the planeswalking ability, CR 901.8) has no mana value.
                 entry.setEventValue(0);
