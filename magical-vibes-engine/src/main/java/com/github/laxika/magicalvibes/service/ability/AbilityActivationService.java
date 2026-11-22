@@ -5012,8 +5012,8 @@ public class AbilityActivationService {
                                 permanent.getCard().getName(),
                                 null,
                                 new PendingInteraction.ActivatedAbilityRevealContext(
-                                        permanent.getId(), effectiveIndex, effectiveXValue, targetId, targetZone,
-                                        targetIds, damageAssignments)));
+                                        permanent.getId(), effectiveIndex, effectiveXValue, effectiveXValue, targetId,
+                                        targetZone, targetIds, damageAssignments)));
                 return;
             }
             if (revealedHandCardIds != null) {
@@ -5033,7 +5033,7 @@ public class AbilityActivationService {
                                     permanent.getCard().getName(),
                                     null,
                                     new PendingInteraction.ActivatedAbilityRevealContext(
-                                            permanent.getId(), effectiveIndex, effectiveXValue, targetId,
+                                            permanent.getId(), effectiveIndex, effectiveXValue, 2, targetId,
                                             targetZone, targetIds, damageAssignments)));
                     return;
                 }

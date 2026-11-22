@@ -31,13 +31,13 @@ class ConcealingCurtainsTest extends BaseCardTest {
         Permanent curtains = transformCurtains();
 
         assertThat(curtains.getCard()).isInstanceOf(RevealingEye.class);
-        PendingInteraction.RevealedHandChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(1);
-        assertThat(choice.optional()).isTrue();
+        assertThat(choice.cards()).extracting(Card::getName).containsExactly("Diregraf Scavenger");
+        assertThat(choice.minCount()).isZero();
 
-        harness.handleCardChosen(player1, 1);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInGraveyard(player2, "Diregraf Scavenger");
         assertThat(gd.playerHands.get(player2.getId()))
@@ -53,7 +53,7 @@ class ConcealingCurtainsTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Island()));
 
         transformCurtains();
-        harness.handleCardChosen(player1, -1);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(Card::getName)

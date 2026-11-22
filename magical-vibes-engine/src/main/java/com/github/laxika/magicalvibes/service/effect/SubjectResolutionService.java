@@ -144,8 +144,8 @@ public class SubjectResolutionService {
             case CardSubject.CardsThisWay thisWay -> thisWay.filter() == null
                     ? cardsThisWay(gameData, entry, thisWay.kind())
                     : cardsThisWay(gameData, entry, thisWay.kind()).stream()
-                    .filter(located -> predicateEvaluationService.matchesCardPredicate(located.card(),
-                            thisWay.filter(), entry.getCard().getId(), gameData, located.ownerId()))
+                    .filter(located -> cardMatches(gameData, entry, located.card(), located.ownerId(),
+                            thisWay.filter()))
                     .toList();
             case CardSubject.TargetCard target -> targetCard(gameData, entry, target);
             case CardSubject.TriggeringCards triggering -> triggeringCards(gameData, entry, triggering);
@@ -456,7 +456,8 @@ public class SubjectResolutionService {
     }
 
     private boolean cardMatches(GameData gameData, StackEntry entry, Card card, UUID ownerId, CardPredicate filter) {
-        return filter == null || predicateEvaluationService.matchesCardPredicate(card, filter, entry.getCard().getId(),
+        return filter == null || predicateEvaluationService.matchesCardPredicate(card,
+                AmountEvaluationService.bindTriggeringSpellManaValue(gameData, filter, entry), entry.getCard().getId(),
                 gameData, ownerId, null, null, entry.getXValue(), entry.getSourcePermanentSnapshot());
     }
 

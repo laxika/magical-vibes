@@ -6,9 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealPowerDamageToTargetPlayerOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandAndDealDamageToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
@@ -19,7 +22,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredic
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-
 import java.util.List;
 import java.util.Set;
 
@@ -29,7 +31,9 @@ public class SarkhanTheMad extends Card {
     public SarkhanTheMad() {
         addActivatedAbility(new ActivatedAbility(
                 0,
-                List.of(new RevealTopCardPutIntoHandAndDealDamageToSelfEffect()),
+                List.of(new RevealTopCardOfLibraryEffect(Subjects.you()),
+                        new PutCardsIntoHandEffect(Subjects.revealedThisWay()),
+                        new DealDamageToTargetCreatureEffect(Subjects.source(), AmountThisWay.revealedManaValue())),
                 "0: Reveal the top card of your library and put it into your hand. Sarkhan deals damage to himself equal to that card's mana value."));
 
         addActivatedAbility(new ActivatedAbility(

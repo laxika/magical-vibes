@@ -163,8 +163,8 @@ class MatterReshaperTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("An Aura accepted with no legal creature to enchant remains on top of the library")
-    void auraWithoutLegalAttachmentRemainsInLibrary() {
+    @DisplayName("An Aura with no legal creature to enchant isn't put onto the battlefield, so it goes to the hand")
+    void auraWithoutLegalAttachmentGoesToHand() {
         UntamedHunger aura = new UntamedHunger();
         harness.setLibrary(player1, List.of(aura));
         killWithGraspOfDarkness();
@@ -172,8 +172,8 @@ class MatterReshaperTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(aura);
-        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(aura);
+        assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).contains(aura);
         harness.assertNotOnBattlefield(player1, "Untamed Hunger");
         harness.assertNotInGraveyard(player1, "Untamed Hunger");
     }

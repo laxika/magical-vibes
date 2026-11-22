@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealOwnHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -21,7 +21,7 @@ public class Manabond extends Card {
     public Manabond() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU), new MayEffect(
                 SequenceEffect.of(
-                        new RevealOwnHandEffect(),
+                        RevealCardsFromHandEffect.hand(Subjects.you()),
                         new PutCardsOntoBattlefieldEffect(Subjects.cardsInYourHand(new CardTypePredicate(CardType.LAND))),
                         new DiscardHandEffect()),
                 "Reveal your hand and put all land cards from it onto the battlefield?"));

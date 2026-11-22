@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PutAwakeningCountersOnTargetLandsEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SOM", collectorNumber = "123")
@@ -10,6 +12,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class LiegeOfTheTangle extends Card {
 
     public LiegeOfTheTangle() {
-        addTrigger(Triggers.dealsCombatDamageToPlayer(), new PutAwakeningCountersOnTargetLandsEffect());
+        target(TargetFilters.landYouControl(), 0, 99)
+                .addTrigger(Triggers.dealsCombatDamageToPlayer(),
+                        new PutCounterOnTargetPermanentEffect(CounterType.AWAKENING));
     }
 }

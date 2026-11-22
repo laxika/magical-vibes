@@ -802,10 +802,6 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
-    /** Put an awakening counter on each chosen land (they become 8/8 Elementals). */
-    record AwakeningCounterPlacement() implements MultiPermanentChoiceContext {
-    }
-
     /**
      * Proliferate. {@code remainingCount} includes the upcoming pick; each answered pick
      * re-begins with the decremented count (fresh-record-per-pick pattern) until it hits zero.

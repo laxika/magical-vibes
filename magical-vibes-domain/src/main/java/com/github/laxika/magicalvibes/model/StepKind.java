@@ -43,9 +43,10 @@ package com.github.laxika.magicalvibes.model;
  *       PutExiledCardsIntoOwnersGraveyardEffect}; a card a replacement sent elsewhere is not counted), those cards,
  *       their owners;</li>
  *   <li>{@link #REVEAL}: the number of cards revealed from the top of libraries
- *       ({@code RevealTopCardOfLibraryEffect}), those cards, their players, each one's
- *       {@link StepOutcome#movedCards()} entry naming its player's library, which revealing doesn't make it leave
- *       (CR 701.20b);</li>
+ *       ({@code RevealTopCardOfLibraryEffect}, {@code RevealCardsFromTopUntilEffect}) or shown from hands
+ *       ({@code RevealCardsFromHandEffect}, a look included, CR 701.20e), those cards, their players, each one's
+ *       {@link StepOutcome#movedCards()} entry naming its player's library or hand, which revealing doesn't make it
+ *       leave (CR 701.20b);</li>
  *   <li>{@link #SHUFFLE_INTO_LIBRARY}: the number of cards and permanents shuffled into libraries
  *       ({@code EachPlayerShufflesZonesIntoLibraryEffect}; a token counts, though it ceases to exist there, CR 111.7),
  *       nothing, the players who shuffled some, and how many were each player's
@@ -76,7 +77,9 @@ package com.github.laxika.magicalvibes.model;
  * same-name exile ({@code ExileCardsWithSameNameEffect}), the card and random-player choices
  * ({@code ChooseCardEffect}, {@code ChoosePlayerAtRandomEffect}), the revealed-hand choice's exile and keep
  * ({@code ChooseCardsFromTargetHandEffect}), the pay-X token step ({@code PayXManaCreateXTokensEffect}), the reveal of
- * the top cards of libraries ({@code RevealTopCardOfLibraryEffect}, never prompting) and the any-amount payment
+ * the top cards of libraries and from hands ({@code RevealTopCardOfLibraryEffect},
+ * {@code RevealCardsFromTopUntilEffect}, {@code RevealCardsFromHandEffect}, never prompting), the discard of named
+ * cards ({@code DiscardCardsEffect}: a replacement's question ends it) and the any-amount payment
  * ({@code EachPlayerPaysAnyManaEffect}: it resolves again at its own index for each answer and records after the last),
  * the shuffle of each player's zones into their library ({@code EachPlayerShufflesZonesIntoLibraryEffect}, never
  * prompting), the put onto the battlefield ({@code PutCardsOntoBattlefieldEffect}: its entry choices come before

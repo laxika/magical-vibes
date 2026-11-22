@@ -5,11 +5,15 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.RevealHandAndRandomDiscardCardTypeEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
-
 import java.util.List;
 
 @CardRegistration(set = "4ED", collectorNumber = "155")
@@ -24,7 +28,9 @@ public class RagMan extends Card {
         // Activate only during your turn.
         addActivatedAbility(new ActivatedAbility(
                 true, "{B}{B}{B}",
-                List.of(new RevealHandAndRandomDiscardCardTypeEffect(CardType.CREATURE)),
+                List.of(RevealCardsFromHandEffect.hand(Subjects.targetPlayer()),
+                        ChooseCardEffect.atRandom(Subjects.revealedThisWay(new CardTypePredicate(CardType.CREATURE)), "a creature card"),
+                        new DiscardCardsEffect(Subjects.cardsThisWay(StepKind.CHOOSE))),
                 "{B}{B}{B}, {T}: Target opponent reveals their hand and discards a creature card at random. "
                         + "Activate only during your turn.",
                 new PlayerPredicateTargetFilter(

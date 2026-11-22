@@ -422,102 +422,69 @@ public class PlayerInteractionSupport {
         Card replacementSource = graveyardService.findDiscardToLibraryReplacementSource(gameData, playerId);
         List<Card> awaitingReplacementChoice = new ArrayList<>();
         for (int i = 0; i < amount; i++) {
-            List<Card> currentHand = gameData.playerHands.get(playerId);
-            List<Card> candidates = currentHand.stream()
+            List<Card> candidates = gameData.playerHands.get(playerId).stream()
                     .filter(card -> !awaitingReplacementChoice.contains(card))
                     .toList();
             if (candidates.isEmpty()) break;
             Card discarded = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
-            boolean entersBattlefield = gameData.discardCausedByOpponent
-                    && discarded.getStaticEffects(Zone.HAND).stream()
-                    .anyMatch(EnterBattlefieldOnDiscardEffect.class::isInstance);
-            if (replacementSource != null && !entersBattlefield && !discarded.isToken()) {
-                // The owner chooses whether each randomly chosen card goes on top of the library
-                // instead of into the graveyard; the card stays in hand until that choice is made.
+            if (!discardOrAskReplacement(gameData, playerId, discarded, replacementSource, " at random.")) {
                 awaitingReplacementChoice.add(discarded);
-                gameData.pendingMayAbilities.add(new PendingMayAbility(
-                        replacementSource, playerId,
-                        List.of(new DiscardToTopOfLibraryInsteadEffect()),
-                        "Put " + discarded.getName() + " on top of your library instead of into your graveyard?",
-                        discarded.getId(), (String) null, (UUID) null));
-                continue;
-            }
-            currentHand.remove(discarded);
-            if (entersBattlefield) {
-                battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(
-                        gameData, playerId, new Permanent(discarded));
             } else {
-                graveyardService.discardCard(gameData, playerId, discarded);
-            }
-            gameLogService.append(gameData, GameLog.textCardText(playerName + " discards " , discarded, " at random."));
-            log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
-            gameData.discarded(playerId, discarded);
-            if (entersBattlefield && discarded.hasType(CardType.CREATURE)) {
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, discarded, null, false);
+                log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
             }
         }
         gameData.finishDiscardEvent();
 
         // Process any pending self-discard triggers (e.g. Guerrilla Tactics)
-    
+
     }
-    /**
-     * Rag Man: target player reveals their hand, then discards a card of {@code cardType} at random.
-     * The whole hand is revealed to the controller; a matching card is picked uniformly at random and
-     * discarded. If the hand holds no matching card, nothing is discarded.
-     */
-    public void resolveRevealHandAndRandomDiscardOfType(GameData gameData, UUID playerId,
-            String sourceName, CardType cardType) {
 
-        List<Card> hand = gameData.playerHands.get(playerId);
-        String playerName = gameData.playerIdToName.get(playerId);
-
-        if (hand == null || hand.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(playerName + " reveals their hand. It is empty."));
+    /** {@code playerId} discards exactly these cards from their hand, as one event. */
+    public void discardCards(GameData gameData, UUID playerId, List<Card> cards) {
+        if (cards.isEmpty()
+                || gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, playerId)) {
             return;
         }
-
-        GameLog.Builder revealBuilder = GameLog.builder().text(playerName + " reveals their hand: ");
-        appendCardList(revealBuilder, hand);
-        revealBuilder.text(".");
-        gameLogService.append(gameData, revealBuilder.build());
-        cardRevealService.revealToAllPlayers(
-                gameData, playerId, GameEventFact.RevealZone.HAND, hand);
-
-        if (gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, playerId)) {
-            return;
-        }
-
-        List<Integer> matchingIndices = new ArrayList<>();
-        for (int i = 0; i < hand.size(); i++) {
-            if (hand.get(i).hasType(cardType)) {
-                matchingIndices.add(i);
+        gameData.beginDiscardEvent(playerId);
+        Card replacementSource = graveyardService.findDiscardToLibraryReplacementSource(gameData, playerId);
+        for (Card card : cards) {
+            if (gameData.playerHands.get(playerId).contains(card)) {
+                discardOrAskReplacement(gameData, playerId, card, replacementSource, ".");
             }
         }
+        gameData.finishDiscardEvent();
+    }
 
-        if (matchingIndices.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(playerName + " has no " + cardType.getDisplayName().toLowerCase() + " card to discard."));
-            return;
-        }
-
-        int chosen = matchingIndices.get(ThreadLocalRandom.current().nextInt(matchingIndices.size()));
-        Card discarded = hand.remove(chosen);
+    /** Discards the card; {@code false} where its owner is asked first whether it goes on top of the library. */
+    private boolean discardOrAskReplacement(GameData gameData, UUID playerId, Card discarded, Card replacementSource,
+                                            String logEnd) {
         boolean entersBattlefield = gameData.discardCausedByOpponent
                 && discarded.getStaticEffects(Zone.HAND).stream()
                 .anyMatch(EnterBattlefieldOnDiscardEffect.class::isInstance);
+        if (replacementSource != null && !entersBattlefield && !discarded.isToken()) {
+            // The owner chooses whether each such card goes on top of the library instead of into the graveyard;
+            // the card stays in hand until that choice is made.
+            gameData.pendingMayAbilities.add(new PendingMayAbility(
+                    replacementSource, playerId,
+                    List.of(new DiscardToTopOfLibraryInsteadEffect()),
+                    "Put " + discarded.getName() + " on top of your library instead of into your graveyard?",
+                    discarded.getId(), (String) null, (UUID) null));
+            return false;
+        }
+        gameData.playerHands.get(playerId).remove(discarded);
         if (entersBattlefield) {
             battlefieldEntryService.putPermanentOntoBattlefieldFromOpponentDiscard(
                     gameData, playerId, new Permanent(discarded));
         } else {
             graveyardService.discardCard(gameData, playerId, discarded);
         }
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " discards ", discarded, " at random."));
-        log.info("Game {} - {} discards {} at random ({})", gameData.id, playerName, discarded.getName(), sourceName);
+        gameLogService.append(gameData, GameLog.textCardText(
+                gameData.playerIdToName.get(playerId) + " discards ", discarded, logEnd));
         gameData.discarded(playerId, discarded);
         if (entersBattlefield && discarded.hasType(CardType.CREATURE)) {
             battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, playerId, discarded, null, false);
         }
-
+        return true;
     }
 
     /**
@@ -1131,45 +1098,6 @@ public class PlayerInteractionSupport {
      * Revealing Eye: the caster reveals the target opponent's hand and may choose a matching card
      * for that player to discard and draw.
      */
-    public void resolveRevealHandChooseCardToDiscardAndDraw(GameData gameData, StackEntry entry,
-                                                             CardPredicate filter) {
-        UUID targetPlayerId = entry.getTargetId();
-        UUID casterId = entry.getControllerId();
-        List<Card> hand = gameData.playerHands.get(targetPlayerId);
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
-        String casterName = gameData.playerIdToName.get(casterId);
-
-        cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
-        if (hand == null || hand.isEmpty()) {
-            log.info("Game {} - {} reveals {}'s empty hand", gameData.id, casterName, targetName);
-            return;
-        }
-
-        gameData.discardCausedByOpponent = !casterId.equals(targetPlayerId);
-
-        List<Integer> validIndices = new ArrayList<>();
-        for (int i = 0; i < hand.size(); i++) {
-            if (filter == null || predicateEvaluationService.matchesCardPredicate(hand.get(i), filter, null)) {
-                validIndices.add(i);
-            }
-        }
-
-        if (validIndices.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(
-                    casterName + " cannot choose a card (" + targetName + "'s hand has no matching cards)."));
-            log.info("Game {} - {}'s hand has no matching cards for {}", gameData.id, targetName, casterName);
-            return;
-        }
-
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
-                casterId, targetPlayerId, validIndices, 1, true, false, List.of(), null,
-                "You may choose a card to discard. If you do, that player draws a card.",
-                false, true, false, null, null, 0, null, false, false, false, true));
-
-        log.info("Game {} - {} may choose a matching card from {}'s revealed hand to discard and draw",
-                gameData.id, casterName, targetName);
-    }
-
     /**
      * Begins the shared reveal-and-choose flow. The target picks which cards to reveal; if they
      * hold {@code revealCount} or fewer, their whole hand is selected and the controller's choice

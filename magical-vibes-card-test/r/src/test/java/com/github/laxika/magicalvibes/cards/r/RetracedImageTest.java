@@ -34,8 +34,8 @@ class RetracedImageTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(harness.getGameData().interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.RetracedImageCardChoice.class);
-        harness.handleCardChosen(player1, 1);
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 1);
 
         harness.assertOnBattlefield(player1, "Skywing Aven");
         harness.assertInHand(player1, "Cephalid Aristocrat");
@@ -51,7 +51,7 @@ class RetracedImageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Cephalid Aristocrat");
         harness.assertNotOnBattlefield(player1, "Cephalid Aristocrat");
@@ -67,7 +67,7 @@ class RetracedImageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Teroh's Faithful");
@@ -84,7 +84,7 @@ class RetracedImageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Prophetic Prism");
@@ -111,7 +111,7 @@ class RetracedImageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
         harness.assertNotInHand(player1, "Skywing Aven");
@@ -126,7 +126,7 @@ class RetracedImageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Skywing Aven");
         harness.assertNotOnBattlefield(player1, "Skywing Aven");
@@ -143,7 +143,7 @@ class RetracedImageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Skywing Aven");
         harness.assertNotOnBattlefield(player1, "Skywing Aven");
@@ -161,7 +161,7 @@ class RetracedImageTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0, 0);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.interaction.activeInteraction()).isNotNull();
         harness.handlePermanentChosen(player1, chosenHost.getId());

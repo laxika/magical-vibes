@@ -18,6 +18,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OldStickfingersTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Every card revealed is shown to all players by name (CR 701.20a)")
+    void revealedCardsAreNamed() {
+        harness.setLibrary(player1, List.of(new Plains(), new CandlegroveWitch(), new Plains()));
+        harness.setHand(player1, List.of(new OldStickfingers()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        gs.playCard(gd, player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
+                .anyMatch(log -> log.contains("reveals Plains, Candlegrove Witch"));
+    }
+
+    @Test
     @DisplayName("Cast trigger mills creature cards until X are found and bottoms the rest")
     void castTriggerMillsCreaturesAndBottomsNoncreatures() {
         Card firstNoncreature = new Plains();

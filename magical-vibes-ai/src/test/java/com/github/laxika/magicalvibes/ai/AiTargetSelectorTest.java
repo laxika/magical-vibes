@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.cards.a.ActOfTreason;
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.b.Befuddle;
@@ -84,7 +86,6 @@ import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
@@ -707,8 +708,13 @@ class AiTargetSelectorTest {
     static Stream<Arguments> graveyardEffectFilterCases() {
         return Stream.of(
                 Arguments.of(
-                        "PutCreatureFromOpponentGraveyard filters to creatures only",
-                        new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(true),
+                        "A return of a creature card from an opponent's graveyard filters to creatures only",
+                        ReturnCardFromGraveyardEffect.builder()
+                                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                                .filter(new CardTypePredicate(CardType.CREATURE))
+                                .source(GraveyardSearchScope.OPPONENT_GRAVEYARD)
+                                .targetGraveyard(true)
+                                .build(),
                         Set.of("GY Creature")
                 ),
                 Arguments.of(
@@ -811,7 +817,12 @@ class AiTargetSelectorTest {
         Card spellCard = new Card();
         spellCard.setName("Test Spell");
         spellCard.setType(CardType.SORCERY);
-        spellCard.addSpellEffect(new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(true));
+        spellCard.addSpellEffect(ReturnCardFromGraveyardEffect.builder()
+                .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                .filter(new CardTypePredicate(CardType.CREATURE))
+                .source(GraveyardSearchScope.OPPONENT_GRAVEYARD)
+                .targetGraveyard(true)
+                .build());
 
         List<Card> results = targetSelector.findValidGraveyardTargets(gd, spellCard, aiPlayer.getId());
 

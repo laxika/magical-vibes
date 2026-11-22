@@ -7,19 +7,25 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.CanBlockAndBeBlockedOnlyByFilterEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateMayPutOntoBattlefieldShuffleRestEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
 import java.util.List;
 import java.util.Set;
 
@@ -28,9 +34,13 @@ import java.util.Set;
 public class HeiBaiForestGuardian extends Card {
 
     public HeiBaiForestGuardian() {
+        var shrine = new CardSubtypePredicate(CardSubtype.SHRINE);
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new RevealUntilCardPredicateMayPutOntoBattlefieldShuffleRestEffect(
-                        new CardSubtypePredicate(CardSubtype.SHRINE)));
+                new RevealCardsFromTopUntilEffect(shrine),
+                new ConditionalEffect(HappenedThisWay.toACard(StepKind.REVEAL, shrine),
+                        new MayEffect(new PutCardsOntoBattlefieldEffect(Subjects.revealedThisWay(shrine)),
+                        "Put the revealed Shrine card onto the battlefield?")),
+                new ShuffleLibraryEffect(false));
 
         var legendaryEnchantments = new PermanentAllOfPredicate(List.of(
                 new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),

@@ -607,15 +607,11 @@ public class TargetPolarityClassifier {
             entry("RedirectCombatDamageFromTargetUnblockedCreatureToItsControllerEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RedirectCombatDamageToTargetAttackingCreatureEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RedirectNextDamageFromTargetToAnotherTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("RevealTopCardsBottomThenDamageIfCopyRevealedEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DoubleDamageFromTargetPermanentThisTurnEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ChannelHarmEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ControlledCreaturesDealPowerDamageToTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("RevealTopCardDealManaValueDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("RevealTopCardsToHandThenDealNonlandManaValueDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealUntilNonlandBottomThenDealManaValueDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("RevealUntilNonlandToHandRestToBottomDealManaValueDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
 
             // Other harm: fights, steals, strips, debuffs, forced blocks.
             entry("DestroyAttachmentsOnTargetCreatureEffect", TargetPolarity.HARMFUL),

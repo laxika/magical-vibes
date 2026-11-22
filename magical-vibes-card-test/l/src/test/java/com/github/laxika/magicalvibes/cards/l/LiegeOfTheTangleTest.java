@@ -1,8 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
-import com.github.laxika.magicalvibes.model.GameLogEntry;
 
-import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.d.DryadArbor;
@@ -20,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -35,7 +34,12 @@ class LiegeOfTheTangleTest extends BaseCardTest {
 
     private void resolveLiegeCombat() {
         resolveCombat();
-        if (!gd.interaction.isAwaitingInput() && !gd.stack.isEmpty()) {
+    }
+
+    /** Chooses the targets as the ability goes on the stack, then lets it resolve. */
+    private void targetLands(List<UUID> landIds) {
+        harness.handleMultiplePermanentsChosen(player1, landIds);
+        if (!gd.stack.isEmpty()) {
             harness.passBothPriorities();
         }
     }
@@ -54,8 +58,6 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId()).isEqualTo(player1.getId());
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).maxCount()).isEqualTo(2);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).context())
-                .isInstanceOf(MultiPermanentChoiceContext.AwakeningCounterPlacement.class);
     }
 
     @Test
@@ -68,7 +70,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
 
         resolveLiegeCombat();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(forest1.getId(), forest2.getId()));
+        targetLands(List.of(forest1.getId(), forest2.getId()));
 
         assertThat(forest1.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
         assertThat(forest2.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
@@ -82,7 +84,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         Permanent forest = addLand(player1, new Forest());
 
         resolveLiegeCombat();
-        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
+        targetLands(List.of(forest.getId()));
 
         assertThat(forest.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(8);
@@ -98,7 +100,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         Permanent forest = addLand(player1, new Forest());
 
         resolveLiegeCombat();
-        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
+        targetLands(List.of(forest.getId()));
 
         assertThat(gqs.getEffectiveCardTypes(gd, forest)).contains(CardType.LAND, CardType.CREATURE);
     }
@@ -111,7 +113,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         Permanent forest = addLand(player1, new Forest());
 
         resolveLiegeCombat();
-        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
+        targetLands(List.of(forest.getId()));
 
         // Simulate end of turn reset
         forest.resetModifiers();
@@ -131,11 +133,10 @@ class LiegeOfTheTangleTest extends BaseCardTest {
 
         resolveLiegeCombat();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        targetLands(List.of());
 
         assertThat(forest.getCounterCount(CounterType.AWAKENING)).isZero();
         assertThat(gqs.isCreature(gd, forest)).isFalse();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("chooses not to put"));
     }
 
     @Test
@@ -164,7 +165,6 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         resolveLiegeCombat();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("controls no lands"));
     }
 
     @Test
@@ -177,7 +177,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
 
         resolveLiegeCombat();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(forest1.getId()));
+        targetLands(List.of(forest1.getId()));
 
         assertThat(forest1.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
         assertThat(forest2.getCounterCount(CounterType.AWAKENING)).isZero();
@@ -195,7 +195,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
 
         resolveLiegeCombat();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        targetLands(List.of());
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(12);
     }
@@ -209,7 +209,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
 
         resolveLiegeCombat();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
+        targetLands(List.of(forest.getId()));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.currentStep).isEqualTo(TurnStep.POSTCOMBAT_MAIN);
@@ -225,7 +225,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
 
         resolveLiegeCombat();
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId(), mountain.getId()));
+        targetLands(List.of(forest.getId(), mountain.getId()));
 
         assertThat(gqs.getEffectivePower(gd, forest)).isEqualTo(8);
         assertThat(gqs.getEffectiveToughness(gd, forest)).isEqualTo(8);
@@ -242,7 +242,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         Permanent mountain = addLand(player1, new Mountain());
 
         resolveLiegeCombat();
-        harness.handleMultiplePermanentsChosen(player1, List.of(mountain.getId()));
+        targetLands(List.of(mountain.getId()));
         gd.playerBattlefields.get(player1.getId()).remove(liege);
 
         assertThat(gqs.getEffectiveColors(gd, mountain)).containsExactly(CardColor.GREEN);
@@ -260,7 +260,7 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         Permanent arbor = addLand(player1, new DryadArbor());
 
         resolveLiegeCombat();
-        harness.handleMultiplePermanentsChosen(player1, List.of(arbor.getId()));
+        targetLands(List.of(arbor.getId()));
 
         assertThat(arbor.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
         assertThat(gqs.getEffectivePower(gd, arbor)).isEqualTo(8);
@@ -278,10 +278,30 @@ class LiegeOfTheTangleTest extends BaseCardTest {
         resolveLiegeCombat();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).maxCount())
                 .isEqualTo(1);
-        harness.handleMultiplePermanentsChosen(player1, List.of(ownLand.getId()));
+        targetLands(List.of(ownLand.getId()));
 
         assertThat(ownLand.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
         assertThat(opposingLand.getCounterCount(CounterType.AWAKENING)).isZero();
         assertThat(gqs.isCreature(gd, opposingLand)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Targets are chosen as the ability goes on the stack, and counters are put only as it resolves")
+    void targetsAreChosenAsTheAbilityGoesOnTheStack() {
+        Permanent liege = addCreatureReady(player1, new LiegeOfTheTangle());
+        liege.setAttacking(true);
+        Permanent forest = addLand(player1, new Forest());
+
+        resolveCombat();
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMultiplePermanentsChosen(player1, List.of(forest.getId()));
+        assertThat(forest.getCounterCount(CounterType.AWAKENING)).isZero();
+        assertThat(gd.stack).singleElement()
+                .satisfies(ability -> assertThat(ability.getTargetIds()).containsExactly(forest.getId()));
+
+        harness.passBothPriorities();
+
+        assertThat(forest.getCounterCount(CounterType.AWAKENING)).isEqualTo(1);
     }
 }

@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfDefendingPlayerLibraryMatchingToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -15,7 +17,7 @@ public class GoblinGuide extends Card {
 
     public GoblinGuide() {
         addTrigger(Triggers.attacks(),
-                new RevealTopCardOfDefendingPlayerLibraryMatchingToHandEffect(
-                        new CardTypePredicate(CardType.LAND)));
+                new RevealTopCardOfLibraryEffect(Subjects.defendingPlayer()),
+                new PutCardsIntoHandEffect(Subjects.revealedThisWay(new CardTypePredicate(CardType.LAND))));
     }
 }

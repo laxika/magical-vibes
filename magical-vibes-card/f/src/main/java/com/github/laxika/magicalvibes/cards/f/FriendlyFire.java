@@ -2,10 +2,10 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPermanentControllerHandRecordManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -13,9 +13,9 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class FriendlyFire extends Card {
 
     public FriendlyFire() {
-        var reveal = new RevealRandomCardFromTargetPermanentControllerHandRecordManaValueEffect();
-        var creatureDamage = new DealDamageToTargetCreatureEffect(new EventValue());
-        var controllerDamage = new DealDamageToPlayersEffect(new EventValue(), Subjects.controllerOf(Subjects.target()));
+        var reveal = RevealCardsFromHandEffect.atRandom(Subjects.controllerOf(Subjects.target()), 1);
+        var creatureDamage = new DealDamageToTargetCreatureEffect(AmountThisWay.revealedManaValue());
+        var controllerDamage = new DealDamageToPlayersEffect(AmountThisWay.revealedManaValue(), Subjects.controllerOf(Subjects.target()));
         target(TargetFilters.creature())
                 .bindEffect(reveal)
                 .bindEffect(creatureDamage)

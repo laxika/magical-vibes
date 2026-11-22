@@ -170,4 +170,20 @@ class SuddenReclamationTest extends BaseCardTest {
         harness.passBothPriorities();
         assertThat(findPermanents(player1, "Zombie")).hasSize(1);
     }
+
+    @Test
+    @DisplayName("The prompt of a mandatory choice doesn't let the player confirm it empty")
+    void mandatoryChoicePromptHasAMinimum() {
+        harness.setGraveyard(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(new Shock(), new Shock(), new Shock(), new Shock()));
+        harness.setHand(player1, List.of(new SuddenReclamation()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.clearMessages();
+
+        harness.castAndResolveInstant(player1, 0);
+
+        assertThat(harness.getConn1().getMessagesContaining("\"shape\":\"MULTI_CARD_PICK\""))
+                .isNotEmpty().allSatisfy(message -> assertThat(message).contains("\"minCount\":1"));
+    }
 }

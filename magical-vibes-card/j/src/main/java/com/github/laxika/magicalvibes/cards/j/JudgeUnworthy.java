@@ -2,15 +2,17 @@ package com.github.laxika.magicalvibes.cards.j;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardDealManaValueDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBlockingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
-
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "9")
@@ -26,6 +28,7 @@ public class JudgeUnworthy extends Card {
                                 new PermanentIsBlockingPredicate())))),
                 "Target must be an attacking or blocking creature"))
                 .addSpellEffect(new ScryEffect(3))
-                .addSpellEffect(new RevealTopCardDealManaValueDamageToAnyTargetEffect());
+                .addSpellEffect(new RevealTopCardOfLibraryEffect(Subjects.you()))
+                .addSpellEffect(new DealDamageToTargetCreatureEffect(AmountThisWay.revealedManaValue()));
     }
 }

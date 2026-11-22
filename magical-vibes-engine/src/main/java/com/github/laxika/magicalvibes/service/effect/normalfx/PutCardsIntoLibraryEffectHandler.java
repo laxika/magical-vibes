@@ -55,13 +55,21 @@ public class PutCardsIntoLibraryEffectHandler implements NormalEffectHandlerBean
         Map<UUID, List<Card>> byOwner = new LinkedHashMap<>();
         Map<UUID, Boolean> publiclyKnown = new LinkedHashMap<>();
         List<UUID> movedIds = new ArrayList<>();
+        List<UUID> revealedIds = entry.getResolutionResults().outcome(StepKind.REVEAL).objectIds();
         graveyardService.beginGraveyardLeaveBatch(gameData);
         try {
             for (LocatedCard located : named) {
                 Card card = located.card();
-                boolean seen = located.zone() == Zone.GRAVEYARD
+                // Revealing doesn't make a card leave its library or hand (CR 701.20b).
+                boolean stillRevealed = located.zone() == Zone.LIBRARY && revealedIds.contains(card.getId());
+                boolean seen = stillRevealed || located.zone() == Zone.GRAVEYARD
                         || located.zone() == Zone.EXILE && !gameData.isExiledFaceDown(card.getId());
-                if (located.zone() == Zone.GRAVEYARD) {
+                if (located.zone() == Zone.LIBRARY) {
+                    if (!stillRevealed || !gameData.playerDecks.get(located.ownerId())
+                            .removeIf(inLibrary -> inLibrary.getId().equals(card.getId()))) {
+                        continue;
+                    }
+                } else if (located.zone() == Zone.GRAVEYARD) {
                     permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
                 } else if (located.zone() == Zone.EXILE) {
                     if (!gameData.removeFromExile(card.getId())) {

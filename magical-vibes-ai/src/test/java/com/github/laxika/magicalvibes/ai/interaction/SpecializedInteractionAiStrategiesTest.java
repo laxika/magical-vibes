@@ -511,31 +511,6 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
-    void nivMizzetChoiceSelectsOneCardForEachColorPair() throws Exception {
-        Card cheapAzorius = card("Cheap Azorius", "{2}");
-        Card expensiveAzorius = card("Expensive Azorius", "{5}");
-        Card gruul = card("Gruul", "{3}");
-        when(context.gameQueryService().getEffectiveCardColors(gameData, cheapAzorius))
-                .thenReturn(Set.of(CardColor.WHITE, CardColor.BLUE));
-        when(context.gameQueryService().getEffectiveCardColors(gameData, expensiveAzorius))
-                .thenReturn(Set.of(CardColor.WHITE, CardColor.BLUE));
-        when(context.gameQueryService().getEffectiveCardColors(gameData, gruul))
-                .thenReturn(Set.of(CardColor.RED, CardColor.GREEN));
-
-        new NivMizzetColorPairChoiceAiStrategy().answer(
-                new PendingInteraction.NivMizzetColorPairChoice(
-                        aiPlayerId,
-                        List.of(cheapAzorius, expensiveAzorius, gruul),
-                        List.of(cheapAzorius.getId(), expensiveAzorius.getId(), gruul.getId()),
-                        2,
-                        "Choose cards"),
-                context);
-
-        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.CardsChosen(
-                List.of(expensiveAzorius.getId(), gruul.getId())));
-    }
-
-    @Test
     void faceUpExiledCardChoiceSelectsAnEligibleCard() throws Exception {
         UUID first = UUID.randomUUID();
 
@@ -581,7 +556,6 @@ class SpecializedInteractionAiStrategiesTest {
                 PendingInteraction.TargetLibraryDestinationChoice.class,
                 PendingInteraction.VividCardChoice.class,
                 PendingInteraction.PutCardFromHandOrGraveyardChoice.class,
-                PendingInteraction.NivMizzetColorPairChoice.class,
                 PendingInteraction.FaceUpExiledCardChoice.class);
     }
 

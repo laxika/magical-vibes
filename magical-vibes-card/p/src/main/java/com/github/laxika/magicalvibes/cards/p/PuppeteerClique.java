@@ -2,7 +2,11 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
+import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,6 +24,13 @@ public class PuppeteerClique extends Card {
         // the battlefield under your control. It gains haste. At the beginning of your next end
         // step, exile it.
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(false));
+                ReturnCardFromGraveyardEffect.builder()
+                        .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                        .filter(new CardTypePredicate(CardType.CREATURE))
+                        .source(GraveyardSearchScope.OPPONENT_GRAVEYARD)
+                        .targetGraveyard(true)
+                        .grantHaste(true)
+                        .exileAtYourNextEndStep(true)
+                        .build());
     }
 }

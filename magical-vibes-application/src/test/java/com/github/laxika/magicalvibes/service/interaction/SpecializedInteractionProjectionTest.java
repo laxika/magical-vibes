@@ -170,6 +170,74 @@ class SpecializedInteractionProjectionTest {
         assertThat(message.cardIds()).containsExactly(first.getId(), second.getId(), third.getId());
     }
 
+    @Test
+    @DisplayName("A mandatory pick among cards tells the client how many have to be chosen")
+    void mandatoryMultiGraveyardChoiceProjectsItsMinimum() {
+        InteractionPromptMessage exactlyTwo = prompt(new PendingInteraction.MultiGraveyardChoice(
+                controllerId, List.of(card("First"), card("Second"), card("Third")), 2, "Choose two cards.", 2));
+        InteractionPromptMessage upToTwo = prompt(new PendingInteraction.MultiGraveyardChoice(
+                controllerId, List.of(card("First"), card("Second")), 2, "Choose up to two cards."));
+
+        assertThat(exactlyTwo.minCount()).isEqualTo(2);
+        assertThat(exactlyTwo.maxCount()).isEqualTo(2);
+        assertThat(upToTwo.minCount()).isIn(null, 0);
+    }
+
+    @Test
+    @DisplayName("Every card pick is projected with the bounds its answer is checked against")
+    void cardPicksProjectTheirBounds() {
+        Card first = card("First");
+        Card second = card("Second");
+        List<UUID> ids = List.of(first.getId(), second.getId());
+
+        InteractionPromptMessage spellbook = prompt(
+                new PendingInteraction.HitCounterExiledCardChoice(controllerId, opponentId, ids, null));
+        InteractionPromptMessage optionalPlay = prompt(new PendingInteraction.ExiledCardMayPlayChoice(
+                controllerId, ids, true, false, true, true));
+        InteractionPromptMessage mayCopy = prompt(
+                new PendingInteraction.ExiledSpellCopyChoice(controllerId, ids, 1));
+        InteractionPromptMessage searchForTwo = prompt(new PendingInteraction.SearchLibraryAndOrGraveyardChoice(
+                controllerId, List.of(first, second), Set.of(first.getId(), second.getId()), true, "land card",
+                com.github.laxika.magicalvibes.model.LibrarySearchDestination.HAND, 2));
+        InteractionPromptMessage mustFindInGraveyard = prompt(new PendingInteraction.SearchLibraryAndOrGraveyardChoice(
+                controllerId, List.of(first, second), Set.of(first.getId()), true, "land card"));
+
+        assertThat(spellbook.minCount()).isEqualTo(1);
+        assertThat(optionalPlay.maxCount()).isEqualTo(1);
+        assertThat(optionalPlay.minCount()).isIn(null, 0);
+        assertThat(mayCopy.minCount()).isIn(null, 0);
+        assertThat(searchForTwo.maxCount()).isEqualTo(2);
+        assertThat(mustFindInGraveyard.minCount()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("No prompt over exiled cards shows a face-down one to a player who may not look at it (CR 406.3)")
+    void exiledCardPromptsHideFaceDownCards() {
+        Card hidden = card("Hidden");
+        gameData.addToExile(opponentId, hidden, UUID.randomUUID(), true);
+        gameData.exiledCardTimeCounters.put(hidden.getId(), 1);
+        List<UUID> ids = List.of(hidden.getId());
+
+        List<PendingInteraction> choices = List.of(
+                new PendingInteraction.ImprovisationCapstoneCastChoice(controllerId, ids, 1),
+                new PendingInteraction.ExiledSpellCopyChoice(controllerId, ids, 1),
+                new PendingInteraction.ExiledCardMayPlayChoice(controllerId, ids),
+                new PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice(
+                        controllerId, UUID.randomUUID(), 0, 0, null, null, List.of(), java.util.Map.of(), ids),
+                new PendingInteraction.HitCounterExiledCardChoice(controllerId, opponentId, ids, null),
+                new PendingInteraction.SuspendedCardTimeCounterChoice(controllerId, ids, 1, "Source"),
+                new PendingInteraction.BrilliantUltimatumPlayChoice(controllerId, ids, 1),
+                new PendingInteraction.BrilliantUltimatumPileSeparationChoice(controllerId, ids));
+
+        for (PendingInteraction choice : choices) {
+            assertThat(prompt(choice).cards()).as(choice.getClass().getSimpleName())
+                    .singleElement().satisfies(view -> assertThat(view).isNotNull()
+                            .extracting(shown -> shown.name()).isEqualTo("Face-down card"));
+        }
+        assertThat(prompt(new PendingInteraction.BrilliantUltimatumPileChoice(controllerId, ids, List.of())).prompt())
+                .doesNotContain("Hidden");
+    }
+
     private InteractionPromptMessage prompt(PendingInteraction interaction) {
         return (InteractionPromptMessage) projections.project(gameData, interaction).orElseThrow();
     }

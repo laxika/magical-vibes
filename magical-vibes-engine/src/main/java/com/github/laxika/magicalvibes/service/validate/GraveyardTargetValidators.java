@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantEmbalmToTargetCreatureCa
 import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnTargetAndSacrificedCardsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -226,24 +225,6 @@ public class GraveyardTargetValidators {
         if (graveyardCard.getManaValue() != ctx.xValue()) {
             throw new IllegalStateException("Target card's mana value must equal X (" + ctx.xValue() + ")");
         }
-    }
-
-    @ValidatesTarget(PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect.class)
-    public void validatePutCreatureFromOpponentGraveyardWithExile(TargetValidationContext ctx) {
-        if (ctx.targetZone() != Zone.GRAVEYARD) {
-            throw new IllegalStateException("Spell requires a graveyard target");
-        }
-        if (ctx.targetId() == null) {
-            throw new IllegalStateException("Spell requires a target card");
-        }
-        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
-        if (graveyardCard == null) {
-            throw new IllegalStateException("Target card not found in any graveyard");
-        }
-        if (!graveyardCard.hasType(CardType.CREATURE)) {
-            throw new IllegalStateException("Target must be a creature card");
-        }
-        // Opponent-graveyard check is enforced in SpellCastingService (which has playerId context)
     }
 
     @ValidatesTarget(CastTargetInstantOrSorceryFromGraveyardEffect.class)

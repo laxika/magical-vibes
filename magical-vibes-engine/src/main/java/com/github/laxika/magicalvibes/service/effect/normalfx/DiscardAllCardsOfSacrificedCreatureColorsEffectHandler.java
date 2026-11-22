@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardAllCardsOfSacrificedCreatureColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealHandAndDiscardMatchingCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -21,7 +23,6 @@ import java.util.List;
 public class DiscardAllCardsOfSacrificedCreatureColorsEffectHandler implements NormalEffectHandlerBean {
 
     private final CardRevealService cardRevealService;
-    private final RevealHandAndDiscardMatchingCardsEffectHandler discardHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -44,6 +45,8 @@ public class DiscardAllCardsOfSacrificedCreatureColorsEffectHandler implements N
                 .map(CardColorPredicate::new)
                 .map(predicate -> (CardPredicate) predicate)
                 .toList());
-        discardHandler.resolve(gameData, entry, new RevealHandAndDiscardMatchingCardsEffect(sharedColor));
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                RevealCardsFromHandEffect.hand(Subjects.targetPlayer()),
+                new DiscardCardsEffect(Subjects.revealedThisWay(sharedColor))));
     }
 }

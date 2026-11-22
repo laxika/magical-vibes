@@ -74,10 +74,7 @@ public class SearchLibraryAndOrGraveyardChoiceInteractionHandler
             throw new IllegalStateException("Choose at most " + interaction.maxCount() + " valid cards");
         }
 
-        boolean graveyardCandidateAvailable = interaction.pool().stream()
-                .anyMatch(card -> !interaction.libraryCardIds().contains(card.getId())
-                        && !interaction.handCardIds().contains(card.getId()));
-        if (selectedIds.isEmpty() && interaction.maxCount() == 1 && graveyardCandidateAvailable) {
+        if (selectedIds.isEmpty() && interaction.mustFind()) {
             throw new IllegalStateException("Must find a card in the graveyard");
         }
 

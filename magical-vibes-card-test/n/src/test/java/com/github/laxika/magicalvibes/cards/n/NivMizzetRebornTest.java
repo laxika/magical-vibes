@@ -33,12 +33,13 @@ class NivMizzetRebornTest extends BaseCardTest {
 
         castAndResolve();
 
-        PendingInteraction.NivMizzetColorPairChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.NivMizzetColorPairChoice.class);
-        assertThat(choice.requiredPairCount()).isEqualTo(2);
-        assertThat(choice.validCardIds()).containsExactly(azorius.getId(), secondAzorius.getId(), golgari.getId());
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThat(choice.validCardIds()).containsExactly(azorius.getId(), secondAzorius.getId());
 
-        answer(List.of(secondAzorius.getId(), golgari.getId()));
+        answer(List.of(secondAzorius.getId()));
+        answer(List.of(golgari.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(secondAzorius, golgari);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(azorius, monocolored, threeColor);
@@ -59,9 +60,10 @@ class NivMizzetRebornTest extends BaseCardTest {
         assertThatThrownBy(() -> answer(List.of(azorius.getId(), secondAzorius.getId())))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.NivMizzetColorPairChoice.class);
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        answer(List.of(azorius.getId(), golgari.getId()));
+        answer(List.of(azorius.getId()));
+        answer(List.of(golgari.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(azorius, golgari);
     }
@@ -85,10 +87,11 @@ class NivMizzetRebornTest extends BaseCardTest {
 
         castAndResolve();
 
-        PendingInteraction.NivMizzetColorPairChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.NivMizzetColorPairChoice.class);
-        assertThat(choice.revealedCards()).containsExactly(
-                azorius, monoWhite, colorless, threeColor, filler1, filler2, filler3, filler4, filler5, filler6);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText())).anyMatch(log -> log.contains(
+                " reveals Azorius card, White card, Colorless card, Three-color card, Filler 1, Filler 2, Filler 3, "
+                        + "Filler 4, Filler 5, Filler 6 from the top of their library."));
         assertThat(choice.validCardIds()).containsExactly(azorius.getId());
 
         answer(List.of(azorius.getId()));
@@ -142,17 +145,20 @@ class NivMizzetRebornTest extends BaseCardTest {
 
         assertThatThrownBy(() -> answer(List.of()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> answer(List.of(azorius.getId())))
+        assertThatThrownBy(() -> answer(List.of(golgari.getId())))
                 .isInstanceOf(IllegalStateException.class);
         assertThatThrownBy(() -> answer(List.of(azorius.getId(), azorius.getId())))
                 .isInstanceOf(IllegalStateException.class);
         for (Card ineligible : List.of(monocolored, colorless, threeColor, fiveColor)) {
-            assertThatThrownBy(() -> answer(List.of(azorius.getId(), ineligible.getId())))
+            assertThatThrownBy(() -> answer(List.of(ineligible.getId())))
                     .isInstanceOf(IllegalStateException.class);
         }
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
 
-        answer(List.of(azorius.getId(), golgari.getId()));
+        answer(List.of(azorius.getId()));
+        assertThatThrownBy(() -> answer(List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        answer(List.of(golgari.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(azorius, golgari);
         assertThat(gd.playerDecks.get(player1.getId()))

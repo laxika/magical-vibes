@@ -63,7 +63,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSharesNameWithAPermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -244,49 +243,6 @@ public class CardChoiceHandlerService {
     }
 
     /** Answers Retraced Image's mandatory hand reveal and conditional battlefield entry. */
-    public void handleRetracedImageCardChosen(GameData gameData, Player player, int cardIndex) {
-        PendingInteraction.RetracedImageCardChoice choice =
-                gameData.interaction.activeInteraction(PendingInteraction.RetracedImageCardChoice.class);
-        if (choice == null || !player.getId().equals(choice.playerId())) {
-            throw new IllegalStateException("Not your turn to choose");
-        }
-        if (!choice.validIndices().contains(cardIndex)) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
-        }
-
-        List<Card> hand = gameData.playerHands.get(player.getId());
-        if (hand == null || cardIndex >= hand.size()) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        Card card = hand.get(cardIndex);
-        gameLogService.append(gameData,
-                GameLog.textCardText(player.getUsername() + " reveals ", card, " from their hand."));
-
-        boolean sharesNameWithPermanent = predicateEvaluationService.matchesCardPredicate(
-                card, new CardSharesNameWithAPermanentPredicate(), card.getId(), gameData, player.getId());
-        if (sharesNameWithPermanent && card.isAura() && !card.isEnchantZone()) {
-            // The Aura stays in hand until the batch places it, so it remains there if no host is legal.
-            battlefieldEntryBatchSupport.begin(gameData, List.of(
-                    new BattlefieldEntryCard(player.getId(), player.getId(), card, Zone.HAND, null)));
-        } else if (sharesNameWithPermanent) {
-            hand.remove(cardIndex);
-            Permanent permanent = new Permanent(card, Zone.HAND);
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
-            gameLogService.append(gameData,
-                    GameLog.textCardText(player.getUsername() + " puts ", card, " onto the battlefield."));
-            battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, player.getId(), card, null, false);
-        } else {
-            gameLogService.append(gameData,
-                    GameLog.cardThen(card, " does not share a name with a permanent and remains in their hand."));
-        }
-
-        if (!gameData.interaction.isAwaitingInput()) {
-            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        }
-    }
-
     /** Applies a perpetual power/keyword modification to a chosen creature card in hand. */
     public void handlePerpetualCreatureCardChosen(GameData gameData, Player player, int cardIndex) {
         PendingInteraction.PerpetualCreatureCardChoice choice =

@@ -66,8 +66,8 @@ class AtraxaGrandUnifierTest extends BaseCardTest {
         castAtraxa(library);
 
         int selections = 0;
-        while (gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class) != null) {
-            harness.handleCardChosen(player1, 0);
+        while (gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class) != null) {
+            chooseOfferedCards(player1, 0);
             selections++;
         }
 
@@ -86,8 +86,8 @@ class AtraxaGrandUnifierTest extends BaseCardTest {
 
         castAtraxa(library);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
-        harness.handleCardChosen(player1, -1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(land, filler);
@@ -99,9 +99,9 @@ class AtraxaGrandUnifierTest extends BaseCardTest {
         Card myr = new MyrConvert();
         castAtraxa(List.of(myr));
 
-        harness.handleCardChosen(player1, -1);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNotNull();
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(myr);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -115,8 +115,8 @@ class AtraxaGrandUnifierTest extends BaseCardTest {
         Card second = new MyrConvert();
         castAtraxa(List.of(first, second));
 
-        harness.handleCardChosen(player1, 0);
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -129,7 +129,7 @@ class AtraxaGrandUnifierTest extends BaseCardTest {
         Card myr = new MyrConvert();
         castAtraxa(List.of(myr));
 
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(myr);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -148,7 +148,7 @@ class AtraxaGrandUnifierTest extends BaseCardTest {
         library.add(unrevealed);
         castAtraxa(library);
 
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(revealed.getFirst());
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(10);

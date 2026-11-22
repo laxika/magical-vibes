@@ -3,8 +3,15 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RevealUntilNonlandBottomThenBoostSelfByManaValueEffect;
-
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "204")
@@ -14,7 +21,9 @@ public class GoblinMachinist extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{R}",
-                List.of(new RevealUntilNonlandBottomThenBoostSelfByManaValueEffect()),
+                List.of(new RevealCardsFromTopUntilEffect(new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
+                        new BoostSelfEffect(AmountThisWay.revealedManaValue(), new Fixed(0)),
+                        PutCardsIntoLibraryEffect.onBottom(Subjects.revealedThisWay())),
                 "{2}{R}: Reveal cards from the top of your library until you reveal a nonland card. "
                         + "This creature gets +X/+0 until end of turn, where X is that card's mana value. "
                         + "Put the revealed cards on the bottom of your library in any order."));

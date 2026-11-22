@@ -1,17 +1,18 @@
 package com.github.laxika.magicalvibes.cards.i;
 
-import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.RevealHandAndDiscardMatchingCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsTriggeringSpellPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
 import java.util.List;
 
 @CardRegistration(set = "SOK", collectorNumber = "72")
@@ -27,6 +28,7 @@ public class InfernalKirin extends Card {
                         new CardSubtypePredicate(CardSubtype.SPIRIT),
                         new CardSubtypePredicate(CardSubtype.ARCANE)
                 ))),
-                new RevealHandAndDiscardMatchingCardsEffect(new CardManaValueEqualsTriggeringSpellPredicate()));
+                RevealCardsFromHandEffect.hand(Subjects.targetPlayer()),
+                new DiscardCardsEffect(Subjects.revealedThisWay(new CardManaValueEqualsTriggeringSpellPredicate())));
     }
 }

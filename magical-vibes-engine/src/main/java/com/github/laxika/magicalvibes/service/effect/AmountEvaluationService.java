@@ -1135,6 +1135,10 @@ public class AmountEvaluationService {
     private int amountThisWay(GameData gameData, AmountContext ctx, AmountThisWay thisWay) {
         StackEntry entry = ctx.stackEntry();
         ResolutionResults results = entry.getResolutionResults();
+        if (thisWay.kind() == StepKind.REVEAL && (thisWay.cardFilter() != null
+                || thisWay.stat() != AmountThisWay.Stat.AMOUNT)) {
+            return revealedStat(gameData, entry, results.outcome(StepKind.REVEAL), thisWay, ctx.controllerId());
+        }
         if (thisWay.cardFilter() != null) {
             UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
             return (int) results.outcome(thisWay.kind()).objectIds().stream()
@@ -1158,7 +1162,7 @@ public class AmountEvaluationService {
                     : results.outcome(thisWay.kind()).amountByPlayer().getOrDefault(ctx.controllerId(), 0);
         }
         if (thisWay.kind() == StepKind.REVEAL) {
-            return revealedStat(gameData, results.outcome(StepKind.REVEAL), thisWay, ctx.controllerId());
+            return revealedStat(gameData, entry, results.outcome(StepKind.REVEAL), thisWay, ctx.controllerId());
         }
         if (thisWay.kind() == StepKind.EXILE) {
             StepOutcome exiled = results.outcome(StepKind.EXILE);
@@ -1250,20 +1254,34 @@ public class AmountEvaluationService {
      * Over a reveal step: how many cards, or their total mana value as they are now; with {@code yours} only those
      * revealed from {@code playerId}'s library.
      */
-    private int revealedStat(GameData gameData, StepOutcome revealed, AmountThisWay thisWay, UUID playerId) {
+    private int revealedStat(GameData gameData, StackEntry entry, StepOutcome revealed, AmountThisWay thisWay,
+                             UUID playerId) {
         int total = 0;
         for (MovedCard shown : revealed.movedCards()) {
             if (thisWay.yours() && !Objects.equals(shown.ownerId(), playerId)) {
                 continue;
             }
-            if (thisWay.stat() == AmountThisWay.Stat.AMOUNT) {
+            if (thisWay.stat() == AmountThisWay.Stat.AMOUNT && thisWay.cardFilter() == null) {
                 total = SaturatingMath.add(total, 1);
                 continue;
             }
             Card card = gameQueryService.findCardById(gameData, shown.cardId());
-            total = SaturatingMath.add(total, card == null ? 0 : card.getManaValue());
+            if (card == null || thisWay.cardFilter() != null && !predicateEvaluationService.matchesCardPredicate(card,
+                    thisWay.cardFilter(), entry.getCard() == null ? null : entry.getCard().getId(), gameData,
+                    shown.ownerId(), entry.getSourcePermanentId(), null, entry.getXValue(),
+                    entry.getSourcePermanentSnapshot())) {
+                continue;
+            }
+            Integer value = switch (thisWay.stat()) {
+                case POWER -> gameQueryService.getEffectiveCardPower(gameData, card);
+                case TOUGHNESS -> gameQueryService.getEffectiveCardToughness(gameData, card);
+                case MANA_VALUE -> card.getManaValue();
+                case AMOUNT -> 1;
+                case DIED, STILL_EXILED, FROM_HAND -> 0;
+            };
+            total = SaturatingMath.add(total, value == null ? 0 : value);
         }
-        return total;
+        return thisWay.negativeKept() ? total : Math.max(0, total);
     }
 
     private int exiledStat(GameData gameData, StackEntry entry, StepOutcome exiled, AmountThisWay.Stat stat,
@@ -3175,8 +3193,20 @@ public class AmountEvaluationService {
 
     private int countColorManaSymbolsInRevealedCards(
             GameData gameData, ColorManaSymbolsInRevealedCards amount, AmountContext ctx) {
+        if (ctx.stackEntry() == null) return 0;
+        List<MovedCard> revealedThisWay = ctx.stackEntry().getResolutionResults().outcome(StepKind.REVEAL).movedCards();
+        if (!revealedThisWay.isEmpty()) {
+            int symbols = 0;
+            for (MovedCard shown : revealedThisWay) {
+                Card card = gameQueryService.findCardById(gameData, shown.cardId());
+                if (card != null && card.getParsedManaCost() != null) {
+                    symbols += card.getParsedManaCost().countColorSymbols(amount.color());
+                }
+            }
+            return symbols;
+        }
         List<Card> hand = gameData.playerHands.get(ctx.controllerId());
-        if (hand == null || ctx.stackEntry() == null) return 0;
+        if (hand == null) return 0;
         List<UUID> revealedIds = ctx.stackEntry().getEventCardIds();
         int total = 0;
         for (Card card : hand) {

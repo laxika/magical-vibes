@@ -10,6 +10,13 @@ import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 public record SetBasePowerToughnessToAmountEffect(
         DynamicAmount power,
         DynamicAmount toughness,
-        PermanentSubject subject
+        PermanentSubject subject,
+        Duration duration
 ) implements CardEffect {
+
+    /** For as long as the subject's form lasts: a target until end of turn, the source with no end. */
+    public SetBasePowerToughnessToAmountEffect(DynamicAmount power, DynamicAmount toughness,
+                                               PermanentSubject subject) {
+        this(power, toughness, subject, null);
+    }
 }

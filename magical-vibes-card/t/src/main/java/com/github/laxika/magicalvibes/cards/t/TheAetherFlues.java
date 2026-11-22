@@ -7,9 +7,11 @@ import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealUntilCreatureToBattlefieldRestToLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -22,16 +24,20 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class TheAetherFlues extends Card {
 
     public TheAetherFlues() {
+        var creatureCard = new CardTypePredicate(CardType.CREATURE);
         MayEffect sacrificeThenReveal = new MayEffect(
                 SequenceEffect.of(
                         new SacrificePermanentsEffect(1, new PermanentIsCreaturePredicate(), Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.sacrificed(),
-                                new RevealUntilCreatureToBattlefieldRestToLibraryEffect())),
+                                SequenceEffect.of(
+                                        new RevealCardsFromTopUntilEffect(creatureCard),
+                                        new PutCardsOntoBattlefieldEffect(Subjects.revealedThisWay(creatureCard)),
+                                        new ShuffleLibraryEffect(false)))),
                 "Sacrifice a creature?");
         addTrigger(Triggers.planeswalkToThis(), sacrificeThenReveal);
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), sacrificeThenReveal);
         addTrigger(Triggers.chaosEnsues(), new MayEffect(
-                new PutCardToBattlefieldEffect(new CardTypePredicate(CardType.CREATURE), "creature"),
+                new PutCardToBattlefieldEffect(creatureCard, "creature"),
                 "Put a creature card from your hand onto the battlefield?"));
     }
 }

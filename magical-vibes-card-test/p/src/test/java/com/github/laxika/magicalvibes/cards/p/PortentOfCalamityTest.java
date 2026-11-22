@@ -35,16 +35,16 @@ class PortentOfCalamityTest extends BaseCardTest {
         Forest forest = new Forest();
         cast(5, List.of(forest, firstCreature, secondCreature, instant, artifact));
 
-        assertThat(librarySearchCards()).containsExactly(forest);
-        harness.handleCardChosen(player1, -1);
+        assertThat(offeredCards()).containsExactly(forest);
+        chooseOfferedCards(player1);
 
-        assertThat(librarySearchCards()).containsExactlyInAnyOrder(firstCreature, secondCreature);
-        harness.handleCardChosen(player1, 0);
+        assertThat(offeredCards()).containsExactlyInAnyOrder(firstCreature, secondCreature);
+        chooseOfferedCards(player1, 0);
 
-        assertThat(librarySearchCards()).containsExactly(instant);
-        harness.handleCardChosen(player1, 0);
-        assertThat(librarySearchCards()).containsExactly(artifact);
-        harness.handleCardChosen(player1, 0);
+        assertThat(offeredCards()).containsExactly(instant);
+        chooseOfferedCards(player1, 0);
+        assertThat(offeredCards()).containsExactly(artifact);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).contains(firstCreature, instant, artifact);
@@ -65,11 +65,12 @@ class PortentOfCalamityTest extends BaseCardTest {
         chooseNextTypeCard();
         chooseNextTypeCard();
 
-        PendingInteraction.ImprovisationCapstoneCastChoice castChoice =
-                (PendingInteraction.ImprovisationCapstoneCastChoice) gd.interaction.activeInteraction();
+        PendingInteraction.MultiGraveyardChoice castChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(castChoice.validCardIds()).containsExactlyInAnyOrder(
                 creature.getId(), instant.getId(), artifact.getId());
         harness.handleMultipleCardsChosen(player1, List.of(artifact.getId()));
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).anyMatch(entry -> entry.getCard() == artifact);
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(forest, creature, instant);
@@ -103,8 +104,8 @@ class PortentOfCalamityTest extends BaseCardTest {
         Forest forest = new Forest();
         ClifftopLookout creature = new ClifftopLookout();
         cast(2, List.of(forest, creature));
-        harness.handleCardChosen(player1, -1);
-        harness.handleCardChosen(player1, -1);
+        chooseOfferedCards(player1);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest, creature);
@@ -138,7 +139,7 @@ class PortentOfCalamityTest extends BaseCardTest {
         cast(2, List.of(first, second));
         chooseNextTypeCard();
 
-        assertThat(librarySearchCards()).containsExactly(second);
+        assertThat(offeredCards()).containsExactly(second);
         chooseNextTypeCard();
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
@@ -158,6 +159,7 @@ class PortentOfCalamityTest extends BaseCardTest {
         chooseNextTypeCard();
         chooseNextTypeCard();
         harness.handleMultipleCardsChosen(player1, List.of(instant.getId()));
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(forest, creature, instant, artifact);
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
@@ -178,6 +180,7 @@ class PortentOfCalamityTest extends BaseCardTest {
         chooseNextTypeCard();
         chooseNextTypeCard();
         harness.handleMultipleCardsChosen(player1, List.of(brew.getId()));
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(discard);
@@ -196,10 +199,11 @@ class PortentOfCalamityTest extends BaseCardTest {
         chooseNextTypeCard();
         chooseNextTypeCard();
 
-        PendingInteraction.ImprovisationCapstoneCastChoice castChoice =
-                gd.interaction.activeInteraction(PendingInteraction.ImprovisationCapstoneCastChoice.class);
+        PendingInteraction.MultiGraveyardChoice castChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(castChoice.validCardIds()).contains(battle.getId());
         harness.handleMultipleCardsChosen(player1, List.of(battle.getId()));
+        harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.stack).anyMatch(entry -> entry.getCard() == battle);
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(forest, creature, instant);
@@ -219,6 +223,7 @@ class PortentOfCalamityTest extends BaseCardTest {
         chooseNextTypeCard();
         chooseNextTypeCard();
         harness.handleMultipleCardsChosen(player1, List.of(secondPortent.getId()));
+        harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(unrevealed);
@@ -243,11 +248,11 @@ class PortentOfCalamityTest extends BaseCardTest {
         harness.passBothPriorities();
     }
 
-    private List<Card> librarySearchCards() {
-        return gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards();
+    private List<Card> offeredCards() {
+        return gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).cards();
     }
 
     private void chooseNextTypeCard() {
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
     }
 }

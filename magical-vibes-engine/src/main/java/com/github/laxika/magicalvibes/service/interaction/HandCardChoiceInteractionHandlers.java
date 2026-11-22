@@ -216,29 +216,6 @@ public final class HandCardChoiceInteractionHandlers {
     }
 
     @Component
-    public static class RetracedImageCardChoiceInteractionHandler
-            extends Base<PendingInteraction.RetracedImageCardChoice> {
-
-        private final CardChoiceHandlerService cardChoiceHandlerService;
-
-        public RetracedImageCardChoiceInteractionHandler(CardChoiceHandlerService cardChoiceHandlerService) {
-            this.cardChoiceHandlerService = cardChoiceHandlerService;
-        }
-
-        @Override
-        public Class<PendingInteraction.RetracedImageCardChoice> handledType() {
-            return PendingInteraction.RetracedImageCardChoice.class;
-        }
-
-        @Override
-        public void handleAnswer(GameData gameData, Player player,
-                                 PendingInteraction.RetracedImageCardChoice interaction,
-                                 InteractionAnswer answer) {
-            cardChoiceHandlerService.handleRetracedImageCardChosen(gameData, player, cardIndex(answer));
-        }
-    }
-
-    @Component
     public static class PerpetualOffspringCardChoiceInteractionHandler
             extends Base<PendingInteraction.PerpetualOffspringCardChoice> {
 

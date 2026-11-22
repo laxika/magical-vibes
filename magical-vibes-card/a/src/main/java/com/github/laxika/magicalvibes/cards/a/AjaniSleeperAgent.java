@@ -1,27 +1,33 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
-import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
-import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
-import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardMatchingToHandElseMayBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 
 @CardRegistration(set = "DMU", collectorNumber = "192")
@@ -38,7 +44,11 @@ public class AjaniSleeperAgent extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new RevealTopCardMatchingToHandElseMayBottomEffect(creatureOrPlaneswalker)),
+                List.of(new RevealTopCardOfLibraryEffect(Subjects.you()),
+                        new PutCardsIntoHandEffect(Subjects.revealedThisWay(creatureOrPlaneswalker)),
+                        new ConditionalEffect(HappenedThisWay.toACard(StepKind.REVEAL, new CardNotPredicate(creatureOrPlaneswalker)),
+                                new MayEffect(PutCardsIntoLibraryEffect.onBottom(Subjects.revealedThisWay()),
+                                "Put the revealed card on the bottom of your library?"))),
                 "+1: Reveal the top card of your library. If it's a creature or planeswalker card, put it into your hand. Otherwise, you may put it on the bottom of your library."
         ));
 

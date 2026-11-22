@@ -2,7 +2,12 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RevealUntilNonlandCardsToHandEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "WWK", collectorNumber = "42")
 @CardRegistration(set = "HA1", collectorNumber = "4")
@@ -10,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.RevealUntilNonlandCardsToHand
 public class TreasureHunt extends Card {
 
     public TreasureHunt() {
-        addSpellEffect(new RevealUntilNonlandCardsToHandEffect());
+        addSpellEffect(new RevealCardsFromTopUntilEffect(new CardNotPredicate(new CardTypePredicate(CardType.LAND))));
+        addSpellEffect(new PutCardsIntoHandEffect(Subjects.revealedThisWay()));
     }
 }

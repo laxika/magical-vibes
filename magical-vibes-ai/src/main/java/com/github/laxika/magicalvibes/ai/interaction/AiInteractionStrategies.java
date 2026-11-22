@@ -132,7 +132,6 @@ public final class AiInteractionStrategies {
         register(new AlternatingHandExileChoiceAiStrategy());
         register(new MasterOfPredicamentsCardChoiceAiStrategy());
         register(new StrongholdGambitCardChoiceAiStrategy());
-        register(new RetracedImageCardChoiceAiStrategy());
         register(new GraveyardChoiceAiStrategy());
         register(new GraveyardExileCostChoiceAiStrategy());
         register(new ActivatedAbilityGraveyardExileCostChoiceAiStrategy());
@@ -156,7 +155,6 @@ public final class AiInteractionStrategies {
         register(new VividCardChoiceAiStrategy());
         register(new CombatDamageAssignmentAiStrategy());
         register(new PutCardFromHandOrGraveyardChoiceAiStrategy());
-        register(new NivMizzetColorPairChoiceAiStrategy());
         register(new FaceUpExiledCardChoiceAiStrategy());
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice.class, 2));

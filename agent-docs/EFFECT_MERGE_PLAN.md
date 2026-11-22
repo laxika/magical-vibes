@@ -1712,6 +1712,10 @@ Independent, all LOW. Do as many as land cleanly; note any that don't.
 
 ### Step 21 — `RevealUntilEffect`
 
+Done another way (effect-cleanup step 9, run 13): the four one-card classes are
+`RevealCardsFromTopUntilEffect` plus move steps over `revealedThisWay()`; the head
+`RevealUntilCardPredicateRestOnBottomRandomEffect` stays.
+
 **Target**
 ```java
 record RevealUntilEffect(CardPredicate matchPredicate, int matchCount,
@@ -1900,7 +1904,7 @@ Do these individually; each is self-contained. Reassess before starting — seve
 | `SetBasePowerToughnessEffect(+ scopes)` | 2 classes | Both mass handlers **already construct** `SetBasePowerToughnessEffect` as the floating payload. Needs `DynamicAmount`; re-verify the layer-7b path |
 | `DealsPowerDamageEffect(...)` | 4 classes (15 cards) | **Behavior change**: two variants build a synthetic StackEntry for CR 608.2h attribution, two don't. The synthetic form looks correct; the others look like a latent bug |
 | `TapOrUntapChosenPermanentEffect` / `TapAnyNumberOfCreaturesForEachEffect` | 2 + 2 | Both need `MultiPermanentChoiceContext` records and their handler branches unified |
-| `RevealRandomCardFromTargetPlayerHandEffect(+ loseLife…)` | 1 class | Merged type must expose both target-supply modes (trigger context vs `targetSpec`) |
+| `RevealRandomCardFromTargetPlayerHandEffect(+ loseLife…)` | 1 class | Done another way (effect-cleanup step 9, run 13: `RevealCardsFromHandEffect` + steps). Merged type must expose both target-supply modes (trigger context vs `targetSpec`) |
 | `GainControlOfTargetEffect(+ recipient axis)` | `GainControlOfEnchantedPermanentEffect` (1) | 1 class for a change to the slice's hottest effect (41 cards). Optional |
 | `MillEffect` + `Halved` amount | `MillHalfLibraryEffect` (2) | Blocked on adding a `Halved(DynamicAmount, boolean roundUp)` wrapper (which would also subsume `HalfControllerLifeRoundedUp`) |
 | `MustAttackEffect(scope, matcher)` | `MatchingCreaturesMustAttackEffect` (2) | Consolidates the class but not the four scanning branches in `AttackLegalityService:373-439` |

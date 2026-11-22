@@ -25,6 +25,21 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class GenesisHydraTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Every card revealed is shown to all players by name, also one that can't be chosen (CR 701.20a)")
+    void revealedCardsAreNamed() {
+        harness.setLibrary(player1, List.of(new Forest(), new CarnifexDemon()));
+        harness.setHand(player1, List.of(new GenesisHydra()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.addMana(player1, ManaColor.WHITE, 2);
+
+        gs.playCard(gd, player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
+                .anyMatch(log -> log.contains("reveals Forest, Carnifex Demon"));
+    }
+
+    @Test
     @DisplayName("Cast trigger reveals X cards; a nonland permanent goes to the battlefield and the rest are shuffled back")
     void castTriggerPutsPermanentOntoBattlefield() {
         Card bears = new GrizzlyBears();
@@ -40,7 +55,7 @@ class GenesisHydraTest extends BaseCardTest {
         gs.playCard(gd, player1, 0, 3, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");

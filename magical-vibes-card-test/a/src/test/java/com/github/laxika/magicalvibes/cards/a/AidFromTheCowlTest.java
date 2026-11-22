@@ -117,7 +117,7 @@ class AidFromTheCowlTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("Declining a permanent leaves it on top without offering to bottom it")
+    @DisplayName("Declining a permanent offers to put it on the bottom, and declining that leaves it on top")
     void declinePermanentLeavesItOnTop() {
         addAidAndRevoltSetup();
         var forest = new Forest();
@@ -126,10 +126,27 @@ class AidFromTheCowlTest extends BaseCardTest {
 
         advanceToEndStep();
         harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(forest, instant);
         harness.assertNotOnBattlefield(player1, "Forest");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A permanent card not put onto the battlefield may be put on the bottom")
+    void declinedPermanentMayGoToTheBottom() {
+        addAidAndRevoltSetup();
+        var forest = new Forest();
+        var instant = new Shock();
+        harness.setLibrary(player1, List.of(forest, instant));
+
+        advanceToEndStep();
+        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(instant, forest);
     }
 
     @Test
@@ -180,6 +197,7 @@ class AidFromTheCowlTest extends BaseCardTest {
     @DisplayName("The controller chooses what a revealed Aura enchants as it enters")
     void auraEntersAttachedToChosenCreature() {
         addAidAndRevoltSetup();
+        harness.addToBattlefield(player2, new GrizzlyBears());
         harness.addToBattlefield(player2, new GrizzlyBears());
         var creature = gd.playerBattlefields.get(player2.getId()).getFirst();
         harness.setLibrary(player1, List.of(new Conviction()));

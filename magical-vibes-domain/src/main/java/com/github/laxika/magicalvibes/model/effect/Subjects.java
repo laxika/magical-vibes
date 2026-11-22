@@ -274,6 +274,21 @@ public final class Subjects {
         return new CardSubject.CardsThisWay(kind, filter);
     }
 
+    /** "All cards revealed this way": those still where the last reveal step showed them. */
+    public static CardSubject revealedThisWay() {
+        return cardsThisWay(StepKind.REVEAL);
+    }
+
+    /** "That card", "the creature cards revealed this way": of those, the ones matching {@code filter}. */
+    public static CardSubject revealedThisWay(CardPredicate filter) {
+        return cardsThisWay(StepKind.REVEAL, filter);
+    }
+
+    /** "The rest" after "put that card ...": the revealed cards that don't match {@code filter}. */
+    public static CardSubject restRevealedThisWay(CardPredicate filter) {
+        return except(revealedThisWay(), revealedThisWay(filter));
+    }
+
     /**
      * "One of them": the cards the trigger event was about that match {@code filter}, each still in the graveyard stay
      * the event put it in.

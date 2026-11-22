@@ -131,7 +131,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ActivatedAbilityGraveyardExileCostChoice,
         PendingInteraction.CraftMaterialChoice,
         PendingInteraction.ActivatedAbilityGraveyardLibraryCostChoice,
-        PendingInteraction.HandCardChoice, PendingInteraction.RetracedImageCardChoice,
+        PendingInteraction.HandCardChoice,
         PendingInteraction.PutCardFromHandIntoGraveyardChoice,
         PendingInteraction.PerpetualOffspringCardChoice,
         PendingInteraction.PerpetualCreatureCardChoice,
@@ -164,7 +164,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.SpellbookCardChoice,
         PendingInteraction.DraftTwiceSpellbookChoice,
         PendingInteraction.VividCardChoice,
-        PendingInteraction.NivMizzetColorPairChoice,
         PendingInteraction.LibrarySearch,
         PendingInteraction.SearchOutsideGameOrExileCardChoice,
         PendingInteraction.ExchangeOutsideGameCardChoice,
@@ -1181,7 +1180,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
+            // "You may copy a card exiled with this": choosing none is the answer "no".
+            return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
         }
     }
 
@@ -1826,7 +1826,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                     int xValue, int manaMultiplier, boolean creatureSource) {
     }
 
-    record ActivatedAbilityRevealContext(UUID sourcePermanentId, int abilityIndex, int xValue,
+    record ActivatedAbilityRevealContext(UUID sourcePermanentId, int abilityIndex, int xValue, int cardCount,
                                          UUID targetId, Zone targetZone, java.util.List<UUID> targetIds,
                                          java.util.Map<UUID, Integer> damageAssignments) {
 
@@ -1923,7 +1923,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                 return new InteractionOptions.MultiCardPick(validCardIds, 0,
                         Math.min(duplicateManaValueRevealContext.maxCount(), validCardIds.size()));
             }
-            int required = activatedAbilityContext == null ? 0 : activatedAbilityContext.xValue();
+            int required = activatedAbilityContext == null ? 0 : activatedAbilityContext.cardCount();
             return new InteractionOptions.MultiCardPick(validCardIds, required,
                     activatedAbilityContext == null ? validCardIds.size() : required);
         }
@@ -2112,7 +2112,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), 0, Math.min(maxCount, pool.size()));
+            return new InteractionOptions.MultiCardPick(validCardIds(), mustFind() ? 1 : 0,
+                    Math.min(maxCount, pool.size()));
+        }
+
+        /** Whether a lone find can't be failed, a card outside the library and hand being among those offered. */
+        public boolean mustFind() {
+            return maxCount == 1 && pool.stream().anyMatch(card -> !libraryCardIds.contains(card.getId())
+                    && !handCardIds.contains(card.getId()));
         }
     }
 
@@ -2264,7 +2271,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), 4, 4);
+            // A search for cards of a stated quality needn't find them all (CR 701.23b).
+            return new InteractionOptions.MultiCardPick(validCardIds(), 0, Math.min(4, pool.size()));
         }
     }
 
@@ -4051,25 +4059,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** Retraced Image: reveal one card from hand, then conditionally put it onto the battlefield. */
-    record RetracedImageCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt)
-            implements PendingInteraction, HandChoice {
-
-        public RetracedImageCardChoice {
-            validIndices = java.util.List.copyOf(validIndices);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(validIndices, false);
-        }
-    }
-
     /** Chooses a creature card in hand to receive perpetual modifications. */
     record PerpetualCreatureCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt,
                                        int powerBoost, int toughnessBoost, Set<Keyword> keywords, boolean grantBlitz)
@@ -5772,27 +5761,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, 1);
-        }
-    }
-
-    /** Selects one card for each two-color pair represented among Niv-Mizzet's revealed cards. */
-    record NivMizzetColorPairChoice(UUID playerId, java.util.List<Card> revealedCards,
-                                    java.util.List<UUID> validCardIds, int requiredPairCount,
-                                    String prompt) implements PendingInteraction {
-
-        public NivMizzetColorPairChoice {
-            revealedCards = java.util.List.copyOf(revealedCards);
-            validCardIds = java.util.List.copyOf(validCardIds);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, requiredPairCount, requiredPairCount);
         }
     }
 

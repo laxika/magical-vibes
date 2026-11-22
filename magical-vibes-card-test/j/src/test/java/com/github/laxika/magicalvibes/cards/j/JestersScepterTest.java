@@ -263,4 +263,35 @@ class JestersScepterTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Giant Growth");
         harness.assertInGraveyard(player2, "Shock");
     }
+
+    @Test
+    @DisplayName("A new controller paying the cost isn't shown the cards exiled face down (CR 406.3)")
+    void newControllerDoesNotSeeTheCardsToPayWith() {
+        harness.setHand(player1, List.of(new JestersScepter()));
+        harness.setLibrary(player2, List.of(new Shock(), new Shock()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castArtifact(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        Permanent scepter = findPermanent(player1, "Jester's Scepter");
+        gd.playerBattlefields.get(player1.getId()).remove(scepter);
+        gd.playerBattlefields.get(player2.getId()).add(scepter);
+        harness.setHand(player1, List.of(new GiantGrowth()));
+        GrizzlyBears bears = new GrizzlyBears();
+        Permanent bearsPermanent = harness.addToBattlefieldAndReturn(player1, bears);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+        harness.castInstant(player1, 0, bearsPermanent.getId());
+        Card growth = gd.stack.getLast().getCard();
+        harness.passPriority(player1);
+        harness.clearMessages();
+
+        harness.activateAbility(player2, gd.playerBattlefields.get(player2.getId()).indexOf(scepter), null,
+                growth.getId());
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice.class);
+        List<String> prompts = harness.getConn2().getMessagesContaining("\"type\":\"INTERACTION_PROMPT\"");
+        assertThat(prompts).isNotEmpty().allSatisfy(message -> assertThat(message).doesNotContain("\"name\":\"Shock\""));
+    }
 }

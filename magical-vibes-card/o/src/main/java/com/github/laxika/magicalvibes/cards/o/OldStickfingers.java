@@ -6,8 +6,12 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.RevealUntilCountMatchingCardsToGraveyardRestOnBottomRandomEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutExiledCardsIntoOwnersGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,12 +21,14 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class OldStickfingers extends Card {
 
     public OldStickfingers() {
+        var creatureCard = new CardTypePredicate(CardType.CREATURE);
         addTrigger(Triggers.youCastThisSpell(),
-                new RevealUntilCountMatchingCardsToGraveyardRestOnBottomRandomEffect(
-                        new XValue(), new CardTypePredicate(CardType.CREATURE)));
+                new RevealCardsFromTopUntilEffect(Subjects.you(), creatureCard, new XValue()),
+                new PutExiledCardsIntoOwnersGraveyardEffect(Subjects.revealedThisWay(creatureCard)),
+                PutCardsIntoLibraryEffect.onBottomInRandomOrder(Subjects.revealedThisWay(new CardNotPredicate(creatureCard))));
 
         CardsInGraveyard creatureCards = new CardsInGraveyard(
-                new CardTypePredicate(CardType.CREATURE), CountScope.CONTROLLER);
+                creatureCard, CountScope.CONTROLLER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(creatureCards, creatureCards));
     }
 }

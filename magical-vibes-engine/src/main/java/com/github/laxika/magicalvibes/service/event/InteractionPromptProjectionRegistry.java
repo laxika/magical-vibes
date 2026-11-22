@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.InteractionOptions;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
@@ -25,6 +26,7 @@ import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessag
 import com.github.laxika.magicalvibes.networking.message.SelectCardsToBottomMessage;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
+import com.github.laxika.magicalvibes.networking.model.InteractionShape;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
@@ -50,6 +52,8 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class InteractionPromptProjectionRegistry {
+
+    private static final String FACE_DOWN_CARD = "Face-down card";
 
     private final CardViewFactory cardViewFactory;
     private final GameQueryService gameQueryService;
@@ -264,8 +268,6 @@ public class InteractionPromptProjectionRegistry {
                 this::projectPerpetualHandOrGraveyardCardChoice);
         register(PendingInteraction.WordOfCommandCardChoice.class,
                 this::projectWordOfCommandCardChoice);
-        register(PendingInteraction.RetracedImageCardChoice.class,
-                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualOffspringCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.StrongholdGambitCardChoice.class,
@@ -303,7 +305,6 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.SpellbookCardChoice.class, this::projectSpellbookCardChoice);
         register(PendingInteraction.ApplejackToyChoice.class, this::projectApplejackToyChoice);
         register(PendingInteraction.VividCardChoice.class, this::projectVividCardChoice);
-        register(PendingInteraction.NivMizzetColorPairChoice.class, this::projectNivMizzetColorPairChoice);
         register(PendingInteraction.LibrarySearch.class, this::projectLibrarySearch);
         register(PendingInteraction.SearchOutsideGameOrExileCardChoice.class,
                 this::projectSearchOutsideGameOrExileCardChoice);
@@ -341,7 +342,15 @@ public class InteractionPromptProjectionRegistry {
     public Optional<Object> project(
             GameData gameData, PendingInteraction interaction) {
         ProjectionStrategy<PendingInteraction> strategy = strategyFor(interaction);
-        return Optional.ofNullable(strategy.project(gameData, interaction));
+        Object projected = strategy.project(gameData, interaction);
+        // A card pick's bounds are what its answer is checked against: without the minimum the client lets a
+        // mandatory pick be confirmed empty.
+        if (projected instanceof InteractionPromptMessage message
+                && message.shape() == InteractionShape.MULTI_CARD_PICK
+                && interaction.legalOptions() instanceof InteractionOptions.MultiCardPick pick) {
+            projected = message.withPickBounds(pick.minCount(), pick.maxCount());
+        }
+        return Optional.ofNullable(projected);
     }
 
     /** Projects the mulligan bottoming decision used by initial delivery and reconnect replay. */
@@ -527,7 +536,7 @@ public class InteractionPromptProjectionRegistry {
         if (sourcePermanentId != null) {
             for (Card card : gameData.getCardsExiledByPermanent(sourcePermanentId)) {
                 if (interaction.validCardIds().contains(card.getId())) {
-                    cardViews.add(cardViewFactory.create(card));
+                    cardViews.add(exiledCardView(gameData, interaction.decidingPlayerId(), card));
                 }
             }
         }
@@ -540,7 +549,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.ImprovisationCapstoneCastChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 interaction.maxCount(),
                 interaction.prompt());
     }
@@ -574,7 +583,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.PlarggAndNassariCardChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()), 1,
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()), 1,
                 "Choose a nonland card exiled with Plargg and Nassari.");
     }
 
@@ -582,7 +591,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.EyeOfTheStormCastChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCopyIds()),
-                exiledCardViews(gameData, interaction.validCopyIds()),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCopyIds()),
                 interaction.validCopyIds().size(),
                 interaction.mustCastAll()
                         ? "Choose the order in which to cast the copies without paying their mana costs."
@@ -593,7 +602,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.ExiledSpellCopyChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 1,
                 "Choose " + interaction.choiceDescription() + " exiled this way to copy "
                         + interaction.copies() + " times.");
@@ -603,7 +612,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.ExiledCreatureCopyChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 1,
                 "Choose a creature card exiled with " + interaction.sourceName() + " to copy.");
     }
@@ -612,7 +621,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.EspersToMagiciteCreatureChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 1,
                 "Choose up to one creature card exiled this way to copy.");
     }
@@ -655,7 +664,7 @@ public class InteractionPromptProjectionRegistry {
                 ? "for as long as it remains exiled" : "until the end of your next turn";
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 interaction.allowNoChoice() ? 0 : 1,
                 "Choose a card exiled this way to play " + duration + ".");
     }
@@ -682,7 +691,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.KohExiledCreatureChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 1,
                 "Choose a creature card exiled with Koh to copy.");
     }
@@ -706,7 +715,7 @@ public class InteractionPromptProjectionRegistry {
             PendingInteraction.PutCardExiledWithSourceIntoGraveyardCostChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 interaction.validCardIds(),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 1,
                 "Choose a card exiled with this permanent to put into its owner's graveyard as an activation cost.");
     }
@@ -716,14 +725,7 @@ public class InteractionPromptProjectionRegistry {
             PendingInteraction.PutOpponentOwnedExiledCardIntoGraveyardCostChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                interaction.validCardIds().stream().map(cardId -> {
-                    ExiledCardEntry exiled = gameData.findExiledCard(cardId);
-                    if (exiled == null) return null;
-                    boolean visible = !exiled.faceDown()
-                            || gameData.mayLookAtExiledCard(cardId, interaction.playerId());
-                    return visible ? cardViewFactory.create(exiled.card())
-                            : CardView.builder().id(cardId).name("Face-down card").build();
-                }).filter(java.util.Objects::nonNull).toList(),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 1,
                 "Choose a card an opponent owns from exile to put into that player's graveyard as an activation cost.");
     }
@@ -733,7 +735,7 @@ public class InteractionPromptProjectionRegistry {
             PendingInteraction.BrilliantUltimatumPileSeparationChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 interaction.validCardIds(),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 interaction.validCardIds().size(),
                 "Separate the exiled cards into two piles. Select cards for Pile 1 "
                         + "(unselected form Pile 2).");
@@ -741,8 +743,8 @@ public class InteractionPromptProjectionRegistry {
 
     private InteractionPromptMessage projectBrilliantUltimatumPileChoice(
             GameData gameData, PendingInteraction.BrilliantUltimatumPileChoice interaction) {
-        String pile1 = describeExiledPile(gameData, interaction.pile1CardIds());
-        String pile2 = describeExiledPile(gameData, interaction.pile2CardIds());
+        String pile1 = describeExiledPile(gameData, interaction.decidingPlayerId(), interaction.pile1CardIds());
+        String pile2 = describeExiledPile(gameData, interaction.decidingPlayerId(), interaction.pile2CardIds());
         return InteractionPromptMessage.acceptDecline(
                 "Choose a pile to play lands and cast spells from. Yes = Pile 1 ("
                         + pile1 + "), No = Pile 2 (" + pile2 + ").",
@@ -754,7 +756,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.BrilliantUltimatumPlayChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 interaction.maxCount(),
                 "You may play lands and cast spells from this pile without paying their mana costs.");
     }
@@ -895,10 +897,10 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()), cardViews,
                 interaction.activatedAbilityContext() == null
                         ? interaction.validCardIds().size()
-                        : interaction.activatedAbilityContext().xValue(),
+                        : interaction.activatedAbilityContext().cardCount(),
                 interaction.activatedAbilityContext() == null
                         ? "Choose any number of cards to reveal from your hand for "
-                        : "Choose " + interaction.activatedAbilityContext().xValue()
+                        : "Choose " + interaction.activatedAbilityContext().cardCount()
                                 + " cards to reveal from your hand for "
                         + interaction.cardName() + ".");
     }
@@ -1359,13 +1361,8 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.MultiGraveyardChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 interaction.validCardIds(),
-                interaction.cards().stream().map(card -> {
-                    ExiledCardEntry exiled = gameData.findExiledCard(card.getId());
-                    boolean visible = exiled == null || !exiled.faceDown()
-                            || gameData.mayLookAtExiledCard(card.getId(), interaction.playerId());
-                    return visible ? cardViewFactory.create(card)
-                            : CardView.builder().id(card.getId()).name("Face-down card").build();
-                }).toList(),
+                interaction.cards().stream()
+                        .map(card -> exiledCardView(gameData, interaction.decidingPlayerId(), card)).toList(),
                 interaction.maxCount(),
                 interaction.prompt());
     }
@@ -1382,7 +1379,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.ActivatedExiledCardChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()), 1,
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()), 1,
                 "Choose one of the exiled cards with " + interaction.sourceName()
                         + " to put on the bottom of its owner's library.");
     }
@@ -1391,7 +1388,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.HitCounterExiledCardChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 1,
                 "Choose a card with a hit counter to remove a hit counter from.");
     }
@@ -1425,7 +1422,7 @@ public class InteractionPromptProjectionRegistry {
                     .filter(entry -> gameData.exiledCardTimeCounters.getOrDefault(
                             entry.card().getId(), 0) > 0)
                     .map(ExiledCardEntry::card)
-                    .map(cardViewFactory::create)
+                    .map(card -> exiledCardView(gameData, interaction.decidingPlayerId(), card))
                     .forEach(cardViews::add);
         }
         return InteractionPromptMessage.multiCardPick(
@@ -1725,19 +1722,6 @@ public class InteractionPromptProjectionRegistry {
                 new ArrayList<>(interaction.validCardIds()), cardViews, 1, interaction.prompt());
     }
 
-    private InteractionPromptMessage projectNivMizzetColorPairChoice(
-            GameData gameData, PendingInteraction.NivMizzetColorPairChoice interaction) {
-        Map<UUID, Card> cardsById = interaction.revealedCards().stream()
-                .collect(Collectors.toMap(Card::getId, Function.identity(), (left, right) -> left));
-        List<CardView> cardViews = interaction.validCardIds().stream()
-                .map(cardsById::get)
-                .map(cardViewFactory::create)
-                .toList();
-        return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()), cardViews,
-                interaction.requiredPairCount(), interaction.prompt());
-    }
-
     private InteractionPromptMessage projectLibrarySearch(
             GameData gameData, PendingInteraction.LibrarySearch interaction) {
         return InteractionPromptMessage.libraryIndexPick(
@@ -1794,7 +1778,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.AssimilationAegisCopyChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 1,
                 "Choose a creature card exiled with Assimilation Aegis to copy.");
     }
@@ -1819,7 +1803,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.SuspendedCardTimeCounterChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 1,
                 interaction.sourceCardName() + " — choose a suspended card you own to remove "
                         + interaction.amount() + " time counter(s) from.");
@@ -1829,7 +1813,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViewsFor(gameData, interaction.playerId(), interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 1,
                 "You may put a card an opponent owns from exile into that player's graveyard.");
     }
@@ -1838,7 +1822,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViewsFor(gameData, interaction.playerId(), interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 2,
                 "You may put two cards your opponents own from exile into their owners' graveyards.");
     }
@@ -1852,7 +1836,7 @@ public class InteractionPromptProjectionRegistry {
                         + " spell from among the exiled cards without paying its mana cost.";
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                exiledCardViews(gameData, interaction.decidingPlayerId(), interaction.validCardIds()),
                 1,
                 prompt);
     }
@@ -1996,14 +1980,14 @@ public class InteractionPromptProjectionRegistry {
                 : "Choose a card for " + targetName + " to discard.";
     }
 
-    private String describeExiledPile(GameData gameData, List<UUID> cardIds) {
+    private String describeExiledPile(GameData gameData, UUID viewerId, List<UUID> cardIds) {
         if (cardIds.isEmpty()) {
             return "empty";
         }
         return cardIds.stream()
                 .map(gameData::findExiledCard)
                 .filter(java.util.Objects::nonNull)
-                .map(entry -> entry.card().getName())
+                .map(entry -> maySee(gameData, viewerId, entry.card()) ? entry.card().getName() : FACE_DOWN_CARD)
                 .collect(Collectors.joining(", "));
     }
 
@@ -2025,29 +2009,28 @@ public class InteractionPromptProjectionRegistry {
                 .orElse(null);
     }
 
-    private List<CardView> exiledCardViews(GameData gameData, List<UUID> cardIds) {
+    /** The exiled cards as {@code viewerId} may see them: a face-down one nameless (CR 406.3). */
+    private List<CardView> exiledCardViews(GameData gameData, UUID viewerId, List<UUID> cardIds) {
         List<CardView> views = new ArrayList<>();
         for (UUID cardId : cardIds) {
             ExiledCardEntry entry = gameData.findExiledCard(cardId);
             if (entry != null) {
-                views.add(cardViewFactory.create(entry.card()));
+                views.add(exiledCardView(gameData, viewerId, entry.card()));
             }
         }
         return views;
     }
 
-    /** The exiled cards as {@code viewerId} may see them: a face-down one nameless (CR 406.3). */
-    private List<CardView> exiledCardViewsFor(GameData gameData, UUID viewerId, List<UUID> cardIds) {
-        List<CardView> views = new ArrayList<>();
-        for (UUID cardId : cardIds) {
-            ExiledCardEntry entry = gameData.findExiledCard(cardId);
-            if (entry != null) {
-                views.add(!entry.faceDown() || gameData.mayLookAtExiledCard(cardId, viewerId)
-                        ? cardViewFactory.create(entry.card())
-                        : CardView.builder().id(cardId).name("Face-down card").build());
-            }
-        }
-        return views;
+    /** {@code card} as {@code viewerId} may see it, if it is in exile face down without its characteristics. */
+    private CardView exiledCardView(GameData gameData, UUID viewerId, Card card) {
+        return maySee(gameData, viewerId, card)
+                ? cardViewFactory.create(card)
+                : CardView.builder().id(card.getId()).name(FACE_DOWN_CARD).build();
+    }
+
+    private boolean maySee(GameData gameData, UUID viewerId, Card card) {
+        ExiledCardEntry exiled = gameData.findExiledCard(card.getId());
+        return exiled == null || !exiled.faceDown() || gameData.mayLookAtExiledCard(card.getId(), viewerId);
     }
 
     private List<CardView> cardViews(List<Card> cards) {

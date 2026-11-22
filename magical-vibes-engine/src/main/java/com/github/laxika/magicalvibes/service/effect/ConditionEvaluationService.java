@@ -1415,7 +1415,9 @@ public class ConditionEvaluationService {
                     ctx.controllerId() != null
                             && gameData.playersWhosePermanentsLeftBattlefieldThisTurn
                                     .contains(ctx.controllerId());
-            case HappenedThisWay c -> c.cardFilter() != null
+            case HappenedThisWay c -> c.kind() == StepKind.REVEAL && c.cardFilter() != null
+                    ? revealedCardMatches(gameData, ctx, c)
+                    : c.cardFilter() != null
                     // An exiled permanent is judged as the card it became (Deicide's ruling: the card in exile).
                     ? Stream.concat(ctx.resolutionResults().outcome(c.kind()).objectIds().stream(),
                             ctx.resolutionResults().outcome(c.kind()).movedCards().stream().map(MovedCard::cardId))
@@ -2923,6 +2925,16 @@ public class ConditionEvaluationService {
                     .findFirst().orElse(null);
         }
         return ctx.sourcePermanent();
+    }
+
+    /** "If it's a land card": one of the cards the reveal step showed matches, judged as it is now where it is. */
+    private boolean revealedCardMatches(GameData gameData, ConditionContext ctx, HappenedThisWay condition) {
+        return ctx.resolutionResults().outcome(StepKind.REVEAL).movedCards().stream().anyMatch(shown -> {
+            Card card = gameQueryService.findCardById(gameData, shown.cardId());
+            return card != null && predicateEvaluationService.matchesCardPredicate(card, condition.cardFilter(),
+                    ctx.sourceCard() == null ? null : ctx.sourceCard().getId(), gameData, shown.ownerId(),
+                    ctx.sourcePermanentId(), null, ctx.xValue(), ctx.sourcePermanent());
+        });
     }
 
     /**

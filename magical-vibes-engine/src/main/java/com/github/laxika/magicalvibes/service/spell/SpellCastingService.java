@@ -5291,7 +5291,7 @@ public class SpellCastingService {
         }
         boolean needsSingleGraveyardTargeting = graveyardReturnEffect != null && !hasBoundGraveyardTargetGroup;
 
-        // Detect any effect that targets a graveyard card (e.g. PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect)
+        // Detect any effect that targets a graveyard card
         boolean needsGraveyardEffectTargeting = !needsSingleGraveyardTargeting && !hasBoundGraveyardTargetGroup
                 && graveyardTargetingSource.stream().anyMatch(e -> e.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD));
         boolean needsHandTargeting = targetingSpellEffects.stream()

@@ -135,6 +135,21 @@ class IlluminatedFolioTest extends BaseCardTest {
                 .noneMatch(log -> log.contains("reveals") && log.contains("as a cost"));
     }
 
+    @Test
+    @DisplayName("The prompt asks for exactly the two cards of the cost")
+    void promptAsksForTwoCards() {
+        addReadyFolio(player1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.setHand(player1, List.of(new GrizzlyBears(), new LlanowarElves(), new SafeholdElite()));
+        harness.clearMessages();
+
+        harness.activateAbility(player1, 0, null, null);
+
+        assertThat(harness.getConn1().getMessagesContaining("\"shape\":\"MULTI_CARD_PICK\""))
+                .isNotEmpty()
+                .allSatisfy(message -> assertThat(message).contains("\"maxCount\":2", "\"minCount\":2"));
+    }
+
     private Permanent addReadyFolio(Player player) {
         Permanent perm = harness.addToBattlefieldAndReturn(player, new IlluminatedFolio());
         perm.setSummoningSick(false);

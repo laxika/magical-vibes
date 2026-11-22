@@ -9,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class GameEngineComponentScanTest {
 
     @Test
-    void componentScanRegistersBothTappedRevealHandlersWithoutBeanNameConflicts() {
+    void componentScanRegistersANormalAndAMayHandlerOfOneNameWithoutBeanNameConflicts() {
         var beanFactory = new DefaultListableBeanFactory();
         var scanner = new ClassPathBeanDefinitionScanner(beanFactory);
 
@@ -18,9 +18,9 @@ class GameEngineComponentScanTest {
         scanner.scan(GameEngineConfig.class.getPackageName());
 
         String normalHandler = com.github.laxika.magicalvibes.service.effect.normalfx
-                .RevealTopCardMayPutMatchingOntoBattlefieldTappedEffectHandler.class.getName();
+                .LookAtTopCardMayPutMatchingOntoBattlefieldOrBottomEffectHandler.class.getName();
         String mayHandler = com.github.laxika.magicalvibes.service.effect.mayfx
-                .RevealTopCardMayPutMatchingOntoBattlefieldTappedEffectHandler.class.getName();
+                .LookAtTopCardMayPutMatchingOntoBattlefieldOrBottomEffectHandler.class.getName();
         assertThat(beanFactory.getBeanDefinitionNames())
                 .extracting(name -> beanFactory.getBeanDefinition(name).getBeanClassName())
                 .filteredOn(className -> normalHandler.equals(className) || mayHandler.equals(className))

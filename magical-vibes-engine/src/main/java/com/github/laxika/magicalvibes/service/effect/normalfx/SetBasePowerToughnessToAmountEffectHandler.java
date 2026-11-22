@@ -40,7 +40,7 @@ public class SetBasePowerToughnessToAmountEffectHandler implements NormalEffectH
             int toughness = amountEvaluationService.evaluate(gameData, setPT.toughness(), spellContext);
             setBasePowerToughnessEffectHandler.resolve(gameData, entry,
                     new SetBasePowerToughnessEffect(power, toughness, Subjects.target(),
-                            Duration.UNTIL_END_OF_TURN));
+                            setPT.duration() != null ? setPT.duration() : Duration.UNTIL_END_OF_TURN));
             return;
         }
         if (!(setPT.subject() instanceof PermanentSubject.Source)) {
@@ -55,6 +55,6 @@ public class SetBasePowerToughnessToAmountEffectHandler implements NormalEffectH
         int toughness = amountEvaluationService.evaluate(gameData, setPT.toughness(), amountContext);
         setBasePowerToughnessEffectHandler.resolve(gameData, entry,
                 new SetBasePowerToughnessEffect(power, toughness, Subjects.source(),
-                        Duration.PERMANENT));
+                        setPT.duration() != null ? setPT.duration() : Duration.PERMANENT));
     }
 }

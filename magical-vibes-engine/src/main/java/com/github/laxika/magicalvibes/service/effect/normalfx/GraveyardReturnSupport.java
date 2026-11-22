@@ -2822,9 +2822,11 @@ public class GraveyardReturnSupport {
                                                               Card delayedTriggerSource,
                                                               List<ReturnedPermanent> deferredEtbs,
                                                               boolean sacrificeAtYourNextEndStep) {
+        // A card is only ever in its owner's graveyard (CR 400.3).
+        UUID graveyardOwnerId = card.getOwnerId() != null ? card.getOwnerId() : controllerId;
         // Grafdigger's Cage etc.: creature cards in graveyards can't enter the battlefield.
         if (isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
-            gameData.playerGraveyards.computeIfAbsent(controllerId, k -> new ArrayList<>()).add(card);
+            gameData.playerGraveyards.computeIfAbsent(graveyardOwnerId, k -> new ArrayList<>()).add(card);
             gameLogService.append(gameData, GameLog.textCardText(
                     gameData.playerIdToName.get(controllerId) + " can't put ", card,
                     " onto the battlefield from a graveyard; it stays in the graveyard."));
@@ -2848,7 +2850,7 @@ public class GraveyardReturnSupport {
             permanent.tap();
         }
         permanent.setEnteredFromZone(Zone.GRAVEYARD);
-        permanent.setEnteredFromGraveyardOwnerId(controllerId);
+        permanent.setEnteredFromGraveyardOwnerId(graveyardOwnerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes,
                 enteredBatchMates(deferredEtbs));
         if (enterTapped) {
@@ -3068,16 +3070,6 @@ public class GraveyardReturnSupport {
      * @param gameData the current game state
      * @param entry    the stack entry being resolved (X value determines mill count)
      * @param effect   the steal-from-opponent effect configuration
-     */
-
-    /**
-     * Resolves a {@link PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect} by stealing
-     * a targeted creature from an opponent's graveyard and putting it onto the battlefield with haste.
-     * The creature is exiled at the next end step. Fizzles if the target is no longer in an
-     * opponent's graveyard.
-     *
-     * @param gameData the current game state
-     * @param entry    the stack entry being resolved
      */
 
     /**

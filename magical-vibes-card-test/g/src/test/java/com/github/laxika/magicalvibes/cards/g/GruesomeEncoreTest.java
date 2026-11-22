@@ -72,7 +72,7 @@ class GruesomeEncoreTest extends BaseCardTest {
         // Creature should be marked for exile at end step
         assertThat(DelayedPermanentMoves.waiting(gd)).anyMatch(a ->
                 a.permanentId().equals(creature.getId())
-                        && a.kind() == DelayedPermanentActionKind.EXILE_TOKEN_AT_END_STEP);
+                        && a.kind() == DelayedPermanentActionKind.EXILE_AT_END_STEP);
         assertThat(DelayedPermanentMoves.abilities(gd)).singleElement()
                 .satisfies(delayed -> assertThat(delayed.controllerId()).isEqualTo(player1.getId()));
 
@@ -266,12 +266,31 @@ class GruesomeEncoreTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
 
-        harness.passUntilWithNoAttackers(player1, TurnStep.END_STEP);
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
 
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getControllerId()).isEqualTo(player1.getId());
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         assertThat(gd.getPlayerExiledCards(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("The creature is exiled at the next end step, another player's included")
+    void exiledAtTheNextEndStepOfAnyPlayer() {
+        Card target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player1, List.of(new GruesomeEncore()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passUntilWithNoAttackers(player2, TurnStep.END_STEP);
+
+        assertThat(gd.stack).hasSize(1);
+        harness.passBothPriorities();
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
     }
 }

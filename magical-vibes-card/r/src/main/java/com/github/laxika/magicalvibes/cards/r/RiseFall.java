@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealRandomCardsFromTargetHandDiscardMatchingEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
@@ -17,7 +19,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
-
 import java.util.List;
 
 @CardRegistration(set = "DIS", collectorNumber = "156")
@@ -45,9 +46,9 @@ public class RiseFall extends Card {
 
         ChooseOneEffect.ChooseOneOption fall = new ChooseOneEffect.ChooseOneOption(
                 "Fall — Target player reveals two cards at random from their hand, then discards each nonland card revealed this way",
-                new RevealRandomCardsFromTargetHandDiscardMatchingEffect(
-                        2, new CardNotPredicate(new CardTypePredicate(CardType.LAND))),
-                player);
+                List.of(RevealCardsFromHandEffect.atRandom(Subjects.targetPlayer(), 2),
+                        new DiscardCardsEffect(Subjects.revealedThisWay(new CardNotPredicate(new CardTypePredicate(CardType.LAND))))),
+                List.of(player));
 
         addSpellEffect(new ChooseOneEffect(List.of(
                 rise.withManaCost("{U}{B}"),

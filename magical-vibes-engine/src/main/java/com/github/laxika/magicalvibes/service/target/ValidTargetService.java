@@ -35,7 +35,6 @@ import com.github.laxika.magicalvibes.model.effect.CastTargetCardFromGraveyardEf
 import com.github.laxika.magicalvibes.model.effect.GrantTargetGraveyardCardCastEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayTargetCardFromGraveyardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromGraveyardOrExileToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToBattlefieldEffect;
@@ -2249,9 +2248,7 @@ public class ValidTargetService {
                         c, declaredFilter, sourceCardId, gameData, cardOwnerId, null, null, xValue)) {
             return false;
         }
-        if (effect instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect) {
-            return c.hasType(CardType.CREATURE);
-        } else if (effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect e) {
+        if (effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect e) {
             return (c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY))
                     && (e.filter() == null
                     || predicateEvaluationService.matchesCardPredicate(

@@ -74,7 +74,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardCreatureToBattlefieldOrMayBottomEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCascadeToNextCreatureSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
@@ -1560,7 +1560,7 @@ class SpellTriggersTest {
         @DisplayName("puts triggered ability on stack")
         void putsTriggeredAbilityOnStack() {
             Permanent perm = createPermanent("Lurking Predators");
-            var effect = new RevealTopCardCreatureToBattlefieldOrMayBottomEffect();
+            var effect = new RevealTopCardOfLibraryEffect(Subjects.you());
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null);
 
@@ -1580,7 +1580,7 @@ class SpellTriggersTest {
         @DisplayName("stack entry includes the effect")
         void stackEntryIncludesEffect() {
             Permanent perm = createPermanent("Lurking Predators");
-            var effect = new RevealTopCardCreatureToBattlefieldOrMayBottomEffect();
+            var effect = new RevealTopCardOfLibraryEffect(Subjects.you());
             Card spellCard = createCard("Grizzly Bears");
             var ctx = new SpellEvent.Cast(spellCard, player2Id, Zone.HAND, null);
 

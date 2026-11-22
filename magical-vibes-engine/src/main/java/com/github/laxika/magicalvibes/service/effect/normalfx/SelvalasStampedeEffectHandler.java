@@ -6,7 +6,13 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutUpToCardsFromHandOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealCreatureCardsToBattlefieldAndShuffleRestEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.effect.SelvalasStampedeEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -67,7 +73,10 @@ public class SelvalasStampedeEffectHandler implements NormalEffectHandlerBean {
             int freeVotes = votes.getOrDefault(ChoiceContext.SelvalasStampedeChoice.FREE, 0);
             List<CardEffect> results = new ArrayList<>(2);
             if (wildVotes > 0) {
-                results.add(new RevealCreatureCardsToBattlefieldAndShuffleRestEffect(wildVotes));
+                CardTypePredicate creature = new CardTypePredicate(CardType.CREATURE);
+                results.add(new RevealCardsFromTopUntilEffect(Subjects.you(), creature, new Fixed(wildVotes)));
+                results.add(new PutCardsOntoBattlefieldEffect(Subjects.revealedThisWay(creature)));
+                results.add(new ShuffleLibraryEffect(false));
             }
             if (freeVotes > 0) {
                 results.add(new PutUpToCardsFromHandOntoBattlefieldEffect(

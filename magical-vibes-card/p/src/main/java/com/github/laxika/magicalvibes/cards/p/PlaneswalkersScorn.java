@@ -4,7 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RevealRandomCardFromTargetPlayerHandBoostTargetCreatureByManaValueEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -18,7 +22,8 @@ public class PlaneswalkersScorn extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{3}{B}",
-                List.of(new RevealRandomCardFromTargetPlayerHandBoostTargetCreatureByManaValueEffect()),
+                List.of(RevealCardsFromHandEffect.atRandom(Subjects.targetPlayer(0), 1),
+                        new BoostTargetCreatureEffect(new Scaled(AmountThisWay.revealedManaValue(), -1), new Scaled(AmountThisWay.revealedManaValue(), -1), 1)),
                 "{3}{B}: Target opponent reveals a card at random from their hand. Target creature gets -X/-X until end of turn, where X is the revealed card's mana value. Activate only as a sorcery.",
                 null,
                 null,

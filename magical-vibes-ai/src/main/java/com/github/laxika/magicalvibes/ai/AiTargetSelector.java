@@ -45,7 +45,6 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
@@ -1177,9 +1176,7 @@ class AiTargetSelector {
                 candidates = getGraveyardCandidates(gameData, scope, aiPlayerId, opponentId);
 
                 // Apply card-type filters matching what GraveyardTargetValidators enforces
-                if (effect instanceof PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect) {
-                    candidates = candidates.stream().filter(c -> c.hasType(CardType.CREATURE)).toList();
-                } else if (effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect) {
+                if (effect instanceof CastTargetInstantOrSorceryFromGraveyardEffect) {
                     candidates = candidates.stream()
                             .filter(c -> c.hasType(CardType.INSTANT) || c.hasType(CardType.SORCERY)).toList();
                 } else if (effect instanceof ExileGraveyardCardsEffect e

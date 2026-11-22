@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -35,6 +36,21 @@ import static org.assertj.core.api.Assertions.assertThat;
         LuminousBonds.class, RaiseTheAlarm.class, SealAway.class, SummaryJudgment.class,
         ThrabenInspector.class, Shock.class, AllIsDust.class})
 class SlayersBountyTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A look is shown to its player alone: its log line names no card (CR 701.20e)")
+    void lookNamesNoCardInTheLog() {
+        harness.setHand(player2, List.of(new BountyAgent(), new Shock()));
+        harness.setHand(player1, List.of(new SlayersBounty()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castArtifact(player1, 0, player2.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
+                .anyMatch(log -> log.contains("looks at cards in"))
+                .noneMatch(log -> log.contains("Bounty Agent") || log.contains("Shock"));
+    }
 
     @Test
     void entersLookingAtTargetOpponentsCreatureCardsOnly() {

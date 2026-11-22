@@ -53,7 +53,7 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
      * for {@link StepKind#MILL} the milled cards, in the graveyard or in exile where a replacement put them
      * (CR 701.17c); for {@link StepKind#CHOOSE} the chosen cards, in the zone they were chosen in (also a revealed
      * hand), while they are still the objects that were chosen; for {@link StepKind#REVEAL} the cards revealed from the
-     * top of libraries, while each is still in that library (CR 701.20b); for {@link StepKind#RETURN} the cards
+     * top of libraries or from hands, while each is still in that library or hand (CR 701.20b); for {@link StepKind#RETURN} the cards
      * returned to a hand, followed into that hand as a sought card is, for "it perpetually gets +3/+3" (digital only:
      * otherwise a card put into a hidden zone is no longer found, CR 400.7j).
      * The rest of the effect can find a card it moved to a public zone (CR 400.7j); a card that has

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.cards.o.ObstinateBaloth;
 import com.github.laxika.magicalvibes.cards.b.BogRats;
 import com.github.laxika.magicalvibes.cards.d.DarkSphere;
 import com.github.laxika.magicalvibes.cards.m.MazeOfIth;
@@ -13,8 +14,21 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Amnesia.class, BogRats.class, DarkSphere.class, MazeOfIth.class})
+@CardUsed({ObstinateBaloth.class, Amnesia.class, BogRats.class, DarkSphere.class, MazeOfIth.class})
 class AmnesiaTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A discard replacement applies to the cards the spell discards")
+    void discardReplacementApplies() {
+        harness.setHand(player2, List.of(new ObstinateBaloth()));
+        harness.setHand(player1, List.of(new Amnesia()));
+        harness.addMana(player1, ManaColor.BLUE, 6);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        harness.assertOnBattlefield(player2, "Obstinate Baloth");
+        harness.assertNotInGraveyard(player2, "Obstinate Baloth");
+    }
 
     @Test
     @DisplayName("Reveals the target player's hand and discards all nonland cards")

@@ -81,7 +81,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
  * zero or more permanents from a list.
  *
  * <p>Covers exile-damaged-player-permanent, sacrifice-self-to-destroy,
- * sacrifice attacking creatures, combat damage bounce, awakening counter
+ * sacrifice attacking creatures, combat damage bounce, counter
  * placement, proliferate, and tap-subtype-boost (e.g. Myr Battlesphere).
  */
 @Slf4j
@@ -1040,8 +1040,6 @@ public class MultiPermanentChoiceHandlerService {
             handleOpponentCreatureCounterPlacement(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacementWithChosenReference ctx) {
             handleOwnPermanentCounterPlacementWithChosenReference(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.AwakeningCounterPlacement) {
-            handleAwakeningCounterPlacement(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.Proliferate ctx) {
             handleProliferate(gameData, playerId, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapSubtypeBoost ctx) {
@@ -2747,42 +2745,6 @@ public class MultiPermanentChoiceHandlerService {
                         + " chooses " + permanentIds.size()
                         + " creature(s) that must block this combat if able."));
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleAwakeningCounterPlacement(GameData gameData, UUID playerId, List<UUID> permanentIds) {
-        if (permanentIds.isEmpty()) {
-            String logEntry = gameData.playerIdToName.get(playerId) + " chooses not to put awakening counters on any lands.";
-            gameLogService.append(gameData, GameLog.text(logEntry));
-        } else {
-            List<Card> awakenedCards = new ArrayList<>();
-            for (UUID permId : permanentIds) {
-                Permanent perm = gameQueryService.findPermanentById(gameData, permId);
-                if (perm != null) {
-                    perm.setCounterCount(CounterType.AWAKENING, perm.getCounterCount(CounterType.AWAKENING) + 1);
-                    awakenedCards.add(perm.getCard());
-                }
-            }
-
-            if (!awakenedCards.isEmpty()) {
-                gameLogService.append(gameData,
-                        appendCards(GameLog.builder(), awakenedCards)
-                                .text((awakenedCards.size() == 1 ? " receives" : " receive")
-                                        + " an awakening counter and "
-                                        + (awakenedCards.size() == 1 ? "becomes an" : "become")
-                                        + " 8/8 green Elemental creature"
-                                        + (awakenedCards.size() == 1 ? "." : "s."))
-                                .build());
-                log.info("Game {} - Awakening counters placed on {} lands", gameData.id, awakenedCards.size());
-            }
-        }
-
-        if (!gameData.pendingMayAbilities.isEmpty()) {
-            playerInputService.processNextMayAbility(gameData);
-            return;
-        }
-
-        turnProgressionService.advanceStep(gameData);
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handleAimCounterPlacement(GameData gameData, List<UUID> permanentIds) {

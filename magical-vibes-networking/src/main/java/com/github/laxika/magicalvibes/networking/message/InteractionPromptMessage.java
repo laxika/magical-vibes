@@ -121,6 +121,13 @@ public record InteractionPromptMessage(
                 null, maxCount, null, null, null, null, null, null, minCount, null);
     }
 
+    /** This card pick with the bounds its answer is checked against; a minimum of none is left out. */
+    public InteractionPromptMessage withPickBounds(int min, int max) {
+        return new InteractionPromptMessage(type, shape, prompt, cardIndices, cards, cardIds, permanentIds, playerIds,
+                options, max, declinable, canPay, manaCost, cardName, allGraveyards, searchable, disabledOptions,
+                min == 0 && minCount == null ? null : Integer.valueOf(min), manaPayment, scrycastCardIndices);
+    }
+
     public static InteractionPromptMessage multiPermanentPick(List<UUID> permanentIds, int maxCount,
                                                               String prompt) {
         return multiPermanentPick(permanentIds, null, maxCount, prompt);

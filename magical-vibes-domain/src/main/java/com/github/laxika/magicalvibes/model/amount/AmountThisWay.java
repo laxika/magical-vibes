@@ -45,7 +45,8 @@ import java.util.Objects;
  * creature's power" after "return another creature you control to its owner's hand" (First Responder, CR 608.2h).
  *
  * <p>A reveal step keeps its cards where they are: {@link Stat#MANA_VALUE} over one is "the total mana value of all
- * cards revealed this way", each card as it is now, and {@code yours} only those from the amount's controller's library
+ * cards revealed this way", {@link Stat#POWER} and {@link Stat#TOUGHNESS} "that card's power" and toughness (a
+ * {@code cardFilter} counts only the matching cards: "that card" after a reveal until one), each card as it is now, and {@code yours} only those from the amount's controller's library
  * ("each player ... loses life equal to that card's mana value", Duskmantle Seer). Over a payment step {@code yours} is
  * what the amount's controller paid ("the amount of mana they paid this way", Liege of the Hollows).
  *
@@ -92,7 +93,7 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
         Objects.requireNonNull(stat, "stat");
         boolean removal = kind == StepKind.SACRIFICE || kind == StepKind.DESTROY;
         if ((stat == Stat.POWER || stat == Stat.TOUGHNESS || stat == Stat.MANA_VALUE)
-                && !removal && kind != StepKind.EXILE && kind != StepKind.RETURN && !(kind == StepKind.REVEAL && stat == Stat.MANA_VALUE)) {
+                && !removal && kind != StepKind.EXILE && kind != StepKind.RETURN && kind != StepKind.REVEAL) {
             throw new IllegalArgumentException(
                     "Only a sacrifice, destroy, exile or return step records last-known " + stat + ": " + kind);
         }
@@ -111,8 +112,9 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
             throw new IllegalArgumentException(
                     "Only a destroy step's count or stat covers what it didn't destroy: " + kind + " " + stat);
         }
-        if (cardFilter != null && (kind != StepKind.EXILE || stat != Stat.AMOUNT)) {
-            throw new IllegalArgumentException("Only an exile step's count is filtered as cards: " + kind + " " + stat);
+        if (cardFilter != null && kind != StepKind.REVEAL && (kind != StepKind.EXILE || stat != Stat.AMOUNT)) {
+            throw new IllegalArgumentException(
+                    "Only an exile step's count or a reveal step is filtered as cards: " + kind + " " + stat);
         }
         if (stat == Stat.STILL_EXILED && kind != StepKind.EXILE) {
             throw new IllegalArgumentException("Only an exile step's cards can still be exiled: " + kind);
@@ -184,7 +186,7 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
      * one included, for an effect that sets a creature's power or toughness to it (CR 107.1b).
      */
     public AmountThisWay keepingNegative() {
-        return new AmountThisWay(kind, stat, filter, yours, includesUnremoved, true);
+        return new AmountThisWay(kind, stat, filter, yours, includesUnremoved, true, cardFilter);
     }
 
     /**
@@ -234,6 +236,26 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
     /** "That card's mana value" in "each player reveals the top card of their library": the player's own cards'. */
     public static AmountThisWay manaValueRevealedByYou() {
         return revealedManaValue().controlledByYou();
+    }
+
+    /** "The number of nonland cards revealed this way": how many matching {@code filter} the reveal step showed. */
+    public static AmountThisWay revealedCards(CardPredicate filter) {
+        return revealed(Stat.AMOUNT, filter);
+    }
+
+    /** "That card's power" after a reveal step: of the revealed cards matching {@code filter}. */
+    public static AmountThisWay revealedPower(CardPredicate filter) {
+        return revealed(Stat.POWER, filter);
+    }
+
+    /** "That card's toughness" after a reveal step: of the revealed cards matching {@code filter}. */
+    public static AmountThisWay revealedToughness(CardPredicate filter) {
+        return revealed(Stat.TOUGHNESS, filter);
+    }
+
+    private static AmountThisWay revealed(Stat stat, CardPredicate filter) {
+        return new AmountThisWay(StepKind.REVEAL, stat, null, false, false, false,
+                Objects.requireNonNull(filter, "filter"));
     }
 
     /** "The total amount of mana paid this way" after a payment step. */

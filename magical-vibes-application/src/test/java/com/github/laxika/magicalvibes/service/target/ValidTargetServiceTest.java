@@ -32,7 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveya
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import com.github.laxika.magicalvibes.model.effect.PutCardFromOpponentGraveyardOntoBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -1970,8 +1969,13 @@ class ValidTargetServiceTest {
         static Stream<Arguments> graveyardEffectFilterCases() {
             return Stream.of(
                     Arguments.of(
-                            "PutCreatureFromOpponentGraveyard filters to creatures only",
-                            new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(true),
+                            "A return of a creature card from an opponent's graveyard filters to creatures only",
+                            ReturnCardFromGraveyardEffect.builder()
+                                    .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                                    .filter(new CardTypePredicate(CardType.CREATURE))
+                                    .source(GraveyardSearchScope.OPPONENT_GRAVEYARD)
+                                    .targetGraveyard(true)
+                                    .build(),
                             Set.of("GY Creature")
                     ),
                     Arguments.of(
@@ -2112,7 +2116,12 @@ class ValidTargetServiceTest {
             gameData.playerGraveyards.put(player2Id, new ArrayList<>(List.of(gyInstant, gyBasicLand)));
 
             Card spell = createCard();
-            spell.addSpellEffect(new PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect(true));
+            spell.addSpellEffect(ReturnCardFromGraveyardEffect.builder()
+                    .destination(GraveyardChoiceDestination.BATTLEFIELD)
+                    .filter(new CardTypePredicate(CardType.CREATURE))
+                    .source(GraveyardSearchScope.OPPONENT_GRAVEYARD)
+                    .targetGraveyard(true)
+                    .build());
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForSpell(
                     gameData, spell, player1Id, null);

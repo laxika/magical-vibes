@@ -19,7 +19,8 @@ import java.util.Objects;
  * {@link #upTo}, "return two cards exiled with this" {@link #exactly}; "return a creature card and a land card" is
  * {@link #oneOfEach}, "for each permanent type, return up to one card of that type" {@link #upToOneOfEach}: one
  * choice after another, a card chosen once no longer offered where one has to be chosen (choosing it again where none
- * has to be is choosing none).
+ * has to be is choosing none), or at all where the cards leave those chosen among ({@link #offeringEachOnce}: "for each
+ * card type, you may put a card of that type from among the revealed cards into your hand").
  *
  * <p>"Its controller may put a creature card from their hand ..." names who chooses ({@link #by}); "choose a creature
  * card at random", "a random instant card" is nobody's choice ({@link #atRandom}): nothing is asked or shown.
@@ -37,9 +38,11 @@ import java.util.Objects;
  * @param upTo        whether fewer, or none, may be chosen
  * @param each        the qualities one card is chosen for each of, in this order; empty for none
  * @param chooser     who chooses; {@code null} for nobody, where the cards are chosen at random
+ * @param offeredOnce whether a card chosen for one quality isn't offered for the next also where none has to be
  */
 public record ChooseCardEffect(CardSubject cards, String label, boolean alwaysAsked, DynamicAmount count,
-                               boolean upTo, List<Each> each, PlayerSubject chooser) implements CardEffect {
+                               boolean upTo, List<Each> each, PlayerSubject chooser, boolean offeredOnce)
+        implements CardEffect {
 
     /** One of the qualities a card is chosen for: "a creature card", "a land card". */
     public record Each(CardPredicate filter, String label) {
@@ -67,6 +70,20 @@ public record ChooseCardEffect(CardSubject cards, String label, boolean alwaysAs
         if (chooser == null && !each.isEmpty()) {
             throw new IllegalArgumentException("One card for each quality is a player's choice");
         }
+        if (offeredOnce && each.isEmpty()) {
+            throw new IllegalArgumentException("Only a choice for each of several qualities offers a card again");
+        }
+    }
+
+    /** A choice offering a card again for another quality where none has to be chosen. */
+    public ChooseCardEffect(CardSubject cards, String label, boolean alwaysAsked, DynamicAmount count,
+                            boolean upTo, List<Each> each, PlayerSubject chooser) {
+        this(cards, label, alwaysAsked, count, upTo, each, chooser, false);
+    }
+
+    /** This choice, not offering a card again once it is chosen for one of the qualities. */
+    public ChooseCardEffect offeringEachOnce() {
+        return new ChooseCardEffect(cards, label, alwaysAsked, count, upTo, each, chooser, true);
     }
 
     /** The controller's choice. */
@@ -82,7 +99,7 @@ public record ChooseCardEffect(CardSubject cards, String label, boolean alwaysAs
 
     /** "Its controller may put ... from their hand": this choice made by the player {@code player} names. */
     public ChooseCardEffect by(PlayerSubject player) {
-        return new ChooseCardEffect(cards, label, alwaysAsked, count, upTo, each, player);
+        return new ChooseCardEffect(cards, label, alwaysAsked, count, upTo, each, player, offeredOnce);
     }
 
     /** The player whose cards are chosen among, where that is a target. */

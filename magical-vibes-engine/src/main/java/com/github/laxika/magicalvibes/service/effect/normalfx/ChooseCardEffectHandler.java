@@ -80,7 +80,8 @@ public class ChooseCardEffectHandler implements NormalEffectHandlerBean {
             ChooseCardEffect.Each each = choose.each().isEmpty() ? null : choose.each().get(choice);
             List<LocatedCard> offered = candidates.stream()
                     // Choosing a card again where none has to be chosen is choosing none.
-                    .filter(located -> choose.upTo() || !picked.contains(located.card().getId()))
+                    .filter(located -> choose.upTo() && !choose.offeredOnce()
+                            || !picked.contains(located.card().getId()))
                     .filter(located -> each == null || matches(gameData, entry, located, each))
                     .toList();
             int wanted = each != null ? 1 : amountEvaluationService.evaluate(gameData, choose.count(),

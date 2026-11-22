@@ -170,7 +170,7 @@
 | scheme draws three, grants no maximum hand size until the controller's next turn, then conditionally offers up to three free hand spells | `p/PowerWithoutEqual.java` + `DrawCardEffect(3)` + `GrantNoMaximumHandSizeEffect(UNTIL_NEXT_TURN)` + `ConditionalEffect(ControlsPermanentCount(6, PermanentIsLandPredicate), CastUpToNSpellsFromHandWithoutPayingManaCostEffect(3))` |
 | scheme makes the next scheme set happen three times | `p/PlotsThatSpanCenturies.java` + `Triggers.youSetSchemeInMotion()` `RegisterNextSchemeSetInMotionReplacementEffect()` |
 | scheme mills each player, then puts one permanent among those milled cards onto the battlefield under its controller's control | `y/YourMistakeIsMyTriumph.java` + `MillEffect(n, eachPlayer()) + ChooseCardEffect.announced(cardsThisWay(MILL, filter), label) + PutCardsOntoBattlefieldEffect(cardsThisWay(CHOOSE)).underControlOf(you())` |
-| scheme reveals the top two cards into hand, then damages any target by the total mana value of revealed nonlands | `a/APremonitionOfYourDemise.java` + `RevealTopCardsToHandThenDealNonlandManaValueDamageToAnyTargetEffect()` |
+| scheme reveals the top two cards into hand, then damages any target by the total mana value of revealed nonlands | `a/APremonitionOfYourDemise.java` + `RevealTopCardOfLibraryEffect` + steps over revealedThisWay() |
 | scheme temporarily steals opponents' nonland permanents, then untaps, hastes, and forces creatures to attack their owners | `m/MyCrushingMasterstroke.java` + `GainControlOfAllPermanentsMatchingEffect(..., END_OF_TURN, UntapPermanentsEffect(Subjects.target()), GrantKeywordEffect(HASTE, Subjects.target()), PermanentMustAttackItsOwnerThisTurnEffect)` |
 | perpetually grant a triggered ability to a card that later leaves the graveyard | `o/OglorDevotedAssistant.java` and EFFECTS_QUICK_REFERENCE.md |
 | ETB perpetually grants a death trigger to current creatures you control | `a/AntiqueCollector.java` and EFFECTS_QUICK_REFERENCE.md |
@@ -503,7 +503,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | demonstrate + destroy an opposing artifact/creature + its controller's immediate free cast from an exile-until-nonland dig | `MayEffect(new DemonstrateEffect())` + `DestroyTargetPermanentThenEffect(..., ThenEffectRecipient.TARGET_CONTROLLER, requiresDestruction=true)` + `ExileTopUntilNonlandMayCastWithoutPayingManaCostEffect` |
 | each opponent digs to a nonland, then the controller may free-cast any number of those spells | `EachPlayerExilesTopUntilNonlandAndMayCastSpellsEffect(Integer.MAX_VALUE, false, Subjects.eachOpponent())` |
 | each opponent chooses a creature tied for greatest power to exile, then spell mastery deals each opponent damage equal to that creature's power | `o/OlRinsSearingLight.java` + `EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamageEffect` |
-| chosen creature type, reveal until matching creature count, put matches onto battlefield | `RevealUntilChosenCreatureTypeCountToBattlefieldEffect` |
+| chosen creature type, reveal until matching creature count, put matches onto battlefield | the creature-type step + the reveal-until step + put + shuffle |
 | encore, graveyard self-exile and token copies that must attack each opponent | `ExileSelfFromGraveyardCost` + `CreateTokenCopiesOfSourceAttackingOpponentsEffect` in a sorcery-speed graveyard ability |
 | destroy target creature, then create two half-sized token copies | `DestroyTargetCreatureAndCreateTokenCopiesEffect` |
 | cast-time X doubling, copy X spells or abilities | CARD_PATTERNS_PERMANENTS_STATIC.md |
@@ -571,7 +571,7 @@ When implementing a card, use these as the **best** test file to read for each c
 | Counterspell | `CancelTest.java` | Covers counter + graveyard |
 | Target creature exile with suspend counters | `s/SuspendTest.java` | Covers exile, suspend countdown, free cast, and creature-only targeting |
 | Activated ability puts time counters on a nonland card exiled from your graveyard this turn and grants suspend | `s/SoovrilPatientAntiquarianTest.java` + `PutTimeCountersOnTargetExiledCardWithSuspendEffect` | Covers provenance-sensitive exile targeting, adding counters, and enabling suspend |
-| ETB reveal until nonland mana value 3 or greater, exile it with suspend, and bottom the rest randomly | `s/SibyllineSoothsayer.java` | `RevealUntilNonlandWithManaValueAtLeastAndSuspendEffect(3, 3)` |
+| ETB reveal until nonland mana value 3 or greater, exile it with suspend, and bottom the rest randomly | `s/SibyllineSoothsayer.java` | `RevealCardsFromTopUntilEffect` + steps over revealedThisWay() |
 | Draw, then controller and target opponent may exile nonland hand cards with mana-value time counters | `t/TheWeddingOfRiverSongTest.java` | Covers draw order, target-player may choice, nonland hand filtering, and dynamic suspend counters |
 | Exile top cards, play them, and put time counters on exiled cards with suspend | `e/EcstaticBeautyTest.java` | Covers scoped suspend counters, play permissions, and the suspend-from-hand ability |
 | combat damage chooses one suspended card you own and removes that many time counters | `a/AmyPond.java` + `ChooseSuspendedCardAndRemoveTimeCountersEffect` |

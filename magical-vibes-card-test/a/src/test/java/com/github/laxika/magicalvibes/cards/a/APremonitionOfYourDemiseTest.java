@@ -52,8 +52,12 @@ class APremonitionOfYourDemiseTest extends BaseCardTest {
                 player1.getId(),
                 scheme.getName(),
                 scheme.getCastingCostsAndSpellEffects(),
-                targetId,
+                (java.util.UUID) null,
                 (Zone) null));
+        harness.passBothPriorities();
+        // The damage is a reflexive ability's, targeted as it goes on the stack (ruling 2024-09-20).
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handlePermanentChosen(player1, targetId);
         harness.passBothPriorities();
     }
 }

@@ -2197,3 +2197,142 @@ PutChosenCardFromHandIntoGraveyardEffect,blocked-other,9,run 12: engine payload 
 PutDiscardedCardOnTopOfLibraryThenBattlefieldEffect,blocked-other,9,run 12: engine payload of a fused exile-discard-return handler; its discard is no step of the entry
 PutTopCardOfTargetLibraryOnBottomEffect,blocked-other,9,"run 12: engine may payload of the look-at-top handler, which records no card for a step to name"
 PutVoyageCounterOnExiledCardEffect,unique,9,"run 12: the voyage counter's own game state, built by the enter-trigger service"
+RevealCreatureCardsToBattlefieldAndShuffleRestEffect,split,9,"run 13: the reveal-until step, the put step and a shuffle; Mass Polymorph, Synthetic Destiny"
+RevealRandomCardFromTargetPlayerHandEffect,absorbed,9,"run 13: RevealCardsFromHandEffect.atRandom; Hired Torturer, Merfolk Spy"
+RevealTopCardDealManaValueDamageToAnyTargetEffect,split,9,"run 13: the top-card reveal and the damage effects over revealedManaValue(); Judge Unworthy, Riddle Of Lightning"
+RevealOwnHandEffect,absorbed,9,"run 13: RevealCardsFromHandEffect.hand(you()); Hedron Alignment, Manabond"
+RevealRandomCardFromTargetPlayerHandBoostTargetCreatureByManaValueEffect,split,9,"run 13: RevealCardsFromHandEffect + the amount reader; Planeswalkers Favor, Planeswalkers Scorn"
+RevealRandomCardFromTargetPlayerHandDealDamageEqualToManaValueEffect,split,9,"run 13: RevealCardsFromHandEffect + the amount reader; Ignite Memories, Planeswalkers Fury"
+RevealTargetHandDrawPerMatchingCardEffect,split,9,"run 13: RevealCardsFromHandEffect + draw over revealedCards(filter); Baleful Stare, Withering Gaze"
+RevealTargetPlayerLibraryUntilCreatureStealRestToGraveyardEffect,split,9,"run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Curse Of Unbinding, Telemin Performance"
+RevealTopCardCreatureToBattlefieldOrMayBottomEffect,split,9,"run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Aid From The Cowl, Lurking Predators"
+RevealUntilLandToBattlefieldRestToBottomEffect,split,9,"run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Clifftop Lookout, Recross The Paths"
+RevealUntilNonlandPermanentToBattlefieldEffect,split,9,"run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Dreamshaper Shaman, Genesis Storm"
+RevealTopCardGrantFreePlayUntilEndOfTurnEffect,unique,9,"run 13: a floating permission for as long as the card stays on top, read by the cast and view services (Temporal Aperture)"
+RevealSubtypeOrEntersWithCountersEffect,unique,9,"run 13: an as-enters replacement with a reveal from hand, read by placement (Dragon's Disciple)"
+RevealAndPutOnBottomOfLibraryInsteadOfGraveyardEffect,unique,9,"run 13: a graveyard replacement read by GraveyardService; its log names the revealed card, as CR 701.20a wants (Wheel of Sun and Moon)"
+RevealHandCost,unique,9,run 13: an activation cost (Sasaya); costs wait for step 10
+RevealHandDiscardMatchingCardsUnlessPaysLifeEffect,unique,9,run 13: one pay-life-or-discard choice for each matching card of a revealed hand (Sirocco)
+RevealSourceChosenSubtypeCost,unique,9,run 13: an activation cost revealing the secret as-enters choice (A Killer Among Us)
+RevealTopCardMatchingToHandElseGraveyardEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Neurok Familiar
+RevealTopCardMayPutMatchingOntoBattlefieldElseToHandEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Matter Reshaper
+RevealTopCardPermanentToBattlefieldEffect,blocked-other,9,run 13: a single-effect payload resolved on a carrier by another player (the shuffled permanent's owner) for ShuffleTargetPermanentIntoLibraryEffect and the discarded-card-on-top record: those parents must take a sequence first
+RevealTopCardsBottomThenDamageIfCopyRevealedEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Stomping Slabs
+RevealTopCardsOfTargetPlayerAndCastInstantOrSorceryEffect,blocked-step-model,9,"run 13: the free cast of a revealed library card exists only as continuations that park mid-step and also move the rest (top-card may-play, search pick, revealed dump): moving them onto the step model is outside this plan (Talent of the Telepath)"
+RevealTopCardsToHandThenDealNonlandManaValueDamageToAnyTargetEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); APremonition Of Your Demise
+RevealTwoCardsSharingColorCost,unique,9,run 13: an activation cost over pairs sharing a color (Illuminated Folio)
+RevealUntilNonlandToHandRestToBottomDealManaValueDamageEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Explosive Revelation
+RevealCardFromHandThenPutOntoBattlefieldIfSharesNameWithPermanentEffect,split,9,run 13: ChooseCardEffect (hand) + RevealCardsFromHandEffect + the put step; Retraced Image
+RevealCardsChooseOneToCastEffect,blocked-other,9,"run 13: the target chooses which cards are looked at, then a free cast from that hand, which no step does (Extract Brain)"
+RevealCardsChooseOneToExileEffect,blocked-other,9,run 13: the exile-from-hand continuation carries the permission for as long as you control the source and the any-mana rider (Taster of Wares)
+RevealDrawnCardAndBoostEquippedCreatureByManaValueEffect,blocked-other,9,"run 13: the reveal is of the card of an unreplaced draw (ruling 2022-06-10), which the DRAW step doesn't record: draw-replacement provenance in DrawService is outside this plan (Pact Weapon)"
+RevealDrawnCardAndRemoveLoyaltyCountersEffect,blocked-other,9,"run 13: the reveal is of the card of an unreplaced draw (ruling 2024-11-08), which the DRAW step doesn't record: draw-replacement provenance in DrawService is outside this plan (Jace, Mirror Mage)"
+RevealHandAndDiscardDuplicateNonlandCardsEffect,unique,9,"run 13: discards by ""the same name as another card in their hand"", a predicate of this card alone (Hint of Insanity)"
+RevealHandAndRandomDiscardCardTypeEffect,split,9,run 13: RevealCardsFromHandEffect + a random choice + DiscardCardsEffect; Rag Man
+RevealHandAndTopCardChooseOneToBottomEffect,unique,9,run 13: one choice over a revealed hand and the revealed top card together (Psychotic Episode)
+RevealHandChooseCardToDiscardAndDrawEffect,split,9,run 13: RevealCardsFromHandEffect + ChooseCardEffect.upTo + DiscardCardsEffect + draw; Revealing Eye
+RevealHandChooseCreatureGainLifeDiscardEffect,blocked-other,9,"run 13: ""that creature card's toughness"" of a chosen card: no amount reads the CHOOSE step's cards; one card (Talara's Bane)"
+RevealMatchingCardsFromTargetHandAndExileEffect,blocked-other,9,run 13: the hand reveal and choice exist; left: exiling the chosen hand card with the draft by that player as its payload (Break Expectations)
+RevealOwnHandThenDamagedPlayerLosesGameIfSixDifferentManaValuesEffect,unique,9,"run 13: six different mana values among the revealed cards, a condition of this card alone (Atemsis)"
+RevealPlanarCardsUntilFivePlanesEffect,unique,9,"run 13: acts on the planar deck, which is no zone a card subject names (Interplanar Tunnel)"
+RevealPlanarCardsUntilPlaneAndPlaneswalkEffect,unique,9,"run 13: acts on the planar deck, which is no zone a card subject names, with a planeswalk that doesn't depart (Norn's Seedcore)"
+RevealPlanarCardsUntilPlaneAndTriggerChaosEffect,unique,9,"run 13: acts on the planar deck, which is no zone a card subject names, with that plane's chaos ability (The Fertile Lands of Saulvinia)"
+RevealPlanarCardsUntilTwoPlanesAndPlaneswalkEffect,unique,9,"run 13: acts on the planar deck, which is no zone a card subject names, with a double planeswalk (Spatial Merging)"
+RevealRandomCardFromTargetPermanentControllerHandRecordManaValueEffect,split,9,run 13: RevealCardsFromHandEffect + the amount reader; Friendly Fire
+RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeEffect,unique,9,run 13: discard unless that player pays life computed from the revealed card (Wand of Ith)
+RevealRandomCardFromTargetPlayerHandGainLifeEqualToManaValueEffect,split,9,run 13: RevealCardsFromHandEffect + the amount reader; Planeswalkers Mirth
+RevealRandomCardFromTargetPlayerHandLoseLifeEqualToManaValueEffect,split,9,run 13: RevealCardsFromHandEffect + the amount reader; Singe Mind Ogre
+RevealRandomCardsFromTargetHandDiscardMatchingEffect,split,9,run 13: RevealCardsFromHandEffect + DiscardCardsEffect; Rise Fall
+RevealRandomHandCardAndPlayEffect,unique,9,"run 13: the mandatory cast of a random hand card as part of resolving, with its own split-card and target path (Wild Evocation)"
+RevealTargetFaceDownPermanentAndMayTurnFaceUpEffect,unique,9,"run 13: reveals a face-down permanent, then may turn it up without paying (Hauntwoods Shrieker)"
+RevealTargetHandDrawIfExactlyChosenNumberOfChosenColorEffect,unique,9,"run 13: exactly the chosen number of the chosen color, both kept on the source (Scrying Glass)"
+RevealTargetPlayerLibraryUntilCreatureAndBecomeCopyUntilEndOfTurnEffect,blocked-other,9,run 13: the copy effects take no CardSubject (with RevealTopCardOfOpponentLibraryAndBecomeCopyEffect; two classes) (Nascent Metamorph)
+RevealTargetPlayerLibraryUntilPredicateCountToBattlefieldRestToGraveyardEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Tasha Unholy Archmage
+RevealTargetPlayerLibraryUntilPredicateOrCountToBattlefieldRestToGraveyardEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Thought Dissector
+RevealTopCardAnyOpponentMayGraveyardOrDealDamageEffect,unique,9,run 13: asks each opponent in turn with its own prompt and damage to whoever accepts (Sin Prodder)
+RevealTopCardCreatureDrawPowerGainToughnessEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Nissas Revelation
+RevealTopCardCreatureGainToughnessLosePowerToHandEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Sapling Of Colfenor
+RevealTopCardCreatureToBattlefieldEffect,blocked-other,9,"run 13: a delayed sacrifice about what a RETURN step put onto the battlefield: RegisterDelayedStepTriggerEffect reads exile, token and seek only (with RevealTopCardCreatureToBattlefieldElseGraveyardEffect; two classes) (Killer Instinct)"
+RevealTopCardCreatureTokenLandToBattlefieldElseGainLifeEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Druidic Satchel
+RevealTopCardDealManaValueDamageEffect,blocked-other,9,run 13: one damage event to a player and each creature they control: the mass damage takes no player subject; one card (Cerebral Eruption)
+RevealTopCardDrawManaValueEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Interpret The Signs
+RevealTopCardGainLifeEqualToManaValueEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Sifter Wurm
+RevealTopCardIfOddMayCastFreeElseDrawEffect,blocked-step-model,9,"run 13: the free cast of a revealed library card exists only as continuations that park mid-step and also move the rest (top-card may-play, search pick, revealed dump): moving them onto the step model is outside this plan (Yennett)"
+RevealTopCardLandToTappedBattlefieldElseDrawEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Thrasios Triton Hero
+RevealTopCardMatchingToHandElseMayBottomEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Ajani Sleeper Agent
+RevealTopCardMatchingToHandElseMayGraveyardEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Nylea Keen Eyed
+RevealTopCardMatchingToHandOrMayGraveyardEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Kellan Daring Traveler
+RevealTopCardMayCastForManaOrPutLandOntoBattlefieldEffect,blocked-step-model,9,"run 13: the free cast of a revealed library card exists only as continuations that park mid-step and also move the rest (top-card may-play, search pick, revealed dump): moving them onto the step model is outside this plan; cast for {1} (Jadzi)"
+RevealTopCardMayPutMatchingOntoBattlefieldEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Gate To The Aether
+RevealTopCardMayPutMatchingOntoBattlefieldOrBottomEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); The Maelstrom
+RevealTopCardMayPutMatchingOntoBattlefieldTappedEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Isolated Watchtower
+RevealTopCardMayPutMatchingOntoBattlefieldWithCounterAndTypeEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Arbiter Of The Ideal
+RevealTopCardOfChosenCreatureTypeToHandElseGraveyardEffect,split,9,run 13: the creature-type step + the top-card reveal + the put steps; Bloodline Shaman
+RevealTopCardOfDefendingPlayerLibraryMatchingToHandEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Goblin Guide
+RevealTopCardOfOpponentLibraryAndBecomeCopyEffect,blocked-other,9,run 13: the copy effects take no CardSubject (with the Nascent Metamorph record; two classes) (Shapeshifter's Marrow)
+RevealTopCardOfTargetPlayerMayCastFreeEffect,blocked-step-model,9,"run 13: the free cast of a revealed library card exists only as continuations that park mid-step and also move the rest (top-card may-play, search pick, revealed dump): moving them onto the step model is outside this plan (Mirrored Depths)"
+RevealTopCardPutIntoHandAndDealDamageToSelfEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Sarkhan The Mad
+RevealTopCardPutIntoHandAndDrainOpponentsEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Twilight Prophet
+RevealTopCardPutLandsIntoGraveyardRepeatEffect,split,9,run 13: the reveal-until step (nonland) + the put-into-graveyard step; Countryside Crusher
+RevealTopCardRemoveTargetFromCombatIfMatchEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Lost In The Woods
+RevealTopCardSameNameInGraveyardOrDrawEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Candles Of Leng
+RevealTopCardsForCardTypesCastThisTurnEffect,blocked-other,9,run 13: one choice for each card type found as it resolves: ChooseCardEffect's qualities are fixed on the card (with RevealTopCardsForVividEffect; two classes) (Hurkyl)
+RevealTopCardsForEachCardTypeEffect,split,9,"run 13: the top-card reveal + ChooseCardEffect one of each, offered once + the put steps; Atraxa Grand Unifier"
+RevealTopCardsForEachCardTypeMayExileEffect,split,9,"run 13: the top-card reveal + ChooseCardEffect + exile, free-cast and put steps; Portent Of Calamity"
+RevealTopCardsForVividEffect,blocked-other,9,run 13: one choice for each color found as it resolves: ChooseCardEffect's qualities are fixed on the card (with Hurkyl's record; two classes) (Sanar)
+RevealTopCardsMatchingToGraveyardRestToBottomRandomEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); The Fourteenth Doctor
+RevealTopCardsMillTargetByColorSymbolsEffect,split,9,"run 13: the top-card reveal + mill over ColorManaSymbolsInRevealedCards, which reads REVEAL + the library step; Sanity Grinding"
+RevealTopCardsOfTargetSpellControllerUntilInstantOrSorceryAndCastEffect,blocked-step-model,9,"run 13: the free cast of a revealed library card exists only as continuations that park mid-step and also move the rest (top-card may-play, search pick, revealed dump): moving them onto the step model is outside this plan (Spellshift)"
+RevealTopCardsOpponentPaysLifeOrToHandEffect,unique,9,run 13: an opponent denies each card for life (Sword-Point Diplomacy)
+RevealTopCardsPutRandomMatchingOntoBattlefieldRestOnBottomEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Getaway Barrel
+RevealTopCardsWithDifferentPowersToHandEffect,unique,9,"run 13: any number with different powers, a constraint on the set chosen (Rip, Spawn Hunter)"
+RevealTopPlanarCardMayPutOnBottomEffect,unique,9,"run 13: acts on the planar deck, which is no zone a card subject names (Stairs to Infinity)"
+RevealTopPlanarCardsAndTriggerChaosEffect,unique,9,"run 13: acts on the planar deck, which is no zone a card subject names, with those cards' chaos abilities (Pools of Becoming)"
+RevealTopTenCardsForColorPairsEffect,split,9,run 13: the top-card reveal + ChooseCardEffect one for each color pair + the put steps; Niv Mizzet Reborn
+RevealTopXCardsLandsToBattlefieldTappedRestOnBottomRandomEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Animists Awakening
+RevealTopXCardsMayPutPermanentToBattlefieldShuffleRestEffect,split,9,run 13: RevealTopCardOfLibraryEffect + steps over revealedThisWay(); Genesis Hydra
+RevealUntilBasicLandToHandRestToGraveyardEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Hermit Druid
+RevealUntilCardPredicateMayPutOntoBattlefieldElseToHandEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Songbirds Blessing
+RevealUntilCardPredicateMayPutOntoBattlefieldShuffleRestEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Hei Bai Forest Guardian
+RevealUntilCardPredicateSetSelfBasePowerToughnessEffect,split,9,run 13: the reveal-until step + SetBasePowerToughnessToAmountEffect with a duration + the library step; Amplifire
+RevealUntilCardPredicateToHandRestToGraveyardEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Foster
+RevealUntilChosenCreatureTypeCountToBattlefieldEffect,split,9,run 13: the creature-type step + the reveal-until step + put + shuffle; Kindred Summons
+RevealUntilChosenCreatureTypeToBattlefieldEffect,split,9,run 13: the creature-type step + the reveal-until step + put + shuffle; Riptide Shapeshifter
+RevealUntilChosenLandOrNonlandToHandEffect,unique,9,"run 13: ""choose land or nonland"", a resolution-time choice of this card alone, over the reveal-until head (Abundant Harvest)"
+RevealUntilColorToHandRestExiledEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Sacred Guide
+RevealUntilCountMatchingCardsToGraveyardRestOnBottomRandomEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Old Stickfingers
+RevealUntilCreatureSharingTypeWithDyingCreatureToHandEffect,blocked-other,9,"run 13: no card predicate ""shares a creature type with the triggering permanent"" as it last was; one card (Heirloom Blade)"
+RevealUntilCreatureToBattlefieldOrHandByManaValueEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Part In Friendship
+RevealUntilCreatureToBattlefieldRestToGraveyardEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Gamekeeper
+RevealUntilCreatureToBattlefieldRestToLibraryEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); The Aether Flues
+RevealUntilCreatureToBattlefieldRestToLibraryThenDemonPowerDamageEffect,blocked-other,9,run 13: damage dealt by the returned permanent to each opponent has no subject; one card (Aspiring Champion)
+RevealUntilLandBottomThenDamageEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Goblin Charbelcher
+RevealUntilLandToBattlefieldRestToGraveyardEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Avenging Druid
+RevealUntilNonlandBoostTargetCreatureByManaValueEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Erratic Mutation
+RevealUntilNonlandBottomThenBoostSelfByManaValueEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Goblin Machinist
+RevealUntilNonlandCardWithManaValueAndCastEffect,blocked-step-model,9,"run 13: the free cast of a revealed library card exists only as continuations that park mid-step and also move the rest (top-card may-play, search pick, revealed dump): moving them onto the step model is outside this plan (Treasure Keeper)"
+RevealUntilNonlandCardsToHandEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Treasure Hunt
+RevealUntilNonlandCardsToHandRestToBottomEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Fathom Trawl
+RevealUntilNonlandWithManaValueAtLeastAndSuspendEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Sibylline Soothsayer
+RevealUntilTwoNonlandCardsWithManaValueAndCastOneEffect,blocked-other,9,"run 13: the exile-until step stops at one match, and the pick is the cast-one-put-other search destination; one card (Invasion of Alara)"
+RevealUntilTypeMillAndBoostAttackerEffect,split,9,run 13: RevealCardsFromTopUntilEffect + steps over revealedThisWay(); Trepanation Blade
+RevealUpToFiveNonlandCardsFromHandThenCreateTreasureTokensEffect,unique,9,run 13: a token for each revealed card sharing its mana value with another (Vault 21)
+RevealHandAndDiscardMatchingCardsEffect,split,9,"run 13: RevealCardsFromHandEffect + DiscardCardsEffect(revealedThisWay(filter)); Amnesia, Infernal Kirin, Shatter Assumptions, Trapfinder's Trick, and the sacrificed-colors record's two steps"
+PutTargetOnBottomThenRevealUntilTypeToBattlefieldRestToBottomEffect,split,9,run 13: PutTargetOnBottomOfLibraryEffect + RevealCardsFromTopUntilEffect(controllerOf(target())) + put + the library step; Proteus Staff
+LookAtRandomCardInTargetPlayerHandEffect,absorbed,9,run 13: RevealCardsFromHandEffect.atRandom(..).seenOnlyBy(you()); Urza's Bauble
+LookAtDefendingPlayerHandEffect,absorbed,9,"run 13: RevealCardsFromHandEffect.hand(defendingPlayer()).seenOnlyBy(you()); Port Inspector, Zara"
+LookAtCreatureCardsInTargetPlayerHandEffect,absorbed,9,run 13: RevealCardsFromHandEffect.cards(..).seenOnlyBy(you()); Slayer's Bounty
+PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect,absorbed,9,"run 13: ReturnCardFromGraveyardEffect.builder() as run 12 noted; Gruesome Encore at the next end step, Puppeteer Clique at your next"
+PutAwakeningCountersOnTargetLandsEffect,absorbed,9,"run 13: target(land you control, 0..99) + PutCounterOnTargetPermanentEffect(AWAKENING); Liege of the Tangle targets now (CR 603.3d)"
+RevealCardsFromTopUntilEffect,survivor,9,"run 13: new: the reveal-until step (players, a filter, how many matches, at most), recording REVEAL"
+RevealCardsFromHandEffect,survivor,9,"run 13: new: shows a hand, cards of it or cards at random to everyone or to exactly the players named, recording REVEAL"
+DiscardCardsEffect,survivor,9,"run 13: new: discards the cards a CardSubject names from hands, recording DISCARD"
+RevealTopCardOfLibraryEffect,survivor,9,run 13: the top-card tail folded into it and the steps over revealedThisWay()
+PutCardsIntoLibraryEffect,survivor,9,run 13: also takes cards still revealed in a library (CR 701.20b)
+RevealUntilNonlandBottomThenDealManaValueDamageEffect,blocked-other,9,"run 13: the reveal-until step and the library step exist (Erratic Explosion and Calibrated Blast would split); left: Kaboom!'s repeat of the whole process for each target in turn order, which keeps the record"
+RevealTopCardsOfTargetPlayerUntilInstantOrSorceryAndCastEffect,blocked-step-model,9,"run 13: it exiles, so the exile-until step is its first half; left: the search pick's cast-without-paying continuation with haste, sacrifice and the rest's fate, which parks mid-step (four cards)"
+RevealSubtypeFromHandEffect,step-9,9,"run 13: split-ready: MayEffect over ChooseCardEffect.oneOf(cardsInYourHand(subtype)) + RevealCardsFromHandEffect.cards(you(), chosen) + ConditionalEffect(HappenedThisWay(REVEAL)); move MayEffectHandler's no-card-to-reveal check with it; three cards"
+RevealMatchingCardsFromTargetHandAndKeepEffect,blocked-step-model,9,"run 13: the hand reveal and choice steps exist; left: its two cards' riders read the chosen card through the RevealedMatchingHandCardChoice continuation, and the exiling one needs an exile step over a hand card"
+ExileRandomInstantOrSorceryFromTargetHandMayCastFreeEffect,blocked-other,9,"run 13: the random hand reveal exists; left: no exile step over a revealed hand card and the next-end-step return ""if you haven't cast it"" (Planeswalker's Mischief)"
+PutTargetOnBottomThenRevealUntilSharedCardTypeToBattlefieldRestOnBottomRandomEffect,blocked-other,9,run 13: the reveal-until and library steps exist; left only: no card filter bound to the moved permanent's last-known types; one card (Reality Scramble)
+DrawCardRevealDiscardUnlessLandEffect,blocked-step-model,9,"run 13: DiscardCardsEffect and the hand reveal exist; left: it draws by rerunning itself and needs the unreplaced draw's card (CR 121.6c), as Pact Weapon and Jace do"

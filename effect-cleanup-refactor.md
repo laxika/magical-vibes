@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 12: Exile, Each, Return and Put closed, Put with one absorb-ready `step-9` row; next Reveal, 120 rare records) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 13: Exile, Each, Return, Put and Reveal closed, Reveal with one split-ready `step-9` row; next Choose, 99 rare records) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -618,6 +618,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 10 | Run 9's two search defects, the Return family's shared blockers with the waiting rows, then its rare tail | done but 17 rare Return records (95 rows: 20 absorbed, 14 split, 3 dead, 8 survivors, 14 blocked-other, 36 unique; 53 card files changed; `ReturnChosenPermanentsToHandEffect`, `cardsThisWay(RETURN)`, `triggeringCards()` / `sourceCard()` / `inYourGraveyard`, `PutCardsOntoBattlefieldEffect` with controller, face down and entering effects; Krenko's Buzzcrusher on the search queue) |
 | 11 | Run 10's two defects, the Return family's five shared blockers with the waiting rows and the Aura hosts; Put started | done for Return, Put barely started (44 rows: 13 absorbed, 20 split, 5 survivors, 2 blocked-other, 4 unique; 58 card files changed; `ChooseCardEffect` up to N / one of each, `exiledWithSource()` / `exiledCards` / `except`, the creature-type step, `attachedTo`, CR 400.4a on the returns) |
 | 12 | Run 11's two defects, the Put records' shared blockers (exiled-card target, command zone, hand, graveyard top, random) with their ledgered rows, then Put's rare tail | done, Put closed (115 rows: 19 absorbed, 23 split, 15 survivors, 28 blocked-other, 29 unique, 1 `step-9`; 49 card files changed; five `CardSubject` variants, a chooser and a random choice on `ChooseCardEffect`, `PutCardsIntoLibraryEffect` with `StepKind.PUT_INTO_LIBRARY`; four prompts and log lines no longer show face-down cards) |
+| 13 | Run 12's defects (the prompts' minimum, face-down cards in prompts, Liege of the Tangle, Gruesome Encore), the Reveal family's shared parts with their ledgered rows, then its rare records | done, Reveal closed (120 rare records: 2 absorbed, 71 split, 22 blocked, 25 unique; with the other rows 80 records deleted; 96 card files changed; `RevealCardsFromTopUntilEffect`, `RevealCardsFromHandEffect`, `DiscardCardsEffect`, the library step over revealed cards) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -7341,6 +7342,124 @@ test of that name.
 - Five Mill rows ledgered `blocked-step-model` in 4f (`MillControllerAndPutMilled…` and siblings) can split on MILL, `ChooseCardEffect`
   and the put step as Gyruda did; `ShuffleCardsFromHandIntoLibraryThenEffect` waits for a shuffle step over a card subject,
   `PutCardToBattlefieldThenEffect` (8 cards) for attacking entry on the put step.
+
+### Step 9, run 13 (2026-11-22, Reveal closed)
+
+The four defects run 12 left, the parts it named for Reveal with the ledger rows waiting for them, then the family's 120 rare records.
+Ratchet 4,343 / 3,579 → 4,266 / 3,492 records / handlers (80 records and 90 handlers deleted, 3 and 3 added). 96 card files changed by
+scratch scripts. Oracle text checked with `get_card` for all 96 (a back face under its front face); rulings with `get_rulings` for the
+cards whose handler or text left a doubt (Genesis Storm, Aid from the Cowl, Matter Reshaper, A Premonition of Your Demise, Portent of
+Calamity, Panoptic Mirror, Turtles Forever, Pact Weapon, Jace). The audit of the cards left unchanged read their text from the
+card-data cache. CR 400.3, 400.7, 401.4, 402.3, 406.3, 603.3d, 603.12, 608.2c, 608.2d, 608.2h, 609.3, 614.1, 701.20a, 701.20b, 701.20d,
+701.20e and 701.23b checked with `get_rule` (2026-11-22).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | `step-9` | Left unaudited |
+|---|---|---|---|---|---|---|---|---|
+| Reveal | the 120 rare records | 2 | 71 | 0 | 6 step-model (free cast of a revealed library card), 16 other (each note names what is left) | 25 | 0 | no rare record; 17 records of three or more cards |
+| Other rows (the waiting rows, the defects' records, the steps) | 19 rows | 5 (Put 2, Look 3) | 2 (Reveal-and-discard, Proteus Staff) | 5 (three new records) | 3 step-model, 3 other (notes narrowed) | 0 | 1 (`RevealSubtypeFromHandEffect`) | Put none, Look 37. All families: 2,297 rare records without a row |
+
+- **Reveal until.** `RevealCardsFromTopUntilEffect` (players, a filter, how many matches, at most) moves nothing and records REVEAL;
+  `Subjects.revealedThisWay([filter])` and `restRevealedThisWay(filter)` name "that card" and "the rest" for the move steps.
+- **Library step.** `PutCardsIntoLibraryEffect` takes cards still revealed in a library (CR 701.20b), and only those.
+- **Hands.** `RevealCardsFromHandEffect` shows a hand, cards of it or cards at random to everybody, or with `seenOnlyBy` to exactly
+  the players named (CR 701.20e, no card in the log). The three Look records of a hand folded into it. `DiscardCardsEffect` discards
+  the named cards through the random discard's replacement path.
+- **Readers.** `AmountThisWay` over REVEAL takes a card filter, power and toughness; a card filter of `cardsThisWay` reads X, the source's
+  last-known state and the triggering spell's mana value; `HappenedThisWay.toACard(REVEAL)` judges with the game's state;
+  `ColorManaSymbolsInRevealedCards` reads REVEAL; `SetBasePowerToughnessToAmountEffect` takes a duration; `ChooseCardEffect` can offer a
+  card for one quality only (`offeringEachOnce`).
+
+**Behaviour changes.**
+
+1. A card pick's prompt carries the bounds its answer is checked against, set in one place from `legalOptions()`: the minimum of
+   `MultiGraveyardChoice` (`ChooseCardEffect`'s `oneOf`, `exactly`, `oneOfEach`, `announced`, and every other mandatory form) and of the
+   others with one. That also fixed four maxima: the optional exiled-card play (0, so nothing could be picked), a library-and/or-graveyard
+   search for several (1), the graveyard-to-library cost (all cards), Illuminated Folio's pair (0). Three options contradicted their
+   handlers and were corrected first: the exiled-spell copy may choose none ("you may copy", Panoptic Mirror's ruling), Turtles Forever
+   may find fewer (CR 701.23b), a lone find in a graveyard is mandatory. `SpecializedInteractionProjectionTest` (two cases),
+   `SuddenReclamationTest.mandatoryChoicePromptHasAMinimum`, `IlluminatedFolioTest.promptAsksForTwoCards` (all failed before).
+2. No prompt over exiled cards shows or names a card exiled face down to a player who may not look at it (CR 406.3): every
+   `exiledCardViews` prompt, Knowledge Pool's, the time-counter cost's and Brilliant Ultimatum's pile text.
+   `SpecializedInteractionProjectionTest.exiledCardPromptsHideFaceDownCards`, `JestersScepterTest.newControllerDoesNotSeeTheCardsToPayWith`
+   (both failed before). Which could offer one: the exiled-with-source cost (Jester's Scepter under a new controller: a real leak), and,
+   with a mixed pool only (a copied or gained linked ability, a replaced exile), the cast-any-number and may-play prompts over
+   exiled-with-source or counter pools, the exiled-spell copy and Knowledge Pool's; the time-counter cost for a face-down card with
+   time counters. Which can't: the two creature-copy prompts, Koh's, Assimilation Aegis', the hit-counter and suspended-card choices,
+   the activated exiled-card choice and Mirror of Fate's filter face-up cards; Espers to Magicite, Plargg and Nassari, Brilliant
+   Ultimatum, Aminatou's Augury and Eye of the Storm offer what they just exiled face up or copies.
+3. Liege of the Tangle targets as its ability goes on the stack (CR 603.3d), and its counters are put through the counter step, so
+   replacement effects apply (CR 614.1). `LiegeOfTheTangleTest.targetsAreChosenAsTheAbilityGoesOnTheStack` (failed before).
+4. Gruesome Encore exiles at the next end step, whoever's (Oracle). `GruesomeEncoreTest.exiledAtTheNextEndStepOfAnyPlayer` (failed
+   before). The haste-and-exile return records the card's owner as the graveyard it entered from (CR 400.3), where it recorded the
+   controller. No test of its own.
+5. Genesis Storm may put the card (Oracle, its ruling). `GenesisStormTest.mayLeaveTheRevealedCard`.
+6. Aid from the Cowl offers the bottom also for a permanent card not put onto the battlefield (ruling 2017-02-09).
+   `AidFromTheCowlTest.declinedPermanentMayGoToTheBottom`.
+7. Matter Reshaper's Aura with nothing to enchant goes to the hand (ruling 2016-01-22). `MatterReshaperTest`.
+8. A Premonition of Your Demise's damage is a reflexive ability, targeted then (CR 603.12, ruling 2024-09-20). Its test.
+9. Every card revealed is named to all (CR 701.20a): Old Stickfingers logged only a number, Genesis Hydra only a number and showed the
+   cards to the chooser alone. `revealedCardsAreNamed` in both tests.
+10. The discards of Amnesia, Infernal Kirin, Shatter Assumptions, Trapfinder's Trick, the sacrificed-colors record, Rag Man, Rise // Fall
+    and Revealing Eye take the discard replacements (CR 614.1). `AmnesiaTest.discardReplacementApplies`.
+11. What the put step now moves enters through the entry batch: as-enters, copy and Aura choices are asked (a lone host is taken
+    unasked), several enter together, and what can't enter stays where it is (CR 101.2, 303.4g), not in the graveyard, the battlefield or
+    the bottom. Dreamshaper Shaman, Getaway Barrel and Part in Friendship still bottom it with the rest.
+12. Sacred Guide, Hermit Druid and the other reveal filters judge a card as it is in the library; "that card's power" reads the
+    characteristic-defining amounts.
+13. Prompts are the steps': Atraxa, Portent of Calamity (the free cast is a choice and then the cast's own yes or no), Niv-Mizzet (one
+    pair after another), Genesis Hydra, Retraced Image, Revealing Eye. Sapling of Colfenor's life gain and loss are steps, so a death
+    replacement is asked about after the reveal was shown. Log lines are the steps'.
+14. AI only: the deleted records' polarity entries and two bespoke strategies went; those choices are answered as graveyard choices.
+
+**What a player sees.** Read for each of the 120 records and the new steps. A reveal from a library is a log line naming each card,
+from a hand that and the modal to every player; a look is the modal to its viewer alone and a line naming none
+(`SlayersBountyTest.lookNamesNoCardInTheLog`, the viewer tests of Urza's Bauble and Port Inspector). Beyond items 2 and 9 only Invasion
+of Alara's handler hid what everybody may see (below). Extract Brain's look is shown to its controller alone.
+
+**The client after a rejected answer** (read, unchanged). `game-choice.service.ts` closes the picker and clears it before it sends;
+`game.component.ts` handles no `ERROR` message and the server neither re-sends the prompt nor a state on a rejection, so the player has
+no picker for a decision that still waits until a reconnect replays it. The minimum only avoids the rejection the picker knows of.
+
+**Seen, not changed.**
+
+- `MULTI_PERMANENT_PICK` prompts carry no minimum on the wire at all, the same dead end as item 1 (frontend and networking).
+- Pact Weapon reveals the last card of a replaced draw and Jace, Mirror Mage the one card of a draw replaced by one draw; their rulings
+  say neither is revealed.
+- Invasion of Alara exiles nothing and names nothing when no card qualifies, and logs no names when one does (Oracle: exile).
+- Sirocco's and Wand of Ith's discards skip the discard replacements (CR 614.1).
+- `cardsThisWay(REVEAL)` still names a card a later step reordered within its library (CR 701.20d); no card reads it so.
+- The index prompts over pooled exile cards (`graveyardIndexPick` with a card pool) weren't checked for CR 406.3.
+- The view's implicit look permission (exiled face down with a permanent) and `mayLookAtExiledCard` are two answers to one question.
+- Kaboom! and the family's free casts from a library keep their own loops (ledger).
+- Dead now and left: `PortentOfCalamityState` with its two branches, the card-type follow-up's exile and graveyard forms.
+
+**Tests edited.** The new cases above. Contradicted the text or a ruling: `GenesisStormTest` (answers the may), `AidFromTheCowlTest`
+(the second offer), `MatterReshaperTest` (item 7), `APremonitionOfYourDemiseTest` (item 8), `LiegeOfTheTangleTest` (targets on the
+stack; its two log assertions went with the bespoke lines), `GruesomeEncoreTest.delayedExileRetainsCasterAfterControlChange` (the next
+end step is the opponent's) and its delayed kind. Renamed prompts and answers, same assertions: `AtraxaGrandUnifierTest`,
+`PortentOfCalamityTest` (and the cast's yes), `GenesisHydraTest`, `RetracedImageTest`, `ConcealingCurtainsTest`,
+`NivMizzetRebornTest` (one pair per answer: its rejections are per pair now, and the list of the ten revealed cards is asserted on the reveal's log line, in order).
+`AidFromTheCowlTest`'s Aura case gets a second host (item 11). `GameEngineComponentScanTest` names another normal and may pair,
+`SpellTriggersTest`, `AiTargetSelectorTest` and `ValidTargetServiceTest` build surviving records;
+`SpecializedInteractionAiStrategiesTest` lost the deleted Niv-Mizzet prompt's case. Seven handler tests deleted with their handlers.
+
+**Tests run.** The final tree in one Gradle run, one `--tests` list per task, counted from that run's XML by file name: 1,040 classes
+(1,304 suites, 12,580 cases, 29 skipped by an assumption, 0 failures): every changed card's tests and the fronts constructing one, the
+card tests of the reveal, choice, library, hand and put steps, samples of the graveyard-return, discard, graveyard-exile, may-play,
+counter and copy heads, the application's architecture and interaction tests with `EffectCountRatchetTest`, the application, AI and
+engine tests naming a changed class. The engine, AI, application, webservice and all 26 card-test modules compile. The eight tests of
+the four defects failed before their fixes. Not run: the full suites, the AI fuzz and stress tests, the frontend. Not verified: that
+the other new cases fail on HEAD; more than two players; a client round trip of the new bounds; each entry change of item 11.
+
+**For the next run (run 14: Choose, 99 rare records).**
+
+- `RevealSubtypeFromHandEffect` is split-ready (`step-9`, the note names the parts and the may handler's check to move).
+- The family's reveal-then records can use the hand step, `revealedThisWay` and `DiscardCardsEffect` (the name-and-reveal records of
+  Choose first: a chosen-name predicate over `revealedThisWay` is what they need).
+- The reveal heads of three or more cards (17) now have steps that express most of them (top card to hand or battlefield,
+  `RevealTargetHandEffect`); they are step 10's unless a run takes them.
+- Two classes each wait for: a card subject on the copy effects, a delayed ability about a RETURN step, qualities found at resolution
+  on `ChooseCardEffect`.
 
 ## Prompt
 

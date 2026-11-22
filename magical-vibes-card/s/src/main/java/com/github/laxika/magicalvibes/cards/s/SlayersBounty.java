@@ -4,13 +4,16 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.LookAtCreatureCardsInTargetPlayerHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -19,7 +22,6 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
 import java.util.List;
 
 @CardRegistration(set = "YMID", collectorNumber = "10")
@@ -51,7 +53,9 @@ public class SlayersBounty extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new LookAtCreatureCardsInTargetPlayerHandEffect());
+                        RevealCardsFromHandEffect.cards(Subjects.targetPlayer(),
+                                Subjects.cardsInHands(Subjects.targetPlayer(), new CardTypePredicate(CardType.CREATURE)))
+                                .seenOnlyBy(Subjects.you()));
 
         addTriggeredAbility(new TriggeredAbility(List.of(
                 new TriggerCondition(Triggers.sacrificed(new PermanentHasSubtypePredicate(CardSubtype.CLUE),
