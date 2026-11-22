@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /**
@@ -86,7 +88,16 @@ public record ExileTargetPermanentEffect(CreateTokenEffect tokenForController,
      */
     @Override
     public RemovalKind removalKind() {
+        if (onlyYours(targetFilter)) {
+            return null; // "Exile target creature you control" removes nothing of an opponent's.
+        }
         return subject.declaresTarget() || subject instanceof PermanentSubject.Triggering ? RemovalKind.EXILE : null;
+    }
+
+    private static boolean onlyYours(PermanentPredicate filter) {
+        return filter instanceof PermanentControlledBySourceControllerPredicate
+                || filter instanceof PermanentAllOfPredicate all
+                && all.predicates().stream().anyMatch(ExileTargetPermanentEffect::onlyYours);
     }
 
     /**

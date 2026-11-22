@@ -19,7 +19,8 @@ import java.util.Objects;
  * @param cards                  the cards that may be played
  * @param duration               how long the permission lasts
  * @param freeCast               the cards are played without paying their mana costs
- * @param anyManaType            mana of any type can be spent to cast a card this way (not a land, which isn't cast)
+ * @param anyManaType            mana of any type can be spent to cast a card this way (marked on a land card too: it
+ *                               may have a spell to cast, an Adventure)
  * @param exileInsteadOfGraveyard "if that spell would be put into a graveyard, exile it instead"
  * @param playCondition          "during any turn you attacked with a Wolf or Werewolf, you may cast that card" (Rahilda),
  *                               "you may play cards exiled with this enchantment as long as you attacked this turn"

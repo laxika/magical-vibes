@@ -15,8 +15,10 @@ import com.github.laxika.magicalvibes.cards.f.FalkenrathNoble;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HealingGrace;
+import com.github.laxika.magicalvibes.cards.h.HexMagic;
 import com.github.laxika.magicalvibes.cards.h.Hibernation;
 import com.github.laxika.magicalvibes.cards.i.InspiringCleric;
+import com.github.laxika.magicalvibes.cards.s.Solitude;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MidnightHaunting;
 import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
@@ -91,6 +93,28 @@ class SpellEvaluatorTest {
 
         gd.playerBattlefields.get(player1.getId()).clear();
         gd.playerBattlefields.get(player2.getId()).clear();
+    }
+
+    @Test
+    @DisplayName("Exiling your hand to draw that many is scored by the cards in hand")
+    void exileHandThenDrawThatManyScoresTheHand() {
+        gd.playerHands.get(player1.getId()).clear();
+        gd.playerHands.get(player1.getId()).addAll(List.of(new GrizzlyBears(), new GrizzlyBears()));
+        double twoCards = spellEvaluator.estimateSpellValue(gd, new HexMagic(), player1.getId());
+        gd.playerHands.get(player1.getId()).clear();
+        double noCards = spellEvaluator.estimateSpellValue(gd, new HexMagic(), player1.getId());
+
+        assertThat(twoCards).isGreaterThan(noCards);
+    }
+
+    @Test
+    @DisplayName("An enters trigger whose first step exiles a target creature is scored as removal")
+    void sequencedEntersRemovalIsScored() {
+        double withoutTarget = spellEvaluator.estimateSpellValue(gd, new Solitude(), player1.getId());
+        gd.playerBattlefields.get(player2.getId()).add(new Permanent(new SerraAngel()));
+        double withTarget = spellEvaluator.estimateSpellValue(gd, new Solitude(), player1.getId());
+
+        assertThat(withTarget).isGreaterThan(withoutTarget);
     }
 
     @Test

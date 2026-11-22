@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.RevealCreatureCardsToBattlefi
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +37,7 @@ public class RevealCreatureCardsToBattlefieldAndShuffleRestEffectHandler
     private final BattlefieldEntryService battlefieldEntryService;
     private final GameQueryService gameQueryService;
     private final CardSpecificSupport cardSpecificSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,7 +51,9 @@ public class RevealCreatureCardsToBattlefieldAndShuffleRestEffectHandler
         String controllerName = gameData.playerIdToName.get(controllerId);
         List<Card> deck = gameData.playerDecks.get(controllerId);
 
-        if (typedEffect.creatureCount() <= 0 || deck == null || deck.isEmpty()) {
+        int creatureCount = amountEvaluationService.evaluate(gameData, typedEffect.creatureCount(),
+                AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot()));
+        if (creatureCount <= 0 || deck == null || deck.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(
                     controllerName + " reveals no cards."));
             if (deck != null) {
@@ -59,7 +64,7 @@ public class RevealCreatureCardsToBattlefieldAndShuffleRestEffectHandler
 
         List<Card> revealedCards = new ArrayList<>();
         List<Card> creatureCards = new ArrayList<>();
-        while (!deck.isEmpty() && creatureCards.size() < typedEffect.creatureCount()) {
+        while (!deck.isEmpty() && creatureCards.size() < creatureCount) {
             Card card = deck.removeFirst();
             revealedCards.add(card);
             if (cardSpecificSupport.cardMatchesAnyType(card, Set.of(CardType.CREATURE))) {

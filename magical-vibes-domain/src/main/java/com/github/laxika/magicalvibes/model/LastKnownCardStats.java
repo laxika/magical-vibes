@@ -8,9 +8,10 @@ import java.util.UUID;
  * (CR 608.2h: the card is no longer in the public zone the effect expected it in). A characteristic-defining power
  * that counts the graveyards, or a change that applies only to graveyard cards, gives a different answer once the card
  * is in exile; "the exiled card's toughness" reads this instead (Morbid Bloom, Scour the Desert, Ritual of the
- * Returned, Soul Separator).
+ * Returned, Soul Separator). A permanent the step exiled is recorded the same way, as it last existed on the
+ * battlefield ({@link StepOutcome#lastKnownPermanents()}).
  *
- * @param cardId    the card, as its step's {@link StepOutcome#objectIds()} lists it
+ * @param cardId    the card, or the permanent, as its step's {@link StepOutcome#objectIds()} lists it
  * @param power     its power there; {@code null} for a card without one
  * @param toughness its toughness there; {@code null} for a card without one
  * @param manaValue its mana value there

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
@@ -31,6 +32,7 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
     private final SubjectResolutionService subjectResolutionService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -48,6 +50,12 @@ public class DiscardHandEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         for (UUID playerId : subjectResolutionService.players(gameData, entry, e, e.player())) {
+            // "Spells and abilities your opponents control can't cause you to discard cards."
+            if (!gameQueryService.canEffectCauseDiscard(gameData, playerId, controllerId)) {
+                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
+                        + " can't be caused to discard (" + cardName + ")."));
+                continue;
+            }
             discardHand(gameData, playerId, controllerId, cardName);
         }
     }

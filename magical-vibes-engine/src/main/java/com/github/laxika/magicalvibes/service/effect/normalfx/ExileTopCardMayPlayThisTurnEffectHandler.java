@@ -134,6 +134,10 @@ public class ExileTopCardMayPlayThisTurnEffectHandler implements NormalEffectHan
             boolean permitted = !exileEffect.chooseOne() && permits(exileEffect, topCard);
             if (permitted) {
                 permittedIds.add(topCard.getId());
+                if (exileEffect.faceDown()) {
+                    // "You may look at and play that card": the player may go on looking at it (CR 406.3).
+                    gameData.grantExileLookPermission(topCard.getId(), holderId);
+                }
                 // Play permission for the effect's duration ("you may cast": not for a land card).
                 gameData.grantExilePlayPermission(topCard.getId(), holderId, duration);
                 if (exileEffect.castFilter() != null) {

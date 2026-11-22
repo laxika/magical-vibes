@@ -3,9 +3,19 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealPowerDamageToEachOpponentEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureThenRevealUntilHigherManaValueEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardsWithLukkaPermissionEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueAtMostAmountPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -24,7 +34,16 @@ public class LukkaCoppercoatOutcast extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new ExileTargetCreatureThenRevealUntilHigherManaValueEffect()),
+                List.of(
+                        new ExileTargetPermanentEffect(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentControlledBySourceControllerPredicate()))),
+                        new RevealUntilCardPredicateRestOnBottomRandomEffect(
+                                new CardAllOfPredicate(List.of(
+                                        new CardTypePredicate(CardType.CREATURE),
+                                        new CardNotPredicate(new CardManaValueAtMostAmountPredicate(
+                                                AmountThisWay.exiledManaValue())))),
+                                LibrarySearchDestination.BATTLEFIELD)),
                 "\u22122: Exile target creature you control, then reveal cards from the top of your library "
                         + "until you reveal a creature card with greater mana value. Put that card onto the "
                         + "battlefield and the rest on the bottom of your library in a random order.",

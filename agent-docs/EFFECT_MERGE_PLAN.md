@@ -1446,7 +1446,7 @@ record ExileTopCardsMayPlayEffect(DynamicAmount count, CardPredicate playableFil
 ```
 **Absorbs**: `ExileTopCardMayPlayThisTurnEffect` (4), `ExileTopCardsMayPlayUntilNextTurnEffect` (3),
 `ExileTopCardMayCastNonlandThisTurnEffect` (1), `ExileTopCardMayPlayUntilNextUpkeepEffect` (1),
-`ExileTopCardsFaceDownMayPlayUntilNextUpkeepEffect` (1),
+`ExileTopCardsFaceDownMayPlayUntilNextUpkeepEffect` (1; absorbed by effect-cleanup step 9),
 `ExileTopCardsMayCastMatchingThisTurnEffect` (1).
 
 All six handlers share the same body verbatim, including the identical

@@ -995,8 +995,6 @@ public class MultiPermanentChoiceHandlerService {
             completeAskingDeathReplacementsFirst(gameData, multiPermanentChoice, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ReturnToHandAttackCost) {
             handleReturnToHandAttackCost(gameData, playerId, permanentIds);
-        } else if (context instanceof MultiPermanentChoiceContext.ExileAttackingCreatures) {
-            handleExileAttackingCreatures(gameData, playerId, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.PutAttackingCreaturesOnLibrary ctx) {
             handlePutAttackingCreaturesOnLibrary(gameData, permanentIds, multiPermanentChoice.validIds(), ctx);
         } else if (context instanceof MultiPermanentChoiceContext.PutPermanentsOnTopOfOwnersLibraries ctx) {
@@ -1699,33 +1697,6 @@ public class MultiPermanentChoiceHandlerService {
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleExileAttackingCreatures(GameData gameData, UUID playerId, List<UUID> permanentIds) {
-        if (permanentIds.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(
-                    gameData.playerIdToName.get(playerId) + " chooses not to exile any attacking creatures."));
-        } else {
-            List<Card> exiledCards = new ArrayList<>();
-            for (UUID permId : permanentIds) {
-                Permanent creature = gameQueryService.findPermanentById(gameData, permId);
-                if (creature != null) {
-                    permanentRemovalService.removePermanentToExile(gameData, creature);
-                    exiledCards.add(creature.getCard());
-                }
-            }
-            if (!exiledCards.isEmpty()) {
-                permanentRemovalService.removeOrphanedAuras(gameData);
-                gameLogService.append(gameData,
-                        appendCards(GameLog.builder(), exiledCards)
-                                .text((exiledCards.size() == 1 ? " is" : " are") + " exiled.").build());
-                log.info("Game {} - {} exiles {} attacking creatures", gameData.id,
-                        gameData.playerIdToName.get(playerId), exiledCards.size());
-            }
-        }
-
-        // Resume resolving remaining effects on the same ability (e.g. the cycling draw)
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
     private void handlePutAttackingCreaturesOnLibrary(GameData gameData, List<UUID> topCreatureIds,

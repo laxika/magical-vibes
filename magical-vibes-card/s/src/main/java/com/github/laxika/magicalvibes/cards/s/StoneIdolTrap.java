@@ -8,11 +8,15 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCreatedPermanentsAtControllerEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -34,6 +38,7 @@ public class StoneIdolTrap extends Card {
                 null, null, List.of(CardSubtype.CONSTRUCT), Set.of(Keyword.TRAMPLE),
                 Set.of(CardType.ARTIFACT), false, false, List.of(), List.of(),
                 false, false, false, 0, Set.of()));
-        addSpellEffect(new ExileCreatedPermanentsAtControllerEndStepEffect());
+        addSpellEffect(RegisterDelayedStepTriggerEffect.aboutCreated(Triggers.endStep(ActivePlayer.YOU),
+                new ExileTargetPermanentEffect(Subjects.createdThisResolution())));
     }
 }

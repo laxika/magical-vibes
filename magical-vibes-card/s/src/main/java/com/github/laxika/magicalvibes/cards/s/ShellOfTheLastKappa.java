@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetSpellUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCardExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.filter.StackEntryAllOfPredicate;
@@ -23,7 +23,7 @@ public class ShellOfTheLastKappa extends Card {
         // against this artifact so the sacrifice ability below can cast it. Exiling is not
         // countering, so "can't be countered" does not protect the spell.
         addActivatedAbility(new ActivatedAbility(true, "{3}",
-                List.of(new ExileTargetSpellUntilSourceLeavesEffect()),
+                List.of(ExileTargetSpellEffect.withSource()),
                 "{3}, {T}: Exile target instant or sorcery spell that targets you.",
                 new StackEntryPredicateTargetFilter(
                         new StackEntryAllOfPredicate(List.of(

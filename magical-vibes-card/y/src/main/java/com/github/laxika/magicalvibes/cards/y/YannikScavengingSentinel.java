@@ -4,11 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongTargetsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExilePermanentYouControlAndTrackWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileChosenPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetPlayerLibraryForNamedCardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -46,10 +50,13 @@ public class YannikScavengingSentinel extends Card {
                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())));
         var distributeCounters =
                 DistributeCountersAmongTargetsEffect.chosenAmongAnyNumberOfTargetCreatures(
-                        CounterType.PLUS_ONE_PLUS_ONE, new EventValue(), null);
+                        CounterType.PLUS_ONE_PLUS_ONE, AmountThisWay.exiledPower(), null);
         var counterTargets = target(TargetFilters.creature(), 0, 99);
         registerEffectTargetIndex(distributeCounters, counterTargets.getIndex());
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ExilePermanentYouControlAndTrackWithSourceEffect(anotherCreature, distributeCounters, true));
+                SequenceEffect.of(
+                ExileChosenPermanentsEffect.youControl(anotherCreature, "creature you control").untilSourceLeaves(),
+                new ConditionalEffect(HappenedThisWay.exiled(),
+                        new QueueReflexiveAbilityEffect(distributeCounters))));
     }
 }

@@ -53,7 +53,8 @@ class DiscardHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
 
         int discardCount = new DiscardHandEffectHandler(gameLogService, graveyardService,
                 new SubjectResolutionService(gameQueryService, predicateEvaluationService,
-                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)))
+                        org.mockito.Mockito.mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)),
+                gameQueryService)
                 .discardHand(gd, player1Id, player1Id, "One with Nothing");
 
         assertThat(discardCount).isEqualTo(2);
@@ -109,6 +110,8 @@ class DiscardHandEffectHandlerTest extends AbstractPlayerInteractionHandlerTest 
         Card player2Card = createCard("Forest");
         gd.playerHands.get(player1Id).add(player1Card);
         gd.playerHands.get(player2Id).add(player2Card);
+        org.mockito.Mockito.when(gameQueryService.canEffectCauseDiscard(org.mockito.ArgumentMatchers.eq(gd),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.eq(player1Id))).thenReturn(true);
         StackEntry entry = new StackEntry(StackEntryType.SORCERY_SPELL, card, player1Id,
                 card.getName(), List.of(effect), 0, List.of(player1Id, player2Id));
 

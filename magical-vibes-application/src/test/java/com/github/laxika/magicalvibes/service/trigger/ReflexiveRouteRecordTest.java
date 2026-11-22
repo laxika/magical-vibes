@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandThenFightEffect;
 import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileChosenPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -33,7 +35,6 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExilePermanentThenExileMatchingPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
@@ -125,8 +126,10 @@ class ReflexiveRouteRecordTest extends BaseCardTest {
                 ReturnPermanentControlledByPlayerToHandEffect.controller(new PermanentIsCreaturePredicate(), "creature"),
                 new ConditionalEffect(HappenedThisWay.returned(), new QueueReflexiveAbilityEffect(effect)))),
         SACRIFICE_FOR_POWER_DAMAGE(effect -> new SacrificeAnotherCreatureDealPowerDamageToAnyTargetEffect()),
-        EXILE_THEN_EXILE_MATCHING(effect -> new ExilePermanentThenExileMatchingPermanentsEffect(
-                new PermanentIsCreaturePredicate(), new PermanentIsCreaturePredicate(), "creature")),
+        EXILE_THEN_EXILE_MATCHING(effect -> SequenceEffect.of(
+                ExileChosenPermanentsEffect.youControl(new PermanentIsCreaturePredicate(), "creature"),
+                new ConditionalEffect(HappenedThisWay.exiled(), new QueueReflexiveAbilityEffect(
+                        new ExileAllPermanentsEffect(new PermanentIsCreaturePredicate()))))),
         CREATE_TOKEN_THEN(effect -> new CreateTokenThenEffect(CreateTokenEffect.ofTreasureToken(1), effect)),
         CREATE_TOKEN_ABOUT_THAT_TOKEN(effect -> CreateTokenThenEffect.aboutThatToken(
                 CreateTokenEffect.ofTreasureToken(1), effect)),

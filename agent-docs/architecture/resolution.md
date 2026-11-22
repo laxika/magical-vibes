@@ -66,6 +66,11 @@ An earlier step is a handler that never prompts, pauses by resolving itself agai
 Owner: `EffectResolutionService`, the recording handlers.
 Why: a later step would run before the earlier one finished, or read half its result.
 
+### A delayed ability about a step reads that step (CR 603.7c)
+"Return those cards at the next end step" after a step is `RegisterDelayedStepTriggerEffect`: its entry carries the step's outcome (`DelayedReferents.stepResults`), each card bound to its stay (`MovedCard.entryVersion`).
+Owner: `RegisterDelayedStepTriggerEffectHandler`, `StackEntry.readStepResults`, `SubjectResolutionService`.
+Why: a bespoke exile-and-register handler forgot the stay and returned a card that had left and come back (CR 400.7).
+
 ### A removal step asks before anything leaves (CR 616.1)
 A step removes through `DepartureService.departAsStep`; on `Pending` the handler returns and is not run again, so what follows goes through `StepDepartureSupport`. `DestructionSupport.tryDestroyAndLog` / `sacrificeAndLog` never end a step.
 Owner: `DepartureService`, `StepDepartureSupport`.

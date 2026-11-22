@@ -244,4 +244,12 @@ public record AmountContext(
         return new AmountContext(castingPlayerId, null, null, xValue, 0, false, null,
                 List.of(), sourceCard);
     }
+
+    /** This context of {@code entry}, whose step results "that many" and "the exiled creature's power" read. */
+    public AmountContext withStackEntry(StackEntry entry) {
+        return new AmountContext(controllerId, sourcePermanent, targetPermanentId, xValue, eventValue,
+                staticEvaluation, chosenPermanentId, repeatedAdditionalCosts, sourceCard, entry,
+                chosenPermanentPowerAtTrigger, triggeringPermanentPowerAtTrigger, sacrificedPower,
+                sacrificedToughness, targetCardIds, madness, convokeCreatureCount, targetIds);
+    }
 }

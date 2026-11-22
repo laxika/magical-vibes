@@ -186,22 +186,23 @@ public class SubjectResolutionService {
 
     /**
      * {@link CardSubject.CardsThisWay}: for each object the step recorded, the card it became in the zone the step put
-     * it in ({@link StepOutcome#movedCards()}); an exiled card that kept its id is looked for in exile, a discarded card
-     * in its graveyard, else in exile where a replacement put it. Only a card still in that zone is named; the subject's
-     * filter, when it has one, is then judged on each card as it is there.
+     * it in ({@link StepOutcome#movedCards()}; every card of a merged permanent, CR 731.3c); an exiled card that kept
+     * its id is looked for in exile, a discarded card in its graveyard, else in exile where a replacement put it. Only
+     * a card still in that zone is named, and, for a delayed ability's step, in the stay it was bound to
+     * ({@link MovedCard#entryVersion()}, CR 603.7c); the subject's filter, when it has one, is then judged on each card
+     * as it is there.
      */
     private List<LocatedCard> cardsThisWay(GameData gameData, StackEntry entry, StepKind kind) {
         StepOutcome outcome = entry.getResolutionResults().outcome(kind);
-        Map<UUID, MovedCard> moved = new LinkedHashMap<>();
-        outcome.movedCards().forEach(card -> moved.putIfAbsent(card.objectId(), card));
+        Map<UUID, List<MovedCard>> moved = new LinkedHashMap<>();
+        outcome.movedCards().forEach(card ->
+                moved.computeIfAbsent(card.objectId(), id -> new ArrayList<>()).add(card));
         List<LocatedCard> located = new ArrayList<>();
         Set<UUID> seen = new LinkedHashSet<>();
         for (UUID objectId : outcome.objectIds()) {
-            MovedCard card = moved.get(objectId);
-            if (card == null && kind == StepKind.EXILE) {
-                card = new MovedCard(objectId, objectId, Zone.EXILE, null);
-            }
-            if (card == null && kind == StepKind.DISCARD) {
+            List<MovedCard> cards = moved.getOrDefault(objectId, kind == StepKind.EXILE
+                    ? List.of(new MovedCard(objectId, objectId, Zone.EXILE, null)) : List.of());
+            if (cards.isEmpty() && kind == StepKind.DISCARD) {
                 LocatedCard discarded = locate(gameData, objectId, Zone.GRAVEYARD);
                 if (discarded == null) {
                     discarded = locate(gameData, objectId, Zone.EXILE);
@@ -211,12 +212,14 @@ public class SubjectResolutionService {
                 }
                 continue;
             }
-            if (card == null || !seen.add(card.cardId())) {
-                continue;
-            }
-            LocatedCard found = locate(gameData, card.cardId(), card.zone());
-            if (found != null) {
-                located.add(found);
+            for (MovedCard card : cards) {
+                if (!seen.add(card.cardId()) || !gameData.isInStay(card)) {
+                    continue;
+                }
+                LocatedCard found = locate(gameData, card.cardId(), card.zone());
+                if (found != null) {
+                    located.add(found);
+                }
             }
         }
         return located;

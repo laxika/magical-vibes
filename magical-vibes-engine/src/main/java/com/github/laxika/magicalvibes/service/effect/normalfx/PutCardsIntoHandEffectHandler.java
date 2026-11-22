@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -38,15 +39,22 @@ public class PutCardsIntoHandEffectHandler implements NormalEffectHandlerBean {
         for (SubjectResolutionService.LocatedCard located
                 : subjectResolutionService.locatedCards(gameData, entry, put, put.cards())) {
             Card card = located.card();
-            if (located.zone() != Zone.EXILE || !gameData.removeFromExile(card.getId())) {
+            if (located.zone() != Zone.EXILE) {
+                continue;
+            }
+            ExiledCardEntry exiled = gameData.findExiledCard(card.getId());
+            boolean faceDown = exiled != null && exiled.faceDown();
+            if (!gameData.removeFromExile(card.getId())) {
                 continue;
             }
             UUID ownerId = located.ownerId() != null ? located.ownerId() : entry.getControllerId();
             gameData.addCardToHand(ownerId, card);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    gameData.playerIdToName.get(ownerId) + " puts ", card, " into their hand."));
-            log.info("Game {} - {} puts {} from exile into their hand", gameData.id,
-                    gameData.playerIdToName.get(ownerId), card.getName());
+            String ownerName = gameData.playerIdToName.get(ownerId);
+            // A card exiled face down goes to a hidden zone without being seen (CR 406.3).
+            gameLogService.append(gameData, faceDown
+                    ? GameLog.text(ownerName + " puts a face-down card from exile into their hand.")
+                    : GameLog.textCardText(ownerName + " puts ", card, " into their hand."));
+            log.info("Game {} - {} puts {} from exile into their hand", gameData.id, ownerName, card.getName());
         }
     }
 }

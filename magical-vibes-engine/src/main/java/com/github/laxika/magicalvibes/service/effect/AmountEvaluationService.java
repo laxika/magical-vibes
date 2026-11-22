@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.effect.PartyAlwaysFullEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -1141,6 +1142,9 @@ public class AmountEvaluationService {
                             card, thisWay.cardFilter(), sourceCardId))
                     .count();
         }
+        if (thisWay.stat() == AmountThisWay.Stat.STILL_EXILED) {
+            return stillExiled(gameData, results.outcome(StepKind.EXILE));
+        }
         if (thisWay.stat() == AmountThisWay.Stat.AMOUNT && thisWay.filter() == null && !thisWay.yours()
                 && !thisWay.includesUnremoved()) {
             return results.outcome(thisWay.kind()).amount();
@@ -1182,10 +1186,32 @@ public class AmountEvaluationService {
                 case POWER -> result.lastKnownPower();
                 case TOUGHNESS -> result.lastKnownToughness();
                 case MANA_VALUE -> result.lastKnownManaValue();
+                case STILL_EXILED -> 0;
             };
             total = SaturatingMath.add(total, value == null ? 0 : value);
         }
         return thisWay.negativeKept() ? total : Math.max(0, total);
+    }
+
+    /**
+     * How many of the cards an exile step exiled are still exiled: in the stay the reading ability is bound to, when it
+     * is (CR 603.7c, 400.7). A token it exiled is no card.
+     */
+    private static int stillExiled(GameData gameData, StepOutcome exiled) {
+        Set<UUID> remaining = new HashSet<>();
+        Set<UUID> movedObjects = new HashSet<>();
+        for (MovedCard moved : exiled.movedCards()) {
+            movedObjects.add(moved.objectId());
+            if (gameData.isInStay(moved) && gameData.findExiledCard(moved.cardId()) != null) {
+                remaining.add(moved.cardId());
+            }
+        }
+        for (UUID id : exiled.objectIds()) {
+            if (!movedObjects.contains(id) && gameData.findExiledCard(id) != null) {
+                remaining.add(id);
+            }
+        }
+        return remaining.size();
     }
 
     /** A departed permanent as it last existed on the battlefield, or one that stayed there as it is now. */
@@ -1206,13 +1232,14 @@ public class AmountEvaluationService {
         int total = 0;
         for (UUID id : exiled.objectIds()) {
             Integer value;
-            LastKnownCardStats fromGraveyard = exiled.lastKnownCard(id).orElse(null);
-            if (fromGraveyard != null) {
+            LastKnownCardStats recorded = exiled.lastKnownCard(id).or(() -> exiled.lastKnownPermanent(id))
+                    .orElse(null);
+            if (recorded != null) {
                 value = switch (stat) {
-                    case POWER -> fromGraveyard.power();
-                    case TOUGHNESS -> fromGraveyard.toughness();
-                    case MANA_VALUE -> fromGraveyard.manaValue();
-                    case AMOUNT, DIED -> 0;
+                    case POWER -> recorded.power();
+                    case TOUGHNESS -> recorded.toughness();
+                    case MANA_VALUE -> recorded.manaValue();
+                    case AMOUNT, DIED, STILL_EXILED -> 0;
                 };
             } else if (entry.getLastKnownPermanentPowers().containsKey(id)) {
                 Card lastKnown = entry.lastKnownPermanentCard(id);
@@ -1220,7 +1247,7 @@ public class AmountEvaluationService {
                     case POWER -> entry.getLastKnownPermanentPowers().get(id);
                     case TOUGHNESS -> entry.getLastKnownPermanentToughnesses().get(id);
                     case MANA_VALUE -> lastKnown == null ? null : lastKnown.getManaValue();
-                    case AMOUNT, DIED -> 0;
+                    case AMOUNT, DIED, STILL_EXILED -> 0;
                 };
             } else {
                 Card card = gameQueryService.findCardById(gameData, id);
@@ -1228,7 +1255,7 @@ public class AmountEvaluationService {
                     case POWER -> gameQueryService.getEffectiveCardPower(gameData, card);
                     case TOUGHNESS -> gameQueryService.getEffectiveCardToughness(gameData, card);
                     case MANA_VALUE -> card.getManaValue();
-                    case AMOUNT, DIED -> 0;
+                    case AMOUNT, DIED, STILL_EXILED -> 0;
                 };
             }
             total = SaturatingMath.add(total, value == null ? 0 : value);

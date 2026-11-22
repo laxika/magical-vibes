@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -42,12 +44,14 @@ public class ExileTargetPlayerHandEffectHandler implements NormalEffectHandlerBe
         UUID sourcePermanentId = exileEffect.trackWithSource()
                 ? resolveSourcePermanentId(gameData, entry)
                 : null;
+        entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
         for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, exileEffect.players())) {
-            exileHand(gameData, playerId, sourcePermanentId);
+            exileHand(gameData, entry, playerId, sourcePermanentId, exileEffect.faceDown());
         }
     }
 
-    private void exileHand(GameData gameData, UUID playerId, UUID sourcePermanentId) {
+    private void exileHand(GameData gameData, StackEntry entry, UUID playerId, UUID sourcePermanentId,
+                           boolean faceDown) {
         String playerName = gameData.playerIdToName.get(playerId);
         List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null || hand.isEmpty()) {
@@ -61,14 +65,18 @@ public class ExileTargetPlayerHandEffectHandler implements NormalEffectHandlerBe
         for (Card card : toExile) {
             // Exiled cards are kept per owner.
             UUID ownerId = card.getOwnerId() != null ? card.getOwnerId() : playerId;
-            if (sourcePermanentId == null) {
+            if (faceDown) {
+                exileService.exileCardFaceDown(gameData, ownerId, card, sourcePermanentId);
+            } else if (sourcePermanentId == null) {
                 exileService.exileCard(gameData, ownerId, card);
             } else {
                 exileService.exileCard(gameData, ownerId, card, sourcePermanentId);
             }
         }
 
-        String logEntry = playerName + "'s hand is exiled (" + count + " card" + (count != 1 ? "s" : "") + ").";
+        entry.addToStep(StepKind.EXILE,
+                StepOutcome.ofObjects(toExile.stream().map(Card::getId).toList(), List.of(playerId)));
+        String logEntry = playerName + "'s hand is exiled" + (faceDown ? " face down (" : " (") + count + " card" + (count != 1 ? "s" : "") + ").";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {}'s hand ({} cards) exiled", gameData.id, playerName, count);
     }

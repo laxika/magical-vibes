@@ -64,6 +64,8 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
         }
         // "When you do, ... that creature's power": the ability reads what the earlier steps of this resolution did.
         record.carryResolutionResultsFrom(entry);
+        // Not a chapter ability, so it doesn't keep a Saga that has finished its chapters (CR 704.5s).
+        record.setReflexiveTrigger(true);
         if (queueEffect.useEntryTargetAsTriggeringPermanent() && entry.getTargetId() != null) {
             record.setTriggeringPermanentId(entry.getTargetId());
         }

@@ -6,11 +6,16 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTwoPermanentsThenSearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileChosenPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -39,10 +44,13 @@ public class FugitiveOfTheJudoon extends Card {
         addTrigger(Triggers.chapter(1), SequenceEffect.of(humanToken, rhinoToken));
         addTrigger(Triggers.chapter(2), CreateTokenEffect.ofClueToken(1));
         addTrigger(Triggers.chapter(3), new MayEffect(
-                new ExileTwoPermanentsThenSearchLibraryEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.HUMAN), "Human",
-                        new PermanentIsArtifactPredicate(), "artifact",
-                        new CardSubtypePredicate(CardSubtype.DOCTOR)),
+                SequenceEffect.of(
+                        ExileChosenPermanentsEffect
+                                .youControl(new PermanentHasSubtypePredicate(CardSubtype.HUMAN), "Human")
+                                .and(new PermanentIsArtifactPredicate(), "artifact"),
+                        new ConditionalEffect(HappenedThisWay.atLeast(StepKind.EXILE, 2),
+                                new SearchLibraryEffect(new CardSubtypePredicate(CardSubtype.DOCTOR),
+                                        LibrarySearchDestination.BATTLEFIELD))),
                 "Exile a Human you control and an artifact you control?"));
     }
 }

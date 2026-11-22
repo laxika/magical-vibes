@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherControll
 import com.github.laxika.magicalvibes.model.effect.CopySpellForAnotherOpponentPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileChosenPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfNextPlayerNonlandPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
@@ -568,61 +569,13 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
                                            PermanentPredicate filter)
             implements PermanentChoiceContext {}
 
-    /** The controller chooses one matching permanent they control to exile until the source leaves. */
-    record PermanentYouControlToExile(Card sourceCard, UUID sourcePermanentId, UUID controllerId,
-                                      PermanentPredicate filter, CardEffect thenEffect,
-                                      boolean untilSourceLeaves)
+    /** One answer of "exile a [filter] you control": {@code chosen} are the earlier choices' answers. */
+    record ExileChosenPermanents(ExileChosenPermanentsEffect effect, List<UUID> chosen)
             implements PermanentChoiceContext {
-        public PermanentYouControlToExile(Card sourceCard, UUID sourcePermanentId, UUID controllerId,
-                                          PermanentPredicate filter) {
-            this(sourceCard, sourcePermanentId, controllerId, filter, null, false);
+        public ExileChosenPermanents {
+            chosen = List.copyOf(chosen);
         }
     }
-
-    /** The controller chooses one matching permanent to exile, then creates a token. */
-    record ExilePermanentYouControlThenCreateToken(
-            Card sourceCard,
-            UUID controllerId,
-            PermanentPredicate filter,
-            CreateTokenEffect token
-    ) implements PermanentChoiceContext {}
-
-    /** The Master, Formed Anew: choose a creature to exile with a takeover counter. */
-    record TakeoverCreatureToExile(Card sourceCard, UUID controllerId) implements PermanentChoiceContext {}
-
-    /** The controller chooses one permanent to exile, then all permanents matching another filter are exiled. */
-    record ExilePermanentThenExileMatchingPermanents(
-            Card sourceCard,
-            UUID sourcePermanentId,
-            UUID controllerId,
-            PermanentPredicate choiceFilter,
-            PermanentPredicate matchingFilter,
-            String choiceLabel
-    ) implements PermanentChoiceContext {}
-
-    /** The controller chooses and exiles a Human and an artifact, then searches their library. */
-    record ExileTwoPermanentsThenSearchLibrary(
-            Card sourceCard,
-            UUID sourcePermanentId,
-            UUID controllerId,
-            PermanentPredicate firstFilter,
-            String firstLabel,
-            PermanentPredicate secondFilter,
-            String secondLabel,
-            CardPredicate searchFilter,
-            UUID firstPermanentId
-    ) implements PermanentChoiceContext {
-        public ExileTwoPermanentsThenSearchLibrary withFirstPermanentId(UUID id) {
-            return new ExileTwoPermanentsThenSearchLibrary(
-                    sourceCard, sourcePermanentId, controllerId, firstFilter, firstLabel,
-                    secondFilter, secondLabel, searchFilter, id);
-        }
-    }
-
-    /** Fear of Change: choose another creature to exile before conjuring a random creature. */
-    record ExileAnotherCreatureAndConjureRandomCreature(
-            Card sourceCard, UUID sourcePermanentId, UUID controllerId)
-            implements PermanentChoiceContext {}
 
     /** Godsend: choose one creature blocking or blocked by the equipped creature to exile. */
     record ExileCombatOpponent(UUID sourcePermanentId, Card sourceCard) implements PermanentChoiceContext {}

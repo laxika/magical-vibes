@@ -1,19 +1,18 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.Objects;
 
 /**
- * Puts each of the named cards that is still in exile into its owner's graveyard. Created by delayed
- * "return them to their owners' graveyards" triggers that remember their cards.
- *
- * @param exileEntryVersions each card's exile entry version as the delayed trigger was made, in order: a card that
- *                           left exile and was exiled again is a new object (CR 400.7) and stays
+ * "Put them into their owners' graveyards": each card {@code cards} names that is in exile goes to its owner's
+ * graveyard, face-down ones included. The step records how many were put into a graveyard this way
+ * ({@code StepKind.PUT_INTO_GRAVEYARD}).
  */
-public record PutExiledCardsIntoOwnersGraveyardEffect(Map<UUID, Long> exileEntryVersions) implements CardEffect {
+public record PutExiledCardsIntoOwnersGraveyardEffect(CardSubject cards) implements CardEffect {
 
     public PutExiledCardsIntoOwnersGraveyardEffect {
-        exileEntryVersions = java.util.Collections.unmodifiableMap(new LinkedHashMap<>(exileEntryVersions));
+        Objects.requireNonNull(cards, "cards");
+        if (cards.declaresTarget()) {
+            throw new IllegalArgumentException("The step names the cards an earlier step moved: " + cards);
+        }
     }
 }

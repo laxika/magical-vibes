@@ -21,6 +21,24 @@ import static org.assertj.core.api.Assertions.assertThat;
 class BlightwingBanditTest extends BaseCardTest {
 
     @Test
+    @DisplayName("The controller may look at the card exiled face down")
+    void controllerMayLookAtTheExiledCard() {
+        harness.addToBattlefield(player1, new BlightwingBandit());
+        Card topCard = new Divination();
+        harness.setLibrary(player2, List.of(topCard, new Island()));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.mayLookAtExiledCard(topCard.getId(), player1.getId())).isTrue();
+        assertThat(gd.mayLookAtExiledCard(topCard.getId(), player2.getId())).isFalse();
+    }
+
+    @Test
     @DisplayName("The first spell during an opponent's turn exiles the top card of that player's library face down")
     void firstSpellDuringOpponentsTurnExilesTopCardFaceDown() {
         harness.addToBattlefield(player1, new BlightwingBandit());

@@ -6,6 +6,8 @@ import com.github.laxika.magicalvibes.model.ManaCost;
 import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXManaCreateXTokensEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -13,6 +15,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -42,6 +45,7 @@ public class PayXManaCreateXTokensEffectHandler implements NormalEffectHandlerBe
         UUID controllerId = entry.getControllerId();
         String cardName = entry.getCard().getName();
         String playerName = gameData.playerIdToName.get(controllerId);
+        entry.recordStep(StepKind.CREATE_TOKEN, StepOutcome.NONE);
 
         if (gameData.chosenXValue != null) {
             int chosenValue = gameData.chosenXValue;
@@ -71,8 +75,10 @@ public class PayXManaCreateXTokensEffectHandler implements NormalEffectHandlerBe
                     + e.manaCost().replace("{X}", "{" + chosenValue + "}") + " for " + cardName + "."));
             log.info("Game {} - {} pays X={} for {}", gameData.id, playerName, chosenValue, cardName);
             int createdFromIndex = entry.getCreatedPermanentIds().size();
-            entry.getCreatedPermanentIds().addAll(permanentControlSupport.applyCreateToken(
-                    gameData, controllerId, e.token(), chosenValue, entry.getCard().getSetCode()));
+            List<UUID> created = permanentControlSupport.applyCreateToken(
+                    gameData, controllerId, e.token(), chosenValue, entry.getCard().getSetCode());
+            entry.getCreatedPermanentIds().addAll(created);
+            entry.recordStep(StepKind.CREATE_TOKEN, StepOutcome.ofObjects(created, List.of(controllerId)));
             if (e.token().tappedAndAttacking()) {
                 // The paid tokens enter attacking, and their controller chooses what each one attacks once the
                 // ordered creation has finished (CR 508.4).

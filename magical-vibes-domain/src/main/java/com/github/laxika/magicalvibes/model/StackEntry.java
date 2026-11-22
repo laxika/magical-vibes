@@ -695,6 +695,16 @@ public class StackEntry {
         resolutionResults = resolving.resolutionResults.asReadByLaterAbility();
     }
 
+    /**
+     * Gives this entry, a delayed triggered ability, what the step it was made after did
+     * ({@link DelayedReferents#stepResults()}): "those cards" are that step's cards, each only in the stay it was bound
+     * to, and "those tokens" the permanents it created (CR 603.7c).
+     */
+    public void readStepResults(ResolutionResults results) {
+        resolutionResults = results;
+        createdPermanentIds.addAll(results.outcome(StepKind.CREATE_TOKEN).objectIds());
+    }
+
     /** Records what a player picked in the step being resolved, for the next step to act on. */
     public void recordPicks(List<UUID> pickedIds) {
         resolutionResults = resolutionResults.withPickedIds(pickedIds);

@@ -6,14 +6,17 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExilePermanentYouControlThenCreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileChosenPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
-import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -33,8 +36,9 @@ public class DalekIntensiveCare extends Card {
         var nonDalekCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),
                 new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.DALEK))));
-        var intensiveCare = new ExilePermanentYouControlThenCreateTokenEffect(
-                nonDalekCreature, dalekToken);
+        var intensiveCare = SequenceEffect.of(
+                ExileChosenPermanentsEffect.youControl(nonDalekCreature, "non-Dalek creature you control"),
+                new ConditionalEffect(HappenedThisWay.exiled(), dalekToken));
 
         addTrigger(Triggers.planeswalkToThis(), intensiveCare);
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), intensiveCare);

@@ -99,13 +99,8 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DestructionSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileAnotherCreatureAndConjureRandomCreatureEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileControlledCreatureWithTakeoverCounterEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentThenExileMatchingPermanentsEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentYouControlAndTrackWithSourceEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExilePermanentYouControlThenCreateTokenEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExileChosenPermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSelfAndReturnUnderOpponentControlEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExileTwoPermanentsThenSearchLibraryEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GainControlOfDefendingPlayerCreatureAndAttackEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LibrarySearchSupport;
@@ -257,9 +252,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport exileSupport;
 
-    private final ExileAnotherCreatureAndConjureRandomCreatureEffectHandler
-            exileAnotherCreatureAndConjureRandomCreatureHandler;
-
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MaySacrificeForCounterSupport maySacrificeForCounterSupport;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GargantuanGorillaUpkeepSupport gargantuanGorillaUpkeepSupport;
@@ -398,17 +390,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final OpponentChoosesPermanentToExileUntilSourceLeavesEffectHandler opponentChoosesPermanentToExileUntilSourceLeavesEffectHandler;
 
-    private final ExilePermanentYouControlAndTrackWithSourceEffectHandler exilePermanentYouControlHandler;
-
-    private final ExilePermanentYouControlThenCreateTokenEffectHandler exilePermanentYouControlThenCreateTokenHandler;
-
-    private final ExileControlledCreatureWithTakeoverCounterEffectHandler exileControlledCreatureWithTakeoverCounterHandler;
-
-    private final ExilePermanentThenExileMatchingPermanentsEffectHandler
-            exilePermanentThenExileMatchingPermanentsHandler;
-
-    private final ExileTwoPermanentsThenSearchLibraryEffectHandler
-            exileTwoPermanentsThenSearchLibraryHandler;
+    private final ExileChosenPermanentsEffectHandler exileChosenPermanentsHandler;
 
     private final ExileSelfAndReturnUnderOpponentControlEffectHandler exileSelfAndReturnUnderOpponentControlHandler;
 
@@ -1407,28 +1389,9 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handlePermanentYouControlToExile(GameData gameData, UUID permanentId,
-            PermanentChoiceContext.PermanentYouControlToExile context) {
-        exilePermanentYouControlHandler.completePermanentChoice(gameData, permanentId, context);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleExilePermanentYouControlThenCreateToken(GameData gameData, UUID permanentId,
-            PermanentChoiceContext.ExilePermanentYouControlThenCreateToken context) {
-        exilePermanentYouControlThenCreateTokenHandler.completePermanentChoice(gameData, permanentId, context);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleTakeoverCreatureToExile(GameData gameData, UUID permanentId,
-            PermanentChoiceContext.TakeoverCreatureToExile context) {
-        exileControlledCreatureWithTakeoverCounterHandler.completePermanentChoice(gameData, permanentId, context);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleExileAnotherCreatureAndConjureRandomCreature(GameData gameData, UUID permanentId,
-            PermanentChoiceContext.ExileAnotherCreatureAndConjureRandomCreature context) {
-        exileAnotherCreatureAndConjureRandomCreatureHandler.completePermanentChoice(
-                gameData, permanentId, context);
+    public void handleExileChosenPermanents(GameData gameData, UUID permanentId,
+            PermanentChoiceContext.ExileChosenPermanents context) {
+        exileChosenPermanentsHandler.completeChoice(gameData, permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1467,20 +1430,6 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Chosen permanent no longer exists");
         }
         exileSupport.exilePermanentAndLog(gameData, target, context.sourceCardName());
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleExilePermanentThenExileMatchingPermanents(
-            GameData gameData, UUID permanentId,
-            PermanentChoiceContext.ExilePermanentThenExileMatchingPermanents context) {
-        exilePermanentThenExileMatchingPermanentsHandler.completeChoice(gameData, permanentId, context);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleExileTwoPermanentsThenSearchLibrary(
-            GameData gameData, UUID permanentId,
-            PermanentChoiceContext.ExileTwoPermanentsThenSearchLibrary context) {
-        exileTwoPermanentsThenSearchLibraryHandler.completeChoice(gameData, permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

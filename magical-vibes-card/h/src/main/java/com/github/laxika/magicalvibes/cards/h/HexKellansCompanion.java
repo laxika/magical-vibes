@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.ExiledCardCounter;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
@@ -12,9 +13,12 @@ import com.github.laxika.magicalvibes.model.condition.SourceCardInExileWithFetch
 import com.github.laxika.magicalvibes.model.condition.SourceCardOnBattlefield;
 import com.github.laxika.magicalvibes.model.condition.SourceIsOnBattlefield;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileSelfWithFetchCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromExileToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastFromZonePredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryCastWithAdventurePredicate;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
@@ -37,7 +41,9 @@ public class HexKellansCompanion extends Card {
                         new AnyOf(List.of(new SourceCardOnBattlefield(), new SourceCardInExile()))),
                 List.of(new EffectRegistration(new PerpetuallyBoostCardEffect(this, 1, 1)),
                         new EffectRegistration(new ConditionalEffect(new SourceIsOnBattlefield(),
-                                new ExileSelfWithFetchCounterEffect())))));
+                                SequenceEffect.of(
+                                new ExileTargetPermanentEffect(Subjects.source()),
+                                PutCounterOnExiledCardsEffect.onCardsExiledThisWay(ExiledCardCounter.FETCH)))))));
 
         addTrigger(new TriggerCondition(Triggers.youCastSpell()
                         .withStackEntryFilter(new StackEntryCastFromZonePredicate(Zone.EXILE)), AbilityZones.EXILE),

@@ -2,8 +2,14 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetAttackingCreatureThenRevealUntilCreatureToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -30,8 +36,11 @@ public class FirefluxSquad extends Card {
                 anotherAttackingCreatureYouControl,
                 "Target must be another attacking creature you control"))
                 .addTrigger(Triggers.attacks(), new MayEffect(
-                        new ExileTargetAttackingCreatureThenRevealUntilCreatureToBattlefieldEffect(
-                                anotherAttackingCreatureYouControl),
+                        SequenceEffect.of(
+                                new ExileTargetPermanentEffect(anotherAttackingCreatureYouControl),
+                                new ConditionalEffect(HappenedThisWay.exiled(),
+                                        RevealUntilCardPredicateRestOnBottomRandomEffect.tappedAndAttacking(
+                                                new CardTypePredicate(CardType.CREATURE)))),
                         "Exile target attacking creature?"));
     }
 }

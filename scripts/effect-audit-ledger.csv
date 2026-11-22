@@ -1621,3 +1621,96 @@ ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect,blocked-other,9,"run 5: 
 ExileCardFromAnyGraveyardThenMayBecomeCopyEffect,blocked-other,9,"run 5: ExileUpToOneCardFromGraveyardEffect is its first half; no become-a-copy step over a CardSubject (Lazav, Familiar Stranger)"
 ExileTargetPermanentAndBecomeCopyUntilEndOfTurnEffect,blocked-other,9,"run 5: no become-a-copy of a departed target as it last existed, beside a scheduled return (Identity Thief)"
 ExileCreaturesFromTargetGraveyardThenManifestEffect,blocked-other,9,run 5: no manifest step over cardsThisWay as a shuffled face-down pile (Ghastly Conscription)
+ExileTargetSpellEffect,survivor,9,"run 6: new step record: exile target spell(s), recording EXILE, withSource(); absorbed the four spell exiles"
+RegisterDelayedStepTriggerEffect,survivor,9,"run 6: new step record: a delayed step trigger about the cards exiled or permanents created this way (DelayedReferents.stepResults, each card bound to its stay)"
+ExileChosenPermanentsEffect,survivor,9,"run 6: new step record: exile chosen permanent(s) you control, recording EXILE with last-known stats; absorbed six chosen-permanent records"
+PlotExiledCardsEffect,survivor,9,"run 6: new step record: ""it becomes plotted"" over a CardSubject (Aven Interrupter)"
+ExileBottomMatchingCardOfLibraryEffect,survivor,9,"run 6: new step record: exile the bottom matching card of your library, recording EXILE (Bank Job)"
+ExileTargetPlayerHandEffect,survivor,9,run 6: exiledFaceDown() and an EXILE record: the seven face-down or then-draw hand exiles
+PutExiledCardsIntoOwnersGraveyardEffect,survivor,9,run 6: takes a CardSubject instead of an id map; records PUT_INTO_GRAVEYARD
+ExileEachTargetSpellEffect,absorbed,9,run 6: ExileTargetSpellEffect() (Mindbreak Trap)
+ExileTargetSpellUntilSourceLeavesEffect,absorbed,9,"run 6: ExileTargetSpellEffect.withSource() (Spell Queller, Smirking Spelljacker, Shell of the Last Kappa, Ashiok's Erasure)"
+ExileTargetSpellAndPlotEffect,split,9,run 6: ExileTargetSpellEffect + PlotExiledCardsEffect(cardsThisWay(EXILE)) (Aven Interrupter)
+ExileTargetSpellAndGrantCastPermissionEffect,split,9,run 6: ExileTargetSpellEffect + AllowPlayCardsFromExileEffect.whileExiled (Gale's Redirection)
+ExileCreatedPermanentsAtControllerEndStepEffect,absorbed,9,"run 6: RegisterDelayedStepTriggerEffect.aboutCreated(your end step, ExileTargetPermanentEffect(createdThisResolution())) (Stone Idol Trap)"
+ExileCreatedPermanentsAtNextCleanupEffect,absorbed,9,"run 6: RegisterDelayedStepTriggerEffect.aboutCreated(cleanup, exile) (Waylay)"
+ExileCreatedPermanentsAtEndStepUnlessConditionEffect,absorbed,9,"run 6: RegisterDelayedStepTriggerEffect.aboutCreated(end step, if not the condition exile), gated on created() (Tilonalli's Summoner)"
+ExileTopCardsFaceDownMayPlayUntilNextUpkeepEffect,split,9,run 6: ExileTopCardMayPlayThisTurnEffect.exiledFaceDown().until + delayed put into graveyard (Three Wishes)
+ExileRandomCardFromHandMayPlayThisTurnEffect,split,9,run 6: ExileCardAtRandomEffect.fromHand + permission + delayed put into graveyard (Elkin Lair)
+ExileOpponentsGraveyardsAndMayCastThisTurnEffect,split,9,run 6: ExileGraveyardCardsEffect(ALL_OPPONENTS) + permission + delayed put into graveyard (Mnemonic Betrayal)
+ExileTopCardsMayPlayUntilNextEndStepAndDamageForEachStillExiledEffect,split,9,run 6: library exile + delayed damage of AmountThisWay.stillExiled() (Dragonhawk)
+ExileTopCardsMayPlayThisTurnAndCreateTokensForStillExiledEffect,split,9,"run 6: library exile + delayed put into graveyard, then tokens for AmountThisWay(PUT_INTO_GRAVEYARD) (Glimpse the Impossible)"
+ExileBottomCardMatchingMayCastThisTurnAndCreateTokenForStillExiledEffect,split,9,run 6: ExileBottomMatchingCardOfLibraryEffect + permission + delayed put and token (Bank Job)
+PutStillExiledCardsIntoGraveyardAndCreateTokensEffect,split,9,run 6: a delayed body of two steps: PutExiledCardsIntoOwnersGraveyardEffect + the token step
+ExileTargetPlayerHandFaceDownAndReturnAtNextTurnEndStepEffect,split,9,run 6: hand exile + delayed PutCardsIntoHandEffect at that player's next turn (Suppress)
+ReturnExiledCardsToTargetPlayerHandEffect,absorbed,9,run 6: Suppress's delayed payload: PutCardsIntoHandEffect(cardsThisWay(EXILE))
+ExileTargetPlayerHandFaceDownWithSourceAndReturnAtNextEndStepEffect,split,9,run 6: hand exile + delayed PutCardsIntoHandEffect (Apple of Eden)
+ExileControllerHandFaceDownAndReturnAtNextEndStepEffect,split,9,"run 6: hand exile + delayed return, then draw (Ignorant Bliss)"
+ExileEachPlayerHandFaceDownAndReturnAtNextEndStepEffect,split,9,"run 6: hand exile + delayed discard hands and return (Memory Jar, Magus of the Jar)"
+DiscardEachPlayerHandAndReturnExiledCardsEffect,split,9,run 6: the Jars' delayed body: DiscardHandEffect(eachPlayer()) + PutCardsIntoHandEffect
+ExileHandFaceDownWithSourceEffect,absorbed,9,run 6: ExileTargetPlayerHandEffect.handsOfWithSource(you()).exiledFaceDown() (Bottled Cloister)
+ExileTargetPlayerHandFaceDownWithSourceThenDrawEffect,split,9,"run 6: hand exile + DrawCardEffect(AmountThisWay(EXILE)), the draw declaring the benign target (Induced Amnesia)"
+ExileHandThenDrawAndMayPlayUntilNextTurnEffect,split,9,"run 6: hand exile + draw that many + permission; SpellEvaluator estimates the draw by the hand (Hex Magic, Invasion of Kaldheim)"
+ExileAllCreaturesYouControlAndRegisterDelayedRevealEffect,split,9,run 6: exile + delayed RevealCreatureCardsToBattlefieldAndShuffleRestEffect(AmountThisWay(EXILE)) (Synthetic Destiny)
+ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect,split,9,run 6: exile + if exiled RevealCreatureCardsToBattlefieldAndShuffleRestEffect(AmountThisWay(EXILE)) (Mass Polymorph)
+ExileSelfWithFetchCounterEffect,split,9,run 6: ExileTargetPermanentEffect(source()) + PutCounterOnExiledCardsEffect(FETCH); the exile now records every card of a merged permanent (Hex)
+ExileTargetPlayerTopCardsForSacrificedManaValueMayPlayUntilNextEndStepEffect,split,9,"run 6: library exile + permission; AllowPlayCardsFromExileEffect marks land cards for any-type mana too (Rakdos, the Muscle)"
+ExilePermanentYouControlAndTrackWithSourceEffect,absorbed,9,run 6: ExileChosenPermanentsEffect.withSource() (the Wormfangs); untilSourceLeaves() + a reflexive step (Yannik)
+ExilePermanentYouControlThenCreateTokenEffect,split,9,run 6: ExileChosenPermanentsEffect + if exiled token (Dalek Intensive Care)
+ExileControlledCreatureWithTakeoverCounterEffect,split,9,"run 6: ExileChosenPermanentsEffect + PutCounterOnExiledCardsEffect(TAKEOVER) (The Master, Formed Anew)"
+ExilePermanentThenExileMatchingPermanentsEffect,split,9,run 6: ExileChosenPermanentsEffect + when you do ExileAllPermanentsEffect (The War Games)
+ExileTwoPermanentsThenSearchLibraryEffect,split,9,run 6: ExileChosenPermanentsEffect with two choices + if both SearchLibraryEffect (Fugitive of the Judoon)
+ExileAnotherCreatureAndConjureRandomCreatureEffect,split,9,run 6: ExileChosenPermanentsEffect + ConjureRandomCreatureWithManaValueEffect(2 + exiledManaValue()) (Fear of Change)
+ExileTargetAttackingCreatureThenRevealUntilCreatureToBattlefieldEffect,split,9,run 6: ExileTargetPermanentEffect(filter) + if exiled RevealUntilCardPredicateRestOnBottomRandomEffect.tappedAndAttacking (Fireflux Squad)
+ExileTargetCreatureThenRevealUntilHigherManaValueEffect,split,9,"run 6: ExileTargetPermanentEffect + reveal-until with a bound ""greater mana value"" filter (Lukka, Coppercoat Outcast)"
+ExileAllCreaturesExceptChosenEffect,absorbed,9,run 6: ExileAllPermanentsEffect(creature not among the chosen ids) (The Day of the Doctor)
+ExileUpToNAttackingCreaturesEffect,dead,9,run 6: nothing constructed it: Resounding Silence uses ExileTargetPermanentEffect
+ExileNCardsFromGraveyardOrPayManaCost,unique,9,"run 6: an either-or additional casting cost chosen as the spell is cast, read by the casting services, no resolution step (Soaring Stoneglider)"
+ExileSourceEquipmentCost,unique,9,"run 6: a cost that exiles the granting Equipment of the ability's source, paid by the activation executor (The Dominion Bracelet)"
+ExileNCardsFromSingleGraveyardCost,unique,9,"run 6: a cost whose cards must share one graveyard, with its own choice flow in activation (Night Soil)"
+ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect,unique,9,"run 6: as-enters replacement: exactly X or the card goes to the graveyard, a chosen counter per card (Frankenstein's Monster)"
+ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect,unique,9,"run 6: as-enters replacement: up to X, counters per card (Mimeoplasm, Revered One)"
+ExileAnyNumberOfCreatureCardsFromGraveyardOnEnterEffect,unique,9,run 6: as-enters replacement through AsEntersGraveyardExileEffect; only this card takes any number (Sutured Ghoul)
+ExileControlledPermanentsInsteadOfDyingThisTurnEffect,unique,9,"run 6: floating replacement with a return at the next end step for any permanent, unlike the creature record (Cosmic Intervention)"
+ExileCreaturesDamagedByControlledSourceInsteadOfDyingEffect,unique,9,run 6: static replacement over damage by any source you control; its sibling reads this source's damage (Etching of Kumano)
+ExileCreaturesInsteadOfDyingWithLifeLossEffect,unique,9,"run 6: planar replacement that also makes the controller lose life, read from the plane (The Doctor's Tomb)"
+ExileIfLeavesBattlefieldEffect,unique,9,"run 6: self replacement of every departure, not only dying (Personal Decoy)"
+ExileInstantSorceryCardsInsteadOfGraveyardEffect,unique,9,"run 6: global from-anywhere replacement by card type, read in GraveyardService (Dryad Militant)"
+ExileCardsOfColorsInsteadOfGraveyardEffect,unique,9,"run 6: global replacement by the color of permanent, spell or card, behind GlobalColorGraveyardExileReplacement (Sanctifier en-Vec)"
+ExileOwnCyclingCardsUnlessCycledEffect,unique,9,"run 6: the one own-graveyard replacement exempting a cycled card, behind OwnGraveyardExileReplacement (Abandoned Sarcophagus)"
+ExileNontokenCreaturesInsteadOfDyingWithBloodCounterEffect,unique,9,"run 6: every player's nontoken creatures, exiled with a blood counter the source's keyword static reads (Rayami)"
+ExileOwnCreaturesOfSubtypeInsteadOfDyingEffect,unique,9,"run 6: the one own-creatures-of-a-subtype death replacement, read in PermanentRemovalService (Lorcan)"
+ExileWithEggCountersInsteadOfDyingEffect,unique,9,run 6: self death replacement with egg counters that start its exile countdown (Darigaaz Reincarnated)
+ExileSelfIfUncastOrUnpaidEffect,unique,9,"run 6: entry replacement on uncast or no mana spent, read before the card enters (Primeval Spawn)"
+ExileCardsFromLibraryInsteadOfLifePaymentEffect,unique,9,"run 6: the life-payment replacement event (Ashiok, Wicked Manipulator)"
+ExileTopCardFaceDownInsteadOfDrawEffect,unique,9,"run 6: draw replacement behind its own interface, also read by the view projection (Asmodeus)"
+ExileEachTargetPermanentThenRevealUntilSharedCardTypeEffect,unique,9,"run 6: one replacement at a time, each by the types that permanent had, in a chosen order (Chaotic Transformation; architecture/resolution.md)"
+ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffect,unique,9,run 6: opening-hand action that shuffles token cards into the library (Time Sidewalk)
+ExileTargetCreatureAndCopyEnchantedCreatureEffect,unique,9,"run 6: a linked exile whose card the enchanted creature copies for the Aura's own duration, through AuraCopyService (Secret Invasion)"
+ExileTargetPermanentThenDiscardAndReturnToBattlefieldEffect,unique,9,"run 6: one object toured through exile, hand, graveyard, library and battlefield by a discard follow-up (The Grand Tour)"
+ExileTargetSpellWithDelayCountersEffect,unique,9,run 6: keeps the original stack entry to put back as a copy of that spell (Ertai's Meddling)
+ExileTetraviteTokensToPutCountersOnSelfEffect,unique,9,"run 6: any number of the tokens created with the source, by GameData.sourceCreatedTokens, then that many counters (Tetravus)"
+ExileCreaturesExceptThoseSharingConvokeCreatureTypeEffect,unique,9,"run 6: reads the convoking creatures, last known included, from the spell entry (Everything Comes to Dust)"
+ExileDragonApproachAndSearchEffect,unique,9,run 6: exiles the resolving spell itself with four same-named graveyard cards as one all-or-nothing choice (Dragon's Approach)
+ExileForEachLifeLostEffect,unique,9,"run 6: one choice over battlefield, hand and graveyard together (Lich's Mastery)"
+ExileMatchingCardsFromGraveyardAndLibraryMayCastThisTurnEffect,unique,9,"run 6: one search over graveyard and library for any number (Chandra, Heart of Fire)"
+ExileOneOfTwoTargetCreaturesThenPutCountersOnOtherEffect,unique,9,run 6: which of the two targets is exiled is chosen on resolution and the other gets the counters (Cannibalize)
+ExileTargetCreatureAndMayCastRandomSideboardCardEffect,unique,9,"run 6: random reveal from a sideboard, outside the game (Wormhole Warp)"
+ExileTargetSagaCardFromGraveyardAndCopyChapterEffect,unique,9,run 6: copies chapter N of a card through SagaChapterService; no other card does (The Many Deeds of Belzenlok)
+ExileTargetThenSearchLibraryPutBothOntoBattlefieldEffect,unique,9,run 6: the exiled card enters simultaneously with the card a search finds (Sword of Hearth and Home)
+ExileTopCardMayPutPermanentOntoBattlefieldRepeatEffect,unique,9,"run 6: a process repeated while each answer is yes, continued by the input epilogue (Primal Surge)"
+ExilePlayPermissionEffect,unique,9,"run 6: the floating play permission GameData builds, not a card effect"
+ExileAnyManaTypeEffect,unique,9,"run 6: the floating any-type-mana permission GameData builds, not a card effect"
+ExileCardInsteadOfGraveyardEffect,unique,9,"run 6: the floating per-card replacement GameData builds, not a card effect"
+ExileCastWithoutPayingManaCostEffect,unique,9,"run 6: the floating free-cast permission GameData builds, not a card effect"
+ExileLookPermissionEffect,unique,9,"run 6: the floating look permission GameData builds, not a card effect"
+ExileAllMatchingCardsFromLibraryWithSourceThenEffect,blocked-other,9,run 6: no step exiles every matching card of a library; one card waits for it (Caldera Breaker)
+ExileAnyNumberOfOwnGraveyardCardsWithFourCardTypesThenPutPermanentOntoBattlefieldEffect,blocked-step-model,9,"run 6: multi-graveyard choice by rerunCurrentEffectAfterInteraction, as ExileNCardsFromGraveyardThenEffect; moving handlers onto the step model is outside this plan (Winter)"
+ExileOneFromTopCardsFaceDownWithHatchingCounterEffect,blocked-step-model,9,run 6: look-and-choose through a LibrarySearch destination that exiles mid-step (step 8 closing summary); outside this plan (The Dragon-Kami Reborn)
+ExileOneOfCombatOpponentsAndTrackWithSourceEffect,blocked-other,9,run 6: ExileChosenPermanentsEffect chooses among permanents you control; no subject names the creatures that blocked or were blocked by the trigger's creature; one card (Godsend)
+ExileSelfAndBecomeForetoldEffect,blocked-other,9,run 6: no face-down permanent exile and no become-foretold step with the card's own foretell cost; one card (The Foretold Soldier)
+ExileTargetCreatureDrawPowerReturnAtControllerUpkeepDiscardToughnessEffect,blocked-other,9,run 6: the discard reads the toughness of the returned permanent (ruling): no amount over what a RETURN step returned; one card (Vanish into Memory)
+ExileTargetNonlandPermanentAndCardWithSourceEffect,blocked-other,9,"run 6: both targets are chosen as card ids by the battlefield-or-graveyard choice, which the permanent and graveyard exile steps don't read; one card (The Spot)"
+ExileTargetPermanentAndReturnAtNextEndStepUnlessPaysEffect,blocked-other,9,"run 6: the delayed trigger exists, but ForcedCostOrElseEffect runs its fallback through a per-class list with no step results: the cost-combinator merge of step 10, which needs sign-off (Koya)"
+ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefieldTappedEffect,blocked-other,9,"run 6: SearchLibraryEffect has no ""that player may search for that many"" that may search at zero and skips the shuffle when declined; with Winds of Abandon two cards (Settle the Wreckage)"
+ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect,blocked-other,9,"run 6: no subject for tokens created with the source, which except(..., createdThisResolution()) would narrow; one card (Faerie Artisans)"

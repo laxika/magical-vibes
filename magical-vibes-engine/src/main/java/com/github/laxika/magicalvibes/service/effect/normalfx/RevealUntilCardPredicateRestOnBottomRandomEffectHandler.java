@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
@@ -21,6 +22,8 @@ import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
+import com.github.laxika.magicalvibes.service.effect.AmountContext;
+import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
@@ -48,6 +51,7 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
     private final PlayerInputService playerInputService;
     private final EquipSupport equipSupport;
     private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+    private final AmountEvaluationService amountEvaluationService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -99,13 +103,16 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
             return;
         }
 
+        // "With greater mana value" than the exiled creature's is read as the effect applies (CR 608.2h).
+        CardPredicate filter = amountEvaluationService.bindAmounts(gameData, typedEffect.predicate(),
+                AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot()));
         List<Card> revealedCards = new ArrayList<>();
         Card foundCard = null;
         while (!deck.isEmpty()) {
             Card card = deck.removeFirst();
             revealedCards.add(card);
             if (predicateEvaluationService.matchesCardPredicate(
-                    card, typedEffect.predicate(), entry.getCard().getId(), gameData, controllerId,
+                    card, filter, entry.getCard().getId(), gameData, controllerId,
                     entry.getSourcePermanentId(), null, entry.getXValue(), entry.getSourcePermanentSnapshot())) {
                 foundCard = card;
                 break;

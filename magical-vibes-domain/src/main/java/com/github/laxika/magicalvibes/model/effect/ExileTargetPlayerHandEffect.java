@@ -10,8 +10,13 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param players         whose hands are exiled; only {@code targetPlayer()} declares the (harmful) player target
  * @param trackWithSource whether the exiled cards are tracked with the source permanent
+ *
+ * <p>The step records its {@code StepKind.EXILE} ("that many", "those cards").
+ *
+ * @param faceDown whether the cards are exiled face down (CR 406.3)
  */
-public record ExileTargetPlayerHandEffect(PlayerSubject players, boolean trackWithSource) implements CardEffect {
+public record ExileTargetPlayerHandEffect(PlayerSubject players, boolean trackWithSource, boolean faceDown)
+        implements CardEffect {
 
     public ExileTargetPlayerHandEffect {
         if (players == null) {
@@ -20,7 +25,7 @@ public record ExileTargetPlayerHandEffect(PlayerSubject players, boolean trackWi
     }
 
     public ExileTargetPlayerHandEffect(boolean trackWithSource) {
-        this(Subjects.targetPlayer(), trackWithSource);
+        this(Subjects.targetPlayer(), trackWithSource, false);
     }
 
     public ExileTargetPlayerHandEffect() {
@@ -29,12 +34,17 @@ public record ExileTargetPlayerHandEffect(PlayerSubject players, boolean trackWi
 
     /** "Exile all cards from [players'] hands", untracked ("all hands": {@code eachPlayer()}). */
     public static ExileTargetPlayerHandEffect handsOf(PlayerSubject players) {
-        return new ExileTargetPlayerHandEffect(players, false);
+        return new ExileTargetPlayerHandEffect(players, false, false);
     }
 
     /** "Exile all cards from [players'] hands", tracked with the source permanent ("exiled with this creature"). */
     public static ExileTargetPlayerHandEffect handsOfWithSource(PlayerSubject players) {
-        return new ExileTargetPlayerHandEffect(players, true);
+        return new ExileTargetPlayerHandEffect(players, true, false);
+    }
+
+    /** These hands exiled face down. */
+    public ExileTargetPlayerHandEffect exiledFaceDown() {
+        return new ExileTargetPlayerHandEffect(players, trackWithSource, true);
     }
 
     @Override

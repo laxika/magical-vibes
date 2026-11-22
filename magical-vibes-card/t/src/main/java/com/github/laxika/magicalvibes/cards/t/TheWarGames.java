@@ -5,13 +5,17 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ExilePermanentThenExileMatchingPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileChosenPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadCreatedPermanentsUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -49,8 +53,10 @@ public class TheWarGames extends Card {
         addTrigger(Triggers.chapter(2), warriorCounter);
         addTrigger(Triggers.chapter(3), warriorCounter);
         addTrigger(Triggers.chapter(4), new MayEffect(
-                new ExilePermanentThenExileMatchingPermanentsEffect(
-                        NONTOKEN_CREATURE, WARRIOR, "nontoken creature you control"),
+                SequenceEffect.of(
+                        ExileChosenPermanentsEffect.youControl(NONTOKEN_CREATURE, "nontoken creature you control"),
+                        new ConditionalEffect(HappenedThisWay.exiled(),
+                                new QueueReflexiveAbilityEffect(new ExileAllPermanentsEffect(WARRIOR)))),
                 "Exile a nontoken creature you control?"));
     }
 }

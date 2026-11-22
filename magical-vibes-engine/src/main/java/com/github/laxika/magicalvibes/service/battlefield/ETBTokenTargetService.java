@@ -773,9 +773,11 @@ public class ETBTokenTargetService {
         if (counterDistribution != null && !distributionTargets.isEmpty()) {
             Permanent source = pending.sourcePermanentId() == null
                     ? null : gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
+            // A reflexive ability's total reads the steps of the resolution that made it (CR 603.12).
             int total = amountEvaluationService.evaluate(gameData, counterDistribution.total(),
                     new AmountContext(pending.controllerId(), source, null, pending.xValue(),
-                            pending.eventValue(), false, null, pending.repeatedAdditionalCosts(), null));
+                            pending.eventValue(), false, null, pending.repeatedAdditionalCosts(), null)
+                            .withStackEntry(pending.triggerRecord()));
             if (total <= 0) {
                 counterAssignments = Map.of();
             } else {

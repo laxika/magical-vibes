@@ -47,6 +47,7 @@ public class PutCounterOnExiledCardsEffectHandler implements NormalEffectHandler
                 case BRAIN -> gameData.exiledCardsWithBrainCounters.add(card.getId());
                 case CROAK -> gameData.exiledCardsWithCroakCounters.add(card.getId());
                 case FETCH -> gameData.markExiledCardWithFetchCounter(card.getId(), entry.getControllerId());
+                case TAKEOVER -> gameData.exiledCardsWithTakeoverCounters.add(card.getId());
             }
             gameLogService.append(gameData, GameLog.cardThen(card, " gets a " + counterName + " counter."));
             log.info("Game {} - {} in exile gets a {} counter", gameData.id, card.getName(), counterName);

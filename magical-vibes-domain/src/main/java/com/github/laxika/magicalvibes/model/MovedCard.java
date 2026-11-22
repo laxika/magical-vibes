@@ -14,12 +14,25 @@ import java.util.UUID;
  * @param cardId   the card's id in the zone it went to
  * @param zone     the zone it went to
  * @param ownerId  the player whose graveyard, exile or hand it went to, or {@code null} when not known
+ * @param entryVersion the stay in that zone it is expected in, for an ability that reads the step later (a delayed
+ *                 triggered ability): a card that left the zone and came back is a new object (CR 603.7c, 400.7);
+ *                 {@code -1} for the resolution the step is part of
  */
-public record MovedCard(UUID objectId, UUID cardId, Zone zone, UUID ownerId) {
+public record MovedCard(UUID objectId, UUID cardId, Zone zone, UUID ownerId, long entryVersion) {
 
     public MovedCard {
         Objects.requireNonNull(objectId, "objectId");
         Objects.requireNonNull(cardId, "cardId");
         Objects.requireNonNull(zone, "zone");
+    }
+
+    /** The card in whichever stay it is found in, as the resolution that moved it reads it. */
+    public MovedCard(UUID objectId, UUID cardId, Zone zone, UUID ownerId) {
+        this(objectId, cardId, zone, ownerId, -1);
+    }
+
+    /** This card, expected in the stay {@code version} of its zone. */
+    public MovedCard expectedInStay(long version) {
+        return new MovedCard(objectId, cardId, zone, ownerId, version);
     }
 }

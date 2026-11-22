@@ -175,6 +175,7 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
             case COPY_SPELL -> "copied";
             case MANIFEST -> "manifested";
             case TRANSFORM -> "transformed";
+            case PUT_INTO_GRAVEYARD -> "put into a graveyard";
         };
     }
 }

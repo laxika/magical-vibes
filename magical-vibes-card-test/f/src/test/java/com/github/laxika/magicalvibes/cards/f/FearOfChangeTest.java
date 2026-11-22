@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -19,6 +20,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({FearOfChange.class, GrizzlyBears.class, ThayanEvokers.class})
 class FearOfChangeTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("An exiled face-down creature has mana value 0, so X is 2")
+    void faceDownCreatureHasNoManaValue() {
+        Permanent faceDown = addCreatureReady(player1, new GrizzlyBears());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        castFearOfChange();
+        declineConjuredCreatureCopyChoice();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(faceDown);
+        assertThat(conjuredCards()).isNotEmpty().allMatch(card -> card.getManaValue() == 2);
+    }
 
     @Test
     @DisplayName("ETB exiles another creature and conjures a creature with mana value four")

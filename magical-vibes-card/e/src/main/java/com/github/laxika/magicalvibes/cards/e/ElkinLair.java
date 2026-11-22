@@ -2,7 +2,13 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileRandomCardFromHandMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardAtRandomEffect;
+import com.github.laxika.magicalvibes.model.effect.PutExiledCardsIntoOwnersGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -10,9 +16,12 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class ElkinLair extends Card {
 
     public ElkinLair() {
-        // Triggers.upkeep(ActivePlayer.ANY) sets targetId to the active player. That player exiles a random
-        // hand card, may play it this turn; unplayed → graveyard at next end step.
         // World rule is handled by SBA.
-        addTrigger(Triggers.upkeep(ActivePlayer.ANY), new ExileRandomCardFromHandMayPlayThisTurnEffect());
+        addTrigger(Triggers.upkeep(ActivePlayer.ANY), SequenceEffect.of(
+                ExileCardAtRandomEffect.fromHand(Subjects.triggeringPlayer()),
+                AllowPlayCardsFromExileEffect.thisTurn(Subjects.cardsThisWay(StepKind.EXILE)).playableByOwner(),
+                RegisterDelayedStepTriggerEffect.aboutExiled(Triggers.endStep(ActivePlayer.ANY),
+                                new PutExiledCardsIntoOwnersGraveyardEffect(Subjects.cardsThisWay(StepKind.EXILE)))
+                        .onlyIfAnyStillExiled()));
     }
 }

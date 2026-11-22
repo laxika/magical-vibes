@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.turn;
 
+import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeTargetPermanentAtEndStepAndGainLifeEqualToToughnessEffect;
 import com.github.laxika.magicalvibes.model.trigger.StepTrigger;
 import com.github.laxika.magicalvibes.model.AbilityZones;
@@ -73,7 +75,6 @@ import com.github.laxika.magicalvibes.model.condition.Raid;
 import com.github.laxika.magicalvibes.model.condition.GainedLifeThisTurn;
 import com.github.laxika.magicalvibes.model.condition.SourceIsTapped;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardEachPlayerHandAndReturnExiledCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPlayersPermanentsAndDamageEqualToCountEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -2360,16 +2361,15 @@ class StepTriggerServiceTest {
             Card source = createCardWithName("Memory Jar");
             gd.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                     Triggers.endStep(ActivePlayer.ANY), player1Id, source, null, null,
-                    new DiscardEachPlayerHandAndReturnExiledCardsEffect(List.of(
-                            new DiscardEachPlayerHandAndReturnExiledCardsEffect.PlayerCards(player1Id, List.of()),
-                            new DiscardEachPlayerHandAndReturnExiledCardsEffect.PlayerCards(player2Id, List.of())))));
+                    new DiscardHandEffect(Subjects.eachPlayer()),
+                    new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.EXILE))));
 
             sut.handleEndStepTriggers(gd);
 
             assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_STEP)).isEmpty();
             assertThat(gd.stack).hasSize(1);
             assertThat(gd.stack.getFirst().getEffectsToResolve().getFirst())
-                    .isInstanceOf(DiscardEachPlayerHandAndReturnExiledCardsEffect.class);
+                    .isInstanceOf(DiscardHandEffect.class);
             assertThat(gd.stack.getFirst().isNonTargeting()).isTrue();
         }
 

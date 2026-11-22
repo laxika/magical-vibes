@@ -9,9 +9,15 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseUpToNMatchingCreaturesThenMayExileRestEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesExceptChosenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -81,7 +87,11 @@ public class ChooseUpToNMatchingCreaturesThenMayExileRestEffectHandler
                 sourceCard,
                 controllerId,
                 List.of(SequenceEffect.of(
-                        new ExileAllCreaturesExceptChosenEffect(chosenIds),
+                        new ExileAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentNotPredicate(new PermanentAnyOfPredicate(chosenIds.stream()
+                                        .<PermanentPredicate>map(PermanentIsSpecificPermanentPredicate::new)
+                                        .toList()))))),
                         new DealDamageToPlayersEffect(13, Subjects.you()))),
                 "Exile all other creatures? If you do, " + sourceCard.getName()
                         + " deals 13 damage to you.",

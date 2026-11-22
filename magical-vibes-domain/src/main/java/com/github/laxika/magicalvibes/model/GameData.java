@@ -3859,6 +3859,28 @@ public class GameData {
         return versions;
     }
 
+    /**
+     * {@code moved} bound to the stay it has in its exile or graveyard now, for a delayed triggered ability that reads
+     * it later (CR 603.7c); a card in another zone is returned as it is.
+     */
+    public MovedCard boundToStay(MovedCard moved) {
+        long version = stayOf(moved);
+        return version < 0 ? moved : moved.expectedInStay(version);
+    }
+
+    /** Whether {@code moved} is still the object it was bound as: it hasn't left its zone since (CR 400.7). */
+    public boolean isInStay(MovedCard moved) {
+        return moved.entryVersion() < 0 || moved.entryVersion() == stayOf(moved);
+    }
+
+    private long stayOf(MovedCard moved) {
+        return switch (moved.zone()) {
+            case EXILE -> exileEntryVersions.getOrDefault(moved.cardId(), 0L);
+            case GRAVEYARD -> graveyardEntryVersion(moved.cardId());
+            default -> -1;
+        };
+    }
+
     /** Returns the identity of the card's latest graveyard entry, or zero if it is untracked. */
     public long graveyardEntryVersion(UUID cardId) {
         return graveyardEntryVersions.getOrDefault(cardId, 0L);

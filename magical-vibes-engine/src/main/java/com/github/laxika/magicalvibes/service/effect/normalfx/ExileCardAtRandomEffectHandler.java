@@ -52,11 +52,13 @@ public class ExileCardAtRandomEffectHandler implements NormalEffectHandlerBean {
         var random = (ExileCardAtRandomEffect) effect;
         entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
         boolean fromGraveyard = random.zone() == Zone.GRAVEYARD;
-        String zoneName = fromGraveyard ? "graveyard" : "library";
+        boolean fromHand = random.zone() == Zone.HAND;
+        String zoneName = fromGraveyard ? "graveyard" : fromHand ? "hand" : "library";
         Integer eventValue = entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY ? entry.getEventValue() : null;
         for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, random.player())) {
             String playerName = gameData.playerIdToName.get(playerId);
-            List<Card> zone = fromGraveyard ? gameData.playerGraveyards.get(playerId) : gameData.playerDecks.get(playerId);
+            List<Card> zone = fromGraveyard ? gameData.playerGraveyards.get(playerId)
+                    : fromHand ? gameData.playerHands.get(playerId) : gameData.playerDecks.get(playerId);
             List<Card> candidates = zone == null ? List.of() : zone.stream()
                     .filter(card -> random.filter() == null || predicateEvaluationService.matchesCardPredicate(card,
                             random.filter(), entry.getCard().getId(), gameData, playerId,

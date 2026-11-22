@@ -325,7 +325,7 @@ public class GameViewProjectionFactory {
                             .filter(com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect.class::isInstance)
                             .map(com.github.laxika.magicalvibes.model.effect.ExileTopCardsToSourceEffect.class::cast)
                             .noneMatch(effect -> effect.faceDown() && !effect.mayLookAtFaceDownCards());
-                    UUID viewerId = grantsImplicitLookPermission
+                    UUID viewerId = grantsImplicitLookPermission && !exilesHandsFaceDown(p.getCard())
                             ? entry.exilerId() != null ? entry.exilerId() : pid
                             : data.exileLookViewers(entry.card().getId()).stream().findFirst().orElse(null);
                     if (viewerId != null) {
@@ -352,6 +352,21 @@ public class GameViewProjectionFactory {
             }
         }
         return reveals;
+    }
+
+    /**
+     * Whether {@code card}'s abilities exile whole hands face down, which lets nobody look at those cards (CR 406.3;
+     * Induced Amnesia's ruling: "No player may look at the exiled cards").
+     */
+    private static boolean exilesHandsFaceDown(com.github.laxika.magicalvibes.model.Card card) {
+        return java.util.stream.Stream.concat(card.getTriggeredEffects().stream(),
+                        card.getActivatedAbilities(Zone.BATTLEFIELD).stream()
+                                .flatMap(ability -> ability.getEffects().stream()))
+                .flatMap(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.SequenceEffect sequence
+                        ? sequence.steps().stream() : java.util.stream.Stream.of(effect))
+                .anyMatch(effect -> effect
+                        instanceof com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandEffect hand
+                        && hand.faceDown());
     }
 
     /** The battlefields as seen by {@code viewerId}: permanents they control get their face-down

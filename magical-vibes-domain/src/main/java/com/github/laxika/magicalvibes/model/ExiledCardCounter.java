@@ -13,5 +13,7 @@ public enum ExiledCardCounter {
     /** Grolnok, the Omnivore. */
     CROAK,
     /** Pako, Arcane Retriever: the store also keeps the player whose effect put it there as the card's exiler. */
-    FETCH
+    FETCH,
+    /** The Master, Formed Anew. */
+    TAKEOVER
 }

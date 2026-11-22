@@ -737,10 +737,6 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleDestroyChosenCreature(gameData, permanentId, destroyChosenCreature);
         } else if (context instanceof PermanentChoiceContext.ExileChosenPermanent exileChosenPermanent) {
             battlefieldHandler.handleExileChosenPermanent(gameData, permanentId, exileChosenPermanent);
-        } else if (context instanceof PermanentChoiceContext.ExilePermanentThenExileMatchingPermanents exileMatching) {
-            battlefieldHandler.handleExilePermanentThenExileMatchingPermanents(gameData, permanentId, exileMatching);
-        } else if (context instanceof PermanentChoiceContext.ExileTwoPermanentsThenSearchLibrary exileTwo) {
-            battlefieldHandler.handleExileTwoPermanentsThenSearchLibrary(gameData, permanentId, exileTwo);
         } else if (context instanceof PermanentChoiceContext.GildedAmbusherChoice gildedAmbusherChoice) {
             gildedAmbusherEffectHandler.completeChoice(gameData, permanentId, gildedAmbusherChoice);
             if (!gameData.interaction.isAwaitingInput()) {
@@ -825,15 +821,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleChooseOpponentForSubtype(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.OpponentChoosesPermanentToExile exileChoice) {
             battlefieldHandler.handleOpponentChoosesPermanentToExile(gameData, permanentId, exileChoice);
-        } else if (context instanceof PermanentChoiceContext.PermanentYouControlToExile exileChoice) {
-            battlefieldHandler.handlePermanentYouControlToExile(gameData, permanentId, exileChoice);
-        } else if (context instanceof PermanentChoiceContext.ExilePermanentYouControlThenCreateToken exileChoice) {
-            battlefieldHandler.handleExilePermanentYouControlThenCreateToken(gameData, permanentId, exileChoice);
-        } else if (context instanceof PermanentChoiceContext.TakeoverCreatureToExile takeoverChoice) {
-            battlefieldHandler.handleTakeoverCreatureToExile(gameData, permanentId, takeoverChoice);
-        } else if (context instanceof PermanentChoiceContext.ExileAnotherCreatureAndConjureRandomCreature exileChoice) {
-            battlefieldHandler.handleExileAnotherCreatureAndConjureRandomCreature(
-                    gameData, permanentId, exileChoice);
+        } else if (context instanceof PermanentChoiceContext.ExileChosenPermanents exileChoice) {
+            battlefieldHandler.handleExileChosenPermanents(gameData, permanentId, exileChoice);
         } else if (context instanceof PermanentChoiceContext.MurmursFromBeyondOpponentChoice murmursChoice) {
             murmursFromBeyondEffectHandler.completeOpponentChoice(gameData, permanentId, murmursChoice);
         } else if (context instanceof PermanentChoiceContext.AnimalMagnetismOpponentChoice animalMagnetismChoice) {

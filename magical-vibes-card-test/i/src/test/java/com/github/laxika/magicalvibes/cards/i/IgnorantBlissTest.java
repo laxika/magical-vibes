@@ -18,6 +18,41 @@ import static org.assertj.core.api.Assertions.assertThat;
 class IgnorantBlissTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A card that left exile and was exiled again is a new object and isn't returned")
+    void cardExiledAgainIsNotReturned() {
+        Card card = new GuardianOfTheGuildpact();
+        harness.setHand(player1, List.of(new IgnorantBliss(), card));
+        harness.setLibrary(player1, List.of(new GuardianOfTheGuildpact()));
+        castIgnorantBliss();
+
+        gd.removeFromExile(card.getId());
+        gd.addToExile(player1.getId(), card);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1).doesNotContain(card);
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("The return doesn't reveal a card exiled face down")
+    void returnDoesNotRevealTheFaceDownCard() {
+        Card card = new GuardianOfTheGuildpact();
+        harness.setHand(player1, List.of(new IgnorantBliss(), card));
+        harness.setLibrary(player1, List.of(new GuardianOfTheGuildpact()));
+        castIgnorantBliss();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        gs.advanceStep(gd);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(card);
+        assertThat(gameLogContains("puts a face-down card from exile into their hand")).isTrue();
+        assertThat(gameLogContains(card.getName())).isFalse();
+    }
+
+    @Test
     @DisplayName("Exiles the hand face down, then returns and draws at the next end step")
     void exilesHandDrawsAndReturnsCardsAtNextEndStep() {
         Card first = new GuardianOfTheGuildpact();

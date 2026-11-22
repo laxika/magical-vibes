@@ -1,5 +1,11 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.amount.CardsInHand;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -584,6 +590,15 @@ public class SpellEvaluator {
                     .orElse(0);
         }
 
+        // Sequence: scored as the sum of its steps, as on the spell path.
+        if (effect instanceof SequenceEffect sequence) {
+            double total = drawsForExiledHand(gameData, sequence, aiPlayerId);
+            for (CardEffect step : sequence.steps()) {
+                total += evaluateEtbEffect(gameData, card, step, aiPlayerId, opponentId);
+            }
+            return total;
+        }
+
         // Removal (destroy / exile / single-target bounce) — see removalScore for the per-kind factors
         if (effect instanceof RemovalEffect rem && rem.removalKind() != null) {
             return removalScore(gameData, card, rem.removalKind(), oppBattlefield, opponentId, aiPlayerId);
@@ -629,6 +644,22 @@ public class SpellEvaluator {
         return 0;
     }
 
+    /**
+     * "Exile all cards from your hand, then draw that many cards": a step-result amount is 0 while estimating, so the
+     * draw is scored by the cards in the hand the sequence exiles; 0 for any other sequence.
+     */
+    private double drawsForExiledHand(GameData gameData, SequenceEffect sequence, UUID aiPlayerId) {
+        boolean exilesOwnHand = sequence.steps().stream().anyMatch(step -> step instanceof ExileTargetPlayerHandEffect
+                hand && hand.players() instanceof PlayerSubject.You);
+        boolean drawsThatMany = sequence.steps().stream().anyMatch(step -> step instanceof DrawCardEffect draw
+                && draw.player() instanceof PlayerSubject.You
+                && new AmountThisWay(StepKind.EXILE).equals(draw.amount()));
+        return exilesOwnHand && drawsThatMany
+                ? amountEvaluationService.evaluate(gameData, new CardsInHand(CountScope.CONTROLLER),
+                        AmountContext.forEstimation(aiPlayerId)) * 6.0
+                : 0;
+    }
+
     private double evaluateEffects(GameData gameData, Card card, List<CardEffect> effects,
                                    UUID aiPlayerId, UUID opponentId,
                                    List<Permanent> aiBattlefield, List<Permanent> oppBattlefield) {
@@ -668,7 +699,7 @@ public class SpellEvaluator {
                 total += evaluateSingleEffect(gameData, card, step,
                         aiPlayerId, opponentId, aiBattlefield, oppBattlefield);
             }
-            return total;
+            return total + drawsForExiledHand(gameData, sequence, aiPlayerId);
         }
 
         // Removal (destroy / exile / single-target bounce) — see removalScore for the per-kind factors

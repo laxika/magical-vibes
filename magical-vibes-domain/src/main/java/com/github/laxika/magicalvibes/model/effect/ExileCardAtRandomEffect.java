@@ -27,8 +27,9 @@ public record ExileCardAtRandomEffect(Zone zone, PlayerSubject player, CardPredi
     public ExileCardAtRandomEffect {
         Objects.requireNonNull(zone, "zone");
         Objects.requireNonNull(player, "player");
-        if (zone != Zone.GRAVEYARD && zone != Zone.LIBRARY) {
-            throw new IllegalArgumentException("A random card is exiled from a graveyard or a library, not " + zone);
+        if (zone != Zone.GRAVEYARD && zone != Zone.LIBRARY && zone != Zone.HAND) {
+            throw new IllegalArgumentException("A random card is exiled from a graveyard, a library or a hand, not "
+                    + zone);
         }
         if (player.declaresTarget()) {
             throw new IllegalArgumentException("The random exile names its player without a target: " + player);
@@ -43,5 +44,10 @@ public record ExileCardAtRandomEffect(Zone zone, PlayerSubject player, CardPredi
     /** "Exile a random [filter] card from [player]'s library"; {@code filter} {@code null} for any card. */
     public static ExileCardAtRandomEffect fromLibrary(PlayerSubject player, CardPredicate filter) {
         return new ExileCardAtRandomEffect(Zone.LIBRARY, player, filter);
+    }
+
+    /** "Exiles a card at random from their hand." */
+    public static ExileCardAtRandomEffect fromHand(PlayerSubject player) {
+        return new ExileCardAtRandomEffect(Zone.HAND, player, null);
     }
 }

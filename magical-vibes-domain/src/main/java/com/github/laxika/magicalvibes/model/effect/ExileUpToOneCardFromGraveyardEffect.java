@@ -10,8 +10,7 @@ import java.util.Objects;
  * graveyard"), that matches {@code filter} ({@code null} for any card). The controller chooses up to one card to exile
  * (one with {@code mandatory}, "exile a card from a graveyard"); when they must exile one from their own graveyard and
  * only one card matches, it is exiled without asking. Because it targets nothing at stack time it rides on
- * any resolution path, mirroring how {@link ExileUpToNAttackingCreaturesEffect} rides Resounding Silence's cycling
- * ability.
+ * any resolution path.
  *
  * <p>It is an EXILE step: the handler asks, resolves itself again with the answer before anything changes, and records
  * the exiled card (and its graveyard's owner), {@code StepOutcome.NONE} when nothing was exiled, so "if you do" is

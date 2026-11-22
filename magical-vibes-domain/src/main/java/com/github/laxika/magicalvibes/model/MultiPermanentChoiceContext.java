@@ -266,10 +266,6 @@ public sealed interface MultiPermanentChoiceContext {
     record ReturnToHandAttackCost(int requiredCount) implements MultiPermanentChoiceContext {
     }
 
-    /** The controller exiles the chosen attacking creatures (Resounding Silence cycling trigger). */
-    record ExileAttackingCreatures() implements MultiPermanentChoiceContext {
-    }
-
     /**
      * Aetherspouts: the current owner selects the attacking creatures that go on top; the other
      * attacking creatures in that owner's group go on the bottom. The remaining and accumulated

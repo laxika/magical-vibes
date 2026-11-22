@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.networking.message.GameStateMessage;
+import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -20,6 +22,31 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({InducedAmnesia.class, Forest.class, GrizzlyBears.class, LlanowarElves.class})
 class InducedAmnesiaTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("No player may look at the cards Induced Amnesia exiled")
+    void noPlayerMayLookAtTheExiledCards() throws Exception {
+        harness.setHand(player2, new ArrayList<>(List.of(new GrizzlyBears())));
+        harness.setHand(player1, new ArrayList<>(List.of(new InducedAmnesia())));
+        harness.setLibrary(player2, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.castEnchantment(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        Permanent amnesia = findPermanent(player1, "Induced Amnesia");
+        harness.publishState();
+
+        var mapper = new JacksonConfig().objectMapper();
+        for (var connection : List.of(harness.getConn1(), harness.getConn2())) {
+            GameStateMessage state = mapper.readValue(
+                    connection.getMessagesContaining("\"type\":\"GAME_STATE\"").getLast(), GameStateMessage.class);
+            var view = state.battlefields().stream().flatMap(List::stream)
+                    .filter(permanent -> permanent.id().equals(amnesia.getId())).findFirst().orElseThrow();
+            assertThat(view.faceDownExiledCards()).isEmpty();
+            assertThat(view.faceDownExiledCount()).isEqualTo(1);
+        }
+    }
 
     @Test
     @DisplayName("Target player exiles their hand face down and draws the same number")

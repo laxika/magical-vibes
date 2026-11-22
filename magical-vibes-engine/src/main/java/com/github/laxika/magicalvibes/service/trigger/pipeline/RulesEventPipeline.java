@@ -358,7 +358,8 @@ public class RulesEventPipeline {
      * active player, the permanent it is about as its non-targeting object and triggering permanent (or else the
      * player it is about as its non-targeting object), and its other objects (CR 603.7c): the permanents as its
      * declared objects, the cards as its target cards, a lone card as its triggering card in its graveyard stay.
-     * What was attached to the permanent as it left the battlefield stays with it as last known (CR 608.2h).
+     * What was attached to the permanent as it left the battlefield stays with it as last known (CR 608.2h). An
+     * ability made after a step reads that step's results.
      */
     private static TriggerRecord delayedStepRecord(StepEvent event, TemporaryGlobalTriggeredAbility delayed) {
         DelayedReferents referents = delayed.referents();
@@ -376,6 +377,9 @@ public class RulesEventPipeline {
             }
             if (!referents.permanentIds().isEmpty()) {
                 entry.setDeclaredTargetIds(referents.permanentIds());
+            }
+            if (!referents.stepResults().outcomes().isEmpty()) {
+                entry.readStepResults(referents.stepResults());
             }
             if (!referents.cardIds().isEmpty()) {
                 entry.setTargetCardIds(new ArrayList<>(referents.cardIds()));

@@ -134,7 +134,6 @@ class CardImmutabilityArchTest {
             "CreateEmblemEffectHandler", // assembles and freezes the fresh emblem source card
             "EachOpponentSacrificesNontokenCreatureConjuresDuplicatesEffectHandler", // stamps owner on fresh conjured copies
             "EachPlayerDiscardsHandThenConjuresFromAdjacentPlayerLibraryEffectHandler", // stamps owner on fresh conjured copies
-            "ExileAnotherCreatureAndConjureRandomCreatureEffectHandler", // marks the freshly created printing as conjured
             "PayXManaConjureRandomCreatureWithManaValueAndCloakEffectHandler", // stamps the freshly created printing as conjured
             "ExileTargetPermanentAndCreateTokenCopyForEachOtherPlayerEffectHandler", // assembles fresh face-down copiable values
             "ReturnTargetCreatureToHandAndCreateTokenCopyEffectHandler", // assembles fresh face-down copiable values

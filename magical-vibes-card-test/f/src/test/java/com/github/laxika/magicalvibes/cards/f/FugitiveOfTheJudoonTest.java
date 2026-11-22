@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -24,6 +25,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 @CardUsed({FugitiveOfTheJudoon.class, AccordersShield.class, MarthaJones.class,
         SarahJaneSmith.class, TheFourthDoctor.class, SwordsToPlowshares.class, LiquimetalCoating.class})
 class FugitiveOfTheJudoonTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The Human that is the only artifact can't be chosen as the Human")
+    void humanThatIsTheOnlyArtifactIsLeftForTheArtifactChoice() {
+        addSagaWithLore(2);
+        Permanent human = harness.addToBattlefieldAndReturn(player1, new SarahJaneSmith());
+        Permanent otherHuman = harness.addToBattlefieldAndReturn(player1, new MarthaJones());
+        harness.addToBattlefield(player2, new LiquimetalCoating());
+        harness.setLibrary(player1, List.of(new TheFourthDoctor()));
+
+        advanceToNextChapter();
+        harness.activateAbility(player2, 0, 0, null, human.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
+        assertThat(gd.exiledCards).extracting(exiled -> exiled.card().getId())
+                .contains(human.getCard().getId(), otherHuman.getCard().getId());
+    }
 
     @Test
     void chaptersOneAndTwoCreateThePrintedTokens() {
