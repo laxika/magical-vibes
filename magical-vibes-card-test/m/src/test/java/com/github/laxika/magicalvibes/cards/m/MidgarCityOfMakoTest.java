@@ -50,9 +50,11 @@ class MidgarCityOfMakoTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class))
-                .isNotNull();
-        harness.handlePermanentChosen(player1, artifact.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                (PendingInteraction.MultiPermanentChoice) gd.interaction.activeInteraction();
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(artifact.getId(), creature.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
+        harness.handleMultiplePermanentsChosen(player1, List.of(artifact.getId()));
         harness.passBothPriorities();
 
         harness.assertInGraveyard(player1, "Phoenix Down");
@@ -73,8 +75,9 @@ class MidgarCityOfMakoTest extends BaseCardTest {
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(creature);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         harness.assertInGraveyard(player1, "Dwarven Castle Guard");
         resolveAllTriggers();
@@ -92,9 +95,6 @@ class MidgarCityOfMakoTest extends BaseCardTest {
 
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
-        if (gd.interaction.isAwaitingInput()) {
-            harness.handleMayAbilityChosen(player1, true);
-        }
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

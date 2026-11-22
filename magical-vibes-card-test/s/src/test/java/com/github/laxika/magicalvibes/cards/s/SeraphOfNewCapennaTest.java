@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,6 +22,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class SeraphOfNewCapennaTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Paying {4} and Phyrexian mana transforms it at sorcery speed")
     void activatesWithPhyrexianManaAndTransformsAtSorcerySpeed() {
         Permanent seraph = addCreatureReady(player1, new SeraphOfNewCapenna());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -32,6 +34,7 @@ class SeraphOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With several other creatures or artifacts, you choose one to sacrifice for +2/+1")
     void transformedSeraphMaySacrificeAnotherCreatureOrArtifactForPlusTwoPlusOne() {
         Permanent seraph = addTransformedSeraph();
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
@@ -41,11 +44,12 @@ class SeraphOfNewCapennaTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
+        PendingInteraction.MultiPermanentChoice choice =
+                (PendingInteraction.MultiPermanentChoice) gd.interaction.activeInteraction();
         assertThat(choice.validIds()).containsExactlyInAnyOrder(bears.getId(), ornithopter.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
 
-        harness.handlePermanentChosen(player1, ornithopter.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(ornithopter.getId()));
 
         assertThat(gqs.getEffectivePower(gd, seraph)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, seraph)).isEqualTo(4);
@@ -54,6 +58,7 @@ class SeraphOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the sacrifice keeps every permanent and gives no boost")
     void transformedSeraphCannotSacrificeItselfAndDecliningDoesNotBoost() {
         Permanent seraph = addTransformedSeraph();
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
@@ -68,6 +73,7 @@ class SeraphOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Without black mana, transforming costs 2 life")
     void transformationPaysTwoLifeWhenBlackManaIsUnavailable() {
         Permanent seraph = addCreatureReady(player1, new SeraphOfNewCapenna());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -82,6 +88,7 @@ class SeraphOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Black mana pays for transforming without losing life")
     void blackManaPaysForTransformationWithoutLosingLife() {
         Permanent seraph = addCreatureReady(player1, new SeraphOfNewCapenna());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -96,6 +103,7 @@ class SeraphOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Paying life does not replace the {4} in the transform cost")
     void payingLifeStillRequiresFourMana() {
         Permanent seraph = addCreatureReady(player1, new SeraphOfNewCapenna());
         harness.addMana(player1, ManaColor.COLORLESS, 3);
@@ -109,6 +117,7 @@ class SeraphOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Transforming cannot be activated during combat")
     void transformationCannotBeActivatedDuringCombat() {
         addCreatureReady(player1, new SeraphOfNewCapenna());
         harness.addMana(player1, ManaColor.COLORLESS, 4);
@@ -119,6 +128,7 @@ class SeraphOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Transforming cannot be activated while an ability is on the stack")
     void transformationCannotBeActivatedWithAnAbilityOnTheStack() {
         addCreatureReady(player1, new SeraphOfNewCapenna());
         harness.addMana(player1, ManaColor.COLORLESS, 8);
@@ -131,6 +141,7 @@ class SeraphOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A lone noncreature artifact you control is sacrificed without a choice, and the boost expires at end of turn")
     void maySacrificeANoncreatureArtifactAndBoostExpiresAtEndOfTurn() {
         Permanent seraph = addTransformedSeraph();
         Permanent vehicle = harness.addToBattlefieldAndReturn(player1, new FlywheelRacer());
@@ -140,11 +151,8 @@ class SeraphOfNewCapennaTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
 
-        PendingInteraction.PermanentChoice choice =
-                (PendingInteraction.PermanentChoice) gd.interaction.activeInteraction();
-        assertThat(choice.validIds()).containsExactly(vehicle.getId());
-        harness.handlePermanentChosen(player1, vehicle.getId());
-
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(seraph);
         assertThat(gqs.getEffectivePower(gd, seraph)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, seraph)).isEqualTo(4);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(vehicle.getCard());
@@ -158,6 +166,7 @@ class SeraphOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A lone other creature of the same name is sacrificed without a choice")
     void maySacrificeAnotherCreatureOfTheSameName() {
         Permanent seraph = addTransformedSeraph();
         Permanent otherSeraph = addCreatureReady(player1, new SeraphOfNewCapenna());
@@ -165,14 +174,16 @@ class SeraphOfNewCapennaTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, otherSeraph.getId());
 
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(seraph);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(otherSeraph.getCard());
         assertThat(gqs.getEffectivePower(gd, seraph)).isEqualTo(5);
         assertThat(gqs.getEffectiveToughness(gd, seraph)).isEqualTo(4);
     }
 
     @Test
+    @DisplayName("The front face attacking offers no sacrifice and gives no boost")
     void frontFaceAttackDoesNotOfferSacrificeOrBoost() {
         Permanent seraph = addCreatureReady(player1, new SeraphOfNewCapenna());
         Permanent otherSeraph = addCreatureReady(player1, new SeraphOfNewCapenna());
@@ -187,13 +198,14 @@ class SeraphOfNewCapennaTest extends BaseCardTest {
     }
 
     @Test
-    void acceptingWithNoOtherPermanentDoesNotSacrificeSelfOrBoost() {
+    @DisplayName("With no other creature or artifact, the sacrifice is not offered and the Seraph is not boosted")
+    void withNoOtherPermanentSacrificeIsNotOfferedAndSeraphIsNotBoosted() {
         Permanent seraph = addTransformedSeraph();
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
 
+        assertThat(gd.stack).isEmpty();
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(seraph);
         assertThat(gqs.getEffectivePower(gd, seraph)).isEqualTo(3);
         assertThat(gqs.getEffectiveToughness(gd, seraph)).isEqualTo(3);

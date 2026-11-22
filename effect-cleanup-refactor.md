@@ -6418,8 +6418,9 @@ form of `BoostTargetCreatureEffect` already is.
 
 **Seen, not changed.**
 
-- `SeraphOfNewCapennaTest` fails 4 of 12 on HEAD (run in a `git archive` export of HEAD, same four methods): the back face's may-sacrifice
-  no longer gives the prompts the test expects since the step 8 splits.
+- Fixed after the run: `SeraphOfNewCapennaTest` and `MidgarCityOfMakoTest` expected the prompts from before step 8's runs 6, 7 and 20
+  (the engine was right). A back face is tested under its front face's name, which `--tests-for` missed; it now adds the tests of
+  the cards constructing each card.
 - Courageous Resolve: "you can't lose life" doesn't stop paying life as a cost (CR 119.8); `canPayLifeForCosts` takes no player.
 - The Ozolith removes counters it then can't put on the target (CR 122.5).
 - Vines of Vastwood's "can't be the target" is a granted ability, which "loses all abilities" removes (CR 611.2c makes it a rule).

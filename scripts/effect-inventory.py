@@ -16,8 +16,9 @@ Modes (one at a time):
   --unaudited [--family PREFIX]   effects with no row in scripts/effect-audit-ledger.csv
   --tests-for CLASS... [--max-per-class N]
                                   the Gradle arguments that run the existing test classes of the cards naming
-                                  those effects (one test task per module, each followed by its own --tests
-                                  filters), plus each effect's own <Effect>Test / <Effect>HandlerTest; with
+                                  those effects and of the cards constructing those (a back face is tested under
+                                  its front face's name; one test task per module, each followed by its own
+                                  --tests filters), plus each effect's own <Effect>Test / <Effect>HandlerTest; with
                                   --max-per-class, an evenly spaced deterministic sample of each effect's cards
   --csv FILE                      also write the per-type table to FILE
 
@@ -385,8 +386,26 @@ def sample(items, n):
     return [items[round(i * (len(items) - 1) / (n - 1))] for i in range(n)]
 
 
+def card_constructors():
+    """For each card class, the card classes that construct it: a back face's tests are named for its front face."""
+    constructors = collections.defaultdict(set)
+    for path in walk_java(ROOT / "magical-vibes-card"):
+        m = CARD_CLASS.search(rel(path))
+        if m:
+            for built in re.findall(r"\bnew\s+([A-Z]\w*)\s*\(", read(path)):
+                if built != m.group(2):
+                    constructors[built].add((m.group(1), m.group(2)))
+    return constructors
+
+
+def has_test(letter, card):
+    return (ROOT / "magical-vibes-card-test" / letter / "src/test/java" / PKG / "cards" / letter
+            / f"{card}Test.java").exists()
+
+
 def tests_for(inv, names, max_per_class):
     tasks = collections.defaultdict(set)
+    constructors = card_constructors()
     missing = []
     for name in names:
         effect = inv.effects.get(name)
@@ -398,15 +417,15 @@ def tests_for(inv, names, max_per_class):
                     fqcn = rel(path).split("/src/test/java/", 1)[1].removesuffix(".java").replace("/", ".")
                     tasks[":magical-vibes-application:test"].add(fqcn)
         cards = sorted(set(effect.cards))
-        with_tests = []
+        with_tests = set()
         for letter, card in cards:
-            test = (ROOT / "magical-vibes-card-test" / letter / "src/test/java" / PKG / "cards" / letter
-                    / f"{card}Test.java")
-            if test.exists():
-                with_tests.append((letter, card))
+            tested = [(letter, card)] if has_test(letter, card) else []
+            tested += [parent for parent in constructors.get(card, ()) if has_test(*parent)]
+            if tested:
+                with_tests.update(tested)
             else:
                 missing.append(card)
-        for letter, card in sample(with_tests, max_per_class):
+        for letter, card in sample(sorted(with_tests), max_per_class):
             tasks[f":magical-vibes-card-test:{letter}:test"].add(f"com.github.laxika.magicalvibes.cards.{letter}.{card}Test")
     args = []
     for task in sorted(tasks):
