@@ -15,8 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -36,7 +36,7 @@ import java.util.Set;
 public class GrMaWormtongue extends Card {
 
     public GrMaWormtongue() {
-        addStaticEffect(new OpponentsCantGainLifeEffect());
+        addStaticEffect(new PlayersCantGainLifeEffect(Subjects.eachOpponent()));
 
         PermanentPredicate army = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

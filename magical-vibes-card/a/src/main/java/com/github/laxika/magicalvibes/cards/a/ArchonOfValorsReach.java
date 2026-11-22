@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsMatchingPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsMatchingPredicateEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardHasSourceChosenCardTypePredicate;
 
 import java.util.List;
@@ -25,7 +26,7 @@ public class ArchonOfValorsReach extends Card {
                 CardType.DUNGEON,
                 CardType.VANGUARD
         )));
-        addStaticEffect(new PlayersCantCastSpellsMatchingPredicateEffect(
-                new CardHasSourceChosenCardTypePredicate()));
+        addStaticEffect(new OpponentsCantCastSpellsMatchingPredicateEffect(
+                new CardHasSourceChosenCardTypePredicate(), Subjects.eachPlayer()));
     }
 }

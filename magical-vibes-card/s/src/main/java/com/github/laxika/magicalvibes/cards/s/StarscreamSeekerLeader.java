@@ -3,8 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.NoMonarch;
+import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.DamagedPlayerBecomesMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
@@ -22,7 +22,7 @@ public class StarscreamSeekerLeader extends Card {
                 new GrantCardTypeEffect(CardType.CREATURE, Subjects.source())));
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
                 TriggerOptions.DEFAULT.withInterveningIf(new NoMonarch()),
-                new DamagedPlayerBecomesMonarchEffect());
+                new BecomeMonarchEffect(Subjects.triggeringPlayer()));
         addTrigger(Triggers.youBecomeMonarch(), new TransformSelfEffect());
     }
 }

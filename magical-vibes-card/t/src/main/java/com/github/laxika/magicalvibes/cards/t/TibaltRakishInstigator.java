@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,7 +22,7 @@ import java.util.Set;
 public class TibaltRakishInstigator extends Card {
 
     public TibaltRakishInstigator() {
-        addStaticEffect(new OpponentsCantGainLifeEffect());
+        addStaticEffect(new PlayersCantGainLifeEffect(Subjects.eachOpponent()));
 
         List<Ability> devilTokenEffects =
                 List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new DealDamageToAnyTargetEffect(1)));

@@ -8,9 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatch
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleSelfFromGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,12 +23,13 @@ public class AntiqueCollector extends Card {
         addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                 new PermanentPowerAtMostPredicate(2)));
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PerpetuallyGrantTriggeredAbilityToOwnCreaturesEffect(
+                new PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(
                         new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
                         new ConditionalEffect(new SourceCardInGraveyard(), new MayEffect(
                                 SequenceEffect.of(
                                         new ShuffleSelfFromGraveyardIntoLibraryEffect(),
                                         CreateTokenEffect.ofClueToken(1)),
-                                "Shuffle it into its owner's library?")))));
+                                "Shuffle it into its owner's library?"))),
+                Subjects.creaturesYouControl()));
     }
 }

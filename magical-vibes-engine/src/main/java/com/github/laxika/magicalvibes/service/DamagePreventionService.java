@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.ReflectDamageToSourceControllerShield;
 import com.github.laxika.magicalvibes.model.EyeForAnEyeShield;
@@ -26,7 +27,6 @@ import com.github.laxika.magicalvibes.model.DamagePreventionLifeGainShield;
 import com.github.laxika.magicalvibes.model.DamageRedirectShield;
 import com.github.laxika.magicalvibes.model.EyeForAnEyeReflection;
 import com.github.laxika.magicalvibes.model.DepartureIntent;
-import com.github.laxika.magicalvibes.model.EndOfTurnStateField;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetCreatureInsteadOfNextDamageEffect;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -52,8 +52,6 @@ import com.github.laxika.magicalvibes.model.TurnSourceDamageRedirectToController
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAttachedCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBySelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAttachedCreatureEffect;
@@ -104,7 +102,6 @@ import com.github.laxika.magicalvibes.model.effect.SelfDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagePreventionControlChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageWithMinusOneCountersEffect;
@@ -140,10 +137,8 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -679,16 +674,20 @@ public class DamagePreventionService {
                         && grantedAttachedPreventionSurvives(gd, c.permanent())));
         steps.add(preventAll("EnchantedCombatToAndBy", "Prevent combat damage to the enchanted creature",
                 (gd, c, damage) -> c.combatDamage() && preventable(gd, c) && gameQueryService.hasAuraWithEffect(
-                        gd, c.permanent(), PreventAllCombatDamageToAndByEnchantedCreatureEffect.class)));
+                        gd, c.permanent(), effect -> effect instanceof PreventAllCombatDamageToAndByEnchantedCreatureEffect prevented
+                                && prevented.subject() instanceof PermanentSubject.Attached)));
         steps.add(preventAll("AttachedCombat", "Prevent combat damage to the equipped creature",
                 (gd, c, damage) -> c.combatDamage() && preventable(gd, c) && gameQueryService.hasAuraWithEffect(
-                        gd, c.permanent(), PreventAllCombatDamageToAttachedCreatureEffect.class)));
+                        gd, c.permanent(), effect -> effect instanceof PreventAllCombatDamageToSelfEffect prevented
+                                && prevented.subject() instanceof PermanentSubject.Attached)));
         steps.add(preventAll("CombatToAndBySelf", "Prevent combat damage to it",
                 (gd, c, damage) -> c.combatDamage() && preventable(gd, c) && gameQueryService.hasActiveStaticEffect(
-                        gd, c.permanent(), PreventAllCombatDamageToAndBySelfEffect.class)));
+                        gd, c.permanent(), PreventAllCombatDamageToAndByEnchantedCreatureEffect.class,
+                        prevented -> prevented.subject() instanceof PermanentSubject.Source)));
         steps.add(preventAll("CombatToSelf", "Prevent combat damage to it",
                 (gd, c, damage) -> c.combatDamage() && preventable(gd, c) && gameQueryService.hasActiveStaticEffect(
-                        gd, c.permanent(), PreventAllCombatDamageToSelfEffect.class)));
+                        gd, c.permanent(), PreventAllCombatDamageToSelfEffect.class,
+                        prevented -> prevented.subject() instanceof PermanentSubject.Source)));
         steps.add(preventAll("Hope", "Hope: prevent damage to the attacking creature",
                 (gd, c, damage) -> preventable(gd, c) && c.permanent().isAttacking()
                         && gameQueryService.hasKeyword(gd, c.permanent(), Keyword.HOPE)));
@@ -3810,7 +3809,8 @@ public class DamagePreventionService {
         boolean unblockedSource = combat && isUnblockedCreatureSource(gameData, sourcePermanentId);
         Set<Permanent> absorbers = new LinkedHashSet<>();
         absorbers.addAll(gameQueryService.findEnchantedCreaturesByAuraEffect(
-                gameData, playerId, RedirectPlayerDamageToEnchantedCreatureEffect.class));
+                gameData, playerId, effect -> effect instanceof RedirectPlayerDamageToSelfEffect redirect
+                        && redirect.subject() instanceof PermanentSubject.Attached));
         if (unblockedSource) {
             for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPlayer(playerId,
                     RedirectUnblockedCombatDamageToSelfEffect.class)) {
@@ -3827,6 +3827,7 @@ public class DamagePreventionService {
                     && unblockedSource && !permanent.isTapped()) {
                 absorbers.add(permanent);
             } else if (effect instanceof RedirectPlayerDamageToSelfEffect redirect
+                    && redirect.subject() instanceof PermanentSubject.Source
                     && !(redirect.requiresUntapped() && permanent.isTapped())
                     && (!redirect.onlyFromUnblockedCreatures() || !permanent.isTapped()
                     && gameQueryService.isCreature(gameData, permanent)

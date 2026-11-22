@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeThisTurnE
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastNoncreatureSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastNoncreatureSpellsThisTurnEffect;
@@ -69,7 +68,6 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantCastSpellsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantPlayLandsFromHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerTurnRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.DampingEngineEffect;
 import com.github.laxika.magicalvibes.model.effect.DefendingPlayerCantCastSpellsWhileAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.EmblemGrantsCastingOptionEffect;
@@ -97,7 +95,6 @@ import com.github.laxika.magicalvibes.model.effect.PlayLandOrCastSpellFromTopOfL
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsAndAttackWithCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsMatchingPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastInstantsUnlessSpellOrAbilityOnStackEffect;
 import com.github.laxika.magicalvibes.model.effect.PlotNonlandCardsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingRestrictionEffect;
@@ -116,6 +113,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
@@ -204,7 +202,7 @@ public class CastingPermissionService {
         // Aurelia's Fury etc.: per-turn "can't cast noncreature spells" restriction on a player.
         if (!card.hasType(CardType.CREATURE)
                 && gameData.hasFloatingEffectOnPlayer(playerId,
-                PlayersCantCastNoncreatureSpellsThisTurnEffect.class, OpponentsCantCastNoncreatureSpellsThisTurnEffect.class)) return false;
+                PlayersCantCastNoncreatureSpellsThisTurnEffect.class)) return false;
         if (!card.hasType(CardType.CREATURE)
                 && isNoncreatureSpellCastRestrictedUntilNextTurn(gameData, playerId)) return false;
         if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return false;
@@ -344,29 +342,20 @@ public class CastingPermissionService {
         boolean playerAttackedThisTurn = gameData.playersDeclaredAttackersThisTurn.contains(playerId);
         if (!playerAttackedThisTurn) return false;
 
-        List<Permanent> ownBattlefield = gameData.playerBattlefields.get(playerId);
-        if (ownBattlefield != null) {
-            for (Permanent permanent : ownBattlefield) {
-                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-                if (permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(effect -> effect instanceof ControllerTurnRestrictionEffect restriction
-                                && restriction.preventsCastingAfterAttack())) {
-                    return true;
-                }
-            }
-        }
-        if (gameData.planechase != null && playerId.equals(gameData.planechase.controllerId)) {
+        if (gameData.planechase != null) {
             for (var planar : gameData.planechase.faceUp) {
-                if (planar.getCard().getStaticEffects().stream()
-                        .anyMatch(effect -> effect instanceof ControllerTurnRestrictionEffect restriction
-                                && restriction.preventsCastingAfterAttack())) {
-                    return true;
+                for (CardEffect effect : planar.getCard().getStaticEffects()) {
+                    if (effect instanceof OpponentsCantCastSpellsIfAttackedThisTurnEffect restriction
+                            && !restriction.onlyIfAttackedControllerOrPlaneswalker()
+                            && SubjectResolutionService.namesPlayer(
+                                    null, gameData.planechase.controllerId, playerId, restriction.players())) {
+                        return true;
+                    }
                 }
             }
         }
 
         for (UUID pid : gameData.orderedPlayerIds) {
-            if (pid.equals(playerId)) continue;
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
@@ -375,6 +364,7 @@ public class CastingPermissionService {
                 }
                 for (CardEffect effect : perm.getCard().getStaticEffects()) {
                     if (effect instanceof OpponentsCantCastSpellsIfAttackedThisTurnEffect restriction
+                            && SubjectResolutionService.namesPlayer(perm, pid, playerId, restriction.players())
                             && (!restriction.onlyIfAttackedControllerOrPlaneswalker()
                             || gameData.playersWhoAttackedPlayerOrPlaneswalkerThisTurn
                             .getOrDefault(pid, Set.of()).contains(playerId))) {
@@ -415,16 +405,10 @@ public class CastingPermissionService {
                 gameData, PlayersCantCastInstantsUnlessSpellOrAbilityOnStackEffect.class)) {
             restricted.add(CardType.INSTANT);
         }
-        // Basandra, Battle Seraph: during combat no player can cast spells. Lands are excluded
-        // because playing a land is not casting a spell; planar cards are not spells either.
-        if (gameQueryService.isSpellCastingCombatLockActive(gameData)) {
-            EnumSet<CardType> spellTypes = EnumSet.allOf(CardType.class);
-            spellTypes.remove(CardType.LAND);
-            spellTypes.removeIf(CardType::isPlanar);
-            restricted.addAll(spellTypes);
-        }
-        // Marisi, Breaker of the Coil: during combat, only opponents of its controller are locked.
-        if (gameQueryService.isOpponentSpellCastingCombatLockActive(gameData, playerId)) {
+        // Basandra, Battle Seraph (every player); Marisi, Breaker of the Coil (its controller's opponents): during
+        // combat those players can't cast spells. Lands are excluded because playing a land is not casting a spell;
+        // planar cards are not spells either.
+        if (gameQueryService.isSpellCastingCombatLockActive(gameData, playerId)) {
             EnumSet<CardType> spellTypes = EnumSet.allOf(CardType.class);
             spellTypes.remove(CardType.LAND);
             spellTypes.removeIf(CardType::isPlanar);
@@ -751,17 +735,12 @@ public class CastingPermissionService {
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
+                // A face-down permanent has no text (CR 708.2a).
+                if (perm.isFaceDown()) continue;
                 for (CardEffect effect : perm.getCard().getStaticEffects()) {
-                    if (!gameQueryService.hasLostAllAbilities(gameData, perm)
-                            && effect instanceof PlayersCantCastSpellsMatchingPredicateEffect restriction
-                            && predicateEvaluationService.matchesCardPredicate(
-                            card, restriction.predicate(), perm.getCard().getId(), gameData, castingPlayerId,
-                            null, null, chosenX)) {
-                        return true;
-                    }
-                    if (!pid.equals(castingPlayerId)
+                    if (effect instanceof OpponentsCantCastSpellsMatchingPredicateEffect restriction
                             && !gameQueryService.hasLostAllAbilities(gameData, perm)
-                            && effect instanceof OpponentsCantCastSpellsMatchingPredicateEffect restriction
+                            && SubjectResolutionService.namesPlayer(perm, pid, castingPlayerId, restriction.players())
                             && predicateEvaluationService.matchesCardPredicate(
                             card, restriction.predicate(), perm.getCard().getId(), gameData, castingPlayerId,
                             null, null, chosenX)) {
@@ -772,14 +751,9 @@ public class CastingPermissionService {
         }
         for (Emblem emblem : gameData.emblems) {
             for (CardEffect effect : emblem.staticEffects()) {
-                if (effect instanceof PlayersCantCastSpellsMatchingPredicateEffect restriction
-                        && predicateEvaluationService.matchesCardPredicate(
-                        card, restriction.predicate(), emblem.sourceCard().getId(), gameData, castingPlayerId,
-                        null, null, chosenX)) {
-                    return true;
-                }
-                if (!emblem.controllerId().equals(castingPlayerId)
-                        && effect instanceof OpponentsCantCastSpellsMatchingPredicateEffect restriction
+                if (effect instanceof OpponentsCantCastSpellsMatchingPredicateEffect restriction
+                        && SubjectResolutionService.namesPlayer(
+                                null, emblem.controllerId(), castingPlayerId, restriction.players())
                         && predicateEvaluationService.matchesCardPredicate(
                         card, restriction.predicate(), emblem.sourceCard().getId(), gameData, castingPlayerId,
                         null, null, chosenX)) {
@@ -1052,7 +1026,7 @@ public class CastingPermissionService {
         if (isSpellCastingRestrictedByTopLibraryCard(gameData, card)) return true;
         if (!card.hasType(CardType.CREATURE)
                 && gameData.hasFloatingEffectOnPlayer(playerId,
-                PlayersCantCastNoncreatureSpellsThisTurnEffect.class, OpponentsCantCastNoncreatureSpellsThisTurnEffect.class)) return true;
+                PlayersCantCastNoncreatureSpellsThisTurnEffect.class)) return true;
         if (!card.hasType(CardType.CREATURE)
                 && isNoncreatureSpellCastRestrictedUntilNextTurn(gameData, playerId)) return true;
         if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return true;

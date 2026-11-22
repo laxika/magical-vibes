@@ -17,7 +17,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
-| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done twice: 94 sibling pairs left) |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | done (5a–5m; 5d finished by 6.2e; no sibling class unaudited) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
@@ -418,7 +418,7 @@ only in subject, replace the verb's scope enum if it has one.
 | 5j | Sacrifice a named permanent | none | `Sacrifice{Self,EnchantedCreature,TargetCreature}Effect` | done (3 folded into `SacrificeSelfEffect`; the delayed and Animate Dead records kept) |
 | 5k | Flicker, phase out, remove from combat | `FlickerScope`, `PhaseOutSubject`, `PhaseOutScope` | `Remove{Target,Self,Source}FromCombatEffect` | done (3 enums gone; 4 records folded into `RemoveTargetFromCombatEffect` and `PhaseOutEffect`) |
 | 5l | Attach and token copies | none | `Attach*EquipmentTo*` (5), `CreateTokenCopyOf*` (4), `CreateTokenAttachedTo*` (4) | done (9 folded into three survivors; `Copied` enum gone; the defending-player token and `CreateTokenCopyOfSourceEffect` kept) |
-| 5m | Whatever `--siblings` still lists | `PermanentReference` | — | partly done (14 folded into 11 survivors; `PermanentReference` and `Subjects.of` gone; continued 2026-11-22: 28 folded, every group of three or more done; 94 pairs still have unaudited classes) |
+| 5m | Whatever `--siblings` still lists | `PermanentReference` | — | done (14 folded into 11 survivors; `PermanentReference` and `Subjects.of` gone; continued 2026-11-22: 28 folded, every group of three or more done; finished 2026-11-22: 31 folded into 30 survivors, the static player and host pairs among them, every pair ledgered) |
 
 Notes for every run:
 
@@ -6367,6 +6367,82 @@ application and the AI's polarity, selector and copy tests, the ratchets. All te
   query each: fold through `staticSubjectNames` and check the face-down and lost-abilities guards of both readers first (they differ in
   `*SpellsCantBeCountered`, hence its three `step-9` rows).
 - The cost pairs (`Sacrifice*Cost`, `Exile*Cost`, `Return*ToHandCost`, `PutCounterOn*Cost`) are payments, probably heads for step 10.
+
+### Step 5, run 5m, finished (2026-11-22)
+
+Re-measured: 94 pairs held 174 unaudited classes. Each was read; `--siblings` now lists no unaudited class, so 5m and step 5 are done.
+Ratchet 4,624 / 3,853 → 4,593 / 3,835 records / handlers (31 records, 18 handlers and the two capability interfaces without another
+implementer deleted: `ControllerTurnRestrictionEffect`, `ChosenPlayerRecipientDamageMultiplyingEffect`). 60 card files rewritten
+(deleted scratch script; every changed line read back by eye), each card's Oracle text checked with `get_card`.
+
+| Audited | Absorbed | Survivor | Blocked-other | Blocked-player-loop | Unique | `step-9` | Left |
+|---|---|---|---|---|---|---|---|
+| 182 ledger rows (176 classes without one before, 6 re-ledgered) | 31 | 30 | 66 | 5 | 47 | 3 | 0 |
+
+**Folds** (survivor ← absorbed; the ledger has each expression).
+
+- One-shot, player subject: `BecomeMonarchEffect` ← target and damaged player (the inherent monarch ability, CR 726.2, uses
+  `targetPlayerDeclaredElsewhere()`); `BlightEffect` ← target player; `PlayersCantCastNoncreatureSpellsThisTurnEffect` ← opponents;
+  `PlayersCantGainLifeRestOfGameEffect` ← that player; `PlayersCantLoseLifeThisTurnEffect` ← you;
+  `GoadCreaturesTargetPlayerControlsUntilNextTurnEffect` ← damaged player; `ExileControllerLibraryEffect` ← target player (its benign
+  spec is kept, which settles the step 9 run 4 polarity row); `GrantStaticEffectToPlayerUntilPlaneswalkEffect` ← target player.
+- One-shot, permanent subject: `TargetCreatureBecomesSubtypeUntilEndOfTurnEffect` ← source (Adrestia's additive form is
+  `GrantSubtypeUntilEndOfTurnEffect`); `GrantSubtypeUntilEndOfTurnEffect` ← the own-creatures permanent grant;
+  `BoostTargetCreatureWhileSourceTappedEffect` ← all creatures; `DealDamageToPermanentsTargetControlsEffect` ← that player's creatures;
+  `GrantTargetingRestrictionToTargetUntilEndOfTurnEffect` ← own creatures (`lastingRule`); `PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect`
+  ← own creatures; `PutAuraFromHandOntoSelfEffect` ← equipped (`triggering()`); `RedirectTargetCreatureDamageFromChosenSourceToTargetEffect`
+  ← to this creature; `TransformSelfEffect` ← target and triggering (the 701.28f check stays the source's).
+- Static, player subject through the new `SubjectResolutionService.namesPlayer`: own-turn casting, casting during combat, the two
+  Angelic Arbiter / Prahv restrictions, can't cast matching spells, can't gain life (`Scope` enum gone), one draw each turn (judged by
+  the record, which `DrawService` asks), double damage to opponents / the chosen player and their permanents.
+- Static, permanent subject: combat prevention to, and to and by; artifact prevention; the player-damage redirection; damage kept
+  through cleanup (a set judged through `staticSubjectNames`). Self and attached forms keep their own guards (`hasActiveStaticEffect`
+  with a matcher, `hasAuraWithEffect`), so those read as before.
+- The three player queries in `GameQueryService` share one scan over `staticEffectsIncludingTemporary`. Both old readers of each had
+  its face-down and lost-abilities guards, except the every-player and enchanted-player gain-life scans, which tested only "lost all
+  abilities" where the scan also counts "all but mana abilities" (CR 613.1f). Every card that does that names lands only, so no card
+  behaves differently.
+
+**Behaviour changes.**
+
+1. Void Winnower, Llawan and Archon of Valor's Reach restrict no casting while face down (CR 708.2a).
+   `VoidWinnowerTest.faceDownWinnowerDoesNotRestrictCasting` fails on the old code.
+2. Marisi declares no player target ("that player", Oracle; CR 115.10a). The old record's declared target was never rechecked, so
+   `MarisiBreakerOfTheCoilTest.goadsCreaturesOfDamagedPlayerWithHexproof` passes on both and pins it.
+3. Log lines and the prompt texts of the two folded prompts (Aura from hand, the redirect's source choice) are the survivors';
+   Balefire and Shockmaw now record a DEAL_DAMAGE step and a target transform a TRANSFORM step (nothing reads either there).
+
+**AI parity.** `TargetPolarityClassifier` gives the absorbed forms what they had (source subtype change, set restriction, set perpetual
+grant, redirect to the source: none; target transform: BENEFICIAL). Thran Weaponry's boost is now a `CreatureBoostEffect`, as the set
+form of `BoostTargetCreatureEffect` already is.
+
+**Seen, not changed.**
+
+- `SeraphOfNewCapennaTest` fails 4 of 12 on HEAD (run in a `git archive` export of HEAD, same four methods): the back face's may-sacrifice
+  no longer gives the prompts the test expects since the step 8 splits.
+- Courageous Resolve: "you can't lose life" doesn't stop paying life as a cost (CR 119.8); `canPayLifeForCosts` takes no player.
+- The Ozolith removes counters it then can't put on the target (CR 122.5).
+- Vines of Vastwood's "can't be the target" is a granted ability, which "loses all abilities" removes (CR 611.2c makes it a rule).
+- Pariah, the attached preventions and Curse of Bloodletting are read without a lost-abilities check (CR 613.1f).
+- Harbor Guardian's kind of "defending player may": `MayEffect`'s `DEFENDING_PLAYER` doesn't read the recorded defending player
+  (CR 508.5); Soldevi Heretic derives "target opponent" and targets nobody.
+
+**Tests edited**: the two tests above added; `PermissionDeniedTest`, `TempestEfreetTest`, `TreeOfPerditionTest`, `TreeOfRedemptionTest`,
+`GameQueryServiceTest` and `TriggeredAbilityStackServiceTest` build or name the survivor; `CardEffectTargetingConsistencyTest` lost a
+deleted name. No assertion changed.
+
+**Tests run**: 407 classes (542 suites, 4,783 cases by the JUnit XML file names): the card tests of every rewritten card and of the
+small survivors, 60 of `TransformSelfEffect`'s, every other test naming a rewritten card, the application's ratchet, resolver, query,
+permission, legality, cleanup, stack and combat tests, the AI polarity, evaluator, selector, engine and copy tests. All pass but the
+four Seraph cases above. All test sources compile.
+
+**For the next run** (step 5 is done).
+
+- Step 9 gets three rows: the two "may draw a card" records and Agatha's Soul Cauldron's exile-then-counter.
+- Step 10 gets the pairs the ledger sends there: the cost heads, can't-activate, unblockable, subtype grant, choose-one-for-target,
+  perpetual boost, the returns from a graveyard, goad and must-block.
+- The `blocked-other` pairs that need one path before a subject: fight, heist, turn face down, hand size (one interface with players),
+  return the dying creature, copy a spell or ability, and a source-card `CardSubject` for the card-axis pairs.
 
 ## Prompt
 

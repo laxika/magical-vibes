@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.SourceBecomesSubtypeUntilEndOfTurnEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import java.util.List;
 import java.util.Set;
 
@@ -20,13 +20,13 @@ public class ReptilDinomorpher extends Card {
 
     public ReptilDinomorpher() {
         addActivatedAbility(new ActivatedAbility(false, "{3}", List.of(
-                new SourceBecomesSubtypeUntilEndOfTurnEffect(DINOSAUR_HERO),
+                new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(DINOSAUR_HERO, Subjects.source()),
                 new SetBasePowerToughnessEffect(3, 5, Subjects.source()),
                 new GrantKeywordEffect(Set.of(Keyword.REACH, Keyword.VIGILANCE), Subjects.source())),
                 "Brontosaurus — {3}: Until end of turn, this creature becomes a Dinosaur Hero with base power and toughness 3/5 and gains reach and vigilance."));
 
         addActivatedAbility(new ActivatedAbility(false, "{6}", List.of(
-                new SourceBecomesSubtypeUntilEndOfTurnEffect(DINOSAUR_HERO),
+                new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(DINOSAUR_HERO, Subjects.source()),
                 new SetBasePowerToughnessEffect(6, 6, Subjects.source()),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source())),
                 "Tyrannosaurus Rex — {6}: Until end of turn, this creature becomes a Dinosaur Hero with base power and toughness 6/6 and gains trample."));

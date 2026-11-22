@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+
 /**
  * Performs the blight action by putting {@code count} -1/-1 counters on a creature the controller
  * controls, then resolves the optional follow-up if the action was performed. A targeted
@@ -8,12 +9,28 @@ package com.github.laxika.magicalvibes.model.effect;
  *
  * @param count      number of -1/-1 counters to put on the chosen creature
  * @param thenEffect effect that follows a successful blight action, or {@code null}
+ * @param player     who blights: the controller by default, or target player ({@link #byTargetPlayer})
  * @param thenEffectTargets whether the follow-up is a new targeted reflexive ability rather than
  *                          an effect that resolves against the blighted creature
  */
-public record BlightEffect(int count, CardEffect thenEffect, boolean thenEffectTargets) implements CardEffect {
+public record BlightEffect(int count, CardEffect thenEffect, boolean thenEffectTargets,
+                          PlayerSubject player) implements CardEffect {
 
     public BlightEffect(int count, CardEffect thenEffect) {
         this(count, thenEffect, false);
+    }
+
+    public BlightEffect(int count, CardEffect thenEffect, boolean thenEffectTargets) {
+        this(count, thenEffect, thenEffectTargets, Subjects.you());
+    }
+
+    /** "Target player blights N" (Champion of the Weird). */
+    public static BlightEffect byTargetPlayer(int count) {
+        return new BlightEffect(count, null, false, Subjects.targetPlayer());
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return player.declaresTarget() ? TargetSpec.harmful(TargetPredicates.player()) : TargetSpec.NONE;
     }
 }

@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.ControllerCantLoseLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantLoseLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -199,7 +200,7 @@ class TreeOfRedemptionTest extends BaseCardTest {
     void exchangeDoesNotOccurWhenLifeLossIsProhibited() {
         Permanent tree = addReadyTree(player1);
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
-                new ControllerCantLoseLifeThisTurnEffect(), player1.getId(), Duration.UNTIL_END_OF_TURN));
+                new PlayersCantLoseLifeThisTurnEffect(Subjects.you()), player1.getId(), Duration.UNTIL_END_OF_TURN));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

@@ -225,7 +225,7 @@ Put a raw `ChooseOneEffect` in the ability's effect list. Unlike a modal *spell*
 // {G}: Choose one. Activate only once each turn.
 addActivatedAbility(new ActivatedAbility(false, "{G}", List.of(new ChooseOneEffect(List.of(
         new ChooseOneEffect.ChooseOneOption(RHINO_MODE, List.of(
-                new SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.RHINO),
+                new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.RHINO, Subjects.source()),
                 new SetBasePowerToughnessEffect(4, 4, Subjects.source()),
                 new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source()))),
         …))),

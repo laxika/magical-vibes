@@ -7,9 +7,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.BeholdAndExileCost;
+import com.github.laxika.magicalvibes.model.effect.BlightEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerBlightsEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -27,7 +27,7 @@ public class ChampionOfTheWeird extends Card {
                 null,
                 List.of(new PayLifeCost(1),
                         new PutCounterOnControlledCreatureCost(CounterType.MINUS_ONE_MINUS_ONE, 2),
-                        new TargetPlayerBlightsEffect(2)),
+                        BlightEffect.byTargetPlayer(2)),
                 "Pay 1 life, Blight 2: Target opponent blights 2. Activate only as a sorcery.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

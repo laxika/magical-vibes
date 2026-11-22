@@ -31,7 +31,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesCantAttackUnlessPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerTurnRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackControllerUnlessPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessDefendingPlayerActedLastTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackUnlessPredicateEffect;
@@ -804,37 +803,26 @@ public class AttackLegalityService {
         if (spellsCast == 0) return false;
 
         for (UUID pid : gameData.orderedPlayerIds) {
-            if (pid.equals(playerId)) continue;
             List<Permanent> bf = gameData.playerBattlefields.get(pid);
             if (bf == null) continue;
             for (Permanent perm : bf) {
                 if (perm.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, perm)) continue;
                 for (CardEffect effect : perm.getCard().getStaticEffects()) {
-                    if (effect instanceof OpponentsCantAttackIfCastSpellThisTurnEffect) {
+                    if (effect instanceof OpponentsCantAttackIfCastSpellThisTurnEffect restriction
+                            && SubjectResolutionService.namesPlayer(perm, pid, playerId, restriction.players())) {
                         return true;
                     }
                 }
             }
         }
-        for (UUID controllerId : gameData.orderedPlayerIds) {
-            if (!controllerId.equals(playerId)) continue;
-            List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-            if (battlefield == null) continue;
-            for (Permanent permanent : battlefield) {
-                if (gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
-                if (permanent.getCard().getStaticEffects().stream()
-                        .anyMatch(effect -> effect instanceof ControllerTurnRestrictionEffect restriction
-                                && restriction.preventsAttackingAfterSpellCast())) {
-                    return true;
-                }
-            }
-        }
-        if (gameData.planechase != null && playerId.equals(gameData.planechase.controllerId)) {
+        if (gameData.planechase != null) {
             for (var planar : gameData.planechase.faceUp) {
-                if (planar.getCard().getStaticEffects().stream()
-                        .anyMatch(effect -> effect instanceof ControllerTurnRestrictionEffect restriction
-                                && restriction.preventsAttackingAfterSpellCast())) {
-                    return true;
+                for (CardEffect effect : planar.getCard().getStaticEffects()) {
+                    if (effect instanceof OpponentsCantAttackIfCastSpellThisTurnEffect restriction
+                            && SubjectResolutionService.namesPlayer(
+                                    null, gameData.planechase.controllerId, playerId, restriction.players())) {
+                        return true;
+                    }
                 }
             }
         }

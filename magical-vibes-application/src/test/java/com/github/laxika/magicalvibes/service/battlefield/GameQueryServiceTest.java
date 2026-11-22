@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
@@ -94,7 +96,6 @@ import com.github.laxika.magicalvibes.model.effect.CreatureSpellsCantBeCountered
 import com.github.laxika.magicalvibes.model.effect.SpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromEverythingEffect;
@@ -154,7 +155,6 @@ import static org.mockito.Mockito.verify;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.DamageLifeFloorEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeFloorCondition;
-import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBySelfEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceLandManaWithColorEffect;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
@@ -335,7 +335,7 @@ class GameQueryServiceTest {
     void combatDamagePreventionEndsWhenItsSourceLosesAbilities() {
         Card card = new Card();
         card.setType(CardType.CREATURE);
-        card.addStaticEffect(new PreventAllCombatDamageToAndBySelfEffect());
+        card.addStaticEffect(new PreventAllCombatDamageToAndByEnchantedCreatureEffect(Subjects.source()));
         Permanent source = new Permanent(card);
         gd.playerBattlefields.get(player1Id).add(source);
 
@@ -4210,7 +4210,7 @@ class GameQueryServiceTest {
         @DisplayName("opponent-only life-gain prohibition leaves its controller unaffected")
         void opponentOnlyProhibition() {
             addPermanent(player1Id, createEnchantmentWithStaticEffect(
-                    "Erebos", new OpponentsCantGainLifeEffect()));
+                    "Erebos", new PlayersCantGainLifeEffect(Subjects.eachOpponent())));
 
             assertThat(gqs.canPlayerGainLife(gd, player1Id)).isTrue();
             assertThat(gqs.canPlayerGainLife(gd, player2Id)).isFalse();

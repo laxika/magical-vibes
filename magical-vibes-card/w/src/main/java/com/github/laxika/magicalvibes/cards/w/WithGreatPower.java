@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.AttachmentsOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -19,6 +19,6 @@ public class WithGreatPower extends Card {
         target(TargetFilters.creatureYouControl())
                 .addStaticEffect(new AttachedBoostEffect(
                         twicePerAttachment, twicePerAttachment, Subjects.attachedCreature(), true))
-                .addStaticEffect(new RedirectPlayerDamageToEnchantedCreatureEffect());
+                .addStaticEffect(RedirectPlayerDamageToSelfEffect.toAttachedPermanent());
     }
 }

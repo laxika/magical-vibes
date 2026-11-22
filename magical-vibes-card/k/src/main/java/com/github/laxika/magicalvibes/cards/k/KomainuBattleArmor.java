@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EquipEffect;
-import com.github.laxika.magicalvibes.model.effect.GoadCreaturesDamagedPlayerControlsUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GoadCreaturesTargetPlayerControlsUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -38,7 +38,7 @@ public class KomainuBattleArmor extends Card {
         // trigger conditions.
         addTrigger(List.of(Triggers.dealsCombatDamageToPlayer(),
                         Triggers.equippedCreatureDealsCombatDamageToPlayer()),
-                new GoadCreaturesDamagedPlayerControlsUntilNextTurnEffect());
+                new GoadCreaturesTargetPlayerControlsUntilNextTurnEffect(Subjects.triggeringPlayer()));
 
         var reconfigureTarget = TargetPredicates.permanents(new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

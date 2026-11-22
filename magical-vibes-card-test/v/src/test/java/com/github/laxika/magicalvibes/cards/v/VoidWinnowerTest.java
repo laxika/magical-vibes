@@ -118,6 +118,21 @@ class VoidWinnowerTest extends BaseCardTest {
         assertThat(gd.gameLog).anyMatch(log -> log.plainText().contains("declares 1 blocker"));
     }
 
+    @Test
+    @DisplayName("A face-down Void Winnower doesn't restrict casting")
+    void faceDownWinnowerDoesNotRestrictCasting() {
+        Permanent winnower = harness.addToBattlefieldAndReturn(player1, new VoidWinnower());
+        // A face-down permanent has no text (CR 708.2a).
+        winnower.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.addMana(player2, ManaColor.GREEN, 2);
+        prepareMainPhase(player2);
+
+        harness.castCreature(player2, 0);
+
+        assertThat(gd.stack).hasSize(1);
+    }
+
     private void prepareMainPhase(Player player) {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

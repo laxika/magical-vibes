@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.SourceBecomesSubtypeUntilEndOfTurnEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import java.util.List;
 import java.util.Set;
 
@@ -25,7 +25,7 @@ public class BogardanDragonheart extends Card {
                 null,
                 List.of(
                         new SacrificeCreatureCost(false, false, false, true),
-                        new SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.DRAGON),
+                        new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.DRAGON, Subjects.source()),
                         new SetBasePowerToughnessEffect(4, 4, Subjects.source()),
                         new GrantKeywordEffect(Set.of(Keyword.FLYING, Keyword.HASTE), Subjects.source())
                 ),

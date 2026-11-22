@@ -11,11 +11,11 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 public class BoostTargetCreatureWhileSourceTappedEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final GameLogService gameLogService;
 
     @Override
@@ -53,16 +54,8 @@ public class BoostTargetCreatureWhileSourceTappedEffectHandler implements Normal
             return;
         }
 
-        List<UUID> targetIds = entry.targetsForEffect(effect);
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
-            targetIds = List.of(entry.getTargetId());
-        }
-        for (UUID targetId : targetIds) {
-            Permanent target = gameQueryService.findPermanentById(gameData, targetId);
-            if (target == null) {
-                continue; // Partially resolves — skip removed targets
-            }
-
+        // A removed target is skipped; a set is the one found now (CR 611.2c).
+        for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, boost.subject())) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
                     entry.getCard().getName(), sourcePermanentId, entry.getControllerId(),
                     new PowerToughnessBoostEffect(boost.power(), boost.toughness(), boost.keywords()),

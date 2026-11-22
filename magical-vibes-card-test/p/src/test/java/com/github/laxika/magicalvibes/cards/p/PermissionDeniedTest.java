@@ -1,10 +1,10 @@
 package com.github.laxika.magicalvibes.cards.p;
 
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastNoncreatureSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantCastNoncreatureSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -34,8 +34,8 @@ class PermissionDeniedTest extends BaseCardTest {
         harness.castAndResolveInstant(player2, 0, shock.getId());
 
         harness.assertInGraveyard(player1, "Shock");
-        assertThat(playersAffectedBy(OpponentsCantCastNoncreatureSpellsThisTurnEffect.class)).contains(player1.getId());
-        assertThat(playersAffectedBy(OpponentsCantCastNoncreatureSpellsThisTurnEffect.class)).doesNotContain(player2.getId());
+        assertThat(playersAffectedBy(PlayersCantCastNoncreatureSpellsThisTurnEffect.class)).contains(player1.getId());
+        assertThat(playersAffectedBy(PlayersCantCastNoncreatureSpellsThisTurnEffect.class)).doesNotContain(player2.getId());
 
         harness.setHand(player1, List.of(new Shock()));
         harness.addMana(player1, ManaColor.RED, 1);

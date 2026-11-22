@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsDuringCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsDuringCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -17,7 +18,7 @@ public class BasandraBattleSeraph extends Card {
 
     public BasandraBattleSeraph() {
         // Players can't cast spells during combat.
-        addStaticEffect(new PlayersCantCastSpellsDuringCombatEffect());
+        addStaticEffect(new OpponentsCantCastSpellsDuringCombatEffect(Subjects.eachPlayer()));
 
         // {R}: Target creature attacks this turn if able.
         addActivatedAbility(new ActivatedAbility(

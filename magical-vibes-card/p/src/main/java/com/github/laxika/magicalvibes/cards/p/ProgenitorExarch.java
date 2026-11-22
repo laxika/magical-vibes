@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RepeatEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -31,7 +31,7 @@ public class ProgenitorExarch extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new TransformTargetPermanentEffect()),
+                List.of(new TransformSelfEffect(Subjects.target())),
                 "{T}: Transform target Incubator token you control.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

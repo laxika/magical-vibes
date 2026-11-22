@@ -9,8 +9,8 @@ import com.github.laxika.magicalvibes.model.condition.DevotionToColorAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCardTypeFromAttachedPermanentEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,7 +25,7 @@ public class ErebosGodOfTheDead extends Card {
         addStaticEffect(new ConditionalEffect(
                 new NotCondition(new DevotionToColorAtLeast(ManaColor.BLACK, 5)),
                 new RemoveCardTypeFromAttachedPermanentEffect(CardType.CREATURE, Subjects.source())));
-        addStaticEffect(new OpponentsCantGainLifeEffect());
+        addStaticEffect(new PlayersCantGainLifeEffect(Subjects.eachOpponent()));
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{B}",

@@ -5,11 +5,11 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.AttackedTargetIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.NoMonarch;
+import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerBecomesMonarchEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingOpponentOfSourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -28,7 +28,7 @@ public class MBakuJabariChieftain extends Card {
                 "Target must be an opponent"
         )).addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new NoMonarch()),
-                new TargetPlayerBecomesMonarchEffect());
+                new BecomeMonarchEffect(Subjects.targetPlayer()));
 
         addTrigger(Triggers.creatureAttacks()
                         .withFilter(new PermanentIsAttackingOpponentOfSourceControllerPredicate()),

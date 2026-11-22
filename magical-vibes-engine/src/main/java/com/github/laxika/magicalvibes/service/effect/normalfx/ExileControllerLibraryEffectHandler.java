@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ExileControllerLibraryEffectHandler implements NormalEffectHandlerBean {
 
+    private final SubjectResolutionService subjectResolutionService;
     private final LibraryExileSupport libraryExileSupport;
 
     @Override
@@ -21,6 +23,8 @@ public class ExileControllerLibraryEffectHandler implements NormalEffectHandlerB
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ExileControllerLibraryEffect exileEffect = (ExileControllerLibraryEffect) effect;
-        libraryExileSupport.exileEntireLibrary(gameData, entry.getControllerId(), exileEffect.faceDown());
+        for (var playerId : subjectResolutionService.players(gameData, entry, effect, exileEffect.player())) {
+            libraryExileSupport.exileEntireLibrary(gameData, playerId, exileEffect.faceDown());
+        }
     }
 }

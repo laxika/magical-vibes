@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTargetingRestrictionToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AbilityEffects;
@@ -38,6 +39,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleSelfPowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.RedirectTargetCreatureDamageFromChosenSourceToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveTargetFromCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
@@ -59,10 +61,12 @@ import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackSourcePermanentNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerChosenTypeCountEffect;
@@ -212,6 +216,9 @@ public class TargetPolarityClassifier {
             return classify(gameData, grant.staticEffect(), aiPlayerId);
         }
         if (effect instanceof PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect grant) {
+            if (!grant.subject().declaresTarget()) {
+                return null;
+            }
             return classifyGrantedAbility(grant.grantedAbility());
         }
         if (effect instanceof GrantTriggeredAbilityEffect grant) {
@@ -432,6 +439,19 @@ public class TargetPolarityClassifier {
         if (effect instanceof PerpetuallyBoostTargetCreatureEffect boost) {
             return boost.powerBoost() < 0 || boost.toughnessBoost() < 0
                     ? TargetPolarity.HARMFUL : TargetPolarity.BENEFICIAL;
+        }
+
+        if (effect instanceof GrantTargetingRestrictionToTargetUntilEndOfTurnEffect grant) {
+            return grant.subject().declaresTarget() ? TargetPolarity.BENEFICIAL : null;
+        }
+        if (effect instanceof RedirectTargetCreatureDamageFromChosenSourceToTargetEffect redirect) {
+            return redirect.redirectTo().declaresTarget() ? TargetPolarity.BENEFICIAL : null;
+        }
+        if (effect instanceof TargetCreatureBecomesSubtypeUntilEndOfTurnEffect becomes) {
+            return becomes.subject() instanceof PermanentSubject.Source ? null : TargetPolarity.NEUTRAL;
+        }
+        if (effect instanceof TransformSelfEffect transform) {
+            return transform.subject() instanceof PermanentSubject.Source ? null : TargetPolarity.BENEFICIAL;
         }
 
         if (effect instanceof RegenerationEffect) {
@@ -685,11 +705,9 @@ public class TargetPolarityClassifier {
             entry("GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionFromOpponentsUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GuardianAngelPermissionEffect", TargetPolarity.BENEFICIAL),
-            entry("GrantTargetingRestrictionToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("MakeCreatureUnblockableEffect", TargetPolarity.BENEFICIAL),
             entry("MakeCreatureBlockableOnlyByFilterThisTurnEffect", TargetPolarity.BENEFICIAL),
             entry("TapCombatOpponentsOfTargetAtEndOfCombatEffect", TargetPolarity.BENEFICIAL),
-            entry("TransformTargetPermanentEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageFromChosenSourceAndRedirectToAnyTargetEffect", TargetPolarity.BENEFICIAL),
             entry("PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect", TargetPolarity.BENEFICIAL),
@@ -701,7 +719,6 @@ public class TargetPolarityClassifier {
             entry("RedirectAllDamageToTargetCreatureToControllerEffect", TargetPolarity.BENEFICIAL),
             entry("RedirectYourDamageToTargetCreatureThisTurnEffect", TargetPolarity.BENEFICIAL),
             entry("RedirectAllDamageToChosenCreatureUntilNextTurnEffect", TargetPolarity.BENEFICIAL),
-            entry("RedirectTargetCreatureDamageFromChosenSourceToTargetEffect", TargetPolarity.BENEFICIAL),
             entry("ReturnTargetCardOnDeathThisTurnEffect", TargetPolarity.BENEFICIAL),
 
             // Pack Hunt searches for cards named after the opposing creature it targets.
@@ -775,8 +792,7 @@ public class TargetPolarityClassifier {
             entry("SetChosenColorForTargetCreaturesUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("BecomeColorlessUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("SwitchPowerToughnessEffect", TargetPolarity.NEUTRAL),
-            entry("SuspectTargetCreatureEffect", TargetPolarity.NEUTRAL),
-            entry("TargetCreatureBecomesSubtypeUntilEndOfTurnEffect", TargetPolarity.NEUTRAL)
+            entry("SuspectTargetCreatureEffect", TargetPolarity.NEUTRAL)
     );
 
     /**

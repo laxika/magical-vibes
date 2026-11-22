@@ -7,7 +7,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * {@code DiscardEffect} with {@code TARGET_PLAYER_OR_PERMANENT_CONTROLLER} does on Blightning.
  *
  * <p>Per-player counterpart of the global {@link PlayersCantGainLifeThisTurnEffect} (Skullcrack) and
- * turn-scoped counterpart of {@link TargetPlayerCantGainLifeRestOfGameEffect} (Stigma Lasher).
+ * turn-scoped counterpart of {@link PlayersCantGainLifeRestOfGameEffect} (Stigma Lasher).
  * Used by Flames of the Blood Hand.</p>
  */
 public record TargetPlayerCantGainLifeThisTurnEffect() implements CardEffect {

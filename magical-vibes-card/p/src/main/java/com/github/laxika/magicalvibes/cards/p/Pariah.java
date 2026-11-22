@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.effect.RedirectPlayerDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "10E", collectorNumber = "33")
@@ -14,6 +14,6 @@ public class Pariah extends Card {
 
     public Pariah() {
         target(TargetFilters.creature())
-                .addStaticEffect(new RedirectPlayerDamageToEnchantedCreatureEffect());
+                .addStaticEffect(RedirectPlayerDamageToSelfEffect.toAttachedPermanent());
     }
 }

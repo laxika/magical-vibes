@@ -1,7 +1,9 @@
 package com.github.laxika.magicalvibes.service.turn;
 
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -12,7 +14,6 @@ import com.github.laxika.magicalvibes.model.EndOfTurnStateShare;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerMaxHandSizeEffect;
-import com.github.laxika.magicalvibes.model.effect.DamageNotRemovedFromAllCreaturesDuringCleanupEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagePersistenceEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentCreatureDamagePersistenceEffect;
@@ -149,21 +150,30 @@ public class TurnCleanupService {
         }
         gameData.rulesEvents.occur(new TurnEvent.Cleanup(gameData.activePlayerId));
 
-        List<UUID> controllersWithOpponentDamagePersistence = new ArrayList<>();
+        List<DamagePersistence> persistences = new ArrayList<>();
         gameData.forEachPermanent((playerId, p) -> {
-            if (!gameQueryService.hasLostPrintedAbilities(gameData, p)
-                    && p.getCard().getStaticEffects().stream()
-                    .anyMatch(OpponentCreatureDamagePersistenceEffect.class::isInstance)) {
-                controllersWithOpponentDamagePersistence.add(playerId);
+            if (gameQueryService.hasLostPrintedAbilities(gameData, p)) {
+                return;
+            }
+            for (CardEffect effect : p.getCard().getStaticEffects()) {
+                if (effect instanceof OpponentCreatureDamagePersistenceEffect persistence) {
+                    persistences.add(new DamagePersistence(p, playerId, persistence.creatures()));
+                }
             }
         });
 
-        boolean allCreaturesKeepDamage;
         synchronized (gameData.floatingEffects) {
-            allCreaturesKeepDamage = gameData.floatingEffects.stream()
-                    .anyMatch(fe -> fe.effect() instanceof GrantStaticEffectToSourceEffect grant
-                            && grant.staticEffect() instanceof DamageNotRemovedFromAllCreaturesDuringCleanupEffect
-                            && gameQueryService.findPermanentById(gameData, fe.sourcePermanentId()) != null);
+            for (FloatingContinuousEffect fe : gameData.floatingEffects) {
+                if (fe.effect() instanceof GrantStaticEffectToSourceEffect grant
+                        && grant.staticEffect() instanceof OpponentCreatureDamagePersistenceEffect persistence) {
+                    Permanent source = gameQueryService.findPermanentById(gameData, fe.sourcePermanentId());
+                    if (source != null) {
+                        persistences.add(new DamagePersistence(source,
+                                gameQueryService.findPermanentController(gameData, source.getId()),
+                                persistence.creatures()));
+                    }
+                }
+            }
         }
 
         gameData.forEachPermanent((playerId, p) -> {
@@ -173,13 +183,10 @@ public class TurnCleanupService {
             activeStaticEffects.addAll(gameQueryService.getGrantedEffects(gameData, p));
             boolean damagePersists = !gameData.losesAllAbilitiesByEffect(p)
                     && activeStaticEffects.stream().anyMatch(DamagePersistenceEffect.class::isInstance);
-            if (!damagePersists && allCreaturesKeepDamage && isCreatureForCleanup(gameData, p)) {
-                damagePersists = true;
-            }
-            if (!damagePersists && !controllersWithOpponentDamagePersistence.isEmpty()
-                    && isCreatureForCleanup(gameData, p)) {
-                damagePersists = controllersWithOpponentDamagePersistence.stream()
-                        .anyMatch(sourceControllerId -> !sourceControllerId.equals(playerId));
+            if (!damagePersists && !persistences.isEmpty() && isCreatureForCleanup(gameData, p)) {
+                damagePersists = persistences.stream().anyMatch(persistence -> gameQueryService.staticSubjectNames(
+                        gameData, persistence.source(), persistence.controllerId(), playerId, p,
+                        persistence.creatures(), SubjectResolutionService.StaticReads.knownCreature()));
             }
             if (!damagePersists) {
                 p.setMarkedDamage(0);
@@ -509,6 +516,10 @@ public class TurnCleanupService {
             }
         }
         return maxHandSize;
+    }
+
+    /** An ability that keeps damage on the creatures its subject names through cleanup. */
+    private record DamagePersistence(Permanent source, UUID controllerId, PermanentSubject creatures) {
     }
 
     /** Orders hand-size effects like {@link #computeMaxHandSize}: by timestamp, then battlefield position. */

@@ -229,7 +229,7 @@ All paths relative to `cards/`.
 | Opponents limited to one dungeon venture each turn | `k/KeenEaredSentry.java` | STATIC OpponentsCantVentureIntoDungeonMoreThanOnceEachTurnEffect + STATIC GrantControllerKeywordEffect(HEXPROOF) |
 | Cast/activate only on own turns | `c/CityOfSolitude.java` | STATIC PlayersCanCastAndActivateOnlyDuringOwnTurnEffect — symmetric; mana abilities included |
 | No instants / non-mana abilities in combat | `h/HandToHand.java` | STATIC PlayersCantCastInstantsOrActivateNonManaAbilitiesDuringCombatEffect — symmetric; only during combat steps |
-| No spells in combat | `b/BasandraBattleSeraph.java` | STATIC PlayersCantCastSpellsDuringCombatEffect — symmetric; lands remain playable because land plays are not spells |
+| No spells in combat | `b/BasandraBattleSeraph.java` | STATIC OpponentsCantCastSpellsDuringCombatEffect(Subjects.eachPlayer()) — symmetric; lands remain playable because land plays are not spells |
 | Aura: enchanted creature's controller can't cast creature spells | `b/BrandOfIllOmen.java` | STATIC EnchantedPermanentControllerCantCastSpellTypeEffect(Set.of(CREATURE)) + Triggers.upkeep(ActivePlayer.YOU) CumulativeUpkeepEffect("{R}") |
 | Opponents with more permanents of a type can't cast/play it | `w/WardOfBones.java` | STATIC WardOfBonesEffect |
 | Leader restriction with sacrifice-to-ignore action | `d/DampingEngine.java` | STATIC DampingEngineEffect + once-per-turn `SacrificePermanentCost` ability with `IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect` |
@@ -327,7 +327,7 @@ All paths relative to `cards/`.
 | Toughness as combat damage (Aura, always) | `g/GauntletsOfLight.java` | STATIC AssignCombatDamageWithToughnessEffect(Subjects.attachedCreature(), true) â€” enchanted creature assigns combat damage equal to toughness even when its power is greater |
 | Double damage (global) | `f/FurnaceOfRath.java` | STATIC DoubleDamageEffect |
 | Double damage between two chosen players | `b/BitterFeud.java` | STATIC ChooseTwoPlayersOnEnterEffect + STATIC DoubleDamageBetweenChosenPlayersEffect — doubles damage from either chosen player's sources to the other chosen player or that player's permanents |
-| Double damage to one chosen player and their permanents | `s/SawhornNemesis.java` | STATIC ChoosePlayerOnEnterEffect + STATIC DoubleDamageToChosenPlayerAndTheirPermanentsEffect — doubles damage from any source to the remembered player or permanents they control |
+| Double damage to one chosen player and their permanents | `s/SawhornNemesis.java` | STATIC ChoosePlayerOnEnterEffect + STATIC DoubleDamageToOpponentsAndTheirPermanentsEffect(Subjects.chosenPlayer()) — doubles damage from any source to the remembered player or permanents they control |
 | Double damage (creatures you control) | `g/GratuitousViolence.java` | STATIC DoubleDamageFromCreaturesEffect |
 | Double damage (countered creatures you control) | `u/UncivilUnrest.java` | STATIC DoubleDamageFromCreaturesWithCountersEffect(PLUS_ONE_PLUS_ONE) |
 | Double damage (this permanent) | `w/WolverineBestThereIs.java` | STATIC DoubleDamageFromCreaturesEffect(Subjects.source()) — doubles all damage dealt by the source permanent, including combat and noncombat damage |
@@ -474,7 +474,7 @@ All paths relative to `cards/`.
 | Control enchanted | `p/Persuasion.java` | STATIC ControlEnchantedCreatureEffect |
 | Grant activated ability | `a/ArcaneTeachings.java` | GrantActivatedAbilityEffect with Subjects.attachedCreature() |
 | Aura grants {T}: X damage where X = counters on the Aura | `a/ArcheryTraining.java` | Triggers.upkeep(ActivePlayer.YOU) MayEffect(PutCountersOnSelfEffect(ARROW)) + STATIC GrantActivatedAbilityEffect(ActivatedAbility(tap, null, DealDamageToTargetCreatureEffect(new CountersOnGrantingPermanent(ARROW))), Subjects.attachedCreature()) — the granted ability's damage amount reads the Aura's arrow counters, not the activating creature's; `CountersOnGrantingPermanent` is bound to the granting permanent at activation in `ActivatedAbilityExecutionService.snapshotEffects` (mirrors `PutCounterOnTargetPermanentEffect(Subjects.granter(), ...)`). Target filter = attacking/blocking creature |
-| Redirect damage to creature | `p/Pariah.java` | STATIC RedirectPlayerDamageToEnchantedCreatureEffect |
+| Redirect damage to creature | `p/Pariah.java` | STATIC RedirectPlayerDamageToSelfEffect.toAttachedPermanent() |
 | Redirect damage from unblocked creatures to self while untapped | `v/VeteranBodyguard.java` | STATIC `RedirectPlayerDamageToSelfEffect(false, true)` — source-restricted self redirect; combat uses the existing simultaneous unblocked-combat redirect path and noncombat damage uses source-aware player redirection |
 | Redirect artifact damage to self while untapped | `m/MartyrsOfKorlis.java` | STATIC `RedirectPlayerDamageToSelfEffect(new PermanentIsArtifactPredicate(), true)` — source-filtered self redirect; noncombat damage uses the source-aware player path and combat damage splits artifact-source contributions before aggregate player damage is finalized |
 | Redirect all your damage to self | `e/EmpyrialArchangel.java` | STATIC RedirectPlayerDamageToSelfEffect â€” "All damage that would be dealt to you is dealt to this creature instead." Flying/Shroud auto-loaded; queried in the same redirect path as Pariah (falls back when no aura variant present) |

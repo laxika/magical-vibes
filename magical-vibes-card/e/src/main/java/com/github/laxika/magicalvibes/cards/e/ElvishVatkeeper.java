@@ -7,8 +7,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleCountersOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -30,7 +30,7 @@ public class ElvishVatkeeper extends Card {
                 false,
                 "{5}",
                 List.of(
-                        new TransformTargetPermanentEffect(),
+                        new TransformSelfEffect(Subjects.target()),
                         new DoubleCountersOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)
                 ),
                 "{5}: Transform target Incubator token you control. Double the number of +1/+1 counters on it.",

@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantGainLifeRestOfGameEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeRestOfGameEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "EVE", collectorNumber = "62")
@@ -12,6 +13,6 @@ public class StigmaLasher extends Card {
         // Wither is auto-loaded from Scryfall keywords.
         // Whenever this creature deals damage to a player, that player can't gain life for the rest of
         // the game. The damaged player is carried as the trigger's (non-targeting) target.
-        addTrigger(Triggers.dealsDamageToPlayer(), new TargetPlayerCantGainLifeRestOfGameEffect());
+        addTrigger(Triggers.dealsDamageToPlayer(), new PlayersCantGainLifeRestOfGameEffect(Subjects.triggeringPlayer()));
     }
 }

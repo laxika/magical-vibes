@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,7 @@ import org.springframework.stereotype.Component;
 public class TransformSelfEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
     private final AnimationSupport animationSupport;
 
     @Override
@@ -34,12 +37,13 @@ public class TransformSelfEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         entry.recordStep(StepKind.TRANSFORM, StepOutcome.NONE);
-        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        PermanentSubject subject = ((TransformSelfEffect) effect).subject();
+        Permanent self = subjectResolutionService.permanent(gameData, entry, effect, subject);
         if (self == null) {
             return;
         }
         Permanent snapshot = entry.getSourcePermanentSnapshot();
-        if (snapshot != null && snapshot.getId().equals(self.getId())
+        if (subject instanceof PermanentSubject.Source && snapshot != null && snapshot.getId().equals(self.getId())
                 && snapshot.getTransformationSequence() != self.getTransformationSequence()) {
             return;
         }

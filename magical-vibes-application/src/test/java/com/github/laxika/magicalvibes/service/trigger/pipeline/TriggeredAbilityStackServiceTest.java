@@ -1260,7 +1260,8 @@ class TriggeredAbilityStackServiceTest {
     @DisplayName("An inherent ability of a designation has no source, chooses nothing and is put once")
     void inherentAbilityIsSourcelessAndPutOnce() {
         stackService.putInherent(gd, PLAYER2_ID, "Combat damage causes a player to become the monarch",
-                List.of(new com.github.laxika.magicalvibes.model.effect.TargetPlayerBecomesMonarchEffect()), entry -> {
+                List.of(new com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect(
+                        com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayerDeclaredElsewhere())), entry -> {
                     entry.setTargetId(PLAYER1_ID);
                     entry.setNonTargeting(true);
                 });

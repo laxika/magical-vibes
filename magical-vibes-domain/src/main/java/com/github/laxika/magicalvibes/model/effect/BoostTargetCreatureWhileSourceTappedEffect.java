@@ -17,12 +17,25 @@ import java.util.Set;
  *
  * <p>The wrapped floating effect reuses {@link PowerToughnessBoostEffect}, which the CR
  * 613 layer reader already applies in sublayer 7c; only the floating effect's duration/source differ.
+ *
+ * @param subject target creature by default, or a set found once as the ability resolves (CR 611.2c:
+ *                {@link Subjects#allCreatures()}, Thran Weaponry), which doesn't target
  */
 public record BoostTargetCreatureWhileSourceTappedEffect(int power, int toughness,
-                                                        Set<Keyword> keywords) implements CreatureBoostEffect {
+                                                        Set<Keyword> keywords,
+                                                         PermanentSubject subject) implements CreatureBoostEffect {
 
     public BoostTargetCreatureWhileSourceTappedEffect(int power, int toughness) {
-        this(power, toughness, Set.of());
+        this(power, toughness, Set.of(), Subjects.target());
+    }
+
+    public BoostTargetCreatureWhileSourceTappedEffect(int power, int toughness, Set<Keyword> keywords) {
+        this(power, toughness, keywords, Subjects.target());
+    }
+
+    /** "All creatures get +P/+T for as long as this remains tapped": the set is found as the ability resolves. */
+    public BoostTargetCreatureWhileSourceTappedEffect(int power, int toughness, PermanentSubject subject) {
+        this(power, toughness, Set.of(), subject);
     }
 
     @Override
@@ -37,6 +50,6 @@ public record BoostTargetCreatureWhileSourceTappedEffect(int power, int toughnes
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.creature());
+        return subject.declaresTarget() ? TargetSpec.benign(TargetPredicates.creature()) : TargetSpec.NONE;
     }
 }

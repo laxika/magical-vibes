@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AttachedPermanentRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByCreaturesMatchingPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventArtifactDamageToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventArtifactDamageToSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -20,7 +21,7 @@ public class ArtifactWard extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                         new PermanentIsArtifactPredicate()))
-                .addStaticEffect(new PreventArtifactDamageToEnchantedCreatureEffect())
+                .addStaticEffect(new PreventArtifactDamageToSelfEffect(Subjects.attachedCreature()))
                 .addStaticEffect(new AttachedPermanentRestrictionEffect(
                         TargetingRestrictionEffect.fromAbilitySourceCardTypes(Set.of(CardType.ARTIFACT))));
     }

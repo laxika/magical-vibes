@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ public class HolyAvenger extends Card {
         addStaticEffect(new GrantKeywordEffect(Keyword.DOUBLE_STRIKE, Subjects.attachedCreature()));
         addTrigger(Triggers.equippedCreatureDealsCombatDamage(),
                 new MayEffect(
-                        new PutAuraFromHandOntoEquippedCreatureEffect(),
+                        new PutAuraFromHandOntoSelfEffect(Subjects.triggering()),
                         "Put an Aura card from your hand onto the battlefield attached to the equipped creature?"));
         addActivatedAbility(new EquipActivatedAbility("{2}{W}"));
     }

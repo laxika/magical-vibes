@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PlayersCanDrawOnlyOneCardEachTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCanDrawOnlyOneCardEachTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "BNG", collectorNumber = "27")
 @CardRegistration(set = "PIO", collectorNumber = "35")
@@ -10,6 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.PlayersCanDrawOnlyOneCardEach
 public class SpiritOfTheLabyrinth extends Card {
 
     public SpiritOfTheLabyrinth() {
-        addStaticEffect(new PlayersCanDrawOnlyOneCardEachTurnEffect());
+        addStaticEffect(new OpponentsCanDrawOnlyOneCardEachTurnEffect(Subjects.eachPlayer()));
     }
 }

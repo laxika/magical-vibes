@@ -64,7 +64,8 @@ public class TargetCreatureBecomesSubtypeUntilEndOfTurnEffectHandler implements 
             return;
         }
 
-        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, Subjects.target());
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect,
+                e.subject().declaresTarget() ? Subjects.target() : e.subject());
         if (target == null) {
             return;
         }

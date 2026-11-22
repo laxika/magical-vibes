@@ -14,8 +14,7 @@ public class GrievousWound extends Card {
 
     public GrievousWound() {
         setEnchantPlayer(true);
-        addStaticEffect(new PlayersCantGainLifeEffect(
-                PlayersCantGainLifeEffect.Scope.ENCHANTED_PLAYER));
+        addStaticEffect(new PlayersCantGainLifeEffect(Subjects.enchantedPlayer()));
         addTrigger(Triggers.enchantedPlayerDealtDamage(),
                 new LoseLifeEffect(new HalvedRoundedUp(new TargetPlayerLifeTotal()), Subjects.targetPlayer()));
     }

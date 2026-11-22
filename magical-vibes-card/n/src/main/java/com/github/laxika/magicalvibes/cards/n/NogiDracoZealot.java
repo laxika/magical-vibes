@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForMatchingSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SourceBecomesSubtypeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -34,7 +35,7 @@ public class NogiDracoZealot extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(
                         new ControlsPermanentCount(3, new PermanentHasSubtypePredicate(CardSubtype.DRAGON))),
                 SequenceEffect.of(
-                        new SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.DRAGON),
+                        new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.DRAGON, Subjects.source()),
                         new AnimatePermanentsEffect(5, 5, List.of(), Set.of(Keyword.FLYING))));
     }
 }

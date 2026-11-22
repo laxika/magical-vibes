@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Component;
 public class BlightEffectHandler implements NormalEffectHandlerBean {
 
     private final TriggeredAbilityStackService triggeredAbilityStackService;
+    private final SubjectResolutionService subjectResolutionService;
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final PermanentCounterSupport permanentCounterSupport;
@@ -41,7 +43,10 @@ public class BlightEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         BlightEffect blight = (BlightEffect) effect;
-        resolveForPlayer(gameData, entry, blight, entry.getControllerId());
+        UUID playerId = subjectResolutionService.player(gameData, entry, effect, blight.player());
+        if (playerId != null) {
+            resolveForPlayer(gameData, entry, blight, playerId);
+        }
     }
 
     public void resolveForPlayer(GameData gameData, StackEntry entry, BlightEffect blight,

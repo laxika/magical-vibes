@@ -455,7 +455,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | cast trigger, takeover counter, enter as a copy of a marked exiled creature card | `t/TheMasterFormedAnew.java` and EFFECTS_QUICK_REFERENCE.md |
 | two target creatures get counters/keywords and only those creatures may attack in an added combat | `l/LastNightTogether.java` + target-bound untap/counter/keyword effects + `AdditionalCombatPhasesAfterMainEffect(1, true)` |
 | combat damage modal, goad damaged player's creature, exile top card and cast with any-color mana | CARD_PATTERNS_CREATURES_TRIGGERED.md |
-| combat damage by a creature or its equipped creature, goad every creature controlled by the damaged player | `k/KomainuBattleArmor.java` + `GoadCreaturesDamagedPlayerControlsUntilNextTurnEffect` |
+| combat damage by a creature or its equipped creature, goad every creature controlled by the damaged player | `k/KomainuBattleArmor.java` + `GoadCreaturesTargetPlayerControlsUntilNextTurnEffect(Subjects.triggeringPlayer())` |
 | ETB goads up to one creature per opponent and adds their total power as +1/+1 counters | `h/HavocEater.java` + `targetUpTo(PlayersInGame - 1, creatureAnOpponentControls)` + `AT_MOST_ONE_PER_CONTROLLER` + `TotalPowerOfTargetGroup` |
 | +1/+1 counter placement trigger | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | ally permanent death trigger counts the dying permanent's total counters and optionally places that many +1/+1 counters on a creature | `y/YunaGrandSummoner.java` + `PutPlusOnePlusOneCountersOnTargetForEachDyingSourceCounterEffect` |
@@ -530,7 +530,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | pay-life trigger, counters from life paid, counter-removal ability | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | protection from modified creatures | CARD_PATTERNS_PERMANENTS_STATIC.md |
 | as-enters card-type choice, controller and own creatures gain protection from chosen card type | `ChooseCardTypeOnEnterEffect` + `GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect` |
-| as-enters card-type choice, players can't cast the chosen type | `ChooseCardTypeOnEnterEffect` + `PlayersCantCastSpellsMatchingPredicateEffect(new CardHasSourceChosenCardTypePredicate())` |
+| as-enters card-type choice, players can't cast the chosen type | `ChooseCardTypeOnEnterEffect` + `OpponentsCantCastSpellsMatchingPredicateEffect(new CardHasSourceChosenCardTypePredicate(), Subjects.eachPlayer())` |
 | postcombat main may-pay-life draw based on opponents dealt combat damage | CARD_PATTERNS_CREATURES_TRIGGERED.md |
 | artifact, charge counter, spellbomb | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | create a token this turn, conditional draw artifact ability | `i/IdolOfOblivion.java` |

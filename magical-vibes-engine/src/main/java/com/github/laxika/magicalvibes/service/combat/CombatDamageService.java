@@ -776,7 +776,8 @@ public class CombatDamageService {
                 UUID newMonarchId = controllerId;
                 triggeredAbilityStackService.putInherent(gameData, gameData.monarchPlayerId,
                         "Combat damage causes a player to become the monarch",
-                        List.of(new com.github.laxika.magicalvibes.model.effect.TargetPlayerBecomesMonarchEffect()),
+                        List.of(new com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect(
+                                com.github.laxika.magicalvibes.model.effect.Subjects.targetPlayerDeclaredElsewhere())),
                         entry -> {
                             entry.setTargetId(newMonarchId);
                             entry.setNonTargeting(true);

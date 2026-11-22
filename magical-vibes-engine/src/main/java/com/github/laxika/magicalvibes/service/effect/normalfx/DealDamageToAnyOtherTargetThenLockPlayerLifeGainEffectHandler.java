@@ -17,7 +17,7 @@ public class DealDamageToAnyOtherTargetThenLockPlayerLifeGainEffectHandler
         implements NormalEffectHandlerBean {
 
     private final DealDamageToAnyTargetEffectHandler dealDamageHandler;
-    private final TargetPlayerCantGainLifeRestOfGameEffectHandler lifeGainLockHandler;
+    private final PlayersCantGainLifeRestOfGameEffectHandler lifeGainLockHandler;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {

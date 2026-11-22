@@ -127,3 +127,7 @@ the states of the board it is building (`LayerSystemService.scopeTargets`; an ef
 memoized apart, per filter instance, CR 613.6); a continuous query outside the pass asks
 `GameQueryService.staticSubjectNames`, which answers them with the layered queries; a caller that already judged the
 permanent's type passes `StaticReads.knownCreature()` or `knownLand()` (that part of a set holds, any other does not).
+
+A static restriction on players asks about one player: `SubjectResolutionService.namesPlayer(source,
+controllerId, playerId, players)` judges `you()`, `eachPlayer()`, `eachOpponent()`, `enchantedPlayer()` and
+`chosenPlayer()` without a lookup (a `null` source enchants and chose nobody).

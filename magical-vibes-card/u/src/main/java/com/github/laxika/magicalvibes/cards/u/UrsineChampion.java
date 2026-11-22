@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.SourceBecomesSubtypeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class UrsineChampion extends Card {
                 "{5}{G}",
                 List.of(
                         new BoostSelfEffect(3, 3),
-                        new SourceBecomesSubtypeUntilEndOfTurnEffect(List.of(CardSubtype.BEAR, CardSubtype.BERSERKER))
+                        new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(List.of(CardSubtype.BEAR, CardSubtype.BERSERKER), Subjects.source())
                 ),
                 "{5}{G}: This creature gets +3/+3 and becomes a Bear Berserker until end of turn. Activate only once each turn.",
                 1

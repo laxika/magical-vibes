@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -23,6 +24,6 @@ public class AttentiveSkywarden extends Card {
                         new PermanentControlledBySourceControllerPredicate())),
                 "Target must be an Incubator token you control"), 0, 1)
                 .addTrigger(Triggers.dealsCombatDamageToPlayerOrBattle(),
-                        new TransformTargetPermanentEffect());
+                        new TransformSelfEffect(Subjects.target()));
     }
 }

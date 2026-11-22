@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellTarget;
+import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerBecomesMonarchEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsBattlePredicate;
@@ -42,8 +43,8 @@ public class DenethorStoneSeer extends Card {
 
         SpellTarget monarchTarget = target(targetPlayer);
         SpellTarget damageTarget = target(anyTarget);
-        TargetPlayerBecomesMonarchEffect monarchEffect =
-                TargetPlayerBecomesMonarchEffect.forTargetGroup(monarchTarget.getIndex());
+        BecomeMonarchEffect monarchEffect =
+                new BecomeMonarchEffect(Subjects.targetPlayer(monarchTarget.getIndex()));
         DealDamageToAnyTargetEffect damageEffect =
                 DealDamageToAnyTargetEffect.forTargetGroup(3, damageTarget.getIndex());
 

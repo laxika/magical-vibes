@@ -6,7 +6,8 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * One-shot effect: the targeted creature <em>becomes</em> the given creature type(s) until end of
+ * One-shot effect: the targeted creature (or the permanent or set {@code subject} names:
+ * {@link Subjects#source()} for "this creature becomes an Angel", Paragon of the Amesha) <em>becomes</em> the given creature type(s) until end of
  * turn, replacing all of its other creature types (e.g. Boldwyr Intimidator: "{R}: Target creature
  * becomes a Coward until end of turn."). Sets {@code Permanent.transientCreatureTypeOverride(s)},
  * which the layered pass reads to strip every creature subtype and add the new ones. Cleared at end
@@ -14,6 +15,7 @@ import java.util.Objects;
  * permanent and additive ("in addition to its other types").
  *
  * @param subtypes the creature types the target becomes
+ * @param subject  who becomes them; only {@link Subjects#target()} and a target player's set target
  */
 public record TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(List<CardSubtype> subtypes, PermanentSubject subject)
         implements CardEffect {
@@ -47,6 +49,7 @@ public record TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(List<CardSubtype>
         if (subject.declaresPlayerTarget()) {
             return TargetSpec.benign(TargetPredicates.player());
         }
-        return subject.isSet() ? TargetSpec.NONE : TargetSpec.benign(TargetPredicates.creature());
+        return subject.declaresTarget() && !subject.isSet()
+                ? TargetSpec.benign(TargetPredicates.creature()) : TargetSpec.NONE;
     }
 }

@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CardsInHand;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
-import com.github.laxika.magicalvibes.model.effect.ControllerCantAttackIfCastSpellThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerCantCastSpellsIfAttackedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantAttackIfCastSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsIfAttackedThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "OPC2", collectorNumber = "31")
@@ -14,8 +15,8 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class Prahv extends Card {
 
     public Prahv() {
-        addStaticEffect(new ControllerCantAttackIfCastSpellThisTurnEffect());
-        addStaticEffect(new ControllerCantCastSpellsIfAttackedThisTurnEffect());
+        addStaticEffect(new OpponentsCantAttackIfCastSpellThisTurnEffect(Subjects.you()));
+        addStaticEffect(new OpponentsCantCastSpellsIfAttackedThisTurnEffect(Subjects.you()));
         addTrigger(Triggers.chaosEnsues(),
                 new GainLifeEffect(new CardsInHand(CountScope.CONTROLLER)));
     }

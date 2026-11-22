@@ -6,10 +6,11 @@ import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.CantLoseGameEffect;
 import com.github.laxika.magicalvibes.model.effect.CantWinGameEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerCantLoseLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantPlayerStaticEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromOpponentsUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantLoseLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public class CourageousResolve extends Card {
                 .addSpellEffect(new GrantProtectionFromOpponentsUntilEndOfTurnEffect());
         addSpellEffect(new DrawCardEffect());
         addSpellEffect(new ConditionalEffect(new ControllerLifeAtMost(5),
-                new ControllerCantLoseLifeThisTurnEffect()));
+                new PlayersCantLoseLifeThisTurnEffect(Subjects.you())));
         addSpellEffect(new ConditionalEffect(new ControllerLifeAtMost(5),
                 new GrantPlayerStaticEffectsUntilEndOfTurnEffect(List.of(
                         new CantLoseGameEffect(), new CantWinGameEffect()))));

@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.f;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBySelfEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndByEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "M13", collectorNumber = "52")
 @CardRegistration(set = "USG", collectorNumber = "75")
@@ -16,6 +17,6 @@ public class FogBank extends Card {
 
     public FogBank() {
         // "Prevent all combat damage that would be dealt to and dealt by this creature."
-        addStaticEffect(new PreventAllCombatDamageToAndBySelfEffect());
+        addStaticEffect(new PreventAllCombatDamageToAndByEnchantedCreatureEffect(Subjects.source()));
     }
 }

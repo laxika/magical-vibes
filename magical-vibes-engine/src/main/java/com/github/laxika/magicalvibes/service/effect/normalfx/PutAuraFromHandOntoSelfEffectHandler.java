@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +27,7 @@ public class PutAuraFromHandOntoSelfEffectHandler implements NormalEffectHandler
     private final GameLogService gameLogService;
     private final PlayerInputService playerInputService;
     private final AuraAttachmentService auraAttachmentService;
-    private final com.github.laxika.magicalvibes.service.battlefield.GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,7 +38,8 @@ public class PutAuraFromHandOntoSelfEffectHandler implements NormalEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
 
-        Permanent self = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        PermanentSubject subject = ((PutAuraFromHandOntoSelfEffect) effect).subject();
+        Permanent self = subjectResolutionService.permanent(gameData, entry, effect, subject);
 
         if (self == null) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (no longer on the battlefield)."));
@@ -63,8 +66,9 @@ public class PutAuraFromHandOntoSelfEffectHandler implements NormalEffectHandler
             return;
         }
 
-        String prompt = "Choose an Aura card from your hand to put onto the battlefield attached to " + entry.getCard().getName() + ".";
-        playerInputService.beginTargetedCardChoice(gameData, controllerId, auraIndices, prompt, self.getId(), false);
+        String prompt = "Choose an Aura card from your hand to put onto the battlefield attached to " + self.getCard().getName() + ".";
+        playerInputService.beginTargetedCardChoice(gameData, controllerId, auraIndices, prompt, self.getId(),
+                !(subject instanceof PermanentSubject.Source));
 
     }
 }

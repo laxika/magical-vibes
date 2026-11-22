@@ -76,7 +76,6 @@ class CardEffectTargetingConsistencyTest {
             // and the handler reads entry.getTargetId(); never enters trigger-target collection.
             "TargetPlayerCantCastSpellTypesThisTurnEffect",
             "TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect",
-            "TargetPlayerCantGainLifeRestOfGameEffect",
             // Pre-resolved: Wasitora's combat damage trigger carries the damaged player's UUID;
             // that player makes a non-targeted sacrifice choice when the trigger resolves.
             "TargetPlayerSacrificesCreatureOrCreatesTokenEffect",

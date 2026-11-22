@@ -8,8 +8,9 @@ import com.github.laxika.magicalvibes.model.condition.SourceWasCrewedBySubtypeTh
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.SourceBecomesSubtypeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,7 +24,7 @@ public class Adrestia extends Card {
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceWasCrewedBySubtypeThisTurn(CardSubtype.ASSASSIN)),
                 SequenceEffect.of(
                         new DrawCardEffect(1),
-                        new SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.ASSASSIN, false)));
+                        new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.ASSASSIN, Subjects.source())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

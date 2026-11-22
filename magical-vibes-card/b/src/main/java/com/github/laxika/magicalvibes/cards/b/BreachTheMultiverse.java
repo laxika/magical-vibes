@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesCardFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToOwnCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -26,6 +27,7 @@ public class BreachTheMultiverse extends Card {
                         new CardTypePredicate(CardType.CREATURE),
                         new CardTypePredicate(CardType.PLANESWALKER)
                 ))));
-        addSpellEffect(new GrantSubtypeToOwnCreaturesEffect(CardSubtype.PHYREXIAN));
+        addSpellEffect(new GrantSubtypeUntilEndOfTurnEffect(CardSubtype.PHYREXIAN,
+                Subjects.creaturesYouControl(), null, Duration.PERMANENT));
     }
 }

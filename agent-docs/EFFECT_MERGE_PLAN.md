@@ -1749,6 +1749,10 @@ bottom-ordered and bottom-random as distinct enum values. (c) Absorbing
 `PreventAllDamageDealtByEnchantedCreatureEffect`,
 `PreventAllNoncombatDamageToAttachedCreatureEffect`.
 
+Partly done by `effect-cleanup-refactor.md` step 5, run 5m: `PreventAllCombatDamageToSelfEffect` and
+`PreventAllCombatDamageToAndByEnchantedCreatureEffect` carry a host subject (`source()` / `attachedCreature()`), and
+`PreventAllCombatDamageToAndBySelfEffect` and the attached combat-only record are deleted.
+
 All seven are **empty records** probed by class literal at exactly two kinds of site:
 `DamagePreventionService.applyCreaturePreventionShield:201-220` is seven consecutive `return 0` lines
 alternating `getEffects(STATIC).stream().anyMatch(X.class::isInstance)` (SELF) and

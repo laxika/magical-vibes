@@ -1347,3 +1347,185 @@ RedirectNextDamageFromChosenSourceToSelfCreatureEffect,absorbed,5m,RedirectNextD
 RedirectNextDamageFromChosenSourceToSelfEffect,unique,5m,"redirects the source's damage to anything, not only to you, with its own shield and source list (Opal-Eye, Konda's Yojimbo)"
 ExileTargetCreaturesUntilSourceLeavesEffect,unique,5m,"mixed battlefield-and-graveyard target pool, X-scaled, optional at resolution, may return to hand (Angel of Serenity)"
 SacrificeOwnCreaturesAtEndStepEffect,blocked-other,5m,captures a set into one DelayedPermanentActions trigger; its siblings schedule one TemporaryGlobalTriggeredAbility each (5j): one scheduling path first
+BecomeMonarchEffect,survivor,5m,run 5m finish: gained a PlayerSubject (default you)
+TargetPlayerBecomesMonarchEffect,absorbed,5m,BecomeMonarchEffect(targetPlayer([group])); the inherent ability uses targetPlayerDeclaredElsewhere()
+DamagedPlayerBecomesMonarchEffect,absorbed,5m,BecomeMonarchEffect(triggeringPlayer())
+TargetCreatureBecomesSubtypeUntilEndOfTurnEffect,survivor,5m,run 5m finish: takes source() as its subject
+SourceBecomesSubtypeUntilEndOfTurnEffect,absorbed,5m,"TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(types, source()); additive (Adrestia): GrantSubtypeUntilEndOfTurnEffect(type, source())"
+BlightEffect,survivor,5m,run 5m finish: gained a PlayerSubject (default you)
+TargetPlayerBlightsEffect,absorbed,5m,BlightEffect.byTargetPlayer(n)
+PlayersCantCastNoncreatureSpellsThisTurnEffect,survivor,5m,run 5m finish: opponentsOnly became a PlayerSubject
+OpponentsCantCastNoncreatureSpellsThisTurnEffect,absorbed,5m,PlayersCantCastNoncreatureSpellsThisTurnEffect.forOpponents()
+PlayersCantGainLifeRestOfGameEffect,survivor,5m,run 5m finish: gained a PlayerSubject (default you)
+TargetPlayerCantGainLifeRestOfGameEffect,absorbed,5m,PlayersCantGainLifeRestOfGameEffect(triggeringPlayer())
+PlayersCantLoseLifeThisTurnEffect,survivor,5m,run 5m finish: gained a PlayerSubject (default eachPlayer)
+ControllerCantLoseLifeThisTurnEffect,absorbed,5m,PlayersCantLoseLifeThisTurnEffect(you())
+BoostTargetCreatureWhileSourceTappedEffect,survivor,5m,run 5m finish: gained a PermanentSubject (target or a set locked at resolution)
+BoostAllCreaturesWhileSourceTappedEffect,absorbed,5m,"BoostTargetCreatureWhileSourceTappedEffect(p, t, allCreatures())"
+DealDamageToPermanentsTargetControlsEffect,survivor,5m,"run 5m finish: takes controlledBy(triggeringPlayer(), creature)"
+DealDamageToEachCreatureDamagedPlayerControlsEffect,absorbed,5m,"DealDamageToPermanentsTargetControlsEffect(amount, controlledBy(triggeringPlayer(), creature))"
+GoadCreaturesTargetPlayerControlsUntilNextTurnEffect,survivor,5m,run 5m finish: gained a PlayerSubject (default targetPlayer)
+GoadCreaturesDamagedPlayerControlsUntilNextTurnEffect,absorbed,5m,GoadCreaturesTargetPlayerControlsUntilNextTurnEffect(triggeringPlayer())
+GrantSubtypeUntilEndOfTurnEffect,survivor,5m,run 5m finish: absorbs a permanent grant to a set
+GrantSubtypeToOwnCreaturesEffect,absorbed,5m,"GrantSubtypeUntilEndOfTurnEffect(type, creaturesYouControl(), null, PERMANENT)"
+GrantTargetingRestrictionToTargetUntilEndOfTurnEffect,survivor,5m,"run 5m finish: gained a PermanentSubject (target, or a set kept as a rule)"
+GrantTargetingRestrictionToOwnCreaturesUntilEndOfTurnEffect,absorbed,5m,"GrantTargetingRestrictionToTargetUntilEndOfTurnEffect(restriction, creaturesYouControl())"
+PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect,survivor,5m,run 5m finish: gained a PermanentSubject (target or a set)
+PerpetuallyGrantTriggeredAbilityToOwnCreaturesEffect,absorbed,5m,"PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect(ability, creaturesYouControl())"
+PutAuraFromHandOntoSelfEffect,survivor,5m,run 5m finish: gained a PermanentSubject (source or triggering)
+PutAuraFromHandOntoEquippedCreatureEffect,absorbed,5m,PutAuraFromHandOntoSelfEffect(triggering())
+RedirectTargetCreatureDamageFromChosenSourceToTargetEffect,survivor,5m,run 5m finish: the two target groups became PermanentSubjects
+RedirectTargetCreatureDamageFromChosenSourceToSelfEffect,absorbed,5m,RedirectTargetCreatureDamageFromChosenSourceToTargetEffect.toSource()
+ExileControllerLibraryEffect,survivor,5m,run 5m finish: gained a PlayerSubject (default you); the target form keeps its benign spec
+ExileTargetPlayerLibraryEffect,absorbed,5m,ExileControllerLibraryEffect(targetPlayer())
+GrantStaticEffectToPlayerUntilPlaneswalkEffect,survivor,5m,run 5m finish: gained a PlayerSubject (default you)
+GrantStaticEffectToTargetPlayerUntilPlaneswalkEffect,absorbed,5m,"GrantStaticEffectToPlayerUntilPlaneswalkEffect(effect, targetPlayer())"
+TransformSelfEffect,survivor,5m,"run 5m finish: gained a PermanentSubject (source, target, triggering)"
+TransformTargetPermanentEffect,absorbed,5m,TransformSelfEffect(target() or triggering())
+PlayersCanCastSpellsOnlyDuringOwnTurnEffect,survivor,5m,run 5m finish: gained a static PlayerSubject (default eachPlayer)
+ControllerCanCastSpellsOnlyDuringOwnTurnEffect,absorbed,5m,PlayersCanCastSpellsOnlyDuringOwnTurnEffect(you())
+OpponentsCantCastSpellsDuringCombatEffect,survivor,5m,run 5m finish: gained a static PlayerSubject (default eachOpponent)
+PlayersCantCastSpellsDuringCombatEffect,absorbed,5m,OpponentsCantCastSpellsDuringCombatEffect(eachPlayer())
+OpponentsCantAttackIfCastSpellThisTurnEffect,survivor,5m,run 5m finish: gained a static PlayerSubject (default eachOpponent)
+ControllerCantAttackIfCastSpellThisTurnEffect,absorbed,5m,OpponentsCantAttackIfCastSpellThisTurnEffect(you())
+OpponentsCantCastSpellsIfAttackedThisTurnEffect,survivor,5m,run 5m finish: gained a static PlayerSubject (default eachOpponent)
+ControllerCantCastSpellsIfAttackedThisTurnEffect,absorbed,5m,OpponentsCantCastSpellsIfAttackedThisTurnEffect(you())
+OpponentsCantCastSpellsMatchingPredicateEffect,survivor,5m,run 5m finish: gained a static PlayerSubject (default eachOpponent)
+PlayersCantCastSpellsMatchingPredicateEffect,absorbed,5m,"OpponentsCantCastSpellsMatchingPredicateEffect(filter, eachPlayer())"
+PlayersCantGainLifeEffect,survivor,5m,run 5m finish: its Scope enum became a static PlayerSubject
+OpponentsCantGainLifeEffect,absorbed,5m,PlayersCantGainLifeEffect(eachOpponent())
+OpponentsCanDrawOnlyOneCardEachTurnEffect,survivor,5m,run 5m finish: gained a static PlayerSubject (default eachOpponent)
+PlayersCanDrawOnlyOneCardEachTurnEffect,absorbed,5m,OpponentsCanDrawOnlyOneCardEachTurnEffect(eachPlayer())
+PreventAllCombatDamageToSelfEffect,survivor,5m,run 5m finish: gained a static PermanentSubject (source or attached)
+PreventAllCombatDamageToAttachedCreatureEffect,absorbed,5m,PreventAllCombatDamageToSelfEffect(attachedCreature())
+PreventAllCombatDamageToAndByEnchantedCreatureEffect,survivor,5m,"run 5m finish: gained a static PermanentSubject (attached or source); run 29 judged it as not fused, as a subject sibling it folds"
+PreventAllCombatDamageToAndBySelfEffect,absorbed,5m,PreventAllCombatDamageToAndByEnchantedCreatureEffect(source())
+PreventArtifactDamageToSelfEffect,survivor,5m,run 5m finish: gained a static PermanentSubject (source or attached)
+PreventArtifactDamageToEnchantedCreatureEffect,absorbed,5m,PreventArtifactDamageToSelfEffect(attachedCreature())
+RedirectPlayerDamageToSelfEffect,survivor,5m,run 5m finish: gained a static PermanentSubject (source or attached)
+RedirectPlayerDamageToEnchantedCreatureEffect,absorbed,5m,RedirectPlayerDamageToSelfEffect.toAttachedPermanent()
+DoubleDamageToOpponentsAndTheirPermanentsEffect,survivor,5m,run 5m finish: gained a static PlayerSubject (default eachOpponent)
+DoubleDamageToChosenPlayerAndTheirPermanentsEffect,absorbed,5m,DoubleDamageToOpponentsAndTheirPermanentsEffect(chosenPlayer())
+DamageNotRemovedFromOpponentsCreaturesDuringCleanupEffect,survivor,5m,run 5m finish: gained a static set subject
+DamageNotRemovedFromAllCreaturesDuringCleanupEffect,absorbed,5m,DamageNotRemovedFromOpponentsCreaturesDuringCleanupEffect(allCreatures())
+EachOpponentBlightsEffect,blocked-player-loop,5m,"each opponent chooses and puts its counters before the next chooses (High Perfect Morcant); BlightEffect now takes one player, not each(...)"
+EachOpponentMayDiscardOrLoseLifeEffect,blocked-player-loop,5m,asks one may per opponent and applies each answer by itself (LoseLifeUnlessDiscardEffect); the every-player sibling has a deferred-discard loop: one loop first
+EachPlayerMayDiscardOrLoseLifeEffect,blocked-player-loop,5m,its own choose-then-act loop with deferred discards; takes each opponent once the opponents record moves onto it
+EachPlayerNameCardRevealTopEffect,blocked-player-loop,5m,"every player names, then all reveal (Conundrum Sphinx); a miss also goes to the bottom, not the graveyard"
+TargetPlayerNameCardRevealTopEffect,unique,5m,"one player names and reveals; a miss goes to the graveyard with optional damage (Petra Sphinx, Vexing Arcanix): not its each-player sibling's effect"
+EachCreatureControllerSacrificesPermanentUnlessPaysEffect,blocked-player-loop,5m,"per creature, its controller pays or sacrifices, all applied together, with its own keep and sacrifice prompts (Fade Away)"
+EnchantedCreatureCantActivateAbilitiesEffect,blocked-other,5m,identical to EnchantedPermanentCantActivateAbilitiesEffect(true) in every reader; both multi-card (25 and 7): merge in step 10
+EnchantedPermanentCantActivateAbilitiesEffect,blocked-other,5m,the (true) form expresses EnchantedCreatureCantActivateAbilitiesEffect; both multi-card: merge in step 10
+EnchantedCreatureCantAttackControllerEffect,unique,5m,"""can't attack you or planeswalkers you control"": differs from its sibling in what is defended, not in a subject"
+EnchantedCreatureCantAttackPlayerEffect,unique,5m,"""can't attack you"" leaves your planeswalkers attackable (Fealty to the Realm); a flag would be this card's alone"
+ControllerCantAttackTargetPlayerThisTurnEffect,unique,5m,"the controller can't attack the target player, planeswalkers excepted (Call for Aid): attacker, defender and breadth all differ from the sibling"
+OpponentCantAttackSourceControllerThisTurnEffect,unique,5m,"the casting opponent can't attack you or your planeswalkers (Sandswirl Wanderglyph): attacker, defender and breadth all differ from the sibling"
+TargetPlayerExilesCardFromGraveyardEffect,blocked-other,5m,lifeGain and track riders of the graveyard-choice completion; the active-player sibling's decline branch needs an EXILE step recorded by this choice first
+ActivePlayerExilesCardFromGraveyardEffect,blocked-other,5m,"""if the player doesn't"" also covers an accepted exile from an empty graveyard: needs the player graveyard choice to record an EXILE step (Web of Inertia)"
+SourceFightsTargetCreatureEffect,blocked-other,5m,"resolves its own damage, with a not-a-fight departed-source form (Cyclops Gladiator), where the attached sibling uses FightSupport: one path, then a subject"
+EnchantedCreatureFightsTargetCreatureEffect,blocked-other,5m,"goes through FightSupport, the source sibling does not: one path, then a fighter subject"
+TargetOpponentMayDrawCardEffect,step-9,5m,"absorb-ready: MayEffect(DrawCardEffect(1, targetPlayer()), TARGET_PLAYER) for ofChosenTarget(); Soldevi Heretic's derived opponent needs a second target"
+DefendingPlayerMayDrawCardEffect,step-9,5m,"absorb-ready: MayEffect(DrawCardEffect(1, defendingPlayer()), DEFENDING_PLAYER) once MayEffectHandler reads the recorded defending player (CR 508.5)"
+CreaturesMustAttackEnchantedCreatureControllerEffect,unique,5m,every creature must attack the host's controller (Public Enemy): not the one-creature requirement of its name sibling
+OpponentsMustAttackControllerEffect,unique,5m,each opponent must attack with at least one creature (Trove of Temptation): not a requirement on every creature
+TargetPlayerReturnsCardFromGraveyardToHandEffect,blocked-other,5m,the target player chooses through its own path; the Oath of Ghouls sibling uses GraveyardReturnSupport: one path first
+ActivePlayerReturnsCardFromGraveyardToHandEffect,blocked-other,5m,"declares the player target the trigger restricts, but the recorded active player returns: no subject for that player, and another return path (Oath of Ghouls)"
+AdditionalDamageToPlayersFromColorSourcesEffect,unique,5m,"any source, players only (Tok-Tok): its sibling takes your sources and the opponents' permanents too"
+AdditionalDamageToOpponentsFromColorSourcesEffect,unique,5m,"your sources, opponents and their permanents (Torbran), read through SourceOpponentDamageBonusEffect"
+AllowCastTargetCardFromGraveyardThisTurnEffect,blocked-other,5m,"the card axis: no CardSubject names the source card; scope, filter, exile and tapped riders are the target form's"
+AllowCastSourceCardFromGraveyardThisTurnEffect,blocked-other,5m,"no CardSubject names the source card, and it also grants while the card is on the battlefield (Ichor Aberration)"
+AwardManaToActivePlayerEffect,blocked-other,5m,reads the active player recorded on the entry and is not a mana ability (CR 605.1b); AwardManaEffect has no player subject
+AwardManaToChosenPlayerEffect,unique,5m,"a mana ability that chooses its player and colour inline as it is paid (Valleymaker, Victory Chimes)"
+BoostCreaturesOfChosenSubtypeEffect,unique,5m,static boost of the type chosen as it entered; its name sibling chooses as it resolves
+BoostAllCreaturesOfChosenSubtypeEffect,unique,5m,a one-shot that chooses the type as it resolves and locks the set; not the static sibling's subject variant
+CastTargetCardFromGraveyardEffect,unique,5m,a targeted cast offered during resolution with any-colour mana and its own may handler (Tinybones)
+CastSourceCardFromGraveyardEffect,unique,5m,offers the resolving card itself through CastCardFromGraveyardEffect's completion (Sproutback Trudge)
+ChangeTargetOfTargetSpellToSourceEffect,unique,5m,"changes one chosen target of a targeted spell or ability, with a prompt (Spellskite, Mizzium Meddler)"
+ChangeTargetOfTargetSpellToEnchantedCreatureEffect,unique,5m,"the triggering single-target spell, not targeted, retargeted to the host (Captured by the Consulate)"
+ChooseOneForTargetCreatureEffect,blocked-other,5m,"differs in target category, not subject: the permanent form's modes rebind and recheck their own filters (Card, ChoiceHandlerService); step 10"
+ChooseOneForTargetPermanentEffect,blocked-other,5m,"differs in target category, not subject: the permanent form's modes rebind and recheck their own filters (Card, ChoiceHandlerService); step 10"
+ConjureDuplicateOfSourceCardIntoHandEffect,blocked-other,5m,"the card axis: no source-card CardSubject, and it conjures the catalog printing with removed keywords"
+ConjureDuplicateOfTriggeringCardIntoHandEffect,blocked-other,5m,"the card axis: copies the triggering card's runtime card with a delayed discard, unlike the printing lookup of its sibling"
+ControlEnchantedCreatureEffect,unique,5m,a layer 2 static of an Aura; not a sibling of the player-control payload
+ControlPlayerEffect,unique,5m,the floating player-control payload (CR 724) engine code makes; no card names it
+ControlledCreaturesDealDamageToTargetEffect,blocked-other,5m,recipient axis mixes permanents and players: damage path and target spec differ (as run 5h's power siblings)
+ControlledCreaturesDealDamageToTargetPlayerEffect,blocked-other,5m,recipient axis mixes permanents and players: damage path and target spec differ (as run 5h's power siblings)
+DealDamageToTargetCreatureDamagedPlayerControlsEffect,unique,5m,"a creature chosen at resolution, by either player, for Flaming Gambit's damage redirection; not a subject"
+DoubleEquippedCreatureCombatDamageEffect,unique,5m,doubles what the host deals and what other creatures deal to it (Inquisitor's Flail)
+DoubleEnchantedCreatureCombatDamageEffect,unique,5m,"doubles only what the host deals, through SourceDamageMultiplyingEffect (The Sound of Drums)"
+DoubleDamageToEnchantedPlayerEffect,blocked-other,5m,"its own replacement option (getEnchantedPlayerDamageMultiplier), without the lost-abilities guard of the recipient multiplier: one option and guard first"
+DoubleDamageToOpponentsEffect,blocked-other,5m,"players only, in the recipient multiplier; the enchanted-player sibling is a separate replacement option: one option and guard first"
+EnteringCreaturePowerBranchEffect,unique,5m,branches on the entering creature's last-known power against a number (Tribute to the World Tree); not a subject
+EnteringCreatureSourcePowerBranchEffect,unique,5m,branches on two last-known powers (Shelinda); not a subject
+ExileOpponentCardsInsteadOfGraveyardEffect,unique,5m,"any card, with track, void-counter and ""you didn't control"" options; its sibling differs in card class"
+ExileOpponentCreatureCardsInsteadOfGraveyardEffect,unique,5m,"nontoken creatures dying plus creature cards from other zones (Anafenza): a different event set, not a subject"
+ExileSelfCost,blocked-other,5m,"a payment: the self cost is paid automatically by the ability, the creature cost is a chosen spell or ability cost; merge with the cost heads in step 10"
+ExileCreatureCost,blocked-other,5m,"a payment: the self cost is paid automatically by the ability, the creature cost is a chosen spell or ability cost; merge with the cost heads in step 10"
+ReturnSelfToHandCost,blocked-other,5m,"a payment: the self cost is paid automatically by the ability, the creature cost is a chosen spell or ability cost; merge with the cost heads in step 10"
+ReturnCreatureToHandCost,blocked-other,5m,"a payment: the self cost is paid automatically by the ability, the creature cost is a chosen spell or ability cost; merge with the cost heads in step 10"
+SacrificeSelfCost,blocked-other,5m,"a payment: the self cost is paid automatically by the ability, the creature cost is a chosen spell or ability cost; merge with the cost heads in step 10"
+SacrificeCreatureCost,blocked-other,5m,"a payment: the self cost is paid automatically by the ability, the creature cost is a chosen spell or ability cost; merge with the cost heads in step 10"
+PutCounterOnSourceCost,blocked-other,5m,an activation payment with a P/T counter shape; its name sibling is a cumulative-upkeep choice; counter costs merge in step 10
+PutCounterOnOpponentCreatureCost,blocked-other,5m,"engine-built cumulative-upkeep payment chosen per age counter, paid by ForcedCostOrElseEffect; step 10"
+GrantControllerSpellsCantBeCounteredThisTurnEffect,blocked-other,5m,"differs in spell filter, not subject: a CardPredicate would be one card's parameter; settle with the static can't-be-countered step-9 rows"
+GrantControllerCreatureSpellsCantBeCounteredThisTurnEffect,blocked-other,5m,"differs in spell filter, not subject: a CardPredicate would be one card's parameter; settle with the static can't-be-countered step-9 rows"
+GrantAllCreatureTypesToOwnCreaturesEffect,blocked-other,5m,the static and until-end-of-turn changeling record; the Oko sibling never ends and grants types only
+GrantAllCreatureTypesToTargetCreatureEffect,unique,5m,"all creature types with no end and no changeling (Oko, Lorwyn Liege); a duration would be this card's alone"
+GrantProtectionFromOpponentsUntilEndOfTurnEffect,unique,5m,"protection from players, locked as it resolves; its sibling differs in what it protects from"
+GrantProtectionFromOpponentCreaturesUntilEndOfTurnEffect,unique,5m,"protection from the opponents' creatures, read through the granted record (Crypsis); not a subject"
+GrantSubtypeToTargetCreatureEffect,blocked-other,5m,the permanent / overriding / perpetual target head (16 cards); merge with GrantSubtypeUntilEndOfTurnEffect in step 10
+HeistTargetLibraryEffect,blocked-other,5m,"one keyword action with two prompts (HeistCardChoice here, LibrarySearch HEIST there): unify the prompt and completion first"
+HeistTargetOpponentLibraryEffect,blocked-other,5m,"one keyword action with two prompts (HeistCardChoice here, LibrarySearch HEIST there): unify the prompt and completion first"
+IgnoreOpponentCreatureHexproofEffect,unique,5m,"creatures only; its sibling also covers players and other permanents: breadth, not subject"
+IgnoreOpponentHexproofEffect,unique,5m,"players and every permanent of the opponents (Kaya, Bane of the Dead)"
+LookAtFaceDownCreaturesEffect,unique,5m,a static permission to look at any time; not the one-shot look
+LookAtFaceDownCreatureEffect,unique,5m,a one-shot look at a targeted card; not the static permission
+MakeCreatureUnblockableEffect,blocked-other,5m,head (169 cards) with five who flags: they become a subject in step 10
+MakeAllCreaturesUnblockableEffect,blocked-other,5m,a rule of a set (CR 611.2c) that is its own floating payload read by GameQueryService; merge with the head in step 10
+MoveAllCountersFromSourceToTargetCreatureEffect,unique,5m,"every kind from the source, recorded oil removal, no event value (The Ozolith): another amount, not a subject"
+MoveAllCountersFromTargetPermanentToTargetPermanentEffect,unique,5m,"one kind between two positional targets, recording the moved number (Black Panther)"
+OnlySourceCreatureCanAttackThisCombatEffect,unique,5m,a marker an additional combat carries (Throat Wolf); its sibling is a payload of chosen ids
+OnlyTargetCreaturesCanAttackThisCombatEffect,unique,5m,engine-built floating payload of the chosen ids; no card names it
+PerpetuallyBoostSourceEffect,blocked-other,5m,follows the source card through graveyard and other zones: no source-card subject; step 10
+PerpetuallyBoostTargetCreatureEffect,blocked-other,5m,battlefield targets only; the source sibling follows a card across zones: step 10
+PerpetuallyGrantGraveyardAbilityToTargetCardEffect,blocked-other,5m,"the card axis: target or triggering card by flag, with graveyard incarnation checks; no source-card CardSubject"
+PerpetuallyGrantGraveyardAbilityToSourceCardEffect,blocked-other,5m,"the card axis: no source-card CardSubject, no zone check and no repeated grant (Effluence Devourer)"
+PreventAllDamageToControllerEffect,blocked-other,5m,"prevents damage to a player, its sibling to a permanent: different recipient types and pipelines"
+PreventAllDamageToAttachedCreatureEffect,blocked-other,5m,"prevents damage to a player, its sibling to a permanent: different recipient types and pipelines"
+PreventFixedDamagePerSourceToControllerEffect,blocked-other,5m,"recipient is a player here and a permanent in its sibling, each read by its own damage pipeline"
+PreventFixedDamagePerSourceToSelfEffect,blocked-other,5m,"recipient is a player here and a permanent in its sibling, each read by its own damage pipeline"
+PreventNextDamageByTargetCreatureEffect,unique,5m,"the whole next damage event, optionally gaining that much life"
+PreventNextDamageBySelfEffect,unique,5m,a fixed amount of the next damage the source deals (Barbed Wire): not the whole-event shield
+ProtectionFromChosenPlayerEffect,unique,5m,the source's static marker read from its chosen player (True-Name Nemesis)
+ProtectionFromPlayersEffect,unique,5m,engine-built payload of players fixed at resolution
+RedirectYourDamageToTargetCreatureThisTurnEffect,unique,5m,"you and creatures you control, the target rechecked as yours (Heroic Sacrifice): the protected set differs too"
+RedirectYourDamageToEnchantedCreatureThisTurnEffect,unique,5m,"you and permanents you control, to the host as it last was (Saving Grace): the protected set differs too"
+RedirectTargetCreatureNextDamageFromChosenSourceToControllerEffect,blocked-other,5m,recipient is a player here and a permanent in its sibling: no subject names both
+RedirectTargetCreatureNextDamageFromChosenSourceToSelfEffect,blocked-other,5m,recipient is a player here and a permanent in its sibling: no subject names both
+ReduceControllerMaxHandSizeEffect,blocked-other,5m,TurnCleanupService picks players by the Controller / Opponent hand-size interfaces and infers the chosen player from entry effects: one interface with players first
+ReduceOpponentMaxHandSizeEffect,blocked-other,5m,TurnCleanupService picks players by the Controller / Opponent hand-size interfaces and infers the chosen player from entry effects: one interface with players first
+SetControllerMaximumHandSizeEffect,blocked-other,5m,TurnCleanupService picks players by the Controller / Opponent hand-size interfaces and infers the chosen player from entry effects: one interface with players first
+SetOpponentMaximumHandSizeEffect,blocked-other,5m,TurnCleanupService picks players by the Controller / Opponent hand-size interfaces and infers the chosen player from entry effects: one interface with players first
+RegisterDelayedSacrificeSourceWhenTargetLeavesEffect,blocked-other,5m,"delayed trigger with watched and sacrificed roles swapped in its sibling, each with its own payload (SacrificeSelf / RemoveLinkedPermanent): a delayed trigger bound to a subject first"
+RegisterDelayedSacrificeTargetWhenSourceLeavesEffect,blocked-other,5m,"delayed trigger with watched and sacrificed roles swapped in its sibling, each with its own payload (SacrificeSelf / RemoveLinkedPermanent): a delayed trigger bound to a subject first"
+ReturnSourceAuraToCreatureOnDeathEffect,unique,5m,the Aura's controller chooses a creature as it returns (Screams from Within)
+ReturnSourceAuraToOpponentCreatureOnDeathEffect,unique,5m,the dying creature's controller chooses a target as it triggers (Necrotic Plague)
+ReturnSourceCardFromGraveyardToBattlefieldEffect,blocked-other,5m,the card axis (no source-card CardSubject) with different riders and entry paths; merge the return heads in step 10
+ReturnTriggeringCardFromGraveyardToBattlefieldEffect,blocked-other,5m,the card axis (no source-card CardSubject) with different riders and entry paths; merge the return heads in step 10
+ReturnDyingCreatureToBattlefieldEffect,blocked-other,5m,"the same card by two paths: attach and steal tracking here, exile origin and a control effect there: one path first"
+ReturnTriggeringPermanentToBattlefieldEffect,blocked-other,5m,"the same card by two paths: attach and steal tracking here, exile origin and a control effect there: one path first"
+ReturnSourceTransformedFromGraveyardAttachedToTargetPlayerEffect,blocked-other,5m,"host is a player here and a permanent in its sibling, with their own target specs and rechecks"
+ReturnSourceTransformedFromGraveyardAttachedToTargetPermanentEffect,blocked-other,5m,"host is a player here and a permanent in its sibling, with their own target specs and rechecks"
+TurnTargetCreatureFaceDownEffect,blocked-other,5m,"two turn-face-down paths (the source one ends a copy, the target one skips double-faced cards): unify first, as face up"
+TurnSourceFaceDownEffect,blocked-other,5m,"two turn-face-down paths (the source one ends a copy, the target one skips double-faced cards): unify first, as face up"
+CloakTopCardOfDamagedPlayerLibraryEffect,unique,5m,cloaks from another player's library under your control (Etrata): whose library and who controls differ
+DealDamageToRandomOpponentCreatureEffect,blocked-other,5m,"a random pick is a choice, not a subject (as DealDamageToRandomOpponentEffect)"
+DoubleCountersOnControllerEffect,unique,5m,"player counters of five kinds, each with its own path; not a permanent subject (Aetheric Amplifier)"
+ExileTargetCardFromGraveyardPutCounterOnTargetCreatureEffect,step-9,5m,"split-ready: ExileGraveyardCardsEffect, then ConditionalEffect(HappenedThisWay.toACard(EXILE, creature), QueueReflexiveAbilityEffect(put counter)) (Agatha's Soul Cauldron)"
+ExileControllerHandFaceDownAndReturnAtNextEndStepEffect,blocked-other,5m,"the delayed return-then-draw needs a delayed trigger bound to cardsThisWay(EXILE), as its each-player sibling"
+ExileTriggeringCreatureUntilSourceLeavesAndReturnOthersEffect,blocked-other,5m,"returns the others even when nothing was exiled, unlike the target sibling; needs the same return-others step (run 2)"
+ExileTargetCreatureWithHitCounterEffect,unique,5m,"fused hit counter, loss check and shuffle over one exile (Etrata, the Silencer)"
+GoadCreaturesUntilNextTurnEffect,blocked-other,5m,"a floating rule over a predicate evaluated continuously, also requirement-only (Kardur); not the locked goad designation of the target head: step 10"
+MustBlockTargetCreatureEffect,blocked-other,5m,two positional targets (blocker and blocked); MustBlockSourceEffect is also its floating payload: merge in step 10
+CopyTriggeringSpellOrAbilityEffect,blocked-other,5m,"dispatches to three copy paths by what triggered (spell, activated, triggered ability), from the trigger snapshot; the target sibling has a fourth: one copy path first (step 10)"
+CopyTargetSpellOrAbilityEffect,blocked-other,5m,copies a targeted stack entry of any of those kinds with its own retarget choice (Return the Favor): one copy path with the triggering sibling first

@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -32,7 +33,7 @@ public class TheGoldenGearColossus extends Card {
 
     public TheGoldenGearColossus() {
         target(OTHER_DOUBLE_FACED_ARTIFACT, 0, 1)
-                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TransformTargetPermanentEffect(), CREATE_GNOMES)
-                .addTrigger(Triggers.attacks(), new TransformTargetPermanentEffect(), CREATE_GNOMES);
+                .addTrigger(Triggers.enters(ObjectRelation.THIS), new TransformSelfEffect(Subjects.target()), CREATE_GNOMES)
+                .addTrigger(Triggers.attacks(), new TransformSelfEffect(Subjects.target()), CREATE_GNOMES);
     }
 }

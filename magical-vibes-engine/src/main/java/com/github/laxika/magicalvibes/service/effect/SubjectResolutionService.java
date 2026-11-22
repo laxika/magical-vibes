@@ -378,6 +378,28 @@ public class SubjectResolutionService {
     }
 
     /**
+     * Whether {@code players}, for a static ability, names {@code playerId}: the one-player form of the static entry
+     * point, for a query that already knows the ability's controller. It judges {@code you()}, {@code eachPlayer()},
+     * {@code eachOpponent()}, {@code enchantedPlayer()} and {@code chosenPlayer()} without looking anything up;
+     * {@code source} may be {@code null} for an ability with no source permanent (an emblem's, a plane's), which then
+     * enchants and chose nobody.
+     *
+     * @throws UnsupportedOperationException for any other subject
+     */
+    public static boolean namesPlayer(Permanent source, UUID controllerId, UUID playerId, PlayerSubject players) {
+        return switch (players) {
+            case PlayerSubject.You ignored -> playerId != null && playerId.equals(controllerId);
+            case PlayerSubject.Each each -> each.relation() == PlayerSubject.Relation.ALL
+                    || playerId != null && !playerId.equals(controllerId);
+            case PlayerSubject.EnchantedPlayer ignored -> playerId != null && source != null
+                    && playerId.equals(source.getAttachedTo());
+            case PlayerSubject.ChosenPlayer ignored -> playerId != null && source != null
+                    && playerId.equals(source.getRememberedTargetPlayerId());
+            default -> throw new UnsupportedOperationException("No one-player static form for " + players + " yet");
+        };
+    }
+
+    /**
      * The characteristics the static membership form reads about the permanent it judges, answered by the static
      * effect handlers' recursion-safe reads of the layered pass in progress.
      */

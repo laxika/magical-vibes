@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TransformTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -47,7 +48,7 @@ public class SeedpodCaretaker extends Card {
                         artifactOrCreatureYouControl),
                 new ChooseOneEffect.ChooseOneOption(
                         "Transform target Incubator token you control.",
-                        new TransformTargetPermanentEffect(),
+                        new TransformSelfEffect(Subjects.target()),
                         incubatorYouControl)
         ))));
     }

@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.v;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantTargetingRestrictionToOwnCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTargetingRestrictionToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -11,7 +12,8 @@ public class VeilstoneAmulet extends Card {
 
     public VeilstoneAmulet() {
         addTrigger(Triggers.youCastSpell().anySpell(),
-                new GrantTargetingRestrictionToOwnCreaturesUntilEndOfTurnEffect(
-                        TargetingRestrictionEffect.opponentSpellsAndAbilities()));
+                new GrantTargetingRestrictionToTargetUntilEndOfTurnEffect(
+                        TargetingRestrictionEffect.opponentSpellsAndAbilities(),
+                        Subjects.creaturesYouControl()));
     }
 }

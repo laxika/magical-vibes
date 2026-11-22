@@ -8,9 +8,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.SourceBecomesSubtypeUntilEndOfTurnEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import java.util.List;
 
 @CardRegistration(set = "M12", collectorNumber = "195")
@@ -25,19 +25,19 @@ public class Skinshifter extends Card {
 
     public Skinshifter() {
         // "{G}: Choose one. Activate only once each turn." Each mode replaces the source's creature
-        // types (SourceBecomesSubtypeUntilEndOfTurnEffect) and sets its base P/T until end of turn.
+        // types (TargetCreatureBecomesSubtypeUntilEndOfTurnEffect on the source) and sets its base P/T until end of turn.
         // The mode is announced while the ability is activated (CR 602.2b via CR 601.2b).
         addActivatedAbility(new ActivatedAbility(false, "{G}", List.of(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(RHINO_MODE, List.of(
-                        new SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.RHINO),
+                        new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.RHINO, Subjects.source()),
                         new SetBasePowerToughnessEffect(4, 4, Subjects.source()),
                         new GrantKeywordEffect(Keyword.TRAMPLE, Subjects.source()))),
                 new ChooseOneEffect.ChooseOneOption(BIRD_MODE, List.of(
-                        new SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.BIRD),
+                        new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.BIRD, Subjects.source()),
                         new SetBasePowerToughnessEffect(2, 2, Subjects.source()),
                         new GrantKeywordEffect(Keyword.FLYING, Subjects.source()))),
                 new ChooseOneEffect.ChooseOneOption(PLANT_MODE, List.of(
-                        new SourceBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.PLANT),
+                        new TargetCreatureBecomesSubtypeUntilEndOfTurnEffect(CardSubtype.PLANT, Subjects.source()),
                         new SetBasePowerToughnessEffect(0, 8, Subjects.source())))))),
                 "{G}: Choose one. Activate only once each turn.", 1).withModalChoiceAtActivation());
     }

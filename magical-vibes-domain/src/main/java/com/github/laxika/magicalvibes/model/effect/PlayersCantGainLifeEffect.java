@@ -1,19 +1,22 @@
 package com.github.laxika.magicalvibes.model.effect;
 
 /**
- * Static effect preventing life gain for the selected scope.
- * Life loss and damage still apply normally — only life gain is prevented.
+ * Static effect: the players {@code players} names can't gain life: every player by default, the opponents of this
+ * permanent's controller ({@link Subjects#eachOpponent()}, Erebos, God of the Dead) or the player it enchants
+ * ({@link Subjects#enchantedPlayer()}, Grievous Wound). Life loss and damage still apply normally; only life gain is
+ * prevented.
  *
- * @param scope players affected by the restriction
+ * @param players who is restricted, judged as the restriction is checked
  */
-public record PlayersCantGainLifeEffect(Scope scope) implements CardEffect {
+public record PlayersCantGainLifeEffect(PlayerSubject players) implements CardEffect {
 
-    public PlayersCantGainLifeEffect() {
-        this(Scope.ALL_PLAYERS);
+    public PlayersCantGainLifeEffect {
+        if (!(players instanceof PlayerSubject.Each || players instanceof PlayerSubject.EnchantedPlayer)) {
+            throw new IllegalArgumentException("Unsupported players for a static restriction: " + players);
+        }
     }
 
-    public enum Scope {
-        ALL_PLAYERS,
-        ENCHANTED_PLAYER
+    public PlayersCantGainLifeEffect() {
+        this(Subjects.eachPlayer());
     }
 }

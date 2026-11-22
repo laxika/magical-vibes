@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.cards.o.OneWithTheStars;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.model.effect.ControllerCantLoseLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantLoseLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -202,7 +203,7 @@ class TreeOfPerditionTest extends BaseCardTest {
     void cannotExchangeWhenOpponentCannotLoseLife() {
         Permanent tree = addReadyTree(player1);
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
-                new ControllerCantLoseLifeThisTurnEffect(), player2.getId(), Duration.UNTIL_END_OF_TURN));
+                new PlayersCantLoseLifeThisTurnEffect(Subjects.you()), player2.getId(), Duration.UNTIL_END_OF_TURN));
 
         harness.activateAbility(player1, 0, null, player2.getId());
         harness.passBothPriorities();

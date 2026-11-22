@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileControllerLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerPutsCardsFromHandOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.HandToLibraryPlacement;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPlayerHandIntoLibraryEffect;
@@ -53,7 +54,7 @@ public class JaceTheMindSculptor extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -12,
-                List.of(new ExileTargetPlayerLibraryEffect(),
+                List.of(new ExileControllerLibraryEffect(Subjects.targetPlayer()),
                         new ShuffleTargetPlayerHandIntoLibraryEffect()),
                 "−12: Exile all cards from target player's library, then that player shuffles their hand into their library.",
                 anyPlayer()

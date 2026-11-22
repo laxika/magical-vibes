@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesWhileSourceTappedEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureWhileSourceTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.EchoEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -19,7 +20,7 @@ public class ThranWeaponry extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new BoostAllCreaturesWhileSourceTappedEffect(2, 2)),
+                List.of(new BoostTargetCreatureWhileSourceTappedEffect(2, 2, Subjects.allCreatures())),
                 "{2}, {T}: All creatures get +2/+2 for as long as this artifact remains tapped."
         ));
     }

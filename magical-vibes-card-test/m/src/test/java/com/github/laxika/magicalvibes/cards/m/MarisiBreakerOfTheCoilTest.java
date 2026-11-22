@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.w.WitchbaneOrb;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,7 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MarisiBreakerOfTheCoil.class, GiantGrowth.class, GrizzlyBears.class})
+@CardUsed({MarisiBreakerOfTheCoil.class, GiantGrowth.class, GrizzlyBears.class, WitchbaneOrb.class})
 class MarisiBreakerOfTheCoilTest extends BaseCardTest {
 
     @Test
@@ -118,6 +119,21 @@ class MarisiBreakerOfTheCoilTest extends BaseCardTest {
         assertThat(als.getMustAttackRequirementCount(gd, defender)).isEqualTo(1);
         advanceToNextTurn(player2);
         assertThat(als.getMustAttackRequirementCount(gd, defender)).isZero();
+    }
+
+    @Test
+    @DisplayName("The damaged player isn't targeted, so hexproof doesn't stop the goad")
+    void goadsCreaturesOfDamagedPlayerWithHexproof() {
+        Permanent marisi = addCreatureReady(player1, new MarisiBreakerOfTheCoil());
+        Permanent defender = addCreatureReady(player2, new GrizzlyBears());
+        harness.addToBattlefield(player2, new WitchbaneOrb());
+        marisi.setAttacking(true);
+        marisi.setAttackTarget(player2.getId());
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(als.getMustAttackRequirementCount(gd, defender)).isEqualTo(1);
     }
 
     private void advanceToNextTurn(Player currentActivePlayer) {
