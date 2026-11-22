@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeAllUnblockedCreaturesAttackingControllerBlockedBySourceEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +53,7 @@ public class MakeAllUnblockedCreaturesAttackingControllerBlockedBySourceEffectHa
 
         for (Permanent attacker : attackers) {
             combatBlockService.applyBlockFromEffect(
-                    gameData, source, attacker, false, source.getCard().getName());
+                    gameData, source, attacker, false, FaceDownVisibility.publicName(gameData, source));
         }
     }
 }

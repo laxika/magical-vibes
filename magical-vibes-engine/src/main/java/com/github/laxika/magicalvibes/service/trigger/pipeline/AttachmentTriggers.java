@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -224,11 +225,11 @@ public class AttachmentTriggers {
         } else if (effect instanceof AttachedCreatureBecomesCopyOfExiledCreatureEffect) {
             // The attachment's record, never put on the stack: the Equipment and the creature it became attached to.
             StackEntry attachment = StackEntry.carrier(equipment.getCard(), controllerId,
-                    equipment.getCard().getName() + "'s ability", List.of(effect), null, equipment.getId());
+                    FaceDownVisibility.publicName(gameData, equipment) + "'s ability", List.of(effect), null, equipment.getId());
             attachment.setTriggeringPermanentId(equipped.getId());
             attachedCreatureCopyHandler.resolve(gameData, attachment, effect);
         } else {
-            throw new IllegalStateException(equipment.getCard().getName()
+            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, equipment)
                     + " has an \"as this becomes attached\" ability nothing applies: " + effect);
         }
     }

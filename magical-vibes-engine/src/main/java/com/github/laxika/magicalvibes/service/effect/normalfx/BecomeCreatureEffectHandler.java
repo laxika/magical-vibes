@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
@@ -92,7 +93,7 @@ public class BecomeCreatureEffectHandler implements NormalEffectHandlerBean {
         }
         if (!becomeCreature.protectionFromColors().isEmpty()) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), entry.getCard().getName(), source.getId(), entry.getControllerId(),
+                    UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), source.getId(), entry.getControllerId(),
                     new ProtectionFromColorsEffect(becomeCreature.protectionFromColors()), source.getId(), null,
                     null, Duration.PERMANENT, 0));
         }

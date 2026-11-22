@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.DisorientingChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
@@ -82,7 +83,7 @@ public class DisorientingChoiceEffectHandler implements NormalEffectHandlerBean 
                     new ChoiceContext.DisorientingChoiceExileChoice(controllerId, targetId, sourceName),
                     List.of(ChoiceContext.DisorientingChoiceExileChoice.EXILE,
                             ChoiceContext.DisorientingChoiceExileChoice.KEEP),
-                    sourceName + " - " + target.getCard().getName() + " may be exiled."));
+                    sourceName + " - " + FaceDownVisibility.publicName(gameData, target) + " may be exiled."));
             return;
         }
 

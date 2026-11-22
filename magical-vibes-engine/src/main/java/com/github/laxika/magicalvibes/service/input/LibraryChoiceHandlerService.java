@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.DelayedExiledCardReturns;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.AdventureCast;
@@ -683,7 +684,7 @@ public class LibraryChoiceHandlerService {
                     }
                     if (returnToHandAtEndStep) {
                         if (librarySearch.returnToHandAtControllerEndStepId() != null) {
-                            gameData.grantAbilityToPermanent(perm.getCard().getName(), librarySearch.sourcePermanentId(),
+                            gameData.grantAbilityToPermanent(FaceDownVisibility.publicName(gameData, perm), librarySearch.sourcePermanentId(),
                                     playerId, new TriggeredAbility(Triggers.endStep(ActivePlayer.YOU),
                                             com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect.self()),
                                     perm.getId(), com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT);

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUnt
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -64,8 +65,8 @@ public class BecomeCopyOfTargetArtifactUntilEndOfTurnEffectHandler implements No
                 : List.of();
 
         Card preCopyCard = PermanentCopierService.preCopyCard(gameData, source);
-        String originalName = source.getCard().getName();
-        String targetName = target.getCard().getName();
+        String originalName = FaceDownVisibility.publicName(gameData, source);
+        String targetName = FaceDownVisibility.publicName(gameData, target);
         permanentCopierService.applyCloneCopy(source, target.getCard(), null, null, Set.of(),
                 retainedAbilities);
         // The second ability's copy doesn't wear off (CR 611.2a); it is newer than the first ability's copies this

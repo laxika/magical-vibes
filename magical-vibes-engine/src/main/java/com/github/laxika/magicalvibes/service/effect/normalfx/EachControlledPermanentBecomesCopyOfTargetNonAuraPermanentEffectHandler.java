@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -78,7 +79,7 @@ public class EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffectHan
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" makes " + permanents.size() + " permanent(s) a copy of "
-                        + target.getCard().getName() + ".")
+                        + FaceDownVisibility.publicName(gameData, target) + ".")
                 .build());
         log.info("Game {} - Mirrorform copies {} onto {} permanents", gameData.id,
                 target.getCard().getName(), permanents.size());

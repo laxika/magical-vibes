@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffec
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -137,7 +138,7 @@ public class GrantColorUntilEndOfTurnEffectHandler implements NormalEffectHandle
         // color effect with its own timestamp — it beats earlier setters (an already
         // attached Nim Deathmantle) and loses to later ones, then wears off at cleanup.
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                entry.getCard().getName(), null, entry.getControllerId(), e,
+                FaceDownVisibility.sourceName(gameData, entry), null, entry.getControllerId(), e,
                 target.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
     }
 }

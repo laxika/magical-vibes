@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourcePermanentHauntingTargetEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -76,7 +77,7 @@ public class ExileSourcePermanentHauntingTargetEffectHandler implements NormalEf
         gameData.hauntingCardToPermanentId.put(sourceCard.getId(), target.getId());
         gameData.addExileReturnOnPermanentLeave(target.getId(), new PendingExileReturn(sourceCard, ownerId));
         gameLogService.append(gameData,
-                GameLog.cardThen(sourceCard, " is exiled haunting " + target.getCard().getName() + "."));
+                GameLog.cardThen(sourceCard, " is exiled haunting " + FaceDownVisibility.publicName(gameData, target) + "."));
     }
 
     private UUID targetId(StackEntry entry, CardEffect effect) {

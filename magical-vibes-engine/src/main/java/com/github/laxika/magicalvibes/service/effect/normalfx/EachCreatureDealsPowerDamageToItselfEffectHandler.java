@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachCreatureDealsPowerDamageToItselfEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -75,7 +76,7 @@ public class EachCreatureDealsPowerDamageToItselfEffectHandler implements Normal
 
             StackEntry damageEntry = StackEntry.carrier(liveCreature.getCard(),
                     controllerId,
-                    liveCreature.getCard().getName() + "'s ability",
+                    FaceDownVisibility.publicName(gameData, liveCreature) + "'s ability",
                     List.of(),
                     null,
                     liveCreature.getId());

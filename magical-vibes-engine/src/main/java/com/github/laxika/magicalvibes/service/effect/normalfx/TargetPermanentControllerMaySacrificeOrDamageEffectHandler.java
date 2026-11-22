@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerMaySacrificeOrDamageEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -113,7 +114,7 @@ public class TargetPermanentControllerMaySacrificeOrDamageEffectHandler
         if (effect.targetIsDamageSource() && target != null) {
             damageEntry = StackEntry.carrier(target.getCard(),
                     playerId,
-                    target.getCard().getName() + "'s ability",
+                    FaceDownVisibility.publicName(gameData, target) + "'s ability",
                     new ArrayList<>(),
                     target.getId(),
                     target.getId());

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -46,7 +47,7 @@ public class MustBlockSourceEffectHandler implements NormalEffectHandlerBean {
         }
 
         Permanent source = gameQueryService.findPermanentById(gameData, sourceId);
-        String sourceName = source != null ? source.getCard().getName() : entry.getCard().getName();
+        String sourceName = source != null ? FaceDownVisibility.publicName(gameData, source) : FaceDownVisibility.sourceName(gameData, entry);
 
         gameData.addEffectOnPermanent(entry, new MustBlockSourceEffect(sourceId, null, e.untilEndOfCombat()),
                 target.getId(), e.untilEndOfCombat() ? Duration.UNTIL_END_OF_COMBAT : Duration.UNTIL_END_OF_TURN);

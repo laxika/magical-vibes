@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.ArrayList;
 import java.util.List;
@@ -134,10 +135,10 @@ public class CreaturePositioningSupport {
         options.add("Right of " + label(creatures, creatures.size() - 1));
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(controllerId, null, null,
                 new ChoiceContext.CreaturePositionChoice(request, permanent.getId(), options), options,
-                "Choose a position for " + permanent.getCard().getName() + "."));
+                "Choose a position for " + FaceDownVisibility.publicName(gameData, permanent) + "."));
     }
 
     private String label(List<Permanent> creatures, int index) {
-        return creatures.get(index).getCard().getName() + " (" + (index + 1) + ")";
+        return FaceDownVisibility.publicName(creatures.get(index)) + " (" + (index + 1) + ")";
     }
 }

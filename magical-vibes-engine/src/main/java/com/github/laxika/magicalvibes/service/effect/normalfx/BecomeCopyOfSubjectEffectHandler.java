@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -68,7 +69,7 @@ public class BecomeCopyOfSubjectEffectHandler implements NormalEffectHandlerBean
                 .filter(ability -> ability.effects().stream().map(EffectRegistration::effect)
                         .anyMatch(part -> contains(part, become)))
                 .toList();
-        String originalName = asItWas.getName();
+        String originalName = FaceDownVisibility.publicName(gameData, asItWas);
         permanentCopierService.applyCloneCopy(source, copied, null, null, Set.of(), keptActivated);
         keptTriggered.forEach(source.getCard()::addTriggeredAbility);
         if (untilEndOfTurn) {

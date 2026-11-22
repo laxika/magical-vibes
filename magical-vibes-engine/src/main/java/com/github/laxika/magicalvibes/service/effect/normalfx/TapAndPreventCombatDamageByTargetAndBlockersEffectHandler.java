@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAndPreventCombatDamageByTargetAndBlockersEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -65,7 +66,7 @@ public class TapAndPreventCombatDamageByTargetAndBlockersEffectHandler implement
         }
 
         gameLogService.append(gameData, GameLog.text(
-                "Combat damage this turn from " + attacker.getCard().getName()
+                "Combat damage this turn from " + FaceDownVisibility.publicName(gameData, attacker)
                         + " and its blockers will be prevented."));
     }
 }

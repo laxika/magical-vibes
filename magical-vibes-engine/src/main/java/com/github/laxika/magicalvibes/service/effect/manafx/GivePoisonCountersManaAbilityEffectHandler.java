@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GivePoisonCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
@@ -40,6 +41,6 @@ public class GivePoisonCountersManaAbilityEffectHandler implements ManaAbilityEf
         int amount = amountEvaluationService.evaluate(gameData, poison.amount(),
                 AmountContext.forManaAbility(permanent, playerId));
         lifeSupport.applyPoisonCounters(gameData, playerId, amount,
-                permanent.getCard().getName(), playerId);
+                FaceDownVisibility.publicName(gameData, permanent), playerId);
     }
 }

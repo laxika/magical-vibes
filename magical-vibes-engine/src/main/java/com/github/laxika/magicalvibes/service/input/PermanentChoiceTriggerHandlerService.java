@@ -613,8 +613,8 @@ public class PermanentChoiceTriggerHandlerService {
 
         Permanent ownTarget = gameQueryService.findPermanentById(gameData, pmot.ownTargetId());
         Permanent opponentTarget = gameQueryService.findPermanentById(gameData, permanentId);
-        String ownName = ownTarget != null ? ownTarget.getCard().getName() : pmot.ownTargetId().toString();
-        String oppName = opponentTarget != null ? opponentTarget.getCard().getName() : permanentId.toString();
+        String ownName = ownTarget != null ? FaceDownVisibility.publicName(gameData, ownTarget) : pmot.ownTargetId().toString();
+        String oppName = opponentTarget != null ? FaceDownVisibility.publicName(gameData, opponentTarget) : permanentId.toString();
         
         gameLogService.append(gameData, GameLog.builder().card(pmot.sourceCard()).text("'s ability targets " + ownName + " and " + oppName + ".").build());
         log.info("Game {} - {} upkeep trigger targets {} and {}",
@@ -639,7 +639,7 @@ public class PermanentChoiceTriggerHandlerService {
 
     public void handleETBSpellTargetTrigger(GameData gameData, UUID cardId, PermanentChoiceContext.ETBSpellTargetTrigger etbStt) {
         Permanent targetPermanent = gameQueryService.findPermanentById(gameData, cardId);
-        String targetName = targetPermanent == null ? "" : targetPermanent.getCard().getName();
+        String targetName = targetPermanent == null ? "" : FaceDownVisibility.publicName(gameData, targetPermanent);
         Zone targetZone = targetPermanent == null ? Zone.STACK : null;
         if (targetPermanent == null) {
             for (StackEntry se : gameData.stack) {
@@ -919,7 +919,7 @@ public class PermanentChoiceTriggerHandlerService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent p : battlefield) {
-                if (p.getId().equals(targetId)) return p.getCard().getName();
+                if (p.getId().equals(targetId)) return FaceDownVisibility.publicName(gameData, p);
             }
         }
 

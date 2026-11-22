@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.RecordedCoinFlip;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinOnEnterEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EntryReplacementHandlerBean;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CoinFlipService;
@@ -89,7 +90,7 @@ public class FlipCoinOnEnterEffectHandler implements EntryReplacementHandlerBean
     private void applyResult(GameData gameData, UUID controllerId, Permanent enteringPermanent,
                              FlipCoinOnEnterEffect flipEffect, CoinFlipService.CoinFlipResult result) {
         boolean heads = result.heads();
-        String sourceName = enteringPermanent.getCard().getName();
+        String sourceName = FaceDownVisibility.publicName(gameData, enteringPermanent);
 
         String flipLog = heads
                 ? gameData.playerIdToName.get(controllerId) + " wins the coin flip for " + sourceName

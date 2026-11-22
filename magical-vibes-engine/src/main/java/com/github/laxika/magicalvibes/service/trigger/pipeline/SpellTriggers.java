@@ -62,6 +62,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -479,7 +480,7 @@ public class SpellTriggers {
                         .withTreasureManaSpentToActivate(activation.treasureManaSpent());
                 if (!activationTriggers(gameData, perm, ownerId, watching, activation, lifePaid, context)) continue;
                 boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
-                        watching.ability(), perm.getCard(), perm, ownerId, perm.getCard().getName() + "'s ability",
+                        watching.ability(), perm.getCard(), perm, ownerId, FaceDownVisibility.publicName(gameData, perm) + "'s ability",
                         context, activationRecord(watching, activation, lifePaid)));
                 if (triggered) {
                     gameLogService.append(gameData, GameLog.abilityTriggers(perm.getCard()));
@@ -1066,7 +1067,7 @@ public class SpellTriggers {
                 : copy.getXValue() * copiedCard.getParsedManaCost().getXSymbolCount());
         Card sourceCard = match.permanent().getCard();
         return triggeredAbilityStackService.put(match.gameData(), new TriggeredAbilityRequest(ability, sourceCard,
-                match.permanent(), match.controllerId(), sourceCard.getName() + "'s ability", context, entry -> {
+                match.permanent(), match.controllerId(), FaceDownVisibility.publicName(match.gameData(), sourceCard) + "'s ability", context, entry -> {
                     entry.setTargetId(copied.copyingPlayerId());
                     entry.setNonTargeting(true);
                     entry.setTriggeringCardId(copiedCard.getId());

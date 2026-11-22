@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -56,7 +57,7 @@ public class GrantStaticEffectToTargetEffectHandler implements NormalEffectHandl
             }
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(),
-                    entry.getCard().getName(),
+                    FaceDownVisibility.sourceName(gameData, entry),
                     null,
                     entry.getControllerId(),
                     new GrantEffectEffect(grant.staticEffect(), Subjects.target(), durationFilter),

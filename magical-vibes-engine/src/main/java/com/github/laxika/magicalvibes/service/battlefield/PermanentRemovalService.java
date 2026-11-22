@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.DelayedExiledCardReturns;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
@@ -639,7 +640,7 @@ public class PermanentRemovalService {
             } else {
                 Permanent source = gameQueryService.findPermanentById(gameData, trackingSourceId);
                 riders.add(new DeathExileReplacement(
-                        "Exile it with " + (source != null ? source.getCard().getName() : "its source"),
+                        "Exile it with " + (source != null ? FaceDownVisibility.publicName(gameData, source) : "its source"),
                         DeathExileReplacement.Kind.TRACKED, null, source != null ? source.getCard() : null,
                         null, trackingSourceId));
             }
@@ -687,7 +688,7 @@ public class PermanentRemovalService {
         }
 
         for (Permanent source : graveyardService.exilesBattlefieldCardWithSources(gameData, target)) {
-            riders.add(new DeathExileReplacement("Exile it with " + source.getCard().getName(),
+            riders.add(new DeathExileReplacement("Exile it with " + FaceDownVisibility.publicName(gameData, source),
                     DeathExileReplacement.Kind.EXILED_WITH_PERMANENT, null, source.getCard(), null,
                     source.getId()));
         }
@@ -717,7 +718,7 @@ public class PermanentRemovalService {
         ReturnToHandReplacement returnToHand = findReturnToHandReplacement(gameData, target);
         if (returnToHand != null) {
             options.add(new DeathExileReplacement(
-                    "Return it to its owner's hand (" + returnToHand.source().getCard().getName() + ")",
+                    "Return it to its owner's hand (" + FaceDownVisibility.publicName(gameData, returnToHand.source()) + ")",
                     DeathExileReplacement.Kind.RETURN_TO_HAND, null, returnToHand.source().getCard(), null,
                     returnToHand.source().getId()));
         }
@@ -792,7 +793,7 @@ public class PermanentRemovalService {
                 controllerId, target.getId(), null,
                 new ChoiceContext.DeathExileReplacementChoice(target.getId(), options, inDepartureBatch),
                 options.stream().map(DeathExileReplacement::label).toList(),
-                "Choose which replacement effect applies to " + target.getCard().getName() + " dying."));
+                "Choose which replacement effect applies to " + FaceDownVisibility.publicName(gameData, target) + " dying."));
     }
 
     /**
@@ -1134,7 +1135,7 @@ public class PermanentRemovalService {
         }
         for (Card card : cards) {
             if (hand.stream().anyMatch(handCard -> handCard.getId().equals(card.getId()))) {
-                gameData.addFloatingEffect(FloatingContinuousEffect.onCard(source.getCard().getName(), source.getId(),
+                gameData.addFloatingEffect(FloatingContinuousEffect.onCard(FaceDownVisibility.publicName(gameData, source), source.getId(),
                         ownerId, new CardRevealedInHandEffect(), card.getId(), Zone.HAND, Duration.UNTIL_YOUR_NEXT_TURN));
             }
         }
@@ -1148,7 +1149,7 @@ public class PermanentRemovalService {
         }
         for (Card card : cards) {
             if (hand.stream().anyMatch(handCard -> handCard.getId().equals(card.getId()))) {
-                gameData.addFloatingEffect(FloatingContinuousEffect.onCard(source.getCard().getName(), source.getId(),
+                gameData.addFloatingEffect(FloatingContinuousEffect.onCard(FaceDownVisibility.publicName(gameData, source), source.getId(),
                         ownerId, new CardCantBePlayedFromHandEffect(), card.getId(), Zone.HAND, Duration.UNTIL_YOUR_NEXT_TURN));
             }
         }
@@ -2576,7 +2577,7 @@ public class PermanentRemovalService {
                 // The effect of the static ability continues with the timestamp it had on the battlefield
                 // (CR 613.7a), so abilities granted after it entered are not removed by it.
                 .ifPresent(effect -> gameData.putFloatingEffect(new FloatingContinuousEffect(
-                        UUID.randomUUID(), target.getCard().getName(), null, controllerId,
+                        UUID.randomUUID(), FaceDownVisibility.publicName(gameData, target), null, controllerId,
                         effect, null, null, new PermanentIsArtifactPredicate(),
                         Duration.UNTIL_END_OF_TURN, target.getTimestamp())));
         UUID ownerId = resolvePermanentOwner(gameData, target, controllerId);
@@ -3239,7 +3240,7 @@ public class PermanentRemovalService {
                 target.getCard(),
                 controllerId,
                 List.of(replacement),
-                target.getCard().getName()
+                FaceDownVisibility.publicName(gameData, target)
                         + " — Put it on top of its owner's library instead of putting it into a graveyard?",
                 target.getId(),
                 null,
@@ -3329,7 +3330,7 @@ public class PermanentRemovalService {
         Card dyingCard = dyingPermanent.getOriginalCard();
         long graveyardStay = gameData.graveyardEntryVersion(dyingCard.getId());
         TriggeredAbilityRequest request = new TriggeredAbilityRequest(ability, dyingCard, dyingPermanent,
-                controllerId, dyingCard.getName() + "'s " + keyword + " ability",
+                controllerId, FaceDownVisibility.publicName(gameData, dyingCard) + "'s " + keyword + " ability",
                 ConditionContext.forPermanent(dyingPermanent, controllerId), entry -> {
                     entry.setNonTargeting(true);
                     entry.setTriggeringCard(dyingCard.getId(), graveyardStay);
@@ -3505,7 +3506,7 @@ public class PermanentRemovalService {
             // the delayed returns above do.
             triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
                     removedPermanent.getCard(), controllerId,
-                    removedPermanent.getCard().getName() + "'s leaves-the-battlefield ability", effects));
+                    FaceDownVisibility.publicName(gameData, removedPermanent) + "'s leaves-the-battlefield ability", effects));
             phasingService.phaseInWhenSourceLeaves(gameData, removedPermanent.getId());
             return;
         }

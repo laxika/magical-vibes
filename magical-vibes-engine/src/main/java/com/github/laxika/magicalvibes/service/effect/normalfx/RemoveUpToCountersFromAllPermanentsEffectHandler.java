@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveUpToCountersFromAllPermanentsEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -68,12 +69,12 @@ public class RemoveUpToCountersFromAllPermanentsEffectHandler implements NormalE
         Map<String, Integer> occurrencesByName = new HashMap<>();
         Map<String, Integer> totalsByName = new HashMap<>();
         for (Permanent permanent : eligiblePermanents) {
-            totalsByName.merge(permanent.getCard().getName(), 1, Integer::sum);
+            totalsByName.merge(FaceDownVisibility.publicName(gameData, permanent), 1, Integer::sum);
         }
 
         Map<String, UUID> options = new LinkedHashMap<>();
         for (Permanent permanent : eligiblePermanents) {
-            String name = permanent.getCard().getName();
+            String name = FaceDownVisibility.publicName(gameData, permanent);
             int occurrence = occurrencesByName.merge(name, 1, Integer::sum);
             String label = totalsByName.get(name) == 1
                     ? name

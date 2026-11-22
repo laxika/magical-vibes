@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
@@ -82,7 +83,7 @@ public class TargetCreatureBecomesSubtypeUntilEndOfTurnEffectHandler implements 
                                          List<CardSubtype> subtypes) {
         for (int i = 0; i < subtypes.size(); i++) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                    UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(),
                     entry.getControllerId(),
                     new GrantSubtypeEffect(subtypes.get(i), Subjects.target(), i == 0),
                     permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));

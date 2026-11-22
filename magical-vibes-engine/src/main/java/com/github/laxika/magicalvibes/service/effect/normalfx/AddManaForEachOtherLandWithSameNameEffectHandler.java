@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AddManaForEachOtherLandWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AnyColorManaChoiceSupport;
@@ -78,7 +79,7 @@ public class AddManaForEachOtherLandWithSameNameEffectHandler implements NormalE
         }
         String playerName = gameData.playerIdToName.get(recipientId);
         gameLogService.append(gameData, GameLog.text(playerName + " adds " + matchingLandCount
-                + " additional mana of a type produced by " + tappedLand.getCard().getName() + "."));
+                + " additional mana of a type produced by " + FaceDownVisibility.publicName(gameData, tappedLand) + "."));
         log.info("Game {} - {} adds {} additional mana for lands named {}", gameData.id, playerName,
                 matchingLandCount, tappedLandName);
     }

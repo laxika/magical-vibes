@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromControlledCreatureCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromControlledCreaturesCost;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
@@ -95,7 +96,7 @@ public class RemoveCounterFromCreatureCostHandler implements PermanentChoiceCost
         pendingBulkRemoval = 0;
         int available = getCounterCount(chosen);
         if (available < toRemove) {
-            throw new IllegalStateException("Not enough " + counterLabel() + " counters on " + chosen.getCard().getName());
+            throw new IllegalStateException("Not enough " + counterLabel() + " counters on " + FaceDownVisibility.publicName(gameData, chosen));
         }
 
         removeCounters(chosen, toRemove);

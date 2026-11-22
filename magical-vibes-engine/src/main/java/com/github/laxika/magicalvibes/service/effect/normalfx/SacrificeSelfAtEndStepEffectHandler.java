@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -74,7 +75,7 @@ public class SacrificeSelfAtEndStepEffectHandler implements NormalEffectHandlerB
         gameData.temporaryGlobalTriggeredAbilities.add(sacrificeAtNextEndStep(
                 sacrifice, sourceId, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId()));
 
-        String logEntry = source.getCard().getName() + " will be sacrificed at the beginning of the next end step.";
+        String logEntry = FaceDownVisibility.publicName(gameData, source) + " will be sacrificed at the beginning of the next end step.";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} scheduled for sacrifice at end step", gameData.id, source.getCard().getName());
     }

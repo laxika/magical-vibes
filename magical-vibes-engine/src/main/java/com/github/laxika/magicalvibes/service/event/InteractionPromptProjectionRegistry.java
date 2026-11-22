@@ -1083,7 +1083,7 @@ public class InteractionPromptProjectionRegistry {
     private InteractionPromptMessage projectIllicitAuctionBidChoice(
             GameData gameData, PendingInteraction.IllicitAuctionBidChoice interaction) {
         Permanent target = findPermanent(gameData, interaction.targetPermanentId());
-        String targetName = target != null ? target.getCard().getName() : "the creature";
+        String targetName = target != null ? FaceDownVisibility.publicName(gameData, target) : "the creature";
         String highBidderName =
                 gameData.playerIdToName.getOrDefault(interaction.highBidderId(), "the high bidder");
         String prompt = "Bid life for control of " + targetName + " (current high bid: "

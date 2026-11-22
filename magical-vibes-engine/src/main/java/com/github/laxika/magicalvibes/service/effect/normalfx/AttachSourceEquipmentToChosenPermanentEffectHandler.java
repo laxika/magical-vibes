@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,6 @@ public class AttachSourceEquipmentToChosenPermanentEffectHandler implements Norm
         }
 
         gameLogService.append(gameData,
-                GameLog.cardThen(entry.getCard(), " is now attached to " + target.getCard().getName() + "."));
+                GameLog.cardThen(entry.getCard(), " is now attached to " + FaceDownVisibility.publicName(gameData, target) + "."));
     }
 }

@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.WintersChillEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -104,7 +105,7 @@ public class WintersChillEffectHandler implements NormalEffectHandlerBean {
             }
 
             gameData.rerunCurrentEffectAfterInteraction = true;
-            String prompt = sourceName + " — for " + target.getCard().getName()
+            String prompt = sourceName + " — for " + FaceDownVisibility.publicName(gameData, target)
                     + ", may pay {1} or {2}.";
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     controllerId, null, null,

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkerDealDamageAndReceivePowerDamageEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -69,7 +70,7 @@ public class PlaneswalkerDealDamageAndReceivePowerDamageEffectHandler implements
             gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" deals " + targetPower + " damage to " + cardName + ". (" + cardName + " now has " + newLoyalty + " loyalty.)").build());
             // The target creature is the damage source here, so its lifelink applies to this damage.
             StackEntry targetDamageEntry = StackEntry.carrier(target.getCard(),
-                    targetControllerId, target.getCard().getName() + "'s ability", List.of(), null, target.getId());
+                    targetControllerId, FaceDownVisibility.publicName(gameData, target) + "'s ability", List.of(), null, target.getId());
             targetDamageEntry.setSourcePermanentSnapshot(target);
             damageSupport.checkSpellLifelink(gameData, targetDamageEntry, targetPower);
             log.info("Game {} - {} takes {} damage from {}, loyalty now {}",

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ClassLevelUpEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -54,7 +55,7 @@ public class ClassLevelUpEffectHandler implements NormalEffectHandlerBean {
                 ? Triggers.reachesLevelTwo() : Triggers.reachesLevelThree(),
                 levelUp.gainedEffects().toArray(CardEffect[]::new));
         if (triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability, card, source,
-                entry.getControllerId(), card.getName() + "'s triggered ability",
+                entry.getControllerId(), FaceDownVisibility.publicName(gameData, card) + "'s triggered ability",
                 ConditionContext.forPermanent(source, entry.getControllerId()), stamped -> {
                 }))) {
             gameLogService.append(gameData, GameLog.cardThen(card, "'s triggered ability triggers."));

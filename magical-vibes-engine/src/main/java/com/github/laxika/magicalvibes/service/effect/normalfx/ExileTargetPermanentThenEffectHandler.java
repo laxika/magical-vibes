@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -76,7 +77,7 @@ public class ExileTargetPermanentThenEffectHandler implements NormalEffectHandle
         permanentRemovalService.beginPermanentLeaveBatch(gameData);
         try {
             permanentRemovalService.removePermanentToExile(gameData, target);
-            gameLogService.append(gameData, GameLog.text(target.getCard().getName() + " is exiled."));
+            gameLogService.append(gameData, GameLog.text(FaceDownVisibility.publicName(gameData, target) + " is exiled."));
             log.info("Game {} - {} is exiled by {}",
                     gameData.id, target.getCard().getName(), entry.getCard().getName());
             permanentRemovalService.removeOrphanedAuras(gameData);

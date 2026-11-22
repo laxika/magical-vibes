@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
 import com.github.laxika.magicalvibes.model.effect.TimeVaultReplacementEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatResult;
@@ -768,7 +769,7 @@ public class TurnProgressionService {
         if (accepted) {
             Permanent timeVault = gameQueryService.findPermanentById(gameData, sourcePermanentId);
             gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(
-                    timeVault == null ? "Time Vault" : timeVault.getCard().getName(), sourcePermanentId, controllerId,
+                    timeVault == null ? "Time Vault" : FaceDownVisibility.publicName(gameData, timeVault), sourcePermanentId, controllerId,
                     new SkipNextEffect(SkipKind.TURN), controllerId, Duration.PERMANENT));
             advanceTurn(gameData, false, false);
         } else {

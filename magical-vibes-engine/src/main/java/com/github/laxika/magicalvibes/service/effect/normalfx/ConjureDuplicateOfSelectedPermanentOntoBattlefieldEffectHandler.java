@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfSelectedPermanentOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -59,7 +60,7 @@ public class ConjureDuplicateOfSelectedPermanentOntoBattlefieldEffectHandler imp
 
         entry.getCreatedPermanentIds().add(permanent.getId());
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                " conjures a duplicate of " + selected.getCard().getName() + " onto the battlefield."));
+                " conjures a duplicate of " + FaceDownVisibility.publicName(gameData, selected) + " onto the battlefield."));
         if (conjuredCard.hasType(CardType.LAND)) {
             battlefieldEntryService.processLandETBEffects(gameData, controllerId, conjuredCard);
         } else {

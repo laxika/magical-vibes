@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLandBecomesBasicLandTypeUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +44,7 @@ public class TargetLandBecomesBasicLandTypeUntilSourceLeavesEffectHandler implem
         // A floating layer-4 effect stamped now (CR 613.7), so it applies after every type change
         // that already existed when the ability resolved, and ends when the source leaves.
         gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), source.getCard().getName(), source.getId(), entry.getControllerId(),
+                UUID.randomUUID(), FaceDownVisibility.publicName(gameData, source), source.getId(), entry.getControllerId(),
                 new GrantSubtypeEffect(e.subtype(), Subjects.target(), true),
                 target.getId(), null, null, e.duration(), 0));
         gameLogService.append(gameData, GameLog.cardTextCard(target.getCard(), " becomes a "

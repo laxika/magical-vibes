@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.combat.block;
 
 import com.github.laxika.magicalvibes.model.Permanent;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 
 /**
  * Renders a {@link BlockDenial} as the sentence shown to the player who tried to declare the block.
@@ -18,8 +19,8 @@ public class BlockDenialMessageService {
 
     /** Describes why {@code blocker} may not block {@code attacker}. */
     public String describe(BlockDenial denial, Permanent blocker, Permanent attacker) {
-        String blockerName = blocker.getCard().getName();
-        String attackerName = attacker.getCard().getName();
+        String blockerName = FaceDownVisibility.publicName(blocker);
+        String attackerName = FaceDownVisibility.publicName(attacker);
         return switch (denial.reason()) {
             case CANT_BE_BLOCKED -> attackerName + " can't be blocked";
             case FLYING -> blockerName + " cannot block " + attackerName + " (flying)";

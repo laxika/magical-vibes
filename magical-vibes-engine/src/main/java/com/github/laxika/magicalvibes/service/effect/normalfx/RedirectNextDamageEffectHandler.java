@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectRole;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -115,11 +116,11 @@ public class RedirectNextDamageEffectHandler implements NormalEffectHandlerBean 
                         sourcePermanentId, controllerId, destinationId));
         gameLogService.append(gameData, GameLog.text(
                 "The next time damage would be dealt to "
-                        + (sourcePermanent == null ? "this creature" : sourcePermanent.getCard().getName())
+                        + (sourcePermanent == null ? "this creature" : FaceDownVisibility.publicName(gameData, sourcePermanent))
                         + " and/or " + gameData.playerIdToName.get(controllerId)
                         + " this turn, that damage is dealt to "
                         + (destinationPermanent == null ? gameData.playerIdToName.get(destinationId)
-                        : destinationPermanent.getCard().getName()) + " instead."));
+                        : FaceDownVisibility.publicName(gameData, destinationPermanent)) + " instead."));
     }
 
     private UUID resolveRole(GameData gameData, StackEntry entry, RedirectRole role) {
@@ -166,6 +167,6 @@ public class RedirectNextDamageEffectHandler implements NormalEffectHandlerBean 
     }
 
     private String describe(GameData gameData, UUID id, Permanent permanent) {
-        return permanent != null ? permanent.getCard().getName() : gameData.playerIdToName.get(id);
+        return permanent != null ? FaceDownVisibility.publicName(gameData, permanent) : gameData.playerIdToName.get(id);
     }
 }

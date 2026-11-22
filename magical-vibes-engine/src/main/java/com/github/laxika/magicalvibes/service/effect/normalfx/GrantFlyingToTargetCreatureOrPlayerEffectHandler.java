@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlyingToTargetCreatureOrPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -63,7 +64,7 @@ public class GrantFlyingToTargetCreatureOrPlayerEffectHandler implements NormalE
                         Subjects.target()),
                 target.getId(), null, null,
                 Duration.UNTIL_END_OF_TURN, 0));
-        gameLogService.append(gameData, GameLog.text(target.getCard().getName()
+        gameLogService.append(gameData, GameLog.text(FaceDownVisibility.publicName(gameData, target)
                 + " gains flying until end of turn."));
     }
 }

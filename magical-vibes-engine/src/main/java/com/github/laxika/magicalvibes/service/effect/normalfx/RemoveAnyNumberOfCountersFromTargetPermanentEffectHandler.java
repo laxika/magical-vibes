@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAnyNumberOfCountersFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -67,7 +68,7 @@ public class RemoveAnyNumberOfCountersFromTargetPermanentEffectHandler implement
         String cardName = entry.getCard().getName();
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(
                 entry.getControllerId(), available,
-                "Choose how many counters to remove from " + target.getCard().getName()
+                "Choose how many counters to remove from " + FaceDownVisibility.publicName(gameData, target)
                         + " (0-" + available + ").", cardName));
     }
 

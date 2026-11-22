@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnMatchingPermanentsUnlessOwnerPaysEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -90,7 +91,7 @@ public class ReturnMatchingPermanentsUnlessOwnerPaysEffectHandler implements Nor
             Permanent permanent = gameQueryService.findPermanentById(gameData, current);
             UUID ownerId = permanent == null ? null : findOwner(gameData, current);
             if (permanent != null && ownerId != null) {
-                String prompt = "Pay " + effect.manaCost() + "? If you don't, " + permanent.getCard().getName()
+                String prompt = "Pay " + effect.manaCost() + "? If you don't, " + FaceDownVisibility.publicName(gameData, permanent)
                         + " is returned to its owner's hand. (" + sourceCard.getName() + ")";
                 gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                         sourceCard, ownerId, List.of(effect), prompt, current, effect.manaCost()));

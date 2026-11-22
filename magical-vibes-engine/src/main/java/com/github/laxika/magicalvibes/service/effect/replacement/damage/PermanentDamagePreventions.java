@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.service.CreatureDamageStep;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatDamageService;
@@ -71,7 +72,7 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
         all.add(pure("SourcePreventedFromDealing", PREVENTION,
                 ctx -> !ctx.combat() && preventionSource(ctx) != null
                         && gameQueryService.isPreventedFromDealingDamage(ctx.gameData(), preventionSource(ctx)),
-                ctx -> "Prevent all damage " + preventionSource(ctx).getCard().getName() + " would deal",
+                ctx -> "Prevent all damage " + FaceDownVisibility.publicName(ctx.gameData(), preventionSource(ctx)) + " would deal",
                 PermanentDamageCandidateSource::prevented,
                 (ctx, result) -> logSourcePrevented(ctx)));
         all.add(pure("SourceDamagePrevented", PREVENTION,
@@ -197,7 +198,7 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
         all.add(effect("PreventCombatDamageAndExile", PREVENTION,
                 ctx -> ctx.combat()
                         && prevention.hasPreventCombatDamageToSelfAndExile(ctx.gameData(), ctx.target()),
-                ctx -> ctx.target().getCard().getName() + ": prevent the combat damage and exile that many cards",
+                ctx -> FaceDownVisibility.publicName(ctx.gameData(), ctx.target()) + ": prevent the combat damage and exile that many cards",
                 ctx -> {
                     if (!prevention.applyPreventCombatDamageToSelfAndExile(ctx.gameData(), ctx.target(), ctx.amount())
                             || ctx.targetProtectedFromPrevention()) {
@@ -217,7 +218,7 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                 ctx -> ctx.combat() && ctx.damageSource() != null
                         && gameQueryService.shufflesTargetIntoOwnersLibraryAfterCombatDamagePrevention(
                         ctx.gameData(), ctx.damageSource(), ctx.target()),
-                ctx -> "Prevent the damage and shuffle " + ctx.target().getCard().getName() + " into its owner's library",
+                ctx -> "Prevent the damage and shuffle " + FaceDownVisibility.publicName(ctx.gameData(), ctx.target()) + " into its owner's library",
                 ctx -> {
                     combatDamageService.getObject().queueShuffleAfterCombatDamage(ctx.gameData(), ctx.target());
                     boolean preventable = !ctx.targetProtectedFromPrevention()

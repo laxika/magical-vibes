@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureAndEachOpponentEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -57,7 +58,7 @@ public class TargetCreatureDealsPowerDamageToEachOtherCreatureAndEachOpponentEff
         // "deals damage" triggers key off the creature rather than off the spell.
         StackEntry damageEntry = StackEntry.carrier(source.getCard(),
                 sourceControllerId,
-                source.getCard().getName() + "'s ability",
+                FaceDownVisibility.publicName(gameData, source) + "'s ability",
                 List.of(),
                 null,
                 source.getId());

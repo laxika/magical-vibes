@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUnlessControllerPaysEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -68,7 +69,7 @@ public class ExileTargetPermanentUnlessControllerPaysEffectHandler implements No
             return;
         }
 
-        String prompt = "Pay " + manaCost + "? If you don't, " + target.getCard().getName()
+        String prompt = "Pay " + manaCost + "? If you don't, " + FaceDownVisibility.publicName(gameData, target)
                 + " is exiled. (" + entry.getCard().getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetControllerId, List.of(e), prompt,

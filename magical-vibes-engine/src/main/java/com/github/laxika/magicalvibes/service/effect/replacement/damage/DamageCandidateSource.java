@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.GlobalDamageMultiplyingEffect
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.DamagePortion;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.LayerSystemService;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
@@ -386,7 +387,12 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
     }
 
     private static String sourceName(DamageEvent view) {
-        return view.entry().getCard() == null ? "a source" : view.entry().getCard().getName();
+        StackEntry entry = view.entry();
+        if (entry.getCard() == null) {
+            return "a source";
+        }
+        Permanent source = entry.getSourcePermanentSnapshot();
+        return source != null && source.isFaceDown() ? FaceDownVisibility.publicName(source) : entry.getCard().getName();
     }
 
     private static <T> T withUnpreventable(GameData gameData, DamageEvent view, Supplier<T> body) {

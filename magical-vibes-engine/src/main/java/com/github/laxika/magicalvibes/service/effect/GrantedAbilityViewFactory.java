@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetColorMode;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
 import com.github.laxika.magicalvibes.networking.model.GrantedAbilityView;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.stereotype.Component;
 
@@ -103,7 +104,7 @@ public class GrantedAbilityViewFactory {
         if (chosenProtection != null && remainingProtection.remove(chosenProtection)) {
             result.add(new GrantedAbilityView(
                     formatProtectionColors(Set.of(chosenProtection)),
-                    permanent.getCard().getName()));
+                    FaceDownVisibility.publicName(gameData, permanent)));
         }
         if (!remainingProtection.isEmpty()) {
             result.add(new GrantedAbilityView(formatProtectionColors(remainingProtection), null));

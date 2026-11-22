@@ -13,10 +13,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 /**
- * The one rule for whether a spell or ability on the stack gives away a face-down card (CR 708.2, 708.5): the stack
- * views, the name prompts, the game log and every text that names such an object ask it.
+ * The one rule for whether a spell or ability on the stack, or a permanent, gives away a face-down card (CR 708.2,
+ * 708.5): the stack views, the name prompts, the game log and every text that names such an object ask it.
  */
 public final class FaceDownVisibility {
 
@@ -131,6 +132,26 @@ public final class FaceDownVisibility {
     }
 
     /**
+     * The name of {@code entry}'s source where everybody reads it: the log, or what an effect is shown as granted by.
+     */
+    public static String sourceName(GameData gameData, StackEntry entry) {
+        return nameShownTo(gameData, entry, null);
+    }
+
+    /**
+     * {@code permanent}'s name where everybody reads it: none while it's face down on the battlefield or phased out
+     * (CR 708.5). Once it has left, its card's name, which its owner reveals as it moves (CR 708.9).
+     */
+    public static String publicName(GameData gameData, Permanent permanent) {
+        return permanent.isFaceDown() ? publicName(gameData, permanent.getCard()) : permanent.getCard().getName();
+    }
+
+    /** {@link #publicName(GameData, Permanent)} for a permanent that is on the battlefield as the text is built. */
+    public static String publicName(Permanent permanent) {
+        return permanent.getPublicName();
+    }
+
+    /**
      * {@code logEntry} as the log, which every player reads, keeps it: with no card of a face-down spell on the stack
      * or of a face-down permanent. A card carries its printing, so even a nameless copy of its face-down
      * characteristics would identify it.
@@ -138,6 +159,12 @@ public final class FaceDownVisibility {
     static GameLogEntry redact(GameData gameData, GameLogEntry logEntry) {
         List<GameLogSegment> segments = new ArrayList<>(logEntry.segments());
         boolean changed = false;
+        if (!segments.isEmpty() && segments.getFirst() instanceof GameLogSegment.Text text
+                && text.value().startsWith("a face-down ")) {
+            // A label that text built for a hidden name begins the sentence.
+            segments.set(0, GameLogSegment.text(capitalized(text.value())));
+            changed = true;
+        }
         for (int i = 0; i < segments.size(); i++) {
             if (segments.get(i) instanceof GameLogSegment.CardSegment segment) {
                 String hidden = faceDownLabel(gameData, segment.card().getId());
@@ -163,11 +190,12 @@ public final class FaceDownVisibility {
                 return entry.isCastFaceDown() ? StackEntry.FACE_DOWN_SPELL : null;
             }
         }
-        return findFaceDownPermanent(gameData, cardId) == null ? null : "a face-down permanent";
+        return findFaceDownPermanent(gameData, cardId) == null ? null : Permanent.FACE_DOWN_PERMANENT;
     }
 
     private static Permanent findFaceDownPermanent(GameData gameData, UUID cardId) {
-        return gameData.playerBattlefields.values().stream()
+        return Stream.concat(gameData.playerBattlefields.values().stream(),
+                        gameData.phasedOutPermanents.values().stream())
                 .filter(Objects::nonNull)
                 .flatMap(List::stream)
                 .filter(permanent -> permanent.isFaceDown()

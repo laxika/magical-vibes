@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesCopyOfExiledCreatureWithSourceEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -55,7 +56,7 @@ public class TargetCreatureBecomesCopyOfExiledCreatureWithSourceEffectHandler
             return;
         }
 
-        String originalName = target.getCard().getName();
+        String originalName = FaceDownVisibility.publicName(gameData, target);
         permanentCopierService.applyCloneCopy(target, exiled.card(), null, null, Set.of());
         gameLogService.append(gameData,
                 GameLog.textCardText(originalName + " becomes a copy of ", exiled.card(), "."));

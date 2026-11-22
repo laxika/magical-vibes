@@ -166,6 +166,7 @@ import com.github.laxika.magicalvibes.model.rules.LibraryEvent;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.rules.TapEvent;
 import com.github.laxika.magicalvibes.service.CardRevealService;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
@@ -406,11 +407,11 @@ public class AbilityActivationService {
             throw new IllegalStateException("Creature has summoning sickness");
         }
         if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
-            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
+            throw new IllegalStateException("Activated abilities of " + FaceDownVisibility.publicName(gameData, permanent) + " can't be activated (Arrest)");
         }
         // Serra Bestiary / Katabatic Winds: tapping for mana is a {T} ability, so it is locked too.
         if (gameQueryService.isLockedFromActivatingTapAbilities(gameData, permanent)) {
-            throw new IllegalStateException("Tap abilities of " + permanent.getCard().getName() + " can't be activated");
+            throw new IllegalStateException("Tap abilities of " + FaceDownVisibility.publicName(gameData, permanent) + " can't be activated");
         }
         validateNotBlockedByStaticAbilityLock(gameData, permanent, true);
         validateNotBlockedByOwnTurnOnlyRestriction(gameData, playerId);
@@ -637,7 +638,7 @@ public class AbilityActivationService {
         }
         for (int amount : amounts) {
             if (amount > 0) {
-                lifeSupport.applyLifePayment(gameData, playerId, amount, permanent.getCard().getName());
+                lifeSupport.applyLifePayment(gameData, playerId, amount, FaceDownVisibility.publicName(gameData, permanent));
             }
         }
     }
@@ -4346,10 +4347,10 @@ public class AbilityActivationService {
                 if (!validTargetIds.validPlayerIds().isEmpty()) {
                     playerInputService.beginAnyTargetChoice(gameData, choosingPlayerId,
                             validTargetIds.validPermanentIds(), validTargetIds.validPlayerIds(),
-                            permanent.getCard().getName() + " — choose the target.");
+                            FaceDownVisibility.publicName(gameData, permanent) + " — choose the target.");
                 } else {
                     playerInputService.beginPermanentChoice(gameData, choosingPlayerId, validOpponentTargetIds,
-                            permanent.getCard().getName() + " — choose the target.");
+                            FaceDownVisibility.publicName(gameData, permanent) + " — choose the target.");
                 }
                 mutationCoordinator.invalidateAllPlayerViews(gameData);
                 return;
@@ -4399,10 +4400,10 @@ public class AbilityActivationService {
             if (!validSecondTargets.validPlayerIds().isEmpty()) {
                 playerInputService.beginAnyTargetChoice(gameData, choosingPlayerId,
                         validSecondTargets.validPermanentIds(), validSecondTargets.validPlayerIds(),
-                        permanent.getCard().getName() + " — choose the second target.");
+                        FaceDownVisibility.publicName(gameData, permanent) + " — choose the second target.");
             } else {
                 playerInputService.beginPermanentChoice(gameData, choosingPlayerId, validOpponentTargetIds,
-                        permanent.getCard().getName() + " — choose the second target.");
+                        FaceDownVisibility.publicName(gameData, permanent) + " — choose the second target.");
             }
             mutationCoordinator.invalidateAllPlayerViews(gameData);
             return;
@@ -4523,7 +4524,7 @@ public class AbilityActivationService {
                     playerId, maxCounters,
                     "Choose how many " + pendingVariableCounterCost.counterType().name().toLowerCase().replace('_', ' ')
                             + " counters to remove as an activation cost.",
-                    permanent.getCard().getName()));
+                    FaceDownVisibility.publicName(gameData, permanent)));
             return;
         }
 
@@ -4542,7 +4543,7 @@ public class AbilityActivationService {
                         damageAssignments, counterKinds, 1, List.of());
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null, kindChoice, kindChoice.options(),
-                        permanent.getCard().getName() + " - Choose a kind of counter to remove."));
+                        FaceDownVisibility.publicName(gameData, permanent) + " - Choose a kind of counter to remove."));
                 return;
             }
         }
@@ -4557,7 +4558,7 @@ public class AbilityActivationService {
                         damageAssignments, counterKinds, pendingSourceCounterKindCost.count(), List.of());
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         playerId, null, null, kindChoice, kindChoice.options(),
-                        permanent.getCard().getName() + " - Choose a kind of counter to remove (1 of "
+                        FaceDownVisibility.publicName(gameData, permanent) + " - Choose a kind of counter to remove (1 of "
                                 + pendingSourceCounterKindCost.count() + ")."));
                 return;
             }
@@ -5009,7 +5010,7 @@ public class AbilityActivationService {
                         new PendingInteraction.RevealAnyNumberOfCardsFromHandChoice(
                                 playerId,
                                 validCards.stream().map(Card::getId).toList(),
-                                permanent.getCard().getName(),
+                                FaceDownVisibility.publicName(gameData, permanent),
                                 null,
                                 new PendingInteraction.ActivatedAbilityRevealContext(
                                         permanent.getId(), effectiveIndex, effectiveXValue, effectiveXValue, targetId,
@@ -5030,7 +5031,7 @@ public class AbilityActivationService {
                             new PendingInteraction.RevealAnyNumberOfCardsFromHandChoice(
                                     playerId,
                                     pairs.stream().flatMap(List::stream).map(Card::getId).distinct().toList(),
-                                    permanent.getCard().getName(),
+                                    FaceDownVisibility.publicName(gameData, permanent),
                                     null,
                                     new PendingInteraction.ActivatedAbilityRevealContext(
                                             permanent.getId(), effectiveIndex, effectiveXValue, 2, targetId,
@@ -5607,7 +5608,7 @@ public class AbilityActivationService {
                         new MultiPermanentChoiceContext.ActivatedAbilityExileArtifactsCost(
                                 playerId, sourceId, effectiveIndex, effectiveXValue, targetId, targetZone,
                                 targetIds, damageAssignments, ability, new Permanent(permanent)),
-                        permanent.getCard().getName() + " — choose "
+                        FaceDownVisibility.publicName(gameData, permanent) + " — choose "
                                 + (exileArtifactsCost.allowsAdditionalArtifacts()
                                 ? "one or more other artifacts"
                                 : "exactly " + exileArtifactsCost.minimumCount()
@@ -5660,9 +5661,9 @@ public class AbilityActivationService {
                         ? Math.min(sacrificeAnyNumberCost.maximumCount(), candidates.size())
                         : candidates.size();
                 String sacrificeChoiceDescription = sacrificeAnyNumberCost.maximumCount() > 0
-                        ? permanent.getCard().getName() + " — choose up to " + maximumCount
+                        ? FaceDownVisibility.publicName(gameData, permanent) + " — choose up to " + maximumCount
                                 + " permanents to sacrifice as a cost."
-                        : permanent.getCard().getName()
+                        : FaceDownVisibility.publicName(gameData, permanent)
                                 + " — choose any number of permanents to sacrifice as a cost.";
                 playerInputService.beginMultiPermanentChoice(gameData, playerId, candidates, maximumCount,
                         new MultiPermanentChoiceContext.ActivatedAbilitySacrificeAnyNumberCost(
@@ -5776,7 +5777,7 @@ public class AbilityActivationService {
                         targetIds, damageAssignments, candidates,
                         craftMaterialCost.minimumCount(), craftMaterialCost.allowsAdditionalMaterials()
                                 ? candidates.size() : craftMaterialCost.minimumCount(),
-                        permanent.getCard().getName() + " - choose " + craftMaterialPrompt(craftMaterialCost) + "."));
+                        FaceDownVisibility.publicName(gameData, permanent) + " - choose " + craftMaterialPrompt(craftMaterialCost) + "."));
                 mutationCoordinator.invalidateAllPlayerViews(gameData);
                 return;
             }
@@ -6019,10 +6020,10 @@ public class AbilityActivationService {
     private Permanent enchantedPermanentForTapCost(GameData gameData, Permanent aura) {
         Permanent enchanted = aura.isAttached() ? gameQueryService.findPermanentById(gameData, aura.getAttachedTo()) : null;
         if (enchanted == null) {
-            throw new IllegalStateException(aura.getCard().getName() + " is not attached to a permanent");
+            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, aura) + " is not attached to a permanent");
         }
         if (enchanted.isTapped()) {
-            throw new IllegalStateException(enchanted.getCard().getName() + " is already tapped");
+            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, enchanted) + " is already tapped");
         }
         return enchanted;
     }
@@ -7095,7 +7096,7 @@ public class AbilityActivationService {
 
         // Arrest check: block all activated abilities of enchanted creature
         if (gameQueryService.hasAuraWithEffect(gameData, permanent, EnchantedCreatureCantActivateAbilitiesEffect.class)) {
-            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName() + " can't be activated (Arrest)");
+            throw new IllegalStateException("Activated abilities of " + FaceDownVisibility.publicName(gameData, permanent) + " can't be activated (Arrest)");
         }
         validateNotBlockedByStaticAbilityLock(gameData, permanent, isManaAbility(ability));
         validateNotBlockedByOpponentsTurnRestriction(gameData, playerId, permanent);
@@ -7126,7 +7127,7 @@ public class AbilityActivationService {
         if (ability.isRequiresTap()) {
             // Serra Bestiary / Katabatic Winds: only activated abilities with {T} in their costs are locked.
             if (gameQueryService.isLockedFromActivatingTapAbilities(gameData, permanent)) {
-                throw new IllegalStateException("Tap abilities of " + permanent.getCard().getName() + " can't be activated");
+                throw new IllegalStateException("Tap abilities of " + FaceDownVisibility.publicName(gameData, permanent) + " can't be activated");
             }
             if (permanent.isTapped() && !canUntapSourceToPayTapCost(gameData, permanent, ability)) {
                 throw new IllegalStateException("Permanent is already tapped");
@@ -7798,7 +7799,7 @@ public class AbilityActivationService {
         if (imprintedCopyEffect != null) {
             Card imprintedCard = gameData.getImprintedCard(permanent.getCard());
             if (imprintedCard == null || gameData.findExiledCard(imprintedCard.getId()) == null) {
-                throw new IllegalStateException("No card has been exiled with " + permanent.getCard().getName());
+                throw new IllegalStateException("No card has been exiled with " + FaceDownVisibility.publicName(gameData, permanent));
             }
             List<Card> exiledWithSource = gameData.getCardsExiledByPermanent(permanent.getId());
             int requiredX = exiledWithSource.size() > 1
@@ -8595,7 +8596,7 @@ public class AbilityActivationService {
                             choice.required(), pickedKinds);
                     interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                             player.getId(), null, null, nextChoice, nextChoice.options(),
-                            source.getCard().getName() + " - Choose a kind of counter to remove ("
+                            FaceDownVisibility.publicName(gameData, source) + " - Choose a kind of counter to remove ("
                                     + (pickedKinds.size() + 1) + " of " + choice.required() + ")."));
                     return;
                 }
@@ -8909,7 +8910,7 @@ public class AbilityActivationService {
                 && permanent.getCounterCount(ability.getRequiredSourceCounterType()) < ability.getRequiredSourceCounterCount()) {
             throw new IllegalStateException("Activate only if there are " + ability.getRequiredSourceCounterCount()
                     + " or more " + ability.getRequiredSourceCounterType().name().toLowerCase() + " counters on "
-                    + permanent.getCard().getName());
+                    + FaceDownVisibility.publicName(gameData, permanent));
         }
 
         // Predicate-count restriction (e.g. Leechridden Swamp's "Activate only if you control two or more black permanents")
@@ -10965,13 +10966,13 @@ public class AbilityActivationService {
         if (gameQueryService.hasAuraWithEffect(gameData, permanent,
                 effect -> effect instanceof EnchantedPermanentAbilityLockEffect lock
                         && (lock.blocksManaAbilities() || !manaAbility))) {
-            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName()
+            throw new IllegalStateException("Activated abilities of " + FaceDownVisibility.publicName(gameData, permanent)
                     + " can't be activated (enchanted permanent lock)");
         }
         // Detain / Edifice of Authority: a floating lock forbids activating this permanent's
         // activated abilities (mana abilities included; triggered abilities are unaffected).
         if (gameQueryService.isLockedFromActivatingAbilities(gameData, permanent.getId())) {
-            throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName()
+            throw new IllegalStateException("Activated abilities of " + FaceDownVisibility.publicName(gameData, permanent)
                     + " can't be activated (detained)");
         }
         for (GameQueryService.ActiveStaticEffect<ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect> active
@@ -10986,8 +10987,8 @@ public class AbilityActivationService {
                         .withSourcePermanentId(p.getId());
                 if (predicateEvaluationService.matchesPermanentPredicate(
                         permanent, lock.predicate(), filterContext)) {
-                    throw new IllegalStateException("Activated abilities of " + permanent.getCard().getName()
-                            + " can't be activated (" + p.getCard().getName() + ")");
+                    throw new IllegalStateException("Activated abilities of " + FaceDownVisibility.publicName(gameData, permanent)
+                            + " can't be activated (" + FaceDownVisibility.publicName(gameData, p) + ")");
                 }
             }
         }
@@ -11017,7 +11018,7 @@ public class AbilityActivationService {
                 if (lockEffect == null) continue;
                 if (manaAbility && !lockEffect.blocksManaAbilities()) continue;
                 throw new IllegalStateException("Activated abilities of " + cardName
-                        + " can't be activated (" + p.getCard().getName() + ")");
+                        + " can't be activated (" + FaceDownVisibility.publicName(gameData, p) + ")");
             }
         }
     }

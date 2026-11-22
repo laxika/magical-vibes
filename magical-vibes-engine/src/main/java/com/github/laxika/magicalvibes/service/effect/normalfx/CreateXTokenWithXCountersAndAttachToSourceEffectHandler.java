@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateXTokenWithXCountersAndAttachToSourceEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -55,7 +56,7 @@ public class CreateXTokenWithXCountersAndAttachToSourceEffectHandler implements 
             // The controller chooses which of several created tokens the equipment attaches to.
             playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), createdIds,
                     new PermanentChoiceContext.AttachEquipmentToCreature(equipment.getId(), entry.getControllerId()),
-                    "Choose a token to attach " + equipment.getCard().getName() + " to.");
+                    "Choose a token to attach " + FaceDownVisibility.publicName(gameData, equipment) + " to.");
             return;
         }
 

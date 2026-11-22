@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import lombok.RequiredArgsConstructor;
@@ -66,7 +67,7 @@ public class BecomeCopyOfTargetCreaturePermanentlyEffectHandler implements Norma
         }
         additionalRetainedAbilities.forEach(ability ->
                 ability.effects().forEach(registration -> retainedTargetingEffects.add(registration.effect())));
-        String originalName = source.getCard().getName();
+        String originalName = FaceDownVisibility.publicName(gameData, source);
         permanentCopierService.applyCloneCopy(source, target, null, null);
         // The copied abilities are new abilities, so "choose a mode that hasn't been chosen" starts over.
         source.getChosenModeLabels().clear();

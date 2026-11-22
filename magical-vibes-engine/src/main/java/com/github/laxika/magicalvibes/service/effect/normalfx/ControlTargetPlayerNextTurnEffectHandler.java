@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlTargetPlayerNextTurnEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +35,7 @@ public class ControlTargetPlayerNextTurnEffectHandler implements NormalEffectHan
         }
 
         UUID controllerId = entry.getControllerId();
-        gameData.controlPlayer(entry.getCard().getName(), entry.getSourcePermanentId(), controllerId, targetPlayerId,
+        gameData.controlPlayer(FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(), controllerId, targetPlayerId,
                 Duration.THROUGH_AFFECTED_PLAYERS_NEXT_TURN, e.grantExtraTurnAfter());
 
         String controllerName = gameData.playerIdToName.get(controllerId);

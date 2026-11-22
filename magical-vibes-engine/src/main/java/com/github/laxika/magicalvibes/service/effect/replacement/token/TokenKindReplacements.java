@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplaceCreatureTokenCreationE
 import com.github.laxika.magicalvibes.model.effect.ReplaceTokenSubtypeCreationEffect;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementCandidateSource;
 import org.springframework.stereotype.Component;
@@ -108,7 +109,7 @@ public class TokenKindReplacements implements ReplacementCandidateSource<TokenCr
                     continue;
                 }
                 String key = KEY_PREFIX + permanent.getId() + ":" + i;
-                String name = permanent.getCard().getName();
+                String name = FaceDownVisibility.publicName(gameData, permanent);
                 Instance instance = switch (effect) {
                     case ReplaceCreatureTokenCreationEffect ignored -> new Instance(key,
                             name + ": create that many 4/4 Angel tokens instead of creature tokens",

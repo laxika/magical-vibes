@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySelfThenRevealUntilCreatureAndAttachGrantingAuraEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
@@ -53,7 +54,7 @@ public class DestroySelfThenRevealUntilCreatureAndAttachGrantingAuraEffectHandle
         UUID controllerId = entry.getControllerId();
 
         if (creature != null) {
-            destructionSupport.tryDestroyAndLog(gameData, creature, entry.getCard().getName(), false, false);
+            destructionSupport.tryDestroyAndLog(gameData, creature, FaceDownVisibility.sourceName(gameData, entry), false, false);
         }
 
         Set<UUID> battlefieldBeforeReveal = new HashSet<>();

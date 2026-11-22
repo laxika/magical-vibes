@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
@@ -70,7 +71,7 @@ public class DiscoverEffectHandler implements NormalEffectHandlerBean {
             }
         }
 
-        String sourceName = entry.getCard().getName();
+        String sourceName = FaceDownVisibility.sourceName(gameData, entry);
         String playerName = gameData.playerIdToName.get(controllerId);
         if (hit == null) {
             entry.setEventValue(discoverValue);

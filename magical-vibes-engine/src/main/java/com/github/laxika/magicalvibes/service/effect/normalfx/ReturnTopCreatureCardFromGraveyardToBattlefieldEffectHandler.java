@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTopCreatureCardFromGraveyardToBattlefieldEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -87,7 +88,7 @@ public class ReturnTopCreatureCardFromGraveyardToBattlefieldEffectHandler implem
         PreventionSupport.assignNoCombatDamage(gameData, entry.getCard().getName(),
                     entry.getSourcePermanentId(), entry.getControllerId(), sourcePermanentId, Duration.UNTIL_END_OF_TURN);
         Permanent source = gameQueryService.findPermanentById(gameData, sourcePermanentId);
-        String sourceName = source != null ? source.getCard().getName() : "the attacking creature";
+        String sourceName = source != null ? FaceDownVisibility.publicName(gameData, source) : "the attacking creature";
         gameLogService.append(gameData,
                 GameLog.text(sourceName + " assigns no combat damage this turn."));
     }

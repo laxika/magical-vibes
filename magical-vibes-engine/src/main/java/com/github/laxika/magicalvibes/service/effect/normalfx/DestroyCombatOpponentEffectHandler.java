@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -31,6 +32,6 @@ public class DestroyCombatOpponentEffectHandler implements NormalEffectHandlerBe
         }
 
         destructionSupport.tryDestroyAndLog(
-                gameData, target, entry.getCard().getName(), destroyEffect.cannotBeRegenerated());
+                gameData, target, FaceDownVisibility.sourceName(gameData, entry), destroyEffect.cannotBeRegenerated());
     }
 }

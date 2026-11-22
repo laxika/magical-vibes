@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.effect.PreventionScope;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield;
@@ -1891,7 +1892,7 @@ public class DamageSupport {
                 : gameQueryService.findPermanentById(gameData, redirect.damageSourceId());
         if (source == null) return null;
         StackEntry entry = new StackEntry(StackEntryType.ACTIVATED_ABILITY, source.getCard(),
-                gameQueryService.findPermanentController(gameData, source.getId()), source.getCard().getName(),
+                gameQueryService.findPermanentController(gameData, source.getId()), FaceDownVisibility.publicName(gameData, source),
                 List.of(), targetId, source.getId());
         boolean unpreventable = gameData.damageCantBePreventedThisTurn() || gameData.unpreventableDamageInProgress;
         return permanentId == null

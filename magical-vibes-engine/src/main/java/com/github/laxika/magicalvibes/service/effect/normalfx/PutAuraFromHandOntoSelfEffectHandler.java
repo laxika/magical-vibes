@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PutAuraFromHandOntoSelfEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -66,7 +67,7 @@ public class PutAuraFromHandOntoSelfEffectHandler implements NormalEffectHandler
             return;
         }
 
-        String prompt = "Choose an Aura card from your hand to put onto the battlefield attached to " + self.getCard().getName() + ".";
+        String prompt = "Choose an Aura card from your hand to put onto the battlefield attached to " + FaceDownVisibility.publicName(gameData, self) + ".";
         playerInputService.beginTargetedCardChoice(gameData, controllerId, auraIndices, prompt, self.getId(),
                 !(subject instanceof PermanentSubject.Source));
 

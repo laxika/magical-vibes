@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyEnchantedPermanentUnlessPaysManaOrLifeEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
@@ -84,7 +85,7 @@ public class DestroyEnchantedPermanentUnlessPaysManaOrLifeEffectHandler implemen
 
         // Can pay at least one resource — ask the player via the may-ability system.
         String prompt = "Pay " + e.manaCost() + " or " + e.lifeCost() + " life? If you don't, "
-                + enchanted.getCard().getName() + " is destroyed. (" + entry.getCard().getName() + ")";
+                + FaceDownVisibility.publicName(gameData, enchanted) + " is destroyed. (" + entry.getCard().getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), payerId, List.of(e), prompt, null, e.manaCost(), entry.getSourcePermanentId(),
                 null, 0, 0, null, null, null, entry.getSourcePermanentSnapshot(), null, null, 0));

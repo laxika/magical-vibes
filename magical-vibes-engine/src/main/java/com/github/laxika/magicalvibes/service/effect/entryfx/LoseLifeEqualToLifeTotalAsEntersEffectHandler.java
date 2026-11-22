@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEqualToLifeTotalAsEntersEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.StackResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.AsEntersInteractionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
@@ -60,7 +61,7 @@ public class LoseLifeEqualToLifeTotalAsEntersEffectHandler implements EntryRepla
     public void apply(GameData gameData, UUID controllerId, Permanent enteringPermanent, CardEffect effect) {
         DepartureIntent sacrifice = lifeLossSacrifice(gameData, controllerId);
         lifeSupport.applyLifeLoss(gameData, controllerId, gameData.getLife(controllerId),
-                enteringPermanent.getCard().getName());
+                FaceDownVisibility.publicName(gameData, enteringPermanent));
         if (sacrifice != null) {
             DepartureService.discardAnsweredEventBatch(gameData, sacrifice);
         }

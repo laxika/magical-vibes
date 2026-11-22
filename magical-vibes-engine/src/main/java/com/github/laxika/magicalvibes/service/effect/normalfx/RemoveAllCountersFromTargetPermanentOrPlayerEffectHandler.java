@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentOrPlayerEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +44,7 @@ public class RemoveAllCountersFromTargetPermanentOrPlayerEffectHandler implement
         String targetName;
         if (permanent != null) {
             removed = removePermanentCounters(gameData, permanent);
-            targetName = permanent.getCard().getName();
+            targetName = FaceDownVisibility.publicName(gameData, permanent);
         } else if (gameData.playerIdToName.containsKey(targetId)) {
             removed = removePlayerCounters(gameData, targetId);
             targetName = gameData.playerIdToName.get(targetId);

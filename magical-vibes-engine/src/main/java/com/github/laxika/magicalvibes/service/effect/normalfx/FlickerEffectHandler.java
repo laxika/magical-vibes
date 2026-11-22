@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
@@ -309,9 +310,9 @@ public class FlickerEffectHandler implements NormalEffectHandlerBean {
         playerInputService.beginChooseModeChoice(gameData, entry.getControllerId(), entry.getCard(),
                 new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect(List.of(
                         new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
-                                "Exile " + other.getCard().getName(), e.withSubject(otherOption)),
+                                "Exile " + FaceDownVisibility.publicName(gameData, other), e.withSubject(otherOption)),
                         new com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption(
-                                "Exile " + target.getCard().getName(), e.withSubject(targetOption)))),
+                                "Exile " + FaceDownVisibility.publicName(gameData, target), e.withSubject(targetOption)))),
                 entry.getSourcePermanentId());
     }
 

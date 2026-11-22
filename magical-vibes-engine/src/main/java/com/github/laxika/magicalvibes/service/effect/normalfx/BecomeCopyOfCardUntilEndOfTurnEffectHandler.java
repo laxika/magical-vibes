@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureUnt
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -68,7 +69,7 @@ public class BecomeCopyOfCardUntilEndOfTurnEffectHandler implements NormalEffect
 
         Card preCopyCard = PermanentCopierService.preCopyCard(gameData, source);
 
-        String originalName = source.getCard().getName();
+        String originalName = FaceDownVisibility.publicName(gameData, source);
         permanentCopierService.applyCloneCopy(source, card, null, null,
                 copyEffect.additionalTypesOverride());
         if (!copyEffect.additionalSubtypesOverride().isEmpty()) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -56,7 +57,7 @@ public class QueueReflexiveAbilityEffectHandler implements NormalEffectHandlerBe
             UUID pickedPermanentId = picks.getFirst();
             entry.recordPicks(picks.subList(1, picks.size()));
             record = ReflexiveAbilitySupport.record(gameData, entry, List.of(queueEffect.effect()),
-                    entry.getCard().getName() + "'s reflexive ability", pickedPermanentId);
+                    FaceDownVisibility.sourceName(gameData, entry) + "'s reflexive ability", pickedPermanentId);
             Permanent reflexiveSource = gameQueryService.findPermanentById(gameData, pickedPermanentId);
             record.setSourcePermanentSnapshot(reflexiveSource == null ? null : new Permanent(reflexiveSource));
         } else {

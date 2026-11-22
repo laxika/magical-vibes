@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPr
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -90,7 +91,7 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
     public void grantCantBeBlocked(GameData gameData, Permanent target, StackEntry entry, Duration duration) {
         if (target == null) return;
         gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
+                UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), null, entry.getControllerId(),
                 new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.target()),
                 target.getId(), null, null, duration, 0));
         gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
@@ -116,7 +117,7 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
                 .toList();
         if (opponentControlled.isEmpty()) return;
         gameData.addFloatingEffect(new FloatingContinuousEffect(
-                UUID.randomUUID(), entry.getCard().getName(), null, abilityControllerId,
+                UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), null, abilityControllerId,
                 new GrantEffectEffect(new CantBeBlockedByCreaturesMatchingPredicateEffect(
                         new PermanentAnyOfPredicate(opponentControlled)), Subjects.target()),
                 target.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
@@ -125,7 +126,7 @@ public class MakeCreatureUnblockableEffectHandler implements NormalEffectHandler
     }
 
     private void makeUnblockable(GameData gameData, StackEntry entry, Permanent target) {
-        makeUnblockableThisTurn(gameData, target, entry.getCard() == null ? null : entry.getCard().getName(),
+        makeUnblockableThisTurn(gameData, target, entry.getCard() == null ? null : FaceDownVisibility.sourceName(gameData, entry),
                 entry.getSourcePermanentId(), entry.getControllerId());
     }
 

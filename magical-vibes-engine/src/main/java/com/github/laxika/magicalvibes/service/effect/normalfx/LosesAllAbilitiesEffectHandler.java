@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -106,7 +107,7 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             }
         }
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                entry.getCard().getName(), sourcePermanentId, entry.getControllerId(), e,
+                FaceDownVisibility.sourceName(gameData, entry), sourcePermanentId, entry.getControllerId(), e,
                 target.getId(), null, null,
                 Duration.STATIC.equals(e.duration())
                         ? Duration.PERMANENT : e.duration(),

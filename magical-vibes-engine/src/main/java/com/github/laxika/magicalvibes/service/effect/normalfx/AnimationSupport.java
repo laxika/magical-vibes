@@ -36,6 +36,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.PermanentChange;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -737,7 +738,7 @@ public class AnimationSupport {
         if (hasControlEffect) {
             creatureControlService.applyControlEffect(gameData, controllerId, target,
                     new ControlEnchantedCreatureEffect(), Duration.WHILE_ATTACHED,
-                    source.getId(), source.getCard().getName());
+                    source.getId(), FaceDownVisibility.publicName(gameData, source));
         }
     }
 

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCountersFromTargetAndBoostSelfEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -80,7 +81,7 @@ public class RemoveCountersFromTargetAndBoostSelfEffectHandler implements Normal
         if (chosenAmount == null) {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(
                     entry.getControllerId(), limit,
-                    "Choose how many counters to remove from " + target.getCard().getName()
+                    "Choose how many counters to remove from " + FaceDownVisibility.publicName(gameData, target)
                             + " (0-" + limit + ").",
                     entry.getCard().getName()));
             return;

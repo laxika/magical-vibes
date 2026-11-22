@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import org.springframework.stereotype.Service;
@@ -471,22 +472,22 @@ public class TargetValidationService {
                 : gameQueryService.getEffectiveColors(ctx.gameData(), sourcePermanent);
         for (CardColor effectiveColor : sourceColors) {
             if (gameQueryService.hasProtectionFrom(ctx.gameData(), target, effectiveColor)) {
-                throw new IllegalStateException(target.getCard().getName() + " has protection from "
+                throw new IllegalStateException(FaceDownVisibility.publicName(ctx.gameData(), target) + " has protection from "
                         + effectiveColor.name().toLowerCase());
             }
         }
         if (sourcePermanent != null && gameQueryService.hasProtectionFromSource(
                 ctx.gameData(), target, sourcePermanent)) {
-            throw new IllegalStateException(target.getCard().getName() + " has protection from the source");
+            throw new IllegalStateException(FaceDownVisibility.publicName(ctx.gameData(), target) + " has protection from the source");
         }
         if (hasProtectionFromSourceController(ctx, target)) {
-            throw new IllegalStateException(target.getCard().getName() + " has protection from the source's controller");
+            throw new IllegalStateException(FaceDownVisibility.publicName(ctx.gameData(), target) + " has protection from the source's controller");
         }
         if (gameQueryService.hasProtectionFromSourceCardTypes(ctx.gameData(), target, ctx.sourceCard())) {
-            throw new IllegalStateException(target.getCard().getName() + " has protection from " + ctx.sourceCard().getType().getDisplayName().toLowerCase() + "s");
+            throw new IllegalStateException(FaceDownVisibility.publicName(ctx.gameData(), target) + " has protection from " + ctx.sourceCard().getType().getDisplayName().toLowerCase() + "s");
         }
         if (gameQueryService.hasProtectionFromSourceSubtypes(ctx.gameData(), target, ctx.sourceCard())) {
-            throw new IllegalStateException(target.getCard().getName() + " has protection from source's subtype");
+            throw new IllegalStateException(FaceDownVisibility.publicName(ctx.gameData(), target) + " has protection from source's subtype");
         }
     }
 

@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.TurnFaceUpReplacementEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -148,7 +149,7 @@ public class TurnFaceUpCopyService {
                 applyTurnFaceUpReplacements(gameData, controllerId, source,
                         gameData.permanentsTurnedFaceUpThisTurn.contains(source.getId()));
                 gameLogService.append(gameData,
-                        GameLog.textCardText(source.getCard().getName() + " becomes a copy of ",
+                        GameLog.textCardText(FaceDownVisibility.publicName(gameData, source) + " becomes a copy of ",
                                 target.getCard(), "."));
             }
         }

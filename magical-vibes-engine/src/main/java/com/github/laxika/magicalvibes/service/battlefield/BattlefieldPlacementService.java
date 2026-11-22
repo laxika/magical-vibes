@@ -96,6 +96,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
@@ -397,7 +398,7 @@ public class BattlefieldPlacementService {
             } else if (enteredTappedBeforeUntappedReplacement && !permanent.isTapped()) {
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                         controllerId, null, null, new com.github.laxika.magicalvibes.model.ChoiceContext.TappedEntryStateChoice(request),
-                        List.of("Tapped", "Untapped"), "Choose whether " + permanent.getCard().getName()
+                        List.of("Tapped", "Untapped"), "Choose whether " + FaceDownVisibility.publicName(gameData, permanent)
                         + " enters tapped or untapped."));
                 return;
             }
@@ -653,7 +654,7 @@ public class BattlefieldPlacementService {
                         new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
                         ActivePlayer.ANY);
             } else {
-                gameData.grantAbilityToPermanent(permanent.getCard().getName(), permanent.getId(), controllerId,
+                gameData.grantAbilityToPermanent(FaceDownVisibility.publicName(gameData, permanent), permanent.getId(), controllerId,
                         new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY), new SacrificeSelfEffect()),
                         permanent.getId(), Duration.PERMANENT);
             }
@@ -706,7 +707,7 @@ public class BattlefieldPlacementService {
                 order.controllerId(), null, null, order,
                 order.remaining().stream().map(ChoiceContext.CounterReplacement::label).toList(),
                 "Choose the counter replacement effect to apply next to the counters "
-                        + order.request().permanent().getCard().getName() + " enters with."));
+                        + FaceDownVisibility.publicName(gameData, order.request().permanent()) + " enters with."));
     }
 
     /**
@@ -784,7 +785,7 @@ public class BattlefieldPlacementService {
         if (entersTapped && !preview.isTapped()) {
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(controllerId, null, null,
                     new com.github.laxika.magicalvibes.model.ChoiceContext.TappedEntryStateChoice(request),
-                    List.of("Tapped", "Untapped"), "Choose whether " + request.permanent().getCard().getName()
+                    List.of("Tapped", "Untapped"), "Choose whether " + FaceDownVisibility.publicName(gameData, request.permanent())
                             + " enters tapped or untapped."));
             return true;
         }
@@ -826,7 +827,7 @@ public class BattlefieldPlacementService {
                 new com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext.DevourSacrifice(
                         entering.getId(), devour.multiplier(), request.controllerId(), entering.getCard(),
                         null, false, 0, false),
-                entering.getCard().getName() + " — Devour: sacrifice any number of creatures.");
+                FaceDownVisibility.publicName(gameData, entering) + " — Devour: sacrifice any number of creatures.");
         return true;
     }
 
@@ -864,7 +865,7 @@ public class BattlefieldPlacementService {
             return false;
         }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealAnyNumberOfCardsFromHandChoice(
-                request.controllerId(), validIds, permanent.getCard().getName(), null, null, null, request));
+                request.controllerId(), validIds, FaceDownVisibility.publicName(gameData, permanent), null, null, null, request));
         return true;
     }
 
@@ -959,7 +960,7 @@ public class BattlefieldPlacementService {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(controllerId, null, null,
                 new com.github.laxika.magicalvibes.model.ChoiceContext.EnterAsCopyOrderChoice(
                         request.withControllerId(controllerId), List.copyOf(targetIdByCopiedName.values())),
-                List.copyOf(targetIdByCopiedName.keySet()), "Choose the creature " + entering.getCard().getName()
+                List.copyOf(targetIdByCopiedName.keySet()), "Choose the creature " + FaceDownVisibility.publicName(gameData, entering)
                         + " enters as a copy of (the replacement effect applied last)."));
         return true;
     }
@@ -983,7 +984,7 @@ public class BattlefieldPlacementService {
                 permanent.getCard(),
                 controllerId,
                 List.of(new UnleashEffect(request)),
-                permanent.getCard().getName() + " — Unleash: have it enter with a +1/+1 counter?"
+                FaceDownVisibility.publicName(gameData, permanent) + " — Unleash: have it enter with a +1/+1 counter?"
                         + " (It can't block as long as it has one.)",
                 null,
                 null,
@@ -1035,7 +1036,7 @@ public class BattlefieldPlacementService {
                 permanent.getCard(),
                 controllerId,
                 List.of(new RiotEffect(request, choices, 0, false)),
-                permanent.getCard().getName() + " — Riot: have it enter with a +1/+1 counter?"
+                FaceDownVisibility.publicName(gameData, permanent) + " — Riot: have it enter with a +1/+1 counter?"
                         + " (Otherwise it gains haste.)",
                 null,
                 null,
@@ -1271,13 +1272,13 @@ public class BattlefieldPlacementService {
         if (colors != null) {
             CardColor color = colors.stream().findFirst().orElse(null);
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                    permanent.getCard().getName(), null, controllerId, new SetTargetColorEffect(color),
+                    FaceDownVisibility.publicName(gameData, permanent), null, controllerId, new SetTargetColorEffect(color),
                     permanent.getId(), null, null, Duration.PERMANENT, 0));
         }
         if (temporaryColors != null && !temporaryColors.isEmpty()) {
             CardColor color = temporaryColors.iterator().next();
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                    permanent.getCard().getName(), null, controllerId,
+                    FaceDownVisibility.publicName(gameData, permanent), null, controllerId,
                     new com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect(color),
                     permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
         }
@@ -1339,7 +1340,7 @@ public class BattlefieldPlacementService {
                 permanent.getCard(),
                 controllerId,
                 List.of(activeEffect),
-                permanent.getCard().getName() + " — Reveal a " + subtypeDescription
+                FaceDownVisibility.publicName(gameData, permanent) + " — Reveal a " + subtypeDescription
                         + " card from your hand? (If you don't, it enters tapped.)",
                 null,
                 null,
@@ -1420,7 +1421,7 @@ public class BattlefieldPlacementService {
                 permanent.getCard(),
                 controllerId,
                 List.of(activeEffect),
-                permanent.getCard().getName() + " — Reveal a " + subtypeDescription
+                FaceDownVisibility.publicName(gameData, permanent) + " — Reveal a " + subtypeDescription
                         + " card from your hand? (If you do, it enters with a " + counterDescription + " counter.)",
                 null,
                 null,
@@ -1453,7 +1454,7 @@ public class BattlefieldPlacementService {
                 permanent.getCard(),
                 controllerId,
                 List.of(effect),
-                permanent.getCard().getName() + " — Pay " + effect.lifeCost()
+                FaceDownVisibility.publicName(gameData, permanent) + " — Pay " + effect.lifeCost()
                         + " life? (If you don't, it enters tapped.)",
                 null,
                 null,
@@ -1551,7 +1552,7 @@ public class BattlefieldPlacementService {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(controllerId, null, null,
                 new com.github.laxika.magicalvibes.model.ChoiceContext.EnterAsCopyOrderChoice(
                         request.withControllerId(controllerId), List.copyOf(sourceIdByCopiedName.values())),
-                options, "Choose the creature " + entering.getCard().getName()
+                options, "Choose the creature " + FaceDownVisibility.publicName(gameData, entering)
                         + " enters as a copy of (the copy effect applied last)."));
         return true;
     }
@@ -1562,7 +1563,7 @@ public class BattlefieldPlacementService {
      * (CR 613.7b) that applies in the layered pass.
      */
     private void grantOnEntry(GameData gameData, UUID controllerId, Permanent permanent, CardEffect effect) {
-        gameData.addEffectOnPermanent(permanent.getCard().getName(), permanent.getId(), controllerId, effect,
+        gameData.addEffectOnPermanent(FaceDownVisibility.publicName(gameData, permanent), permanent.getId(), controllerId, effect,
                 permanent.getId(), Duration.PERMANENT);
     }
 
@@ -1850,16 +1851,16 @@ public class BattlefieldPlacementService {
                     new ArrayList<>(sacrificeable), effect.count(),
                     new MultiPermanentChoiceContext.SacrificePermanentsToEnter(
                             controllerId, permanent, effect.count()),
-                    permanent.getCard().getName() + " — Sacrifice " + effect.description()
-                            + " to have " + permanent.getCard().getName()
+                    FaceDownVisibility.publicName(gameData, permanent) + " — Sacrifice " + effect.description()
+                            + " to have " + FaceDownVisibility.publicName(gameData, permanent)
                             + " enter (choose none to decline).");
             return false;
         }
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.SacrificePermanentToEnter(controllerId, permanent));
         playerInputService.beginAnyTargetChoice(gameData, controllerId, sacrificeable, List.of(controllerId),
-                permanent.getCard().getName() + " — Sacrifice " + effect.description()
-                        + "? (Choose yourself to decline; " + permanent.getCard().getName()
+                FaceDownVisibility.publicName(gameData, permanent) + " — Sacrifice " + effect.description()
+                        + "? (Choose yourself to decline; " + FaceDownVisibility.publicName(gameData, permanent)
                         + " is then put into its owner's graveyard.)");
         return false;
     }
@@ -1877,7 +1878,7 @@ public class BattlefieldPlacementService {
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.LandCasualty(controllerId, permanent));
         playerInputService.beginAnyTargetChoice(gameData, controllerId, sacrificeable, List.of(controllerId),
-                permanent.getCard().getName() + " — Land casualty: sacrifice " + effect.description()
+                FaceDownVisibility.publicName(gameData, permanent) + " — Land casualty: sacrifice " + effect.description()
                         + "? (Choose yourself to decline.)");
         return false;
     }
@@ -1923,7 +1924,7 @@ public class BattlefieldPlacementService {
         }
 
         playerInputService.beginDiscardChoice(gameData, controllerId, discardable,
-                permanent.getCard().getName() + " — Discard " + effect.description()
+                FaceDownVisibility.publicName(gameData, permanent) + " — Discard " + effect.description()
                         + " to have it enter (choose no card to decline).", 1,
                 DiscardFollowUp.enteringPermanent(permanent, controllerId), (CardType) null, true);
         return false;
@@ -1962,7 +1963,7 @@ public class BattlefieldPlacementService {
     private void createLandCasualtyCopy(GameData gameData, UUID controllerId, Permanent permanent) {
         CreateTokenCopyOfSourceEffect copyEffect = new CreateTokenCopyOfSourceEffect();
         StackEntry copyEntry = StackEntry.carrier(permanent.getCard(), controllerId,
-                permanent.getCard().getName() + "'s land casualty", new ArrayList<>(List.of(copyEffect)), null,
+                FaceDownVisibility.publicName(gameData, permanent) + "'s land casualty", new ArrayList<>(List.of(copyEffect)), null,
                 permanent.getId());
         createTokenCopyOfSourceEffectHandler.resolve(gameData, copyEntry, copyEffect);
     }
@@ -2382,7 +2383,7 @@ public class BattlefieldPlacementService {
             if (gameData.spellsGrantedPermanentHasteOnEntry.remove(permanent.getCard().getId())) {
                 grantOnEntry(gameData, controllerId, permanent, new GrantKeywordEffect(Keyword.HASTE, Subjects.target()));
             } else {
-                gameData.addEffectOnPermanent(permanent.getCard().getName(), null, controllerId, new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), permanent.getId(), Duration.UNTIL_END_OF_TURN);
+                gameData.addEffectOnPermanent(FaceDownVisibility.publicName(gameData, permanent), null, controllerId, new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), permanent.getId(), Duration.UNTIL_END_OF_TURN);
             }
             log.info("Game {} - {} enters with haste (paid for with haste-granting mana)",
                     gameData.id, permanent.getCard().getName());

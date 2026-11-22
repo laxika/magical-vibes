@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfOpponentLibraryAndBecomeCopyEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -63,7 +64,7 @@ public class RevealTopCardOfOpponentLibraryAndBecomeCopyEffectHandler implements
             return;
         }
 
-        String originalName = source.getCard().getName();
+        String originalName = FaceDownVisibility.publicName(gameData, source);
         permanentCopierService.applyCloneCopy(source, topCard, null, null, Set.of());
         gameLogService.append(gameData, GameLog.textCardText(originalName + " becomes a copy of ", topCard, "."));
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName, topCard.getName());

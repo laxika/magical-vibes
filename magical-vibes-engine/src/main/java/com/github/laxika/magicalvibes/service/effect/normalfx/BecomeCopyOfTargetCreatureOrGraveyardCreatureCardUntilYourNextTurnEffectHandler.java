@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureOrGraveyardCreatureCardUntilYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -68,8 +69,8 @@ public class BecomeCopyOfTargetCreatureOrGraveyardCreatureCardUntilYourNextTurnE
                 (BecomeCopyOfTargetCreatureOrGraveyardCreatureCardUntilYourNextTurnEffect) effect;
         Card preCopyCard = PermanentCopierService.preCopyCard(gameData, source);
 
-        String originalName = source.getCard().getName();
-        String targetName = targetCard.getName();
+        String originalName = FaceDownVisibility.publicName(gameData, source);
+        String targetName = FaceDownVisibility.publicName(gameData, targetCard);
         permanentCopierService.applyCloneCopy(source, targetCard, null, null, null);
         // "except ... he's a legendary Human Mercenary Villain creature" has no "in addition to its other
         // types" wording, so the copied card types (e.g. artifact) are replaced rather than kept (CR 205.1b).

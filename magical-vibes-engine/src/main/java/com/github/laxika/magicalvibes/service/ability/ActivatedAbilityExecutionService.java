@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.ability;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RegisterDrawCardsAtNextUpkeepEffectHandler;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
@@ -785,14 +786,14 @@ public class ActivatedAbilityExecutionService {
                         amount = ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
                     }
                     if (amount > 0) {
-                        lifeSupport.applyLifePayment(gameData, playerId, amount, permanent.getCard().getName());
+                        lifeSupport.applyLifePayment(gameData, playerId, amount, FaceDownVisibility.publicName(gameData, permanent));
                     }
                 });
 
         if (abilityEffects.stream().anyMatch(PayLifeForEachCardInHandCost.class::isInstance)) {
             int amount = gameData.playerHands.getOrDefault(playerId, List.of()).size();
             if (amount > 0) {
-                lifeSupport.applyLifePayment(gameData, playerId, amount, permanent.getCard().getName());
+                lifeSupport.applyLifePayment(gameData, playerId, amount, FaceDownVisibility.publicName(gameData, permanent));
             }
         }
 
@@ -800,7 +801,7 @@ public class ActivatedAbilityExecutionService {
                 && cost.paysLifeForEachCommanderColorIdentity())) {
             int amount = ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
             if (amount > 0) {
-                lifeSupport.applyLifePayment(gameData, playerId, amount, permanent.getCard().getName());
+                lifeSupport.applyLifePayment(gameData, playerId, amount, FaceDownVisibility.publicName(gameData, permanent));
             }
         }
 
@@ -811,7 +812,7 @@ public class ActivatedAbilityExecutionService {
                 .ifPresent(cost -> {
                     if (xLifeCost > 0) {
                         lifeSupport.applyLifePayment(gameData, playerId, xLifeCost,
-                                permanent.getCard().getName());
+                                FaceDownVisibility.publicName(gameData, permanent));
                     }
                 });
 
@@ -976,7 +977,7 @@ public class ActivatedAbilityExecutionService {
         for (CardEffect effect : abilityEffects) {
             if (effect instanceof SkipNextUntapEffect skip
                     && skip.subject() instanceof PermanentSubject.Source && skip.activationCost()) {
-                gameData.skipNextUntapSteps(permanent.getCard().getName(), permanent.getId(), playerId,
+                gameData.skipNextUntapSteps(FaceDownVisibility.publicName(gameData, permanent), permanent.getId(), playerId,
                         permanent.getId(), skip.untapSteps(), playerId);
                 ActionEvents.exerted(gameData, playerId, permanent.getId());
             }
@@ -1240,7 +1241,7 @@ public class ActivatedAbilityExecutionService {
                 StackEntryType.ACTIVATED_ABILITY,
                 permanent.getCard(),
                 playerId,
-                permanent.getCard().getName() + "'s ability",
+                FaceDownVisibility.publicName(gameData, permanent) + "'s ability",
                 snapshotEffects,
                 effectiveXValue,
                 effectiveTargetId,
@@ -1533,7 +1534,7 @@ public class ActivatedAbilityExecutionService {
                 // the ability runs through the ordinary effect loop, which parks and resumes around them
                 // while the ability itself still never uses the stack (CR 605.3b).
                 StackEntry resolving = new StackEntry(StackEntryType.ACTIVATED_ABILITY, permanent.getCard(),
-                        playerId, permanent.getCard().getName() + "'s ability",
+                        playerId, FaceDownVisibility.publicName(gameData, permanent) + "'s ability",
                         new ArrayList<>(effectsToResolve.subList(effectIndex, effectsToResolve.size())),
                         xValue, permanent.getId());
                 resolving.setActivePlayerId(gameData.activePlayerId);
@@ -1609,7 +1610,7 @@ public class ActivatedAbilityExecutionService {
                         && effectsToResolve.get(effectIndex + 1) instanceof AwardManaEffect award) {
                     interactionHandlerRegistry.begin(gameData,
                             new PendingInteraction.RevealAnyNumberOfCardsFromHandChoice(
-                                    playerId, validCardIds, permanent.getCard().getName(),
+                                    playerId, validCardIds, FaceDownVisibility.publicName(gameData, permanent),
                                     new PendingInteraction.ManaAbilityRevealContext(
                                             permanent.getId(), award.color(), award.amount(), xValue,
                                             manaMultiplier, isCreatureSource)));
@@ -1644,7 +1645,7 @@ public class ActivatedAbilityExecutionService {
                 PermanentChoiceContext.ManaAbilityAddToChosenPlayer context =
                         new PermanentChoiceContext.ManaAbilityAddToChosenPlayer(
                                 chosen.color(), chosen.amount() * manaMultiplier, isCreatureSource,
-                                permanent.getCard().getName(), chosen.anyColor(), playerId);
+                                FaceDownVisibility.publicName(gameData, permanent), chosen.anyColor(), playerId);
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.PermanentChoice(
                         playerId, List.of(), validPlayerIds, context, "Choose a player to add mana."));
                 log.info("Game {} - Awaiting {} to choose a player to receive mana", gameData.id, player.getUsername());
@@ -1674,7 +1675,7 @@ public class ActivatedAbilityExecutionService {
                 // Mana abilities resolve inline rather than through the normal effect-handler path.
                 // Grand Summon's mana ability uses this rider to register its one-shot creature
                 // spell empowerment alongside the mana it produces.
-                gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(permanent.getCard().getName(),
+                gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(FaceDownVisibility.publicName(gameData, permanent),
                         permanent.getId(), playerId, empower, playerId, Duration.UNTIL_MATCHING_SPELL_CAST));
                 gameLogService.append(gameData, GameLog.builder()
                         .card(permanent.getCard())
@@ -1930,7 +1931,7 @@ public class ActivatedAbilityExecutionService {
                 int amount = amountEvaluationService.evaluate(gameData, gain.amount(),
                         new AmountContext(playerId, permanent, null, xValue, 0));
                 for (UUID recipientId : nonTargetedLifeRecipients(gameData, playerId, gain.player())) {
-                    lifeSupport.applyGainLife(gameData, recipientId, amount, permanent.getCard().getName(),
+                    lifeSupport.applyGainLife(gameData, recipientId, amount, FaceDownVisibility.publicName(gameData, permanent),
                             permanent.getCard(), StackEntryType.ACTIVATED_ABILITY, playerId);
                 }
             } else if (effect instanceof LoseLifeEffect loss && isNonTargetedLifeLoss(loss)) {
@@ -1940,13 +1941,13 @@ public class ActivatedAbilityExecutionService {
                 int amount = amountEvaluationService.evaluate(gameData, loss.amount(),
                         new AmountContext(playerId, permanent, null, xValue, 0));
                 for (UUID victimId : nonTargetedLifeRecipients(gameData, playerId, loss.player())) {
-                    lifeSupport.applyLifeLoss(gameData, victimId, amount, permanent.getCard().getName());
+                    lifeSupport.applyLifeLoss(gameData, victimId, amount, FaceDownVisibility.publicName(gameData, permanent));
                 }
             } else if (effect instanceof DealDamageToPlayersEffect dmg && dmg.player() instanceof PlayerSubject.You) {
                 int damage = amountEvaluationService.evaluate(gameData, dmg.amount(),
                         new AmountContext(playerId, permanent, null, 0, 0));
                 StackEntry damageEntry = new StackEntry(StackEntryType.ACTIVATED_ABILITY,
-                        permanent.getCard(), playerId, permanent.getCard().getName() + "'s ability", List.of(dmg),
+                        permanent.getCard(), playerId, FaceDownVisibility.publicName(gameData, permanent) + "'s ability", List.of(dmg),
                         playerId, permanent.getId());
                 damageSupport.dealDamageToPlayer(gameData, damageEntry, playerId,
                         damage);
@@ -2008,7 +2009,7 @@ public class ActivatedAbilityExecutionService {
                 // "{T}, Exert this creature: Add …" (Oasis Ritualist). Exert is modeled as
                 // SkipNextUntapEffect(source()); on a mana ability it must apply inline here because
                 // mana abilities never hit the stack / NormalEffectHandlerBean path.
-                gameData.skipNextUntapSteps(permanent.getCard().getName(), permanent.getId(), player.getId(),
+                gameData.skipNextUntapSteps(FaceDownVisibility.publicName(gameData, permanent), permanent.getId(), player.getId(),
                         permanent.getId(), skip.untapSteps(), skip.controllerStepOnly() ? player.getId() : null);
                 gameLogService.append(gameData, GameLog.cardThen(
                         permanent.getCard(), " won't untap during its controller's next untap step."));
@@ -2409,7 +2410,7 @@ public class ActivatedAbilityExecutionService {
                 StackEntryType.ACTIVATED_ABILITY,
                 permanent.getCard(),
                 playerId,
-                permanent.getCard().getName() + "'s ability",
+                FaceDownVisibility.publicName(gameData, permanent) + "'s ability",
                 snapshotEffects,
                 effectiveXValue,
                 effectiveTargetId,

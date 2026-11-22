@@ -57,6 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.OnlyLandCreaturesCanAttackThi
 import com.github.laxika.magicalvibes.model.effect.OnlyMatchingCreaturesCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlySourceCreatureCanAttackThisCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.OnlyTargetCreaturesCanAttackThisCombatEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -1204,12 +1205,12 @@ public class AttackLegalityService {
                 if (p.getCard().hasType(CardType.PLANESWALKER)) {
                     if (!isAttackTargetRestricted(gameData, p)) {
                         targets.add(new CombatAttackTarget(
-                                p.getId(), p.getCard().getName(), false));
+                                p.getId(), FaceDownVisibility.publicName(gameData, p), false));
                     }
                 } else if (p.getCard().hasType(CardType.BATTLE)
                         && !activePlayerId.equals(p.getProtectorPlayerId())) {
                     targets.add(new CombatAttackTarget(
-                            p.getId(), p.getCard().getName(), false));
+                            p.getId(), FaceDownVisibility.publicName(gameData, p), false));
                 }
             }
         }
@@ -1220,7 +1221,7 @@ public class AttackLegalityService {
                 if (p.getCard().hasType(CardType.BATTLE)
                         && !activePlayerId.equals(p.getProtectorPlayerId())) {
                     targets.add(new CombatAttackTarget(
-                            p.getId(), p.getCard().getName(), false));
+                            p.getId(), FaceDownVisibility.publicName(gameData, p), false));
                 }
             }
         }

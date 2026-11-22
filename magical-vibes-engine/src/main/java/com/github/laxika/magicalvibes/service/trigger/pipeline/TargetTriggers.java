@@ -32,6 +32,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
@@ -543,7 +544,7 @@ public class TargetTriggers {
             extra.stamp(entry);
         };
         boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
-                source.getCard(), source, controllerId, source.getCard().getName() + description, context, record)
+                source.getCard(), source, controllerId, FaceDownVisibility.publicName(gameData, source) + description, context, record)
                 .withCause(new TriggerCause.BecameTarget(target, targetControllerId)));
         if (triggered) {
             gameLogService.append(gameData, GameLog.cardThen(source.getCard(), "'s triggered ability triggers."));

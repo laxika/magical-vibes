@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -108,7 +109,7 @@ public class MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandle
 
         gameLogService.append(gameData, GameLog.text(
                 entry.getCard().getName() + " makes " + targets.size() + " target creature(s) copies of "
-                        + chosen.getCard().getName() + " until end of turn."));
+                        + FaceDownVisibility.publicName(gameData, chosen) + " until end of turn."));
         log.info("Game {} - {} copies {} onto {} target creature(s)", gameData.id,
                 entry.getCard().getName(), chosen.getCard().getName(), targets.size());
     }

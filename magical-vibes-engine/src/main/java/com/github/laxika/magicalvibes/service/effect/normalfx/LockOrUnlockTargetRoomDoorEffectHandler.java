@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LockOrUnlockTargetRoomDoorEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -105,7 +106,7 @@ public class LockOrUnlockTargetRoomDoorEffectHandler implements NormalEffectHand
             String action = room.isRoomDoorUnlocked(doorIndex) ? "Lock " : "Unlock ";
             choices.add(new ChoiceContext.LockOrUnlockRoomDoorChoice.RoomDoor(
                     room.getId(), doorIndex,
-                    action + room.getCard().getName() + " (Room " + (permanentIndex + 1)
+                    action + FaceDownVisibility.publicName(room) + " (Room " + (permanentIndex + 1)
                             + ") - Door " + (doorIndex + 1)));
         }
     }

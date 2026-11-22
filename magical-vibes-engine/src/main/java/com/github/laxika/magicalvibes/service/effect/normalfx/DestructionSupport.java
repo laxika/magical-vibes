@@ -54,6 +54,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -579,7 +580,7 @@ public class DestructionSupport {
         }
         if (kinds.size() > 1) {
             playerInputService.beginRemoveOneCounterChoice(gameData, playerId, permanent.getId(),
-                    permanent.getCard().getName(), kinds);
+                    FaceDownVisibility.publicName(gameData, permanent), kinds);
             return true;
         }
         CounterType kind = kinds.getFirst();
@@ -1225,7 +1226,7 @@ public class DestructionSupport {
         for (UUID permId : permanentIds) {
             Permanent perm = gameQueryService.findPermanentById(gameData, permId);
             if (perm != null) {
-                names.add(perm.getCard().getName());
+                names.add(FaceDownVisibility.publicName(gameData, perm));
             }
         }
         return String.join(", ", names);

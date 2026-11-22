@@ -18,6 +18,9 @@ import java.util.UUID;
 @Getter
 public class Permanent {
 
+    /** What a face-down permanent, which has no name (CR 708.2), is called wherever a name would be shown. */
+    public static final String FACE_DOWN_PERMANENT = "a face-down permanent";
+
     private final UUID id;
     private Card card;
     private Card originalCard;
@@ -781,6 +784,11 @@ public class Permanent {
 
     public void recordMutation() {
         timesMutated++;
+    }
+
+    /** This permanent's name as everybody may read it while it's on the battlefield (CR 708.2, 708.5). */
+    public String getPublicName() {
+        return faceDown ? FACE_DOWN_PERMANENT : getCard().getName();
     }
 
     public void setFaceDown(int power, int toughness, Set<CardType> cardTypes) {

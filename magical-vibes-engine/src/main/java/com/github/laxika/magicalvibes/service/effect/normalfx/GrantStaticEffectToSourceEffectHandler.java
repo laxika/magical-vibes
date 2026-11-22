@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -36,7 +37,7 @@ public class GrantStaticEffectToSourceEffectHandler implements NormalEffectHandl
         }
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(),
-                entry.getCard().getName(),
+                FaceDownVisibility.sourceName(gameData, entry),
                 sourcePermanentId,
                 entry.getControllerId(),
                 grant,

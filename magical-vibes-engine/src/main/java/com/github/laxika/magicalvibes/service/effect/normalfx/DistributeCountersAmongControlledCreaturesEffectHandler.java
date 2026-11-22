@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongControlledCreaturesEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -92,7 +93,7 @@ public class DistributeCountersAmongControlledCreaturesEffectHandler implements 
                 interactionHandlerRegistry.begin(gameData, new PendingInteraction.XValueChoice(
                         entry.getControllerId(), minimum, remaining,
                         entry.getCard().getName() + " — Choose how many counters to put on "
-                                + nextCreature.getCard().getName() + ".",
+                                + FaceDownVisibility.publicName(gameData, nextCreature) + ".",
                         entry.getCard().getName()));
                 return;
             }

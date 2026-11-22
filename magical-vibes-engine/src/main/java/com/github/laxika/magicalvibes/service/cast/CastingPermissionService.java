@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantPlayChosenNameUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -2528,12 +2529,29 @@ public class CastingPermissionService {
 
     /** Builds the characteristics used when announcing a face-down creature spell. */
     public static Card faceDownSpellCharacteristics(Card card) {
+        return faceDownSpellCharacteristics(card, card.hasKeyword(Keyword.DISGUISE));
+    }
+
+    /**
+     * {@code spell} as effects that care about a spell's characteristics see it: one cast face down has only the
+     * characteristics listed for it (CR 708.2, 708.4), so the same object with those as its card.
+     */
+    public static StackEntry spellAsEffectsSeeIt(StackEntry spell) {
+        if (spell == null || !spell.isCastFaceDown() || spell.getCard() == null) {
+            return spell;
+        }
+        StackEntry seen = new StackEntry(spell);
+        seen.setCastCard(faceDownSpellCharacteristics(spell.getCard(), spell.isCastWithDisguise()));
+        return seen;
+    }
+
+    private static Card faceDownSpellCharacteristics(Card card, boolean disguise) {
         Card face = new Card();
         face.setName("");
         face.setType(CardType.CREATURE);
         face.setPower(2);
         face.setToughness(2);
-        if (card.hasKeyword(Keyword.DISGUISE)) {
+        if (disguise) {
             face.setKeywords(Set.of(Keyword.WARD));
         }
         Card characteristics = card.createRuntimeCopyWithFace(face);

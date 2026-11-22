@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.TurnSourceFaceUpOrExileAndMayCastEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -62,7 +63,7 @@ public class TurnSourceFaceUpOrExileAndMayCastEffectHandler implements NormalEff
                     entry.getCard(),
                     entry.getControllerId(),
                     List.of(new MayPlayExiledCardWithoutPayingManaCostEffect()),
-                    "Cast " + originalCard.getName() + " without paying its mana cost?",
+                    "Cast " + FaceDownVisibility.publicName(gameData, originalCard) + " without paying its mana cost?",
                     originalCard.getId()
             ));
         }

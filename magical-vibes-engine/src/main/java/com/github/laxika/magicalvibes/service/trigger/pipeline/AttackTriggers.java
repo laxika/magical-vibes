@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -254,7 +255,7 @@ public class AttackTriggers {
                 continue;
             }
             put(gameData, new TriggeredAbilityRequest(ability, attacker.getCard(), attacker, playerId,
-                    attacker.getCard().getName() + "'s enlist trigger", context, entry -> {
+                    FaceDownVisibility.publicName(gameData, attacker) + "'s enlist trigger", context, entry -> {
                         entry.setNonTargeting(true);
                         entry.setSourcePermanentSnapshot(new Permanent(attacker));
                         entry.setTriggeringPermanentId(enlisted.getId());
@@ -389,7 +390,7 @@ public class AttackTriggers {
                 Permanent source = grantedToCreature ? attacker : attached;
                 TriggeredAbilityRequest request = new TriggeredAbilityRequest(ability, card, source,
                         grantedToCreature ? creatureControllerId : auraControllerId,
-                        card.getName() + "'s triggered ability", context,
+                        FaceDownVisibility.publicName(gameData, card) + "'s triggered ability", context,
                         entry -> recordAttachedEvent(gameData, entry, attacker, creatureControllerId, null, source));
                 put(gameData, grantedToCreature ? request.causedBySourceAttacking() : request.causedByAttack(), card,
                         "'s ability triggers.");
@@ -600,7 +601,7 @@ public class AttackTriggers {
                         continue;
                     }
                     put(gameData, new TriggeredAbilityRequest(ability, permanent.getCard(), permanent, playerId,
-                            permanent.getCard().getName() + "'s attack trigger", context, entry -> {
+                            FaceDownVisibility.publicName(gameData, permanent) + "'s attack trigger", context, entry -> {
                                 entry.setEventValue(count);
                                 entry.setAttackedTargetId(attackedId);
                                 entry.setNonTargeting(true);
@@ -674,7 +675,7 @@ public class AttackTriggers {
                                              TriggeredAbility ability, ConditionContext context) {
         UUID attackedTargetId = attacker.getAttackTarget();
         TriggeredAbilityRequest request = new TriggeredAbilityRequest(ability, source.getCard(), source, playerId,
-                source.getCard().getName() + "'s attack trigger", context, entry -> {
+                FaceDownVisibility.publicName(gameData, source) + "'s attack trigger", context, entry -> {
                     entry.setSourcePermanentSnapshot(new Permanent(source));
                     entry.setAttackedTargetId(attackedTargetId);
                     entry.setDefendingPlayerId(gameQueryService.defendingPlayerOfAttackTarget(gameData,
@@ -949,7 +950,7 @@ public class AttackTriggers {
                         continue;
                     }
                     put(gameData, new TriggeredAbilityRequest(ability, permanent.getCard(), permanent,
-                            attackedPlayerId, permanent.getCard().getName() + "'s trigger", context, entry -> {
+                            attackedPlayerId, FaceDownVisibility.publicName(gameData, permanent) + "'s trigger", context, entry -> {
                                 entry.setNonTargeting(true);
                                 entry.setActivePlayerId(attack.playerId());
                                 entry.setSourcePermanentSnapshot(new Permanent(permanent));
@@ -994,7 +995,7 @@ public class AttackTriggers {
                         continue;
                     }
                     put(gameData, new TriggeredAbilityRequest(ability, permanent.getCard(), permanent,
-                            attackedPlayerId, permanent.getCard().getName() + "'s trigger", context, entry -> {
+                            attackedPlayerId, FaceDownVisibility.publicName(gameData, permanent) + "'s trigger", context, entry -> {
                                 entry.setTargetId(playerId);
                                 entry.setNonTargeting(true);
                             }).causedByAttack(), permanent.getCard(), "'s ability triggers.");
@@ -1128,7 +1129,7 @@ public class AttackTriggers {
                     continue;
                 }
                 put(gameData, new TriggeredAbilityRequest(ability, source.getCard(), source, controllerId,
-                        source.getCard().getName() + "'s trigger", context, entry -> {
+                        FaceDownVisibility.publicName(gameData, source) + "'s trigger", context, entry -> {
                             entry.setXValue(attack.count());
                             entry.setTargetId(playerId);
                             entry.setTriggeringPermanentControllerId(playerId);
@@ -1204,7 +1205,7 @@ public class AttackTriggers {
                     continue;
                 }
                 put(gameData, new TriggeredAbilityRequest(ability, watcher.getCard(), watcher, controllerId,
-                        watcher.getCard().getName() + "'s triggered ability", context, entry -> {
+                        FaceDownVisibility.publicName(gameData, watcher) + "'s triggered ability", context, entry -> {
                             entry.setNonTargeting(true);
                             entry.setSourcePermanentSnapshot(new Permanent(watcher));
                             entry.setTriggeringPermanentId(attacker.getId());

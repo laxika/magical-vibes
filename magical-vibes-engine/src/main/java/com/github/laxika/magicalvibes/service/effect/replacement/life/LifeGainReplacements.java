@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.NefariousLichLifeGainReplacem
 import com.github.laxika.magicalvibes.model.effect.OpponentLifeGainBecomesLifeLossEffect;
 import com.github.laxika.magicalvibes.model.replacement.LifeGainEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementCandidateSource;
@@ -64,7 +65,7 @@ public class LifeGainReplacements implements ReplacementCandidateSource<LifeGain
             for (int i = 0; i < statics.size(); i++) {
                 if (statics.get(i) instanceof NefariousLichLifeGainReplacementEffect) {
                     options.add(new ReplacementOption(LICH_KEY + source.getId() + ":" + i,
-                            source.getCard().getName() + ": draw that many cards instead",
+                            FaceDownVisibility.publicName(gameData, source) + ": draw that many cards instead",
                             ReplacementOption.Kind.REPLACEMENT, true));
                 }
             }
@@ -76,7 +77,7 @@ public class LifeGainReplacements implements ReplacementCandidateSource<LifeGain
                 for (int i = 0; i < statics.size(); i++) {
                     if (statics.get(i) instanceof OpponentLifeGainBecomesLifeLossEffect) {
                         options.add(new ReplacementOption(LOSS_KEY + source.getId() + ":" + i,
-                                source.getCard().getName() + ": lose that much life instead",
+                                FaceDownVisibility.publicName(gameData, source) + ": lose that much life instead",
                                 ReplacementOption.Kind.REPLACEMENT, true));
                     }
                 }
@@ -93,7 +94,7 @@ public class LifeGainReplacements implements ReplacementCandidateSource<LifeGain
                     : "multiply the life gained by "
                     + MaroGoneNutsSupport.apply(gameData, sourced.effect(), sourced.effect().lifeGainMultiplier());
             options.add(new ReplacementOption(sourced.key(),
-                    sourced.source().getCard().getName() + ": " + text,
+                    FaceDownVisibility.publicName(gameData, sourced.source()) + ": " + text,
                     ReplacementOption.Kind.REPLACEMENT, true));
         }
         return options;

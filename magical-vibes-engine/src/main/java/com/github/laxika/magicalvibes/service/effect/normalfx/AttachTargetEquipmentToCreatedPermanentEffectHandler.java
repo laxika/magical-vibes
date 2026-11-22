@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentToCreatedPermanentEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
@@ -68,7 +69,7 @@ public class AttachTargetEquipmentToCreatedPermanentEffectHandler implements Nor
             playerInputService.beginPermanentChoice(gameData, entry.getControllerId(),
                     hosts.stream().map(Permanent::getId).toList(),
                     new PermanentChoiceContext.AttachEquipmentToCreature(equipment.getId(), entry.getControllerId()),
-                    "Choose a created creature to attach " + equipment.getCard().getName() + " to.");
+                    "Choose a created creature to attach " + FaceDownVisibility.publicName(gameData, equipment) + " to.");
             return;
         }
         Permanent host = hosts.getFirst();

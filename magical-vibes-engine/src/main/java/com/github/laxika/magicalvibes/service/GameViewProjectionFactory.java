@@ -1383,7 +1383,7 @@ public class GameViewProjectionFactory {
         String playerName = gameData.playerIdToName.get(affectedId);
         if (playerName != null) return playerName;
         Permanent permanent = gameQueryService.findPermanentById(gameData, affectedId);
-        return permanent == null ? null : permanent.getCard().getName();
+        return permanent == null ? null : FaceDownVisibility.publicName(gameData, permanent);
     }
 
     int getSearchTaxCost(GameData gameData, UUID playerId) {

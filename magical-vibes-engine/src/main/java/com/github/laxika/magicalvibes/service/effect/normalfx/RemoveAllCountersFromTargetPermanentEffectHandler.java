@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -64,7 +65,7 @@ public class RemoveAllCountersFromTargetPermanentEffectHandler implements Normal
 
         if (removed > 0) {
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
-                    .text(" removes all counters from " + target.getCard().getName() + " (" + removed + ").")
+                    .text(" removes all counters from " + FaceDownVisibility.publicName(gameData, target) + " (" + removed + ").")
                     .build());
         }
         log.info("Game {} - {} removes {} counter(s) from {}", gameData.id,

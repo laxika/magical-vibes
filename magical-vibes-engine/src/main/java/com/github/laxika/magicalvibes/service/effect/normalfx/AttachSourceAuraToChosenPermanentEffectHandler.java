@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToChosenPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -78,7 +79,7 @@ public class AttachSourceAuraToChosenPermanentEffectHandler implements NormalEff
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.AttachSourceAuraToChosenPermanent(aura.getId()));
             playerInputService.beginPermanentChoice(gameData, chooserId, validTargetIds,
-                    "Choose a permanent to attach " + aura.getCard().getName() + " to.");
+                    "Choose a permanent to attach " + FaceDownVisibility.publicName(gameData, aura) + " to.");
             return;
         }
 

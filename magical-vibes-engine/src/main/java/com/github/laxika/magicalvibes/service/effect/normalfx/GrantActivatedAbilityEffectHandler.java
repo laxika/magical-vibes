@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -103,7 +104,7 @@ public class GrantActivatedAbilityEffectHandler implements NormalEffectHandlerBe
                 || Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
                     UUID.randomUUID(),
-                    entry.getCard().getName(),
+                    FaceDownVisibility.sourceName(gameData, entry),
                     entry.getSourcePermanentId(),
                     entry.getControllerId(),
                     new GrantActivatedAbilityEffect(

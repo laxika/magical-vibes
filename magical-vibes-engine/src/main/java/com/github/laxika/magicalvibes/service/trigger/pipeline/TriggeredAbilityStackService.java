@@ -48,6 +48,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.ZoneChangeTrigger;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -1327,7 +1328,7 @@ public class TriggeredAbilityStackService extends StackDoor {
         enqueue(gameData, entry);
         String targetName = gameData.playerIdToName.containsKey(chosen) ? gameData.playerIdToName.get(chosen)
                 : java.util.Optional.ofNullable(gameQueryService.findPermanentById(gameData, chosen))
-                        .map(permanent -> permanent.getCard().getName()).orElse("a permanent");
+                        .map(permanent -> FaceDownVisibility.publicName(gameData, permanent)).orElse("a permanent");
         gameLogService.append(gameData, GameLog.cardThen(card, "'s ability randomly targets " + targetName + "."));
     }
 

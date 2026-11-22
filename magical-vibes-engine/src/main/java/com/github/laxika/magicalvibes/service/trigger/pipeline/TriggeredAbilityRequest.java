@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 
 import java.util.Objects;
@@ -19,7 +20,7 @@ import java.util.UUID;
  * @param sourcePermanent  the permanent whose ability it is (CR 113.7), or {@code null} for an ability of a card in
  *                         another zone
  * @param controllerId     the ability's controller (CR 113.8)
- * @param description      what the stack entry is called
+ * @param description      what the stack entry is called; it names no face-down source
  * @param ifContext        the context the intervening "if" is judged in as the ability triggers (CR 603.4)
  * @param record           stamps what the event was on the stack entry
  * @param attack           whether creatures attacking caused the ability to trigger, which the "triggers an
@@ -47,6 +48,11 @@ public record TriggeredAbilityRequest(TriggeredAbility ability, Card sourceCard,
         Objects.requireNonNull(description, "description");
         Objects.requireNonNull(ifContext, "ifContext");
         Objects.requireNonNull(record, "record");
+        String sourceName = sourceCard.getName();
+        if (sourcePermanent != null && sourcePermanent.isFaceDown() && sourceName != null && !sourceName.isEmpty()) {
+            // The log and prompts quote the description to players who may not look at the source (CR 708.5).
+            description = description.replace(sourceName, FaceDownVisibility.publicName(sourcePermanent));
+        }
     }
 
     /** A request for an ability that no attack caused, read by the doublers without a cause. */

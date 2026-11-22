@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordToBlockingCreaturesUnlessAttackerPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -71,7 +72,7 @@ public class GrantKeywordToBlockingCreaturesUnlessAttackerPaysEffectHandler impl
                         controllerId,
                         List.of(effect),
                         "Pay " + effect.manaCost() + " to prevent creatures you control blocking "
-                                + attacker.getCard().getName() + " from gaining " + formatKeyword(effect.keyword())
+                                + FaceDownVisibility.publicName(gameData, attacker) + " from gaining " + formatKeyword(effect.keyword())
                                 + "? (" + sourceCard.getName() + ")",
                         attacker.getId(),
                         effect.manaCost(),

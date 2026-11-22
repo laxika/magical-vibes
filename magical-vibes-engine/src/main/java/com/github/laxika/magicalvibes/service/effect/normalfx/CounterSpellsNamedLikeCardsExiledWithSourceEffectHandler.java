@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellsNamedLikeCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -63,7 +64,8 @@ public class CounterSpellsNamedLikeCardsExiledWithSourceEffectHandler implements
         List<StackEntry> toCounter = new ArrayList<>();
         for (StackEntry se : gameData.stack) {
             if (se == entry) continue;
-            if (SPELL_TYPES.contains(se.getEntryType()) && exiledNames.contains(se.getCard().getName())) {
+            if (SPELL_TYPES.contains(se.getEntryType())
+                    && exiledNames.contains(CastingPermissionService.spellAsEffectsSeeIt(se).getCard().getName())) {
                 toCounter.add(se);
             }
         }

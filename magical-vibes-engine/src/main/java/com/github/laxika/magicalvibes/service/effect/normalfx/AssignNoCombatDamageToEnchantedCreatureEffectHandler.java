@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,6 @@ public class AssignNoCombatDamageToEnchantedCreatureEffectHandler implements Nor
         PreventionSupport.assignNoCombatDamage(gameData, entry.getCard().getName(),
                     entry.getSourcePermanentId(), entry.getControllerId(), creature.getId(), Duration.UNTIL_END_OF_TURN);
         gameLogService.append(gameData,
-                GameLog.text(creature.getCard().getName() + " assigns no combat damage this turn."));
+                GameLog.text(FaceDownVisibility.publicName(gameData, creature) + " assigns no combat damage this turn."));
     }
 }

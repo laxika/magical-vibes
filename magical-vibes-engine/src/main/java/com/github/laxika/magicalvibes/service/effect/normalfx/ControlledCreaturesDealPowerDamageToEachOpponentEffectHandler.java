@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -65,7 +66,7 @@ public class ControlledCreaturesDealPowerDamageToEachOpponentEffectHandler
             for (UUID opponentId : opponents) {
                 StackEntry damageEntry = StackEntry.carrier(source.getCard(),
                         sourceControllerId,
-                        source.getCard().getName() + "'s ability",
+                        FaceDownVisibility.publicName(gameData, source) + "'s ability",
                         List.of(),
                         opponentId,
                         source.getId());

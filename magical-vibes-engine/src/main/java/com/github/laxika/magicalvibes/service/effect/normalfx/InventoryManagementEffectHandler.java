@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.InventoryManagementEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -107,7 +108,7 @@ public class InventoryManagementEffectHandler implements NormalEffectHandlerBean
                 gameData,
                 controllerId,
                 creatureIds,
-                attachment.getCard().getName() + " — Choose a creature you control to attach it to.");
+                FaceDownVisibility.publicName(gameData, attachment) + " — Choose a creature you control to attach it to.");
     }
 
     private void continueWithNextAttachment(GameData gameData, UUID controllerId,

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -104,7 +105,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean, AsksDeath
         }
         Map<UUID, Integer> lifeBefore = new LinkedHashMap<>();
         losses.keySet().forEach(playerId -> lifeBefore.put(playerId, gameData.getLife(playerId)));
-        int totalLifeLost = lifeSupport.applyLifeLosses(gameData, losses, entry.getCard().getName());
+        int totalLifeLost = lifeSupport.applyLifeLosses(gameData, losses, FaceDownVisibility.sourceName(gameData, entry));
         entry.recordStep(StepKind.LOSE_LIFE, lifeSupport.lifeChange(gameData, lifeBefore, false));
 
         if (e.recordTargetLifeLost()) {

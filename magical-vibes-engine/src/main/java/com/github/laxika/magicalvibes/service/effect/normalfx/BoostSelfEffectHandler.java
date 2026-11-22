@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -61,7 +62,7 @@ public class BoostSelfEffectHandler implements NormalEffectHandlerBean {
             gameData.addPowerToughnessBoost(entry, boosted.getId(), powerBoost, toughnessBoost);
         } else {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
+                    UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), null, entry.getControllerId(),
                     new PowerToughnessBoostEffect(powerBoost, toughnessBoost),
                     boosted.getId(), null, null, boost.duration(), 0));
         }

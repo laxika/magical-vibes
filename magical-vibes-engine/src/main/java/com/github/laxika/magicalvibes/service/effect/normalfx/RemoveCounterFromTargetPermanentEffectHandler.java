@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromTargetPermanentEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battle.BattleDefeatSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -75,7 +76,7 @@ public class RemoveCounterFromTargetPermanentEffectHandler implements NormalEffe
                             entry.getControllerId(), 0, maxRemovable,
                             "Remove up to " + maxRemovable + " "
                                     + permanentCounterSupport.counterTypeName(e.counterType())
-                                    + " counters from " + target.getCard().getName() + ".",
+                                    + " counters from " + FaceDownVisibility.publicName(gameData, target) + ".",
                             entry.getCard().getName()));
                 }
                 return;

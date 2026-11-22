@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToSelfFromTargetCreatureEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -38,7 +39,7 @@ public class PreventAllDamageToSelfFromTargetCreatureEffectHandler implements No
         gameData.addShield(
                 TargetSourceDamagePreventionShield.allDamage(sourceId, targetId));
         gameLogService.append(gameData, GameLog.text(
-                "All damage that would be dealt to " + source.getCard().getName() + " by "
-                        + target.getCard().getName() + " this turn is prevented."));
+                "All damage that would be dealt to " + FaceDownVisibility.publicName(gameData, source) + " by "
+                        + FaceDownVisibility.publicName(gameData, target) + " this turn is prevented."));
     }
 }

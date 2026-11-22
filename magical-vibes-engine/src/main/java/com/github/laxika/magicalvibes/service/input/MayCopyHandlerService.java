@@ -770,7 +770,7 @@ public class MayCopyHandlerService {
                 .findFirst()
                 .orElse(null);
         // Apply the copy
-        String originalName = sourcePermanent.getCard().getName();
+        String originalName = FaceDownVisibility.publicName(gameData, sourcePermanent);
         permanentCopierService.applyCloneCopy(sourcePermanent, targetPerm.getCard(), null, null, Set.of(),
                 List.of(), copyEffect.copyColor());
 
@@ -779,7 +779,7 @@ public class MayCopyHandlerService {
             copiedCard.addTriggeredAbility(retainedTrigger);
         }
 
-        String targetName = targetPerm.getCard().getName();
+        String targetName = FaceDownVisibility.publicName(gameData, targetPerm);
         
         gameLogService.append(gameData, GameLog.cardThen(sourceCard, "'s copy target is no longer on the battlefield."));
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName, targetName);

@@ -260,7 +260,7 @@ public class DrawService {
             drawAmount++;
             String playerName = gameData.playerIdToName.get(playerId);
             gameLogService.append(gameData, GameLog.text(
-                    playerName + " draws one additional card with " + quantumRiddler.getCard().getName() + "."));
+                    playerName + " draws one additional card with " + FaceDownVisibility.publicName(gameData, quantumRiddler) + "."));
             log.info("Game {} - {} draws one additional card with {}",
                     gameData.id, playerName, quantumRiddler.getCard().getName());
         }
@@ -757,7 +757,7 @@ public class DrawService {
                     counterDrawReplacementSource.getCard(),
                     playerId,
                     List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.STUDY_COUNTER)),
-                    "Put a study counter on " + counterDrawReplacementSource.getCard().getName()
+                    "Put a study counter on " + FaceDownVisibility.publicName(gameData, counterDrawReplacementSource)
                             + " instead of drawing?",
                     null,
                     null,
@@ -845,7 +845,7 @@ public class DrawService {
                 int drawCount = replacementCount * doublerMultiplier;
                 String playerName = gameData.playerIdToName.get(playerId);
                 gameLogService.append(gameData, GameLog.text(playerName + " draws " + drawCount
-                        + " cards instead with " + replacement.source().getCard().getName() + "."));
+                        + " cards instead with " + FaceDownVisibility.publicName(gameData, replacement.source()) + "."));
                 for (int i = 0; i < drawCount; i++) {
                     gameData.pendingReplacementCardDraws.addLast(playerId);
                 }
@@ -1979,7 +1979,7 @@ public class DrawService {
             }
             Permanent targetPermanent = gameQueryService.findPermanentById(gameData, replacement.targetId());
             String targetName = targetPermanent != null
-                    ? targetPermanent.getCard().getName()
+                    ? FaceDownVisibility.publicName(gameData, targetPermanent)
                     : gameData.playerIdToName.getOrDefault(replacement.targetId(), "target");
             String label = WORDS_OF_WAR_NAME + " — " + targetName;
             for (int suffix = 2; options.containsKey(label); suffix++) {
@@ -2424,7 +2424,7 @@ public class DrawService {
                     studyCounterSource.getCard(),
                     playerId,
                     List.of(new ReplaceSingleDrawEffect(playerId, DrawReplacementKind.STUDY_COUNTER)),
-                    "Put a study counter on " + studyCounterSource.getCard().getName() + " instead of drawing?",
+                    "Put a study counter on " + FaceDownVisibility.publicName(gameData, studyCounterSource) + " instead of drawing?",
                     null,
                     null,
                     studyCounterSource.getId()));
@@ -2710,7 +2710,7 @@ public class DrawService {
                     if (reveal.optional()) {
                         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                                 perm.getCard(), drawingPlayerId, List.of(reveal),
-                                perm.getCard().getName() + " - Reveal " + drawn.getName() + "?",
+                                FaceDownVisibility.publicName(gameData, perm) + " - Reveal " + drawn.getName() + "?",
                                 drawn.getId(), null, perm.getId()));
                     } else {
                         revealDrawnCard(gameData, perm, drawingPlayerId, drawn);

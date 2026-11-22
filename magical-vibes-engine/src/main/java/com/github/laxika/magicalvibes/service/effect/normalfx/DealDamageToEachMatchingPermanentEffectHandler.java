@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.DamageSource;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -66,7 +67,7 @@ public class DealDamageToEachMatchingPermanentEffectHandler implements NormalEff
         int evaluated = amountEvaluationService.evaluate(gameData, e.damage(),
                 AmountContext.forStackEntry(entry, source));
         int rawDamage = evaluated;
-        String cardName = source == null ? entry.getCard().getName() : source.getCard().getName();
+        String cardName = source == null ? FaceDownVisibility.sourceName(gameData, entry) : FaceDownVisibility.publicName(gameData, source);
 
         List<Permanent> candidates = new ArrayList<>();
         if (e.scope() == EachPermanentScope.TARGET_PLAYER) {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachAnyNumberOfControlledAurasAndEquipmentToSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -60,7 +61,7 @@ public class AttachAnyNumberOfControlledAurasAndEquipmentToSourceEffectHandler
                 legalAttachmentIds.size(),
                 new MultiPermanentChoiceContext.AttachAnyNumberOfControlledAurasAndEquipmentToSource(
                         source.getId()),
-                "Choose any number of Auras and Equipment to attach to " + source.getCard().getName() + ".");
+                "Choose any number of Auras and Equipment to attach to " + FaceDownVisibility.publicName(gameData, source) + ".");
     }
 
     private List<UUID> controlledLegalAttachmentIds(GameData gameData, UUID controllerId, Permanent source) {

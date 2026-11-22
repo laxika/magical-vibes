@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetPermanentUn
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -52,8 +53,8 @@ public class BecomeCopyOfTargetPermanentUntilEndOfTurnEffectHandler implements N
 
         Card preCopyCard = PermanentCopierService.preCopyCard(gameData, targetPermanent);
 
-        String originalName = targetPermanent.getCard().getName();
-        String copySourceName = copySource.getCard().getName();
+        String originalName = FaceDownVisibility.publicName(gameData, targetPermanent);
+        String copySourceName = FaceDownVisibility.publicName(gameData, copySource);
         BecomeCopyOfTargetPermanentUntilEndOfTurnEffect copyEffect =
                 (BecomeCopyOfTargetPermanentUntilEndOfTurnEffect) effect;
         permanentCopierService.applyCloneCopy(

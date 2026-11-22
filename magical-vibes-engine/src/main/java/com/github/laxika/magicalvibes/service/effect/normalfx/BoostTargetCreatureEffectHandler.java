@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -103,7 +104,7 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
                             int powerBoost, int toughnessBoost, Duration duration) {
         // A layer-7c floating effect on the target with the stated duration (CR 613.4c, 611.2a): until end of turn,
         // until end of combat, or until the ability controller's next turn.
-        gameData.addPowerToughnessBoost(entry.getCard().getName(), entry.getSourcePermanentId(),
+        gameData.addPowerToughnessBoost(FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(),
                 entry.getControllerId(), target.getId(), powerBoost, toughnessBoost,
                 Duration.UNTIL_YOUR_NEXT_TURN.equals(duration) || Duration.UNTIL_END_OF_COMBAT.equals(duration)
                         ? duration : Duration.UNTIL_END_OF_TURN);

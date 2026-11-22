@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AsEntersDiscardEntry;
 import com.github.laxika.magicalvibes.model.effect.DiscardCreatureCardsAsEntersForKeywordCountersEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -83,7 +84,7 @@ public class AsEntersDiscardSupport {
             entering.setAsEntersDiscardResolved(true);
             return false;
         }
-        String cardName = entering.getCard().getName();
+        String cardName = FaceDownVisibility.publicName(gameData, entering);
         PendingMayAbility carrier = new PendingMayAbility(entering.getCard(), controllerId,
                 List.of(new AsEntersDiscardEntry(request, effect)),
                 cardName + " — choose how many cards to discard as it enters");
@@ -111,7 +112,7 @@ public class AsEntersDiscardSupport {
             return;
         }
         playerInputService.beginDiscardChoice(gameData, controllerId, validIndices,
-                entering.getCard().getName() + " — choose a creature card to discard as it enters.", count,
+                FaceDownVisibility.publicName(gameData, entering) + " — choose a creature card to discard as it enters.", count,
                 DiscardFollowUp.thenEffectWithEventValueAndDiscardedCards(
                         entering.getCard(), entry, count, null, null, controllerId));
     }

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetOpponentChoosesCardFrom
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -123,7 +124,7 @@ public class TargetOpponentChoosesCardFromGraveyardEffectHandler implements Norm
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, controllerId, permanent, enterTappedTypes);
         for (CardEffect grantedEffect : battlefieldEffectGrants) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(), controllerId,
+                    UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(), controllerId,
                     grantedEffect, permanent.getId(), null, null, Duration.PERMANENT, 0));
         }
         graveyardReturnSupport.trackStolenCreature(gameData, permanent.getId(), controllerId, graveyardOwnerId);

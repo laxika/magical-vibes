@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -172,9 +173,9 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
         if (absorber == null) {
             return "A permanent";
         }
-        String name = absorber.getCard().getName();
+        String name = FaceDownVisibility.publicName(ctx.gameData(), absorber);
         List<Permanent> sameName = absorbers(ctx).stream()
-                .filter(candidate -> candidate.getCard().getName().equals(name))
+                .filter(candidate -> FaceDownVisibility.publicName(ctx.gameData(), candidate).equals(name))
                 .toList();
         if (sameName.size() < 2) {
             return name;
@@ -207,12 +208,12 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
         UUID destinationId = gameData.shields(TurnDamageRedirectToCreatureShield.class)
                 .get(Integer.parseInt(shieldIndex)).redirectTargetCreatureId();
         Permanent destination = gameQueryService.findPermanentById(gameData, destinationId);
-        return destination == null ? "a creature" : destination.getCard().getName();
+        return destination == null ? "a creature" : FaceDownVisibility.publicName(gameData, destination);
     }
 
     private String redirectDestinationName(GameData gameData, String destinationId) {
         Permanent destination = gameQueryService.findPermanentById(gameData, UUID.fromString(destinationId));
-        return destination == null ? "a creature" : destination.getCard().getName();
+        return destination == null ? "a creature" : FaceDownVisibility.publicName(gameData, destination);
     }
 
     private DamageEvent redirected(PlayerDamageContext ctx, int remaining) {

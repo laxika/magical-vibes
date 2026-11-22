@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -1099,12 +1100,12 @@ public class GraveyardService {
         for (Permanent aura : findDestructionReplacementSources(gameData, perm,
                 DestructionReplacement.SACRIFICE_AURA_AND_GRANT_INDESTRUCTIBLE)) {
             if (!gameQueryService.cantBeSacrificed(gameData, aura)) {
-                options.put("Sacrifice " + aura.getCard().getName() + " (choice " + (options.size() + 1) + ")",
+                options.put("Sacrifice " + FaceDownVisibility.publicName(gameData, aura) + " (choice " + (options.size() + 1) + ")",
                         "SACRIFICE_AURA:" + aura.getId());
             }
         }
         for (Permanent aura : findDestructionReplacementSources(gameData, perm, DestructionReplacement.UMBRA_ARMOR)) {
-            options.put("Use " + aura.getCard().getName() + " (choice " + (options.size() + 1) + ") umbra armor",
+            options.put("Use " + FaceDownVisibility.publicName(gameData, aura) + " (choice " + (options.size() + 1) + ") umbra armor",
                     "UMBRA:" + aura.getId());
         }
         if (allowShieldCounter && perm.getCounterCount(CounterType.SHIELD) > 0) {
@@ -1132,7 +1133,7 @@ public class GraveyardService {
         gameData.pendingInteractions.addLast(new PendingInteraction.ColorChoice(
                 controllerId, perm.getId(), null,
                 new ChoiceContext.RegenerationShieldChoice(perm.getId(), options),
-                List.copyOf(options.keySet()), "Choose how to save " + perm.getCard().getName()));
+                List.copyOf(options.keySet()), "Choose how to save " + FaceDownVisibility.publicName(gameData, perm)));
         processPendingRegenerationChoice(gameData);
     }
 
@@ -1279,7 +1280,7 @@ public class GraveyardService {
     private boolean performSacrificeAuraAndGrantIndestructibleReplacement(
             GameData gameData, Permanent protectedPermanent, Permanent aura) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, aura.getId());
-        gameData.addEffectOnPermanent(aura.getCard().getName(), aura.getId(), controllerId, new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()), protectedPermanent.getId(), Duration.UNTIL_END_OF_TURN);
+        gameData.addEffectOnPermanent(FaceDownVisibility.publicName(gameData, aura), aura.getId(), controllerId, new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.target()), protectedPermanent.getId(), Duration.UNTIL_END_OF_TURN);
         boolean[] removed = {false};
         departAuraForReplacement(gameData, new DepartureIntent(aura.getId(), DepartureCause.OTHER),
                 DepartureService.Hooks.afterEach((intent, permanent, snapshot, left) -> removed[0] = left));
@@ -1335,7 +1336,7 @@ public class GraveyardService {
         // "When it regenerates this way, that player may draw a card": a delayed triggered ability (CR 603.7).
         StackEntry trigger = TriggeredAbilityStackService.madeAbility(perm.getCard(),
                 riderControllerId(gameData, perm, used),
-                perm.getCard().getName() + "'s regeneration ability",
+                FaceDownVisibility.publicName(gameData, perm) + "'s regeneration ability",
                 List.of(new MayEffect(new DrawCardEffect(1, Subjects.targetPlayerDeclaredElsewhere()), "Draw a card?",
                         null, MayChoicePlayer.TARGET_PLAYER)),
                 opponentId, perm.getId());
@@ -1355,7 +1356,7 @@ public class GraveyardService {
         // "When it regenerates this way, put a counter on it": a delayed triggered ability (CR 603.7).
         StackEntry trigger = TriggeredAbilityStackService.madeAbility(perm.getCard(),
                 riderControllerId(gameData, perm, used),
-                perm.getCard().getName() + "'s regeneration ability",
+                FaceDownVisibility.publicName(gameData, perm) + "'s regeneration ability",
                 List.of(new com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect(
                         modifier, modifier, 1)),
                 perm.getId(), perm.getId());

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -125,7 +126,7 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
         // A one-shot base-P/T setter is a floating layer-7b effect on the permanent with its own timestamp
         // (CR 613.4b, 613.7b): of all applicable 7b setters the latest timestamp wins in the layered pass.
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(), entry.getControllerId(),
                 e, target.getId(), null, null, e.duration(), 0));
     }
 

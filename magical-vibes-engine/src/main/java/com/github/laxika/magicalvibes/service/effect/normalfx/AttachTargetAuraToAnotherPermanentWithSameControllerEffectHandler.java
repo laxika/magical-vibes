@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentWithSameControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -70,7 +71,7 @@ public class AttachTargetAuraToAnotherPermanentWithSameControllerEffectHandler
             gameData.interaction.setPermanentChoiceContext(
                     new PermanentChoiceContext.AttachTargetAuraToAnotherPermanentWithSameController(aura.getId()));
             playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), validTargetIds,
-                    "Choose another permanent to attach " + aura.getCard().getName() + " to.");
+                    "Choose another permanent to attach " + FaceDownVisibility.publicName(gameData, aura) + " to.");
             return;
         }
 

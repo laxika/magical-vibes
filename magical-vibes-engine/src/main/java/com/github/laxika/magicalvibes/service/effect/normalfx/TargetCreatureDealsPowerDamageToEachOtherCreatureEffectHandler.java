@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToEachOtherCreatureEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -49,7 +50,7 @@ public class TargetCreatureDealsPowerDamageToEachOtherCreatureEffectHandler impl
         int power = gameQueryService.getPowerBasedDamage(gameData, source);
         StackEntry damageEntry = StackEntry.carrier(source.getCard(),
                 sourceControllerId,
-                source.getCard().getName() + "'s ability",
+                FaceDownVisibility.publicName(gameData, source) + "'s ability",
                 List.of(),
                 null,
                 source.getId());

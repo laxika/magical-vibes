@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetArtifactWithManaValueXEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class BecomeCopyOfTargetArtifactWithManaValueXEffectHandler implements No
             return;
         }
 
-        String originalName = source.getCard().getName();
+        String originalName = FaceDownVisibility.publicName(gameData, source);
         permanentCopierService.applyCloneCopy(source, target, null, null);
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName, target.getCard().getName());
     }

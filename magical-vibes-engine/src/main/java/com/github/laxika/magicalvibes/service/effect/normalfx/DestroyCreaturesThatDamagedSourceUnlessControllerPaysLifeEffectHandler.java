@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import java.util.ArrayList;
@@ -89,7 +90,7 @@ public class DestroyCreaturesThatDamagedSourceUnlessControllerPaysLifeEffectHand
                         && gameData.getLife(controllerId) >= effect.lifeCost();
                 if (canPay) {
                     String prompt = "Pay " + effect.lifeCost() + " life? If you don't, "
-                            + perm.getCard().getName() + " is destroyed and can't be regenerated. ("
+                            + FaceDownVisibility.publicName(gameData, perm) + " is destroyed and can't be regenerated. ("
                             + sourceCard.getName() + ")";
                     gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                             sourceCard, controllerId, List.of(effect), prompt, current));

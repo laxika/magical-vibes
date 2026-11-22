@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -68,7 +69,7 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
 
         Card preCopyCard = PermanentCopierService.preCopyCard(gameData, sourcePermanent);
 
-        String originalName = sourcePermanent.getCard().getName();
+        String originalName = FaceDownVisibility.publicName(gameData, sourcePermanent);
         BecomeCopyOfTargetCreatureUntilEndOfTurnEffect copyEffect =
                 (BecomeCopyOfTargetCreatureUntilEndOfTurnEffect) effect;
         Card originalCard = sourcePermanent.getCard();
@@ -124,7 +125,7 @@ public class BecomeCopyOfTargetCreatureUntilEndOfTurnEffectHandler implements No
         PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), sourcePermanentId, entry.getControllerId(),
                 sourcePermanent, preCopyCard, Duration.UNTIL_END_OF_TURN);
 
-        String targetName = targetPerm != null ? targetPerm.getCard().getName() : lastKnownTarget.getName();
+        String targetName = targetPerm != null ? FaceDownVisibility.publicName(gameData, targetPerm) : lastKnownTarget.getName();
         String logMsg = originalName + " becomes a copy of " + targetName + " until end of turn.";
         gameLogService.append(gameData, GameLog.text(logMsg));
         log.info("Game {} - {} becomes a copy of {} until end of turn", gameData.id, originalName, targetName);

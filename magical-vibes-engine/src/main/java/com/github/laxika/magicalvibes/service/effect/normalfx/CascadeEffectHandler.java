@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -56,7 +57,7 @@ public class CascadeEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
-        String sourceName = entry.getCard().getName();
+        String sourceName = FaceDownVisibility.sourceName(gameData, entry);
         // A cascade granted by a cast trigger compares with the triggering spell's mana value, as it last existed on the
         // stack once it has left (CR 608.2h); a spell's own cascade with its own (CR 702.85a).
         int threshold = entry.getTriggeringCardId() != null

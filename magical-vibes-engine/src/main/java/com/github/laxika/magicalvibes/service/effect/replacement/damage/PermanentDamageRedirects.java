@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatDamageService;
@@ -53,7 +54,7 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
                                 prevention.getTargetSorceryDamageRedirectController(ctx.gameData(), ctx.entry())),
                         (ctx, result) -> {
                             gameLogService.append(ctx.gameData(), GameLog.cardThen(ctx.entry().getEffectiveDamageSourceCard(),
-                                    "'s damage to " + ctx.target().getCard().getName()
+                                    "'s damage to " + FaceDownVisibility.publicName(ctx.gameData(), ctx.target())
                                             + " is dealt to its controller instead."));
                             return null;
                         }),
@@ -102,7 +103,7 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
                                 ctx.targetControllerId(), ctx.target().getId()).stream()
                                 .map(permanent -> permanent.getId().toString()).toList()
                                 : List.of(),
-                        (ctx, instance) -> absorber(ctx, instance).getCard().getName() + ": deal the damage to it instead",
+                        (ctx, instance) -> FaceDownVisibility.publicName(ctx.gameData(), absorber(ctx, instance)) + ": deal the damage to it instead",
                         (ctx, instance) -> ctx.event(),
                         (ctx, instance) -> new ApplyResult.Applied<>(redirected(ctx,
                                 prevention.applyStaticPermanentDamageRedirectToSelf(ctx.gameData(),
@@ -195,7 +196,7 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
         UUID destinationId = ctx.gameData().shields(TurnDamageRedirectToCreatureShield.class)
                 .get(Integer.parseInt(shieldIndex)).redirectTargetCreatureId();
         Permanent destination = gameQueryService.findPermanentById(ctx.gameData(), destinationId);
-        return destination == null ? "a creature" : destination.getCard().getName();
+        return destination == null ? "a creature" : FaceDownVisibility.publicName(ctx.gameData(), destination);
     }
 
     private Permanent absorber(PermanentDamageContext ctx, String instance) {

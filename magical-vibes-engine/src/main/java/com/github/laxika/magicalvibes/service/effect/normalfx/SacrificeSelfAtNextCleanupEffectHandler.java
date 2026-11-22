@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfAtNextCleanupEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +52,7 @@ public class SacrificeSelfAtNextCleanupEffectHandler implements NormalEffectHand
                 Triggers.cleanup(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), null,
                 new SacrificePermanentsEffect(1, new PermanentIsSpecificPermanentPredicate(sourceId),
                         Subjects.you())));
-        gameLogService.append(gameData, GameLog.text(source.getCard().getName()
+        gameLogService.append(gameData, GameLog.text(FaceDownVisibility.publicName(gameData, source)
                 + " will be sacrificed at the beginning of the next cleanup step."));
         log.info("Game {} - {} scheduled for sacrifice at next cleanup", gameData.id, source.getCard().getName());
     }

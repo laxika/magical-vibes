@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfTargetCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -51,7 +52,7 @@ public class GainActivatedAbilitiesOfTargetCreatureUntilEndOfTurnEffectHandler i
                 gameData.grantAbilityToPermanent(entry, ability, source.getId(), Duration.UNTIL_END_OF_TURN));
 
         gameLogService.append(gameData, GameLog.builder().card(source.getCard())
-                .text(" gains the activated abilities of " + target.getCard().getName() + " until end of turn.")
+                .text(" gains the activated abilities of " + FaceDownVisibility.publicName(gameData, target) + " until end of turn.")
                 .build());
     }
 }

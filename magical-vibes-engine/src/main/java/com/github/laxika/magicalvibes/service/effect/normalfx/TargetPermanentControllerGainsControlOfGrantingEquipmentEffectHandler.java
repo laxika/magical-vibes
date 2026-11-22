@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerGainsControlOfGrantingEquipmentEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +48,6 @@ public class TargetPermanentControllerGainsControlOfGrantingEquipmentEffectHandl
 
         creatureControlService.applyControlEffect(gameData, newControllerId, equipment,
                 new GainControlOfTargetEffect(e.duration()),
-                Duration.PERMANENT, null, entry.getCard().getName());
+                Duration.PERMANENT, null, FaceDownVisibility.sourceName(gameData, entry));
     }
 }

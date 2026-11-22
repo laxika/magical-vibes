@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -48,7 +49,7 @@ public class MakeTargetCopyOfTargetPermanentEffectHandler implements NormalEffec
             return;
         }
 
-        String targetName = target.getCard().getName();
+        String targetName = FaceDownVisibility.publicName(gameData, target);
         permanentCopierService.applyCloneCopy(target, copySource, null, null);
         gameLogService.append(gameData, GameLog.textCardText(
                 targetName + " becomes a copy of ", copySource.getCard(), "."));

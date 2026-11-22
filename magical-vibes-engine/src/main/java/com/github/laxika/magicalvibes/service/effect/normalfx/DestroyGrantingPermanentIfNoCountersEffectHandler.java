@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -34,6 +35,6 @@ public class DestroyGrantingPermanentIfNoCountersEffectHandler implements Normal
             return;
         }
         destructionSupport.destroyBatch(
-                gameData, java.util.List.of(grantingPermanent), entry.getCard().getName(), false);
+                gameData, java.util.List.of(grantingPermanent), FaceDownVisibility.sourceName(gameData, entry), false);
     }
 }

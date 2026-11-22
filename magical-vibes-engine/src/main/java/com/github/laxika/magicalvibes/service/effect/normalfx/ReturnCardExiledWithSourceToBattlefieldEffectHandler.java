@@ -20,6 +20,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardExiledWithSourceToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -287,7 +288,7 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.TokenAttackTargetChoice(controllerId, List.of(attacker.getId())));
         playerInputService.beginAnyTargetChoice(gameData, controllerId, planeswalkerIds, opponentIds,
-                "Choose the player or planeswalker for " + attacker.getCard().getName() + " to attack.");
+                "Choose the player or planeswalker for " + FaceDownVisibility.publicName(gameData, attacker) + " to attack.");
     }
 
     private boolean matches(StackEntry entry, ReturnCardExiledWithSourceToBattlefieldEffect e, Card card) {

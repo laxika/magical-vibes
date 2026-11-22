@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -121,7 +122,7 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
         permanentRemovalService.removeOrphanedAuras(gameData);
         for (UUID controllerId : tokenControllers) {
             destructionSupport.createTokenForPlayer(gameData, controllerId, exile.tokenForController(),
-                    entry.getCard().getName(), entry.getCard().getSetCode());
+                    FaceDownVisibility.sourceName(gameData, entry), entry.getCard().getSetCode());
         }
     }
 

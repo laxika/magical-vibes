@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UpgradeEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -64,7 +65,7 @@ public class UpgradeSupport {
         covered.getMeldComponentCards().add(enteringPermanent.getCard());
         covered.getMeldComponentCards().addAll(coveredCards);
         covered.setCard(enteringPermanent.getCard());
-        gameData.addEffectOnPermanent(enteringPermanent.getCard().getName(), null, controllerId,
+        gameData.addEffectOnPermanent(FaceDownVisibility.publicName(gameData, enteringPermanent), null, controllerId,
                 new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), covered.getId(), Duration.PERMANENT);
 
         gameData.playerBattlefields.get(controllerId).removeIf(

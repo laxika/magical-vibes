@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -41,7 +42,7 @@ public class FlipCoinWinEffectHandler implements NormalEffectHandlerBean, Choose
         // "That player flips a coin": the triggering spell's controller, as it was cast.
         UUID controllerId = e.triggeringSpellController() && entry.getTriggeringSpellSnapshot() != null
                 ? entry.getTriggeringSpellSnapshot().getControllerId() : entry.getControllerId();
-        String sourceName = entry.getCard().getName();
+        String sourceName = FaceDownVisibility.sourceName(gameData, entry);
         CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, controllerId);
         boolean wonFlip = result.heads();
 

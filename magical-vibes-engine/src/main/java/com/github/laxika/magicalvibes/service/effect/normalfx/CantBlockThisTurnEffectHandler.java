@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -74,7 +75,7 @@ public class CantBlockThisTurnEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         predicate = lockCounterThresholds(gameData, entry.getControllerId(), predicate);
-        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), entry.getCard().getName(),
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry),
                 entry.getSourcePermanentId(), entry.getControllerId(),
                 new MatchingCreaturesCantBlockMatchingCreaturesEffect(predicate,
                         new PermanentTruePredicate(), "can't block this turn"),

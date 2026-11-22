@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackSourcePermanentNextTurnEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -56,13 +57,13 @@ public class TargetCreatureMustAttackSourcePermanentNextTurnEffectHandler implem
             if (target == null) {
                 continue;
             }
-            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(source.getCard().getName(),
+            gameData.addFloatingEffect(FloatingContinuousEffect.onPermanent(FaceDownVisibility.publicName(gameData, source),
                     sourcePermanentId, entry.getControllerId(),
                     new CreaturesMustAttackTargetPlayerUntilNextTurnEffect(sourcePermanentId), target.getId(),
                     Duration.DURING_AFFECTED_PLAYERS_NEXT_TURN));
             gameLogService.append(gameData, GameLog.builder()
                     .card(target.getCard())
-                    .text(" attacks " + source.getCard().getName() + " during its controller's next turn if able.")
+                    .text(" attacks " + FaceDownVisibility.publicName(gameData, source) + " during its controller's next turn if able.")
                     .build());
             log.info("Game {} - {} must attack {} during its controller's next turn",
                     gameData.id, target.getCard().getName(), source.getCard().getName());

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -828,7 +829,7 @@ public class LibraryTriggers {
                 }
                 Permanent snapshot = new Permanent(perm);
                 stackService.put(gameData, new TriggeredAbilityRequest(ability, perm.getCard(), perm, controllerId,
-                        perm.getCard().getName() + "'s ability", context, entry -> {
+                        FaceDownVisibility.publicName(gameData, perm) + "'s ability", context, entry -> {
                             entry.setTargetId(shufflingPlayerId);
                             entry.setNonTargeting(true);
                             entry.setSourcePermanentSnapshot(snapshot);

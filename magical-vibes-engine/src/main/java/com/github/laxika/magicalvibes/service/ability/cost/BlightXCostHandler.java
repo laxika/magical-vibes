@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.BlightXCost;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -76,7 +77,7 @@ public class BlightXCostHandler implements PermanentChoiceCostHandler {
             throw new IllegalStateException("Must choose a creature to blight");
         }
         if (gameQueryService.cantBeChosen(gameData, chosen)) {
-            throw new IllegalStateException(chosen.getCard().getName() + " can't be chosen");
+            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, chosen) + " can't be chosen");
         }
         int amount = cost.fixedAmount() != null ? cost.fixedAmount() : xValue;
         int count = gameQueryService.replaceCounters(

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ReplaceControllerLossWithGameResetEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.DrawService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -71,7 +72,7 @@ public class GameResetLossReplacer implements LossReplacer {
         }
 
         String playerName = gameData.playerIdToName.get(losingPlayerId);
-        String mirrorName = mirror.getCard().getName();
+        String mirrorName = FaceDownVisibility.publicName(gameData, mirror);
         gameLogService.append(gameData, GameLog.text(
                 playerName + " would lose the game — " + mirrorName + " resets the game instead."));
         log.info("Game {} - {} loss ({}) replaced by {}", gameData.id, playerName, reason, mirrorName);

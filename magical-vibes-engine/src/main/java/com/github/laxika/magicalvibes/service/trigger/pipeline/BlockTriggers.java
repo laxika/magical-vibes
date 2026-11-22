@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.CombatTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -355,7 +356,7 @@ public class BlockTriggers {
                     continue;
                 }
                 if (stackService.put(gameData, new TriggeredAbilityRequest(ability, attached.getCard(), attached,
-                        attachedControllerId, attached.getCard().getName() + "'s triggered ability", context,
+                        attachedControllerId, FaceDownVisibility.publicName(gameData, attached) + "'s triggered ability", context,
                         entry -> attackTriggers.recordAttachedEvent(gameData, entry, creature, creatureControllerId,
                                 combatOpponent, attached)))) {
                     if (oneOrMore && oncePerBlock != null) {
@@ -414,7 +415,7 @@ public class BlockTriggers {
                         continue;
                     }
                     if (stackService.put(gameData, new TriggeredAbilityRequest(ability, attached.getCard(), attached,
-                            attachedControllerId, attached.getCard().getName() + "'s triggered ability", context,
+                            attachedControllerId, FaceDownVisibility.publicName(gameData, attached) + "'s triggered ability", context,
                             entry -> {
                                 entry.setTargetId(blocker.getId());
                                 entry.setNonTargeting(true);
@@ -439,7 +440,7 @@ public class BlockTriggers {
                 continue;
             }
             put(gameData, new TriggeredAbilityRequest(ability, blocker.getCard(), blocker, defenderId,
-                    blocker.getCard().getName() + "'s multi-block trigger", context, entry -> {
+                    FaceDownVisibility.publicName(gameData, blocker) + "'s multi-block trigger", context, entry -> {
                         entry.setTargetId(blocker.getId());
                         entry.setNonTargeting(true);
                     }), blocker.getCard(), "'s block ability triggers.");
@@ -600,7 +601,7 @@ public class BlockTriggers {
                     continue;
                 }
                 put(gameData, new TriggeredAbilityRequest(ability, watcher.getCard(), watcher, activeId,
-                        watcher.getCard().getName() + "'s becomes-blocked trigger", context, entry -> {
+                        FaceDownVisibility.publicName(gameData, watcher) + "'s becomes-blocked trigger", context, entry -> {
                             entry.setTargetId(blocked.getId());
                             recordBlockedCreature(gameData, entry, blocked);
                             entry.setSourcePermanentSnapshot(new Permanent(watcher));
@@ -623,7 +624,7 @@ public class BlockTriggers {
                     continue;
                 }
                 put(gameData, new TriggeredAbilityRequest(ability, watcher.getCard(), watcher, activeId,
-                        watcher.getCard().getName() + "'s creatures-become-blocked trigger", context,
+                        FaceDownVisibility.publicName(gameData, watcher) + "'s creatures-become-blocked trigger", context,
                         TriggeredAbilityRequest.TriggerRecord.NONE), watcher.getCard(), "'s ability triggers.");
             }
         }
@@ -656,7 +657,7 @@ public class BlockTriggers {
                             continue;
                         }
                         put(gameData, new TriggeredAbilityRequest(ability, watcher.getCard(), watcher, controllerId,
-                                watcher.getCard().getName() + "'s block trigger", context, entry -> {
+                                FaceDownVisibility.publicName(gameData, watcher) + "'s block trigger", context, entry -> {
                                     entry.setTargetId(pair.blocker().getId());
                                     recordBlockedCreature(gameData, entry, pair.attacker());
                                 }), watcher.getCard(), "'s ability triggers.");
@@ -688,7 +689,7 @@ public class BlockTriggers {
                         continue;
                     }
                     put(gameData, new TriggeredAbilityRequest(ability, watcher.getCard(), watcher, controllerId,
-                            watcher.getCard().getName() + "'s becomes-blocked trigger", context, entry -> {
+                            FaceDownVisibility.publicName(gameData, watcher) + "'s becomes-blocked trigger", context, entry -> {
                                 entry.setTargetId(attacker.getId());
                                 recordBlockedCreature(gameData, entry, attacker);
                             }), watcher.getCard(), "'s ability triggers.");
@@ -712,7 +713,7 @@ public class BlockTriggers {
                         continue;
                     }
                     put(gameData, new TriggeredAbilityRequest(ability, watcher.getCard(), watcher, controllerId,
-                            watcher.getCard().getName() + "'s block trigger", context,
+                            FaceDownVisibility.publicName(gameData, watcher) + "'s block trigger", context,
                             TriggeredAbilityRequest.TriggerRecord.NONE), watcher.getCard(), "'s ability triggers.");
                 }
             }
@@ -799,7 +800,7 @@ public class BlockTriggers {
                 continue;
             }
             put(gameData, new TriggeredAbilityRequest(ability, attacker.getCard(), attacker, activeId,
-                    attacker.getCard().getName() + "'s unblocked-attack trigger", context, entry -> {
+                    FaceDownVisibility.publicName(gameData, attacker) + "'s unblocked-attack trigger", context, entry -> {
                         entry.setTargetId(defenderId);
                         entry.setNonTargeting(true);
                         entry.setTriggeringPlayerId(defenderId);
@@ -828,7 +829,7 @@ public class BlockTriggers {
                     continue;
                 }
                 put(gameData, new TriggeredAbilityRequest(ability, aura.getCard(), aura, auraControllerId,
-                        aura.getCard().getName() + "'s unblocked-attack trigger", context, entry -> {
+                        FaceDownVisibility.publicName(gameData, aura) + "'s unblocked-attack trigger", context, entry -> {
                             entry.setTargetId(defenderId);
                             entry.setNonTargeting(true);
                             entry.setAttackedTargetId(defenderId);
@@ -861,7 +862,7 @@ public class BlockTriggers {
                     continue;
                 }
                 put(gameData, new TriggeredAbilityRequest(ability, permanent.getCard(), permanent, defenderId,
-                        permanent.getCard().getName() + "'s unblocked-attack trigger", context, entry -> {
+                        FaceDownVisibility.publicName(gameData, permanent) + "'s unblocked-attack trigger", context, entry -> {
                             entry.setTargetId(activeId);
                             entry.setNonTargeting(true);
                         }), permanent.getCard(), "'s ability triggers.");
@@ -891,7 +892,7 @@ public class BlockTriggers {
                         continue;
                     }
                     put(gameData, new TriggeredAbilityRequest(ability, permanent.getCard(), permanent, activeId,
-                            permanent.getCard().getName() + "'s unblocked-attacker trigger", context, entry -> {
+                            FaceDownVisibility.publicName(gameData, permanent) + "'s unblocked-attacker trigger", context, entry -> {
                                 entry.setTargetId(attacker.getId());
                                 entry.setNonTargeting(true);
                                 entry.setTriggeringPermanentId(attacker.getId());

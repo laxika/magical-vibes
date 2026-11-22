@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerUnlessControllerTakesDamageEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -43,7 +44,7 @@ public class DealDamageToTargetCreatureOrPlaneswalkerUnlessControllerTakesDamage
         String sourceName = entry.getCard().getName();
         String prompt = "Have " + sourceName + " deal " + e.controllerDamage()
                 + " damage to you? If you don't, " + sourceName + " deals "
-                + e.targetDamage() + " damage to " + target.getCard().getName() + ". ("
+                + e.targetDamage() + " damage to " + FaceDownVisibility.publicName(gameData, target) + ". ("
                 + sourceName + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetControllerId, List.of(e), prompt,

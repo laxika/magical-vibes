@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinForEachBlockingCreatureEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsAtCheckpoints;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
@@ -48,7 +49,7 @@ public class FlipCoinForEachBlockingCreatureEffectHandler
             boolean wonFlip = result.heads();
             String outcome = wonFlip ? " wins" : " loses";
             gameLogService.append(gameData, GameLog.text(playerName + outcome
-                    + " the coin flip for " + cardName + " for " + blocker.getCard().getName()
+                    + " the coin flip for " + cardName + " for " + FaceDownVisibility.publicName(gameData, blocker)
                     + coinFlipService.replacementDetails(result) + "."));
 
             if (wonFlip) {

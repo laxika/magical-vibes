@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +37,7 @@ public class CantBlockSourceEffectHandler implements NormalEffectHandlerBean {
         }
 
         Permanent source = gameQueryService.findPermanentById(gameData, e.sourcePermanentId());
-        String sourceName = source != null ? source.getCard().getName() : entry.getCard().getName();
+        String sourceName = source != null ? FaceDownVisibility.publicName(gameData, source) : FaceDownVisibility.sourceName(gameData, entry);
 
         gameData.addEffectOnPermanent(entry, e, target.getId(), Duration.UNTIL_END_OF_TURN);
 

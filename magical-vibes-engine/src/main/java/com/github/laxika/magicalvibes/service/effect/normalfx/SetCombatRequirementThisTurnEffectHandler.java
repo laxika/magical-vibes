@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -85,7 +86,7 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
             case MUST_BLOCK -> {
                 stamp(gameData, entry, target, requirement);
 
-                String logEntry = target.getCard().getName() + " blocks this turn if able.";
+                String logEntry = FaceDownVisibility.publicName(gameData, target) + " blocks this turn if able.";
                 gameLogService.append(gameData, GameLog.text(logEntry));
 
                 log.info("Game {} - {} must block this turn if able", gameData.id, target.getCard().getName());

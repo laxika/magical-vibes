@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -832,7 +833,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = result.controllerId();
         List<Card> topCards = result.topCards();
         String playerName = result.playerName();
-        String cardName = entry.getCard().getName();
+        String cardName = FaceDownVisibility.sourceName(gameData, entry);
         int count = topCards.size();
         int toHandCount = chooseCount;
         CardPredicate handChoicePredicate = e.choosePredicate();
@@ -1004,7 +1005,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         lifeSupport.applyGainLife(gameData, entry.getControllerId(), manaValue,
-                entry.getCard().getName(), entry.getCard(), entry.getEntryType());
+                FaceDownVisibility.sourceName(gameData, entry), entry.getCard(), entry.getEntryType());
     }
 
     private void gainLifeForGreatestPowerOfGraveyardCards(
@@ -1021,7 +1022,7 @@ public class LookAtTopCardsEffectHandler implements NormalEffectHandlerBean {
                 .orElse(0);
         if (greatestPower > 0) {
             lifeSupport.applyGainLife(gameData, entry.getControllerId(), greatestPower,
-                    entry.getCard().getName(), entry.getCard(), entry.getEntryType());
+                    FaceDownVisibility.sourceName(gameData, entry), entry.getCard(), entry.getEntryType());
         }
     }
 }

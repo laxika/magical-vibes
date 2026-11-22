@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeChosenPermanentAttackingEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -101,7 +102,7 @@ public class MakeChosenPermanentAttackingEffectHandler implements NormalEffectHa
                 entry.getControllerId(),
                 permanentTargetIds,
                 validPlayerIds,
-                "Choose the player, planeswalker, or battle for " + permanent.getCard().getName() + " to attack.");
+                "Choose the player, planeswalker, or battle for " + FaceDownVisibility.publicName(gameData, permanent) + " to attack.");
     }
 
     private Set<UUID> currentAttackTargetIds(GameData gameData, UUID attackingPlayerId) {

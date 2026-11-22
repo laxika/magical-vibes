@@ -1972,12 +1972,12 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameData.addWaitingDamageSource(permanentId, chosenCard);
 
         Permanent protectedPerm = gameQueryService.findPermanentById(gameData, redirectSource.protectedCreatureId());
-        String protectedName = protectedPerm != null ? protectedPerm.getCard().getName() : "target creature";
+        String protectedName = protectedPerm != null ? FaceDownVisibility.publicName(gameData, protectedPerm) : "target creature";
         // The redirect target may be a player (Jade Monolith) or a permanent (Oracle's Attendants).
         String redirectName = gameData.playerIdToName.get(redirectSource.redirectTargetId());
         if (redirectName == null) {
             Permanent redirectPerm = gameQueryService.findPermanentById(gameData, redirectSource.redirectTargetId());
-            redirectName = redirectPerm != null ? redirectPerm.getCard().getName() : "another creature";
+            redirectName = redirectPerm != null ? FaceDownVisibility.publicName(gameData, redirectPerm) : "another creature";
         }
         String prefix = redirectSource.nextEventOnly() ? "The next time " : "All damage ";
         String suffix = redirectSource.nextEventOnly()
@@ -2002,7 +2002,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameData.addWaitingDamageSource(permanentId, chosenSource);
 
         Permanent destination = gameQueryService.findPermanentById(gameData, redirectSource.redirectTargetId());
-        String destinationName = destination != null ? destination.getCard().getName() : "the target creature";
+        String destinationName = destination != null ? FaceDownVisibility.publicName(gameData, destination) : "the target creature";
         gameLogService.append(gameData, GameLog.textCardText("The next time ", chosenSource,
                 " would deal damage to you this turn, that damage is dealt to " + destinationName + " instead."));
         log.info("Game {} - {} chose {} as player damage redirect source", gameData.id,
@@ -2026,7 +2026,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         // Determine target name for logging
         Permanent targetPerm = gameQueryService.findPermanentById(gameData, targetId);
         String targetName = targetPerm != null
-                ? targetPerm.getCard().getName()
+                ? FaceDownVisibility.publicName(gameData, targetPerm)
                 : gameData.playerIdToName.getOrDefault(targetId, "unknown");
 
         String preventionText = ctx.allDamage()
@@ -2203,7 +2203,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         Permanent destination = gameQueryService.findPermanentById(gameData, ctx.destinationPermanentId());
         String sourceName = FaceDownVisibility.publicName(gameData, chosenPermanent != null ? chosenPermanent.getCard()
                 : chosenSpell != null ? chosenSpell.getCard() : chosenAbility.getCard());
-        String destinationName = destination != null ? destination.getCard().getName() : "it";
+        String destinationName = destination != null ? FaceDownVisibility.publicName(gameData, destination) : "it";
         gameLogService.append(gameData, GameLog.text("The next time " + sourceName + " would deal damage this turn, "
                 + "that damage is dealt to " + destinationName + " instead."));
         log.info("Game {} - {} chose {} as damage redirect source", gameData.id,
@@ -2242,7 +2242,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                         permanentId, ctx.protectedPermanentId()));
 
         Permanent protectedPermanent = gameQueryService.findPermanentById(gameData, ctx.protectedPermanentId());
-        String protectedName = protectedPermanent != null ? protectedPermanent.getCard().getName() : "the enchanted creature";
+        String protectedName = protectedPermanent != null ? FaceDownVisibility.publicName(gameData, protectedPermanent) : "the enchanted creature";
         gameLogService.append(gameData, GameLog.textCardText("The next time ", chosenSource,
                 " would deal damage to " + protectedName + " this turn, that damage is prevented."));
         log.info("Game {} - {} chose {} as next-damage-to-permanent prevention source", gameData.id,
@@ -3116,7 +3116,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                     }
                 }
                 if (auraGraveyardReturn.grantHaste()) {
-                    gameData.addEffectOnPermanent(auraPerm.getCard().getName(), auraPerm.getId(), auraControllerId,
+                    gameData.addEffectOnPermanent(FaceDownVisibility.publicName(gameData, auraPerm), auraPerm.getId(), auraControllerId,
                             new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), auraPerm.getId(), Duration.PERMANENT);
                 }
                 if (auraGraveyardReturn.exileIfLeavesBattlefield()) {

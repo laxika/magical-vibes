@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectUnblockedCombatDamageToSelfEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,7 @@ public class RedirectUnblockedCombatDamageToSelfEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         if (source == null) return;
-        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), source.getCard().getName(),
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), FaceDownVisibility.publicName(gameData, source),
                 source.getId(), entry.getControllerId(), (RedirectUnblockedCombatDamageToSelfEffect) effect,
                 source.getId(), entry.getControllerId(), null, Duration.UNTIL_END_OF_TURN, 0));
         gameLogService.append(gameData, GameLog.cardThen(source.getCard(),

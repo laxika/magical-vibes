@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ControllerOpponentMillBonusEf
 import com.github.laxika.magicalvibes.model.effect.ControllerOpponentMillMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.replacement.MillEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementCandidateSource;
 import org.springframework.stereotype.Component;
@@ -76,7 +77,7 @@ public class MillReplacements implements ReplacementCandidateSource<MillEvent> {
             for (int i = 0; i < effects.size(); i++) {
                 CardEffect effect = effects.get(i);
                 String key = "Mill:" + permanent.getId() + ":" + i;
-                String name = permanent.getCard().getName();
+                String name = FaceDownVisibility.publicName(gameData, permanent);
                 if (effect instanceof ControllerOpponentMillBonusEffect bonus) {
                     replacements.add(new MillReplacement(key,
                             name + ": mill " + bonus.amount() + " more", effect));

@@ -87,6 +87,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
 import org.springframework.beans.factory.ObjectProvider;
@@ -2172,7 +2173,7 @@ public class AdditionalSpellCostService {
             throw new IllegalStateException("Players can't sacrifice nonland permanents to cast " + sourceCard.getName());
         }
         if (gameQueryService.cantBeChosen(gameData, toSacrifice)) {
-            throw new IllegalStateException(toSacrifice.getCard().getName() + " can't be chosen");
+            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, toSacrifice) + " can't be chosen");
         }
         return toSacrifice;
     }
@@ -2660,7 +2661,7 @@ public class AdditionalSpellCostService {
 
     private void validateCanBecomeTapped(Permanent permanent, Card card) {
         if (permanent.isTapRestrictedUnlessAttacking()) {
-            throw new IllegalStateException("Cannot tap " + permanent.getCard().getName()
+            throw new IllegalStateException("Cannot tap " + FaceDownVisibility.publicName(permanent)
                     + " for " + card.getName() + " unless it is attacking");
         }
     }
@@ -2783,7 +2784,7 @@ public class AdditionalSpellCostService {
                     + card.getName());
         }
         if (gameQueryService.cantBeChosen(gameData, creature)) {
-            throw new IllegalStateException(creature.getCard().getName() + " can't be chosen");
+            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, creature) + " can't be chosen");
         }
         return creature;
     }

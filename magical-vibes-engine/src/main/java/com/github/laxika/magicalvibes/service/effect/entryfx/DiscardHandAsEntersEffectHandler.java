@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandAsEntersEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.EntryReplacementHandlerBean;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DiscardHandEffectHandler;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,6 @@ public class DiscardHandAsEntersEffectHandler implements EntryReplacementHandler
     @Override
     public void apply(GameData gameData, UUID controllerId, Permanent enteringPermanent, CardEffect effect) {
         discardHandEffectHandler.discardHand(gameData, controllerId, controllerId,
-                enteringPermanent.getCard().getName());
+                FaceDownVisibility.publicName(gameData, enteringPermanent));
     }
 }

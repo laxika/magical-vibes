@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
@@ -40,7 +41,7 @@ public class CreateEmblemEffectHandler implements NormalEffectHandlerBean {
         CreateEmblemEffect emblemEffect = (CreateEmblemEffect) effect;
 
         for (UUID recipientId : subjectResolutionService.players(gameData, entry, effect, emblemEffect.player())) {
-            createEmblem(gameData, recipientId, entry.getCard() != null ? entry.getCard().getName() : "",
+            createEmblem(gameData, recipientId, entry.getCard() != null ? FaceDownVisibility.sourceName(gameData, entry) : "",
                     emblemEffect);
         }
     }

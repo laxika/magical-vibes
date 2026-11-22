@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.rules.DepartedAttachments;
 import com.github.laxika.magicalvibes.model.effect.ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -68,7 +69,7 @@ public class ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffectHandler
                     new MultiPermanentChoiceContext.ReturnAurasAndAttachEquipmentToTargetCreature(
                             target.getId(), legalAuraCardIds.isEmpty() ? List.of() : attachments.auraCardIds(),
                             attachments.equipmentPermanentIds()),
-                    "Choose any number of Auras and Equipment to attach to " + target.getCard().getName() + ".");
+                    "Choose any number of Auras and Equipment to attach to " + FaceDownVisibility.publicName(gameData, target) + ".");
         }
     }
 
@@ -93,7 +94,7 @@ public class ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffectHandler
                         legalEquipmentIds, List.of(), legalEquipmentIds.size(),
                         new MultiPermanentChoiceContext.ReturnAurasAndAttachEquipmentToTargetCreature(
                                 target.getId(), List.of(), context.equipmentPermanentIds()),
-                        "Choose any number of Equipment to attach to " + target.getCard().getName() + ".");
+                        "Choose any number of Equipment to attach to " + FaceDownVisibility.publicName(gameData, target) + ".");
             }
             return;
         }

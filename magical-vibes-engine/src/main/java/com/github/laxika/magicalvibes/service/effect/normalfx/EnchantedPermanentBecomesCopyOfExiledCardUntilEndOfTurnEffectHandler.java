@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentBecomesCopyOfExiledCardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -61,7 +62,7 @@ public class EnchantedPermanentBecomesCopyOfExiledCardUntilEndOfTurnEffectHandle
                 entry.getControllerId(), enchanted, preCopyCard, Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData,
-                GameLog.textCardText(original.getName() + " becomes a copy of ", exiled.card(),
+                GameLog.textCardText(FaceDownVisibility.publicName(gameData, original) + " becomes a copy of ", exiled.card(),
                         " until end of turn."));
     }
 }

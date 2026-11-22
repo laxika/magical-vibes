@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.Card;
@@ -86,7 +87,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
         insertRemainingExplores(entry, effect, exploreEffect, exploreCount);
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
-        String sourceName = entry.getCard().getName();
+        String sourceName = FaceDownVisibility.sourceName(gameData, entry);
 
         if (deck.isEmpty()) {
             gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty (" + sourceName + " explores)."));

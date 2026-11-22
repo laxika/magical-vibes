@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
@@ -55,7 +56,7 @@ public class RemoveKeywordEffectHandler implements NormalEffectHandlerBean {
         // A one-shot keyword removal is a floating layer-6 effect with its own timestamp: a
         // later-timestamp grant of the same keyword re-adds it (CR 613.7).
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                entry.getCard().getName(), null, entry.getControllerId(), remove,
+                FaceDownVisibility.sourceName(gameData, entry), null, entry.getControllerId(), remove,
                 target.getId(), null, null, remove.duration(), 0));
         String keywordName = remove.keyword().name().charAt(0) + remove.keyword().name().substring(1).toLowerCase().replace('_', ' ');
         String durationLabel = Duration.UNTIL_END_OF_TURN.equals(remove.duration()) ? " until end of turn" : "";

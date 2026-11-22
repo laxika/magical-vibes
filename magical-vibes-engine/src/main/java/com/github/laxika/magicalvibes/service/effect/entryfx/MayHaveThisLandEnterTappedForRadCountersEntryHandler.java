@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayHaveThisLandEnterTappedForRadCountersEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.EntryReplacementHandlerBean;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -32,7 +33,7 @@ public class MayHaveThisLandEnterTappedForRadCountersEntryHandler implements Ent
                 enteringPermanent.getCard(),
                 controllerId,
                 List.of(radEffect),
-                enteringPermanent.getCard().getName() + " — Have it enter tapped and get "
+                FaceDownVisibility.publicName(gameData, enteringPermanent) + " — Have it enter tapped and get "
                         + radEffect.radCounterCount() + " rad counters?",
                 null,
                 null,

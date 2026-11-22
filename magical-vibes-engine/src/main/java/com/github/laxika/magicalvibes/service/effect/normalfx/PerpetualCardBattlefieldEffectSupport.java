@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 
 /** Stores static effects perpetually granted to a physical card and reapplies them on entry. */
 public final class PerpetualCardBattlefieldEffectSupport {
@@ -41,7 +42,7 @@ public final class PerpetualCardBattlefieldEffectSupport {
         }
         for (CardEffect effect : effects) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), permanent.getCard().getName(), null, controllerId,
+                    UUID.randomUUID(), FaceDownVisibility.publicName(gameData, permanent), null, controllerId,
                     effect, permanent.getId(), null, null, Duration.PERMANENT, 0));
         }
     }

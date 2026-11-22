@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -40,7 +41,7 @@ public class BecomeCopyOfTargetCreatureEffectHandler implements NormalEffectHand
                 entry.getCard(),
                 entry.getControllerId(),
                 List.of((BecomeCopyOfTargetCreatureEffect) effect),
-                entry.getCard().getName() + " — You may have this creature become a copy of " + targetPerm.getCard().getName() + ".",
+                entry.getCard().getName() + " — You may have this creature become a copy of " + FaceDownVisibility.publicName(gameData, targetPerm) + ".",
                 targetId,
                 null,
                 entry.getSourcePermanentId()

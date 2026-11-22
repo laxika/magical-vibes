@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ReplaceControllerLossWithExileAndReturnTransformedEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.ExileAndReturnTransformedService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -50,7 +51,7 @@ public class LilianaOtherContractLossReplacer implements LossReplacer {
 
         String playerName = gameData.playerIdToName.get(losingPlayerId);
         gameLogService.append(gameData, GameLog.text(
-                playerName + " would lose the game — " + contract.getOriginalCard().getName()
+                playerName + " would lose the game — " + FaceDownVisibility.publicName(gameData, contract.getOriginalCard())
                         + " returns transformed instead."));
         log.info("Game {} - {} loss ({}) replaced by {}",
                 gameData.id, playerName, reason, contract.getOriginalCard().getName());

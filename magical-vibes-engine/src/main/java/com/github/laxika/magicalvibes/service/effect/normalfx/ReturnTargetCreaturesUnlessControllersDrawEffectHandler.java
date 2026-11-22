@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreaturesUnlessControllersDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,7 +88,7 @@ public class ReturnTargetCreaturesUnlessControllersDrawEffectHandler implements 
                     targetControllerId,
                     List.of(nextEffect),
                     "Have " + sourceCard.getName() + " have you draw a card instead of returning "
-                            + target.getCard().getName() + " to its owner's hand?",
+                            + FaceDownVisibility.publicName(gameData, target) + " to its owner's hand?",
                     targetId,
                     sourceControllerId));
             return;

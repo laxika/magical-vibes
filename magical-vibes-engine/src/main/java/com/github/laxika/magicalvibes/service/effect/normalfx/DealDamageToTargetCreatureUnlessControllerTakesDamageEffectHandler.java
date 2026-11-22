@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureUnlessControllerTakesDamageEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -52,7 +53,7 @@ public class DealDamageToTargetCreatureUnlessControllerTakesDamageEffectHandler
         int targetDamage = amountEvaluationService.evaluate(gameData, e.targetDamage(), amountContext);
         String prompt = "Have " + entry.getCard().getName() + " deal " + controllerDamage
                 + " damage to you? If you don't, " + entry.getCard().getName() + " deals "
-                + targetDamage + " damage to " + target.getCard().getName() + ". ("
+                + targetDamage + " damage to " + FaceDownVisibility.publicName(gameData, target) + ". ("
                 + entry.getCard().getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetControllerId, List.of(e), prompt,

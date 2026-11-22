@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSacrificedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -51,11 +52,11 @@ public class BecomeCopyOfSacrificedPermanentEffectHandler implements NormalEffec
                 : source.getCard().getActivatedAbilities(Zone.BATTLEFIELD).stream()
                         .filter(BecomeCopyOfSacrificedPermanentEffectHandler::isBecomeCopyAbility)
                         .toList();
-        String originalName = source.getCard().getName();
+        String originalName = FaceDownVisibility.publicName(gameData, source);
         permanentCopierService.applyCloneCopy(
                 source, sacrificed.getCard(), null, null, java.util.Set.of(), retainedAbilities);
         gameLogService.append(gameData,
-                GameLog.text(originalName + " becomes a copy of " + sacrificed.getCard().getName() + "."));
+                GameLog.text(originalName + " becomes a copy of " + FaceDownVisibility.publicName(gameData, sacrificed) + "."));
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName,
                 sacrificed.getCard().getName());
     }

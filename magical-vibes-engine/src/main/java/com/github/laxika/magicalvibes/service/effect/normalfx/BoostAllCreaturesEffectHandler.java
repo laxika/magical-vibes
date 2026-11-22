@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import java.util.List;
 import java.util.UUID;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -102,7 +103,7 @@ public class BoostAllCreaturesEffectHandler implements NormalEffectHandlerBean {
                             int powerBoost, int toughnessBoost, Duration duration) {
         if (Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                    entry.getCard().getName(), null, entry.getControllerId(),
+                    FaceDownVisibility.sourceName(gameData, entry), null, entry.getControllerId(),
                     new PowerToughnessBoostEffect(powerBoost, toughnessBoost),
                     target.getId(), null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
         } else {

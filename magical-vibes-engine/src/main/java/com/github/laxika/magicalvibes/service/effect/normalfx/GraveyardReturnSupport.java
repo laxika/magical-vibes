@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
@@ -246,8 +247,8 @@ public class GraveyardReturnSupport {
                     gameData.interaction.setPendingEquipmentAttach(equipment.getId(), sourcePermanent.getId());
                     gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                             sourcePermanent.getCard(), controllerId, List.of(),
-                            sourcePermanent.getCard().getName() + " — Attach " + targetCard.getName()
-                                    + " to " + sourcePermanent.getCard().getName() + "?"));
+                            FaceDownVisibility.publicName(gameData, sourcePermanent) + " — Attach " + targetCard.getName()
+                                    + " to " + FaceDownVisibility.publicName(gameData, sourcePermanent) + "?"));
                     playerInputService.processNextMayAbility(gameData);
                 } else if (sourcePermanent != null) {
                     equipSupport.attachEquipment(gameData, equipment, sourcePermanent);
@@ -2692,7 +2693,7 @@ public class GraveyardReturnSupport {
      */
     public void applyPermanentGrants(GameData gameData, UUID controllerId, Permanent permanent,
                                      CardColor grantColor, CardSubtype grantSubtype, boolean grantIndestructible) {
-        String cardName = permanent.getCard().getName();
+        String cardName = FaceDownVisibility.publicName(gameData, permanent);
         if (grantColor != null) {
             gameData.addEffectOnPermanent(cardName, permanent.getId(), controllerId,
                     new GrantColorEffect(grantColor, Subjects.target()), permanent.getId(), Duration.PERMANENT);

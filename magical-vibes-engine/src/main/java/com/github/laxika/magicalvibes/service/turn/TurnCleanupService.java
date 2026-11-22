@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.turn;
 import com.github.laxika.magicalvibes.model.effect.GrantNoMaximumHandSizeEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -120,7 +121,7 @@ public class TurnCleanupService {
             UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
             var entry = TriggeredAbilityStackService.madeAbility(
                     permanent.getCard(), controllerId,
-                    permanent.getCard().getName() + "'s cleanup trigger",
+                    FaceDownVisibility.publicName(gameData, permanent) + "'s cleanup trigger",
                     List.of(new SacrificePermanentsEffect(1,
                             new PermanentIsSpecificPermanentPredicate(permanent.getId()),
                             Subjects.eachPlayer())));

@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 
 @Component
 public class GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffectHandler
@@ -35,7 +36,7 @@ public class GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffectHandler
             }
             for (Permanent permanent : battlefield) {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
-                        UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                        UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(),
                         entry.getControllerId(), new GrantEffectEffect(grantedEffect, Subjects.target()),
                         permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             }

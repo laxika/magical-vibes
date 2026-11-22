@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -102,7 +103,7 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
             for (UUID playerId : targetPlayers) {
                 gameData.discardCausedByOpponent = !playerId.equals(entry.getControllerId());
                 playerInteractionSupport.resolveRandomDiscardCards(
-                        gameData, playerId, entry.getCard().getName(), amount);
+                        gameData, playerId, FaceDownVisibility.sourceName(gameData, entry), amount);
             }
             return;
         }
@@ -122,7 +123,7 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
 
         if (e.random()) {
             playerInteractionSupport.resolveRandomDiscardCards(gameData, playerId,
-                    entry.getCard().getName(), amount);
+                    FaceDownVisibility.sourceName(gameData, entry), amount);
         } else if (e.filter() != null) {
             playerInteractionSupport.resolveDiscardCards(gameData, playerId, amount,
                     matchingIndices(gameData, entry, e, playerId));
@@ -154,7 +155,7 @@ public class DiscardEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = entry.getControllerId();
 
         if (e.random()) {
-            String sourceName = entry.getCard().getName();
+            String sourceName = FaceDownVisibility.sourceName(gameData, entry);
             for (UUID playerId : players) {
                 gameData.discardCausedByOpponent = !playerId.equals(controllerId);
                 playerInteractionSupport.resolveRandomDiscardCards(gameData, playerId, sourceName, amount);

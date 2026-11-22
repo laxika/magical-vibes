@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSourceFromGraveyardAndTargetCreatureUnlessPaysEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -50,7 +51,7 @@ public class ExileSourceFromGraveyardAndTargetCreatureUnlessPaysEffectHandler im
             return;
         }
 
-        String prompt = "Pay " + e.manaCost() + "? If you don't, " + target.getCard().getName()
+        String prompt = "Pay " + e.manaCost() + "? If you don't, " + FaceDownVisibility.publicName(gameData, target)
                 + " and " + entry.getCard().getName() + " are exiled.";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetControllerId, List.of(e), prompt,

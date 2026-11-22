@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +42,7 @@ public class SetCardTypesEffectHandler implements NormalEffectHandlerBean {
         }
         for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect, set.subject())) {
             gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                    UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(),
                     entry.getControllerId(), set, target.getId(), null, null,
                     set.duration(), 0));
         }

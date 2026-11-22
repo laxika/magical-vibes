@@ -210,6 +210,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.CardRevealService;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
@@ -5699,19 +5700,19 @@ public class SpellCastingService {
                     throw new IllegalStateException("Conspire creature not found on your battlefield");
                 }
                 if (!gameQueryService.isCreature(gameData, creature)) {
-                    throw new IllegalStateException(creature.getCard().getName() + " is not a creature");
+                    throw new IllegalStateException(FaceDownVisibility.publicName(gameData, creature) + " is not a creature");
                 }
                 if (creature.isTapped()) {
-                    throw new IllegalStateException(creature.getCard().getName() + " is already tapped");
+                    throw new IllegalStateException(FaceDownVisibility.publicName(gameData, creature) + " is already tapped");
                 }
                 if (creature.isTapRestrictedUnlessAttacking()) {
-                    throw new IllegalStateException(creature.getCard().getName()
+                    throw new IllegalStateException(FaceDownVisibility.publicName(gameData, creature)
                             + " can't become tapped unless it is attacking");
                 }
                 if (spellColors != null && !spellColors.isEmpty()) {
                     Set<CardColor> creatureColors = gameQueryService.getEffectiveColors(gameData, creature);
                     if (spellColors.stream().noneMatch(creatureColors::contains)) {
-                        throw new IllegalStateException(creature.getCard().getName()
+                        throw new IllegalStateException(FaceDownVisibility.publicName(gameData, creature)
                                 + " does not share a color with " + card.getName());
                     }
                 }
@@ -13416,7 +13417,7 @@ public class SpellCastingService {
         // The copy (CR 707.10) is made by Discord's ability as the spell is cast, with Discord as its source: it goes on
         // the stack through the door as an ability an earlier resolution made, choosing nothing.
         StackEntry abilityCopy = TriggeredAbilityStackService.madeAbility(discord.getCard(), casterId,
-                discord.getCard().getName() + "'s ability",
+                FaceDownVisibility.publicName(gameData, discord) + "'s ability",
                 List.of(new com.github.laxika.magicalvibes.model.effect.DiscordRandomCardCopyEffect()), 0,
                 discord.getId());
         abilityCopy.setNonTargeting(true);
@@ -13457,7 +13458,7 @@ public class SpellCastingService {
             }
             selectedCounts.merge(permanentId, 1, Integer::sum);
             if (countAnyCounters(permanent) < selectedCounts.get(permanentId)) {
-                throw new IllegalStateException("Not enough counters on " + permanent.getCard().getName());
+                throw new IllegalStateException("Not enough counters on " + FaceDownVisibility.publicName(gameData, permanent));
             }
         }
     }
@@ -13530,7 +13531,7 @@ public class SpellCastingService {
             var next = exileCounterChoiceWithTypes(cast, chosen);
             interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
                     player.getId(), null, null, next, available.keySet().stream().map(Enum::name).toList(),
-                    "Choose a counter to remove from " + permanent.getCard().getName() + "."));
+                    "Choose a counter to remove from " + FaceDownVisibility.publicName(gameData, permanent) + "."));
             return true;
         }
         if (!cast.chosenTypes().isEmpty() && chosen.size() != cast.chosenTypes().size()) {
@@ -14912,14 +14913,14 @@ public class SpellCastingService {
             boolean isCreature = gameQueryService.isCreature(gameData, creature);
             boolean isArtifact = gameQueryService.isArtifact(gameData, creature);
             if ((!hasConvoke || !isCreature) && (!hasImprovise || !isArtifact)) {
-                throw new IllegalStateException(creature.getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, creature)
                         + (hasConvoke && !hasImprovise ? " is not a creature" : " is not an artifact"));
             }
             if (creature.isTapped()) {
-                throw new IllegalStateException(creature.getCard().getName() + " is already tapped");
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, creature) + " is already tapped");
             }
             if (creature.isTapRestrictedUnlessAttacking()) {
-                throw new IllegalStateException(creature.getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, creature)
                         + " can't become tapped unless it is attacking");
             }
             if (hasImprovise && isArtifact && (!hasConvoke || !isCreature)) {

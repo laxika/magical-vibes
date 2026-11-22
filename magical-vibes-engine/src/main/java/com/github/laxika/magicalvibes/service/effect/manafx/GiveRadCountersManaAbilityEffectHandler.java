@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -52,6 +53,6 @@ public class GiveRadCountersManaAbilityEffectHandler implements ManaAbilityEffec
             return;
         }
         int placed = gameQueryService.replaceRadCounters(gameData, playerId, amount, playerId);
-        lifeSupport.applyRadCounters(gameData, playerId, placed, permanent.getCard().getName(), playerId);
+        lifeSupport.applyRadCounters(gameData, playerId, placed, FaceDownVisibility.publicName(gameData, permanent), playerId);
     }
 }

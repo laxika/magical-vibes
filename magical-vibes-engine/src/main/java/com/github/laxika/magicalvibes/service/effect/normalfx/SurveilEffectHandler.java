@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.AdditionalSurveilCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -59,7 +60,7 @@ public class SurveilEffectHandler implements NormalEffectHandlerBean {
         UUID controllerId = entry.getControllerId();
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
-        String sourceName = entry.getCard().getName();
+        String sourceName = FaceDownVisibility.sourceName(gameData, entry);
 
         // Surveil 0 (or fewer): no surveil event occurs.
         if (count <= 0) {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.aura;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
@@ -657,7 +658,7 @@ public class AuraAttachmentService {
                 || filter instanceof OwnedPermanentPredicateTargetFilter) {
             FilterContext context = new FilterContext(gameData, attachment.getCard().getId(), controllerId, null, null);
             if (predicateEvaluationService.checkTargetFilter(filter, host, context).isPresent()) {
-                return "it can no longer enchant " + host.getCard().getName();
+                return "it can no longer enchant " + FaceDownVisibility.publicName(gameData, host);
             }
         }
         return null;

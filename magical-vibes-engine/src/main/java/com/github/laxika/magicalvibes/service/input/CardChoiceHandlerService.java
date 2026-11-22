@@ -67,6 +67,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.DrawService;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
@@ -2936,7 +2937,7 @@ public class CardChoiceHandlerService {
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.ChosenPermanentAttackTarget(permanent.getId()));
         playerInputService.beginAnyTargetChoice(gameData, playerId, validPermanentIds, validPlayerIds,
-                "Choose the player, planeswalker, or battle for " + permanent.getCard().getName() + " to attack.");
+                "Choose the player, planeswalker, or battle for " + FaceDownVisibility.publicName(gameData, permanent) + " to attack.");
     }
 
     /**
@@ -3076,7 +3077,7 @@ public class CardChoiceHandlerService {
                 var transform = new com.github.laxika.magicalvibes.model.effect.TransformSelfEffect();
                 StackEntry transformEntry = new StackEntry(StackEntryType.ACTIVATED_ABILITY,
                         source.getCard(), gameQueryService.findPermanentController(gameData, source.getId()),
-                        source.getCard().getName() + " transforms", List.of(transform), null, source.getId());
+                        FaceDownVisibility.publicName(gameData, source) + " transforms", List.of(transform), null, source.getId());
                 effectHandlerRegistry.getHandler(transform).resolve(gameData, transformEntry, transform);
             }
         }

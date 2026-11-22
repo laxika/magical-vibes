@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyLandsUnlessAnyPlayerPaysLifeEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
@@ -180,7 +181,7 @@ public class DestroyLandsUnlessAnyPlayerPaysLifeEffectHandler implements NormalE
                     sourceCard,
                     payerId,
                     List.of(nextEffect),
-                    "Pay " + effect.lifeCost() + " life to prevent " + land.getCard().getName()
+                    "Pay " + effect.lifeCost() + " life to prevent " + FaceDownVisibility.publicName(gameData, land)
                             + " from being destroyed? (" + sourceCard.getName() + ")",
                     effect.currentLandId()));
             return true;

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TimmerianFiendsAnteExchangeEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -77,7 +78,7 @@ public class TimmerianFiendsAnteExchangeEffectHandler implements NormalEffectHan
         // card — in the targetCardId slot, and the artifact itself in the sourcePermanentId slot,
         // for the accept/decline branch.
         String prompt = "Ante the top card of your library? If you don't, you lose "
-                + artifact.getCard().getName() + " and gain " + entry.getCard().getName() + ". ("
+                + FaceDownVisibility.publicName(gameData, artifact) + " and gain " + entry.getCard().getName() + ". ("
                 + entry.getCard().getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), ownerId, List.of(effect), prompt, controllerId, null, artifact.getId()));

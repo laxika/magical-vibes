@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToReturnedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +38,7 @@ public class AttachSourceEquipmentToReturnedPermanentEffectHandler implements No
         }
 
         gameLogService.append(gameData,
-                GameLog.cardThen(entry.getCard(), " is now attached to " + returned.getCard().getName() + "."));
+                GameLog.cardThen(entry.getCard(), " is now attached to " + FaceDownVisibility.publicName(gameData, returned) + "."));
     }
 
     private UUID returnedCardId(StackEntry entry) {

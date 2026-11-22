@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroySelfAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -54,7 +55,7 @@ public class DestroySelfAtEndStepEffectHandler implements NormalEffectHandlerBea
         DelayedPermanentActions.schedule(gameData, entry,
                 new DelayedPermanentAction(sourceId, DelayedPermanentActionKind.DESTROY_AT_END_STEP), ActivePlayer.ANY);
 
-        String logEntry = source.getCard().getName() + " will be destroyed at the beginning of the next end step.";
+        String logEntry = FaceDownVisibility.publicName(gameData, source) + " will be destroyed at the beginning of the next end step.";
         gameLogService.append(gameData, GameLog.text(logEntry));
         log.info("Game {} - {} scheduled for destruction at end step", gameData.id, source.getCard().getName());
     }

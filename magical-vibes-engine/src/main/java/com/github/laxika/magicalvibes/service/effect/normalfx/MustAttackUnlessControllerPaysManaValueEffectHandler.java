@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CombatRequirement;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetIfDidNotAttackAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackUnlessControllerPaysManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -47,7 +48,7 @@ public class MustAttackUnlessControllerPaysManaValueEffectHandler implements Nor
 
         int manaValue = target.isFaceDown() ? 0 : target.getCard().getManaValue();
         String cost = "{" + manaValue + "}";
-        String prompt = "Pay " + cost + "? If you don't, " + target.getCard().getName()
+        String prompt = "Pay " + cost + "? If you don't, " + FaceDownVisibility.publicName(gameData, target)
                 + " attacks this turn if able and is destroyed at the beginning of the next end step"
                 + " if it didn't attack. (" + entry.getCard().getName() + ")";
 

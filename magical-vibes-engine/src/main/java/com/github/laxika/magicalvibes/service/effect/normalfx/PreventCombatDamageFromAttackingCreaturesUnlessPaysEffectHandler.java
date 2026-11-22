@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageFromAttackingCreaturesUnlessPaysEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +53,7 @@ public class PreventCombatDamageFromAttackingCreaturesUnlessPaysEffectHandler im
                         sourceCard,
                         controllerId,
                         List.of(e),
-                        "Pay " + e.manaCost() + " to have " + attacker.getCard().getName()
+                        "Pay " + e.manaCost() + " to have " + FaceDownVisibility.publicName(gameData, attacker)
                                 + " deal combat damage this turn? (" + sourceCard.getName() + ")",
                         attacker.getId(),
                         e.manaCost(),

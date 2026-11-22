@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsPowerDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -70,7 +71,7 @@ public class TargetCreatureDealsPowerDamageToAnyTargetEffectHandler implements N
             // protection and damage triggers key off the creature rather than the spell.
             StackEntry damageEntry = StackEntry.carrier(biter.getCard(),
                     controllerId,
-                    biter.getCard().getName() + "'s ability",
+                    FaceDownVisibility.publicName(gameData, biter) + "'s ability",
                     List.of(),
                     null,
                     biter.getId());

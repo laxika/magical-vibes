@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -49,7 +50,7 @@ public class PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffectHandler implem
                     entry.getCard(),
                     entry.getControllerId(),
                     List.of(e),
-                    entry.getCard().getName() + " — Put " + target.getCard().getName()
+                    entry.getCard().getName() + " — Put " + FaceDownVisibility.publicName(gameData, target)
                             + " on the bottom of its owner's library instead?",
                     target.getId()
             ));

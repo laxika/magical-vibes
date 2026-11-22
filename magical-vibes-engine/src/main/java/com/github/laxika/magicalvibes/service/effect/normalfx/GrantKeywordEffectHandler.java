@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -101,7 +102,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 return;
             }
             gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
-                    entry.getCard().getName(), null, entry.getControllerId(),
+                    FaceDownVisibility.sourceName(gameData, entry), null, entry.getControllerId(),
                     new GrantKeywordEffect(grantableKeywords, Subjects.target(), null,
                             grant.duration(), grant.grantCondition()),
                     target.getId(), null, null, grant.duration(), 0));
@@ -156,7 +157,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                     ? entry.getSourcePermanentId()
                     : null;
             gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
-                    entry.getCard().getName(), floatingSourceId, entry.getControllerId(), resolvedGrant,
+                    FaceDownVisibility.sourceName(gameData, entry), floatingSourceId, entry.getControllerId(), resolvedGrant,
                     target.getId(), null, null, grant.duration(), 0));
             String keywordNames = formatKeywords(grant.keywords());
             
@@ -185,7 +186,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
             gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
-                    entry.getCard().getName(), null, entry.getControllerId(),
+                    FaceDownVisibility.sourceName(gameData, entry), null, entry.getControllerId(),
                     new GrantKeywordEffect(grantableKeywords, Subjects.target(), grant.filter(), grant.duration(),
                             grant.grantCondition()),
                     permanent.getId(), null, null, grant.duration(), 0));
@@ -242,7 +243,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                     ? entry.getSourcePermanentId()
                     : null;
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                    entry.getCard().getName(), floatingSourceId, entry.getControllerId(),
+                    FaceDownVisibility.sourceName(gameData, entry), floatingSourceId, entry.getControllerId(),
                     new GrantKeywordEffect(grantableKeywords, Subjects.target(), null,
                             grant.duration(), grant.grantCondition()),
                     permanent.getId(), null, null, grant.duration(), 0));
@@ -258,7 +259,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
     }
 
     void grantToPermanent(GameData gameData, StackEntry entry, Permanent permanent, Set<Keyword> keywords) {
-        grantToPermanent(gameData, entry.getCard().getName(), entry.getControllerId(), permanent, keywords);
+        grantToPermanent(gameData, FaceDownVisibility.sourceName(gameData, entry), entry.getControllerId(), permanent, keywords);
     }
 
     void grantToPermanent(GameData gameData, String sourceName, UUID controllerId,
@@ -330,7 +331,7 @@ public class GrantKeywordEffectHandler implements NormalEffectHandlerBean {
                 continue;
             }
             gameData.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(),
-                    entry.getCard().getName(), null, entry.getControllerId(),
+                    FaceDownVisibility.sourceName(gameData, entry), null, entry.getControllerId(),
                     new GrantKeywordEffect(grantableKeywords, Subjects.target(), grant.filter(),
                             grant.duration(), grant.grantCondition()),
                     target.getId(), null, null, grant.duration(), 0));

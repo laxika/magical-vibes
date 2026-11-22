@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetBasePowerToughnessToAmountUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -54,7 +55,7 @@ public class SetTargetBasePowerToughnessToAmountUntilEndOfTurnEffectHandler impl
                 continue;
             }
             gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                    UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(),
                     entry.getControllerId(), new SetBasePowerToughnessEffect(power, toughness),
                     target.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
             String description = " has base power and toughness " + power + "/" + toughness

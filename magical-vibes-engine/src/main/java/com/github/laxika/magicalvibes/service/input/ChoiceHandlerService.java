@@ -88,6 +88,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.MulliganService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
@@ -2640,7 +2641,7 @@ public class ChoiceHandlerService {
             if (source != null && sourceBecomesProducedColor(source)) {
                 CardColor sourceChosenColor = CardColor.valueOf(chosenColor.name());
                 gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                        source.getCard().getName(), null, ctx.playerId(),
+                        FaceDownVisibility.publicName(gameData, source), null, ctx.playerId(),
                         new GrantColorUntilEndOfTurnEffect(sourceChosenColor), source.getId(), null, null,
                         Duration.UNTIL_END_OF_TURN, 0));
             }
@@ -2806,7 +2807,7 @@ public class ChoiceHandlerService {
             if (source != null && sourceBecomesProducedColor(source)) {
                 CardColor sourceChosenColor = CardColor.valueOf(chosenColor.name());
                 gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                        source.getCard().getName(), null, ctx.playerId(),
+                        FaceDownVisibility.publicName(gameData, source), null, ctx.playerId(),
                         new GrantColorUntilEndOfTurnEffect(sourceChosenColor), source.getId(), null, null,
                         Duration.UNTIL_END_OF_TURN, 0));
             }
@@ -3358,7 +3359,7 @@ public class ChoiceHandlerService {
         Card enteredCard = perm.getCard();
         String chosenType = cardType.getDisplayName().toLowerCase();
         gameLogService.append(gameData,
-                GameLog.text(player.getUsername() + " chooses " + chosenType + " for " + enteredCard.getName() + "."));
+                GameLog.text(player.getUsername() + " chooses " + chosenType + " for " + FaceDownVisibility.publicName(gameData, enteredCard) + "."));
         gameLogService.append(gameData, GameLog.entersBattlefieldUnder(enteredCard, playerName));
         log.info("Game {} - {} chooses card type {} for {}", gameData.id, player.getUsername(), cardType,
                 ctx.card().getName());
@@ -3387,7 +3388,7 @@ public class ChoiceHandlerService {
         String chosenType = cardType.getDisplayName().toLowerCase();
         gameLogService.append(gameData,
                 GameLog.text(player.getUsername() + " chooses " + chosenType + " for "
-                        + ctx.permanent().getCard().getName() + "."));
+                        + FaceDownVisibility.publicName(gameData, ctx.permanent()) + "."));
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
@@ -6538,7 +6539,7 @@ public class ChoiceHandlerService {
             if (next != null && next.getCounterCount(ctx.counterType()) > 0) {
                 playerInputService.beginMoveCountersFromControlledPermanentsAmountChoice(
                         gameData, player.getId(), ctx.fromPermanentIds(), nextIndex, ctx.toPermanentId(),
-                        ctx.counterType(), ctx.sourceCardName(), next.getCard().getName(),
+                        ctx.counterType(), ctx.sourceCardName(), FaceDownVisibility.publicName(gameData, next),
                         next.getCounterCount(ctx.counterType()), ctx.countersPerMovedCounter(), countersRemoved);
                 return;
             }

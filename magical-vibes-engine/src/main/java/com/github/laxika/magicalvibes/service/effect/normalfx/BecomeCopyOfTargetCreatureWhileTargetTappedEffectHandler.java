@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureWhi
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -48,14 +49,14 @@ public class BecomeCopyOfTargetCreatureWhileTargetTappedEffectHandler implements
         }
 
         Card preCopyCard = PermanentCopierService.preCopyCard(gameData, source);
-        String originalName = source.getCard().getName();
+        String originalName = FaceDownVisibility.publicName(gameData, source);
         permanentCopierService.applyCloneCopy(source, target, null, null);
 
         PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), targetId, entry.getControllerId(),
                 source, preCopyCard, Duration.WHILE_SOURCE_REMAINS_TAPPED);
 
         gameLogService.append(gameData, GameLog.text(
-                originalName + " becomes a copy of " + target.getCard().getName()
+                originalName + " becomes a copy of " + FaceDownVisibility.publicName(gameData, target)
                         + " for as long as it remains tapped."));
         log.info("Game {} - {} becomes a copy of {} while the target remains tapped",
                 gameData.id, originalName, target.getCard().getName());

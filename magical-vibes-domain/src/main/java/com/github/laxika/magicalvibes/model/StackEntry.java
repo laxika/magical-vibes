@@ -3053,8 +3053,12 @@ public class StackEntry {
     /**
      * This spell's mana value while it's on the stack: X counts once for each {X} in its mana cost and
      * not at all when the cost has no {X}, e.g. an X chosen by another effect (CR 202.3e).
+     * A spell cast face down has no mana cost, so it is 0 (CR 708.2a, 708.4).
      */
     public int getSpellManaValue() {
+        if (castFaceDown) {
+            return 0;
+        }
         if ((castWithAdventure || castWithOmen) && card != null && card.getBackFaceCard() != null) {
             return spellManaValue(card.getBackFaceCard(), xValue);
         }

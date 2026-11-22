@@ -44,6 +44,7 @@ import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -691,7 +692,7 @@ public class CombatBlockService {
         for (int instance = 0; instance < gameQueryService.flankingInstances(gameData, attacker); instance++) {
             boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
                     FLANKING_ABILITY, attacker.getCard(), attacker, activeId,
-                    attacker.getCard().getName() + "'s flanking trigger",
+                    FaceDownVisibility.publicName(gameData, attacker) + "'s flanking trigger",
                     ConditionContext.forPermanent(attacker, activeId), entry -> {
                         entry.setTargetId(blocker.getId());
                         entry.setNonTargeting(true);
@@ -1024,7 +1025,7 @@ public class CombatBlockService {
             if (!blockable.contains(blockerIdx)) {
                 if (blockerIdx >= 0 && blockerIdx < defenderBattlefield.size()) {
                     throw new IllegalStateException("Invalid blocker index: " + blockerIdx + " ("
-                            + defenderBattlefield.get(blockerIdx).getCard().getName() + " can't block)");
+                            + FaceDownVisibility.publicName(gameData, defenderBattlefield.get(blockerIdx)) + " can't block)");
                 }
                 throw new IllegalStateException("Invalid blocker index: " + blockerIdx);
             }
@@ -1059,11 +1060,11 @@ public class CombatBlockService {
             int blockerCount = entry.getValue();
             Permanent attacker = attackerBattlefield.get(attackerIdx);
             if (gameQueryService.hasKeyword(gameData, attacker, Keyword.MENACE) && blockerCount == 1) {
-                throw new IllegalStateException(attacker.getCard().getName() + " can't be blocked except by two or more creatures");
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, attacker) + " can't be blocked except by two or more creatures");
             }
             int teamMaxBlockers = maximumBlockersForTeam(gameData, attacker, attackerBattlefield);
             if (blockerCount > teamMaxBlockers) {
-                throw new IllegalStateException(attacker.getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, attacker)
                         + " can't be blocked by more than " + teamMaxBlockers
                         + " creature" + (teamMaxBlockers == 1 ? "" : "s"));
             }
@@ -1075,7 +1076,7 @@ public class CombatBlockService {
             int maxBlockers = exactlyOneRequirementUnobeyable
                     ? Integer.MAX_VALUE : gameQueryService.getMaxBlockersAllowed(gameData, attacker);
             if (blockerCount > maxBlockers) {
-                throw new IllegalStateException(attacker.getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, attacker)
                         + " can't be blocked by more than " + maxBlockers
                         + " creature" + (maxBlockers == 1 ? "" : "s"));
             }
@@ -1083,14 +1084,14 @@ public class CombatBlockService {
                     ? List.<CardEffect>of() : attacker.getCard().getStaticEffects()) {
                 if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction
                         && blockerCount < restriction.minBlockers()) {
-                    throw new IllegalStateException(attacker.getCard().getName()
+                    throw new IllegalStateException(FaceDownVisibility.publicName(gameData, attacker)
                             + " can't be blocked except by " + restriction.minBlockers() + " or more creatures");
                 }
             }
             for (CardEffect effect : gameQueryService.getGrantedEffects(gameData, attacker)) {
                 if (effect instanceof CantBeBlockedByFewerThanNCreaturesEffect restriction
                         && blockerCount < restriction.minBlockers()) {
-                    throw new IllegalStateException(attacker.getCard().getName()
+                    throw new IllegalStateException(FaceDownVisibility.publicName(gameData, attacker)
                             + " can't be blocked except by " + restriction.minBlockers() + " or more creatures");
                 }
             }
@@ -1407,7 +1408,7 @@ public class CombatBlockService {
                     .map(Map.Entry::getKey)
                     .findFirst()
                     .orElse(requiredAttackersByBlocker.keySet().iterator().next());
-            throw new IllegalStateException(defenderBattlefield.get(missingBlockerIdx).getCard().getName()
+            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, defenderBattlefield.get(missingBlockerIdx))
                     + " must block enchanted creature if able");
         }
     }
@@ -1595,7 +1596,7 @@ public class CombatBlockService {
                         .anyMatch(assignment -> assignment.blockerIndex() == currentBlockerIdx
                                 && assignment.attackerIndex() == currentAttackerIdx);
                 if (!blocksAttacker) {
-                    throw new IllegalStateException(attacker.getCard().getName()
+                    throw new IllegalStateException(FaceDownVisibility.publicName(gameData, attacker)
                             + " can't be blocked unless all creatures defending player controls block it");
                 }
             }
@@ -1667,7 +1668,7 @@ public class CombatBlockService {
 
             int maxSatisfiable = Math.min(getMaxBlocksForCreature(gameData, blocker, defenderBattlefield), requiredAttackerIndices.size());
             if (currentMustBlocks < maxSatisfiable) {
-                throw new IllegalStateException(blocker.getCard().getName() + " must block target creature this turn if able");
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, blocker) + " must block target creature this turn if able");
             }
         }
     }
@@ -1709,7 +1710,7 @@ public class CombatBlockService {
         // that some declaration violating no restrictions could obey.
         if (firstUnblocked != null && maxObeyableMustBeBlockedAttackers(gameData, blockContext,
                 attackerBattlefield, defenderBattlefield, blockable, mustBeBlockedAttackers) > obeyed) {
-            throw new IllegalStateException(attackerBattlefield.get(firstUnblocked).getCard().getName()
+            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, attackerBattlefield.get(firstUnblocked))
                     + " must be blocked if able");
         }
     }
@@ -1815,8 +1816,7 @@ public class CombatBlockService {
         int maxObeyable = maxObeyableMatchingBlockerRequirements(gameData, blockContext, attackerBattlefield,
                 defenderBattlefield, blockable, requirementAttackers, requirements);
         if (maxObeyable > obeyed) {
-            throw new IllegalStateException(attackerBattlefield.get(requirementAttackers.get(firstUnobeyed))
-                    .getCard().getName() + " must be blocked by a matching creature if able");
+            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, attackerBattlefield.get(requirementAttackers.get(firstUnobeyed))) + " must be blocked by a matching creature if able");
         }
     }
 
@@ -1931,7 +1931,7 @@ public class CombatBlockService {
                 CombatHelper.getMaximumBlockers(gameData,
                         controllerIdOf(gameData, defenderBattlefield), staticEffectConditionResolver));
         if (obeyedRequirements < maximumObeyableRequirements) {
-            throw new IllegalStateException(firstUnobeyedBlocker.getCard().getName() + " must block this turn if able");
+            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, firstUnobeyedBlocker) + " must block this turn if able");
         }
     }
 
@@ -1961,7 +1961,7 @@ public class CombatBlockService {
                         .anyMatch(assignment -> assignment.blockerIndex() == blockerIdx
                                 && assignment.attackerIndex() == currentAttackerIdx);
                 if (!blocksAttacker) {
-                    throw new IllegalStateException(blocker.getCard().getName()
+                    throw new IllegalStateException(FaceDownVisibility.publicName(gameData, blocker)
                             + " must block each attacking creature this turn if able");
                 }
             }
@@ -2245,7 +2245,7 @@ public class CombatBlockService {
             int soleIdx = uniqueBlockerIndices.iterator().next();
             Permanent sole = defenderBattlefield.get(soleIdx);
             if (hasCantAttackOrBlockAlone(gameData, sole)) {
-                throw new IllegalStateException(sole.getCard().getName() + " can't block alone");
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, sole) + " can't block alone");
             }
         }
     }
@@ -2282,7 +2282,7 @@ public class CombatBlockService {
                     .map(defenderBattlefield::get)
                     .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > power);
             if (!greaterPowerAlsoBlocks) {
-                throw new IllegalStateException(restricted.getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, restricted)
                         + " can't block unless a creature with greater power also blocks");
             }
         }
@@ -2309,7 +2309,7 @@ public class CombatBlockService {
                     .ifPresent(effect -> {
                         long otherBlockers = uniqueBlockerIndices.stream().filter(other -> other != idx).count();
                         if (otherBlockers < effect.otherCount()) {
-                            throw new IllegalStateException(restricted.getCard().getName()
+                            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, restricted)
                                     + " can't block unless at least " + effect.otherCount()
                                     + " other creatures block");
                         }

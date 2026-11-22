@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
@@ -344,7 +345,7 @@ public class ReturnTargetCardsFromGraveyardToBattlefieldEffectHandler implements
         int toughness = animation.toughness() == null ? permanent.getBaseToughness()
                 : amountEvaluationService.evaluate(gameData, animation.toughness(), context);
         animationSupport.animatePermanently(gameData, permanent, animation, power, toughness,
-                entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId());
+                FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(), entry.getControllerId());
     }
 
     private void resolveRandomTwoAndPutRestOnBottom(

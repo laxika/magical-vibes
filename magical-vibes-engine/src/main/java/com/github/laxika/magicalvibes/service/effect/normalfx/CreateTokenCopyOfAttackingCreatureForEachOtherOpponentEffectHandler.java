@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.ArrayList;
@@ -71,7 +72,7 @@ public class CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffectHandler
                         List.of(new CreateTokenCopyOfAttackingCreatureForEachOtherOpponentEffect(
                                 opponentId, true, effect.removeLegendary(), effect.exileAtEndStep(),
                                 effect.exileAtEndOfCombat(), batchId)),
-                        "Create a tapped and attacking token copy of " + attacker.getCard().getName()
+                        "Create a tapped and attacking token copy of " + FaceDownVisibility.publicName(gameData, attacker)
                                 + " attacking " + gameData.playerIdToName.get(opponentId) + "?",
                         attackerId,
                         null,

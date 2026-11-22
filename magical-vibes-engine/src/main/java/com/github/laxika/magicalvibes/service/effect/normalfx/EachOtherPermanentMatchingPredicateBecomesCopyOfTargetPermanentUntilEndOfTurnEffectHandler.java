@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.EachOtherPermanentMatchingPre
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -88,7 +89,7 @@ public class EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUnti
             }
         });
 
-        String targetName = targetCard.getName();
+        String targetName = FaceDownVisibility.publicName(gameData, targetCard);
         for (Permanent permanent : permanentsToCopy) {
             Card preCopyCard = PermanentCopierService.preCopyCard(gameData, permanent);
             permanentCopierService.applyCloneCopy(permanent, targetCard, null, null, Set.of());

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.EsixFractalBloomEffect;
 import com.github.laxika.magicalvibes.model.effect.MirrormindCrownEffect;
 import com.github.laxika.magicalvibes.model.effect.MoonlitMeditationEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -50,7 +51,7 @@ public class EsixTokenReplacementSupport {
                 esix.getCard(),
                 controllerId,
                 List.of(new CreateTokenCopyOfChosenCreatureEffect(amount, esix.getId())),
-                esix.getCard().getName()
+                FaceDownVisibility.publicName(gameData, esix)
                         + " — You may instead choose a creature other than Esix and create that many tokens that are copies of it."));
         return true;
     }
@@ -86,7 +87,7 @@ public class EsixTokenReplacementSupport {
                     crown.getCard(),
                     controllerId,
                     List.of(new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount)).ofNamed(crown.getAttachedTo())),
-                    crown.getCard().getName()
+                    FaceDownVisibility.publicName(gameData, crown)
                             + " — You may create that many tokens that are copies of the equipped creature."));
             return true;
         }
@@ -124,7 +125,7 @@ public class EsixTokenReplacementSupport {
                     aura.getCard(),
                     controllerId,
                     List.of(new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount)).ofNamed(aura.getAttachedTo())),
-                    aura.getCard().getName()
+                    FaceDownVisibility.publicName(gameData, aura)
                             + " — You may create that many tokens that are copies of the enchanted permanent."));
             return true;
         }

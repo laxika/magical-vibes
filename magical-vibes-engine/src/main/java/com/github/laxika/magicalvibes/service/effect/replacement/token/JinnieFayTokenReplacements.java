@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementCandidateSource;
 import org.springframework.context.annotation.Lazy;
@@ -47,7 +48,7 @@ public class JinnieFayTokenReplacements implements ReplacementCandidateSource<To
     public List<ReplacementOption> applicable(GameData gameData, TokenCreationEvent event) {
         return instances(gameData, event).stream()
                 .map(instance -> new ReplacementOption(instance.key(),
-                        instance.source().getCard().getName()
+                        FaceDownVisibility.publicName(gameData, instance.source())
                                 + ": you may instead create that many Cat or Dog tokens",
                         ReplacementOption.Kind.REPLACEMENT, false))
                 .toList();

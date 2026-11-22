@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.MoonlitMeditationEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -194,7 +195,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                         controllerId,
                         List.of(new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount))
                                 .ofNamed(crown.getAttachedTo())),
-                        crown.getCard().getName()
+                        FaceDownVisibility.publicName(gameData, crown)
                                 + " — You may create that many tokens that are copies of the equipped creature."));
                 return;
             }
@@ -209,7 +210,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                         controllerId,
                         List.of(new CreateTokenCopyOfTargetPermanentEffect(new Fixed(amount))
                                 .ofNamed(moonlit.getAttachedTo())),
-                        moonlit.getCard().getName()
+                        FaceDownVisibility.publicName(gameData, moonlit)
                                 + " — You may create that many tokens that are copies of the enchanted permanent."));
                 return;
             }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -51,7 +52,7 @@ public class AttachSourceAuraToTargetPlayerEffectHandler implements NormalEffect
         durationClock.sourceUnattached(gameData, aura.getId());
         aura.setAttachedTo(targetPlayerId);
         aura.setTimestamp(gameData.nextTimestamp());
-        gameLogService.append(gameData, GameLog.text(aura.getCard().getName() + " is now attached to "
+        gameLogService.append(gameData, GameLog.text(FaceDownVisibility.publicName(gameData, aura) + " is now attached to "
                 + gameData.playerIdToName.get(targetPlayerId) + "."));
         log.info("Game {} - {} attached to player {}", gameData.id, aura.getCard().getName(), targetPlayerId);
     }

@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.RingState;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackRequirementEffect;
@@ -430,7 +431,7 @@ public class CreatureControlService {
                             && aura.getId().equals(fe.sourcePermanentId()));
             if (!present && controllingPlayerId != null) {
                 gameData.putFloatingEffect(new FloatingContinuousEffect(
-                        UUID.randomUUID(), aura.getCard().getName(), aura.getId(), controllingPlayerId,
+                        UUID.randomUUID(), FaceDownVisibility.publicName(gameData, aura), aura.getId(), controllingPlayerId,
                         controlEffect, enchanted.getId(), null, null,
                         Duration.WHILE_ATTACHED, aura.getTimestamp()));
             }

@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.List;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -131,7 +132,7 @@ public class DealDamageToPlayersEffectHandler implements NormalEffectHandlerBean
         }
         if (readsTarget(e, PermanentSubject.Target.class)) {
             if (gameQueryService.isDamageFromStackEntryPrevented(gameData, dealing)) {
-                gameLogService.append(gameData, GameLog.text(dealing.getCard().getName() + "'s damage to "
+                gameLogService.append(gameData, GameLog.text(FaceDownVisibility.sourceName(gameData, dealing) + "'s damage to "
                         + gameData.playerIdToName.get(playerId) + " is prevented."));
                 return true;
             }

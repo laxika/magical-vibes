@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.OtherNontokenCreaturesBecomeCopyOfEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -71,7 +72,7 @@ public class OtherNontokenCreaturesBecomeCopyOfEnchantedCreatureEffectHandler im
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" makes " + creatures.size() + " other nontoken creature(s) a copy of "
-                        + enchanted.getCard().getName() + ".")
+                        + FaceDownVisibility.publicName(gameData, enchanted) + ".")
                 .build());
         log.info("Game {} - Infinite Reflection copies {} onto {} creatures",
                 gameData.id, enchanted.getCard().getName(), creatures.size());

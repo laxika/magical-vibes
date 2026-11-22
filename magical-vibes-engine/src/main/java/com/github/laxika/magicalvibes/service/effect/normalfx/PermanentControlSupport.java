@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AddClueTokenToTokenCreationEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementOrderService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
@@ -393,7 +394,7 @@ public class PermanentControlSupport {
 
             Set<Keyword> blueprintGrantedKeywords = tokenBlueprint.grantedKeywordsUntilEndOfTurn();
             if (blueprintGrantedKeywords != null && !blueprintGrantedKeywords.isEmpty()) {
-                gameData.addEffectOnPermanent(tokenPermanent.getCard().getName(), null, controllerId,
+                gameData.addEffectOnPermanent(FaceDownVisibility.publicName(gameData, tokenPermanent), null, controllerId,
                         new GrantKeywordEffect(Set.copyOf(blueprintGrantedKeywords), Subjects.target()),
                         tokenPermanent.getId(), Duration.UNTIL_END_OF_TURN);
             }

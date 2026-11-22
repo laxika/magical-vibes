@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.TapTargetCreatureUnlessControllerPaysLifeEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -59,7 +60,7 @@ public class TapTargetCreatureUnlessControllerPaysLifeEffectHandler implements N
 
         // Payable — ask the target creature's controller. Carry the target permanent id so the
         // decline branch can tap it.
-        String prompt = "Pay " + e.lifeCost() + " life? If you don't, " + target.getCard().getName()
+        String prompt = "Pay " + e.lifeCost() + " life? If you don't, " + FaceDownVisibility.publicName(gameData, target)
                 + " becomes tapped. (" + entry.getCard().getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetControllerId, List.of(e), prompt,

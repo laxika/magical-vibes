@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageAndDefendingPlayerDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -46,7 +47,7 @@ public class AssignNoCombatDamageAndDefendingPlayerDiscardsEffectHandler impleme
         PreventionSupport.assignNoCombatDamage(gameData, entry.getCard().getName(),
                     entry.getSourcePermanentId(), entry.getControllerId(), attackerId, Duration.UNTIL_END_OF_TURN);
         Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
-        String attackerName = attacker != null ? attacker.getCard().getName() : "the attacking creature";
+        String attackerName = attacker != null ? FaceDownVisibility.publicName(gameData, attacker) : "the attacking creature";
         gameLogService.append(gameData,
                 GameLog.text(attackerName + " assigns no combat damage this turn."));
 

@@ -8,6 +8,7 @@ import java.util.Set;
 import java.util.EnumSet;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.DamageTriggers.Read;
 import com.github.laxika.magicalvibes.model.rules.CombatDamageStepEvent;
 import com.github.laxika.magicalvibes.model.CombatDamageState;
@@ -357,7 +358,7 @@ public class CombatDamageTriggers {
                 // records whatever the effects are: the player as its triggering player, attacked target and
                 // non-targeting target, the damage as its event value, the creature as the damage's source.
                 boolean put = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
-                        creature.getCard(), creature, attackerId, creature.getCard().getName() + "'s triggered ability",
+                        creature.getCard(), creature, attackerId, FaceDownVisibility.publicName(gameData, creature) + "'s triggered ability",
                         damageContext, record -> {
                             record.setTargetId(defenderId);
                             record.setNonTargeting(true);
@@ -457,7 +458,7 @@ public class CombatDamageTriggers {
                 }
                 boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
                         watcher.getCard(), watcher, watcherControllerId,
-                        watcher.getCard().getName() + "'s triggered ability", context, entry -> {
+                        FaceDownVisibility.publicName(gameData, watcher) + "'s triggered ability", context, entry -> {
                             entry.setTargetId(defenderId);
                             entry.setEventValue(damageDealt);
                             entry.setNonTargeting(true);
@@ -517,7 +518,7 @@ public class CombatDamageTriggers {
                 // "that player" is the player dealt damage, and "it", "that creature" and "its controller" the
                 // creature that dealt it, its triggering permanent, whatever the effects are.
                 boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
-                        perm.getCard(), perm, ownerId, perm.getCard().getName() + "'s triggered ability",
+                        perm.getCard(), perm, ownerId, FaceDownVisibility.publicName(gameData, perm) + "'s triggered ability",
                         attachedContext, entry -> {
                             entry.setTargetId(defenderId);
                             entry.setSourcePermanentSnapshot(new Permanent(perm));
@@ -562,7 +563,7 @@ public class CombatDamageTriggers {
                     continue;
                 }
                 boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
-                        perm.getCard(), perm, ownerId, perm.getCard().getName() + "'s triggered ability", context,
+                        perm.getCard(), perm, ownerId, FaceDownVisibility.publicName(gameData, perm) + "'s triggered ability", context,
                         entry -> {
                             entry.setTargetId(defenderId);
                             entry.setTriggeringPlayerId(defenderId);
@@ -805,7 +806,7 @@ public class CombatDamageTriggers {
                 continue;
             }
             boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
-                    perm.getCard(), perm, attackerId, perm.getCard().getName() + "'s triggered ability", context,
+                    perm.getCard(), perm, attackerId, FaceDownVisibility.publicName(gameData, perm) + "'s triggered ability", context,
                     record).withCause(new DamageTriggers.SourceDealsCombatDamage(
                     creature.getCard(), attackerId, creature.getId(), damageDealt, damageDealt).cause()));
             if (triggered) {
@@ -948,7 +949,7 @@ public class CombatDamageTriggers {
                     }
                     boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(
                             ability, source.getCard(), source, controllerId,
-                            source.getCard().getName() + "'s triggered ability", context, record -> {
+                            FaceDownVisibility.publicName(gameData, source) + "'s triggered ability", context, record -> {
                                 record.setTargetId(damagedCreatureId);
                                 record.setSourcePermanentSnapshot(new Permanent(source));
                                 record.setTriggeringPermanentId(damagedCreatureId);
@@ -1000,7 +1001,7 @@ public class CombatDamageTriggers {
                     continue;
                 }
                 boolean triggered = triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability,
-                        source.getCard(), source, controllerId, source.getCard().getName() + "'s triggered ability",
+                        source.getCard(), source, controllerId, FaceDownVisibility.publicName(gameData, source) + "'s triggered ability",
                         context, TriggeredAbilityRequest.TriggerRecord.NONE));
                 if (triggered) {
                     gameLogService.append(gameData, GameLog.abilityTriggers(source.getCard()));

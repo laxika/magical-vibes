@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.target;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.filter.PlayerAttackedBySourceThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerControlsMostCreaturesPredicate;
@@ -8,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerHasNoCardsInHandPredica
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -1029,7 +1031,7 @@ public class TargetLegalityService {
             if (positionFilter == null && declaredRestriction != null
                     && !predicateEvaluationService.matchesPermanentPredicate(target, declaredRestriction,
                             filterContext(gameData, sourceCard.getId(), playerId))) {
-                throw new IllegalStateException(target.getCard().getName() + " is not a legal target");
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, target) + " is not a legal target");
             }
             validateHexproofFromColor(gameData, target, sourceCard, playerId);
 
@@ -1040,7 +1042,7 @@ public class TargetLegalityService {
 
             if (gameQueryService.cantBeTargetedByWallOnlySources(gameData, target)
                     && sourceCanTargetOnlyWalls(sourceCard, abilityEffects, ability.getTargetFilter(), perPositionFilters)) {
-                throw new IllegalStateException(target.getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, target)
                         + " can't be targeted by spells or abilities that can target only Walls");
             }
 
@@ -1273,12 +1275,12 @@ public class TargetLegalityService {
         if (protectedTarget != null) {
             for (CardColor color : effectiveSourceColors(gameData, sourceCard)) {
                 if (gameQueryService.hasProtectionFrom(gameData, protectedTarget, color)) {
-                    throw new IllegalStateException(protectedTarget.getCard().getName()
+                    throw new IllegalStateException(FaceDownVisibility.publicName(gameData, protectedTarget)
                             + " has protection from " + color.name().toLowerCase());
                 }
             }
             if (gameQueryService.hasProtectionFromSource(gameData, protectedTarget, sourceCard, playerId)) {
-                throw new IllegalStateException(protectedTarget.getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, protectedTarget)
                         + " has protection from this source");
             }
         }
@@ -1297,14 +1299,14 @@ public class TargetLegalityService {
             if (target != null && gameQueryService.cantBeTargetOfOpponentAbilities(gameData, target)) {
                 UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
                 if (targetController != null && !targetController.equals(playerId)) {
-                    throw new IllegalStateException(target.getCard().getName()
+                    throw new IllegalStateException(FaceDownVisibility.publicName(gameData, target)
                             + " can't be the target of abilities opponents control");
                 }
             }
             Optional<CardType> restrictedSourceType = target == null ? Optional.empty()
                     : gameQueryService.abilityCardTypeRestriction(gameData, target, sourceCard, null, playerId);
             if (restrictedSourceType.isPresent()) {
-                throw new IllegalStateException(target.getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, target)
                         + " can't be the target of abilities from "
                         + restrictedSourceType.get().name().toLowerCase(Locale.ROOT) + " sources");
             }
@@ -1327,7 +1329,7 @@ public class TargetLegalityService {
             }
             if (target != null && gameQueryService.cantBeTargetedByWallOnlySources(gameData, target)
                     && sourceCanTargetOnlyWalls(sourceCard, abilityEffects, ability.getTargetFilter())) {
-                throw new IllegalStateException(target.getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, target)
                         + " can't be targeted by spells or abilities that can target only Walls");
             }
         }
@@ -2477,10 +2479,10 @@ public class TargetLegalityService {
             } else if (declaredRestriction != null) {
                 if (!predicateEvaluationService.matchesPermanentPredicate(target, declaredRestriction,
                         filterContext(gameData, card.getId(), controllerId))) {
-                    throw new IllegalStateException(target.getCard().getName() + " is not a legal target");
+                    throw new IllegalStateException(FaceDownVisibility.publicName(gameData, target) + " is not a legal target");
                 }
             } else if (!groupRequiresPermanent && !gameQueryService.isCreature(gameData, target)) {
-                throw new IllegalStateException(target.getCard().getName() + " is not a creature");
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, target) + " is not a creature");
             }
 
             if (EffectResolution.needsTarget(selectedEffects, List.of(),
@@ -2607,11 +2609,11 @@ public class TargetLegalityService {
         } else if (declaredRestriction != null) {
             if (!predicateEvaluationService.matchesPermanentPredicate(target, declaredRestriction,
                     filterContext(gameData, card.getId(), controllerId))) {
-                throw new IllegalStateException(target.getCard().getName() + " is not a legal target");
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, target) + " is not a legal target");
             }
         } else if (!gameQueryService.isCreature(gameData, target)
                 && !targetGroupAllowsPlaneswalkers(card, groupIndex)) {
-            throw new IllegalStateException(target.getCard().getName() + " is not a creature");
+            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, target) + " is not a creature");
         }
 
         if (EffectResolution.needsTarget(card)) {
@@ -4325,7 +4327,8 @@ public class TargetLegalityService {
             if (filter.predicate() instanceof StackEntrySharesNameWithCardExiledWithSourcePredicate
                     && entry.getExiledCostCardSnapshot() != null) {
                 // Paying the cost removed this card from exile; use the card actually paid.
-                return entry.getExiledCostCardSnapshot().getName().equals(target.getCard().getName());
+                return entry.getExiledCostCardSnapshot().getName().equals(
+                        CastingPermissionService.spellAsEffectsSeeIt(target).getCard().getName());
             }
             return matchesStackEntryPredicate(gameData, target, filter.predicate(), entry.getControllerId(),
                     entry.getSourcePermanentSnapshot(), entry.getXValue());
@@ -4803,11 +4806,11 @@ public class TargetLegalityService {
                         .map(c -> c.name().toLowerCase())
                         .reduce((a, b) -> a + "/" + b)
                         .orElse("");
-                return target.getCard().getName() + " can't be the target of non-"
+                return FaceDownVisibility.publicName(target) + " can't be the target of non-"
                         + colorName + " spells or abilities";
             }
         }
-        return target.getCard().getName() + " can't be targeted by this source";
+        return FaceDownVisibility.publicName(target) + " can't be targeted by this source";
     }
 
     /**
@@ -4854,13 +4857,13 @@ public class TargetLegalityService {
                 && gameQueryService.ignoresOpponentCreatureHexproof(gameData, sourcePlayerId))) {
             UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
             if (targetController != null && !targetController.equals(sourcePlayerId)) {
-                throw new IllegalStateException(target.getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, target)
                         + " has hexproof from " + colorCountWord(sourceColorCount));
             }
         }
         for (CardColor sourceColor : effectiveSourceColors(gameData, sourceCard)) {
             if (gameQueryService.cantBeTargetedByColorSources(gameData, target, sourceColor)) {
-                throw new IllegalStateException(target.getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, target)
                         + " can't be the target of " + sourceColor.name().toLowerCase()
                         + " spells or abilities from " + sourceColor.name().toLowerCase() + " sources");
             }
@@ -4868,7 +4871,7 @@ public class TargetLegalityService {
                     && !opponentHexproofLifted(gameData, target, sourcePlayerId)) {
                 UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
                 if (targetController != null && !targetController.equals(sourcePlayerId)) {
-                    throw new IllegalStateException(target.getCard().getName()
+                    throw new IllegalStateException(FaceDownVisibility.publicName(gameData, target)
                             + " has hexproof from " + sourceColor.name().toLowerCase());
                 }
             }
@@ -4883,12 +4886,12 @@ public class TargetLegalityService {
                 && gameQueryService.ignoresOpponentCreatureHexproof(gameData, sourcePlayerId))) {
             UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
             if (targetController != null && !targetController.equals(sourcePlayerId)) {
-                return target.getCard().getName() + " has hexproof from " + colorCountWord(sourceColorCount);
+                return FaceDownVisibility.publicName(gameData, target) + " has hexproof from " + colorCountWord(sourceColorCount);
             }
         }
         for (CardColor sourceColor : effectiveSourceColors(gameData, sourceCard)) {
             if (gameQueryService.cantBeTargetedByColorSources(gameData, target, sourceColor)) {
-                return target.getCard().getName() + " can't be the target of "
+                return FaceDownVisibility.publicName(gameData, target) + " can't be the target of "
                         + sourceColor.name().toLowerCase() + " spells or abilities from "
                         + sourceColor.name().toLowerCase() + " sources";
             }
@@ -4896,7 +4899,7 @@ public class TargetLegalityService {
                     && !opponentHexproofLifted(gameData, target, sourcePlayerId)) {
                 UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
                 if (targetController != null && !targetController.equals(sourcePlayerId)) {
-                    return target.getCard().getName() + " has hexproof from " + sourceColor.name().toLowerCase();
+                    return FaceDownVisibility.publicName(gameData, target) + " has hexproof from " + sourceColor.name().toLowerCase();
                 }
             }
         }
@@ -4916,21 +4919,21 @@ public class TargetLegalityService {
 
     private String untargetableReason(GameData gameData, Permanent target, UUID sourcePlayerId) {
         if (gameQueryService.isLandTargetRestricted(gameData, target, sourcePlayerId)) {
-            return target.getCard().getName()
+            return FaceDownVisibility.publicName(gameData, target)
                     + " can't be the target of spells or abilities opponents control";
         }
         if (gameQueryService.hasKeyword(gameData, target, Keyword.SHROUD)
                 && !gameData.mayTargetIgnoringShroud(target.getId(), sourcePlayerId)) {
-            return target.getCard().getName() + " has shroud and can't be targeted";
+            return FaceDownVisibility.publicName(gameData, target) + " has shroud and can't be targeted";
         }
         UUID targetController = gameQueryService.findPermanentController(gameData, target.getId());
         if (gameQueryService.cantBeTargetedByOpponentSpellsOrAbilities(gameData, target, sourcePlayerId)) {
-            return target.getCard().getName() + (gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, target)
+            return FaceDownVisibility.publicName(gameData, target) + (gameQueryService.cantBeTargetedBySpellsOrAbilities(gameData, target)
                     ? " has hexproof and can't be targeted"
                     : " can't be targeted by this player's spells or abilities");
         }
         if (gameQueryService.cantBeAffectedByOwnEffects(gameData, target, sourcePlayerId)) {
-            return target.getCard().getName()
+            return FaceDownVisibility.publicName(gameData, target)
                     + " can't be targeted by its controller's spells or abilities";
         }
         // Glaring Spotlight: opponents' hexproof creatures are targetable as though they had none.
@@ -4939,7 +4942,7 @@ public class TargetLegalityService {
                 && gameQueryService.ignoresOpponentCreatureHexproof(gameData, sourcePlayerId));
         if (targetController != null && !targetController.equals(sourcePlayerId)) {
             if (!hexproofLifted && gameQueryService.hasKeyword(gameData, target, Keyword.HEXPROOF)) {
-                return target.getCard().getName() + " has hexproof and can't be targeted";
+                return FaceDownVisibility.publicName(gameData, target) + " has hexproof and can't be targeted";
             }
         }
         return null;
@@ -5039,12 +5042,12 @@ public class TargetLegalityService {
         }
         for (CardColor color : effectiveSourceColors(gameData, sourceCard)) {
             if (gameQueryService.hasProtectionFrom(gameData, protectedTarget, color)) {
-                throw new IllegalStateException(protectedTarget.getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, protectedTarget)
                         + " has protection from " + color.name().toLowerCase());
             }
         }
         if (gameQueryService.hasProtectionFromSource(gameData, protectedTarget, sourceCard, controllerId)) {
-            throw new IllegalStateException(protectedTarget.getCard().getName()
+            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, protectedTarget)
                     + " has protection from this source");
         }
     }
@@ -5094,7 +5097,7 @@ public class TargetLegalityService {
         }
         if (card != null && gameQueryService.cantBeTargetedByWallOnlySources(gameData, target)
                 && sourceCanTargetOnlyWalls(card, sourceEffects, targetFilter)) {
-            return Optional.of(target.getCard().getName()
+            return Optional.of(FaceDownVisibility.publicName(gameData, target)
                     + " can't be targeted by spells or abilities that can target only Walls");
         }
         return Optional.empty();
@@ -5218,30 +5221,30 @@ public class TargetLegalityService {
                                         boolean sourceIsSpell) {
         if (card.hasType(CardType.INSTANT)
                 && gameQueryService.hasHexproofFromCardType(gameData, target, CardType.INSTANT, sourcePlayerId)) {
-            return target.getCard().getName() + " has hexproof from instants";
+            return FaceDownVisibility.publicName(gameData, target) + " has hexproof from instants";
         }
         if (gameQueryService.hasProtectionFromOpponents(gameData, target, sourcePlayerId)) {
-            return target.getCard().getName() + " has protection from the source's controller";
+            return FaceDownVisibility.publicName(gameData, target) + " has protection from the source's controller";
         }
         Set<CardColor> effectiveColors = gameQueryService.getEffectiveCardColors(gameData, card);
         if (!effectiveColors.isEmpty()
                 && ((sourceIsSpell && gameQueryService.hasProtectionFromColoredSpells(gameData, target))
                 || gameQueryService.hasProtectionFromColoredSpellSource(gameData, target, card))) {
-            return target.getCard().getName() + " has protection from colored spells";
+            return FaceDownVisibility.publicName(gameData, target) + " has protection from colored spells";
         }
         for (CardColor color : effectiveColors) {
             if (gameQueryService.hasProtectionFrom(gameData, target, color)) {
-                return target.getCard().getName() + " has protection from " + color.name().toLowerCase();
+                return FaceDownVisibility.publicName(gameData, target) + " has protection from " + color.name().toLowerCase();
             }
         }
         if (gameQueryService.hasProtectionFromSourceCardTypes(gameData, target, card)) {
-            return target.getCard().getName() + " has protection from " + card.getType().getDisplayName().toLowerCase() + "s";
+            return FaceDownVisibility.publicName(gameData, target) + " has protection from " + card.getType().getDisplayName().toLowerCase() + "s";
         }
         if (gameQueryService.hasProtectionFromSourceSubtypes(gameData, target, card)) {
-            return target.getCard().getName() + " has protection from source's subtype";
+            return FaceDownVisibility.publicName(gameData, target) + " has protection from source's subtype";
         }
         if (gameQueryService.hasProtectionFromSource(gameData, target, card, sourcePlayerId)) {
-            return target.getCard().getName() + " has protection from this source";
+            return FaceDownVisibility.publicName(gameData, target) + " has protection from this source";
         }
         if (sourcePlayerId != null) {
             String hexReason = hexproofFromColorReason(gameData, target, card, sourcePlayerId);
@@ -5249,18 +5252,18 @@ public class TargetLegalityService {
         }
         for (CardColor color : effectiveColors) {
             if (gameQueryService.cantBeTargetedBySourceColor(gameData, target, color, sourcePlayerId, sourceIsSpell)) {
-                return target.getCard().getName() + " can't be the target of "
+                return FaceDownVisibility.publicName(gameData, target) + " can't be the target of "
                         + color.name().toLowerCase() + " spells";
             }
         }
         if (gameQueryService.cantBeTargetedByAnySpell(gameData, target)) {
-            return target.getCard().getName() + " can't be the target of spells";
+            return FaceDownVisibility.publicName(gameData, target) + " can't be the target of spells";
         }
         if (gameQueryService.cantBeTargetedByNonColorSources(gameData, target, card, sourcePlayerId)) {
             return nonColorSourceRestrictionMessage(target);
         }
         if (card.isAura() && gameQueryService.cantBeTargetedByAuraSpells(gameData, target)) {
-            return target.getCard().getName() + " can't be enchanted by other Auras";
+            return FaceDownVisibility.publicName(gameData, target) + " can't be enchanted by other Auras";
         }
         return null;
     }
@@ -5552,9 +5555,17 @@ public class TargetLegalityService {
                 .orElse(null);
     }
 
+    /** A spell cast face down is judged by its face-down characteristics alone (CR 708.4). */
     public boolean matchesStackEntryPredicate(GameData gameData, StackEntry stackEntry, StackEntryPredicate predicate,
                                               UUID controllerId, Permanent source, Integer xValue,
                                               Integer sourcePowerAtLastKnown) {
+        return matchesSeenEntry(gameData, CastingPermissionService.spellAsEffectsSeeIt(stackEntry), predicate,
+                controllerId, source, xValue, sourcePowerAtLastKnown);
+    }
+
+    private boolean matchesSeenEntry(GameData gameData, StackEntry stackEntry, StackEntryPredicate predicate,
+                                     UUID controllerId, Permanent source, Integer xValue,
+                                     Integer sourcePowerAtLastKnown) {
         if (predicate instanceof StackEntryTruePredicate) {
             return true;
         }
@@ -5719,7 +5730,7 @@ public class TargetLegalityService {
             return stackEntry.getSpellManaValue() == manaValuePredicate.manaValue();
         }
         if (predicate instanceof StackEntryMaxManaValuePredicate maxManaValuePredicate) {
-            int manaValue = stackEntry.isCastFaceDown() ? 0 : stackEntry.getSpellManaValue();
+            int manaValue = stackEntry.getSpellManaValue();
             return manaValue <= maxManaValuePredicate.maxManaValue();
         }
         if (predicate instanceof StackEntryColoredManaSpentPredicate) {
@@ -5732,7 +5743,6 @@ public class TargetLegalityService {
                     .anyMatch(color -> gameData.getSpellCastSnowManaSpentByColor(spellCardId, color) > 0);
         }
         if (predicate instanceof StackEntryManaSpentLessThanManaValuePredicate) {
-            if (stackEntry.isCastFaceDown()) return false;
             int manaValue = stackEntry.getCard().getManaValue()
                     + (stackEntry.getCard().getParsedManaCost() == null ? 0
                     : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());
@@ -5742,7 +5752,7 @@ public class TargetLegalityService {
             // When X is unknown (target enumeration before X is chosen), match permissively —
             // any spell is potentially a legal target since X can be any non-negative integer.
             // A face-down spell has no mana cost, so its mana value is 0 (CR 708.2).
-            int manaValue = stackEntry.isCastFaceDown() ? 0 : stackEntry.getCard().getManaValue()
+            int manaValue = stackEntry.getCard().getManaValue()
                     + (stackEntry.getCard().getParsedManaCost() == null ? 0
                         : stackEntry.getXValue() * stackEntry.getCard().getParsedManaCost().getXSymbolCount());
             return xValue == null || manaValue == xValue;
@@ -5825,7 +5835,7 @@ public class TargetLegalityService {
         if (predicate instanceof StackEntryManaValueAtMostAmountPredicate atMostAmount) {
             int amount = amountEvaluationService.evaluate(gameData, atMostAmount.amount(),
                     AmountContext.forEstimation(controllerId));
-            return (stackEntry.isCastFaceDown() ? 0 : stackEntry.getSpellManaValue()) <= amount;
+            return stackEntry.getSpellManaValue() <= amount;
         }
         if (predicate instanceof StackEntryManaValueAtMostControlledCountPredicate atMostPredicate) {
             int count = countControlledMatching(gameData, controllerId, atMostPredicate.countFilter());
@@ -5841,8 +5851,7 @@ public class TargetLegalityService {
                     ? stackEntry.getCard() : stackEntry.getTargetingCard();
             int xSymbols = spellCard.getParsedManaCost() == null ? 0
                     : spellCard.getParsedManaCost().getXSymbolCount();
-            int manaValue = stackEntry.isCastFaceDown() ? 0
-                    : spellCard.getManaValue() + xSymbols * stackEntry.getXValue();
+            int manaValue = spellCard.getManaValue() + xSymbols * stackEntry.getXValue();
             return manaValue <= count;
         }
         if (predicate instanceof StackEntrySharesColorOrManaValueWithImprintedCardPredicate) {
@@ -5949,7 +5958,7 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryAnyOfPredicate anyOfPredicate) {
             for (StackEntryPredicate nested : anyOfPredicate.predicates()) {
-                if (matchesStackEntryPredicate(gameData, stackEntry, nested, controllerId, source, xValue,
+                if (matchesSeenEntry(gameData, stackEntry, nested, controllerId, source, xValue,
                         sourcePowerAtLastKnown)) {
                     return true;
                 }
@@ -5958,7 +5967,7 @@ public class TargetLegalityService {
         }
         if (predicate instanceof StackEntryAllOfPredicate allOfPredicate) {
             for (StackEntryPredicate nested : allOfPredicate.predicates()) {
-                if (!matchesStackEntryPredicate(gameData, stackEntry, nested, controllerId, source, xValue,
+                if (!matchesSeenEntry(gameData, stackEntry, nested, controllerId, source, xValue,
                         sourcePowerAtLastKnown)) {
                     return false;
                 }
@@ -5966,7 +5975,7 @@ public class TargetLegalityService {
             return true;
         }
         if (predicate instanceof StackEntryNotPredicate notPredicate) {
-            return !matchesStackEntryPredicate(gameData, stackEntry, notPredicate.predicate(), controllerId, source,
+            return !matchesSeenEntry(gameData, stackEntry, notPredicate.predicate(), controllerId, source,
                     xValue, sourcePowerAtLastKnown);
         }
         return false;

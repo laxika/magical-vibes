@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.trigger.PlayerActionTrigger;
 import com.github.laxika.magicalvibes.model.trigger.PlayerActionTrigger.PlayerAction;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -429,7 +430,7 @@ public class ActionTriggers {
                         ConditionContext.forPermanent(permanent, controllerId).withTargetId(losingPlayerId), entry -> {
                             entry.setTargetId(losingPlayerId);
                             entry.setNonTargeting(true);
-                        }, null, card.getName() + "'s triggered ability",
+                        }, null, FaceDownVisibility.publicName(gameData, card) + "'s triggered ability",
                         GameLog.cardThen(card, "'s triggered ability goes on the stack ("
                                 + gameData.playerIdToName.get(losingPlayerId) + " loses the game)."));
             }

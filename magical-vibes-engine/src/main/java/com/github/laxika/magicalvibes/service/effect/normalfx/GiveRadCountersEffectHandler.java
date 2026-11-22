@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GiveRadCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -51,7 +52,7 @@ public class GiveRadCountersEffectHandler implements NormalEffectHandlerBean {
         if (amount <= 0) {
             return;
         }
-        String sourceName = entry.getCard() == null ? "rad counters" : entry.getCard().getName();
+        String sourceName = entry.getCard() == null ? "rad counters" : FaceDownVisibility.sourceName(gameData, entry);
         UUID placingPlayerId = entry.getControllerId();
         for (UUID playerId : players) {
             int placed = gameQueryService.replaceRadCounters(gameData, playerId, amount, placingPlayerId);

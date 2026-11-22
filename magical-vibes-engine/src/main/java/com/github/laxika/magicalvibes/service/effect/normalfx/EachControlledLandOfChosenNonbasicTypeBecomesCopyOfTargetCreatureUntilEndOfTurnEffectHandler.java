@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -111,7 +112,7 @@ public class EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUn
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" makes " + copies.size() + " land(s) a hasty copy of "
-                        + targetCard.getName() + " until end of turn.")
+                        + FaceDownVisibility.publicName(gameData, targetCard) + " until end of turn.")
                 .build());
     }
 }

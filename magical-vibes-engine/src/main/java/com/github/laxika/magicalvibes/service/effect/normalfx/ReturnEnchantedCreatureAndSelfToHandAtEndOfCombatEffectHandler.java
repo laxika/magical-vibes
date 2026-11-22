@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndSelfToHandAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +51,6 @@ public class ReturnEnchantedCreatureAndSelfToHandAtEndOfCombatEffectHandler impl
                 Triggers.endOfCombat(), entry.getControllerId(), entry.getCard(), aura.getId(), enchanted.getId(),
                 ReturnToHandEffect.targetAndSelf()));
         gameLogService.append(gameData, GameLog.cardThen(enchanted.getCard(),
-                " and " + aura.getCard().getName() + " will be returned to their owners' hands at end of combat."));
+                " and " + FaceDownVisibility.publicName(gameData, aura) + " will be returned to their owners' hands at end of combat."));
     }
 }

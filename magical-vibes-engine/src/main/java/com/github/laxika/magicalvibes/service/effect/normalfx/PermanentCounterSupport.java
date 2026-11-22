@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.SagaChapterService;
@@ -643,7 +644,7 @@ public class PermanentCounterSupport {
         Permanent snapshot = new Permanent(permanent);
         triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(VANISHING_SACRIFICE,
                 permanent.getCard(), permanent, controllerId,
-                permanent.getCard().getName() + "'s vanishing ability",
+                FaceDownVisibility.publicName(gameData, permanent) + "'s vanishing ability",
                 ConditionContext.forPermanent(permanent, controllerId),
                 entry -> entry.setSourcePermanentSnapshot(snapshot)));
     }

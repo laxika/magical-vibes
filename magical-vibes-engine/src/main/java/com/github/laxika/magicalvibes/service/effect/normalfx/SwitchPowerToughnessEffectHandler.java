@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.SwitchPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -56,7 +57,7 @@ public class SwitchPowerToughnessEffectHandler implements NormalEffectHandlerBea
             }
 
             gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                    entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),
+                    FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(), entry.getControllerId(),
                     switchEffect, target.getId(), null, null,
                     switchEffect.indefinite() ? Duration.PERMANENT : Duration.UNTIL_END_OF_TURN, 0));
 

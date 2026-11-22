@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardPersistentManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -95,7 +96,7 @@ public class FightSupport {
             return;
         }
         StackEntry damageEntry = StackEntry.carrier(source.getCard(), gameQueryService.findPermanentController(gameData, source.getId()),
-                source.getCard().getName() + " deals fight damage", java.util.List.of(),
+                FaceDownVisibility.publicName(gameData, source) + " deals fight damage", java.util.List.of(),
                 recipient.getId(), source.getId());
         damageEntry.setNonTargeting(true);
         damageEntry.setSourcePermanentSnapshot(new Permanent(source));

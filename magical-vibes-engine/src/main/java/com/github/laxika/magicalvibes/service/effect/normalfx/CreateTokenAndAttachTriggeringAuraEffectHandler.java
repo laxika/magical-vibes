@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenAndAttachTriggeringAuraEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -58,7 +59,7 @@ public class CreateTokenAndAttachTriggeringAuraEffectHandler implements NormalEf
         gameData.interaction.setPendingEquipmentAttach(aura.getId(), token.getId());
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 entry.getCard(), entry.getControllerId(), List.of(),
-                entry.getCard().getName() + " — Attach " + aura.getCard().getName()
+                entry.getCard().getName() + " — Attach " + FaceDownVisibility.publicName(gameData, aura)
                         + " to the Cat token?"));
         log.info("Game {} - {} offers to move {} onto its token", gameData.id,
                 entry.getCard().getName(), aura.getCard().getName());

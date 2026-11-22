@@ -152,6 +152,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasTypeChosenThisRes
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.room.RoomNameSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.LandManaTypeSupport;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -5352,6 +5353,14 @@ public class PredicateEvaluationService {
     public boolean matchesStackEntryPredicate(StackEntry entry, StackEntryPredicate predicate, UUID enchantedPlayerId,
                                               GameData gameData, Permanent liveSource) {
         if (predicate == null) return false;
+        return matchesSeenEntry(CastingPermissionService.spellAsEffectsSeeIt(entry), predicate, enchantedPlayerId,
+                gameData, liveSource);
+    }
+
+    /** {@link #matchesStackEntryPredicate} on the entry as effects see it (CR 708.4). */
+    private boolean matchesSeenEntry(StackEntry entry, StackEntryPredicate predicate, UUID enchantedPlayerId,
+                                     GameData gameData, Permanent liveSource) {
+        if (predicate == null) return false;
         return switch (predicate) {
             case StackEntryControlledByEnchantedPlayerPredicate ignored ->
                     enchantedPlayerId != null && enchantedPlayerId.equals(entry.getControllerId());
@@ -5382,18 +5391,18 @@ public class PredicateEvaluationService {
                     entry.getCard().getSupertypes().stream().anyMatch(supertypeIn.supertypes()::contains);
             case StackEntryAllOfPredicate allOf -> {
                 for (StackEntryPredicate nested : allOf.predicates()) {
-                    if (!matchesStackEntryPredicate(entry, nested, enchantedPlayerId, gameData, liveSource)) yield false;
+                    if (!matchesSeenEntry(entry, nested, enchantedPlayerId, gameData, liveSource)) yield false;
                 }
                 yield true;
             }
             case StackEntryAnyOfPredicate anyOf -> {
                 for (StackEntryPredicate nested : anyOf.predicates()) {
-                    if (matchesStackEntryPredicate(entry, nested, enchantedPlayerId, gameData, liveSource)) yield true;
+                    if (matchesSeenEntry(entry, nested, enchantedPlayerId, gameData, liveSource)) yield true;
                 }
                 yield false;
             }
             case StackEntryNotPredicate not ->
-                    !matchesStackEntryPredicate(entry, not.predicate(), enchantedPlayerId, gameData, liveSource);
+                    !matchesSeenEntry(entry, not.predicate(), enchantedPlayerId, gameData, liveSource);
             case StackEntryCastFromZonePredicate castFrom ->
                     entry.getSourceZone() == castFrom.sourceZone();
             case StackEntryCastWithAdventurePredicate ignored -> entry.isCastWithAdventure();
@@ -5417,9 +5426,9 @@ public class PredicateEvaluationService {
             case StackEntryManaValuePredicate manaValue ->
                     entry.getSpellManaValue() == manaValue.manaValue();
             case StackEntryMaxManaValuePredicate maxManaValue ->
-                    (entry.isCastFaceDown() ? 0 : entry.getSpellManaValue()) <= maxManaValue.maxManaValue();
+                    entry.getSpellManaValue() <= maxManaValue.maxManaValue();
             case StackEntryManaSpentLessThanManaValuePredicate ignored ->
-                    !entry.isCastFaceDown() && entry.getManaSpentToCast() < entry.getSpellManaValue();
+                    entry.getManaSpentToCast() < entry.getSpellManaValue();
             // Targeting-only predicates: evaluated by TargetLegalityService, never in this context.
             case StackEntryManaValueEqualsXPredicate ignored -> false;
             case StackEntryColoredManaSpentPredicate ignored -> false;

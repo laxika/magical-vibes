@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -51,7 +52,7 @@ public class GoadTargetCreatureUntilNextTurnEffectHandler implements NormalEffec
                 continue;
             }
             gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), entry.getCard().getName(), null, entry.getControllerId(),
+                    UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), null, entry.getControllerId(),
                     effect, targetId, null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
         }
     }

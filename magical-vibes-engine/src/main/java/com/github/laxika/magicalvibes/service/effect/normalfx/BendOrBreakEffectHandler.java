@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BendOrBreakEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ContinueAfterDepartureEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -240,7 +241,7 @@ public class BendOrBreakEffectHandler implements NormalEffectHandlerBean, Contin
                 continue;
             }
             tapUntapSupport.tapPermanent(gameData, permanent);
-            gameLogService.append(gameData, GameLog.text(permanent.getCard().getName() + " is tapped by "
+            gameLogService.append(gameData, GameLog.text(FaceDownVisibility.publicName(gameData, permanent) + " is tapped by "
                     + sourceName + "."));
         }
         gameOutcomeService.checkWinCondition(gameData);
@@ -274,7 +275,7 @@ public class BendOrBreakEffectHandler implements NormalEffectHandlerBean, Contin
         List<String> names = ids.stream()
                 .map(id -> gameQueryService.findPermanentById(gameData, id))
                 .filter(permanent -> permanent != null)
-                .map(permanent -> permanent.getCard().getName())
+                .map(permanent -> FaceDownVisibility.publicName(gameData, permanent))
                 .toList();
         return names.isEmpty() ? "empty" : String.join(", ", names);
     }

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SwapExclusiveBlockersBetweenTwoBlockedAttackersEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityService;
@@ -84,7 +85,7 @@ public class SwapExclusiveBlockersBetweenTwoBlockedAttackersEffectHandler implem
         attackerB.setBlockedWithoutBlockers(findBlockers(gameData, attackerB.getId()).isEmpty());
 
         String msg = entry.getCard().getName() + " switches blockers between "
-                + attackerA.getCard().getName() + " and " + attackerB.getCard().getName() + ".";
+                + FaceDownVisibility.publicName(gameData, attackerA) + " and " + FaceDownVisibility.publicName(gameData, attackerB) + ".";
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" switches blockers between ")

@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaPool;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrainTargetPlayersLandManaEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -92,7 +93,7 @@ public class DrainTargetPlayersLandManaEffectHandler implements NormalEffectHand
                 interactionHandlerRegistry.begin(gameData, new com.github.laxika.magicalvibes.model.PendingInteraction.ColorChoice(
                         playerId, landId, null, new com.github.laxika.magicalvibes.model.ChoiceContext.LandManaDrainAbilityChoice(
                         entry, landId, indices, remaining, delayedColorless), options,
-                        "Choose a mana ability of " + land.getCard().getName() + "."));
+                        "Choose a mana ability of " + FaceDownVisibility.publicName(gameData, land) + "."));
                 return;
             }
             activateLandAbility(gameData, entry, landId, indices.getFirst(), remaining, delayedColorless);

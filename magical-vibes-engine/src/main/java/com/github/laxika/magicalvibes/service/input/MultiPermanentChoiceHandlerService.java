@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChoosePermanentsEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventionSupport;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
@@ -1399,9 +1400,9 @@ public class MultiPermanentChoiceHandlerService {
                 creatureControlService.applyControlEffect(gameData, playerId, stolen,
                         new GainControlOfTargetEffect(duration), duration,
                         duration.isSourceLinked() ? sourcePermId : null,
-                        source != null ? source.getCard().getName() : stolen.getCard().getName());
+                        source != null ? FaceDownVisibility.publicName(gameData, source) : FaceDownVisibility.publicName(gameData, stolen));
                 if (source != null) {
-                    PreventionSupport.preventCombatDamageDealtBy(gameData, source.getCard().getName(), sourcePermId,
+                    PreventionSupport.preventCombatDamageDealtBy(gameData, FaceDownVisibility.publicName(gameData, source), sourcePermId,
                             playerId, sourcePermId, Duration.UNTIL_END_OF_TURN);
                     gameLogService.append(gameData,
                             GameLog.cardThen(source.getCard(), " assigns no combat damage this turn."));
@@ -1436,7 +1437,7 @@ public class MultiPermanentChoiceHandlerService {
             // combat damage this turn once a permanent was chosen.
             Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
             if (source != null) {
-                PreventionSupport.preventCombatDamageDealtBy(gameData, source.getCard().getName(),
+                PreventionSupport.preventCombatDamageDealtBy(gameData, FaceDownVisibility.publicName(gameData, source),
                         context.sourcePermanentId(), playerId, context.sourcePermanentId(),
                         Duration.UNTIL_END_OF_TURN);
                 gameLogService.append(gameData,
@@ -3094,7 +3095,7 @@ public class MultiPermanentChoiceHandlerService {
             if (tappedCount == context.requiredCount()) {
                 Permanent source = gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
                 makeCreatureUnblockableEffectHandler.makeUnblockableThisTurn(gameData, source,
-                        source == null ? null : source.getCard().getName(), context.sourcePermanentId(), playerId);
+                        source == null ? null : FaceDownVisibility.publicName(gameData, source), context.sourcePermanentId(), playerId);
             }
         }
 

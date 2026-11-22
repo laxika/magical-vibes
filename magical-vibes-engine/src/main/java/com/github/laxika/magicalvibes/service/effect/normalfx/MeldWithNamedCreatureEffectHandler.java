@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentOwnedBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -97,7 +98,7 @@ public class MeldWithNamedCreatureEffectHandler implements NormalEffectHandlerBe
                     controllerId, source.getId(), e));
             playerInputService.beginPermanentChoice(gameData, controllerId,
                     partners.stream().map(Permanent::getId).toList(),
-                    "Choose a creature to meld with " + source.getCard().getName() + ".");
+                    "Choose a creature to meld with " + FaceDownVisibility.publicName(gameData, source) + ".");
             return;
         }
         meld(gameData, source, partners.getFirst(), controllerId, e);

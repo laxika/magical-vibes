@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchZonesForCardNamedToBattlefieldEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -222,7 +223,7 @@ public class SearchZonesForCardNamedToBattlefieldEffectHandler implements Normal
         // this way, shuffle"). Handles Leonin Arbiter, an empty library, and no matches internally.
         if (!searchLibrary) return;
         String prompt = "Search your library for a card named " + cardName + " and put it onto the battlefield"
-                + (host == null ? "." : " attached to " + host.getCard().getName() + ".");
+                + (host == null ? "." : " attached to " + FaceDownVisibility.publicName(gameData, host) + ".");
         librarySearchSupport.performLibrarySearch(
                 gameData,
                 controllerId,

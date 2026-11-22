@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -69,7 +70,7 @@ public class ControlledCreaturesDealDamageToTargetPlayerEffectHandler implements
             }
             StackEntry damageEntry = StackEntry.carrier(sourcePermanent.getCard(),
                     sourceControllerId,
-                    sourcePermanent.getCard().getName() + "'s ability",
+                    FaceDownVisibility.publicName(gameData, sourcePermanent) + "'s ability",
                     List.of(), null, sourcePermanent.getId());
             damageSupport.dealDamageToPlayer(gameData, damageEntry, targetId, rawDamage);
         }

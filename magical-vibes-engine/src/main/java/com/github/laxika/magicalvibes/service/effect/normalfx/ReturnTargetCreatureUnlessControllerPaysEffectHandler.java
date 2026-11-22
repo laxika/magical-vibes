@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureUnlessControllerPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
 import java.util.UUID;
@@ -52,7 +53,7 @@ public class ReturnTargetCreatureUnlessControllerPaysEffectHandler implements No
             return;
         }
 
-        String prompt = "Pay " + e.manaCost() + "? If you don't, " + target.getCard().getName()
+        String prompt = "Pay " + e.manaCost() + "? If you don't, " + FaceDownVisibility.publicName(gameData, target)
                 + " is returned to its owner's hand. (" + entry.getCard().getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetControllerId, List.of(e), prompt,

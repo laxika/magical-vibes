@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.PermanentsCantPhaseInEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.PermanentChange;
 import com.github.laxika.magicalvibes.model.rules.PermanentChangeEvent;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -225,7 +226,7 @@ public class PhasingService {
 
         phaseOut(gameData, List.of(target));
         if (findPhasedOutPermanent(gameData, target.getId()) != null) {
-            hold(gameData, source.getCard().getName(), source.getId(), gameData.findControllerOf(source), target,
+            hold(gameData, FaceDownVisibility.publicName(gameData, source), source.getId(), gameData.findControllerOf(source), target,
                     new PhasedOutHeldEffect(true, tapsOnPhaseIn), Duration.UNTIL_SOURCE_LEAVES);
         }
     }
@@ -261,7 +262,7 @@ public class PhasingService {
                 || findPhasedOutPermanent(gameData, target.getId()) == null) {
             return;
         }
-        hold(gameData, source.getCard().getName(), source.getId(), sourceControllerId, target,
+        hold(gameData, FaceDownVisibility.publicName(gameData, source), source.getId(), sourceControllerId, target,
                 new PhasedOutHeldEffect(false, false), Duration.WHILE_SOURCE_CONTROLLED);
     }
 
@@ -285,7 +286,7 @@ public class PhasingService {
                 .computeIfAbsent(source.getId(), ignored -> ConcurrentHashMap.newKeySet())
                 .add(target.getId());
         if (source.isTapped()) {
-            hold(gameData, source.getCard().getName(), source.getId(), gameData.findControllerOf(source), target,
+            hold(gameData, FaceDownVisibility.publicName(gameData, source), source.getId(), gameData.findControllerOf(source), target,
                     new PhasedOutHeldEffect(false, false), Duration.WHILE_SOURCE_REMAINS_TAPPED);
         }
     }
@@ -650,7 +651,7 @@ public class PhasingService {
     }
 
     private String names(Set<Permanent> permanents) {
-        return permanents.stream().map(permanent -> permanent.getCard().getName()).reduce(
+        return permanents.stream().map(permanent -> FaceDownVisibility.publicName(permanent)).reduce(
                 (left, right) -> left + ", " + right).orElse("");
     }
 }

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachEnchantmentDealsDamageToControllerThenEachAuraToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -99,7 +100,7 @@ public class EachEnchantmentDealsDamageToControllerThenEachAuraToEnchantedCreatu
     private StackEntry sourceEntry(Permanent enchantment, UUID controllerId) {
         return StackEntry.carrier(enchantment.getCard(),
                 controllerId,
-                enchantment.getCard().getName() + "'s ability",
+                FaceDownVisibility.publicName(enchantment) + "'s ability",
                 List.of(),
                 null,
                 enchantment.getId());

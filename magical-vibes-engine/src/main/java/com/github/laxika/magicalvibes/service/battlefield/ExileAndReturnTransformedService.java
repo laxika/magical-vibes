@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -142,7 +143,7 @@ public class ExileAndReturnTransformedService {
             gameData.stolenCreatures.put(newPerm.getId(), originalCard.getOwnerId());
             creatureControlService.applyControlEffect(gameData, returnControllerId, newPerm,
                     new GainControlOfTargetEffect(Duration.PERMANENT),
-                    Duration.PERMANENT, null, originalCard.getName());
+                    Duration.PERMANENT, null, FaceDownVisibility.publicName(gameData, originalCard));
         }
 
         if (gameQueryService.isCreature(gameData, newPerm)) {

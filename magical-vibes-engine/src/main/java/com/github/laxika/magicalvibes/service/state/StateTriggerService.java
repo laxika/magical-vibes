@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -234,7 +235,7 @@ public class StateTriggerService {
 
     /** The stack and log description of a permanent's state-triggered ability. */
     private static String description(Permanent permanent) {
-        return permanent.getCard().getName() + "'s state-triggered ability";
+        return FaceDownVisibility.publicName(permanent) + "'s state-triggered ability";
     }
 
     /**

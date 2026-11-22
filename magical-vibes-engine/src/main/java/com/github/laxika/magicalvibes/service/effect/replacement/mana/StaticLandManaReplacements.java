@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ReplaceLandExcessManaWithColo
 import com.github.laxika.magicalvibes.model.effect.TwistBasicLandManaColorsEffect;
 import com.github.laxika.magicalvibes.model.replacement.LandManaEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -63,7 +64,7 @@ class StaticLandManaReplacements extends LandManaCandidateSource {
         }
 
         String name() {
-            return source.getCard().getName();
+            return FaceDownVisibility.publicName(source);
         }
     }
 

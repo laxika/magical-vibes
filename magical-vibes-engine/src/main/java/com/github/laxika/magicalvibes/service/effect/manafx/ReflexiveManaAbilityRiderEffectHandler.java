@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.manafx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -37,7 +38,7 @@ public class ReflexiveManaAbilityRiderEffectHandler implements ManaAbilityEffect
                         CardEffect effect, int manaMultiplier, boolean creatureSource) {
         QueueReflexiveAbilityEffect reflexive = (QueueReflexiveAbilityEffect) effect;
         StackEntry ability = TriggeredAbilityStackService.madeAbility(permanent.getCard(), playerId,
-                permanent.getCard().getName() + "'s ability", List.of(reflexive.effect()), (UUID) null,
+                FaceDownVisibility.publicName(gameData, permanent) + "'s ability", List.of(reflexive.effect()), (UUID) null,
                 permanent.getId());
         ability.setSourcePermanentSnapshot(new Permanent(permanent));
         triggeredAbilityStackService.putMade(gameData, ability);

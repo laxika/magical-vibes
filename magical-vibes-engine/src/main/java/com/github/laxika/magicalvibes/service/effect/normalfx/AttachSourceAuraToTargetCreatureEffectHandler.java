@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceAuraToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -53,7 +54,7 @@ public class AttachSourceAuraToTargetCreatureEffectHandler implements NormalEffe
         if (target.getId().equals(aura.getAttachedTo())) return;
 
         if (!auraAttachmentService.canEnchant(gameData, aura.getCard(), entry.getControllerId(), target)) {
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " can't be attached to " + target.getCard().getName() + "."));
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " can't be attached to " + FaceDownVisibility.publicName(gameData, target) + "."));
             return;
         }
 
@@ -62,7 +63,7 @@ public class AttachSourceAuraToTargetCreatureEffectHandler implements NormalEffe
         // CR 613.7e: an Aura receives a new timestamp each time it becomes attached.
         aura.setTimestamp(gameData.nextTimestamp());
 
-        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is now attached to " + target.getCard().getName() + "."));
+        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " is now attached to " + FaceDownVisibility.publicName(gameData, target) + "."));
         log.info("Game {} - {} attached to {}", gameData.id, entry.getCard().getName(), target.getCard().getName());
 
         gameData.rulesEvents.occur(new AttachmentEvent.AuraAttached(aura, target.getId()));

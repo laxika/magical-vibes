@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.LoseAllCreatureTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
@@ -57,7 +58,7 @@ public class LoseAllCreatureTypesEffectHandler implements NormalEffectHandlerBea
 
     private void applyTypeLoss(GameData gameData, StackEntry entry, CardEffect effect, Permanent target) {
         gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                entry.getCard().getName(), null, entry.getControllerId(), effect,
+                FaceDownVisibility.sourceName(gameData, entry), null, entry.getControllerId(), effect,
                 target.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
     }
 }

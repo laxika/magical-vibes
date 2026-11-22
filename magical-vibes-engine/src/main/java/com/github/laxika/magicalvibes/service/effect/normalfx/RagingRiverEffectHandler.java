@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RagingRiverEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -128,7 +129,7 @@ public class RagingRiverEffectHandler implements NormalEffectHandlerBean {
                 Duration.UNTIL_END_OF_COMBAT));
 
         Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
-        String attackerName = attacker == null ? "attacker" : attacker.getCard().getName();
+        String attackerName = attacker == null ? "attacker" : FaceDownVisibility.publicName(gameData, attacker);
         gameLogService.append(gameData, GameLog.text(attackerName + " is assigned to the "
                 + (choosePile1 ? "left" : "right") + " pile for blocking."));
 
@@ -183,7 +184,7 @@ public class RagingRiverEffectHandler implements NormalEffectHandlerBean {
         }
         Permanent attacker = gameQueryService.findPermanentById(gameData,
                 state.attackerIds().get(state.nextAttackerIndex()));
-        String attackerName = attacker == null ? "attacker" : attacker.getCard().getName();
+        String attackerName = attacker == null ? "attacker" : FaceDownVisibility.publicName(gameData, attacker);
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(null, state.controllerId(), List.of(),
                 "Choose left or right for " + attackerName + ". Yes = Left, No = Right."));
         playerInputService.processNextMayAbility(gameData);

@@ -282,7 +282,7 @@ public class PermanentChoiceSpellHandlerService {
 
             String targetName = isPlayerTarget
                     ? gameData.playerIdToName.get(permanentId)
-                    : isSpellTarget ? getTargetDisplayName(gameData, permanentId) : target.getCard().getName();
+                    : isSpellTarget ? getTargetDisplayName(gameData, permanentId) : FaceDownVisibility.publicName(gameData, target);
             
             gameLogService.append(gameData, GameLog.builder().card(lct.cardToCast()).text(" targets " + targetName + ".").build());
             log.info("Game {} - {} cast-from-library targets {}", gameData.id, lct.cardToCast().getName(), targetName);
@@ -781,7 +781,7 @@ public class PermanentChoiceSpellHandlerService {
             String targetName = isPlayerTarget
                     ? gameData.playerIdToName.get(permanentId)
                     : isGraveyardTarget ? graveyardTarget.getName()
-                    : isSpellTarget ? getTargetDisplayName(gameData, permanentId) : target.getCard().getName();
+                    : isSpellTarget ? getTargetDisplayName(gameData, permanentId) : FaceDownVisibility.publicName(gameData, target);
             
             gameLogService.append(gameData, GameLog.builder().card(castCharacteristics).text(" targets " + targetName + ".").build());
             log.info("Game {} - {} cast-from-graveyard targets {}", gameData.id, spellCard.getName(), targetName);
@@ -882,7 +882,7 @@ public class PermanentChoiceSpellHandlerService {
             String targetName = isPlayerTarget
                     ? gameData.playerIdToName.get(permanentId)
                     : isGraveyardTarget ? graveyardTarget.getName()
-                    : isSpellTarget ? getTargetDisplayName(gameData, permanentId) : target.getCard().getName();
+                    : isSpellTarget ? getTargetDisplayName(gameData, permanentId) : FaceDownVisibility.publicName(gameData, target);
             gameLogService.append(gameData, GameLog.builder().card(hct.cardToCast()).text(" targets " + targetName + ".").build());
             log.info("Game {} - {} cast-from-hand targets {}", gameData.id, hct.cardToCast().getName(), targetName);
 
@@ -1116,7 +1116,7 @@ public class PermanentChoiceSpellHandlerService {
             List<Permanent> battlefield = gameData.playerBattlefields.get(pid);
             if (battlefield == null) continue;
             for (Permanent p : battlefield) {
-                if (p.getId().equals(targetId)) return p.getCard().getName();
+                if (p.getId().equals(targetId)) return FaceDownVisibility.publicName(gameData, p);
             }
         }
 

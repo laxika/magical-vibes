@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.HauntEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -54,7 +55,7 @@ public class HauntEffectHandler implements NormalEffectHandlerBean {
         gameData.hauntingCardToPermanentId.put(cardId, target.getId());
 
         gameLogService.append(gameData,
-                GameLog.cardThen(sourceCard, " is exiled haunting " + target.getCard().getName() + "."));
+                GameLog.cardThen(sourceCard, " is exiled haunting " + FaceDownVisibility.publicName(gameData, target) + "."));
         log.info("Game {} - {} is exiled haunting {}", gameData.id,
                 sourceCard.getName(), target.getCard().getName());
     }

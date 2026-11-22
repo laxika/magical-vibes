@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.amount.ChosenPermanentPower;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyRemoveKeywordEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.model.effect.ExertAsItAttacksEffect;
@@ -706,22 +707,22 @@ public class CombatAttackService {
                     && castingCostService.getAttackLifePaymentPerCreature(gameData, playerId,
                     requiredDefenderId, attacker) == 0
                     && !requiredDefenderId.equals(targetId)) {
-                throw new IllegalStateException(attacker.getCard().getName() + " must attack the specified player");
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, attacker) + " must attack the specified player");
             }
             if (gameQueryService.computeStaticBonus(gameData, attacker).grantedEffects().stream()
                     .anyMatch(MustAttackPlayerEffect.class::isInstance)
                     && attackLegalityService.canAttackDefender(gameData, attacker, defenderId)
                     && !gameData.playerIds.contains(targetId)) {
-                throw new IllegalStateException(attacker.getCard().getName() + " must attack a player");
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, attacker) + " must attack a player");
             }
             if (attackLegalityService.mustAttackOtherPlayerIfAble(gameData, attacker, targetId)) {
-                throw new IllegalStateException(attacker.getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, attacker)
                         + " must attack a player other than you if able");
             }
             // Defender-scoped restriction (e.g. Form of the Dragon — "Creatures without flying can't attack you"):
             // the attacked player controls a permanent that forbids attackers not matching its exemption predicate.
             if (!attackLegalityService.canAttackDefender(gameData, attacker, targetId)) {
-                throw new IllegalStateException(attacker.getCard().getName() + " can't attack that player");
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, attacker) + " can't attack that player");
             }
             resolvedTargets.put(idx, targetId);
         }
@@ -1194,7 +1195,7 @@ public class CombatAttackService {
                         ConditionContext.forPermanent(attacker, playerId))))) {
             gameData.queueMayAbilityForPlayer(attacker.getCard(), playerId,
                     new MayEffect(SkipNextUntapEffect.exert(),
-                            "Exert " + attacker.getCard().getName() + " as it attacks?"),
+                            "Exert " + FaceDownVisibility.publicName(gameData, attacker) + " as it attacks?"),
                     null, attacker.getId(), playerId, new Permanent(attacker));
         }
     }
@@ -1232,7 +1233,7 @@ public class CombatAttackService {
                     context.usedSupporterIds());
             if (!validSupporters.isEmpty()) {
                 playerInputService.beginMultiPermanentChoice(gameData, context.playerId(), validSupporters, 1,
-                        context, "Choose a creature to enlist " + attacker.getCard().getName()
+                        context, "Choose a creature to enlist " + FaceDownVisibility.publicName(gameData, attacker)
                                 + " or choose none.");
                 return;
             }
@@ -1286,8 +1287,8 @@ public class CombatAttackService {
                 enlistedSupporters.put(attacker.getId(), supporter.getId());
                 gameLogService.append(gameData, GameLog.text(
                         gameData.playerIdToName.get(context.playerId()) + " taps "
-                                + supporter.getCard().getName() + " to enlist "
-                                + attacker.getCard().getName() + "."));
+                                + FaceDownVisibility.publicName(gameData, supporter) + " to enlist "
+                                + FaceDownVisibility.publicName(gameData, attacker) + "."));
             }
         }
 
@@ -1325,7 +1326,7 @@ public class CombatAttackService {
             }
             UUID enlistedId = enlistedSupporters.get(boost.getKey());
             if (triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ENLIST_ABILITY,
-                    attacker.getCard(), attacker, playerId, attacker.getCard().getName() + "'s enlist trigger",
+                    attacker.getCard(), attacker, playerId, FaceDownVisibility.publicName(gameData, attacker) + "'s enlist trigger",
                     ConditionContext.forPermanent(attacker, playerId), entry -> {
                         entry.setTargetId(attacker.getId());
                         entry.setNonTargeting(true);
@@ -1360,7 +1361,7 @@ public class CombatAttackService {
                                             TriggeredAbility ability, String description,
                                             TriggeredAbilityRequest.TriggerRecord record) {
         return triggeredAbilityStackService.put(gameData, new TriggeredAbilityRequest(ability, attacker.getCard(),
-                attacker, playerId, attacker.getCard().getName() + description,
+                attacker, playerId, FaceDownVisibility.publicName(gameData, attacker) + description,
                 ConditionContext.forPermanent(attacker, playerId), record).causedBySourceAttacking());
     }
 
@@ -1736,7 +1737,7 @@ public class CombatAttackService {
             if (conditional && declaredAttackerIndices.stream().anyMatch(other -> other != idx)
                     && canAttackAlongside(gameData, playerId, battlefield, declaredAttackerIndices, attackTargets,
                     idx)) {
-                throw new IllegalStateException(creature.getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, creature)
                         + " must also attack when another creature you control attacks");
             }
         }
@@ -1760,7 +1761,7 @@ public class CombatAttackService {
             if (!declaredAttackerIndices.contains(idx)
                     && canAttackAlongside(gameData, playerId, battlefield, declaredAttackerIndices, attackTargets,
                     idx)) {
-                throw new IllegalStateException(battlefield.get(idx).getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, battlefield.get(idx))
                         + " must also attack when another creature you control attacks");
             }
         }
@@ -1786,7 +1787,7 @@ public class CombatAttackService {
                     && canAttackAlongside(gameData, playerId, battlefield, declaredAttackerIndices, attackTargets,
                     index)
                     && gameQueryService.getCreatureAttackTax(gameData, other) == 0) {
-                throw new IllegalStateException(other.getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, other)
                         + " must attack when the source creature attacks");
             }
         }
@@ -1831,7 +1832,7 @@ public class CombatAttackService {
                 if (creature.getCounterCount(counterType) > 0
                         && canAttackAlongside(gameData, playerId, battlefield, declaredAttackerIndices,
                         attackTargets, idx)) {
-                    throw new IllegalStateException(creature.getCard().getName()
+                    throw new IllegalStateException(FaceDownVisibility.publicName(gameData, creature)
                             + " must also attack when a creature with such a counter attacks");
                 }
             }
@@ -1843,7 +1844,7 @@ public class CombatAttackService {
         if (attackerIndices.size() == 1) {
             Permanent sole = battlefield.get(attackerIndices.getFirst());
             if (hasCantAttackOrBlockAlone(gameData, sole)) {
-                throw new IllegalStateException(sole.getCard().getName() + " can't attack alone");
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, sole) + " can't attack alone");
             }
         }
     }
@@ -1856,7 +1857,7 @@ public class CombatAttackService {
         for (int idx : attackerIndices) {
             Permanent attacker = battlefield.get(idx);
             if (canOnlyAttackAlone(gameData, attacker)) {
-                throw new IllegalStateException(attacker.getCard().getName() + " can only attack alone");
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, attacker) + " can only attack alone");
             }
         }
     }
@@ -1888,7 +1889,7 @@ public class CombatAttackService {
                     .map(battlefield::get)
                     .anyMatch(other -> gameQueryService.getEffectivePower(gameData, other) > power);
             if (!greaterPowerAlsoAttacks) {
-                throw new IllegalStateException(restricted.getCard().getName()
+                throw new IllegalStateException(FaceDownVisibility.publicName(gameData, restricted)
                         + " can't attack unless a creature with greater power also attacks");
             }
         }
@@ -1916,7 +1917,7 @@ public class CombatAttackService {
                     .ifPresent(effect -> {
                         long otherAttackers = attackerIndices.stream().filter(other -> other != idx).count();
                         if (otherAttackers < effect.otherCount()) {
-                            throw new IllegalStateException(restricted.getCard().getName()
+                            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, restricted)
                                     + " can't attack unless at least " + effect.otherCount()
                                     + " other creatures attack");
                         }
@@ -1940,7 +1941,7 @@ public class CombatAttackService {
                                 .anyMatch(other -> predicateEvaluationService.matchesPermanentPredicate(
                                         gameData, other, effect.matchingAttackerPredicate()));
                         if (!matchingAttacker) {
-                            throw new IllegalStateException(restricted.getCard().getName()
+                            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, restricted)
                                     + " can't attack unless " + effect.restrictionDescription());
                         }
                     });

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCountersFromControlledPermanentsToSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -62,7 +63,7 @@ public class MoveCountersFromControlledPermanentsToSourceEffectHandler implement
             if (from != null && from.getCounterCount(counterType) > 0) {
                 playerInputService.beginMoveCountersFromControlledPermanentsAmountChoice(
                         gameData, entry.getControllerId(), candidates, index, sourceId, counterType,
-                        entry.getCard().getName(), from.getCard().getName(), from.getCounterCount(counterType),
+                        entry.getCard().getName(), FaceDownVisibility.publicName(gameData, from), from.getCounterCount(counterType),
                         countersPerMovedCounter);
                 return;
             }

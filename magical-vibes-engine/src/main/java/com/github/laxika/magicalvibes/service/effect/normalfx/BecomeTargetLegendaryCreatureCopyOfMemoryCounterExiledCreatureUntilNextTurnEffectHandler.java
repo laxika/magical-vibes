@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.BecomeTargetLegendaryCreatureCopyOfMemoryCounterExiledCreatureUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -51,7 +52,7 @@ public class BecomeTargetLegendaryCreatureCopyOfMemoryCounterExiledCreatureUntil
             return;
         }
 
-        String originalName = target.getCard().getName();
+        String originalName = FaceDownVisibility.publicName(gameData, target);
         Card preCopyCard = PermanentCopierService.preCopyCard(gameData, target);
         permanentCopierService.applyCloneCopy(target, exiled.card(), null, null, Set.of());
         PermanentCopierService.beginCopy(gameData, entry.getCard().getName(),

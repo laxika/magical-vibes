@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCappedCountersOnSourceEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -68,7 +69,7 @@ public class PutCappedCountersOnSourceEffectHandler implements NormalEffectHandl
                     entry.getControllerId(), null, null,
                     new ChoiceContext.CappedCounterAmountChoice(source.getId()),
                     IntStream.rangeClosed(0, maximum).mapToObj(Integer::toString).toList(),
-                    "Choose how many counters to put on " + source.getCard().getName() + "."));
+                    "Choose how many counters to put on " + FaceDownVisibility.publicName(gameData, source) + "."));
             return;
         }
 

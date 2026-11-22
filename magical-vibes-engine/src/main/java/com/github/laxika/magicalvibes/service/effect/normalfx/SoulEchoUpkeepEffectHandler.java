@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SoulEchoUpkeepEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
@@ -65,7 +66,7 @@ public class SoulEchoUpkeepEffectHandler implements NormalEffectHandlerBean {
         String prompt = "Choose that for each 1 damage that would be dealt to "
                 + gameData.playerIdToName.get(entry.getControllerId())
                 + " until their next upkeep, they remove an echo counter from "
-                + self.getCard().getName() + " instead?";
+                + FaceDownVisibility.publicName(gameData, self) + " instead?";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 self.getCard(), opponentId, List.of(effect), prompt, null, null, self.getId(), null));
         log.info("Game {} - {} offers the echo-counter choice to {}", gameData.id,

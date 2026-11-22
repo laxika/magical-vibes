@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -50,7 +51,7 @@ public class TargetPlayerGainsControlOfSourceCreatureEffectHandler implements No
 
         boolean controlApplied = creatureControlService.applyControlEffect(gameData, newControllerId, permanent,
                 new GainControlOfTargetEffect(e.duration()),
-                e.duration(), null, entry.getCard().getName());
+                e.duration(), null, FaceDownVisibility.sourceName(gameData, entry));
 
         if (controlApplied && e.thenEffect() != null) {
             int effectIndex = entry.getResolvingEffectIndex();

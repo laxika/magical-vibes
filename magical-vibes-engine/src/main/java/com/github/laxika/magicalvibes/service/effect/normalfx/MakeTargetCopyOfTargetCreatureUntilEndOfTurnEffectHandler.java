@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.MakeTargetCopyOfTargetCreatureUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -51,7 +52,7 @@ public class MakeTargetCopyOfTargetCreatureUntilEndOfTurnEffectHandler implement
             return;
         }
 
-        String targetName = target.getCard().getName();
+        String targetName = FaceDownVisibility.publicName(gameData, target);
         Card preCopyCard = PermanentCopierService.preCopyCard(gameData, target);
         permanentCopierService.applyCloneCopy(target, copySource, null, null);
         PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), target.getId(), entry.getControllerId(),
@@ -60,7 +61,7 @@ public class MakeTargetCopyOfTargetCreatureUntilEndOfTurnEffectHandler implement
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" makes " + targetName + " a copy of "
-                        + copySource.getCard().getName() + " until end of turn.")
+                        + FaceDownVisibility.publicName(gameData, copySource) + " until end of turn.")
                 .build());
         log.info("Game {} - {} makes {} a copy of {} until end of turn", gameData.id,
                 entry.getCard().getName(), targetName, copySource.getCard().getName());

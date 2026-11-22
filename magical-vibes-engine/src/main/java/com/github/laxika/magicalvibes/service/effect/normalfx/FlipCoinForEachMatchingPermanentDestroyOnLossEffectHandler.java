@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.ChoosesCoinFlipResultsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -64,7 +65,7 @@ public class FlipCoinForEachMatchingPermanentDestroyOnLossEffectHandler implemen
             CoinFlipResult result = results.get(i);
             String outcome = result.heads() ? "wins" : "loses";
             gameLogService.append(gameData, GameLog.text(playerName + " " + outcome
-                    + " the coin flip for " + sourceName + " for " + permanent.getCard().getName()
+                    + " the coin flip for " + sourceName + " for " + FaceDownVisibility.publicName(gameData, permanent)
                     + coinFlipService.replacementDetails(result) + "."));
 
             if (!result.heads()) {

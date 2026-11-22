@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTriggeringPermanentPredicate;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -83,7 +84,7 @@ public class BoostAllOwnCreaturesEffectHandler implements NormalEffectHandlerBea
                         || predicateEvaluationService.matchesPermanentPredicate(permanent, boost.filter(), filterContext))) {
                 if (Duration.UNTIL_YOUR_NEXT_TURN.equals(boost.duration())) {
                     gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(),
-                            entry.getCard().getName(), null, entry.getControllerId(),
+                            FaceDownVisibility.sourceName(gameData, entry), null, entry.getControllerId(),
                             new PowerToughnessBoostEffect(powerBoost, toughnessBoost),
                             permanent.getId(), null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
                 } else {

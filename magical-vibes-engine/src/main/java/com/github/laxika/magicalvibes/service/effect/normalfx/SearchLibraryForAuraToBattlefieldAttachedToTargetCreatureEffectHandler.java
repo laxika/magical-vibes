@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -93,16 +94,16 @@ public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHand
 
         if (matchingCards.isEmpty()) {
             LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no Aura that could enchant " + host.getCard().getName() + ". Library is shuffled."));
+            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no Aura that could enchant " + FaceDownVisibility.publicName(gameData, host) + ". Library is shuffled."));
             log.info("Game {} - {} searches library, no eligible Aura cards found", gameData.id, playerName);
             return;
         }
 
         String prompt = maxManaValue == Integer.MAX_VALUE
-                ? "Search your library for an Aura card and put it onto the battlefield attached to " + host.getCard().getName() + "."
+                ? "Search your library for an Aura card and put it onto the battlefield attached to " + FaceDownVisibility.publicName(gameData, host) + "."
                 : "Search your library for an Aura card with mana value " + maxManaValue
                 + " or less and a different name than each Aura you control, then put it onto the battlefield attached to "
-                + host.getCard().getName() + ".";
+                + FaceDownVisibility.publicName(gameData, host) + ".";
         librarySearchSupport.sendLibrarySearchToPlayer(gameData, controllerId,
                 LibrarySearchParams.builder(controllerId, new ArrayList<>(matchingCards))
                         .canFailToFind(true)

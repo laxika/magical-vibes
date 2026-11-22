@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.stereotype.Component;
@@ -146,7 +147,7 @@ class PermanentDamageModifiers extends PermanentDamageCandidateSource {
         for (int i = 0; i < statics.size(); i++) {
             if (statics.get(i) instanceof ReduceSpellDamageEffect reduce && reduce.amount() > 0) {
                 reductions.put(permanent.getId() + "#" + i, new NumericInstance(
-                        permanent.getCard().getName() + ": subtract " + reduce.amount() + " from the damage",
+                        FaceDownVisibility.publicName(gameData, permanent) + ": subtract " + reduce.amount() + " from the damage",
                         reduce.amount()));
             }
         }

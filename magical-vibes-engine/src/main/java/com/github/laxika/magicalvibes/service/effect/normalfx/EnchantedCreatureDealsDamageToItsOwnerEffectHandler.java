@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsDamageToItsOwnerEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.UUID;
@@ -49,7 +50,7 @@ public class EnchantedCreatureDealsDamageToItsOwnerEffectHandler implements Norm
 
         UUID ownerId = gameData.stolenCreatures.getOrDefault(creature.getId(), controllerId);
 
-        String creatureName = creature.getCard().getName();
+        String creatureName = FaceDownVisibility.publicName(gameData, creature);
         
 
         int rawDamage = e.damage();

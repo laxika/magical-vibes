@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeArtifactThenDealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -278,7 +279,7 @@ public class StackedDividedDamageTriggerService {
 
     private String targetName(GameData gameData, UUID targetId) {
         Permanent permanent = gameQueryService.findPermanentById(gameData, targetId);
-        return permanent != null ? permanent.getCard().getName() : gameData.playerIdToName.get(targetId);
+        return permanent != null ? FaceDownVisibility.publicName(gameData, permanent) : gameData.playerIdToName.get(targetId);
     }
 
     private static StackEntry findEntry(GameData gameData, UUID stackEntryId) {

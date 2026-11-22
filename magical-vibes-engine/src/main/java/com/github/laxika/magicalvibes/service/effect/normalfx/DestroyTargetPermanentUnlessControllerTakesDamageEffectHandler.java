@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentUnlessControllerTakesDamageEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import java.util.List;
@@ -50,7 +51,7 @@ public class DestroyTargetPermanentUnlessControllerTakesDamageEffectHandler
                 ? "deal " + fixed.value() + " damage"
                 : "deal damage equal to its power";
         String prompt = "Have " + entry.getCard().getName() + " " + damageDescription
-                + " to you? If you don't, " + target.getCard().getName()
+                + " to you? If you don't, " + FaceDownVisibility.publicName(gameData, target)
                 + " is destroyed. (" + entry.getCard().getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 entry.getCard(), targetControllerId, List.of(e), prompt,

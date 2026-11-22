@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SourceFightsTargetCreatureEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -58,7 +59,7 @@ public class SourceFightsTargetCreatureEffectHandler implements NormalEffectHand
         boolean sourceIsCreature = source != null && gameQueryService.isCreature(gameData, source);
         boolean targetIsCreature = gameQueryService.isCreature(gameData, target);
 
-        String cardName = entry.getCard().getName();
+        String cardName = FaceDownVisibility.sourceName(gameData, entry);
 
         int sourcePower = gameQueryService.getPowerBasedDamage(gameData, sourceForPower);
         int targetPower = gameQueryService.getPowerBasedDamage(gameData, target);

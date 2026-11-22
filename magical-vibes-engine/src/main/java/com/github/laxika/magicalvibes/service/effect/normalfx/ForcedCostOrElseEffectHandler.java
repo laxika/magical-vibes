@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -752,7 +753,7 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
                         null, null, entry.getSourcePermanentId()));
                 return;
             }
-            createOpponentTokens(gameData, entry.getControllerId(), tokenCost, entry.getCard().getName(),
+            createOpponentTokens(gameData, entry.getControllerId(), tokenCost, FaceDownVisibility.sourceName(gameData, entry),
                     entry.getCard().getSetCode());
             return;
         }
@@ -1260,12 +1261,12 @@ public class ForcedCostOrElseEffectHandler implements NormalEffectHandlerBean, A
             List<Permanent> candidates, RemoveCounterFromControlledPermanentCost cost) {
         Map<String, Integer> totalsByName = new HashMap<>();
         for (Permanent candidate : candidates) {
-            totalsByName.merge(candidate.getCard().getName(), 1, Integer::sum);
+            totalsByName.merge(FaceDownVisibility.publicName(candidate), 1, Integer::sum);
         }
         Map<String, Integer> occurrencesByName = new HashMap<>();
         Map<String, ChoiceContext.CounterSelection> options = new LinkedHashMap<>();
         for (Permanent candidate : candidates) {
-            String name = candidate.getCard().getName();
+            String name = FaceDownVisibility.publicName(candidate);
             int occurrence = occurrencesByName.merge(name, 1, Integer::sum);
             String label = totalsByName.get(name) == 1 ? name : name + " (" + occurrence + ")";
             List<CounterType> types = availableCounterTypes(candidate, cost);

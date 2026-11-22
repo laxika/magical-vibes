@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.effect.ChooseCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureIsCopyOfChosenCreatureEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -149,7 +150,7 @@ public class AuraCopyService {
      */
     private void beginCopy(GameData gameData, Permanent source, Permanent affected, Card preCopyCard,
                            Duration duration) {
-        PermanentCopierService.beginCopy(gameData, source.getCard().getName(), source.getId(),
+        PermanentCopierService.beginCopy(gameData, FaceDownVisibility.publicName(gameData, source), source.getId(),
                 gameQueryService.findPermanentController(gameData, source.getId()), affected, preCopyCard, duration);
     }
 }

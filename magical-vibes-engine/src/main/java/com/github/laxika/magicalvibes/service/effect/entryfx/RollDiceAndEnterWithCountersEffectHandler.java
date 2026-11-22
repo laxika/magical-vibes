@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RollDiceAndEnterWithCountersEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -54,7 +55,7 @@ public class RollDiceAndEnterWithCountersEffectHandler implements EntryReplaceme
 
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId)
                 + " rolls " + diceCount + " d" + rollEffect.sides() + " for "
-                + enteringPermanent.getCard().getName() + ": " + results + "."));
+                + FaceDownVisibility.publicName(gameData, enteringPermanent) + ": " + results + "."));
         ActionEvents.diceRolled(
                 gameData, controllerId, diceCount);
         ActionEvents.dieResults(

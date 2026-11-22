@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantBasicLandTypeToTargetEff
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -121,6 +122,6 @@ public class GrantBasicLandTypeToTargetEffectHandler implements NormalEffectHand
                 : Duration.UNTIL_CONTROLLERS_NEXT_UNTAP_STEP.equals(duration)
                 ? " until its controller's next untap step" : "";
         String suffix = replacing ? "" : " in addition to its other types";
-        return targetLand.getCard().getName() + " becomes a " + subtype.getDisplayName() + suffix + durationText + ".";
+        return FaceDownVisibility.publicName(targetLand) + " becomes a " + subtype.getDisplayName() + suffix + durationText + ".";
     }
 }

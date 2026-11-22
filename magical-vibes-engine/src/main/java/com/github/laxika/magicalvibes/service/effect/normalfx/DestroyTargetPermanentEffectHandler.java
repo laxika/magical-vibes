@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -70,7 +71,7 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
         // Capture the controller before destruction (needed for token creation)
         UUID controllerId = rememberTarget(gameData, entry, target);
         Card card = target.getOriginalCard();
-        if (destructionSupport.tryDestroyAndLog(gameData, target, entry.getCard().getName(),
+        if (destructionSupport.tryDestroyAndLog(gameData, target, FaceDownVisibility.sourceName(gameData, entry),
                 destroy.cannotBeRegenerated())) {
             entry.recordStep(StepKind.DESTROY, StepOutcome.ofObjects(List.of(target.getId()),
                     controllerId == null ? List.of() : List.of(controllerId), movedCard(gameData, target, card)));
@@ -81,7 +82,7 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
                 && (!destroy.tokenOnlyForSourceController()
                 || controllerId.equals(entry.getControllerId()))) {
             destructionSupport.createTokenForPlayer(gameData, controllerId, destroy.tokenForController(),
-                    destroy.tokenCount(), entry.getCard().getName(), entry.getCard().getSetCode());
+                    destroy.tokenCount(), FaceDownVisibility.sourceName(gameData, entry), entry.getCard().getSetCode());
         }
     }
 
@@ -131,7 +132,7 @@ public class DestroyTargetPermanentEffectHandler implements NormalEffectHandlerB
             }
         }
         DestructionSupport.BatchOutcome outcome = destructionSupport.destroyBatchWithOutcome(gameData, permanents,
-                entry.getCard().getName(), cannotBeRegenerated);
+                FaceDownVisibility.sourceName(gameData, entry), cannotBeRegenerated);
         List<UUID> destroyed = outcome.destroyed().stream().map(Permanent::getId).toList();
         List<MovedCard> moved = outcome.results().stream()
                 .filter(result -> result.destroyed() && result.left() && result.newCardId() != null

@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.OppositionAgentEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesAtAllEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInsteadEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
@@ -674,7 +675,7 @@ public class LibrarySearchSupport {
                     continue;
                 }
                 String playerName = gameData.playerIdToName.get(searchingPlayerId);
-                String sourceName = perm.getCard().getName();
+                String sourceName = FaceDownVisibility.publicName(gameData, perm);
                 gameLogService.append(gameData, GameLog.text(
                         playerName + "'s library search is prevented by " + sourceName + "."));
                 log.info("Game {} - {} search prevented by {}",
@@ -688,7 +689,7 @@ public class LibrarySearchSupport {
                     continue;
                 }
                 String playerName = gameData.playerIdToName.get(searchingPlayerId);
-                String sourceName = perm.getCard().getName();
+                String sourceName = FaceDownVisibility.publicName(gameData, perm);
                 gameLogService.append(gameData, GameLog.text(
                         playerName + "'s library search is prevented by " + sourceName + "."));
                 log.info("Game {} - {} search prevented by {}",
@@ -703,7 +704,7 @@ public class LibrarySearchSupport {
                 }
                 if (!paid) {
                     String playerName = gameData.playerIdToName.get(searchingPlayerId);
-                    String sourceName = perm.getCard().getName();
+                    String sourceName = FaceDownVisibility.publicName(gameData, perm);
                     String logMsg = playerName + "'s library search is prevented by " + sourceName + ".";
                     gameLogService.append(gameData, GameLog.text(logMsg));
                     log.info("Game {} - {} search prevented by {}",

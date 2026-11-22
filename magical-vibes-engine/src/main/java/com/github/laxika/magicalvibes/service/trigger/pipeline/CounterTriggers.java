@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerLimit;
 import com.github.laxika.magicalvibes.model.trigger.TriggerMultiplicity;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -414,7 +415,7 @@ public class CounterTriggers {
             Card card = target.getCard();
             abilities.putJudged(gameData, ability, card, target, controllerId,
                     ConditionContext.forPermanent(target, controllerId), entry -> {
-                    }, null, card.getName() + "'s triggered ability",
+                    }, null, FaceDownVisibility.publicName(gameData, card) + "'s triggered ability",
                     GameLog.cardThen(card, "'s triggered ability triggers."));
         }
     }
@@ -999,7 +1000,7 @@ public class CounterTriggers {
         for (TriggeredAbility ability : abilities.abilities(gameData, source, TRAINS)) {
             abilities.put(gameData, ability, card, source, controllerId,
                     ConditionContext.forPermanent(source, controllerId), TriggerRecord.NONE, null,
-                    card.getName() + "'s training ability", GameLog.abilityTriggers(card));
+                    FaceDownVisibility.publicName(gameData, card) + "'s training ability", GameLog.abilityTriggers(card));
         }
     }
 
@@ -1102,7 +1103,7 @@ public class CounterTriggers {
                                         TriggerRecord record) {
         Card card = source.getCard();
         return abilities.put(gameData, ability, card, source, controllerId, context, record, limitCreatureId,
-                card.getName() + "'s triggered ability", GameLog.cardThen(card, "'s triggered ability triggers."));
+                FaceDownVisibility.publicName(gameData, card) + "'s triggered ability", GameLog.cardThen(card, "'s triggered ability triggers."));
     }
 
     /**

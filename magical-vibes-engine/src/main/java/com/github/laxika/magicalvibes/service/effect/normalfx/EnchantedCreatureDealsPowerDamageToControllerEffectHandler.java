@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsPowerDamageToControllerEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +47,7 @@ public class EnchantedCreatureDealsPowerDamageToControllerEffectHandler implemen
                 : Math.max(0, entry.getTriggeringPermanentPowerAtTrigger());
         StackEntry damageEntry = StackEntry.carrier(creature.getCard(),
                 creatureControllerId,
-                creature.getCard().getName() + "'s ability",
+                FaceDownVisibility.publicName(gameData, creature) + "'s ability",
                 List.of(),
                 recipientId,
                 creature.getId());

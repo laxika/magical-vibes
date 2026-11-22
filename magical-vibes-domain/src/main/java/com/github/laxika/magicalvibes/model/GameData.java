@@ -4598,7 +4598,7 @@ public class GameData {
 
     /** {@link #exileInsteadOfGraveyard(String, UUID, UUID)} made by the resolving {@code entry}. */
     public void exileInsteadOfGraveyard(StackEntry entry, UUID cardId) {
-        exileInsteadOfGraveyard(entry.getCard() == null ? null : entry.getCard().getName(), entry.getControllerId(),
+        exileInsteadOfGraveyard(effectSourceName(entry), entry.getControllerId(),
                 cardId);
     }
 
@@ -4631,7 +4631,7 @@ public class GameData {
      * of several, replaced by one for one step fewer.
      */
     public void restrictNextUntapStep(StackEntry entry, UUID playerId, SkipNextUntapEffect restriction) {
-        addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard() == null ? null : entry.getCard().getName(),
+        addFloatingEffect(FloatingContinuousEffect.onPlayer(effectSourceName(entry),
                 entry.getSourcePermanentId(), entry.getControllerId(), restriction, playerId,
                 com.github.laxika.magicalvibes.model.effect.Duration.PERMANENT));
     }
@@ -4643,7 +4643,7 @@ public class GameData {
      * {@link com.github.laxika.magicalvibes.model.effect.DoesntUntapDuringNextUntapStepsEffect}).
      */
     public void skipNextUntapSteps(StackEntry entry, UUID permanentId, int untapSteps, UUID untapStepPlayerId) {
-        skipNextUntapSteps(entry.getCard() == null ? null : entry.getCard().getName(), entry.getSourcePermanentId(),
+        skipNextUntapSteps(effectSourceName(entry), entry.getSourcePermanentId(),
                 entry.getControllerId(), permanentId, untapSteps, untapStepPlayerId);
     }
 
@@ -4725,7 +4725,7 @@ public class GameData {
      * end of turn. With {@code trackWithSource} the card exiled this way is linked to the entry's source permanent.
      */
     public void exileInsteadOfDying(StackEntry entry, UUID permanentId, boolean trackWithSource) {
-        addFloatingEffect(FloatingContinuousEffect.onPermanent(entry.getCard() == null ? null : entry.getCard().getName(),
+        addFloatingEffect(FloatingContinuousEffect.onPermanent(effectSourceName(entry),
                 entry.getSourcePermanentId(), entry.getControllerId(),
                 new com.github.laxika.magicalvibes.model.effect.MarkTargetCreatureExileInsteadOfDieThisTurnEffect(trackWithSource), permanentId,
                 com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));
@@ -4764,7 +4764,7 @@ public class GameData {
      */
     public FloatingContinuousEffect addEffectOnPermanent(StackEntry entry, CardEffect effect, UUID permanentId,
                                                          Duration duration) {
-        return addEffectOnPermanent(entry.getCard() == null ? null : entry.getCard().getName(),
+        return addEffectOnPermanent(effectSourceName(entry),
                 entry.getSourcePermanentId(), entry.getControllerId(), effect, permanentId, duration);
     }
 
@@ -4787,7 +4787,7 @@ public class GameData {
      */
     public void grantAbilityToPermanent(StackEntry entry, Ability ability, UUID permanentId,
                                         Duration duration) {
-        grantAbilityToPermanent(entry.getCard() == null ? null : entry.getCard().getName(),
+        grantAbilityToPermanent(effectSourceName(entry),
                 entry.getSourcePermanentId(), entry.getControllerId(), ability, permanentId, duration);
     }
 
@@ -4929,7 +4929,7 @@ public class GameData {
      */
     public FloatingContinuousEffect addPowerToughnessBoost(StackEntry entry, UUID permanentId, int power,
                                                            int toughness) {
-        return addPowerToughnessBoost(entry.getCard() == null ? null : entry.getCard().getName(),
+        return addPowerToughnessBoost(effectSourceName(entry),
                 entry.getSourcePermanentId(), entry.getControllerId(), permanentId, power, toughness,
                 Duration.UNTIL_END_OF_TURN);
     }
@@ -4940,7 +4940,7 @@ public class GameData {
      * {@link #addPowerToughnessBoost(StackEntry, UUID, int, int)}.
      */
     public FloatingContinuousEffect addPowerToughnessBoost(Permanent permanent, int power, int toughness) {
-        return addPowerToughnessBoost(permanent.getCard().getName(), permanent.getId(), findControllerOf(permanent),
+        return addPowerToughnessBoost(permanent.getPublicName(), permanent.getId(), findControllerOf(permanent),
                 permanent.getId(), power, toughness, Duration.UNTIL_END_OF_TURN);
     }
 
@@ -5371,7 +5371,7 @@ public class GameData {
     public FloatingContinuousEffect addCardEffect(StackEntry entry, CardEffect effect, UUID cardId, Zone zone,
                                                   Duration duration) {
         return addFloatingEffect(FloatingContinuousEffect.onCard(
-                entry.getCard() == null ? null : entry.getCard().getName(), entry.getSourcePermanentId(),
+                effectSourceName(entry), entry.getSourcePermanentId(),
                 entry.getControllerId(), effect, cardId, zone, duration));
     }
 
@@ -5447,7 +5447,7 @@ public class GameData {
     public FloatingContinuousEffect addPlayerEffect(StackEntry entry, CardEffect effect, UUID playerId,
                                                     Duration duration) {
         return addFloatingEffect(FloatingContinuousEffect.onPlayer(
-                entry.getCard() == null ? null : entry.getCard().getName(), entry.getSourcePermanentId(),
+                effectSourceName(entry), entry.getSourcePermanentId(),
                 entry.getControllerId(), effect, playerId, duration));
     }
 
@@ -6096,6 +6096,25 @@ public class GameData {
                 ? resolveControlEffectController(newestSurviving)
                 : defaultControllerOf(permanentId);
         return withEffect != null && !withEffect.equals(withoutEffect);
+    }
+
+    /**
+     * What an effect {@code entry} makes is shown to every player as coming from: the source's card, or no name while
+     * that permanent is face down (CR 708.5).
+     */
+    private String effectSourceName(StackEntry entry) {
+        UUID sourceId = entry.getSourcePermanentId();
+        if (sourceId != null) {
+            Permanent source = playerBattlefields.values().stream()
+                    .flatMap(List::stream)
+                    .filter(permanent -> sourceId.equals(permanent.getId()))
+                    .findFirst()
+                    .orElse(entry.getSourcePermanentSnapshot());
+            if (source != null && source.isFaceDown()) {
+                return source.getPublicName();
+            }
+        }
+        return entry.getCard() == null ? null : entry.getCard().getName();
     }
 
     /** The player whose battlefield currently holds the permanent, or {@code null}. */
@@ -8407,7 +8426,7 @@ public class GameData {
         Map<UUID, Card> originals = replacements.originals();
         if (!originals.isEmpty()) {
             addFloatingEffect(FloatingContinuousEffect.onPlayer(
-                    resolvingEntry == null || resolvingEntry.getCard() == null ? null : resolvingEntry.getCard().getName(),
+                    resolvingEntry == null ? null : effectSourceName(resolvingEntry),
                     resolvingEntry == null ? null : resolvingEntry.getSourcePermanentId(), controllerId,
                     new com.github.laxika.magicalvibes.model.effect.BombardmentEffect(originals), controllerId,
                     com.github.laxika.magicalvibes.model.effect.Duration.UNTIL_END_OF_TURN));

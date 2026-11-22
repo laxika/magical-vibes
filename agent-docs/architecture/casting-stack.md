@@ -59,9 +59,14 @@ Owner: `StackEntry`.
 Why: two abilities of one source are separately targetable.
 
 ### A face-down card's identity never leaves for other players (CR 708.2, 708.5)
-A spell's `getCard()` stays the real card: text built from a stack entry for a player asks `FaceDownVisibility` (`nameShownTo`, `descriptionShownTo`, `publicName`), and a copy is made by `CopySupport.createCopyCard(StackEntry)`.
+`getCard()` of a spell or permanent stays the real card: text for a player never uses its `getName()` but asks `FaceDownVisibility` (`publicName` for a permanent, `sourceName` for an ability's source, `nameShownTo`, `descriptionShownTo`), and a copy is made by `CopySupport.createCopyCard(StackEntry)`.
 Owner: `FaceDownVisibility`; applied by `GameViewProjectionFactory` (stack views) and `GameLogService.append` (card segments; `appendRevealing` for a reveal).
 Why: the card's name, or its printing alone, tells an opponent what was cast face down.
+
+### A face-down spell is judged by its face-down characteristics (CR 708.2, 708.4)
+Anything judging a spell on the stack by color, type, subtype, name, mana value, power or text reads `CastingPermissionService.spellAsEffectsSeeIt(entry)`; both stack-entry predicate matchers do, and `getSpellManaValue()` is 0.
+Owner: `CastingPermissionService.spellAsEffectsSeeIt`.
+Why: the real characteristics are wrong, and which spells can be targeted gives the card away.
 
 ### Spell copies choose targets before entering the stack (CR 707.10c)
 A copy with a retarget prompt waits in `GameData.stagedSpellCopies`; copy and becomes-the-target triggers fire only when it is committed with its final targets. Ability copies are not staged.

@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -74,11 +75,11 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             if (target == null) continue;
 
             boolean controlApplied = creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
-                    e, e.duration(), null, entry.getCard().getName());
+                    e, e.duration(), null, FaceDownVisibility.sourceName(gameData, entry));
 
             if (controlApplied && e.grantedSubtype() != null) {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
-                        UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                        UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(),
                         entry.getControllerId(), new GrantSubtypeEffect(e.grantedSubtype(), Subjects.target()),
                         targetId, null, null, Duration.PERMANENT, 0));
 
@@ -98,7 +99,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             if (target == null) continue;
 
             boolean controlApplied = creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
-                    e, e.duration(), null, entry.getCard().getName());
+                    e, e.duration(), null, FaceDownVisibility.sourceName(gameData, entry));
 
             // "When you lose control of the creature, tap it" (Ray of Command, Magus of the Unseen): a delayed
             // triggered ability about the stolen permanent, with no stated duration (CR 603.7b, 603.7c).
@@ -130,14 +131,14 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
                     || sourceSnapshot != null
                     && source.getControlChangeSequence() != sourceSnapshot.getControlChangeSequence()) {
                 gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                        "'s ability has no effect (controller no longer controls " + source.getCard().getName() + ")."));
+                        "'s ability has no effect (controller no longer controls " + FaceDownVisibility.publicName(gameData, source) + ")."));
                 return;
             }
         }
         if (requireSourceTapped && (!source.isTapped() || sourceSnapshot != null
                 && source.getUntapSequence() != sourceSnapshot.getUntapSequence())) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                    "'s ability has no effect (" + source.getCard().getName() + " is no longer tapped)."));
+                    "'s ability has no effect (" + FaceDownVisibility.publicName(gameData, source) + " is no longer tapped)."));
             return;
         }
 
@@ -150,7 +151,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             if (target == null) continue;
 
             creatureControlService.applyControlEffect(gameData, entry.getControllerId(), target,
-                    e, e.duration(), sourcePermanentId, entry.getCard().getName());
+                    e, e.duration(), sourcePermanentId, FaceDownVisibility.sourceName(gameData, entry));
         }
     }
 

@@ -126,7 +126,7 @@ public class TriggeredAbilityQueueService {
 
             gameData.interaction.setPermanentChoiceContext(pending);
             playerInputService.beginPlayerChoice(gameData, pending.controllerId(), gameData.orderedPlayerIds,
-                    permanent.getCard().getName() + " - Choose a player to enchant.");
+                    FaceDownVisibility.publicName(gameData, permanent) + " - Choose a player to enchant.");
             return;
         }
     }
@@ -1782,7 +1782,7 @@ public class TriggeredAbilityQueueService {
             entry.setTargetId(null);
             entry.setNonTargeting(true);
         });
-        gameLogService.append(gameData, GameLog.text(pending.sourceCard().getName()
+        gameLogService.append(gameData, GameLog.text(FaceDownVisibility.publicName(gameData, pending.sourceCard())
                 + "'s ability triggers targeting no cards."));
     }
 

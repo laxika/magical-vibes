@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AsksDeathReplacementsFirst;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -114,7 +115,7 @@ public class SacrificeEnchantedPermanentAndReattachSourceAuraEffectHandler imple
                     new PermanentChoiceContext.ReattachSourceAuraAfterSacrifice(aura.getId(),
                             sacrificeEnchanted ? enchantedPermanentId : null));
             playerInputService.beginPermanentChoice(gameData, controllerId, validTargetIds,
-                    aura.getCard().getName() + " — Choose a permanent to attach it to.");
+                    FaceDownVisibility.publicName(gameData, aura) + " — Choose a permanent to attach it to.");
             return;
         }
 

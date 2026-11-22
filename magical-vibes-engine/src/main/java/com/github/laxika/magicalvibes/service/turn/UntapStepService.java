@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.AllPermanentsUntapDuringEachPlayersUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.model.effect.PlayersSkipUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticOrbEffect;
@@ -311,7 +312,7 @@ public class UntapStepService {
                     p.getCard(),
                     activePlayerId,
                     List.of(new MayNotUntapDuringUntapStepEffect()),
-                    "Untap " + p.getCard().getName() + "?"
+                    "Untap " + FaceDownVisibility.publicName(gameData, p) + "?"
             ));
         }
 
@@ -719,7 +720,7 @@ public class UntapStepService {
                     continue;
                 }
                 tapUntapSupport.untapPermanent(gameData, permanent);
-                String logLine = gameData.playerIdToName.get(controllerId) + " untaps " + permanent.getCard().getName()
+                String logLine = gameData.playerIdToName.get(controllerId) + " untaps " + FaceDownVisibility.publicName(gameData, permanent)
                         + " during another player's untap step.";
                 gameLogService.append(gameData, GameLog.text(logLine));
                 log.info("Game {} - {} untaps {} during another player's untap step",

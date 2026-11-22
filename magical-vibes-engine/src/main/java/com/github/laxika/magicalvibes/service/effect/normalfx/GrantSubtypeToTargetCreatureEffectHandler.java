@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -66,7 +67,7 @@ public class GrantSubtypeToTargetCreatureEffectHandler implements NormalEffectHa
                 }
             } else {
                 gameData.addFloatingEffect(new FloatingContinuousEffect(
-                        UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
+                        UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(),
                         entry.getControllerId(),
                         new GrantSubtypeEffect(e.subtype(), Subjects.target(), e.overriding()),
                         target.getId(), null, null, e.duration(), 0));

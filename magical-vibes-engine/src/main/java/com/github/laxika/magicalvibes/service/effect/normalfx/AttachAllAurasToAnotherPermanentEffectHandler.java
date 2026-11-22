@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachAllAurasToAnotherPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -83,7 +84,7 @@ public class AttachAllAurasToAnotherPermanentEffectHandler implements NormalEffe
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.AttachAllAurasToAnotherPermanent(auraIds));
         playerInputService.beginPermanentChoice(gameData, casterId, validRecipientIds,
-                "Attach all Auras enchanting " + target.getCard().getName()
+                "Attach all Auras enchanting " + FaceDownVisibility.publicName(gameData, target)
                         + " to another permanent with the same controller.");
     }
 

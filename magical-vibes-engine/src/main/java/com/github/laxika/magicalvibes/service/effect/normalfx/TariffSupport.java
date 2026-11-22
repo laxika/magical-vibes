@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerSacrificesGreatestManaValueCreatureUnlessPaysEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.cast.PotentialManaService;
@@ -125,7 +126,7 @@ public class TariffSupport {
         }
 
         String prompt = "Pay " + creature.getCard().getManaCost() + " or sacrifice "
-                + creature.getCard().getName() + "? (" + sourceCard.getName() + ")";
+                + FaceDownVisibility.publicName(gameData, creature) + "? (" + sourceCard.getName() + ")";
         gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
                 sourceCard, playerId,
                 List.of(new EachPlayerSacrificesGreatestManaValueCreatureUnlessPaysEffect()),

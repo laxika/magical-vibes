@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerA
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToControllerAndMillEffect;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.CombatDamageService;
@@ -190,12 +191,12 @@ class PlayerDamageFinalReplacements extends PlayerDamageCandidateSource {
                 perPermanent("CounterReplacement",
                         ctx -> damageSupport.getObject().damageToControllerCounterReplacementSources(
                                 ctx.gameData(), ctx.playerId()),
-                        permanent -> permanent.getCard().getName() + ": put counters on it instead",
+                        permanent -> FaceDownVisibility.publicName(permanent) + ": put counters on it instead",
                         (ctx, permanent) -> damageSupport.getObject().applyDamageToControllerCounterReplacement(
                                 ctx.gameData(), ctx.playerId(), permanent, ctx.amount())).whole(),
                 perPermanent("SoulEcho",
                         ctx -> soulEchoes(ctx.gameData(), ctx.playerId()),
-                        permanent -> permanent.getCard().getName() + ": remove echo counters instead",
+                        permanent -> FaceDownVisibility.publicName(permanent) + ": remove echo counters instead",
                         (ctx, permanent) -> damageSupport.getObject().applySoulEchoCounterRemoval(
                                 ctx.gameData(), ctx.playerId(), permanent, ctx.amount())).whole(),
                 wholeEventReplacement("SoulEchoGone", "Soul Echo: remove echo counters instead",
@@ -257,7 +258,7 @@ class PlayerDamageFinalReplacements extends PlayerDamageCandidateSource {
         return new Rule<PlayerDamageContext>("PreventAndPutCounterOnSelf", PREVENTION, false,
                 ctx -> preventionReplacementSupport.damageToControllerCounterOnSelfSources(ctx.gameData(), ctx.playerId())
                         .stream().map(permanent -> permanent.getId().toString()).toList(),
-                (ctx, instance) -> permanent(ctx, instance).getCard().getName()
+                (ctx, instance) -> FaceDownVisibility.publicName(ctx.gameData(), permanent(ctx, instance))
                         + ": prevent the damage and put a counter on it",
                 (ctx, instance) -> ctx.event(),
                 (ctx, instance) -> new ApplyResult.Applied<>(ctx.event().withAmount(ctx.amount()

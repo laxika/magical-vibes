@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtFaceDownCreaturesUntilEndOfTurnEffect;
@@ -352,6 +353,7 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.layer.ModifierLine;
 import com.github.laxika.magicalvibes.model.trigger.Trigger;
 import com.github.laxika.magicalvibes.service.ability.AbilityActivationService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -4952,7 +4954,7 @@ public class GameQueryService {
     public List<GrantedEffectAttribution> attachedRestrictionAttributions(GameData gameData, Permanent permanent) {
         return attachedPermanentRestrictions(gameData, permanent).stream()
                 .map(attached -> new GrantedEffectAttribution(
-                        attached.source().getCard().getName(), attached.restriction()))
+                        FaceDownVisibility.publicName(gameData, attached.source()), attached.restriction()))
                 .toList();
     }
 
@@ -5705,7 +5707,7 @@ public class GameQueryService {
             if (effect instanceof CounterReplacementEffect replacement
                     && replacement.appliesToWhenEntering(counterType, creature, artifact, permanent)) {
                 modifiers.add(new com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement(
-                        permanent.getCard().getName() + " (" + (modifiers.size() + 1) + ")", effect));
+                        FaceDownVisibility.publicName(gameData, permanent) + " (" + (modifiers.size() + 1) + ")", effect));
             }
         }
         return List.copyOf(modifiers);
@@ -5776,7 +5778,7 @@ public class GameQueryService {
                     }
                     if (applies) {
                         modifiers.add(new com.github.laxika.magicalvibes.model.ChoiceContext.CounterReplacement(
-                                source.getCard().getName() + " (" + (modifiers.size() + 1) + ")", effect));
+                                FaceDownVisibility.publicName(gameData, source) + " (" + (modifiers.size() + 1) + ")", effect));
                     }
                 }
             }
@@ -7422,11 +7424,11 @@ public class GameQueryService {
                 }
             }
             if (beforeSource != null) {
-                ModifierLine line = beforeSource.diff(source.getCard().getName(), accumulator, false);
+                ModifierLine line = beforeSource.diff(FaceDownVisibility.publicName(gameData, source), accumulator, false);
                 if (!line.isEmpty()) {
                     explain.add(line);
                 }
-                recordGrantedEffectDiff(beforeSource, source.getCard().getName(),
+                recordGrantedEffectDiff(beforeSource, FaceDownVisibility.publicName(gameData, source),
                         accumulator, explainEffects);
             }
             if (sourceState != null) {
@@ -7657,11 +7659,11 @@ public class GameQueryService {
         }
         if (beforeSelf != null) {
             // The 7a CDA base line â€” emitted before the board's 7b lines fold over it.
-            ModifierLine line = beforeSelf.diff(target.getCard().getName(), accumulator, true);
+            ModifierLine line = beforeSelf.diff(FaceDownVisibility.publicName(gameData, target), accumulator, true);
             if (!line.isEmpty()) {
                 explain.add(line);
             }
-            recordGrantedEffectDiff(beforeSelf, target.getCard().getName(),
+            recordGrantedEffectDiff(beforeSelf, FaceDownVisibility.publicName(gameData, target),
                     accumulator, explainEffects);
         }
 
@@ -10589,14 +10591,17 @@ public class GameQueryService {
         return anyBattlefieldHasStaticEffect(gameData, SpellsAndAbilitiesCantBeCounteredEffect.class);
     }
 
-    public boolean isUncounterable(GameData gameData, Card card) {
-        StackEntry spell = findStackEntryByCardId(gameData, card.getId());
+    public boolean isUncounterable(GameData gameData, Card printedCard) {
+        StackEntry spell = findStackEntryByCardId(gameData, printedCard.getId());
         if (anyBattlefieldHasStaticEffect(gameData, SpellsAndAbilitiesCantBeCounteredEffect.class)) {
             return true;
         }
+        boolean faceDown = spell != null && spell.isCastFaceDown();
+        // A face-down spell has no text, and protection for spells of a color, type, power or mana value reads the
+        // face-down spell's (CR 708.2, 708.4).
+        Card card = faceDown ? CastingPermissionService.spellAsEffectsSeeIt(spell).getCard() : printedCard;
         for (CardEffect effect : card.getStaticEffects()) {
-            if ((spell == null || !spell.isCastFaceDown())
-                    && effect instanceof CantBeCounteredEffect cbc && isCantBeCounteredActive(gameData, card, cbc)) {
+            if (effect instanceof CantBeCounteredEffect cbc && isCantBeCounteredActive(gameData, card, cbc)) {
                 return true;
             }
         }
@@ -12346,7 +12351,7 @@ public class GameQueryService {
             forEachStaticEffect(permanent, (effect, instance) -> {
                 if (effect instanceof SourceOpponentDamageBonusEffect additional
                         && additional.appliesTo(effectiveSourceColors, artifactSource)) {
-                    bonuses.add(new DamageBonus(instance, permanent.getCard().getName(), additional.amount()));
+                    bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, permanent), additional.amount()));
                 }
             });
         });
@@ -12411,7 +12416,7 @@ public class GameQueryService {
                         gameData, effect, permanent, controllerId, combatDamage,
                         opponentPermanent, damageSourcePermanentId);
                 if (amount != 0) {
-                    bonuses.add(new DamageBonus(instance, permanent.getCard().getName(), amount));
+                    bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, permanent), amount));
                 }
             });
         });
@@ -12441,7 +12446,7 @@ public class GameQueryService {
                     || hasLostAllAbilities(gameData, permanent)) return;
             forEachStaticEffect(permanent, (effect, instance) -> {
                 if (effect instanceof OpponentDamageBonusEffect damageBonus) {
-                    bonuses.add(new DamageBonus(instance, permanent.getCard().getName(), damageBonus.amount()));
+                    bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, permanent), damageBonus.amount()));
                 }
             });
         });
@@ -12494,7 +12499,7 @@ public class GameQueryService {
             forEachStaticEffect(p, (effect, instance) -> {
                 if (effect instanceof AdditionalDamageToPlayersFromColorSourcesEffect e
                         && !Collections.disjoint(e.colors(), sourceColors)) {
-                    bonuses.add(new DamageBonus(instance, p.getCard().getName(), e.amount()));
+                    bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, p), e.amount()));
                 }
             });
         });
@@ -12700,7 +12705,7 @@ public class GameQueryService {
                         && (!(replacement instanceof MultiplyTokenCreationEffect multiply)
                             || !multiply.creatureTokensOnly() || creatureToken)) {
                     replacements.add(new TokenCreationReplacement("TokenCreation:" + p.getId() + ":" + i,
-                            p.getCard().getName() + ": " + describeTokenCreationReplacement(replacement), replacement));
+                            FaceDownVisibility.publicName(gameData, p) + ": " + describeTokenCreationReplacement(replacement), replacement));
                 }
             }
         });
@@ -12948,7 +12953,7 @@ public class GameQueryService {
         gameData.forEachPermanent((playerId, permanent) -> forEachStaticEffect(permanent, (effect, instance) -> {
             if (effect instanceof SpellDamageBonusEffect spellDamageBonus
                     && spellDamageBonus.colors().stream().anyMatch(spellColors::contains)) {
-                bonuses.add(new DamageBonus(instance, permanent.getCard().getName(), spellDamageBonus.amount()));
+                bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, permanent), spellDamageBonus.amount()));
             }
         }));
         return bonuses;
@@ -12997,7 +13002,7 @@ public class GameQueryService {
                         || !unfilteredOnly
                         && predicateEvaluationService.matchesStackEntryPredicate(
                         entry, acde.stackFilter(), null, gameData, liveSource))) {
-                    bonuses.add(new DamageBonus(instance, p.getCard().getName(), acde.amount()));
+                    bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, p), acde.amount()));
                 }
             });
         });
@@ -13038,7 +13043,7 @@ public class GameQueryService {
             }
             forEachStaticEffect(permanent, (effect, instance) -> {
                 if (effect instanceof NoncreatureSourceDamageBonusEffect damageBonus) {
-                    bonuses.add(new DamageBonus(instance, permanent.getCard().getName(), damageBonus.amount()));
+                    bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, permanent), damageBonus.amount()));
                 }
             });
         });
@@ -13342,7 +13347,7 @@ public class GameQueryService {
                         && subtypeBonus.subtypes().stream().anyMatch(subtype -> source != null
                                 ? hasEffectiveSubtype(gameData, source, subtype)
                                 : sourceCard.getSubtypes().contains(subtype))) {
-                    bonuses.add(new DamageBonus(instance, permanent.getCard().getName(), subtypeBonus.amount()));
+                    bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, permanent), subtypeBonus.amount()));
                 }
             });
         });
@@ -13442,7 +13447,7 @@ public class GameQueryService {
             forEachStaticEffect(p, (effect, instance) -> {
                 if (effect instanceof AdditionalColorSourceDamageEffect acsde
                         && sourceColors.contains(acsde.color())) {
-                    bonuses.add(new DamageBonus(instance, p.getCard().getName(), acsde.amount()));
+                    bonuses.add(new DamageBonus(instance, FaceDownVisibility.publicName(gameData, p), acsde.amount()));
                 }
             });
         });

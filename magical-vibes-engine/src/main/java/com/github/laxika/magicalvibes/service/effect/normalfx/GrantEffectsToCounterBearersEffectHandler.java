@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 
 /** Installs source-independent continuous effects keyed to a counter on the affected permanent. */
 @Component
@@ -51,7 +52,7 @@ public class GrantEffectsToCounterBearersEffectHandler implements NormalEffectHa
             return;
         }
 
-        String sourceName = entry.getCard() != null ? entry.getCard().getName() : null;
+        String sourceName = entry.getCard() != null ? FaceDownVisibility.sourceName(gameData, entry) : null;
         UUID controllerId = entry.getControllerId();
         for (CardEffect declaredEffect : rule.effects()) {
             CardEffect grantedEffect = boundPredicate == null

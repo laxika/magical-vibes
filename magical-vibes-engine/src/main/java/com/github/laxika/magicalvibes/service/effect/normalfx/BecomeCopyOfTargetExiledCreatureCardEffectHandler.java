@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetExiledCreatureCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -59,7 +60,7 @@ public class BecomeCopyOfTargetExiledCreatureCardEffectHandler implements Normal
                 retainedAbilities);
 
         gameLogService.append(gameData,
-                GameLog.textCardText(printed.getName() + " becomes a copy of ", exiledEntry.card(), "."));
+                GameLog.textCardText(FaceDownVisibility.publicName(gameData, printed) + " becomes a copy of ", exiledEntry.card(), "."));
         log.info("Game {} - {} becomes a copy of {}", gameData.id, printed.getName(), exiledEntry.card().getName());
     }
 }

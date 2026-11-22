@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveAnyCountersFromControlledCreaturesToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -46,7 +47,7 @@ public class MoveAnyCountersFromControlledCreaturesToTargetCreatureEffectHandler
             permanent.getCounters().forEach((counterType, count) -> {
                 if (count > 0 && counterType != CounterType.ANY && counterType != CounterType.SILVER) {
                     sources.add(new ChoiceContext.CounterSource(permanent.getId(), counterType,
-                            permanent.getCard().getName()));
+                            FaceDownVisibility.publicName(gameData, permanent)));
                 }
             });
         }

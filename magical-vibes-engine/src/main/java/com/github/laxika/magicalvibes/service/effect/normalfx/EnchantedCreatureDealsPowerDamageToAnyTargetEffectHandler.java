@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnchantedCreatureDealsPowerDamageToAnyTargetEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameOutcomeService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -75,7 +76,7 @@ public class EnchantedCreatureDealsPowerDamageToAnyTargetEffectHandler implement
         }
         StackEntry damageEntry = StackEntry.carrier(creature.getCard(),
                 controllerId,
-                creature.getCard().getName() + "'s ability",
+                FaceDownVisibility.publicName(gameData, creature) + "'s ability",
                 List.of(),
                 targetId,
                 creature.getId());

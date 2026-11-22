@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnControlledCreatureCost;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
@@ -64,7 +65,7 @@ public class PutCounterOnCreatureCostHandler implements PermanentChoiceCostHandl
             throw new IllegalStateException("The chosen creature cannot receive these counters");
         }
         if (gameQueryService.cantBeChosen(gameData, chosen)) {
-            throw new IllegalStateException(chosen.getCard().getName() + " can't be chosen");
+            throw new IllegalStateException(FaceDownVisibility.publicName(gameData, chosen) + " can't be chosen");
         }
         CounterType type = cost.counterType();
         int count = cost.count();

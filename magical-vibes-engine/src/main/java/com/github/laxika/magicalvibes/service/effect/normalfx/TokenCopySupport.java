@@ -35,6 +35,7 @@ import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
@@ -815,7 +816,7 @@ public class TokenCopySupport {
                         new PermanentChoiceContext.PreparedTokenCopyAttachments(tokenControllerId, entry, effect,
                                 tokens, sourcePermanent, expandedAttackTargets, explicitAttackTargets, i,
                                 afterEntry),
-                        "Choose what " + token.getCard().getName() + " will enchant.");
+                        "Choose what " + FaceDownVisibility.publicName(gameData, token) + " will enchant.");
                 return List.of();
             }
         }

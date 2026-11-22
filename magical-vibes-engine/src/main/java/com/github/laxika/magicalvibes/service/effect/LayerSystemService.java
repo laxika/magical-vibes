@@ -112,6 +112,7 @@ import com.github.laxika.magicalvibes.model.layer.CharacteristicState;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.layer.Layer;
 import com.github.laxika.magicalvibes.model.layer.ModifierLine;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.DependencyFootprint.BoardTable;
 import com.github.laxika.magicalvibes.service.effect.staticfx.GrantTriggeredAbilityEffectHandler;
@@ -4162,7 +4163,7 @@ public class LayerSystemService {
             return instance.floating().sourceCardName();
         }
         if (instance.source() != null) {
-            return instance.source().permanent().getCard().getName();
+            return FaceDownVisibility.publicName(instance.source().permanent());
         }
         return "Effect";
     }

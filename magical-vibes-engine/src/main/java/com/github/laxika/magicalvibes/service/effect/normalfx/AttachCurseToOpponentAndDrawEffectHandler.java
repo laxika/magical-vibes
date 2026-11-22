@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachCurseToOpponentAndDrawEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -123,7 +124,7 @@ public class AttachCurseToOpponentAndDrawEffectHandler implements NormalEffectHa
         durationClock.sourceUnattached(gameData, curse.getId());
         curse.setAttachedTo(opponentId);
         curse.setTimestamp(gameData.nextTimestamp());
-        gameLogService.append(gameData, GameLog.text(curse.getCard().getName() + " is now attached to "
+        gameLogService.append(gameData, GameLog.text(FaceDownVisibility.publicName(gameData, curse) + " is now attached to "
                 + gameData.playerIdToName.get(opponentId) + "."));
         entry.insertEffectsToResolve(drawInsertionIndex, List.of(new DrawCardEffect(2)));
     }

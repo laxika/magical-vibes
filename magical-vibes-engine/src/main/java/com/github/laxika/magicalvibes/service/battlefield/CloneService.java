@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -810,7 +811,7 @@ public class CloneService {
         }
 
         if (grantHasteUntilEndOfTurn && copiedCard != null) {
-            gameData.addEffectOnPermanent(perm.getCard().getName(), null, controllerId, new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), perm.getId(), Duration.UNTIL_END_OF_TURN);
+            gameData.addEffectOnPermanent(FaceDownVisibility.publicName(gameData, perm), null, controllerId, new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), perm.getId(), Duration.UNTIL_END_OF_TURN);
         }
 
         gameData.cloneOperation.entryRequest = entryRequest;
@@ -934,7 +935,7 @@ public class CloneService {
      */
     private static StackEntry exileCopiedCardAbility(Permanent perm, UUID controllerId, Card copiedCard) {
         StackEntry ability = TriggeredAbilityStackService.madeAbility(perm.getCard(), controllerId,
-                perm.getCard().getName() + "'s reflexive ability",
+                FaceDownVisibility.publicName(perm) + "'s reflexive ability",
                 List.of(new ExileTriggeringCardFromGraveyardEffect()), 0, perm.getId());
         ability.setTriggeringCardId(copiedCard.getId());
         return ability;

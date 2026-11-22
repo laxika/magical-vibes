@@ -885,7 +885,7 @@ public class DamagePreventionService {
                 new PermanentAttachedToSourcePermanentPredicate(),
                 new PermanentControlledBySourceControllerPredicate()));
         StackEntry trigger = TriggeredAbilityStackService.madeAbility(creature.getCard(), controllerId,
-                creature.getCard().getName() + "'s triggered ability",
+                FaceDownVisibility.publicName(gameData, creature) + "'s triggered ability",
                 List.of(new SacrificePermanentsEffect(1, attachedEquipment, Subjects.you())),
                 (UUID) null, creature.getId());
         trigger.setNonTargeting(true);
@@ -953,16 +953,16 @@ public class DamagePreventionService {
             creatureControlServiceProvider.getObject().applyControlEffect(
                     gameData, opponents.getFirst(), permanent,
                     new GainControlOfTargetEffect(Duration.PERMANENT),
-                    Duration.PERMANENT, null, permanent.getCard().getName());
+                    Duration.PERMANENT, null, FaceDownVisibility.publicName(gameData, permanent));
             return;
         }
 
         gameData.interaction.setPermanentChoiceContext(
                 new PermanentChoiceContext.ChooseOpponentGainsControlOfSource(
-                        permanent.getId(), permanent.getCard().getName()));
+                        permanent.getId(), FaceDownVisibility.publicName(gameData, permanent)));
         playerInputServiceProvider.getObject().beginAnyTargetChoice(
                 gameData, currentControllerId, List.of(), opponents,
-                permanent.getCard().getName() + " — choose an opponent.");
+                FaceDownVisibility.publicName(gameData, permanent) + " — choose an opponent.");
     }
 
     /**
@@ -1105,7 +1105,7 @@ public class DamagePreventionService {
         // A delayed triggered ability of the permanent whose static ability prevented the damage (CR 603.7f): its
         // target is chosen as it goes on the stack (CR 603.3d), "that much" is the damage prevented.
         StackEntry trigger = TriggeredAbilityStackService.madeAbility(permanent.getCard(), controllerId,
-                permanent.getCard().getName() + "'s ability",
+                FaceDownVisibility.publicName(gameData, permanent) + "'s ability",
                 List.of(new DealDamageToAnyTargetEffect(new EventValue())), (UUID) null, permanent.getId());
         trigger.setEventValue(damageAmount);
         trigger.setSourcePermanentSnapshot(new Permanent(permanent));

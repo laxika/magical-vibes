@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.TargetCreatureDealsDamageToCo
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -77,7 +78,7 @@ public class TargetCreatureDealsDamageToControllerEffectHandler implements Norma
         }
         StackEntry damageEntry = StackEntry.carrier(source.getCard(),
                 entry.getControllerId(),
-                source.getCard().getName() + "'s ability",
+                FaceDownVisibility.publicName(gameData, source) + "'s ability",
                 List.of(),
                 null,
                 source.getId());
@@ -108,7 +109,7 @@ public class TargetCreatureDealsDamageToControllerEffectHandler implements Norma
 
         StackEntry damageEntry = StackEntry.carrier(target.getCard(),
                 controllerId,
-                target.getCard().getName() + "'s ability",
+                FaceDownVisibility.publicName(gameData, target) + "'s ability",
                 List.of(),
                 null,
                 target.getId());

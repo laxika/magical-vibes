@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.state;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
@@ -769,7 +770,7 @@ public class StateBasedActionService {
                         // returning ability made (CR 603.7), about the creature it returned, which it acts on.
                         StackEntry trigger = TriggeredAbilityStackService.madeAbility(creature.getCard(),
                                 prevController,
-                                creature.getCard().getName() + "'s control-loss sacrifice ability",
+                                FaceDownVisibility.publicName(gameData, creature) + "'s control-loss sacrifice ability",
                                 List.of(SacrificeSelfEffect.ofTriggeringPermanent()), (UUID) null, seraphId);
                         trigger.setTriggeringPermanentId(creatureId);
                         trigger.setNonTargeting(true);

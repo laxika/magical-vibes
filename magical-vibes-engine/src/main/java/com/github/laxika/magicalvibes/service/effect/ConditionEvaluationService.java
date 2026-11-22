@@ -511,6 +511,7 @@ import com.github.laxika.magicalvibes.model.condition.WonClash;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.trigger.TriggerJudge;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
@@ -1806,13 +1807,17 @@ public class ConditionEvaluationService {
                             : gameQueryService.findCardById(gameData, ctx.targetId());
                     if (lastKnown != null
                             && c.filter() instanceof com.github.laxika.magicalvibes.model.filter.StackEntryMaxManaValuePredicate maxValue) {
-                        yield lastKnown.getManaValue() <= maxValue.maxManaValue();
+                        // Its mana value as it last was on the stack: X as chosen, 0 for a face-down one (CR 608.2h).
+                        GameData.CounteredSpellManaCost countered = gameData.counteredSpellManaCosts.get(ctx.targetId());
+                        int manaValue = countered != null ? countered.manaValue() : lastKnown.getManaValue();
+                        yield manaValue <= maxValue.maxManaValue();
                     }
                     if (lastKnown == null || !(c.filter() instanceof StackEntrySubtypeInPredicate subtypeIn)) {
                         yield false;
                     }
                     yield lastKnown.getSubtypes().stream().anyMatch(subtypeIn.subtypes()::contains);
                 }
+                targetSpell = CastingPermissionService.spellAsEffectsSeeIt(targetSpell);
                 if (c.filter() instanceof com.github.laxika.magicalvibes.model.filter.StackEntrySharesNameWithCardExiledWithSourcePredicate) {
                     // A card paid from exile is no longer linked to its source; the cost snapshot survives it.
                     yield ctx.triggeringCard() != null
@@ -2637,6 +2642,7 @@ public class ConditionEvaluationService {
                 .findFirst()
                 .orElse(null);
         if (targetSpell == null) return false;
+        targetSpell = CastingPermissionService.spellAsEffectsSeeIt(targetSpell);
 
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (battlefield == null) return false;
@@ -2675,7 +2681,8 @@ public class ConditionEvaluationService {
                 .orElse(null);
         if (targetSpell == null) return false;
 
-        Set<CardColor> spellColors = gameQueryService.getEffectiveCardColors(gameData, targetSpell.getCard());
+        Set<CardColor> spellColors = gameQueryService.getEffectiveCardColors(gameData,
+                CastingPermissionService.spellAsEffectsSeeIt(targetSpell).getCard());
         List<Permanent> battlefield = gameData.playerBattlefields.get(ctx.controllerId());
         if (spellColors.isEmpty() || battlefield == null) return false;
 

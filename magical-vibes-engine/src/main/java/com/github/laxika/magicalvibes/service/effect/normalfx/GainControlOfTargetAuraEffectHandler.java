@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetAuraEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -75,7 +76,7 @@ public class GainControlOfTargetAuraEffectHandler implements NormalEffectHandler
                 if (!validTargetIds.isEmpty()) {
                     gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.AuraGraft(aura.getId()));
                     playerInputService.beginPermanentChoice(gameData, casterId, validTargetIds,
-                            "Attach " + aura.getCard().getName() + " to another permanent it can enchant.");
+                            "Attach " + FaceDownVisibility.publicName(gameData, aura) + " to another permanent it can enchant.");
                 } else {
                     gameLogService.append(gameData, GameLog.cardThen(aura.getCard(), " stays attached to its current target (no other valid permanents)."));
                 }

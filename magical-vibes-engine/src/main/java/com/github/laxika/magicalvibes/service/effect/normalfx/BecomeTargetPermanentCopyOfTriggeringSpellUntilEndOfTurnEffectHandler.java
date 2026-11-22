@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.BecomeTargetPermanentCopyOfTr
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
@@ -61,7 +62,7 @@ public class BecomeTargetPermanentCopyOfTriggeringSpellUntilEndOfTurnEffectHandl
             return;
         }
 
-        String originalName = target.getCard().getName();
+        String originalName = FaceDownVisibility.publicName(gameData, target);
         Card preCopyCard = PermanentCopierService.preCopyCard(gameData, target);
         permanentCopierService.applyCloneCopy(target, spellCard, null, null, Set.of());
         PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), entry.getSourcePermanentId(), entry.getControllerId(),

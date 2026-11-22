@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.rules.CombatDamageStepEvent;
 import com.github.laxika.magicalvibes.model.rules.DamageDealtEvent;
 import com.github.laxika.magicalvibes.model.rules.RulesEvent;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
@@ -302,7 +303,7 @@ public class CombatDamageService {
                             creature.getId(), controllerId),
                     List.of(com.github.laxika.magicalvibes.model.ChoiceContext.CombatDamageAssignmentModeChoice.MANA_VALUE,
                             com.github.laxika.magicalvibes.model.ChoiceContext.CombatDamageAssignmentModeChoice.TOUGHNESS),
-                    "Choose how " + creature.getCard().getName() + " assigns combat damage."));
+                    "Choose how " + FaceDownVisibility.publicName(gameData, creature) + " assigns combat damage."));
             return true;
         }
         return false;
@@ -383,7 +384,7 @@ public class CombatDamageService {
             UUID recipientId) {
         Permanent permanent = gameQueryService.findPermanentById(gameData, recipientId);
         String name = permanent == null ? gameData.playerIdToName.get(recipientId)
-                : permanent.getCard().getName();
+                : FaceDownVisibility.publicName(gameData, permanent);
         return name + " (" + (choice.recipients().indexOf(recipientId) + 1) + ")";
     }
 
@@ -971,7 +972,7 @@ public class CombatDamageService {
                 int assigned = assignments.getOrDefault(blk.getId(), 0);
                 if (assigned < lethal) {
                     throw new IllegalStateException("Trample: must assign at least " + lethal
-                            + " damage to " + blk.getCard().getName()
+                            + " damage to " + FaceDownVisibility.publicName(gameData, blk)
                             + " before assigning damage to the "
                             + (gameData.playerIds.contains(overflowTargetId) ? "defending player" : "planeswalker"));
                 }
@@ -1012,7 +1013,7 @@ public class CombatDamageService {
                 parts.add(entry.getValue() + " to player");
             } else if (entry.getKey().equals(overflowTargetId) && !gameData.playerIds.contains(overflowTargetId)) {
                 Permanent pw = gameQueryService.findPermanentById(gameData, overflowTargetId);
-                parts.add(entry.getValue() + " to " + (pw != null ? pw.getCard().getName() : "planeswalker"));
+                parts.add(entry.getValue() + " to " + (pw != null ? FaceDownVisibility.publicName(gameData, pw) : "planeswalker"));
             } else {
                 Permanent target = null;
                 for (Permanent p : defBf) {
@@ -1021,7 +1022,7 @@ public class CombatDamageService {
                         break;
                     }
                 }
-                parts.add(entry.getValue() + " to " + (target != null ? target.getCard().getName() : entry.getKey()));
+                parts.add(entry.getValue() + " to " + (target != null ? FaceDownVisibility.publicName(gameData, target) : entry.getKey()));
             }
         }
         log.info("Game {} - Combat damage assigned for [{}]: {} -> {}", gameData.id, attackerIndex,
@@ -1109,7 +1110,7 @@ public class CombatDamageService {
                     int assigned = assignments.getOrDefault(attacker.getId(), 0);
                     if (assigned < lethal) {
                         throw new IllegalStateException("Tantrum: must assign lethal damage to "
-                                + attacker.getCard().getName() + " before assigning damage to its controller");
+                                + FaceDownVisibility.publicName(gameData, attacker) + " before assigning damage to its controller");
                     }
                 }
             }
@@ -1133,7 +1134,7 @@ public class CombatDamageService {
                     break;
                 }
             }
-            parts.add(entry.getValue() + " to " + (target != null ? target.getCard().getName() : entry.getKey()));
+            parts.add(entry.getValue() + " to " + (target != null ? FaceDownVisibility.publicName(gameData, target) : entry.getKey()));
         }
         log.info("Game {} - Blocker damage divided for [{}]: {} -> {}", gameData.id, blockerIndex,
                 blk.getCard().getName(), String.join(", ", parts));
@@ -2109,7 +2110,7 @@ public class CombatDamageService {
         UUID sourceId = portion.sourceId();
         if (portion.counterDamage()) {
             lifeSupport.applyPoisonCounters(gameData, targetId, damage,
-                    portion.sourceSnapshot().getCard().getName(), sourceControllerId);
+                    FaceDownVisibility.publicName(gameData, portion.sourceSnapshot()), sourceControllerId);
         } else if (gameQueryService.canPlayerLoseLife(gameData, targetId)) {
             int lifeLoss = SaturatingMath.multiply(damage, gameQueryService.opponentLifeLossMultiplier(gameData, targetId));
             gameData.playerLifeTotals.put(targetId, gameQueryService.lifeAfterDamage(gameData, targetId, lifeLoss));
@@ -3205,7 +3206,7 @@ public class CombatDamageService {
             int lethalDamageThreshold = gameQueryService.getLethalDamageThreshold(gameData, blk);
             int damageTaken = p1.defDamageTaken.getOrDefault(blkIdx, 0);
             domainTargets.add(new CombatDamageTarget(
-                    blk.getId(), blk.getCard().getName(), lethalDamageThreshold, damageTaken, false));
+                    blk.getId(), FaceDownVisibility.publicName(gameData, blk), lethalDamageThreshold, damageTaken, false));
             domainTargetIds.add(blk.getId());
         }
 
@@ -3221,7 +3222,7 @@ public class CombatDamageService {
         if (unblockedRedirect) {
             for (Permanent def : defBf) {
                 if (gameQueryService.isCreature(gameData, def) && domainTargetIds.add(def.getId())) {
-                    domainTargets.add(new CombatDamageTarget(def.getId(), def.getCard().getName(),
+                    domainTargets.add(new CombatDamageTarget(def.getId(), FaceDownVisibility.publicName(gameData, def),
                             gameQueryService.getLethalDamageThreshold(gameData, def), def.getMarkedDamage(), false));
                 }
             }
@@ -3231,7 +3232,7 @@ public class CombatDamageService {
                 Permanent def = defBf.get(defIdx);
                 if (gameQueryService.isCreature(gameData, def) && domainTargetIds.add(def.getId())) {
                     domainTargets.add(new CombatDamageTarget(
-                            def.getId(), def.getCard().getName(),
+                            def.getId(), FaceDownVisibility.publicName(gameData, def),
                             gameQueryService.getLethalDamageThreshold(gameData, def),
                             def.getMarkedDamage() + p1.defDamageTaken.getOrDefault(defIdx, 0), false));
                 }
@@ -3258,7 +3259,7 @@ public class CombatDamageService {
                 Permanent pw = gameQueryService.findPermanentById(gameData, overflowTarget);
                 if (pw != null && domainTargetIds.add(overflowTarget)) {
                     domainTargets.add(new CombatDamageTarget(
-                            overflowTarget, pw.getCard().getName(), 0, 0, true));
+                            overflowTarget, FaceDownVisibility.publicName(gameData, pw), 0, 0, true));
                 }
             }
         }
@@ -3267,7 +3268,7 @@ public class CombatDamageService {
 
         List<String> blockerDescriptions = new ArrayList<>();
         for (int i : livingBlockers) {
-            blockerDescriptions.add(defBf.get(i).getCard().getName()
+            blockerDescriptions.add(FaceDownVisibility.publicName(gameData, defBf.get(i))
                     + " " + gameQueryService.getEffectiveToughness(gameData, defBf.get(i)) + " toughness");
         }
         log.info("Game {} - Requesting combat damage assignment for [{}]: {} (damage={}, trample={}, deathtouch={}, blockers={})",
@@ -3277,7 +3278,7 @@ public class CombatDamageService {
         // CR 702.22j — route the prompt to the defending player when a banding blocker is present.
         UUID assigningPlayer = attackerDamageAssigner(gameData, atk, livingBlockers, defBf, activeId, defenderId);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.CombatDamageAssignment(
-                assigningPlayer, atkIdx, atk.getId(), atk.getCard().getName(), totalDamage,
+                assigningPlayer, atkIdx, atk.getId(), FaceDownVisibility.publicName(gameData, atk), totalDamage,
                 domainTargets, isTrample, isDeathtouch,
                 unblockedRedirect && !assignsAmongDefendingPlayerAndCreatures));
     }
@@ -3301,7 +3302,7 @@ public class CombatDamageService {
             if (!bEntry.getValue().contains(blkIdx)) continue;
             Permanent atk = atkBf.get(atkIdx);
             domainTargets.add(new CombatDamageTarget(
-                    atk.getId(), atk.getCard().getName(),
+                    atk.getId(), FaceDownVisibility.publicName(gameData, atk),
                     gameQueryService.getLethalDamageThreshold(gameData, atk),
                     atk.getMarkedDamage() + p1.atkDamageTaken.getOrDefault(atkIdx, 0), false));
         }
@@ -3310,7 +3311,7 @@ public class CombatDamageService {
             domainTargets.add(new CombatDamageTarget(defenderId, gameData.playerIdToName.get(defenderId), 0, 0, true));
             for (Permanent permanent : defBf) {
                 if (gameQueryService.isCreature(gameData, permanent)) {
-                    domainTargets.add(new CombatDamageTarget(permanent.getId(), permanent.getCard().getName(),
+                    domainTargets.add(new CombatDamageTarget(permanent.getId(), FaceDownVisibility.publicName(gameData, permanent),
                             gameQueryService.getLethalDamageThreshold(gameData, permanent), permanent.getMarkedDamage(), false));
                 }
             }
@@ -3330,7 +3331,7 @@ public class CombatDamageService {
         // creature with banding.
         UUID assigningPlayer = blockerDamageAssigner(gameData, blkIdx, p1, atkBf, activeId, defenderId);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.CombatDamageAssignment(
-                assigningPlayer, blkIdx, blk.getId(), blk.getCard().getName(), totalDamage,
+                assigningPlayer, blkIdx, blk.getId(), FaceDownVisibility.publicName(gameData, blk), totalDamage,
                 domainTargets, false, isDeathtouch, false));
     }
 }

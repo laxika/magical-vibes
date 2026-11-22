@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeAnExampleEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.DepartureService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -172,7 +173,7 @@ public class MakeAnExampleEffectHandler implements NormalEffectHandlerBean {
         for (UUID permanentId : permanentIds) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent != null) {
-                names.add(permanent.getCard().getName());
+                names.add(FaceDownVisibility.publicName(gameData, permanent));
             }
         }
         return names.isEmpty() ? "empty" : String.join(", ", names);

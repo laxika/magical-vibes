@@ -203,7 +203,7 @@ public class StackedModalTriggerService {
             if (targetSpell != null) {
                 entry.setTargetZone(Zone.STACK);
             }
-            String targetName = target != null ? target.getCard().getName()
+            String targetName = target != null ? FaceDownVisibility.publicName(gameData, target)
                     : targetSpell != null ? FaceDownVisibility.nameShownTo(gameData, targetSpell, null)
                     : gameData.playerIdToName.get(targetId);
             gameLogService.append(gameData, GameLog.cardThen(ctx.sourceCard(),

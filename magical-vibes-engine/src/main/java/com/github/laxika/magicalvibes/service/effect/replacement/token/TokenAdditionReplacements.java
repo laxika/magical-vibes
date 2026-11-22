@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.model.replacement.TokenCreationEvent;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCreationReplacementSupport;
 import com.github.laxika.magicalvibes.service.replacement.ReplacementCandidateSource;
 import org.springframework.stereotype.Component;
@@ -159,7 +160,7 @@ public class TokenAdditionReplacements implements ReplacementCandidateSource<Tok
                     continue;
                 }
                 instances.add(new Instance(KEY_PREFIX + permanent.getId() + ":" + i,
-                        permanent.getCard().getName() + ": " + addition.description, addition));
+                        FaceDownVisibility.publicName(gameData, permanent) + ": " + addition.description, addition));
             }
         }
         return instances;

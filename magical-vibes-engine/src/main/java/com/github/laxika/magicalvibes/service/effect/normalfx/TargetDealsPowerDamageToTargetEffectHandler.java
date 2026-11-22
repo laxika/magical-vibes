@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
@@ -85,7 +86,7 @@ public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffect
             if (sourceController == null) {
                 continue;
             }
-            StackEntry damageEntry = StackEntry.carrier(biter.getCard(), sourceController, biter.getCard().getName(),
+            StackEntry damageEntry = StackEntry.carrier(biter.getCard(), sourceController, FaceDownVisibility.publicName(gameData, biter),
                     List.of(), null, biter.getId());
             damageEntry.setSourcePermanentSnapshot(new Permanent(biter));
             int power = gameQueryService.getPowerBasedDamage(gameData, biter);
@@ -197,7 +198,7 @@ public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffect
                 : gameQueryService.getPowerBasedDamage(gameData, creature);
         StackEntry damageEntry = StackEntry.carrier(creature.getCard(),
                 controllerId,
-                creature.getCard().getName() + "'s ability",
+                FaceDownVisibility.publicName(gameData, creature) + "'s ability",
                 List.of(),
                 target.getId(),
                 creature.getId());
@@ -228,7 +229,7 @@ public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffect
             }
             StackEntry lastKnownEntry = StackEntry.carrier(lastKnown.getCard(),
                     lastKnownControllerId,
-                    lastKnown.getCard().getName() + "'s ability",
+                    FaceDownVisibility.publicName(gameData, lastKnown) + "'s ability",
                     List.of(),
                     target.getId(),
                     lastKnown.getId());
@@ -257,7 +258,7 @@ public class TargetDealsPowerDamageToTargetEffectHandler implements NormalEffect
         }
         StackEntry damageEntry = StackEntry.carrier(creature.getCard(),
                 creatureControllerId,
-                creature.getCard().getName() + "'s ability",
+                FaceDownVisibility.publicName(gameData, creature) + "'s ability",
                 List.of(),
                 target.getId(),
                 creature.getId());

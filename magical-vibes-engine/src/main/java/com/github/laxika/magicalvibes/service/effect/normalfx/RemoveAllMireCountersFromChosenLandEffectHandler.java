@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllMireCountersFromChosenLandEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -97,7 +98,7 @@ public class RemoveAllMireCountersFromChosenLandEffectHandler implements NormalE
             permanentCounterSupport.removeCounterFromPermanent(
                     gameData, target, CounterType.MIRE, mireCounters);
             gameLogService.append(gameData, GameLog.text(
-                    "All mire counters are removed from " + target.getCard().getName() + "."));
+                    "All mire counters are removed from " + FaceDownVisibility.publicName(gameData, target) + "."));
             gameData.markCyclopeanTombLandRemoved(context.delayedActionId(), target.getId());
         }
 

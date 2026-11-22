@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachSelectedAurasToLegalTargetsEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -100,7 +101,7 @@ public class AttachSelectedAurasToLegalTargetsEffectHandler implements NormalEff
                                 aura.getId(), remaining));
                 playerInputService.beginAnyTargetChoice(gameData, auraControllerId,
                         permanentIds, playerIds,
-                        "Choose a permanent or player for " + aura.getCard().getName() + " to enchant.");
+                        "Choose a permanent or player for " + FaceDownVisibility.publicName(gameData, aura) + " to enchant.");
                 return;
             }
 
