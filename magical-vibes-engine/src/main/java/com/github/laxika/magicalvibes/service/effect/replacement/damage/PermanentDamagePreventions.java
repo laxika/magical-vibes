@@ -288,11 +288,11 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                 PermanentDamageCandidateSource::noLog));
         all.add(pure("AllButOneToPlaneswalker", PREVENTION,
                 ctx -> !ctx.targetProtectedFromPrevention() && gameQueryService.isPlaneswalker(ctx.gameData(), ctx.target())
-                        && prevention.applyAllButOneDamageToPlaneswalkerPrevention(
-                        ctx.gameData(), ctx.targetControllerId(), ctx.amount(), ctx.combat()) > 0,
+                        && prevention.applyAllButOneDamageToPermanentPrevention(
+                        ctx.gameData(), ctx.target(), ctx.amount(), ctx.combat()) > 0,
                 ctx -> "Prevent all but 1 of the damage to your planeswalker",
-                ctx -> ctx.event().withAmount(ctx.amount() - prevention.applyAllButOneDamageToPlaneswalkerPrevention(
-                        ctx.gameData(), ctx.targetControllerId(), ctx.amount(), ctx.combat())),
+                ctx -> ctx.event().withAmount(ctx.amount() - prevention.applyAllButOneDamageToPermanentPrevention(
+                        ctx.gameData(), ctx.target(), ctx.amount(), ctx.combat())),
                 PermanentDamageCandidateSource::noLog));
         return List.copyOf(all);
     }

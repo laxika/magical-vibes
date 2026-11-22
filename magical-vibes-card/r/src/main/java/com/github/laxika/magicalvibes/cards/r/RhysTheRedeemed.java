@@ -5,9 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEachControlledCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import java.util.List;
 import java.util.Set;
 
@@ -31,7 +34,9 @@ public class RhysTheRedeemed extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{4}{G/W}{G/W}",
-                List.of(new CreateTokenCopyOfEachControlledCreatureTokenEffect()),
+                List.of(new CreateTokenCopyOfTargetPermanentEffect().withSubject(Subjects.controlledBy(Subjects.you(),
+                        new PermanentAllOfPredicate(List.of(new PermanentIsTokenPredicate(),
+                                new PermanentIsCreaturePredicate()))))),
                 "{4}{G/W}{G/W}, {T}: For each creature token you control, create a token that's a copy of that creature."
         ));
     }

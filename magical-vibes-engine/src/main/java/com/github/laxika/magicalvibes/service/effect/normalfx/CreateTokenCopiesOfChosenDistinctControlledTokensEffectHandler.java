@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfChosenDistinctControlledTokensEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -26,7 +28,7 @@ public class CreateTokenCopiesOfChosenDistinctControlledTokensEffectHandler impl
 
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
-    private final CreateTokenCopyOfEachControlledCreatureTokenEffectHandler tokenCopyHandler;
+    private final TokenCopySupport tokenCopySupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -58,7 +60,7 @@ public class CreateTokenCopiesOfChosenDistinctControlledTokensEffectHandler impl
                 validIds,
                 maxCount,
                 new MultiPermanentChoiceContext.CreateTokenCopiesOfChosenDistinctControlledTokens(),
-                entry.getCard().getName() + " — Choose any number of artifact and/or creature tokens with different names.");
+                FaceDownVisibility.sourceName(gameData, entry) + " — Choose any number of artifact and/or creature tokens with different names.");
     }
 
     public void completeChoice(GameData gameData, List<UUID> permanentIds, StackEntry entry) {
@@ -76,8 +78,8 @@ public class CreateTokenCopiesOfChosenDistinctControlledTokensEffectHandler impl
             }
         }
 
-        for (Card sourceCard : sourceCards) {
-            tokenCopyHandler.createTokenCopy(gameData, entry, sourceCard);
-        }
+        // "For each of them, create a token that's a copy of it": one action on several objects, processed simultaneously (CR 608.2f).
+        tokenCopySupport.createTokenCopies(gameData, entry, sourceCards, null,
+                new CreateTokenCopyOfTargetPermanentEffect());
     }
 }

@@ -85,7 +85,6 @@ import com.github.laxika.magicalvibes.model.effect.PreventHalfDamageToController
 import com.github.laxika.magicalvibes.model.effect.ControllerAndCreaturesDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerAndPermanentsNoncombatDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.FilteredCreaturesDamagePreventionEffect;
-import com.github.laxika.magicalvibes.model.effect.AllButOneDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndSourceControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndDealThatMuchDamageEffect;
@@ -97,6 +96,7 @@ import com.github.laxika.magicalvibes.model.effect.PreventCombatDamageToPlayerAn
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ControllerOpponentDamageMillReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventAllButOneDamageToControllerAndPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagePreventionControlChangeEffect;
@@ -627,8 +627,8 @@ public class DamagePreventionService {
                         controllerOf(gd, c.permanent()), damage, c.combatDamage(), c.damageSource(), c.permanent())));
         steps.add(step("AllButOneToHero", "Prevent all but 1 of the damage", prevention, true,
                 (gd, c, damage) -> preventable(gd, c)
-                        && applyAllButOneDamageToHeroPrevention(gd, c.permanent(), damage, c.combatDamage()) > 0,
-                (gd, c, damage) -> damage - applyAllButOneDamageToHeroPrevention(gd, c.permanent(), damage,
+                        && applyAllButOneDamageToPermanentPrevention(gd, c.permanent(), damage, c.combatDamage()) > 0,
+                (gd, c, damage) -> damage - applyAllButOneDamageToPermanentPrevention(gd, c.permanent(), damage,
                         c.combatDamage())));
         steps.add(preventAll("PreventAllDamageToSelf", "Prevent all damage to it",
                 (gd, c, damage) -> preventable(gd, c)
@@ -3267,8 +3267,8 @@ public class DamagePreventionService {
     }
 
     /**
-     * Ajani Steadfast-style prevention: prevent all but 1 damage to the controller or one of their
-     * planeswalkers. The effect is recipient-scoped and applies once per damage event.
+     * Ajani Steadfast-style prevention for a damaged player: all but 1 of the damage to the controller of a
+     * {@link PreventAllButOneDamageToControllerAndPermanentsEffect} is prevented, once per damage event.
      */
     public int applyAllButOneDamagePrevention(GameData gameData, UUID recipientControllerId, int damage) {
         return applyAllButOneDamagePrevention(gameData, recipientControllerId, damage, false);
@@ -3279,54 +3279,44 @@ public class DamagePreventionService {
         if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return 0;
         if (damage <= 1 || recipientControllerId == null) return 0;
 
-        return hasAllButOneDamagePrevention(
-                gameData, recipientControllerId, AllButOneDamagePreventionEffect::protectsController)
+        return hasAllButOneDamagePrevention(gameData, recipientControllerId, prevention -> true)
                 ? damage - 1
                 : 0;
     }
 
-    public int applyAllButOneDamageToPlaneswalkerPrevention(GameData gameData, UUID recipientControllerId,
-                                                             int damage, boolean combatDamage) {
-        if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return 0;
-        if (damage <= 1 || recipientControllerId == null) return 0;
-
-        return hasAllButOneDamagePrevention(
-                gameData, recipientControllerId, AllButOneDamagePreventionEffect::protectsPlaneswalkers)
-                ? damage - 1
-                : 0;
-    }
-
-    /** Hyperion, Supreme Hero-style prevention for a Hero permanent controlled by the recipient. */
-    private int applyAllButOneDamageToHeroPrevention(GameData gameData, Permanent permanent, int damage,
-                                                      boolean combatDamage) {
-        if (!gameQueryService.isDamagePreventable(gameData, combatDamage)
-                || permanent == null || damage <= 1
-                || !gameQueryService.hasEffectiveSubtype(gameData, permanent, CardSubtype.HERO)) {
+    /**
+     * Ajani Steadfast's emblem and Hyperion, Supreme Hero for a damaged permanent: all but 1 of the damage to
+     * {@code permanent} is prevented when its controller has a
+     * {@link PreventAllButOneDamageToControllerAndPermanentsEffect} whose permanents it matches.
+     */
+    public int applyAllButOneDamageToPermanentPrevention(GameData gameData, Permanent permanent, int damage,
+                                                          boolean combatDamage) {
+        if (!gameQueryService.isDamagePreventable(gameData, combatDamage) || permanent == null || damage <= 1) {
             return 0;
         }
-
         UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
         return controllerId != null
-                && hasAllButOneDamagePrevention(
-                gameData, controllerId, AllButOneDamagePreventionEffect::protectsHeroes)
+                && hasAllButOneDamagePrevention(gameData, controllerId,
+                prevention -> predicateEvaluationService.matchesPermanentPredicate(
+                        gameData, permanent, prevention.permanents()))
                 ? damage - 1
                 : 0;
     }
 
     private boolean hasAllButOneDamagePrevention(GameData gameData, UUID controllerId,
-                                                  Predicate<AllButOneDamagePreventionEffect> applies) {
+                                                  Predicate<PreventAllButOneDamageToControllerAndPermanentsEffect> applies) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         boolean hasPrevention = battlefield != null && battlefield.stream()
                 .filter(p -> !gameQueryService.hasLostAllAbilities(gameData, p))
                 .flatMap(p -> p.getCard().getStaticEffects().stream())
-                .anyMatch(effect -> effect instanceof AllButOneDamagePreventionEffect prevention
+                .anyMatch(effect -> effect instanceof PreventAllButOneDamageToControllerAndPermanentsEffect prevention
                         && applies.test(prevention));
         if (hasPrevention) return true;
 
         return gameData.emblems.stream()
                 .anyMatch(emblem -> controllerId.equals(emblem.controllerId())
                         && emblem.staticEffects().stream()
-                        .anyMatch(effect -> effect instanceof AllButOneDamagePreventionEffect prevention
+                        .anyMatch(effect -> effect instanceof PreventAllButOneDamageToControllerAndPermanentsEffect prevention
                                 && applies.test(prevention)));
     }
 

@@ -59,7 +59,7 @@ public class CreateTokenAndAttachTriggeringAuraEffectHandler implements NormalEf
         gameData.interaction.setPendingEquipmentAttach(aura.getId(), token.getId());
         gameData.pendingMayAbilities.add(new PendingMayAbility(
                 entry.getCard(), entry.getControllerId(), List.of(),
-                entry.getCard().getName() + " — Attach " + FaceDownVisibility.publicName(gameData, aura)
+                FaceDownVisibility.sourceName(gameData, entry) + " — Attach " + FaceDownVisibility.publicName(gameData, aura)
                         + " to the Cat token?"));
         log.info("Game {} - {} offers to move {} onto its token", gameData.id,
                 entry.getCard().getName(), aura.getCard().getName());

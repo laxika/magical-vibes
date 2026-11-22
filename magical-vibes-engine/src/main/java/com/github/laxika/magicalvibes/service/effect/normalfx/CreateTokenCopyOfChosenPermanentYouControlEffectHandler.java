@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -56,7 +57,7 @@ public class CreateTokenCopyOfChosenPermanentYouControlEffectHandler implements 
                     new PermanentChoiceContext.ChosenPermanentCopyChoice(
                             controllerId, entry.getCard(), copyEffect.filter()));
             playerInputService.beginPermanentChoice(gameData, controllerId, permanentIds,
-                    entry.getCard().getName() + " - Choose a permanent you control to copy.");
+                    FaceDownVisibility.sourceName(gameData, entry) + " - Choose a permanent you control to copy.");
         }
     }
 

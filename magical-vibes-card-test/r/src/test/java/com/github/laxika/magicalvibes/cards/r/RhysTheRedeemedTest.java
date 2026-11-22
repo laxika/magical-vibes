@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.cards.e.EsixFractalBloom;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -7,18 +8,21 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
+import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({RhysTheRedeemed.class, GrizzlyBears.class})
+@CardUsed({RhysTheRedeemed.class, GrizzlyBears.class, EsixFractalBloom.class})
 class RhysTheRedeemedTest extends BaseCardTest {
 
     private List<Permanent> creatureTokensNamed(Player player, String name) {
@@ -169,4 +173,41 @@ class RhysTheRedeemedTest extends BaseCardTest {
         assertThat(creatureTokensNamed(player1, "Departed token")).isEmpty();
         assertThat(creatureTokensNamed(player1, "New token")).hasSize(2);
     }
+
+    @Test
+    @DisplayName("Esix can replace the second ability's copies: they are the first tokens created on its controller's turn")
+    void esixIsOfferedTheCopies() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new EsixFractalBloom());
+        addCreatureReady(player1, new RhysTheRedeemed());
+        addCreatureToken(player1, "Elf Warrior");
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(creatureTokensNamed(player1, "Elf Warrior")).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Esix's creature choice doesn't name an ability source that is now face down")
+    void esixChoiceHidesAFaceDownSource() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new EsixFractalBloom());
+        Permanent rhys = addCreatureReady(player1, new RhysTheRedeemed());
+        addCreatureToken(player1, "Elf Warrior");
+        harness.addMana(player1, ManaColor.GREEN, 6);
+
+        harness.activateAbility(player1, 1, 1, null, null);
+        rhys.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        PendingInteraction.PermanentChoice choice = gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.prompt()).doesNotContain("Rhys").startsWith("a face-down card");
+    }
+
 }

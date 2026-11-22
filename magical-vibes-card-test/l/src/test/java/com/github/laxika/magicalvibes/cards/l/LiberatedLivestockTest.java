@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.h.HolyStrength;
 import com.github.laxika.magicalvibes.cards.w.WrathOfGod;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LiberatedLivestock.class, HolyStrength.class, WrathOfGod.class})
+@CardUsed({LiberatedLivestock.class, HolyStrength.class, WrathOfGod.class, QueenAllenalOfRuadach.class})
 class LiberatedLivestockTest extends BaseCardTest {
 
     @Test
@@ -97,5 +99,22 @@ class LiberatedLivestockTest extends BaseCardTest {
                 findPermanent(player1, "Cat").getId(),
                 findPermanent(player1, "Bird").getId(),
                 findPermanent(player1, "Ox").getId());
+    }
+
+    @Test
+    @DisplayName("The Cat, Bird and Ox are one creation event: Queen Allenal adds a single Soldier")
+    void tokensAreOneCreationEvent() {
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        Permanent livestock = harness.addToBattlefieldAndReturn(player1, new LiberatedLivestock());
+        harness.setHand(player1, List.of());
+        harness.setGraveyard(player1, List.of());
+
+        harness.sacrifice(livestock);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .extracting(permanent -> permanent.getCard().getName())
+                .containsExactlyInAnyOrder("Cat", "Bird", "Ox", "Soldier");
     }
 }

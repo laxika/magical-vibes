@@ -5,21 +5,23 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopiesOfAttackingModifiedCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsModifiedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
-
 import java.util.List;
 
 @CardRegistration(set = "MOC", collectorNumber = "32")
@@ -27,7 +29,12 @@ import java.util.List;
 public class MirrorStyleMaster extends Card {
 
     public MirrorStyleMaster() {
-        CardEffect attackTrigger = new CreateTokenCopiesOfAttackingModifiedCreaturesEffect();
+        // The copies' attack targets are chosen by their controller (CR 508.4).
+        CardEffect attackTrigger = CreateTokenCopyOfTargetPermanentEffect
+                .tappedAndAttackingWithTargetChoiceExiledAtEndOfCombat()
+                .withSubject(Subjects.controlledBy(Subjects.you(), new PermanentAllOfPredicate(List.of(
+                        new PermanentIsAttackingPredicate(), new PermanentIsCreaturePredicate(),
+                        new PermanentIsModifiedPredicate()))));
         addTrigger(Triggers.attacks(), attackTrigger);
 
         PermanentPredicate anotherCreature = new PermanentAllOfPredicate(List.of(

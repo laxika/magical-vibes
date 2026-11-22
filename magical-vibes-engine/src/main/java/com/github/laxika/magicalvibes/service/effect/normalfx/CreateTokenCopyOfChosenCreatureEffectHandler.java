@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.Set;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -60,7 +61,7 @@ public class CreateTokenCopyOfChosenCreatureEffectHandler implements NormalEffec
                 tokenControllerId, entry.getCard(), entry, copyEffect.amount(),
                 copyEffect.excludedPermanentId()));
         playerInputService.beginPermanentChoice(gameData, tokenControllerId, creatureIds,
-                entry.getCard().getName() + " — Choose a creature other than Esix to copy.");
+                FaceDownVisibility.sourceName(gameData, entry) + " — Choose a creature other than Esix to copy.");
     }
 
     public void completeChoice(GameData gameData, UUID permanentId,

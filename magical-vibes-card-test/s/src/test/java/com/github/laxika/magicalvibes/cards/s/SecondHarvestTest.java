@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.e.EsixFractalBloom;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.b.BoundByMoonsilver;
 import com.github.laxika.magicalvibes.cards.p.ParallelLives;
@@ -24,7 +26,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SecondHarvest.class, ThrabenInspector.class, BoundByMoonsilver.class, QueenAllenalOfRuadach.class,
-        ParallelLives.class})
+        ParallelLives.class, EsixFractalBloom.class})
 class SecondHarvestTest extends BaseCardTest {
 
     private List<Permanent> tokensNamed(Player player, String name) {
@@ -254,5 +256,18 @@ class SecondHarvestTest extends BaseCardTest {
                 .findFirst().orElseThrow();
         assertThat(copy.getAttachedTo()).isEqualTo(second.getId());
         assertThat(original.getAttachedTo()).isEqualTo(first.getId());
+    }
+
+    @Test
+    @DisplayName("Esix can replace the copies: they are the first tokens created on its controller's turn")
+    void esixIsOfferedTheCopies() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.addToBattlefield(player1, new EsixFractalBloom());
+
+        castWithSpiritAndSaproling();
+
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(tokensNamed(player1, "Spirit")).hasSize(1);
     }
 }

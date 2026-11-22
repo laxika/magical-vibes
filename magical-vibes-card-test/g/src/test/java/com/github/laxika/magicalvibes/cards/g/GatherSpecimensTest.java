@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.a.AladdinsRing;
 import com.github.laxika.magicalvibes.cards.c.Clone;
+import com.github.laxika.magicalvibes.cards.z.Zombify;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +18,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({GatherSpecimens.class, GrizzlyBears.class, AladdinsRing.class, GatherTheTownsfolk.class, Clone.class})
+@CardUsed({GatherSpecimens.class, GrizzlyBears.class, AladdinsRing.class, GatherTheTownsfolk.class, Clone.class,
+        Zombify.class})
 class GatherSpecimensTest extends BaseCardTest {
 
     private void castGatherSpecimens() {
@@ -222,4 +225,22 @@ class GatherSpecimensTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
     }
+
+    @Test
+    @DisplayName("A creature card an opponent returns from their graveyard enters under your control instead")
+    void opponentsGraveyardReturnEntersUnderYourControl() {
+        castGatherSpecimens();
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(bears));
+        harness.setHand(player2, List.of(new Zombify()));
+        harness.addMana(player2, ManaColor.BLACK, 4);
+        harness.castAndResolveSorcery(player2, 0, bears.getId());
+
+        harness.assertOnBattlefield(player1, "Grizzly Bears");
+        harness.assertNotOnBattlefield(player2, "Grizzly Bears");
+    }
+
 }

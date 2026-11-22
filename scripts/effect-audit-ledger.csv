@@ -2664,3 +2664,31 @@ CreateTokenAttachedToTargetEffect,survivor,9,run 19: accepts returned() / return
 CreateXTokenWithXCountersEffect,survivor,9,run 19: implements TokenCreatingEffect (the absorbed Fractal records' AI marker)
 CreateTokenCopyOfCardEffect,survivor,9,run 19: reads the new exiledAsCost() card subject
 AttachCreatedEquipmentToSourceEffect,survivor,9,run 19: absorbed CreateTokenAndAttachToSourceEffect's attach half (it reads the entry's created permanents)
+CreateTokenCopyOfEachControlledCreatureTokenEffect,absorbed,9,"run 20: CreateTokenCopyOfTargetPermanentEffect().withSubject(controlledBy(you(), token [creature])): copiable values incl. face-down (CR 707.2), one event, Esix offered (Rhys the Redeemed, Second Harvest)"
+CreateTokenCopyOfEachCreatureOfChosenTypeEffect,absorbed,9,"run 20: ChooseCreatureTypeAtResolutionEffect + CreateTokenCopyOfTargetPermanentEffect(true, true).withSubject(controlledBy(you(), creature with PermanentHasTypeChosenThisResolutionPredicate)) (Kindred Charge)"
+CreateTokenCopyOfEachTokenEnteredThisTurnEffect,absorbed,9,"run 20: the token copy (sacrificeAtEndStep, tappedAndAttacking, chooseAttackTarget) over controlledBy(you(), creature token entered this turn); the survivor's set path now chooses attack targets in one event (Redoubled Stormsinger)"
+CreateTokenCopyOfEachTokenOfChosenSubtypeEnteredThisTurnEffect,absorbed,9,"run 20: CreateTokenCopyOfTargetPermanentEffect().withSubject(controlledBy(you(), token with PermanentHasSourceChosenSubtypePredicate, entered this turn)) (Renewed Solidarity)"
+CreateTokenCopiesOfAttackingModifiedCreaturesEffect,absorbed,9,"run 20: CreateTokenCopyOfTargetPermanentEffect.tappedAndAttackingWithTargetChoiceExiledAtEndOfCombat().withSubject(controlledBy(you(), attacking modified creature)) (Mirror-Style Master)"
+CreateTokenCopyAndLinkToSourceEffect,blocked-other,9,"run 20: face-down copies are decided; the token copy with trackWithSource would express it, but its Esix replacement (a625b69fdc's survivor path) creates copies the source doesn't track, so Dance of Many's 'the token' would miss them (Faerie Artisans already has that gap; see Findings)"
+CreateTokenCopyOfSacrificedPermanentEffect,unique,9,"run 20: face-down copies are decided; two shapes of one card each: a copy of the permanent sacrificed as the cost (no subject names it; only Cleaver Skaab) and Ashling's copy with haste and a per-token pay-or-sacrifice delayed rider"
+CreateTokenCopyOfTargetPermanentEffect,survivor,9,"run 20: a set subject with chooseAttackTarget makes every copy in one event and then asks each attack target (CR 608.2f, 508.4)"
+PreventAllButOneDamageToControllerAndPermanentsEffect,survivor,9,"run 20: new; 'prevent all but 1 of that damage' to its controller and the permanents they control matching a predicate (Ajani Steadfast's emblem, Hyperion)"
+PreventAllButOneDamageToControllerAndHeroesEffect,absorbed,9,run 20: PreventAllButOneDamageToControllerAndPermanentsEffect(PermanentHasSubtypePredicate(HERO)) (Hyperion)
+PreventAllButOneDamageToControllerAndPlaneswalkersEffect,absorbed,9,run 20: PreventAllButOneDamageToControllerAndPermanentsEffect(PermanentIsPlaneswalkerPredicate) (Ajani Steadfast's emblem)
+PreventAllDamageToControllerAndExileFromGraveyardEffect,unique,9,run 20: not fused: a static replacement whose graveyard exile is its replacing event (Immortal Coil)
+PreventAllDamageToControllerAndMillEffect,unique,9,run 20: not fused: a static replacement whose mill is its replacing event (Angel of Suffering)
+PreventDamageAndAddMinusCountersEffect,unique,9,run 20: not fused: a static replacement whose -1/-1 counters are its replacing event (Phyrexian Hydra)
+PreventCombatDamageToPlayerAndDrawHalfEffect,unique,9,run 20: not fused: a static replacement whose two draws are its replacing event (Sokrates)
+PreventCombatDamageToSelfAndAddPlusOneCounterEffect,unique,9,run 20: not fused: a static replacement whose counter per creature is its replacing event (Ironscale Hydra)
+PreventCombatDamageToSelfAndExileFromLibraryEffect,unique,9,run 20: not fused: a static replacement whose library exile is its replacing event (Gloom Surgeon)
+PreventDamageAndSacrificeAttachedEquipmentEffect,unique,9,run 20: not fused: a static replacement whose Equipment sacrifice is its replacing event (Outfitted Jouster)
+PreventDamageByRemovingCountersOrSacrificeEffect,unique,9,run 20: not fused: a static replacement removing counters or sacrificing instead of the damage (Underdark Beholder)
+PreventDamageToControllerAndPutCounterOnSelfEffect,unique,9,run 20: not fused: a static replacement whose counters are its replacing event (Nine Lives)
+PreventDamageToSelfAndDealThatMuchDamageEffect,unique,9,run 20: not fused: a static replacement whose reflexive damage follows each prevention (Phyrexian Vindicator)
+PreventDamageToSelfAndSourceControllerDrawsEffect,unique,9,run 20: not fused: a static replacement whose draw for the source's controller is its replacing event (Swans of Bryn Argoll)
+PreventNoncombatDamageToControllerAndGainLifeEffect,unique,9,run 20: not fused: a static replacement whose life gain is its replacing event (Purity)
+PreventSpellDamageToOpponentAndCreateTokensEffect,unique,9,run 20: not fused: a static replacement whose tokens are its replacing event (Hostility)
+PreventDamageToOpponentsAndMillEffect,unique,9,run 20: not fused: a static replacement whose mill of each opponent is its replacing event (The Mindskinner)
+PreventDamageToSelfAndOpponentGainsControlEffect,unique,9,run 20: not fused: a static replacement whose control change is its replacing event (Khârn the Betrayer)
+PreventCombatDamageBySelfToCreaturesAndShuffleEffect,unique,9,run 20: not fused: a static replacement whose shuffle of the creature is its replacing event (Weeping Angel)
+PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect,unique,9,"run 20: prevention keyed to damage from a spell or ability that targets the creature, not to a source filter (Silhouette)"

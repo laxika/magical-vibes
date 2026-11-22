@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.q.QueenAllenalOfRuadach;
 import com.github.laxika.magicalvibes.cards.v.VoiceOfResurgence;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BattleForBretagard.class, VoiceOfResurgence.class})
+@CardUsed({BattleForBretagard.class, VoiceOfResurgence.class, QueenAllenalOfRuadach.class})
 class BattleForBretagardTest extends BaseCardTest {
 
     @Test
@@ -164,5 +165,22 @@ class BattleForBretagardTest extends BaseCardTest {
         card.setPower(power);
         card.setToughness(toughness);
         return card;
+    }
+
+    @Test
+    @DisplayName("Chapter III's copies are one creation event: Queen Allenal adds a single Soldier")
+    void chapterIIICopiesAreOneCreationEvent() {
+        harness.addToBattlefield(player1, new BattleForBretagard());
+        harness.addToBattlefield(player1, new QueenAllenalOfRuadach());
+        Permanent bear = harness.addToBattlefieldAndReturn(player1, token("Bear", CardType.CREATURE, 2, 2));
+        Permanent elf = harness.addToBattlefieldAndReturn(player1, token("Elf", CardType.CREATURE, 1, 1));
+        saga().setCounterCount(CounterType.LORE, 2);
+
+        advanceToNextChapter();
+        harness.handleMultiplePermanentsChosen(player1, List.of(bear.getId(), elf.getId()));
+
+        assertThat(countOf("Bear")).isEqualTo(2);
+        assertThat(countOf("Elf")).isEqualTo(2);
+        assertThat(countOf("Soldier")).isEqualTo(1);
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
@@ -98,7 +99,7 @@ public class CreateTokenCopiesOfSaddledCreatureEffectHandler implements NormalEf
                 1,
                 new MultiPermanentChoiceContext.CreateTokenCopiesOfSaddledCreature(
                         entry, remainingIterations),
-                entry.getCard().getName()
+                FaceDownVisibility.sourceName(gameData, entry)
                         + " — Choose a nonlegendary creature that saddled it this turn to copy.");
     }
 

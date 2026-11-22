@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfEachControlledCreatureTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 
 @CardRegistration(set = "INR", collectorNumber = "213")
 @CardRegistration(set = "INR", collectorNumber = "417")
@@ -18,6 +20,7 @@ public class SecondHarvest extends Card {
 
     public SecondHarvest() {
         // For each token you control, create a token that's a copy of that permanent.
-        addSpellEffect(new CreateTokenCopyOfEachControlledCreatureTokenEffect(false));
+        addSpellEffect(new CreateTokenCopyOfTargetPermanentEffect().withSubject(
+                Subjects.controlledBy(Subjects.you(), new PermanentIsTokenPredicate())));
     }
 }

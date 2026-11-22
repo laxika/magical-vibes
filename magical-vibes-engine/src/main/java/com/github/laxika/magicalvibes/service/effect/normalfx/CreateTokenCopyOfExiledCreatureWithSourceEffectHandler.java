@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
@@ -61,7 +62,8 @@ public class CreateTokenCopyOfExiledCreatureWithSourceEffectHandler implements N
         }
 
         gameData.rerunCurrentEffectAfterInteraction = true;
-        String sourceName = entry.getCard() == null ? "the source permanent" : entry.getCard().getName();
+        String sourceName = entry.getCard() == null
+                ? "the source permanent" : FaceDownVisibility.sourceName(gameData, entry);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExiledCreatureCopyChoice(
                 entry.getControllerId(), sourcePermanentId,
                 eligible.stream().map(exiled -> exiled.card().getId()).toList(),

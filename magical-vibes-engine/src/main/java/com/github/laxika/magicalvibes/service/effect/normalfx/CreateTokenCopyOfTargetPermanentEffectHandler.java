@@ -101,11 +101,12 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
             return;
         }
 
-        if (targetIds.size() > 1 && !copyEffect.chooseAttackTarget() && !copyEffect.createForTargetController()
-                && !copyEffect.tappedAndAttacking()) {
-            // One instruction ("for each of X target permanents, create X tokens"): every token enters
-            // as one event, so token replacement effects only see permanents already on the battlefield
-            // (a Doubling Season token created by this very spell doesn't double its siblings).
+        if (targetIds.size() > 1 && !copyEffect.createForTargetController()
+                && (copyEffect.chooseAttackTarget() || !copyEffect.tappedAndAttacking())) {
+            // One instruction ("for each of X target permanents, create X tokens", "for each attacking creature,
+            // create a tapped and attacking copy"): the action is processed simultaneously (CR 608.2f), so token
+            // replacement effects only see permanents already on the battlefield (a Doubling Season token
+            // created by this very spell doesn't double its siblings).
             List<Card> copySources = new java.util.ArrayList<>();
             for (UUID targetId : targetIds) {
                 Permanent targetPermanent = gameQueryService.findPermanentById(gameData, targetId);
@@ -113,10 +114,16 @@ public class CreateTokenCopyOfTargetPermanentEffectHandler implements NormalEffe
                     copySources.addAll(Collections.nCopies(copyCount, copySourceFor(targetPermanent)));
                     continue;
                 }
-                Card lastKnownCard = lastKnownCopySource(gameData, entry, copyEffect, targetId);
+                Card lastKnownCard = copyEffect.chooseAttackTarget()
+                        ? null : lastKnownCopySource(gameData, entry, copyEffect, targetId);
                 if (lastKnownCard != null) {
                     copySources.addAll(Collections.nCopies(copyCount, lastKnownCard));
                 }
+            }
+            if (copyEffect.chooseAttackTarget()) {
+                tokenCopySupport.createTokenCopiesChoosingAttackTargets(gameData, entry, copySources,
+                        sourcePermanent, entry.getControllerId(), copyEffect);
+                return;
             }
             tokenCopySupport.createTokenCopies(gameData, entry, copySources, sourcePermanent,
                     entry.getControllerId(), copyEffect, null);

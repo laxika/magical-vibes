@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.d.DanceOfMany;
 import com.github.laxika.magicalvibes.cards.e.ExaltedAngel;
 import com.github.laxika.magicalvibes.cards.k.KayaIntangibleSlayer;
+import com.github.laxika.magicalvibes.cards.s.SecondHarvest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.SplinterTwin;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -32,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * (CR 702.168a, 701.58a), and nothing of the hidden card reaches a player.
  */
 @CardUsed({Clone.class, DanceOfMany.class, ExaltedAngel.class, KayaIntangibleSlayer.class, Shock.class,
-        SplinterTwin.class})
+        SplinterTwin.class, SecondHarvest.class})
 class FaceDownTokenCopyTest extends BaseCardTest {
 
     private static final String HIDDEN_NAME = "Exalted Angel";
@@ -199,6 +200,25 @@ class FaceDownTokenCopyTest extends BaseCardTest {
         assertThat(clone.getPublicName()).isEqualTo("a nameless permanent");
         assertThat(logLines()).anyMatch(line -> line.contains("a nameless permanent"))
                 .noneMatch(line -> line.contains("  "));
+    }
+
+    @Test
+    @DisplayName("Second Harvest's copy of a face-down token is a face-up nameless 2/2 with no abilities")
+    void secondHarvestCopiesAFaceDownTokensFaceDownValues() {
+        ExaltedAngel tokenAngel = new ExaltedAngel();
+        tokenAngel.setToken(true);
+        Permanent hidden = addCreatureReady(player1, tokenAngel);
+        hidden.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new SecondHarvest()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castInstant(player1, 0);
+        harness.passBothPriorities();
+
+        Permanent copy = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().isToken() && !permanent.getId().equals(hidden.getId()))
+                .findFirst().orElseThrow();
+        assertFaceDownValues(copy);
     }
 
     private List<String> logLines() {

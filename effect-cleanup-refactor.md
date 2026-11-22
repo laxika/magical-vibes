@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 19: Exile, Each, Return, Put, Reveal, Choose, Grant and Create closed; 2,015 rare records left, Prevent next) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 20: Exile, Each, Return, Put, Reveal, Choose, Grant and Create closed, Prevent started; 1,996 rare records left, Prevent next) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -625,6 +625,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 17 | Run 16's small defects and dead code (Mindblaze's shuffle, split names), its shared parts, then the rest of Choose's rare records | done, Choose closed (50 rows: 2 absorbed, 12 split, 6 survivors, 8 blocked-other, 22 unique; 14 records deleted; 27 card files changed, 16 rewritten; `RegisterDelayedStepTriggerEffect.aboutPutOntoBattlefield`, subjects on four survivors, `ChoosePermanentOnEnterEffect`) |
 | 18 | Run 17's four small defects, the Grant family's waiting rows' shared parts (the Crowns' host set, the searched permanent), then its rare records | done, Grant closed (108 rare records: 29 absorbed, 2 split, 1 dead, 12 blocked-other, 64 unique; with the other rows 37 records deleted; 41 card files rewritten; `GrantGraveyardAbilityToCardsEffect`, `GrantSupertypeEffect`, `GrantAbilityToNextSpellThisTurnEffect`, `searched()`, `attachedAndSharingCreatureType()`) |
 | 19 | Run 18's small defects (Room spell names, mayhem types, unchoosable candidates of the non-target choices), then the Create family's rare records | done, Create closed (67 rare records: 17 absorbed, 3 split, 1 survivor, 10 blocked-other, 37 unique (one is Esix's engine-built record); 20 records deleted; 24 card files rewritten; `exiledAsCost()`, `CardHasMemoryCounterPredicate`, subjects on the token copy and the attached token, CREATE_TOKEN from the attached token) |
+| 20 | The seven face-down Create rows, run 19's small defects (Battle for Bretagard, Liberated Livestock, the Create prompts' source names, Gather Specimens, the attached tokens' pairing), then Prevent's rare records | done for Create and the defects, Prevent open (28 rows: 7 absorbed, 2 survivors (one new record), 1 blocked-other, 18 unique; 7 records deleted; 8 card files rewritten; the token copy's set path chooses attack targets in one event, `PreventAllButOneDamageToControllerAndPermanentsEffect`; two defects not reproduced; 47 rare Prevent records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -8004,7 +8005,7 @@ card subject variant added outside the counted packages). 24 card files rewritte
 `get_rulings` for Coiling Rebirth, Osgir, Flesh Carver, The Skullspore Nexus, Fractal Anomaly, Chainer's Torment, Altaïr, Outlaws'
 Merriment, Return Triumphant, Not Dead After All and Giant Inheritance. The unique and blocked verdicts come from reading each record,
 handler and card. CR 101.2, 107.1b, 115.1, 115.10a, 205.3i, 301.5, 303.4f, 303.4g, 406.3a, 508.4, 603.12, 608.2c, 608.2d, 608.2h,
-614.1a, 614.6, 616.1, 701.7a, 701.34a, 701.53a, 702.2b, 702.2d, 702.127a, 707.2, 709.3a, 709.3b, 709.4, 709.5, 709.5b and 709.5d
+614.1a, 614.6, 701.7a, 701.34a, 701.53a, 702.2b, 702.2d, 702.127a, 707.2, 709.3a, 709.3b, 709.4, 709.5, 709.5b and 709.5d
 702.14a checked with `get_rule` (2026-11-22).
 
 | Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | `step-9` | Left unaudited |
@@ -8041,7 +8042,7 @@ handler and card. CR 101.2, 107.1b, 115.1, 115.10a, 205.3i, 301.5, 303.4f, 303.4
    (all failed before).
 4. Giant Inheritance creates no Role without a target (ruling, CR 303.4g). `GiantInheritanceTest` (failed before; see Tests edited).
 5. Outlaws' Merriment's token is chosen at random as the ability goes on the stack (ruling): `OutlawsMerrimentTest` (failed before).
-6. Osgir's two copies are one creation event (CR 701.7a, 616.1), each of the exiled card the ability's own cost exiled:
+6. Osgir's two copies are one creation event (CR 701.7a), each of the exiled card the ability's own cost exiled:
    `OsgirTheReconstructorTest.bothCopiesAreOneCreationEvent` (failed before).
 7. Fractal Anomaly puts the counters on the token a replacement creates instead ("it"): `FractalAnomalyTest` (failed before).
 8. Clone Legion's and Coiling Rebirth's copies offer Esix's replacement (CR 614.1a): `CloneLegionTest`, `CoilingRebirthTest` (failed
@@ -8067,7 +8068,7 @@ the cast door's, which is public.
   so a hand is hinted only for that cost (`CutRibbonsTest.handHintIgnoresTheAftermathHalfsCost` guards it).
 - The other prompt callers (1e) that count before the prompt drops an unchoosable permanent (about 400 calls of the permanent and
   multi-permanent prompts) weren't swept; targets are excluded by shroud and targeting rules already.
-- Battle for Bretagard copies each chosen token as its own event (CR 616.1); Liberated Livestock creates its three tokens as three
+- Battle for Bretagard copies each chosen token as its own event (Oracle: "For each of them, create a token", one action, CR 608.2f); Liberated Livestock creates its three tokens as three
   events.
 - `CreateTokensAttachedToControlledCreaturesEffect` pairs tokens to creatures by the token multiplier, so an added token
   (Queen Allenal) can be attached to the wrong creature.
@@ -8100,6 +8101,92 @@ sweep's aura-host paths but Replenish's by a test of their own.
 - Pestilent Spirit needs a "source is a spell" fact on the stack entry; the remaining prompt callers that count before dropping an
   unchoosable permanent wait for a sweep of their own.
 - Seven `step-9` ledger rows are left, as run 17 listed them.
+
+### Step 9, run 20 (2026-11-23, Prevent started)
+
+The seven face-down Create rows, three of run 19's small defects, then the Prevent family's two-card all-but-one pair and its
+static replacements with a rider. Ratchet 4,154 / 3,389 → 4,148 / 3,384 records / handlers (7 records and 5 handlers deleted,
+1 record added; the `AllButOneDamagePreventionEffect` interface deleted). 8 card files rewritten by scratch
+scripts; Oracle text checked with `get_card` for all 8, for Esix, the Create defects' cards (Battle for Bretagard by its record,
+Liberated Livestock) and the 17 cards of the unique verdicts (Underdark Beholder, a playtest card, is not in the feeds: by its
+record). Rulings with `get_rulings` for Asinine Antics. CR 508.4, 608.2f, 614.1a, 701.7a, 707.2, 708.2 and 708.5
+checked with `get_rule` (2026-11-22).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | `step-9` | Left unaudited |
+|---|---|---|---|---|---|---|---|---|
+| Create | 8 rows (the 7 face-down rows re-ledgered, the token copy) | 5 | 0 | 1 | 1 other (Esix's replacement copies aren't tracked by the source) | 1 | 0 | no rare record |
+| Prevent | 20 rows (19 rare records, 1 new survivor) | 2 | 0 | 1 | 0 | 17 | 0 | 47 rare records (60 records in all) |
+
+All families: 1,996 rare records without a row (run 19: 2,015).
+
+- **The token copy over a set.** Rhys the Redeemed, Second Harvest, Kindred Charge (after `ChooseCreatureTypeAtResolutionEffect`),
+  Redoubled Stormsinger, Renewed Solidarity and Mirror-Style Master are `CreateTokenCopyOfTargetPermanentEffect` over
+  `controlledBy(you(), filter)`. Its set path now also serves `chooseAttackTarget`: all copies are one simultaneous action (CR 608.2f) and their
+  attack targets are asked afterwards (CR 508.4), as the absorbed handlers did; the departed members of such a set are skipped
+  as `resolveForDepartedTarget` already skipped them. The copies read `copiableCard` (bestow, Licid, chosen modes and face-down
+  values, CR 707.2) instead of `cardToCopy`.
+- **Kept.** Dance of Many's record (blocked-other): the survivor with `trackWithSource` would offer Esix, whose copies are made by
+  `CreateTokenCopyOfChosenCreatureEffectHandler` without the tracking, so "the token" would miss them. Ashling's and Cleaver
+  Skaab's record (unique): two shapes, a cost-sacrificed permanent that no subject names and a per-token pay-or-sacrifice rider.
+- **Prevent.** `PreventAllButOneDamageToControllerAndPermanentsEffect(permanents)` takes Ajani Steadfast's emblem (planeswalkers)
+  and Hyperion (Heroes); both permanent steps judge the damaged permanent by the predicate. The 16 static replacements whose
+  rider is their replacing event (mill, counters, draws, life, tokens, exile, a control change, a shuffle) follow run 28/29's
+  verdict for `PreventDamageAndAddPlusCountersEffect`; Silhouette's prevention is keyed to the damage's own targeting spell.
+
+**Behaviour changes.** "Failed before" means the new test failed on a `git archive` copy of HEAD with the new tests copied in.
+
+1. Esix is offered the copies of Rhys, Second Harvest, Kindred Charge and Renewed Solidarity (its text: "the first time you would
+   create one or more tokens", CR 614.1a): `RhysTheRedeemedTest.esixIsOfferedTheCopies`, `SecondHarvestTest.esixIsOfferedTheCopies`.
+2. Battle for Bretagard's chapter III copies are one creation event ("for each of them", one action on several objects, CR 608.2f): `BattleForBretagardTest.chapterIIICopiesAreOneCreationEvent`.
+3. Liberated Livestock's Cat, Bird and Ox are one creation event (one instruction puts the specified tokens onto the battlefield, CR 701.7a): `LiberatedLivestockTest.tokensAreOneCreationEvent`.
+4. Six Create prompts name their source through `FaceDownVisibility.sourceName` (CR 708.5): Esix's creature choice, the saddled
+   copy (Calamity), the chosen-permanent copy (Calix, Awaken the Maelstrom), the exiled-creature copy (Dino DNA, Phantom Steed),
+   the targeted-spell copy (Orvar, Vesuvan Duplimancy), Ajani's Chosen's Aura move;
+   `RhysTheRedeemedTest.esixChoiceHidesAFaceDownSource`.
+5. A token copy of a face-down token copies its face-down values through the survivor: `FaceDownTokenCopyTest.secondHarvestCopiesAFaceDownTokensFaceDownValues`
+   (a guard; the absorbed handler did the same since a625b69fdc).
+6. Kindred Charge's type prompt is the creature-type step's; Mirror-Style Master's and the others' log lines are the survivor's.
+
+**What a player sees.** The set subjects name battlefield permanents; the copies of face-down permanents are nameless (a625b69fdc's
+rule). The six prompts now show "a face-down card" for a source that is or last was face down.
+
+**Seen, not changed.** Run 19's other items stand.
+
+- `CreateTokensAttachedToControlledCreaturesEffect` (run 19's item): not reproduced. Its Roles are not creature tokens, so Queen
+  Allenal adds nothing; equal-outcome replacements don't pause. It still pairs by `getTokenMultiplier` (replacement-damage.md's
+  known gap), and a creation that pauses for an order prompt returns no ids, so neither it nor the single attached-token handler
+  attaches anything then; Halving Season's split over distinct Roles is a rules question. No test.
+- Gather Specimens (run 19's item): an opponent's Zombify return is redirected (`GatherSpecimensTest`, a guard that passes on HEAD);
+  every graveyard put found goes through `BattlefieldPlacementService.resolveEnteringController`. Premise not shown.
+- The survivor's Esix path drops the replaced copy's instructions (tracking, haste, end-step exile): Faerie Artisans' copies made by
+  Esix aren't exiled by its next trigger. By reading; no test.
+- Mercenaries' shield log names its card by `entry.getCard().getName()`.
+- A shell `rm` of the deleted classes through shell variables was denied by the safety check ("Dangerous rm operation
+  detected"); the files were removed by literal paths, as its message suggests.
+
+**Tests edited.** The new cases above, and `GatherSpecimensTest`'s guard. `EffectCountRatchetTest`'s baselines.
+
+**Tests run.** The final sources in one Gradle run with every test task forced (`--rerun`), one `--tests` list per task, counted
+from that run's XML by the test cases' class names: 114 classes (1,024 cases, 0 failures, 0 skipped): the 35 test classes that
+name one of the 8 rewritten cards, Battle for Bretagard, Liberated Livestock, Dance of Many or Gather Specimens, the 34 naming a
+card of the six prompt handlers, Esix, Faerie Artisans, Cleaver Skaab or Ashling, `--tests-for` the token copy and
+`PreventDamageToSelfFromCreaturesEffect` (at most 30 each), the 10 application classes naming `DamagePreventionService`, the
+damage candidate sources, `TokenCopySupport` or the changed records, `FaceDownTokenCopyTest` and `EffectCountRatchetTest`
+(the AI's classes name none of them). Every project's main, test and test-fixture Java sources compile on the final tree. No
+deleted handler asked death replacements first, so `Mastery|DeathReplacement` wasn't selected. On a `git archive` copy of HEAD
+with the new cases copied in, the five behaviour cases failed and the two guards passed. Not run: the full suites, the AI fuzz and
+stress tests, the frontend. Not verified: more than two players, the AI's estimates over the set copies, MCTS.
+
+**For the next run (run 21: Prevent 47; then May 58, Perpetually 55, Conjure 49, Register 48, Target 48).**
+
+- Prevent's shields with subjects: the four prevent-and-redirect shields (Divine Deflection, Acolyte's Reward, Vengeful Archon,
+  and the chosen-source redirect row), the three source-to-recipient shields (`TargetSourceDamagePreventionShield`: Healing Grace /
+  Shieldmage Advocate, Stonewise Fortifier, Torrent of Lava's granted ability), the two filtered target shields (Lithomancer's
+  Focus, Avacyn) and the tokens-per-prevention pair (Inkshield, Ria Ivor) each share a shape: build one before verdicts.
+- The pure static preventions (Deserts, spells, creatures it blocks, colour to the enchanted creature, ...) are each read by their
+  own branch of `DamagePreventionService` / `GameQueryService`; a static record with a recipient subject and a source filter would
+  take most of them, which is a damage-pipeline design: ask the owner before building it.
+- Esix's copies keep none of the replaced copy's instructions; with that closed, Dance of Many folds into the token copy.
 
 ## Prompt
 

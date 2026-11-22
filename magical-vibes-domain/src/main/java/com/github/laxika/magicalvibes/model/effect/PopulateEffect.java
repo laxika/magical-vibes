@@ -9,8 +9,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * token the effect does nothing; with exactly one the choice is forced. The copy is made from all
  * copiable characteristics per CR 707.2 and respects the controller's token multiplier.
  *
- * <p>The bulk form ("for each creature token you control...") is
- * {@link CreateTokenCopyOfEachControlledCreatureTokenEffect}.
+ * <p>The bulk form ("for each creature token you control...") is {@link CreateTokenCopyOfTargetPermanentEffect}
+ * over a {@code controlledBy(you(), token creature)} subject.
  */
 public record PopulateEffect() implements CardEffect {
 }
