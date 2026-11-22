@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameForDelayedCreatureCombatDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyNextSpellCastThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterChosenNameCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +25,7 @@ public class TheCloneSaga extends Card {
         addTrigger(Triggers.chapter(1), new SurveilEffect(3));
         addTrigger(Triggers.chapter(2), new CopyNextSpellCastThisTurnEffect(
                 new CardTypePredicate(CardType.CREATURE), Set.of(CardSupertype.LEGENDARY)));
-        addTrigger(Triggers.chapter(3), new ChooseCardNameForDelayedCreatureCombatDamageEffect(
-                List.of(new DrawCardEffect())));
+        addTrigger(Triggers.chapter(3), new ChooseCardNameAtResolutionEffect(),
+                new RegisterChosenNameCombatDamageTriggerEffect(List.of(new DrawCardEffect())));
     }
 }

@@ -2,15 +2,13 @@ package com.github.laxika.magicalvibes.ai.interaction;
 
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
+import com.github.laxika.magicalvibes.model.effect.RegisterChosenNameCombatDamageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
-import com.github.laxika.magicalvibes.model.filter.CardHasNameChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
@@ -142,9 +140,8 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
-        if (context instanceof ChoiceContext.DualCardNameChoice
-                || context instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice) {
-            // Null Chamber, Comply: lock down something seen of an opponent's.
+        if (context instanceof ChoiceContext.DualCardNameChoice) {
+            // Null Chamber: lock down something seen of an opponent's.
             String chosenName = knownName(ctx, interaction, getOpponentId(gameData, aiPlayerId));
             log.info("AI: Choosing card name \"{}\" to lock down in game {}", chosenName, gameId);
             answerWith(ctx, interaction, chosenName);
@@ -164,9 +161,9 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
 
         if (context instanceof ChoiceContext.ChooseCardNameAtResolutionChoice) {
             StackEntry resolving = gameData.pendingEffectResolutionEntry;
-            Optional<String> dug = digsForChosenName(resolving) ? nameToDigFor(ctx, interaction, resolving)
-                    : Optional.empty();
-            String chosenName = dug.orElseGet(() -> nameAtResolution(ctx, interaction, resolving));
+            String chosenName = searchesForChosenName(resolving)
+                    ? knownName(ctx, interaction, resolving.getTargetId())
+                    : nameAtResolution(ctx, interaction, resolving);
             log.info("AI: Choosing card name \"{}\" as an effect resolves in game {}", chosenName, gameId);
             answerWith(ctx, interaction, chosenName);
             return;
@@ -365,13 +362,6 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
-        if (context instanceof ChoiceContext.ExileByNameChoice exile) {
-            String chosenName = knownName(ctx, interaction, exile.targetPlayerId());
-            log.info("AI: Choosing card name \"{}\" for exile in game {}", chosenName, gameId);
-            answerWith(ctx, interaction, chosenName);
-            return;
-        }
-
         if (context instanceof ChoiceContext.AdjustCounterKindChoice acc) {
             // Quarry Hauler: for each kind of counter on the target, add or remove one. Grow our own
             // good counters / shrink opponents'; and the reverse for detrimental counters.
@@ -389,14 +379,6 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                     : ChoiceContext.AdjustCounterKindChoice.REMOVE;
             log.info("AI: {} a {} counter in game {}", chosen, kind, gameId);
             answerWith(ctx, interaction, chosen);
-            return;
-        }
-
-        if (context instanceof ChoiceContext.RevealHandDamageAndExileByNameChoice exile) {
-            // Thought Hemorrhage: name the card seen most of the target's, its hand being hidden.
-            String chosenName = knownName(ctx, interaction, exile.targetPlayerId());
-            log.info("AI: Choosing card name \"{}\" for reveal-damage-exile in game {}", chosenName, gameId);
-            answerWith(ctx, interaction, chosenName);
             return;
         }
 
@@ -624,29 +606,24 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
         return null;
     }
 
-    /** Whether the resolution reveals from its controller's library until a card has the name being chosen. */
-    private static boolean digsForChosenName(StackEntry resolving) {
+    /** Whether the resolution rewards its controller when a creature with the name being chosen connects. */
+    private static boolean rewardsOwnNamedCreature(StackEntry resolving) {
         return resolving != null && resolving.getEffectsToResolve().stream()
-                .anyMatch(effect -> effect instanceof RevealCardsFromTopUntilEffect reveal
-                        && reveal.library() instanceof PlayerSubject.You
-                        && reveal.until() instanceof CardHasNameChosenThisResolutionPredicate);
+                .anyMatch(RegisterChosenNameCombatDamageTriggerEffect.class::isInstance);
     }
 
-    /** The name of the first card past what the effect exiles before it digs, if that name can be chosen. */
-    private static Optional<String> nameToDigFor(AiInteractionContext ctx, PendingInteraction.ColorChoice interaction,
-                                                 StackEntry resolving) {
-        List<Card> library = ctx.gameData().playerDecks.getOrDefault(ctx.aiPlayerId(), List.of());
-        if (library.isEmpty()) {
-            return Optional.empty();
-        }
-        String name = library.get(Math.min(cardsExiledBeforeTheDig(resolving), library.size() - 1)).getName();
-        return interaction.options().contains(name) && !ctx.gameQueryService().isCardNameUnchoosable(ctx.gameData(), name)
-                ? Optional.of(name) : Optional.empty();
+    /** Whether the resolution searches the player it targets for cards with the name being chosen. */
+    private static boolean searchesForChosenName(StackEntry resolving) {
+        return resolving != null && resolving.getEffectsToResolve().stream()
+                .anyMatch(effect -> effect instanceof ExileCardsWithSameNameEffect exile
+                        && exile.permanents() == null && exile.cards() == null
+                        && exile.searched() instanceof PlayerSubject.TargetPlayer);
     }
 
     /**
      * The offered, choosable name the AI's knowledge favors: what it holds most of in its own hand or library where the
-     * effect reveals from there, otherwise what is seen most of the other players', then of any, then of its own cards.
+     * effect reveals from there (a library's order being unknown to it), otherwise what is seen most of the other
+     * players', then of any, then of its own cards.
      * No other player's hand or library and no hidden face is read (CR 400.2, 406.3).
      */
     private static String nameAtResolution(AiInteractionContext ctx, PendingInteraction.ColorChoice interaction,
@@ -665,6 +642,13 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
         List<Card> seenOfOwn = new ArrayList<>();
         for (UUID playerId : gameData.orderedPlayerIds) {
             (playerId.equals(aiPlayerId) ? seenOfOwn : seenOfOthers).addAll(publicCards(gameData, playerId));
+        }
+        if (rewardsOwnNamedCreature(resolving)) {
+            pools.add(gameData.playerBattlefields.getOrDefault(aiPlayerId, List.of()).stream()
+                    .filter(permanent -> !permanent.isFaceDown()
+                            && ctx.gameQueryService().isCreature(gameData, permanent))
+                    .map(Permanent::getCard)
+                    .toList());
         }
         pools.add(seenOfOthers);
         pools.add(seenOfOwn);
@@ -747,15 +731,5 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
     private static boolean namesAi(StackEntry resolving, PlayerSubject player, UUID aiPlayerId) {
         return player instanceof PlayerSubject.You && aiPlayerId.equals(resolving.getControllerId())
                 || player instanceof PlayerSubject.TargetPlayer && aiPlayerId.equals(resolving.getTargetId());
-    }
-
-    private static int cardsExiledBeforeTheDig(StackEntry resolving) {
-        int count = 0;
-        for (CardEffect effect : resolving.getEffectsToResolve()) {
-            if (effect instanceof ExileTopCardOfOwnLibraryEffect exile && exile.count() instanceof Fixed fixed) {
-                count += fixed.value();
-            }
-        }
-        return count;
     }
 }

@@ -328,13 +328,9 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesGreatestPowerCreatureToDestroyEffectHandler eachOpponentChoosesGreatestPowerCreatureToDestroyEffectHandler;
 
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesPermanentToDestroyEffectHandler eachOpponentChoosesPermanentToDestroyEffectHandler;
-
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoosesGreatestManaValueCreatureToReturnToHandEffectHandler eachOpponentChoosesGreatestManaValueCreatureToReturnToHandEffectHandler;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerChoosesCreatureToDestroyEffectHandler eachPlayerChoosesCreatureToDestroyEffectHandler;
-
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandomEffectHandler chooseNonlandPermanentForEachOpponentThenDestroyOneAtRandomEffectHandler;
 
     private final EachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler eachOpponentCreatesTokenUnlessSacrificesCreatureEffectHandler;
 
@@ -1139,14 +1135,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
     }
 
-    public void handleEachOpponentChoosesPermanentToDestroy(GameData gameData, UUID permanentId,
-            PermanentChoiceContext.EachOpponentChoosesPermanentToDestroy context) {
-        eachOpponentChoosesPermanentToDestroyEffectHandler.completeChoice(gameData, permanentId, context);
-        if (!gameData.interaction.isAwaitingInput()) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-        }
-    }
-
     public void handleEachOpponentChoosesGreatestManaValueCreatureToReturnToHand(GameData gameData,
             UUID permanentId,
             PermanentChoiceContext.EachOpponentChoosesGreatestManaValueCreatureToReturnToHand context) {
@@ -1160,16 +1148,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleEachPlayerChoosesCreatureToDestroy(GameData gameData, UUID permanentId,
             PermanentChoiceContext.EachPlayerChoosesCreatureToDestroy context) {
         eachPlayerChoosesCreatureToDestroyEffectHandler.completeChoice(gameData, permanentId, context);
-        if (!gameData.interaction.isAwaitingInput()) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-        }
-    }
-
-    public void handleChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandom(GameData gameData,
-            UUID permanentId,
-            PermanentChoiceContext.ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandom context) {
-        chooseNonlandPermanentForEachOpponentThenDestroyOneAtRandomEffectHandler.completeChoice(
-                gameData, permanentId, context);
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         }
@@ -1635,7 +1613,10 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     public void handleRecordChosenPermanents(GameData gameData, UUID permanentId,
             PermanentChoiceContext.RecordChosenPermanents context) {
-        choosePermanentsEffectHandler.completeChoice(gameData, List.of(permanentId), context.effect());
+        if (choosePermanentsEffectHandler.completeSingleChoice(gameData, permanentId, context)) {
+            inputCompletionService.publishStateAfterInput(gameData);
+            return;
+        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

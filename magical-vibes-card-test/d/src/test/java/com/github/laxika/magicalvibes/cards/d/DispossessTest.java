@@ -121,7 +121,7 @@ class DispossessTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class)).isNull();
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("exiles 0 cards"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their library"));
     }
 
     @Test

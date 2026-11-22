@@ -431,7 +431,6 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.DestroyChosenCreature destroy
                         && !destroy.exile() && !destroy.shuffleIntoOwnersLibrary()
                 || context instanceof PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToDestroy
-                || context instanceof PermanentChoiceContext.EachOpponentChoosesPermanentToDestroy
                 || context instanceof PermanentChoiceContext.EachPlayerChoosesCreatureToDestroy
                 || context instanceof PermanentChoiceContext.SacrificeCreatureOpponentsLoseLife
                 || context instanceof PermanentChoiceContext.SacrificeCreatureThenSearchLibrary
@@ -514,8 +513,6 @@ public class PermanentChoiceHandlerService {
             case PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToDestroy destroy ->
                     battlefieldHandler.handleEachOpponentChoosesGreatestPowerCreatureToDestroy(
                             gameData, permanentId, destroy);
-            case PermanentChoiceContext.EachOpponentChoosesPermanentToDestroy destroy ->
-                    battlefieldHandler.handleEachOpponentChoosesPermanentToDestroy(gameData, permanentId, destroy);
             case PermanentChoiceContext.EachPlayerChoosesCreatureToDestroy destroy ->
                     battlefieldHandler.handleEachPlayerChoosesCreatureToDestroy(gameData, permanentId, destroy);
             case PermanentChoiceContext.SacrificeCreatureOpponentsLoseLife sacrificeOpp ->
@@ -1100,16 +1097,11 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleEachOpponentBlightsCreature(gameData, permanentId, blight);
         } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesGreatestPowerCreatureToDestroy destroy) {
             battlefieldHandler.handleEachOpponentChoosesGreatestPowerCreatureToDestroy(gameData, permanentId, destroy);
-        } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesPermanentToDestroy destroy) {
-            battlefieldHandler.handleEachOpponentChoosesPermanentToDestroy(gameData, permanentId, destroy);
         } else if (context instanceof PermanentChoiceContext.EachOpponentChoosesGreatestManaValueCreatureToReturnToHand returnToHand) {
             battlefieldHandler.handleEachOpponentChoosesGreatestManaValueCreatureToReturnToHand(gameData,
                     permanentId, returnToHand);
         } else if (context instanceof PermanentChoiceContext.EachPlayerChoosesCreatureToDestroy destroy) {
             battlefieldHandler.handleEachPlayerChoosesCreatureToDestroy(gameData, permanentId, destroy);
-        } else if (context instanceof PermanentChoiceContext.ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandom destroy) {
-            battlefieldHandler.handleChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandom(
-                    gameData, permanentId, destroy);
         } else if (context instanceof PermanentChoiceContext.ManaAbilityAddToChosenPlayer manaChosen) {
             battlefieldHandler.handleManaAbilityAddToChosenPlayer(gameData, permanentId, manaChosen);
         } else if (context instanceof PermanentChoiceContext.BendOrBreakOpponentChoice) {

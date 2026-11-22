@@ -4,12 +4,14 @@ import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.d.Demystify;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -154,5 +156,22 @@ class MetamorphicAlterationTest extends BaseCardTest {
         assertThat(bears.getCard().getName()).isEqualTo("Hill Giant");
         assertThat(gqs.getEffectivePower(gd, bears)).isEqualTo(3);
         assertThat(gqs.hasKeyword(gd, bears, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("The choice and the copy name no face-down creature's card (CR 708.2)")
+    void logNamesNoFaceDownCreature() {
+        Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+        Permanent hidden = addCreatureReady(player2, new HillGiant());
+        hidden.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new MetamorphicAlteration()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castEnchantment(player1, 0, bears.getId());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, hidden.getId());
+
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Hill Giant"));
     }
 }

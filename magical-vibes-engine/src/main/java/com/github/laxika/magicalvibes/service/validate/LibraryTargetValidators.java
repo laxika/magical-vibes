@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.validate;
 
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.MillBottomOfTargetLibraryConditionalTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -34,9 +34,12 @@ public class LibraryTargetValidators {
         }
     }
 
-    @ValidatesTarget(ChooseCardNameAndExileFromZonesEffect.class)
-    public void validateChooseCardNameAndExileFromZones(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
+    @ValidatesTarget(ExileCardsWithSameNameEffect.class)
+    public void validateExileCardsWithSameName(TargetValidationContext ctx, ExileCardsWithSameNameEffect effect) {
+        // Only a search for the chosen name declares the player searched.
+        if (effect.permanents() == null && effect.cards() == null && effect.searched().declaresTarget()) {
+            tvs.requireTargetPlayer(ctx);
+        }
     }
 
     @ValidatesTarget(MillBottomOfTargetLibraryConditionalTokenEffect.class)

@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.GameActionAvailabilityService;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -32,13 +33,13 @@ class UnstableGlyphbridgeTest extends BaseCardTest {
         castGlyphbridge();
         resolveAllTriggers();
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(choice.validIds()).containsExactly(firstChoice.getId(), secondChoice.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(firstChoice.getId()));
+        harness.handlePermanentChosen(player1, firstChoice.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId)
                 .contains(firstChoice.getId())
@@ -112,9 +113,9 @@ class UnstableGlyphbridgeTest extends BaseCardTest {
         castGlyphbridge();
         resolveAllTriggers();
 
-        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, java.util.UUID.randomUUID()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
+        harness.handlePermanentChosen(player1, first.getId());
         assertThat(gd.playerBattlefields.get(player1.getId())).extracting(Permanent::getId)
                 .contains(first.getId());
     }
@@ -126,11 +127,11 @@ class UnstableGlyphbridgeTest extends BaseCardTest {
         castGlyphbridge();
         resolveAllTriggers();
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(choice.validIds()).containsExactly(chosen.getId(), destroyed.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(chosen.getId()));
+        harness.handlePermanentChosen(player1, chosen.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).extracting(Permanent::getId)
                 .contains(chosen.getId()).doesNotContain(destroyed.getId());
     }
@@ -254,5 +255,32 @@ class UnstableGlyphbridgeTest extends BaseCardTest {
         permanent.setTransformed(true);
         gd.playerBattlefields.get(player1.getId()).add(permanent);
         return permanent;
+    }
+
+    @Test
+    @DisplayName("One creature is chosen for each player in turn, then the rest are destroyed together")
+    void choosesForEachPlayerInTurn() {
+        Permanent ownKept = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent ownDestroyed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent theirsKept = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent theirsDestroyed = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        castGlyphbridge();
+        resolveAllTriggers();
+
+        for (int choices = 0; choices < 2; choices++) {
+            PendingInteraction.PermanentChoice choice =
+                    gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+            assertThat(choice.playerId()).isEqualTo(player1.getId());
+            boolean own = choice.validIds().contains(ownKept.getId());
+            assertThat(choice.validIds()).containsExactlyInAnyOrder(own
+                    ? new java.util.UUID[]{ownKept.getId(), ownDestroyed.getId()}
+                    : new java.util.UUID[]{theirsKept.getId(), theirsDestroyed.getId()});
+            assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownDestroyed);
+            assertThat(gd.playerBattlefields.get(player2.getId())).contains(theirsDestroyed);
+            harness.handlePermanentChosen(player1, own ? ownKept.getId() : theirsKept.getId());
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(ownKept).doesNotContain(ownDestroyed);
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(theirsKept).doesNotContain(theirsDestroyed);
     }
 }

@@ -5,11 +5,14 @@ import com.github.laxika.magicalvibes.cards.s.SandswirlWanderglyph;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.WasCast;
-import com.github.laxika.magicalvibes.model.effect.ChooseCreatureForEachPlayerDestroyRestEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromExileTransformedEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -28,9 +31,13 @@ public class UnstableGlyphbridge extends Card {
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 TriggerOptions.DEFAULT.withInterveningIf(new WasCast()),
-                new ChooseCreatureForEachPlayerDestroyRestEffect(new PermanentAllOfPredicate(List.of(
-                        new PermanentIsCreaturePredicate(),
-                        new PermanentPowerAtMostPredicate(2)))));
+                ChoosePermanentsEffect.oneForEach(Subjects.eachPlayer(),
+                        Subjects.controlledBy(Subjects.eachPlayer(), new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentPowerAtMostPredicate(2)))),
+                        "a creature with power 2 or less"),
+                DestroyAllPermanentsEffect.sparing(new PermanentIsCreaturePredicate(),
+                        Subjects.thisWay(StepKind.CHOOSE)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

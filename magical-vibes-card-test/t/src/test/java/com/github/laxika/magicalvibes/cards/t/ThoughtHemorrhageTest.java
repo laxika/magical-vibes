@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.b.BlitzHellion;
+import com.github.laxika.magicalvibes.cards.m.MindlockOrb;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({ThoughtHemorrhage.class, BlitzHellion.class, Terminate.class, Swamp.class})
+@CardUsed({ThoughtHemorrhage.class, BlitzHellion.class, Terminate.class, Swamp.class, MindlockOrb.class})
 class ThoughtHemorrhageTest extends BaseCardTest {
 
     private void giveMana() {
@@ -144,7 +145,6 @@ class ThoughtHemorrhageTest extends BaseCardTest {
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("exiles 0 cards"));
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(l -> l.contains("shuffles their library"));
     }
 
@@ -248,11 +248,34 @@ class ThoughtHemorrhageTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player1.getId());
         harness.handleListChoice(player1, "Blitz Hellion");
+        // The searcher looks at the library too (CR 701.23a), so the search is asked with only a graveyard copy there.
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(graveyardCopy);
         harness.assertNotInGraveyard(player1, "Blitz Hellion");
         harness.assertInGraveyard(player1, "Thought Hemorrhage");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A library that can't be searched is neither offered nor exiled from")
+    void leavesOutLibraryThatCantBeSearched() {
+        harness.addToBattlefield(player2, new MindlockOrb());
+        Card handCopy = new BlitzHellion();
+        Card libraryCopy = new BlitzHellion();
+        harness.setHand(player2, List.of(handCopy));
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player2, List.of(libraryCopy));
+        harness.setHand(player1, List.of(new ThoughtHemorrhage()));
+        giveMana();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleListChoice(player1, "Blitz Hellion");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class).validCardIds())
+                .containsExactly(handCopy.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(handCopy.getId()));
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCopy);
     }
 }

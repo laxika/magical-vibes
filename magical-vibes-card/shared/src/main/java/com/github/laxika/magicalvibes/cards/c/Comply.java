@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOpponentsCantCastUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CantPlayChosenNameUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 
 /**
  * Comply — back half of Failure // Comply.
@@ -15,7 +16,8 @@ public class Comply extends Card {
 
     public Comply() {
         // Choose a card name. Until your next turn, your opponents can't cast spells with the chosen name.
-        addSpellEffect(new ChooseCardNameOpponentsCantCastUntilNextTurnEffect());
+        addSpellEffect(new ChooseCardNameAtResolutionEffect());
+        addSpellEffect(CantPlayChosenNameUntilNextTurnEffect.opponentsCantCast());
 
         // Aftermath cost equals this half's mana cost; exile after leaving the stack.
         addCastingOption(new FlashbackCast("{W}"));

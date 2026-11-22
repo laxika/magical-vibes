@@ -70,8 +70,10 @@ public class ExileCardsWithSameNameEffectHandler implements NormalEffectHandlerB
                     searched.add(named.ownerId());
                 }
             }
-        } else {
+        } else if (e.permanents() != null) {
             names.addAll(subjectResolutionService.names(gameData, entry, e, e.permanents()));
+        } else if (entry.getChosenCardName() != null) {
+            names.add(entry.getChosenCardName());
         }
         if (e.searched() != null) {
             searched.addAll(subjectResolutionService.players(gameData, entry, e, e.searched()));
@@ -123,9 +125,10 @@ public class ExileCardsWithSameNameEffectHandler implements NormalEffectHandlerB
         List<Card> offered = new ArrayList<>();
         Set<Zone> searchedZones = new LinkedHashSet<>();
         int libraryTopCards = 0;
-        // "All cards with the same name as that card", that card being in the graveyard searched: it is found with the
-        // others as one exile, whatever is picked from the hidden zones.
-        boolean graveyardFoundWithTheRest = e.find() == Find.ALL && e.cards() != null
+        // "All cards with the same name as that card", that card being in the graveyard searched, and "all cards with
+        // that name", the chosen one: the graveyard's are found with the others as one exile, whatever is picked from
+        // the hidden zones.
+        boolean graveyardFoundWithTheRest = e.find() == Find.ALL && e.permanents() == null
                 && e.zones().contains(Zone.GRAVEYARD);
         for (Zone zone : List.of(Zone.HAND, Zone.GRAVEYARD, Zone.LIBRARY)) {
             if (!e.zones().contains(zone)) {
@@ -165,7 +168,7 @@ public class ExileCardsWithSameNameEffectHandler implements NormalEffectHandlerB
             return;
         }
         if (!offered.isEmpty()) {
-            playerInputService.beginSameNameExileChoice(gameData, searcherId, offered, playerId,
+            playerInputService.beginSameNameExileChoice(gameData, searcherId, offered, e.maxCount(), playerId,
                     String.join(", ", names), sourceId, new SearchedZones(searchedZones, libraryTopCards), shuffles,
                     graveyardFoundWithTheRest);
             return;

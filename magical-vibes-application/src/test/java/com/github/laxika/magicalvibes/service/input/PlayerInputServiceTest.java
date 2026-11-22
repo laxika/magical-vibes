@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PreventDividedDamageEffect;
@@ -941,12 +941,17 @@ class PlayerInputServiceTest {
     }
 
     // ========================================================================
-    // beginSpellCardNameChoice
+    // beginCardNameAtResolutionChoice
     // ========================================================================
 
     @Nested
-    @DisplayName("beginSpellCardNameChoice")
-    class BeginSpellCardNameChoice {
+    @DisplayName("beginCardNameAtResolutionChoice")
+    class BeginCardNameAtResolutionChoice {
+
+        private void beginNameChoice(ChooseCardNameAtResolutionEffect choice) {
+            svc.beginCardNameAtResolutionChoice(gd, new ChoiceContext.ChooseCardNameAtResolutionChoice(
+                    createCard("Memoricide", CardType.SORCERY), PLAYER1_ID, null, choice, null));
+        }
 
         @Test
         @DisplayName("Stores choosingPlayerId as the decision owner")
@@ -954,31 +959,9 @@ class PlayerInputServiceTest {
             Card card = createCreature("Bear");
             gd.playerHands.get(PLAYER2_ID).add(card);
 
-            svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(CardType.LAND), null);
+            beginNameChoice(ChooseCardNameAtResolutionEffect.excluding(CardType.LAND));
 
             assertThat(gd.interaction.activeInteraction().decidingPlayerId()).isEqualTo(PLAYER1_ID);
-        }
-
-        @Test
-        @DisplayName("Stores ExileByNameChoice context")
-        void storesContext() {
-            svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(CardType.LAND), null);
-
-            assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context()).isInstanceOf(ChoiceContext.ExileByNameChoice.class);
-            ChoiceContext.ExileByNameChoice ctx = (ChoiceContext.ExileByNameChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
-            assertThat(ctx.targetPlayerId()).isEqualTo(PLAYER2_ID);
-            assertThat(ctx.controllerId()).isEqualTo(PLAYER1_ID);
-        }
-
-        @Test
-        @DisplayName("Stores a finite exile cap and hand-exile draw rider")
-        void storesFiniteExileOptions() {
-            svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(), null, 4, true);
-
-            ChoiceContext.ExileByNameChoice ctx =
-                    (ChoiceContext.ExileByNameChoice) gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
-            assertThat(ctx.maxCount()).isEqualTo(4);
-            assertThat(ctx.drawForEachHandCardExiled()).isTrue();
         }
 
         @Test
@@ -989,7 +972,7 @@ class PlayerInputServiceTest {
             gd.playerHands.get(PLAYER1_ID).add(artifact);
             gd.playerHands.get(PLAYER1_ID).add(creature);
 
-            svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(), CardType.ARTIFACT);
+            beginNameChoice(new ChooseCardNameAtResolutionEffect(CardType.ARTIFACT));
 
             InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).contains("Sol Ring");
@@ -1004,19 +987,13 @@ class PlayerInputServiceTest {
             Card nonbasicLand = createCard("Bojuka Bog", CardType.LAND);
             Card creature = createCreature("Bear");
             gd.playerHands.get(PLAYER1_ID).addAll(List.of(basicLand, nonbasicLand, creature));
-            CreateTokenEffect tokenTemplate = CreateTokenEffect.blackZombie(1);
 
-            svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(), null,
-                    Integer.MAX_VALUE, false, true, tokenTemplate, "M21");
+            beginNameChoice(ChooseCardNameAtResolutionEffect.otherThanABasicLand());
 
             InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.options()).contains("Bojuka Bog", "Bear");
             assertThat(msg.options()).doesNotContain("Plains");
             assertThat(msg.prompt()).isEqualTo("Choose a card name other than a basic land card name.");
-            ChoiceContext.ExileByNameChoice ctx = (ChoiceContext.ExileByNameChoice)
-                    gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context();
-            assertThat(ctx.tokenTemplate()).isEqualTo(tokenTemplate);
-            assertThat(ctx.sourceSetCode()).isEqualTo("M21");
         }
     }
 

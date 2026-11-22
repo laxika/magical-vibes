@@ -3,16 +3,18 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.f.FireLordSozin;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAndExileFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
-import java.util.List;
 
 @CardRegistration(set = "TLA", collectorNumber = "117")
 public class TheRiseOfSozin extends Card {
@@ -27,7 +29,8 @@ public class TheRiseOfSozin extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent."
         )).addTrigger(Triggers.chapter(2),
-                new ChooseCardNameAndExileFromZonesEffect(List.of(), 4));
+                SequenceEffect.of(new ChooseCardNameAtResolutionEffect(),
+                        ExileCardsWithSameNameEffect.upToWithChosenName(4, Subjects.targetPlayer())));
 
         addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect(true));
     }

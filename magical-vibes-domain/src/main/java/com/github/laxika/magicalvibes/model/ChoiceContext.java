@@ -1461,38 +1461,6 @@ public sealed interface ChoiceContext {
     /** Choosing a basic land type for a plain landwalk grant until end of turn. */
     record LandwalkGrantChoice(UUID targetId) implements ChoiceContext {}
 
-    record ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes,
-                              int maxCount, boolean drawForHandExiled,
-                              com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
-                              String sourceSetCode, boolean findAllCards) implements ChoiceContext {
-
-        public ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes,
-                                 int maxCount, boolean drawForHandExiled,
-                                 com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
-                                 String sourceSetCode) {
-            this(targetPlayerId, controllerId, excludedTypes, maxCount, drawForHandExiled, tokenTemplate,
-                    sourceSetCode, false);
-        }
-
-        public ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes) {
-            this(targetPlayerId, controllerId, excludedTypes, Integer.MAX_VALUE, false, null, null);
-        }
-
-        public ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes,
-                                 boolean drawForHandExiled) {
-            this(targetPlayerId, controllerId, excludedTypes, Integer.MAX_VALUE, drawForHandExiled, null, null);
-        }
-
-        public ExileByNameChoice(UUID targetPlayerId, UUID controllerId, List<CardType> excludedTypes,
-                                 int maxCount, boolean drawForHandExiled) {
-            this(targetPlayerId, controllerId, excludedTypes, maxCount, drawForHandExiled, null, null);
-        }
-
-        public boolean drawForEachHandCardExiled() {
-            return drawForHandExiled;
-        }
-    }
-
     /**
      * @param followUpSubtypeChoice when non-null, the source's creature-subtype choice that is made right after the
      *                              name is chosen (an "as this becomes attached" choice pair that is not put on
@@ -1505,15 +1473,6 @@ public sealed interface ChoiceContext {
 
     record CreateTokenWithChosenNameChoice(Card sourceCard, UUID controllerId, CreateTokenEffect tokenTemplate,
                                            int amount, int power, int toughness) implements ChoiceContext {}
-
-    /**
-     * The controller chose a card name; {@code targetPlayerId} reveals their hand, the source deals
-     * {@code damagePerCard} damage per revealed copy, then every copy in their hand/graveyard/library
-     * is exiled and they shuffle (Thought Hemorrhage). {@code sourceCard} attributes the damage.
-     */
-    record RevealHandDamageAndExileByNameChoice(UUID targetPlayerId, UUID controllerId,
-                                                List<CardType> excludedTypes, int damagePerCard,
-                                                Card sourceCard) implements ChoiceContext {}
 
     /** Assembly Hall: choose the name of a creature card currently in your hand to reveal. */
     record AssemblyHallCreatureCardChoice(UUID controllerId) implements ChoiceContext {}
@@ -1969,26 +1928,6 @@ public sealed interface ChoiceContext {
     }
 
     /**
-     * Comply / Academic Probation: the controller names a card; until their next turn, their
-     * opponents can't cast spells with that name. Resolving it makes a floating effect on each opponent that
-     * ends at the start of the controller's next turn.
-     */
-    record OpponentsCantCastNamedSpellsUntilNextTurnChoice(UUID controllerId,
-                                                           List<CardType> excludedTypes)
-            implements ChoiceContext {
-
-        public OpponentsCantCastNamedSpellsUntilNextTurnChoice {
-            excludedTypes = List.copyOf(excludedTypes);
-        }
-    }
-
-    /**
-     * Conjurer's Ban: the controller names a card; until their next turn, spells with that name
-     * can't be cast and lands with that name can't be played.
-     */
-    record SpellsAndLandsCantBePlayedUntilNextTurnChoice(UUID controllerId) implements ChoiceContext {}
-
-    /**
      * The target player names a card, then reveals the top card of their library. If it matches
      * the named card it goes to their hand; otherwise it goes to their graveyard and the source
      * ({@code sourcePermanentId}) deals {@code damageOnMiss} damage to them ({@code 0} for no
@@ -1999,18 +1938,6 @@ public sealed interface ChoiceContext {
         public TargetPlayerNameCardRevealTopChoice(UUID controllerId, UUID targetPlayerId,
                                                    UUID sourcePermanentId, int damageOnMiss) {
             this(controllerId, targetPlayerId, sourcePermanentId, damageOnMiss, null);
-        }
-    }
-
-    record ChooseCardNameForDelayedCreatureCombatDamageChoice(
-            UUID controllerId,
-            List<CardEffect> effects,
-            Card sourceCard,
-            UUID sourcePermanentId
-    ) implements ChoiceContext {
-
-        public ChooseCardNameForDelayedCreatureCombatDamageChoice {
-            effects = List.copyOf(effects);
         }
     }
 

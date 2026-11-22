@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOpponentsCantCastUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CantPlayChosenNameUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
@@ -214,9 +214,9 @@ class AcademicProbationTest extends BaseCardTest {
     }
 
     private List<String> lockedNames(com.github.laxika.magicalvibes.model.Player opponent) {
-        return gd.floatingEffectsOnPlayer(opponent.getId(), ChooseCardNameOpponentsCantCastUntilNextTurnEffect.class)
+        return gd.floatingEffectsOnPlayer(opponent.getId(), CantPlayChosenNameUntilNextTurnEffect.class)
                 .stream()
-                .map(fe -> ((ChooseCardNameOpponentsCantCastUntilNextTurnEffect) fe.effect()).cardName())
+                .map(fe -> ((CantPlayChosenNameUntilNextTurnEffect) fe.effect()).cardName())
                 .toList();
     }
 }

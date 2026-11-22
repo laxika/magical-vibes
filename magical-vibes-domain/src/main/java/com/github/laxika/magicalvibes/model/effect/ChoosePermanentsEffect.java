@@ -9,6 +9,9 @@ import java.util.Objects;
  * "Choose a creature an opponent controls", "choose up to two creatures", "choose any number of creatures with
  * different powers": as the effect resolves its controller chooses among the permanents {@code candidates} names
  * (CR 608.2d); none of them is targeted. With no more candidates than must be chosen, all of them are, unasked.
+ * "For each opponent, choose a nonland permanent that player controls" is {@link #oneForEach}: one choice for each
+ * of those players in turn, among the candidates that player controls. "One of them chosen at random" is
+ * {@link #atRandom}: nobody is asked.
  *
  * <p>A CHOOSE step that pauses at its end on the choice: {@code Subjects.thisWay(StepKind.CHOOSE)} is what was chosen,
  * for the steps after it. A source that chose one permanent also keeps it as its chosen permanent ("when the chosen
@@ -19,9 +22,12 @@ import java.util.Objects;
  * @param maximum    how many may be chosen; {@code null} for any number
  * @param different  the quality no two of the chosen share, or {@code null}; only with no minimum
  * @param label      what is chosen, for the prompt ("up to two creatures")
+ * @param oneForEach for each of whom one that player controls is chosen; {@code null} for one choice among all
+ * @param random     whether they are chosen at random, {@code maximum} of them
  */
 public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount minimum, DynamicAmount maximum,
-                                     Different different, String label) implements CardEffect {
+                                     Different different, String label, PlayerSubject oneForEach,
+                                     boolean random) implements CardEffect {
 
     /** "With different powers", "with different mana values". */
     public enum Different {
@@ -49,6 +55,31 @@ public record ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount 
         if (different != null && !minimum.equals(new Fixed(0))) {
             throw new IllegalArgumentException("Permanents with different qualities are any number: " + minimum);
         }
+        if (oneForEach != null && (different != null || random || !minimum.equals(new Fixed(1))
+                || !new Fixed(1).equals(maximum) || oneForEach.declaresTarget())) {
+            throw new IllegalArgumentException("One is chosen for each of players who are no target: " + oneForEach);
+        }
+        if (random && (different != null || maximum == null)) {
+            throw new IllegalArgumentException("A number of permanents is chosen at random: " + maximum);
+        }
+    }
+
+    /** The controller's one choice among all the candidates. */
+    public ChoosePermanentsEffect(PermanentSubject candidates, DynamicAmount minimum, DynamicAmount maximum,
+                                  Different different, String label) {
+        this(candidates, minimum, maximum, different, label, null, false);
+    }
+
+    /** "For each [of players], choose [one of candidates] that player controls." */
+    public static ChoosePermanentsEffect oneForEach(PlayerSubject players, PermanentSubject candidates,
+                                                    String label) {
+        return new ChoosePermanentsEffect(candidates, new Fixed(1), new Fixed(1), null, label,
+                Objects.requireNonNull(players, "players"), false);
+    }
+
+    /** "[Count] of [candidates] chosen at random." */
+    public static ChoosePermanentsEffect atRandom(int count, PermanentSubject candidates, String label) {
+        return new ChoosePermanentsEffect(candidates, new Fixed(count), new Fixed(count), null, label, null, true);
     }
 
     /** "Choose [count] [candidates]." */

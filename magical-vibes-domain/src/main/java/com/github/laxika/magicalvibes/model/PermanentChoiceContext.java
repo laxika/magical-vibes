@@ -75,9 +75,20 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** {@code ChoosePermanentsEffect} of exactly one: the chosen permanent becomes the resolving entry's CHOOSE step. */
-    record RecordChosenPermanents(com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect effect)
-            implements PermanentChoiceContext {}
+    /**
+     * {@code ChoosePermanentsEffect} of exactly one: the chosen permanent becomes the resolving entry's CHOOSE step.
+     * Of one for each of several players, {@code chosenBefore} is what the choices before this one chose and
+     * {@code laterChoices} what each choice after it offers.
+     */
+    record RecordChosenPermanents(com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect effect,
+                                  java.util.List<UUID> chosenBefore,
+                                  java.util.List<java.util.List<UUID>> laterChoices)
+            implements PermanentChoiceContext {
+
+        public RecordChosenPermanents(com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect effect) {
+            this(effect, java.util.List.of(), java.util.List.of());
+        }
+    }
 
     /** {@code ChoosePlayerEffect}: the chosen player becomes the resolving entry's CHOOSE step. */
     record RecordChosenPlayer(java.util.List<UUID> playerIds) implements PermanentChoiceContext {}
@@ -480,16 +491,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** Ultimate Magic: Meteor: the controller chooses an artifact or land for each opponent. */
-    record EachOpponentChoosesPermanentToDestroy(
-            UUID controllerId,
-            Card sourceCard,
-            UUID opponentId,
-            List<UUID> remainingOpponentIds,
-            List<UUID> chosenPermanentIds,
-            PermanentPredicate filter
-    ) implements PermanentChoiceContext {}
-
     /** Summon: Valefor: each opponent chooses among their greatest-mana-value creatures. */
     record EachOpponentChoosesGreatestManaValueCreatureToReturnToHand(
             UUID controllerId,
@@ -505,15 +506,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             Card sourceCard,
             UUID choosingPlayerId,
             List<UUID> remainingChooserIds,
-            List<UUID> chosenPermanentIds
-    ) implements PermanentChoiceContext {}
-
-    /** Chaos Defiler: the controller chooses one nonland permanent for an opponent. */
-    record ChooseNonlandPermanentForEachOpponentThenDestroyOneAtRandom(
-            UUID controllerId,
-            Card sourceCard,
-            UUID opponentId,
-            List<UUID> remainingOpponentIds,
             List<UUID> chosenPermanentIds
     ) implements PermanentChoiceContext {}
 

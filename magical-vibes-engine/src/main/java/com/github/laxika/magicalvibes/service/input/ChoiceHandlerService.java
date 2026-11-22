@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfDefenderContro
 
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.AllLandsProduceChosenColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOpponentsCantCastUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.rules.CounterChangeEvent;
@@ -58,9 +57,6 @@ import com.github.laxika.magicalvibes.model.amount.DevotionToColor;
 import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
-import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
-import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.filter.PermanentNamedPredicate;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TextChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
@@ -71,7 +67,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.NamedSpellsAndLandsCantBePlayedUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
@@ -133,7 +128,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.RequiredArgsConstructor;
@@ -332,18 +326,13 @@ public class ChoiceHandlerService {
     public static boolean isCardNameChoice(ChoiceContext context) {
         return context instanceof ChoiceContext.CardNameChoice
                 || context instanceof ChoiceContext.LiarsPendulumChoice pendulum && pendulum.chosenName() == null
-                || context instanceof ChoiceContext.SpellsAndLandsCantBePlayedUntilNextTurnChoice
                 || context instanceof ChoiceContext.DualCardNameChoice
-                || context instanceof ChoiceContext.ExileByNameChoice
                 || context instanceof ChoiceContext.ChooseCardNameAtResolutionChoice
                 || context instanceof ChoiceContext.CreateTokenWithChosenNameChoice
-                || context instanceof ChoiceContext.RevealHandDamageAndExileByNameChoice
                 || context instanceof ChoiceContext.RevealLibraryNameGuessChoice
                 || context instanceof ChoiceContext.EachPlayerCardNameRevealChoice
                 || context instanceof ChoiceContext.SphinxAmbassadorNameChoice
-                || context instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice
-                || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice
-                || context instanceof ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice;
+                || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice;
     }
 
     public void handleListChoice(GameData gameData, Player player, String colorName) {
@@ -1019,14 +1008,6 @@ public class ChoiceHandlerService {
             return;
         }
 
-        if (colorChoice.context() instanceof ChoiceContext.ExileByNameChoice ctx) {
-            handleExileByNameChoice(gameData, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.RevealHandDamageAndExileByNameChoice ctx) {
-            handleRevealHandDamageAndExileByNameChoice(gameData, colorName, ctx);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.AssemblyHallCreatureCardChoice ctx) {
             handleAssemblyHallCreatureCardChoice(gameData, colorName, ctx);
             return;
@@ -1285,20 +1266,8 @@ public class ChoiceHandlerService {
             handleBecomeChosenColorsChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice ctx) {
-            handleOpponentsCantCastNamedSpellsUntilNextTurnChoice(gameData, player, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.SpellsAndLandsCantBePlayedUntilNextTurnChoice ctx) {
-            handleSpellsAndLandsCantBePlayedUntilNextTurnChoice(gameData, player, colorName, ctx);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx) {
             handleTargetPlayerNameCardRevealTopChoice(gameData, player, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice ctx) {
-            handleChooseCardNameForDelayedCreatureCombatDamageChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.AdjustCounterKindChoice ctx) {
@@ -1773,9 +1742,6 @@ public class ChoiceHandlerService {
                 offeredOnly = named.choice().requiredType() != null || named.choice().notBasicLandName();
             }
             case ChoiceContext.DualCardNameChoice ignored -> offeredOnly = true;
-            case ChoiceContext.ExileByNameChoice ignored -> offeredOnly = true;
-            case ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice named -> excluded = named.excludedTypes();
-            case ChoiceContext.RevealHandDamageAndExileByNameChoice named -> excluded = named.excludedTypes();
             case ChoiceContext.RevealLibraryNameGuessChoice named -> excluded = named.excludedTypes();
             default -> {
             }
@@ -7097,49 +7063,6 @@ public class ChoiceHandlerService {
         }
     }
 
-    private void handleOpponentsCantCastNamedSpellsUntilNextTurnChoice(GameData gameData, Player player,
-                                                                       String cardName,
-                                                                       ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
-        UUID controllerId = ctx.controllerId();
-        for (UUID opponentId : gameData.orderedPlayerIds) {
-            if (!opponentId.equals(controllerId)) {
-                gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer("Named spell lock", null, controllerId,
-                        new ChooseCardNameOpponentsCantCastUntilNextTurnEffect(ctx.excludedTypes(), cardName),
-                        opponentId, Duration.UNTIL_YOUR_NEXT_TURN));
-            }
-        }
-
-        gameLogService.append(gameData, GameLog.text(
-                player.getUsername() + " chooses \"" + cardName + "\". Opponents can't cast spells named "
-                        + cardName + " until " + gameData.playerIdToName.get(controllerId) + "'s next turn."));
-        log.info("Game {} - {} chooses card name \"{}\" (opponents can't cast until next turn)",
-                gameData.id, player.getUsername(), cardName);
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleSpellsAndLandsCantBePlayedUntilNextTurnChoice(GameData gameData, Player player,
-                                                                       String cardName,
-                                                                       ChoiceContext.SpellsAndLandsCantBePlayedUntilNextTurnChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
-        UUID controllerId = ctx.controllerId();
-        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer("Named spell and land lock", null, controllerId,
-                new NamedSpellsAndLandsCantBePlayedUntilNextTurnEffect(cardName), null,
-                Duration.UNTIL_YOUR_NEXT_TURN));
-
-        gameLogService.append(gameData, GameLog.text(
-                player.getUsername() + " chooses \"" + cardName
-                        + "\". Spells and lands named " + cardName + " can't be cast or played until "
-                        + gameData.playerIdToName.get(controllerId) + "'s next turn."));
-        log.info("Game {} - {} chooses card name \"{}\" (spells and lands can't be played until next turn)",
-                gameData.id, player.getUsername(), cardName);
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
     private void handleSpellColorChoice(GameData gameData, Player player, String colorName) {
         CardColor color = CardColor.valueOf(colorName);
 
@@ -7233,21 +7156,6 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleChooseCardNameForDelayedCreatureCombatDamageChoice(
-            GameData gameData, Player player, String cardName,
-            ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-        // "Whenever a creature with the chosen name deals combat damage to a player this turn": a delayed ability
-        // (CR 603.7a) whose trigger names the creature by the name chosen as it was made.
-        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.thisTurn(
-                ctx.controllerId(), ctx.sourceCard(),
-                new TriggeredAbility(Triggers.creatureDealsCombatDamageToPlayer()
-                        .withFilter(new PermanentNamedPredicate(cardName)),
-                        ctx.effects().toArray(CardEffect[]::new)), ctx.sourcePermanentId()));
-        gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses \"" + cardName + "\"."));
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
     private void dealRevealMissDamage(GameData gameData, ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx,
                                       UUID targetPlayerId) {
         if (ctx.damageOnMiss() <= 0) return;
@@ -7266,171 +7174,6 @@ public class ChoiceHandlerService {
                 ctx.sourcePermanentId());
 
         damageSupport.dealDamageToPlayer(gameData, damageEntry, targetPlayerId, ctx.damageOnMiss());
-    }
-
-    private void handleExileByNameChoice(GameData gameData, String cardName, ChoiceContext.ExileByNameChoice ctx) {
-        PendingInteraction.ColorChoice choice =
-                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        if (choice == null || !choice.options().contains(cardName)) {
-            throw new IllegalArgumentException("Invalid card name: " + cardName);
-        }
-        gameData.interaction.clearAwaitingInput();
-
-        UUID targetPlayerId = ctx.targetPlayerId();
-        UUID controllerId = ctx.controllerId();
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
-
-        String choiceLog = controllerName + " chooses \"" + cardName + "\".";
-        gameLogService.append(gameData, GameLog.text(choiceLog));
-        log.info("Game {} - {} chooses card name \"{}\" for exile from zones", gameData.id, controllerName, cardName);
-
-        // Collect all matching cards across hand, graveyard, and library
-        List<Card> matchingCards = new ArrayList<>();
-
-        List<Card> hand = gameData.playerHands.get(targetPlayerId);
-        if (hand != null) {
-            matchingCards.addAll(hand.stream().filter(c -> c.hasName(cardName)).toList());
-        }
-
-        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
-        if (graveyard != null) {
-            matchingCards.addAll(graveyard.stream().filter(c -> c.hasName(cardName)).toList());
-        }
-
-        List<Card> library = gameData.playerDecks.get(targetPlayerId);
-        if (library != null) {
-            matchingCards.addAll(library.stream().filter(c -> c.hasName(cardName)).toList());
-        }
-
-        if (matchingCards.isEmpty()) {
-            // No matching cards — just shuffle library and resolve
-            if (library != null) {
-                LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-            }
-
-            String exileLog = controllerName + " exiles 0 cards named \"" + cardName + "\" from " + targetName
-                    + "'s hand, graveyard, and library. " + targetName + " shuffles their library.";
-            gameLogService.append(gameData, GameLog.text(exileLog));
-            log.info("Game {} - {} found 0 cards named \"{}\" in {}'s zones", gameData.id, controllerName, cardName, targetName);
-
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        // Present matching cards for "any number" selection; the searcher sees the whole searched zones.
-        // An unbounded count makes graveyard copies mandatory, which only "all cards" wording requires (CR 701.23b).
-        playerInputService.beginMultiZoneExileChoice(gameData, controllerId, matchingCards,
-                ctx.findAllCards() ? Integer.MAX_VALUE : Math.min(ctx.maxCount(), matchingCards.size()),
-                targetPlayerId, cardName, ctx.drawForHandExiled(), ctx.tokenTemplate(), ctx.sourceSetCode(), true);
-        inputCompletionService.publishStateAfterInput(gameData);
-    }
-
-    /**
-     * Thought Hemorrhage: the controller named a card; the target player reveals their hand, the
-     * source deals {@code damagePerCard} damage per copy revealed from that hand, then every copy in
-     * their hand, graveyard, and library is exiled (mandatory) and they shuffle.
-     */
-    private void handleRevealHandDamageAndExileByNameChoice(GameData gameData, String cardName,
-            ChoiceContext.RevealHandDamageAndExileByNameChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
-        UUID targetPlayerId = ctx.targetPlayerId();
-        UUID controllerId = ctx.controllerId();
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
-
-        gameLogService.append(gameData, GameLog.text(controllerName + " chooses \"" + cardName + "\"."));
-        log.info("Game {} - {} chooses card name \"{}\" (reveal hand, damage, exile)", gameData.id, controllerName, cardName);
-
-        // Target player reveals their hand.
-        List<Card> hand = gameData.playerHands.get(targetPlayerId);
-        if (hand == null || hand.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(targetName + " reveals an empty hand."));
-        } else {
-            gameLogService.append(gameData,
-                    appendCards(GameLog.builder().text(targetName + " reveals their hand: "), hand).text(".").build());
-        }
-
-        // Damage = damagePerCard for each copy with the chosen name revealed from hand this way.
-        long copiesInHand = hand == null ? 0 : hand.stream().filter(c -> c.hasName(cardName)).count();
-        int damage = (int) (copiesInHand * ctx.damagePerCard());
-        if (damage > 0) {
-            StackEntry damageEntry = new StackEntry(
-                    StackEntryType.SORCERY_SPELL, ctx.sourceCard(), controllerId,
-                    ctx.sourceCard().getName(), List.of(), targetPlayerId, (UUID) null);
-            damageSupport.dealDamageToPlayer(gameData, damageEntry, targetPlayerId, damage);
-        }
-
-        // CR 701.23b: graveyard copies are found mandatorily, while the controller may choose any number
-        // of the hand and library copies to find. Without hidden-zone copies, nothing is left to choose.
-        boolean hiddenZoneCopies = (hand != null && hand.stream().anyMatch(c -> c.hasName(cardName)))
-                || (gameData.playerDecks.get(targetPlayerId) != null
-                && gameData.playerDecks.get(targetPlayerId).stream().anyMatch(c -> c.hasName(cardName)));
-        if (hiddenZoneCopies) {
-            playerInputService.beginMultiZoneExileChoice(
-                    gameData, controllerId, collectMatchingCards(gameData, targetPlayerId, cardName),
-                    targetPlayerId, cardName, false, (UUID) null, true);
-            inputCompletionService.publishStateAfterInput(gameData);
-            return;
-        }
-
-        // Exile the graveyard copies (mandatory) and any hand or library copies, then shuffle.
-        int exiledCount = 0;
-
-        if (hand != null) {
-            List<Card> toExile = hand.stream().filter(c -> c.hasName(cardName)).toList();
-            hand.removeAll(toExile);
-            toExile.forEach(card -> gameData.addToExile(targetPlayerId, card));
-            exiledCount += toExile.size();
-        }
-
-        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
-        if (graveyard != null) {
-            List<Card> toExile = graveyard.stream().filter(c -> c.hasName(cardName)).toList();
-            graveyard.removeAll(toExile);
-            toExile.forEach(card -> gameData.addToExile(targetPlayerId, card));
-            if (!toExile.isEmpty()) {
-                graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, toExile);
-            }
-            exiledCount += toExile.size();
-        }
-
-        List<Card> library = gameData.playerDecks.get(targetPlayerId);
-        if (library != null) {
-            List<Card> toExile = library.stream().filter(c -> c.hasName(cardName)).toList();
-            library.removeAll(toExile);
-            toExile.forEach(card -> gameData.addToExile(targetPlayerId, card));
-            exiledCount += toExile.size();
-            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-        }
-
-        String exileLog = controllerName + " exiles " + exiledCount + " card" + (exiledCount != 1 ? "s" : "")
-                + " named \"" + cardName + "\" from " + targetName + "'s hand, graveyard, and library. "
-                + targetName + " shuffles their library.";
-        gameLogService.append(gameData, GameLog.text(exileLog));
-        log.info("Game {} - {} exiled {} card(s) named \"{}\" from {}'s zones and dealt {} damage",
-                gameData.id, controllerName, exiledCount, cardName, targetName, damage);
-
-        stateBasedActionService.performStateBasedActions(gameData);
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private List<Card> collectMatchingCards(GameData gameData, UUID targetPlayerId, String cardName) {
-        List<Card> matchingCards = new ArrayList<>();
-        List<Card> hand = gameData.playerHands.get(targetPlayerId);
-        List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
-        List<Card> library = gameData.playerDecks.get(targetPlayerId);
-        if (hand != null) {
-            matchingCards.addAll(hand.stream().filter(card -> card.hasName(cardName)).toList());
-        }
-        if (graveyard != null) {
-            matchingCards.addAll(graveyard.stream().filter(card -> card.hasName(cardName)).toList());
-        }
-        if (library != null) {
-            matchingCards.addAll(library.stream().filter(card -> card.hasName(cardName)).toList());
-        }
-        return matchingCards;
     }
 
     private void handleAssemblyHallCreatureCardChoice(GameData gameData, String cardName,

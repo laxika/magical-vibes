@@ -43,12 +43,14 @@ final class ChosenPermanentsAiChoice {
             List<Permanent> side = playerId.equals(ctx.aiPlayerId()) ? own : others;
             battlefield.stream().filter(permanent -> validIds.contains(permanent.getId())).forEach(side::add);
         });
-        Comparator<Permanent> byPower = Comparator.comparingInt(
-                permanent -> ctx.gameQueryService().getEffectivePower(gameData, permanent));
+        // By power, then by mana value among those without any (an artifact, a land); a face-down one's is 0.
+        Comparator<Permanent> byStrength = Comparator
+                .<Permanent>comparingInt(permanent -> ctx.gameQueryService().getEffectivePower(gameData, permanent))
+                .thenComparingInt(permanent -> ctx.gameQueryService().getPermanentManaValue(permanent));
         List<Permanent> preferred = favorsChosen ? own : others;
         List<Permanent> rest = favorsChosen ? others : own;
-        preferred.sort(byPower.reversed());
-        rest.sort(byPower);
+        preferred.sort(byStrength.reversed());
+        rest.sort(byStrength);
 
         List<UUID> chosen = new ArrayList<>();
         Set<Integer> values = new HashSet<>();

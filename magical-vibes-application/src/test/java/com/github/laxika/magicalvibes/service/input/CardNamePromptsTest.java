@@ -12,12 +12,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameForDelayedCreatureCombatDamageEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOpponentsCantCastUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameSpellsAndLandsCantBePlayedUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenWithChosenNameEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerNameCardRevealTopEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerNameCardRevealTopEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -51,12 +48,8 @@ class CardNamePromptsTest extends BaseCardTest {
                 .beginDualCardNameChoice(t.gd,
                 new ChoiceContext.DualCardNameChoice(
                         unlistedCard("Source"), t.player1.getId(), t.player1.getId(), null)))),
-        EXILE_BY_NAME(t -> t.harness.inMutationScope(() -> t.harness.getPlayerInputService()
-                .beginSpellCardNameChoice(t.gd,
-                t.player1.getId(), t.player2.getId(), List.of(CardType.LAND), null))),
-        DAMAGE_AND_EXILE_BY_NAME(t -> t.harness.inMutationScope(() -> t.harness.getPlayerInputService()
-                .beginRevealHandDamageAndExileCardNameChoice(
-                t.gd, t.player1.getId(), t.player2.getId(), List.of(CardType.LAND), 3, unlistedCard("Source")))),
+        NAMED_AT_RESOLUTION_OF_ANY_CARD(t -> t.resolve(new ChooseCardNameAtResolutionEffect())),
+        NAMED_AT_RESOLUTION(t -> t.resolve(ChooseCardNameAtResolutionEffect.excluding(CardType.LAND))),
         LIBRARY_NAME_GUESS(t -> t.harness.inMutationScope(() -> t.harness.getPlayerInputService()
                 .beginRevealLibraryNameGuessChoice(
                 t.gd, t.player1.getId(), t.player2.getId(), List.of(CardType.LAND), 8, unlistedCard("Source")))),
@@ -66,12 +59,6 @@ class CardNamePromptsTest extends BaseCardTest {
         NAME_FOR_A_GUESS(t -> t.harness.inMutationScope(() -> t.harness.getPlayerInputService()
                 .beginLiarsPendulumNameChoice(
                 t.gd, t.player1.getId(), t.player2.getId(), null, unlistedCard("Source")))),
-        OPPONENTS_CANT_CAST(t -> t.resolve(new ChooseCardNameOpponentsCantCastUntilNextTurnEffect())),
-        OPPONENTS_CANT_CAST_NONLAND(t -> t.resolve(
-                new ChooseCardNameOpponentsCantCastUntilNextTurnEffect(List.of(CardType.LAND)))),
-        CANT_BE_CAST_OR_PLAYED(t -> t.resolve(new ChooseCardNameSpellsAndLandsCantBePlayedUntilNextTurnEffect())),
-        NAMED_CREATURE_TRIGGER(t -> t.resolve(
-                new ChooseCardNameForDelayedCreatureCombatDamageEffect(List.of(new DrawCardEffect())))),
         NAMED_TOKEN(t -> t.resolve(new CreateTokenWithChosenNameEffect(
                 new CreateTokenEffect("Dog", 1, 1, CardColor.WHITE, List.of(CardSubtype.DOG), Set.of(), Set.of())))),
         TARGET_PLAYER_NAMES(t -> t.resolveTargeting(new TargetPlayerNameCardRevealTopEffect(0), t.player1.getId())),
@@ -124,7 +111,7 @@ class CardNamePromptsTest extends BaseCardTest {
         token.setToken(true);
         harness.addToBattlefield(player2, token);
 
-        resolve(new ChooseCardNameSpellsAndLandsCantBePlayedUntilNextTurnEffect());
+        resolve(new ChooseCardNameAtResolutionEffect());
 
         assertThatThrownBy(() -> harness.handleListChoice(player1, "Only A Token's Name"))
                 .isInstanceOf(IllegalArgumentException.class);

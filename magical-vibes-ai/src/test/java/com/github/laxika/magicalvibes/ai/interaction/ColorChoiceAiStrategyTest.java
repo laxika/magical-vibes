@@ -12,9 +12,11 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CantPlayChosenNameUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
@@ -382,6 +384,17 @@ class ColorChoiceAiStrategyTest {
     }
 
     @Test
+    @DisplayName("A dig names what the library holds most of, not the card its unknown order puts on top")
+    void digDoesNotReadTheLibrarysOrder() {
+        addOpponent();
+        gameData.playerDecks.put(aiPlayerId, new ArrayList<>(List.of(namedCard("In Library"), namedCard("Own Twice"),
+                namedCard("Own Twice"))));
+
+        assertThat(nameChosenFor(null, new RevealCardsFromTopUntilEffect(
+                new CardHasNameChosenThisResolutionPredicate()))).isEqualTo("Own Twice");
+    }
+
+    @Test
     @DisplayName("Free-form name guess falls back to another visible card when its pick can't be chosen")
     void freeFormNameGuessAvoidsUnchoosableName() {
         Card glimpse = mock(Card.class);
@@ -430,7 +443,7 @@ class ColorChoiceAiStrategyTest {
         UUID opponentId = addOpponent();
         hideSecretAndShowSeen(opponentId);
 
-        assertThat(nameAnswered(new ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice(aiPlayerId, List.of()))).isEqualTo("Seen");
+        assertThat(nameChosenFor(null, CantPlayChosenNameUntilNextTurnEffect.opponentsCantCast())).isEqualTo("Seen");
     }
 
     @Test
@@ -439,7 +452,8 @@ class ColorChoiceAiStrategyTest {
         UUID opponentId = addOpponent();
         hideSecretAndShowSeen(opponentId);
 
-        assertThat(nameAnswered(new ChoiceContext.ExileByNameChoice(opponentId, aiPlayerId, List.of(), 4, false, null, null, false))).isEqualTo("Seen");
+        assertThat(nameChosenFor(opponentId, ExileCardsWithSameNameEffect.upToWithChosenName(4, Subjects.targetPlayer())))
+                .isEqualTo("Seen");
     }
 
     @Test
@@ -448,7 +462,8 @@ class ColorChoiceAiStrategyTest {
         UUID opponentId = addOpponent();
         hideSecretAndShowSeen(opponentId);
 
-        assertThat(nameAnswered(new ChoiceContext.RevealHandDamageAndExileByNameChoice(opponentId, aiPlayerId, List.of(), 3, namedCard("Source")))).isEqualTo("Seen");
+        assertThat(nameChosenFor(opponentId, ExileCardsWithSameNameEffect.allWithChosenName(Subjects.targetPlayer())))
+                .isEqualTo("Seen");
     }
 
     private UUID addOpponent() {

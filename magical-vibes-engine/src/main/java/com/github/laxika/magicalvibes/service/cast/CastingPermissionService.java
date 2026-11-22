@@ -1,12 +1,11 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.effect.CantPlayChosenNameUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayFaceUpCardsFromExileThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOpponentsCantCastUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.NamedSpellsAndLandsCantBePlayedUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerLibraryTopPermissionForTargetPlayerUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeUntilNextTurnEffect;
@@ -948,10 +947,10 @@ public class CastingPermissionService {
                 }
             }
         }
-        // Comply: until the namer's next turn, their opponents can't cast spells with the chosen name(s).
+        // Comply, Conjurer's Ban: until the namer's next turn, those players, or nobody, can cast spells so named.
         for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPlayer(castingPlayerId,
-                ChooseCardNameOpponentsCantCastUntilNextTurnEffect.class)) {
-            forbidden.add(((ChooseCardNameOpponentsCantCastUntilNextTurnEffect) fe.effect()).cardName());
+                CantPlayChosenNameUntilNextTurnEffect.class)) {
+            forbidden.add(((CantPlayChosenNameUntilNextTurnEffect) fe.effect()).cardName());
         }
         // Reflector Mage: until its controller's next turn, the owner can't cast spells with the returned name.
         for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPlayer(castingPlayerId,
@@ -960,8 +959,11 @@ public class CastingPermissionService {
                     ((ReturnTargetCreatureToHandAndOwnerCantCastSameNameUntilNextTurnEffect) fe.effect()).cardName());
         }
         for (FloatingContinuousEffect fe : gameData.floatingEffectsOfTypes(
-                NamedSpellsAndLandsCantBePlayedUntilNextTurnEffect.class)) {
-            forbidden.add(((NamedSpellsAndLandsCantBePlayedUntilNextTurnEffect) fe.effect()).cardName());
+                CantPlayChosenNameUntilNextTurnEffect.class)) {
+            var rule = (CantPlayChosenNameUntilNextTurnEffect) fe.effect();
+            if (rule.landsToo()) {
+                forbidden.add(rule.cardName());
+            }
         }
         return forbidden;
     }
@@ -995,9 +997,9 @@ public class CastingPermissionService {
                 }
             }
         }
-        return gameData.floatingEffectsOfTypes(NamedSpellsAndLandsCantBePlayedUntilNextTurnEffect.class).stream()
-                .anyMatch(fe -> ((NamedSpellsAndLandsCantBePlayedUntilNextTurnEffect) fe.effect()).cardName()
-                        .equals(card.getName()));
+        return gameData.floatingEffectsOfTypes(CantPlayChosenNameUntilNextTurnEffect.class).stream()
+                .map(fe -> (CantPlayChosenNameUntilNextTurnEffect) fe.effect())
+                .anyMatch(rule -> rule.landsToo() && rule.cardName().equals(card.getName()));
     }
 
     private Set<String> getNontokenPermanentNames(GameData gameData) {

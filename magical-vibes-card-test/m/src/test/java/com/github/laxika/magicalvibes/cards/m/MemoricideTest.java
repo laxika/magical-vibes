@@ -21,7 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Memoricide.class, MoriokReaver.class, TurnAside.class})
+@CardUsed({Memoricide.class, MoriokReaver.class, TurnAside.class, MindlockOrb.class})
 class MemoricideTest extends BaseCardTest {
 
     @Test
@@ -211,8 +211,8 @@ class MemoricideTest extends BaseCardTest {
         // Library size unchanged (just shuffled)
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(deckSizeBefore);
 
-        // Log should mention 0 cards exiled
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("exiles 0 cards"));
+        // Log should mention the shuffle
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("shuffles their library"));
     }
 
     @Test
@@ -438,5 +438,27 @@ class MemoricideTest extends BaseCardTest {
         assertThat(harness.getConn2().getSentMessages())
                 .noneMatch(message -> message.contains("Choose any number") && message.contains("Turn Aside"));
         harness.handleMultipleCardsChosen(player1, List.of(matching.getId()));
+    }
+
+    @Test
+    @DisplayName("A library that can't be searched is neither offered nor exiled from")
+    void leavesOutLibraryThatCantBeSearched() {
+        harness.addToBattlefield(player2, new MindlockOrb());
+        Card handCopy = new MoriokReaver();
+        Card libraryCopy = new MoriokReaver();
+        harness.setHand(player2, List.of(handCopy));
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player2, List.of(libraryCopy));
+        harness.setHand(player1, List.of(new Memoricide()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleListChoice(player1, "Moriok Reaver");
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class).validCardIds())
+                .containsExactly(handCopy.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(handCopy.getId()));
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCopy);
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(handCopy);
     }
 }

@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 15: Exile, Each, Return, Put and Reveal closed; Choose partly done, 64 rare records left) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 16: Exile, Each, Return, Put and Reveal closed; Choose partly done, 43 rare records left) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -621,6 +621,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 13 | Run 12's defects (the prompts' minimum, face-down cards in prompts, Liege of the Tangle, Gruesome Encore), the Reveal family's shared parts with their ledgered rows, then its rare records | done, Reveal closed (120 rare records: 2 absorbed, 71 split, 22 blocked, 25 unique; with the other rows 80 records deleted; 96 card files changed; `RevealCardsFromTopUntilEffect`, `RevealCardsFromHandEffect`, `DiscardCardsEffect`, the library step over revealed cards) |
 | 14 | Run 13's defects (pooled index prompts, the two discards, Invasion of Alara, replaced draws), the reveal-from-hand row and the planar verdicts, then Choose: the chosen name and player and the hand and exile choices with existing second halves | done for the defects and parts, Choose open (30 rows: 21 split, 2 survivors, 7 blocked-other, six of them corrected planar verdicts, 21 records deleted; 28 card files changed; `ChooseCardNameAtResolutionEffect` with `CardHasNameChosenThisResolutionPredicate`, `ChoosePlayerEffect`; 80 rare Choose records left) |
 | 15 | Run 14's defects (the other name prompts, the perpetual choices' log, the three draw handlers), the choose-permanents and perpetual grant steps, users of the player and name steps, then Choose's rare records | done for the defects and the two steps, Choose open (26 rows: 2 absorbed, 19 split, 5 survivors, 21 records deleted; 29 card files changed; `ChoosePermanentsEffect` with `thisWay(CHOOSE)`, `DestroyAllPermanentsEffect.sparing`, `PerpetuallyGrantAbilitiesEffect`; 64 rare Choose records left) |
+| 16 | Run 15's defects (exile-by-name searches, as-enters copy log, APNAP draws, the AI's dig), the chosen name's remaining users, the choose-permanents step per player and at random, then Choose's rare records | done for the defects and those parts, Choose open (28 rows: 1 absorbed, 8 split, 4 survivors, 15 unique, 9 records deleted; 20 card files changed; `ExileCardsWithSameNameEffect` by the chosen name, `CantPlayChosenNameUntilNextTurnEffect`, `ChoosePermanentsEffect.oneForEach` / `.atRandom`; 43 rare Choose records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -7650,7 +7651,7 @@ lists battlefield ids only; its log, item 8.
 
 **Seen, not changed.**
 
-- The stack view's face-down leak (`getStackViews`): outside this plan, waits for the owner.
+- The stack view's face-down leak (`getStackViews`): fixed outside this plan by b6fa735b07 (`FaceDownVisibility`).
 - The client ignores a minimum on `MULTI_PERMANENT_PICK`, so too few can still be sent and rejected (frontend).
   `GameSimulator` answers such a pick with the first maximum, which a "different" choice may reject.
 - The name step's dig strategy reads the AI's own library order, which the player doesn't know.
@@ -7695,6 +7696,98 @@ the catalog-wide list on the wire for the prompts that had none; MCTS over the n
   the card in four different ways; a conjure step over a card subject frees Holographic Double and Nashi.
 - The as-enters markers: three permanent choices differ only in candidates and a decline, but their continuations also serve Upgrade,
   the phylactery and the text-box exchange; read those before a fold.
+
+### Step 9, run 16 (2026-11-22, Choose partly done)
+
+The four defects run 15 left, the chosen name on the same-name exile and on the lasting name rules, one-for-each-player and random on the
+choose-permanents step, then plain verdicts. Stopped there at a compiling, tested point: 43 of the family's 64 rare records are left. Ratchet
+4,227 / 3,454 → 4,220 / 3,448 records / handlers (9 records and 8 handlers deleted, 2 and 2 added). 20 card files changed by scratch scripts.
+Oracle text checked with `get_card` for all 20; rulings with `get_rulings` for Thought Hemorrhage, Memoricide, Cranial Extraction,
+Necromentia, Unmoored Ego, Academic Probation, Conjurer's Ban, The Clone Saga, Unstable Glyphbridge and Chaos Defiler. CR 101.4, 201.4, 400.2,
+603.7a, 608.2c, 608.2d, 608.2h, 609.3, 701.23a, 701.23b, 708.2 and 709.4a checked with `get_rule` (2026-11-22).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | `step-9` | Left unaudited |
+|---|---|---|---|---|---|---|---|---|
+| Choose | 23 rows (21 rare records, 1 ledgered row, 1 step) | 0 | 7 | 1 | 0 | 15 | 0 | 43 rare records |
+| Other families | 5 rows (same-name exile, two new steps, the floating payload, Meteor's ledgered row) | 1 | 1 | 3 (two new records) | 0 | 0 | 0 | All families: 2,236 rare records without a row |
+
+- **The chosen name.** `ExileCardsWithSameNameEffect.anyNumberWithChosenName` / `upToWithChosenName` / `allWithChosenName` is the second half
+  of the thirteen exile-by-name cards; the draw and the token read `AmountThisWay.exiledFromHand()`. Two contexts, their prompts and their
+  completions went. `CantPlayChosenNameUntilNextTurnEffect` is Comply's, Academic Probation's and Conjurer's Ban's step and their floating
+  effect; `RegisterChosenNameCombatDamageTriggerEffect` The Clone Saga's. Three more contexts and completions went.
+- **One for each player.** `ChoosePermanentsEffect.oneForEach(players, candidates, label)` is one chooser's choice per player, recorded
+  together at the end; it is no player loop, so Ultimate Magic: Meteor's blocked-player-loop row was wrong and split with Glyphbridge and
+  Chaos Defiler. `atRandom` asks nobody.
+
+**Behaviour changes.**
+
+1. The exile-by-name cards don't look into or find in a library that can't be searched, still shuffle it, and search only the top four under
+   Aven Mindcensor (CR 609.3; the card). `MemoricideTest` and `ThoughtHemorrhageTest.leavesOutLibraryThatCantBeSearched` (failed before).
+2. The log of Metamorphic Alteration's as-enters choice names no face-down creature's card: the copy line was text with both names (CR 708.2).
+   `MetamorphicAlterationTest.logNamesNoFaceDownCreature` (failed before). The choices' own "chooses" lines are card segments, which
+   b6fa735b07 already masks: `DauntlessBodyguardTest.logNamesNoFaceDownCreature` passed on HEAD.
+3. Each opponent draws in APNAP order (CR 101.4). `EachOpponentDrawsCardEffectHandlerTest` (failed before).
+4. AI only: a name to dig for is what the AI's library holds most of, not its top card. `ColorChoiceAiStrategyTest.digDoesNotReadTheLibrarysOrder`
+   (failed before).
+5. Thought Hemorrhage's search is shown also when only graveyard copies match: the searcher looks at all cards in the zones searched
+   (CR 701.23a), as Cranial Extraction's was. Graveyard copies are exiled whatever is answered (CR 701.23b). Its test answers it.
+6. Chaos Defiler's random pick is among the chosen permanents without indestructible (ruling, 2022-10-07). No test of its own: it shows
+   only with two or more opponents, which the card harness doesn't seat.
+7. Entries and moves are the steps': the rider draw and token are their own steps after the shuffle, Thought Hemorrhage's reveal is recorded
+   and its damage dealt by the damage step. Prompts and log lines are the steps': no "exiles 0 cards" line when nothing matches (the shuffle
+   is logged), Glyphbridge asks by single permanent picks, "an artifact card name" has its article.
+8. AI only: a chosen-name search names what is seen of the searched player; The Clone Saga one of the AI's own creatures; a chosen permanent
+   without power is weighed by mana value (a face-down one's is 0), as the deleted prompts' generic answer did.
+
+**What a player sees.** The search prompt shows what that search may look at and nothing of a library that can't be searched (item 1, the
+step's `SearchedZones`). The name prompts are run 15's. A permanent choice lists battlefield ids; its prompt names the player and no card.
+
+**Seen, not changed** (for the owner's decision where it is a leak).
+
+- Opaque card ids and targeting predicates over face-down spells: not looked at.
+- Copy log lines built as text name a face-down permanent's card (CR 708.2; read, not reproduced): `BecomeCopyOfSubjectEffectHandler`, the
+  `MakeTargetCopy…` and `BecomeCopyOfTargetPermanent…` handlers, `TurnFaceUpCopyService`'s source.
+- Scour the Scene's choice offers battlefield creatures by card id, and the perpetual hand choices left (offspring, static, enter-exile)
+  still go by their own prompts; not audited for what they show.
+- Mindblaze's completion shuffles with `Collections.shuffle`, so nothing sees a shuffle.
+- `CardChoiceHandlerService.offerSameNamedCopiesExile` searches without the prohibition check; no card sets its flag
+  (`exileAllCopiesOfChosenNames`), so it is dead code.
+- The multi-zone exile prompt's draw, token and set-code fields have no setter left; the prompt's overloads can go.
+- A lasting name rule compares a land's full name, and which half of a split spell the forbidden-name check compares wasn't traced (CR 709.4a).
+- The frontend's multi-pick minimum (run 15).
+
+**Tests edited.** The new cases above and `UnstableGlyphbridgeTest.choosesForEachPlayerInTurn`. Deleted with its handler:
+`ChooseCardNameAndExileFromZonesEffectHandlerTest` (five cases that asserted the arguments passed to a deleted prompt method) and two
+`PlayerInputServiceTest` cases that asserted the deleted context's fields; the cards' tests cover the cap and the riders. Log line of the
+survivor: `DispossessTest`, `MemoricideTest`, `ThoughtHemorrhageTest` asserted "exiles 0 cards" (the shuffle line now). Contradicted
+CR 701.23a: `ThoughtHemorrhageTest.mayTargetSelfWithNoHandCopies` (item 5; same assertions). Renamed contexts, classes and answers, same
+assertions: `FailureComplyTest`, `AcademicProbationTest`, `CardNamePromptsTest`, `PlayerInputServiceTest`, `ColorChoiceAiStrategyTest`,
+`UnstableGlyphbridgeTest` (an empty answer became one not offered).
+
+**Tests run.** The final sources in one Gradle run, one `--tests` list per task, counted from that run's XML by the test cases' class names:
+250 classes (573 suites, 6,679 cases, 31 skipped: the 29 of `TriggerRouteRecordTest`'s assumption, the AI fuzz and stress tests' switched-off
+cases; 0 failures): every changed card's and changed test class (a back face under its front face), the cards of the changed steps and
+readers (same-name exiles, name prompts and rules, permanent choices, as-enters choices, the aura copies, the draw), the application's
+architecture tests with `EffectCountRatchetTest`, and the application and AI tests naming a changed mechanism. Every project's main and test
+sources compile on the final tree. Failed before their fixes: the tests so marked. Not run: the full suites, the frontend, other users of
+`DestroyTargetPermanentEffect` and `DealDamageToPlayersEffect` (unchanged). Not verified: more than two players in a game (the choice per
+opponent and Chaos Defiler's random pick; APNAP by the handler test only), item 8's new answers by a test of their own, MCTS over the
+converted steps, the AI's valuation of Thought Hemorrhage's damage step.
+
+**For the next run (run 17: Choose, 43 rare records, none given a verdict it didn't earn).**
+
+- As-enters markers: read. The three permanent markers differ in candidates and one card's decline, and only their completions are shared
+  with Upgrade, the phylactery, Metamorphic Alteration and the text-box exchange: one marker over a candidates subject with one completion
+  fits Pitlord / Bodyguard and Predatory Sludge; Scheming Fence's decline is one card's.
+- The permanent step: a chooser (My Will Is Irresistible, whose "the rest" also needs the earlier choice), one for each quality (Sundering
+  Titan), gain control over a subject (The Nipton Lottery, which `atRandom` starts), a lesser-power-than-the-target filter (Kamiz), an
+  amount for two chosen powers (Spry and Mighty), attach and unattach over a subject, Winnowing's filter over the same player's choice.
+- Revealed hands with parts that exist: `RevealCardsFromHandEffect` + `ChooseCardEffect` over `revealedThisWay` + discard / put onto the
+  battlefield fits Distended Mindbender, Treacherous Urge, Zara and, with a chosen-color filter, Addle (their tests answer by index).
+- `ChooseCardEffect` + the perpetual verbs for the hand choices; a conjure step over a card subject (Holographic Double, Nashi); the void
+  counter and suspended filters over `exiledCards` (Dauthi Voidwalker, Amy Pond).
+- Player step users: Multiple Choice, Boreas Charger, the relay pair. Numbers: the five number choices beside
+  `ChooseNumberAtResolutionEffect` differ in where the answer is kept; Mindblaze waits for one with no upper bound that the AI answers.
 
 ## Prompt
 

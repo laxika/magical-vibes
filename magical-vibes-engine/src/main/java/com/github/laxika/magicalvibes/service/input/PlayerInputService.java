@@ -2539,7 +2539,8 @@ public class PlayerInputService {
                     ? choice.requiredType().getDisplayName().toLowerCase() + " "
                     : choice.excludedTypes().isEmpty() ? "" : "non" + choice.excludedTypes().stream()
                             .map(type -> type.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("") + " ";
-            prompt = "Choose a " + qualifier + "card name.";
+            String article = !qualifier.isEmpty() && "aeiou".indexOf(qualifier.charAt(0)) >= 0 ? "an " : "a ";
+            prompt = "Choose " + article + qualifier + "card name.";
         }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 context.controllerId(), null, null, context, cardNames, prompt));
@@ -2612,85 +2613,6 @@ public class PlayerInputService {
 
         String playerName = gameData.playerIdToName.get(ctx.choosingPlayerId());
         log.info("Game {} - Awaiting {} to choose a card name for {}", gameData.id, playerName, ctx.card().getName());
-    }
-
-    public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
-                                         List<CardType> excludedTypes, CardType requiredType) {
-        beginSpellCardNameChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes, requiredType,
-                Integer.MAX_VALUE, false);
-    }
-
-    public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
-                                         List<CardType> excludedTypes, CardType requiredType,
-                                         boolean drawForHandExiled) {
-        beginSpellCardNameChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes, requiredType,
-                Integer.MAX_VALUE, drawForHandExiled);
-    }
-
-    public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
-                                         List<CardType> excludedTypes, CardType requiredType,
-                                         boolean drawForHandExiled, int maxCount) {
-        beginSpellCardNameChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes, requiredType,
-                maxCount, drawForHandExiled);
-    }
-
-    public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
-                                         List<CardType> excludedTypes, CardType requiredType, int maxCount,
-                                         boolean drawForHandExiled) {
-        beginSpellCardNameChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes, requiredType,
-                maxCount, drawForHandExiled, false, null, null);
-    }
-    public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
-                                         List<CardType> excludedTypes, CardType requiredType, int maxCount,
-                                         boolean drawForHandExiled, boolean excludeBasicLandNames,
-                                         CreateTokenEffect tokenTemplate, String sourceSetCode) {
-        beginSpellCardNameChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes, requiredType, maxCount,
-                drawForHandExiled, excludeBasicLandNames, tokenTemplate, sourceSetCode, false);
-    }
-
-    public void beginSpellCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
-                                         List<CardType> excludedTypes, CardType requiredType, int maxCount,
-                                         boolean drawForHandExiled, boolean excludeBasicLandNames,
-                                         CreateTokenEffect tokenTemplate, String sourceSetCode,
-                                         boolean findAllCards) {
-        ChoiceContext.ExileByNameChoice choiceContext = new ChoiceContext.ExileByNameChoice(
-                targetPlayerId, choosingPlayerId, excludedTypes, maxCount, drawForHandExiled,
-                tokenTemplate, sourceSetCode, findAllCards);
-
-        List<String> cardNames = excludeBasicLandNames
-                ? nonbasicCardNamesOfferedTo(gameData, choosingPlayerId)
-                : cardNamesOfferedTo(gameData, choosingPlayerId, excludedTypes, requiredType);
-        String prompt;
-        if (excludeBasicLandNames) {
-            prompt = "Choose a card name other than a basic land card name.";
-        } else if (requiredType != null) {
-            String typeLabel = requiredType.name().toLowerCase();
-            String article = "aeiou".indexOf(typeLabel.charAt(0)) >= 0 ? "an " : "a ";
-            prompt = "Choose " + article + typeLabel + " card name.";
-        } else {
-            String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
-            prompt = "Choose a non" + excludedLabel + " card name.";
-        }
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                choosingPlayerId, null, null, choiceContext, cardNames, prompt));
-
-        String playerName = gameData.playerIdToName.get(choosingPlayerId);
-        log.info("Game {} - Awaiting {} to choose a card name (exile from zones)", gameData.id, playerName);
-    }
-
-    public void beginRevealHandDamageAndExileCardNameChoice(GameData gameData, UUID choosingPlayerId, UUID targetPlayerId,
-                                                            List<CardType> excludedTypes, int damagePerCard, Card sourceCard) {
-        ChoiceContext.RevealHandDamageAndExileByNameChoice choiceContext =
-                new ChoiceContext.RevealHandDamageAndExileByNameChoice(targetPlayerId, choosingPlayerId, excludedTypes, damagePerCard, sourceCard);
-
-        List<String> cardNames = cardNamesOfferedTo(gameData, choosingPlayerId, excludedTypes, null);
-        String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
-        String prompt = "Choose a non" + excludedLabel + " card name.";
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                choosingPlayerId, null, null, choiceContext, cardNames, prompt));
-
-        String playerName = gameData.playerIdToName.get(choosingPlayerId);
-        log.info("Game {} - Awaiting {} to choose a card name (reveal hand, damage, exile)", gameData.id, playerName);
     }
 
     /** Begins Assembly Hall's choice of a creature card name from the controller's hand. */
@@ -3057,18 +2979,19 @@ public class PlayerInputService {
     }
 
     /**
-     * "Search ... for cards with the same name and exile them": any number of {@code matchingCards}, added to the
-     * resolving step as they are exiled. The searcher is shown what is in {@code searchedZones} and nothing
-     * else (CR 701.23a); {@code shufflesLibrary} is independent of it. With {@code allInGraveyard} those in the
-     * graveyard are found whether chosen or not (CR 701.23b).
+     * "Search ... for cards with the same name and exile them": at most {@code maxCount} of {@code matchingCards},
+     * added to the resolving step as they are exiled. The searcher is shown what is in {@code searchedZones} and
+     * nothing else (CR 701.23a); {@code shufflesLibrary} is independent of it. With {@code allInGraveyard} those in
+     * the graveyard are found whether chosen or not (CR 701.23b).
      */
     public void beginSameNameExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
-                                         UUID searchedPlayerId, String cardNames, UUID sourcePermanentId,
+                                         int maxCount, UUID searchedPlayerId, String cardNames, UUID sourcePermanentId,
                                          SearchedZones searchedZones, boolean shufflesLibrary,
                                          boolean allInGraveyard) {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
-                choosingPlayerId, matchingCards.stream().map(Card::getId).toList(), matchingCards.size(),
-                searchedPlayerId, choosingPlayerId, cardNames, false, null, null, sourcePermanentId, null,
+                choosingPlayerId, matchingCards.stream().map(Card::getId).toList(),
+                Math.min(maxCount, matchingCards.size()), searchedPlayerId, choosingPlayerId, cardNames, false, null,
+                null, sourcePermanentId, null,
                 allInGraveyard, searchedZones, shufflesLibrary, true));
     }
 

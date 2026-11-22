@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
-import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOpponentsCantCastUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.CantPlayChosenNameUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -53,7 +53,7 @@ class FailureComplyTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        assertThat(choice.context()).isInstanceOf(ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice.class);
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ChooseCardNameAtResolutionChoice.class);
 
         harness.handleListChoice(player1, "Shock");
 
@@ -161,7 +161,7 @@ class FailureComplyTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(aftermath);
         assertThat(gd.getPlayerExiledCards(player1.getId())).contains(aftermath);
-        assertThat(playersAffectedBy(ChooseCardNameOpponentsCantCastUntilNextTurnEffect.class)).isEmpty();
+        assertThat(playersAffectedBy(CantPlayChosenNameUntilNextTurnEffect.class)).isEmpty();
     }
 
     @Test
@@ -203,9 +203,9 @@ class FailureComplyTest extends BaseCardTest {
     }
 
     private List<String> lockedNames(com.github.laxika.magicalvibes.model.Player opponent) {
-        return gd.floatingEffectsOnPlayer(opponent.getId(), ChooseCardNameOpponentsCantCastUntilNextTurnEffect.class)
+        return gd.floatingEffectsOnPlayer(opponent.getId(), CantPlayChosenNameUntilNextTurnEffect.class)
                 .stream()
-                .map(fe -> ((ChooseCardNameOpponentsCantCastUntilNextTurnEffect) fe.effect()).cardName())
+                .map(fe -> ((CantPlayChosenNameUntilNextTurnEffect) fe.effect()).cardName())
                 .toList();
     }
 }

@@ -113,14 +113,15 @@ public class AuraCopyService {
 
     private void applyWhileAttachedCopy(GameData gameData, Permanent source, Permanent affected,
                                         Permanent chosen, Duration duration) {
-        String originalName = affected.getCard().getName();
+        Card originalCard = affected.getCard();
         Card preCopyCard = PermanentCopierService.preCopyCard(gameData, affected);
         permanentCopierService.applyCloneCopy(affected, chosen, null, null);
         beginCopy(gameData, source, affected, preCopyCard, duration);
 
-        gameLogService.append(gameData, GameLog.text(
-                originalName + " becomes a copy of " + chosen.getCard().getName() + "."));
-        log.info("Game {} - {} becomes a copy of {} ({})", gameData.id, originalName,
+        // Cards, not names: the log shows no card of a face-down permanent (CR 708.2).
+        gameLogService.append(gameData,
+                GameLog.cardTextCard(originalCard, " becomes a copy of ", chosen.getCard(), "."));
+        log.info("Game {} - {} becomes a copy of {} ({})", gameData.id, originalCard.getName(),
                 chosen.getCard().getName(), source.getCard().getName());
     }
 
@@ -131,13 +132,13 @@ public class AuraCopyService {
      */
     public void applyExiledCreatureCopy(GameData gameData, Permanent equipment, Permanent attached,
                                          Card exiledCreature, Duration duration) {
-        String originalName = attached.getCard().getName();
+        Card originalCard = attached.getCard();
         Card preCopyCard = PermanentCopierService.preCopyCard(gameData, attached);
         permanentCopierService.applyCloneCopy(attached, exiledCreature, null, null, java.util.Set.of());
         beginCopy(gameData, equipment, attached, preCopyCard, duration);
-        gameLogService.append(gameData, GameLog.text(
-                originalName + " becomes a copy of " + exiledCreature.getName() + "."));
-        log.info("Game {} - {} becomes a copy of {} ({})", gameData.id, originalName,
+        gameLogService.append(gameData,
+                GameLog.cardThen(originalCard, " becomes a copy of " + exiledCreature.getName() + "."));
+        log.info("Game {} - {} becomes a copy of {} ({})", gameData.id, originalCard.getName(),
                 exiledCreature.getName(), equipment.getCard().getName());
     }
 
