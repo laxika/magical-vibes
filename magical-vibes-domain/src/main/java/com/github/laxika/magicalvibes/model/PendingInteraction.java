@@ -29,7 +29,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingMemoriesReturningChoice,
         PendingSphinxAmbassadorChoice,
         PendingKarnScionRevealChoice, PendingKarnScionExileReturn,
-        PendingStudyCounterExileReturn,
         PendingOpponentChoosesCardToHandRestToGraveyard,
         PendingManifoldInsightsChoice,
         PendingValkiCopyChoice, PendingValkiHandExileChoice,
@@ -38,7 +37,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingAllureOfTheUnknownChoice,
         PendingThranTomeChoice,
         PendingDubiousChallengeChoice,
-        PendingReturnExiledWithSourceCard, PendingReturnTwoExiledWithSourceCards, PendingPortalPileSearch,
+        PendingReturnExiledWithSourceCard, PendingPortalPileSearch,
         PendingMakeAnExample, PendingKarnRestart, PendingKnowledgePoolCast, PendingPileSeparation, PendingRagingRiver, PendingBendOrBreak,
         PendingPsychoticEpisodeChoice,
         PendingTruthOrTaleCardChoice,
@@ -82,7 +81,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.BrilliantUltimatumPlayChoice,
         PendingInteraction.HostileNegotiationsFaceUpChoice,
         PendingInteraction.HostileNegotiationsOpponentPileChoice,
-        PendingInteraction.MirrorOfFateChoice, PendingInteraction.ReturnExiledCardsToHandChoice,
+        PendingInteraction.MirrorOfFateChoice,
         PendingInteraction.KeepCardsInHandChoice,
         PendingInteraction.EachPlayerChoosesOneCardOfEachColorChoice,
         PendingInteraction.PutLandsFromHandChoice, PendingInteraction.WorldsWithinWorldsChoice,
@@ -181,7 +180,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.SuspendedCardTimeCounterChoice,
         PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice,
         PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice,
-        PendingInteraction.OblivionSowerLandChoice,
         PendingInteraction.PermanentChoice,
         PendingInteraction.AdNauseamRepeatChoice,
         PendingInteraction.ForbiddenRitualRepeatChoice,
@@ -1589,26 +1587,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             implements PendingInteraction {
 
         public MirrorOfFateChoice {
-            validCardIds = java.util.List.copyOf(validCardIds);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 0, maxCount);
-        }
-    }
-
-    /** Bag of Devouring: choose up to the d10 result of the source-tracked exiled cards. */
-    record ReturnExiledCardsToHandChoice(UUID playerId, UUID sourcePermanentId,
-                                         java.util.List<UUID> validCardIds, int maxCount,
-                                         String sourceName) implements PendingInteraction {
-
-        public ReturnExiledCardsToHandChoice {
             validCardIds = java.util.List.copyOf(validCardIds);
         }
 
@@ -6558,26 +6536,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, 2);
-        }
-    }
-
-    /** Oblivion Sower's choice of any number of face-up land cards owned by the target player. */
-    record OblivionSowerLandChoice(UUID playerId, UUID ownerId,
-                                   java.util.List<UUID> validCardIds, String cardName)
-            implements PendingInteraction {
-
-        public OblivionSowerLandChoice {
-            validCardIds = java.util.List.copyOf(validCardIds);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 0, validCardIds.size());
         }
     }
 

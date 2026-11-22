@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -21,7 +23,8 @@ import org.springframework.stereotype.Component;
  * Resolves {@link ReturnDyingOpponentCreatureUnderYourControlEffect}: takes the dying creature
  * card from the graveyard it is in (including the controller's own graveyard when the card is
  * their own) and puts it onto the battlefield under the ability controller's control, optionally
- * granting a subtype, and tracks it as a stolen creature. Fizzles if it is no longer in a graveyard.
+ * granting a subtype, and tracks it as a stolen creature. Does nothing if it left that graveyard stay (CR 400.7) or
+ * can't enter (CR 101.2, 400.4a).
  */
 @Component
 @RequiredArgsConstructor
@@ -45,7 +48,14 @@ public class ReturnDyingOpponentCreatureUnderYourControlEffectHandler implements
         // "That card" is the entry's triggering card. Feed it to the shared steal-from-graveyard helper as the
         // entry's target as the effect resolves (as a target chosen with the trigger it would be validated against
         // on-battlefield permanents and fizzle).
-        entry.setTargetId(entry.getTriggeringCardId());
+        Card card = gameQueryService.findCardInGraveyardById(gameData, entry.getTriggeringCardId());
+        // A card that left the graveyard and came back is a new object (CR 400.7).
+        if (card == null || !entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(card.getId()))
+                || graveyardReturnSupport.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " does nothing (the card can't return)."));
+            return;
+        }
+        entry.setTargetId(card.getId());
         GraveyardReturnSupport.StolenCreatureResult result =
                 graveyardReturnSupport.stealFromGraveyard(gameData, entry, controllerId, false);
         if (result == null) return;

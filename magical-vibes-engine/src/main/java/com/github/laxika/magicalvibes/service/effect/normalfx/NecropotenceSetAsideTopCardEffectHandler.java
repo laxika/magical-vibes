@@ -12,6 +12,7 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.service.effect.DelayedExiledCardReturns;
 
 /**
  * Resolves Necropotence's "Pay 1 life: Exile the top card of your library face down. Put that card
@@ -45,8 +46,8 @@ public class NecropotenceSetAsideTopCardEffectHandler implements NormalEffectHan
 
         Card topCard = deck.removeFirst();
         gameData.addToExile(controllerId, topCard, null, true);
-        gameData.temporaryGlobalTriggeredAbilities.add(ReturnExiledCardToHandEffectHandler.returnAtYourNextEndStep(
-                gameData, controllerId, entry.getCard(), entry.getSourcePermanentId(), topCard.getId(), controllerId));
+        gameData.temporaryGlobalTriggeredAbilities.add(DelayedExiledCardReturns.toHandAtYourNextEndStep(
+                gameData, controllerId, entry.getCard(), entry.getSourcePermanentId(), topCard.getId()));
 
         gameLogService.append(gameData, GameLog.text(controllerName
                 + " exiles the top card of their library face down; it returns to their hand at the beginning of their next end step."));

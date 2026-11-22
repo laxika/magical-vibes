@@ -49,7 +49,9 @@ public class ReturnSourceAuraToOpponentCreatureOnDeathEffectHandler implements N
 
         // Find the aura card in the graveyard
         Card auraCard = gameQueryService.findCardInGraveyardById(gameData, auraCardId);
-        if (auraCard == null) {
+        // An Aura that left the graveyard and came back is a new object (CR 400.7).
+        if (auraCard == null || entry.sourceCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(auraCardId) != entry.sourceCardGraveyardEntryVersion()) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
             log.info("Game {} - {} not found in graveyard, death trigger fizzles",
                     gameData.id, entry.getCard().getName());

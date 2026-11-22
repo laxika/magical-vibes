@@ -12,7 +12,9 @@ import java.util.Set;
  * "Put those cards onto the battlefield", "return that card to the battlefield": each card {@code cards} names, in
  * whichever zone it names it in, enters under its owner's control, or under that of {@code controller}, all together,
  * an Aura attached as that player chooses (CR 303.4f). A card that can't enter, or an Aura with nothing to enchant,
- * stays where it is (CR 303.4g). "Puts all land cards revealed this way onto the battlefield tapped" is
+ * stays where it is (CR 303.4g), as does an instant or sorcery card unless it enters face down (CR 400.4a). What
+ * entered is the step's {@code StepKind.RETURN} ("for each card returned this way"). "Puts all land cards revealed this way
+ * onto the battlefield tapped" is
  * {@code cardsThisWay(StepKind.REVEAL, land)} (Clear the Land); "return it to the battlefield face down" after
  * "whenever a creature dies" is {@code triggeringCards()} with {@link #faceDown}.
  *
@@ -33,16 +35,36 @@ public record PutCardsOntoBattlefieldEffect(CardSubject cards, boolean tapped, P
      * @param faceDown its face-down characteristics (CR 708.2); {@code null} for face up
      * @param counter  a kind of counter it enters with; {@code null} for none
      * @param counters how many of those counters
+     * @param host     what it enters attached to ("attached to a creature that shares a creature type with that
+     *                 creature", "attached to you"); {@code null} where the effect names nothing (CR 303.4f)
      * @param grants   continuous effects without a duration on it, each reading {@code Subjects.target()}, in effect
      *                 as it enters ("that creature is a black Zombie in addition to its other colors and types",
      *                 "she's a land named Moon")
      */
-    public record EnteringAs(FaceDown faceDown, CounterType counter, int counters, List<CardEffect> grants) {
+    public record EnteringAs(FaceDown faceDown, CounterType counter, int counters, List<CardEffect> grants,
+                             AttachedTo host) {
 
-        static final EnteringAs NOTHING_ELSE = new EnteringAs(null, null, 0, List.of());
+        static final EnteringAs NOTHING_ELSE = new EnteringAs(null, null, 0, List.of(), null);
 
         public EnteringAs {
             grants = List.copyOf(grants);
+        }
+    }
+
+    /**
+     * What an Aura put onto the battlefield enters attached to: one of these, as whoever it enters under the control
+     * of chooses among those it can enchant (CR 303.4f), and with none it stays where it is (CR 303.4g). A subject
+     * that names one permanent or player leaves no choice.
+     */
+    public record AttachedTo(PermanentSubject permanents, PlayerSubject players) {
+
+        public AttachedTo {
+            if ((permanents == null) == (players == null)) {
+                throw new IllegalArgumentException("An Aura enters attached to a permanent or to a player");
+            }
+            if (permanents != null && permanents.declaresTarget() || players != null && players.declaresTarget()) {
+                throw new IllegalArgumentException("What it enters attached to is no target");
+            }
         }
     }
 
@@ -89,7 +111,8 @@ public record PutCardsOntoBattlefieldEffect(CardSubject cards, boolean tapped, P
                                                   Set<CardSubtype> subtypes) {
         EnteringAs as = enteringAs();
         return new PutCardsOntoBattlefieldEffect(cards, tapped, controller,
-                new EnteringAs(new FaceDown(power, toughness, types, subtypes), as.counter(), as.counters(), as.grants()));
+                new EnteringAs(new FaceDown(power, toughness, types, subtypes), as.counter(), as.counters(), as.grants(),
+                        as.host()));
     }
 
     /** These cards entering face down as 2/2 creatures (CR 708.2a). */
@@ -101,14 +124,30 @@ public record PutCardsOntoBattlefieldEffect(CardSubject cards, boolean tapped, P
     public PutCardsOntoBattlefieldEffect withCounters(CounterType counter, int count) {
         EnteringAs as = enteringAs();
         return new PutCardsOntoBattlefieldEffect(cards, tapped, controller,
-                new EnteringAs(as.faceDown(), counter, count, as.grants()));
+                new EnteringAs(as.faceDown(), counter, count, as.grants(), as.host()));
     }
 
     /** These cards each entering with these effects without a duration on it, each over {@code Subjects.target()}. */
     public PutCardsOntoBattlefieldEffect enteringWith(CardEffect... grants) {
         EnteringAs as = enteringAs();
         return new PutCardsOntoBattlefieldEffect(cards, tapped, controller,
-                new EnteringAs(as.faceDown(), as.counter(), as.counters(), List.of(grants)));
+                new EnteringAs(as.faceDown(), as.counter(), as.counters(), List.of(grants), as.host()));
+    }
+
+    /** These Aura cards each entering attached to one of the permanents {@code hosts} names. */
+    public PutCardsOntoBattlefieldEffect attachedTo(PermanentSubject hosts) {
+        return attachedTo(new AttachedTo(hosts, null));
+    }
+
+    /** These Aura cards each entering attached to one of the players {@code hosts} names ("attached to you"). */
+    public PutCardsOntoBattlefieldEffect attachedTo(PlayerSubject hosts) {
+        return attachedTo(new AttachedTo(null, hosts));
+    }
+
+    private PutCardsOntoBattlefieldEffect attachedTo(AttachedTo host) {
+        EnteringAs as = enteringAs();
+        return new PutCardsOntoBattlefieldEffect(cards, tapped, controller,
+                new EnteringAs(as.faceDown(), as.counter(), as.counters(), as.grants(), host));
     }
 
     private EnteringAs enteringAs() {

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
@@ -33,7 +35,8 @@ import org.springframework.context.annotation.Lazy;
 /**
  * Puts a batch of cards onto the battlefield together, after every choice their entry needs.
  *
- * <p>Before any card moves, the batch gathers what each Aura enchants (CR 303.4f, among objects already on the
+ * <p>A card that can't enter stays where it is, and so does an instant or sorcery card unless it enters face down
+ * (CR 400.4a). Before any card moves, the batch gathers what each Aura enchants (CR 303.4f, among objects already on the
  * battlefield, never a card entering with it), each battle's protector, each "enter as a copy" choice and each
  * native as-enters choice (riot, unleash, amplify, a name, an entry cost, conflicting tapped-entry choices,
  * devour, then the creature's position). The cards stay in their original zones, in their original order,
@@ -130,6 +133,10 @@ public class BattlefieldEntryBatchSupport {
             if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, candidate.card(), candidate.origin())) {
                 continue;
             }
+            if ((candidate.preparedPermanent() == null || !candidate.preparedPermanent().isFaceDown())
+                    && gameQueryService.cantEnterFaceUp(candidate.enteringCard())) {
+                continue;
+            }
             if (candidate.preparedPermanent() == null && cloneService.prepareCloneReplacementEffect(
                     gameData, candidate.controllerId(), candidate.card(), null)) {
                 gameData.cloneOperation.preparedPermanent = new Permanent(candidate.card(), candidate.origin());
@@ -174,6 +181,10 @@ public class BattlefieldEntryBatchSupport {
                 if (auraAttachmentService.canEnchantPlayer(gameData, enteringCard, candidate.controllerId(), playerId)) {
                     hosts.add(playerId);
                 }
+            }
+            if (candidate.hosts() != null) {
+                // The effect says what it's attached to; the choice is only among those (CR 303.4f).
+                hosts.retainAll(candidate.hosts());
             }
             if (hosts.isEmpty()) continue;
             if (hosts.size() == 1) {
@@ -322,6 +333,9 @@ public class BattlefieldEntryBatchSupport {
                 }
                 if (gameQueryService.findPermanentController(gameData, permanent.getId()) != null) {
                     entered.add(permanent);
+                    if (candidate.recordsReturn()) {
+                        recordReturn(gameData, candidate, permanent);
+                    }
                     keepUnderNonOwnersControl(gameData, candidate, permanent);
                     gameData.stack.addAll(candidate.afterEntryTriggers());
                     gameLogService.append(gameData, permanent.isFaceDown()
@@ -383,6 +397,18 @@ public class BattlefieldEntryBatchSupport {
             gameData.addEffectOnPermanent(candidate.card().getName(), permanent.getId(), controllerId, grant,
                     permanent.getId(), Duration.PERMANENT);
         }
+    }
+
+    /** Adds the permanent to the step that put it there, which ends as its batch enters. */
+    private void recordReturn(GameData gameData, BattlefieldEntryCard candidate, Permanent permanent) {
+        StackEntry step = gameData.resolvingEntry != null
+                ? gameData.resolvingEntry : gameData.pendingEffectResolutionEntry;
+        if (step == null) {
+            return;
+        }
+        step.addToStep(StepKind.RETURN, StepOutcome.ofObjects(List.of(permanent.getId()),
+                candidate.zoneOwnerId() == null ? List.of() : List.of(candidate.zoneOwnerId())));
+        step.rememberReturnedPermanent(permanent.getId());
     }
 
     /** A permanent put onto the battlefield under another player's control than its owner's stays that player's. */

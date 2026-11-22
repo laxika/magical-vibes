@@ -39,8 +39,8 @@ class TetzinGnomeChampionTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new TetzinGnomeChampion());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Darksteel Relic");
         assertThat(gd.playerGraveyards.get(player1.getId())).noneMatch(card -> card.getId().equals(artifact.getId()));
@@ -95,7 +95,7 @@ class TetzinGnomeChampionTest extends BaseCardTest {
 
         harness.enterBattlefieldAndReturn(player1, new TetzinGnomeChampion());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3).contains(artifact);
         harness.assertNotInHand(player1, "Dire Flail");
@@ -110,7 +110,7 @@ class TetzinGnomeChampionTest extends BaseCardTest {
 
         harness.enterBattlefieldAndReturn(player1, new TetzinGnomeChampion());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).filteredOn(c ->
                 List.of(first, second, third).contains(c)).hasSize(1);

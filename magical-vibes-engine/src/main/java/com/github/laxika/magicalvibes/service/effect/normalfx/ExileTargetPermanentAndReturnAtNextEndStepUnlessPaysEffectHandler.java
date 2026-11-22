@@ -5,23 +5,25 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndReturnAtNextEndStepUnlessPaysEffect;
-import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.PayManaCost;
-import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
+import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.service.effect.DelayedExiledCardReturns;
 
 @Slf4j
 @Component
@@ -63,7 +65,7 @@ public class ExileTargetPermanentAndReturnAtNextEndStepUnlessPaysEffectHandler
 
             Card exiledCard = cards.getFirst();
             queued = true;
-            gameData.temporaryGlobalTriggeredAbilities.add(returnUnlessPaid(
+            gameData.temporaryGlobalTriggeredAbilities.add(returnUnlessPaid(gameData,
                     exiledCard.getId(), entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId()));
             gameLogService.append(gameData, GameLog.cardThen(exiledCard,
                     " is exiled. It will return at the beginning of the next end step unless its controller pays {3}{B}."));
@@ -74,7 +76,7 @@ public class ExileTargetPermanentAndReturnAtNextEndStepUnlessPaysEffectHandler
         if (!queued && targetIds.stream().noneMatch(java.util.Objects::nonNull)) {
             // "Up to one" with no target chosen: the delayed trigger is still created and its payment
             // still offered, but there is no card to return.
-            gameData.temporaryGlobalTriggeredAbilities.add(returnUnlessPaid(
+            gameData.temporaryGlobalTriggeredAbilities.add(returnUnlessPaid(gameData,
                     null, entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId()));
         }
 
@@ -86,13 +88,14 @@ public class ExileTargetPermanentAndReturnAtNextEndStepUnlessPaysEffectHandler
      * that card to the battlefield under its owner's control" of a spell or ability of {@code sourceCard} controlled by
      * {@code controllerId} that exiled {@code cardId} (none when it exiled no card).
      */
-    private static TemporaryGlobalTriggeredAbility returnUnlessPaid(UUID cardId, UUID controllerId, Card sourceCard,
+    private static TemporaryGlobalTriggeredAbility returnUnlessPaid(GameData gameData, UUID cardId,
+                                                                    UUID controllerId, Card sourceCard,
                                                                     UUID sourcePermanentId) {
-        ForcedCostOrElseEffect payOrReturn = new ForcedCostOrElseEffect(
-                new PayManaCost("{3}{B}"),
-                new ArrayList<>(List.of(new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(cardId))),
-                true);
-        return TemporaryGlobalTriggeredAbility.atNextStep(
-                Triggers.endStep(ActivePlayer.ANY), controllerId, sourceCard, sourcePermanentId, null, payOrReturn);
+        MayPayManaEffect payOrReturn = new MayPayManaEffect("{3}{B}", null,
+                "Pay {3}{B}? If you don't, that card returns to the battlefield under its owner's control.",
+                new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.EXILE)));
+        return TemporaryGlobalTriggeredAbility.atNextStep(controllerId, sourceCard,
+                new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY), payOrReturn), sourcePermanentId, null, null,
+                DelayedExiledCardReturns.exiled(gameData, java.util.Collections.singletonList(cardId)));
     }
 }

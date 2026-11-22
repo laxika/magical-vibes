@@ -22,8 +22,8 @@ class TownGreeterTest extends BaseCardTest {
 
         castTownGreeter();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(town);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
@@ -37,7 +37,7 @@ class TownGreeterTest extends BaseCardTest {
 
         castTownGreeter();
 
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -50,7 +50,7 @@ class TownGreeterTest extends BaseCardTest {
 
         castTownGreeter();
 
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(town);
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(20);
@@ -64,8 +64,7 @@ class TownGreeterTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(forest, town, new TownGreeter(), new TownGreeter()));
 
         castTownGreeter();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(town);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest).hasSize(3);
@@ -80,7 +79,7 @@ class TownGreeterTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(forest, town, new TownGreeter(), new TownGreeter()));
 
         castTownGreeter();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(town).hasSize(3);
@@ -112,7 +111,7 @@ class TownGreeterTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(town, creature));
 
         castTownGreeter();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(town);

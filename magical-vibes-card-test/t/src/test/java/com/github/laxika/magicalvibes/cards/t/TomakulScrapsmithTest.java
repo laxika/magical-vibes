@@ -27,8 +27,8 @@ class TomakulScrapsmithTest extends BaseCardTest {
 
         Permanent scrapsmith = castAndResolveEtb();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(millstone);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
@@ -42,7 +42,7 @@ class TomakulScrapsmithTest extends BaseCardTest {
         setLibrary(millstone, new Forest(), new Shock());
 
         Permanent scrapsmith = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(millstone);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
@@ -70,7 +70,7 @@ class TomakulScrapsmithTest extends BaseCardTest {
         setLibrary(first, second, land);
 
         Permanent scrapsmith = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(second, land);
@@ -86,9 +86,8 @@ class TomakulScrapsmithTest extends BaseCardTest {
         setLibrary(first, second, new Forest());
 
         Permanent scrapsmith = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
         assertThat(scrapsmith.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first).doesNotContain(second);
@@ -105,9 +104,8 @@ class TomakulScrapsmithTest extends BaseCardTest {
         setLibrary(first, second, land);
 
         Permanent scrapsmith = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
         assertThat(scrapsmith.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second, land);
@@ -139,7 +137,7 @@ class TomakulScrapsmithTest extends BaseCardTest {
         setLibrary(artifact);
 
         Permanent scrapsmith = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifact);

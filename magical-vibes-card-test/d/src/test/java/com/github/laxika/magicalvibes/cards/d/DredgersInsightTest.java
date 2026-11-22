@@ -32,8 +32,8 @@ class DredgersInsightTest extends BaseCardTest {
 
         castInsight();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Forest");
         harness.assertInGraveyard(player1, "Shock");
@@ -89,7 +89,7 @@ class DredgersInsightTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         castInsight();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertNotInHand(player1, "Grizzly Bears");
@@ -103,7 +103,7 @@ class DredgersInsightTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         castInsight();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertNotInGraveyard(player1, "Grizzly Bears");
@@ -119,7 +119,7 @@ class DredgersInsightTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         castInsight();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Spellbook");
         harness.assertInGraveyard(player1, "Grizzly Bears");
@@ -149,7 +149,7 @@ class DredgersInsightTest extends BaseCardTest {
         setDeck(new Forest(), new Shock());
 
         castInsight();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         harness.assertInHand(player1, "Forest");
@@ -181,8 +181,8 @@ class DredgersInsightTest extends BaseCardTest {
         castInsight();
 
         assertThat(gd.exiledCards).anyMatch(entry -> entry.card().getId().equals(creature.getId()));
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.exiledCards).noneMatch(entry -> entry.card().getId().equals(creature.getId()));

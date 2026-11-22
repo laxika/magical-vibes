@@ -42,10 +42,9 @@ class GreenhouseRicketyGazeboTest extends BaseCardTest {
         castRoom(1);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0, 1);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .hasSize(2)
@@ -76,8 +75,7 @@ class GreenhouseRicketyGazeboTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second));
 
         castRoom(1);
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(first, second);
@@ -93,8 +91,7 @@ class GreenhouseRicketyGazeboTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(skipped, returned));
 
         castRoom(1);
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(returned);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -127,7 +124,7 @@ class GreenhouseRicketyGazeboTest extends BaseCardTest {
 
         harness.unlockRoomDoor(player1, 0, 1);
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(milled);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();

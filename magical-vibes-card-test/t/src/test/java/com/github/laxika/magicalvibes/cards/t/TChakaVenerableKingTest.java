@@ -26,8 +26,8 @@ class TChakaVenerableKingTest extends BaseCardTest {
 
         castTChaka();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
@@ -40,7 +40,7 @@ class TChakaVenerableKingTest extends BaseCardTest {
 
         castTChaka();
 
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest);
@@ -77,7 +77,7 @@ class TChakaVenerableKingTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(ring, new Shock(), new Shock()));
 
         castTChaka();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(ring);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
@@ -90,8 +90,7 @@ class TChakaVenerableKingTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(forest, ring, new Shock()));
 
         castTChaka();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(ring);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest).hasSize(2);
@@ -118,7 +117,7 @@ class TChakaVenerableKingTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(forest));
 
         castTChaka();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

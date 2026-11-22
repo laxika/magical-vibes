@@ -49,8 +49,8 @@ class BarrowgoyfTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(milledCreature);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -108,7 +108,7 @@ class BarrowgoyfTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(creature);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature).hasSize(6);
@@ -130,8 +130,7 @@ class BarrowgoyfTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId()))
                 .contains(chosenCreature).doesNotContain(firstCreature, lastCreature, oldCreature);

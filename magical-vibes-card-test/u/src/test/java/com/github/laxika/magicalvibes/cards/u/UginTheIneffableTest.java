@@ -283,4 +283,23 @@ class UginTheIneffableTest extends BaseCardTest {
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return ugin;
     }
+
+    @Test
+    @DisplayName("A card that left exile and was exiled again isn't put into the hand")
+    void doesNotFollowACardExiledAgain() {
+        addReadyUgin();
+        Card exiledCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(exiledCard));
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        Permanent spirit = findPermanent(player1, "Spirit");
+        gd.removeFromExile(exiledCard.getId());
+        gd.addToExile(player1.getId(), exiledCard);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, spirit));
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(exiledCard.getId())).isNotNull();
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(exiledCard);
+    }
 }

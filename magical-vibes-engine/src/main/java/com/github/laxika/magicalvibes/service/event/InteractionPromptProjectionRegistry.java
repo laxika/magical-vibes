@@ -143,8 +143,6 @@ public class InteractionPromptProjectionRegistry {
         register(PendingInteraction.HostileNegotiationsOpponentPileChoice.class,
                 this::projectHostileNegotiationsOpponentPileChoice);
         register(PendingInteraction.MirrorOfFateChoice.class, this::projectMirrorOfFateChoice);
-        register(PendingInteraction.ReturnExiledCardsToHandChoice.class,
-                this::projectReturnExiledCardsToHandChoice);
         register(PendingInteraction.KeepCardsInHandChoice.class, this::projectKeepCardsInHandChoice);
         register(PendingInteraction.EachPlayerChoosesOneCardOfEachColorChoice.class,
                 this::projectEachPlayerChoosesOneCardOfEachColorChoice);
@@ -325,8 +323,6 @@ public class InteractionPromptProjectionRegistry {
                 this::projectOpponentOwnedExiledCardToGraveyardChoice);
         register(PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice.class,
                 this::projectTwoOpponentOwnedExiledCardsToGraveyardChoice);
-        register(PendingInteraction.OblivionSowerLandChoice.class,
-                this::projectOblivionSowerLandChoice);
         register(PendingInteraction.PermanentChoice.class, this::projectPermanentChoice);
         register(PendingInteraction.AdNauseamRepeatChoice.class, this::projectAdNauseamRepeatChoice);
         register(PendingInteraction.ForbiddenRitualRepeatChoice.class, this::projectForbiddenRitualRepeatChoice);
@@ -804,16 +800,6 @@ public class InteractionPromptProjectionRegistry {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()), cardViews, interaction.maxCount(),
                 "Choose up to seven face-up exiled cards you own to put on top of your library.");
-    }
-
-    private InteractionPromptMessage projectReturnExiledCardsToHandChoice(
-            GameData gameData, PendingInteraction.ReturnExiledCardsToHandChoice interaction) {
-        return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
-                interaction.maxCount(),
-                "Choose up to " + interaction.maxCount() + " cards exiled with "
-                        + interaction.sourceName() + " to put into their owners' hands.");
     }
 
     private InteractionPromptMessage projectKeepCardsInHandChoice(
@@ -1877,15 +1863,6 @@ public class InteractionPromptProjectionRegistry {
                 exiledCardViews(gameData, interaction.validCardIds()),
                 2,
                 "You may put two cards your opponents own from exile into their owners' graveyards.");
-    }
-
-    private InteractionPromptMessage projectOblivionSowerLandChoice(
-            GameData gameData, PendingInteraction.OblivionSowerLandChoice interaction) {
-        return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
-                interaction.validCardIds().size(),
-                "You may put any number of land cards they own from exile onto the battlefield.");
     }
 
     private InteractionPromptMessage projectAminatousAuguryChoice(

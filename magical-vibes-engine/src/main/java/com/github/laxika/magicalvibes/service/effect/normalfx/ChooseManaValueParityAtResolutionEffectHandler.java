@@ -24,6 +24,8 @@ public class ChooseManaValueParityAtResolutionEffectHandler implements NormalEff
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         if (gameData.chosenSpellManaValueParity != null) {
             gameData.rerunCurrentEffectAfterInteraction = false;
+            entry.setChosenParity(gameData.chosenSpellManaValueParity);
+            gameData.chosenSpellManaValueParity = null;
             return;
         }
 

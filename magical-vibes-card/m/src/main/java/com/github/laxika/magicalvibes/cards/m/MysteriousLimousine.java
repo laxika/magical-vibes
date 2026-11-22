@@ -3,9 +3,15 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -30,8 +36,10 @@ public class MysteriousLimousine extends Card {
                 "Target must be another creature"
         );
 
-        ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect exile =
-                new ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect(anotherCreature);
+        SequenceEffect exile = SequenceEffect.of(
+                new ExileTargetPermanentUntilSourceLeavesEffect(false, anotherCreature),
+                new ConditionalEffect(HappenedThisWay.exiled(), new PutCardsOntoBattlefieldEffect(Subjects.except(
+                        Subjects.exiledWithSource(), Subjects.cardsThisWay(StepKind.EXILE)))));
         target(targetFilter, 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS), exile);
         addTrigger(Triggers.attacks(), exile);
 

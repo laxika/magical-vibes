@@ -44,7 +44,7 @@ class LeylineDowserTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(shock);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(shock);
@@ -102,7 +102,7 @@ class LeylineDowserTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(milledSpell).doesNotContain(oldSpell, nextSpell);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(oldSpell);
@@ -119,7 +119,7 @@ class LeylineDowserTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(spell);

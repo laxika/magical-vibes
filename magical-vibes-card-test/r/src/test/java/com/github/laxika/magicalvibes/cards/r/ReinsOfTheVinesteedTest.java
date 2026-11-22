@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.p.Progenitus;
 import com.github.laxika.magicalvibes.cards.s.SoulstoneSanctuary;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -209,5 +210,44 @@ class ReinsOfTheVinesteedTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.BLACK, 4);
         harness.castAndResolveInstant(player2, 0, target.getId());
         resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("Does not return an Aura that left the graveyard and came back")
+    void doesNotReturnAnAuraThatLeftTheGraveyardAndCameBack() {
+        Permanent dying = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        Permanent reins = attachReinsTo(player1, dying);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new DarkBanishing()));
+        harness.addMana(player2, ManaColor.BLACK, 4);
+        harness.castAndResolveInstant(player2, 0, dying.getId());
+        harness.runStateBasedActions();
+        gd.markGraveyardExit(reins.getCard().getId());
+        resolveAllTriggers();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.assertInGraveyard(player1, "Reins of the Vinesteed");
+        harness.assertNotOnBattlefield(player1, "Reins of the Vinesteed");
+    }
+
+    @Test
+    @DisplayName("The dead creature's types are those it had as it left the battlefield")
+    void readsTheDeadCreaturesTypesAsItLeftTheBattlefield() {
+        Permanent dying = addCreatureReady(player1, new GrizzlyBears());
+        Permanent elf = addCreatureReady(player1, new ElvishWarrior());
+        grantSubtypeUntilEndOfTurn(dying, CardSubtype.ELF, true);
+        Permanent reins = attachReinsTo(player1, dying);
+
+        destroyEnchantedCreature(dying);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(findPermanent(player1, "Reins of the Vinesteed").getAttachedTo()).isEqualTo(elf.getId());
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(reins.getCard());
     }
 }

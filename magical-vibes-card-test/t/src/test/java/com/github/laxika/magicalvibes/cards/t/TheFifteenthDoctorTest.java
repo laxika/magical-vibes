@@ -33,8 +33,8 @@ class TheFifteenthDoctorTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Howling Mine");
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(nonArtifact);
@@ -68,7 +68,7 @@ class TheFifteenthDoctorTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(sphere);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(ring, nonartifact);
@@ -84,8 +84,7 @@ class TheFifteenthDoctorTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new TheFifteenthDoctor());
         harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(second).doesNotContain(first, third);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, third);
@@ -101,7 +100,7 @@ class TheFifteenthDoctorTest extends BaseCardTest {
         harness.enterBattlefieldAndReturn(player1, new TheFifteenthDoctor());
         harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact, ring, doctor);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();

@@ -83,7 +83,8 @@ public class ReturnDamagedCreaturesThatDiedUnderControlEffectHandler implements 
                 cardIds.remove(cardId);
                 continue;
             }
-            if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, cardToReturn,
+            if (gameQueryService.cantEnterFaceUp(cardToReturn)
+                    || gameQueryService.isCardBlockedFromEnteringFromZone(gameData, cardToReturn,
                     com.github.laxika.magicalvibes.model.Zone.GRAVEYARD)) {
                 gameLogService.append(gameData,
                         GameLog.cardThen(cardToReturn, " can't return from the graveyard; it stays in the graveyard."));

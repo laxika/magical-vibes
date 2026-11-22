@@ -4,8 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToChosenCreatureOnLeaveEffect;
 import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,6 +25,7 @@ public class TravelingPlague extends Card {
                         new Scaled(new CountersOnSource(CounterType.PLAGUE), -1),
                         Subjects.attachedCreature()))
                 .addTrigger(Triggers.leavesBattlefield(null, ObjectRelation.ENCHANTED),
-                        new ReturnSourceAuraToChosenCreatureOnLeaveEffect());
+                        new PutCardsOntoBattlefieldEffect(Subjects.sourceCard())
+                                .underControlOf(Subjects.controllerOf(Subjects.triggering())));
     }
 }

@@ -4,10 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.SagaChapterTargetGroup;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTwoExiledCardsWithSourceToBattlefieldAndBottomRestEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -41,6 +45,9 @@ public class Vault13DwellersJourney extends Card {
         addTrigger(Triggers.chapter(2), new GainLifeEffect(2), new ScryEffect(2));
 
         addTrigger(Triggers.chapter(3),
-                new ReturnTwoExiledCardsWithSourceToBattlefieldAndBottomRestEffect());
+                ChooseCardEffect.exactly(Subjects.exiledWithSource(), 2, "two cards exiled with this Saga"),
+                new PutCardsOnBottomOfLibraryEffect(
+                        Subjects.except(Subjects.exiledWithSource(), Subjects.cardsThisWay(StepKind.CHOOSE))),
+                new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.CHOOSE)));
     }
 }

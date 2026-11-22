@@ -27,8 +27,8 @@ class SparringDummyTest extends BaseCardTest {
 
         activateDummy();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(land);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(land);
@@ -43,7 +43,7 @@ class SparringDummyTest extends BaseCardTest {
 
         activateDummy();
 
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(land);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(land);
@@ -113,8 +113,8 @@ class SparringDummyTest extends BaseCardTest {
         activateDummy();
 
         assertThat(gd.findExiledCard(land.getId())).isNotNull();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
         assertThat(gd.playerHands.get(player1.getId())).contains(land);
         assertThat(gd.findExiledCard(land.getId())).isNull();
     }
@@ -131,9 +131,7 @@ class SparringDummyTest extends BaseCardTest {
         activateDummy();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstLand, secondLand);
-        harness.handleMayAbilityChosen(player1, false);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
         assertThat(gd.playerHands.get(player1.getId())).contains(secondLand).doesNotContain(firstLand);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(firstLand).doesNotContain(secondLand);
         harness.assertLife(player1, 20);

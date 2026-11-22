@@ -31,8 +31,8 @@ class BalladOfTheBlackFlagTest extends BaseCardTest {
         advanceToNextChapter();
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Jhoira's Familiar");
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -46,7 +46,7 @@ class BalladOfTheBlackFlagTest extends BaseCardTest {
         addSagaWithLore(1);
 
         advanceToNextChapter();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Jhoira's Familiar");
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -61,7 +61,7 @@ class BalladOfTheBlackFlagTest extends BaseCardTest {
         addSagaWithLore(2);
 
         advanceToNextChapter();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Jhoira's Familiar");
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -104,7 +104,7 @@ class BalladOfTheBlackFlagTest extends BaseCardTest {
         harness.castFromHand(player1, new BalladOfTheBlackFlag(), "{1}{U}{U}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Jhoira's Familiar");
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, second);
@@ -118,7 +118,7 @@ class BalladOfTheBlackFlagTest extends BaseCardTest {
         addSagaWithLore(0);
 
         advanceToNextChapter();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         harness.assertNotInHand(player1, "Jhoira's Familiar");
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3).contains(historic);
@@ -134,8 +134,7 @@ class BalladOfTheBlackFlagTest extends BaseCardTest {
         addSagaWithLore(0);
 
         advanceToNextChapter();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         harness.assertInHand(player1, "Ezio, Brash Novice");
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact, saga);
@@ -149,7 +148,7 @@ class BalladOfTheBlackFlagTest extends BaseCardTest {
         addSagaWithLore(0);
 
         advanceToNextChapter();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Ballad of the Black Flag");
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2).doesNotContain(milledSaga);
@@ -176,7 +175,7 @@ class BalladOfTheBlackFlagTest extends BaseCardTest {
         addSagaWithLore(0);
 
         advanceToNextChapter();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         harness.assertInHand(player1, "Jhoira's Familiar");

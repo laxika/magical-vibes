@@ -13,17 +13,19 @@ import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.CardSubject;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfChosenCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MirrormindCrownEffect;
 import com.github.laxika.magicalvibes.model.effect.MoonlitMeditationEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.DelayedExiledCardReturns;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import java.util.ArrayList;
@@ -220,6 +222,9 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
 
         int createdFromIndex = entry.getCreatedPermanentIds().size();
         CardEffect deathReturn = deathReturn(e, entry);
+        // That card as it is exiled now, with the ability that exiled it as a cost resolving (CR 400.7j, 603.7c).
+        var deathReturnReferents = deathReturn == null ? null
+                : DelayedExiledCardReturns.exiled(gameData, List.of(entry.getCard().getId()));
         List<UUID> createdIds = permanentControlSupport.applyCreateToken(gameData, controllerId,
                 deathReturn == null ? e : withoutDeathReturn(e), amount, entry.getCard().getSetCode(), power,
                 toughness);
@@ -232,7 +237,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
                     gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.about(
                             entry.getControllerId(), entry.getCard(),
                             new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), deathReturn), createdId,
-                            entry.getSourcePermanentId(), false));
+                            entry.getSourcePermanentId(), false).withReferents(deathReturnReferents));
                 }
             }
         }
@@ -299,7 +304,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
 
     /**
      * The delayed "return this card from exile when that token dies" trigger a blueprint authors as a death
-     * ability with a {@code null} placeholder (Tatsumasa, the Dragon's Fang, exiled to pay its own activation
+     * ability over {@code cardsThisWay(EXILE)} (Tatsumasa, the Dragon's Fang, exiled to pay its own activation
      * cost), bound to the card that created the token, or {@code null} when it has none. It is a delayed trigger
      * (CR 603.7), not an ability of the token, so it still triggers while the token has lost its abilities.
      */
@@ -310,8 +315,7 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         return token.tokenEffects().stream()
                 .filter(CreateTokenEffectHandler::isDeathReturnPlaceholder)
                 .findFirst()
-                .map(ignored -> (CardEffect) new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(
-                        entry.getCard().getId()))
+                .map(ability -> AbilityEffects.effectsOf(ability).getFirst())
                 .orElse(null);
     }
 
@@ -324,7 +328,8 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
     private static boolean isDeathReturnPlaceholder(Ability ability) {
         return ability instanceof TriggeredAbility triggered && triggered.hasTrigger(Triggers.dies(ObjectRelation.THIS))
                 && AbilityEffects.effectsOf(ability).getFirst()
-                instanceof ReturnExiledCardToBattlefieldUnderOwnerControlEffect returnEffect
-                && returnEffect.exiledCardId() == null;
+                instanceof PutCardsOntoBattlefieldEffect put
+                // A token's own dies ability has no earlier step to read: this names what the maker exiled.
+                && put.cards() instanceof CardSubject.CardsThisWay thisWay && thisWay.kind() == StepKind.EXILE;
     }
 }

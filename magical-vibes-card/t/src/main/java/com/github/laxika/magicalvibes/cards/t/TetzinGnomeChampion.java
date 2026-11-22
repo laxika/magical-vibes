@@ -7,11 +7,16 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CraftMaterialCost;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
-import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceFromExileTransformedEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -27,9 +32,13 @@ import java.util.List;
 @CardRegistration(set = "LCC", collectorNumber = "31")
 public class TetzinGnomeChampion extends Card {
 
-    private static final MillControllerAndMayReturnMilledPermanentToHandEffect MILL_ARTIFACT =
-            new MillControllerAndMayReturnMilledPermanentToHandEffect(3,
-                    new CardTypePredicate(CardType.ARTIFACT));
+    private static final SequenceEffect MILL_ARTIFACT =
+            SequenceEffect.of(
+                    new MillEffect(3, Subjects.you()),
+                    ChooseCardEffect.upTo(
+                            Subjects.cardsThisWay(StepKind.MILL, new CardTypePredicate(CardType.ARTIFACT)), 1,
+                            "an artifact card milled this way"),
+                    new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.CHOOSE)));
 
     public TetzinGnomeChampion() {
         setBackFaceCard(new TheGoldenGearColossus());

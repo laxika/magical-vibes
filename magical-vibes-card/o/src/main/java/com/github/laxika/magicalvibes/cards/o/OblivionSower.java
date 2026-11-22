@@ -1,10 +1,14 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PutAnyNumberOfOwnedLandCardsFromExileOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -22,6 +26,9 @@ public class OblivionSower extends Card {
                 "Target must be an opponent"
         )).addTrigger(Triggers.youCastThisSpell(),
                 ExileTopCardOfOwnLibraryEffect.of(Subjects.targetPlayer(), 4),
-                new PutAnyNumberOfOwnedLandCardsFromExileOntoBattlefieldEffect());
+                ChooseCardEffect.upTo(
+                        Subjects.exiledCards(Subjects.targetPlayerDeclaredElsewhere(), new CardTypePredicate(CardType.LAND)),
+                        Integer.MAX_VALUE, "land cards that player owns in exile"),
+                new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.CHOOSE)).underControlOf(Subjects.you()));
     }
 }

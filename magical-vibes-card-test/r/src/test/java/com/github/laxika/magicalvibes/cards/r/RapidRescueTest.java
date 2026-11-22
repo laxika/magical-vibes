@@ -24,9 +24,9 @@ class RapidRescueTest extends BaseCardTest {
         castAndResolve();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Forest");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
@@ -39,7 +39,7 @@ class RapidRescueTest extends BaseCardTest {
         setTopCards(new Forest(), new RapidRescue());
 
         castAndResolve();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         harness.assertNotInHand(player1, "Forest");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
@@ -66,7 +66,7 @@ class RapidRescueTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         castAndResolve();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(second);
@@ -82,8 +82,7 @@ class RapidRescueTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         castAndResolve();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first);
@@ -113,7 +112,7 @@ class RapidRescueTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         castAndResolve();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(onlyCard);

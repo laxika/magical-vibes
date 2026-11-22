@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.b.BakersbaneDuo;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.s.ScalesOfShale;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CacheGrab.class, BakersbaneDuo.class, Forest.class, ScalesOfShale.class})
+@CardUsed({CacheGrab.class, BakersbaneDuo.class, Forest.class, ScalesOfShale.class, RestInPeace.class})
 class CacheGrabTest extends BaseCardTest {
 
     @Test
@@ -25,7 +26,7 @@ class CacheGrabTest extends BaseCardTest {
         setLibrary(returned, new Forest(), new Forest(), new Forest());
 
         castCacheGrab();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(returned);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
@@ -50,7 +51,7 @@ class CacheGrabTest extends BaseCardTest {
         setLibrary(new Forest(), new ScalesOfShale(), new ScalesOfShale(), new ScalesOfShale());
 
         castCacheGrab();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         harness.assertOnBattlefield(player1, "Food");
     }
@@ -61,8 +62,8 @@ class CacheGrabTest extends BaseCardTest {
         setLibrary(new BakersbaneDuo(), new ScalesOfShale(), new ScalesOfShale(), new ScalesOfShale());
 
         castCacheGrab();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1);
 
         harness.assertNotOnBattlefield(player1, "Food");
     }
@@ -73,7 +74,7 @@ class CacheGrabTest extends BaseCardTest {
         setLibrary(land, new ScalesOfShale(), new ScalesOfShale(), new ScalesOfShale());
 
         castCacheGrab();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(land).hasSize(4);
@@ -87,8 +88,7 @@ class CacheGrabTest extends BaseCardTest {
         setLibrary(first, second, new ScalesOfShale(), new ScalesOfShale());
 
         castCacheGrab();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first).doesNotContain(second);
@@ -103,7 +103,7 @@ class CacheGrabTest extends BaseCardTest {
         setLibrary(first, second, new Forest(), new Forest());
 
         castCacheGrab();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(second).hasSize(4);
@@ -117,9 +117,8 @@ class CacheGrabTest extends BaseCardTest {
         setLibrary(new Forest(), new Forest(), new ScalesOfShale(), new ScalesOfShale());
 
         castCacheGrab();
-        harness.handleMayAbilityChosen(player1, false);
         harness.assertNotOnBattlefield(player1, "Food");
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5);
@@ -165,7 +164,7 @@ class CacheGrabTest extends BaseCardTest {
         setLibrary(squirrel);
 
         castCacheGrab();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(squirrel);
@@ -180,7 +179,7 @@ class CacheGrabTest extends BaseCardTest {
         setLibrary(returned, new ScalesOfShale(), new ScalesOfShale(), new ScalesOfShale());
 
         castCacheGrab();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(returned);
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(2);
@@ -212,5 +211,19 @@ class CacheGrabTest extends BaseCardTest {
 
     private void setLibrary(Card... cards) {
         harness.setLibrary(player1, List.of(cards));
+    }
+
+    @Test
+    @DisplayName("A milled card a replacement exiled can be put into the hand")
+    void milledCardExiledInsteadCanBePutIntoHand() {
+        harness.addToBattlefield(player1, new RestInPeace());
+        Forest land = new Forest();
+        setLibrary(land, new ScalesOfShale(), new ScalesOfShale(), new ScalesOfShale());
+
+        castCacheGrab();
+        assertThat(gd.findExiledCard(land.getId())).isNotNull();
+        chooseOfferedCards(player1, 0);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(land);
     }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.filter;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
+import com.github.laxika.magicalvibes.model.ManaValueParity;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.AddExtraManaOfChosenColorOnLandTapEffect;
 import com.github.laxika.magicalvibes.model.effect.AddOneOfEachManaTypeProducedByLandEffect;
@@ -42,6 +43,8 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardControllerDoesNotOwnPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardDoesNotShareColorWithSourceControlledCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasStudyCounterPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasTypeChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesColorWithControlledPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSharesCreatureTypeWithCommanderPredicate;
@@ -142,6 +145,8 @@ import com.github.laxika.magicalvibes.model.filter.CardToughnessGreaterThanPower
 import com.github.laxika.magicalvibes.model.filter.CardToughnessLessThanSourceToughnessPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenParityPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasTypeChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -668,6 +673,14 @@ public class PredicateEvaluationService {
         };
     }
 
+    /** The spell or ability resolving, parked for a choice or not; what it chose so far is on it. */
+    private static StackEntry resolving(GameData gameData) {
+        if (gameData == null) {
+            return null;
+        }
+        return gameData.resolvingEntry != null ? gameData.resolvingEntry : gameData.pendingEffectResolutionEntry;
+    }
+
     private boolean matchesCardPredicateInternal(Card card, CardPredicate predicate, UUID sourceCardId,
                                                  GameData gameData, UUID cardOwnerId, UUID sourcePermanentId,
                                                  Integer sourcePowerAtTrigger, Integer xValue,
@@ -679,6 +692,14 @@ public class PredicateEvaluationService {
                     gameQueryService.cardHasType(card, p.cardType(), gameData, cardOwnerId);
             case CardSubtypePredicate p ->
                     gameQueryService.cardHasSubtype(card, p.subtype(), gameData, cardOwnerId);
+            case CardHasStudyCounterPredicate ignored ->
+                    gameData != null && gameData.exiledCardsWithStudyCounters.contains(card.getId());
+            case CardHasTypeChosenThisResolutionPredicate ignored -> {
+                StackEntry resolving = resolving(gameData);
+                CardSubtype chosen = resolving == null ? null : resolving.getChosenCreatureType();
+                yield chosen != null && (gameQueryService.cardHasSubtype(card, chosen, gameData, cardOwnerId)
+                        || card.hasKeyword(Keyword.CHANGELING));
+            }
             case CardHasSourceChosenSubtypePredicate p -> {
                 if (gameData == null || sourceCardId == null) {
                     yield false;
@@ -3191,6 +3212,20 @@ public class PredicateEvaluationService {
                         && matchesPermanentPredicate(permanent,
                                 new PermanentColorInPredicate(Set.of(chosenColor)), filterContext);
             }
+            case PermanentHasTypeChosenThisResolutionPredicate ignored -> {
+                StackEntry resolving = resolving(gameData);
+                CardSubtype chosen = resolving == null ? null : resolving.getChosenCreatureType();
+                yield chosen != null
+                        && matchesPermanentPredicate(permanent, new PermanentHasSubtypePredicate(chosen), filterContext);
+            }
+            case PermanentHasChosenParityPredicate chosenParity -> {
+                StackEntry resolving = resolving(gameData);
+                ManaValueParity parity = resolving == null ? null : resolving.getChosenParity();
+                yield parity != null && parity.matches(switch (chosenParity.of()) {
+                    case MANA_VALUE -> gameQueryService.getPermanentManaValue(permanent);
+                    case POWER -> gameQueryService.getEffectivePower(gameData, permanent);
+                });
+            }
             case PermanentHasChosenSpellColorPredicate ignored ->
                     gameData != null
                             && gameData.chosenSpellColor != null
@@ -3769,6 +3804,9 @@ public class PredicateEvaluationService {
                 yield chosen != null
                         && matchesStaticLeaf(permanent, new PermanentColorInPredicate(Set.of(chosen)));
             }
+            // What a resolution chose is a resolving effect's, never a static ability's.
+            case PermanentHasTypeChosenThisResolutionPredicate ignored -> false;
+            case PermanentHasChosenParityPredicate ignored -> false;
             case PermanentHasChosenSpellColorPredicate ignored -> {
                 GameData gameData = context == null ? null : context.gameData();
                 yield gameData != null && gameData.chosenSpellColor != null

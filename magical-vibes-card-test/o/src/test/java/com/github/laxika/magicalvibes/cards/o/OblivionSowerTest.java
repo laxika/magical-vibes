@@ -35,9 +35,8 @@ class OblivionSowerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        PendingInteraction.OblivionSowerLandChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.OblivionSowerLandChoice.class);
-        assertThat(choice.ownerId()).isEqualTo(player2.getId());
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice.validCardIds())
                 .containsExactly(previouslyExiled.getId(), topLand.getId(), otherLand.getId());
 
@@ -62,7 +61,7 @@ class OblivionSowerTest extends BaseCardTest {
         castSower();
 
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.OblivionSowerLandChoice.class))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNotNull();
 
         harness.handleMultipleCardsChosen(player1, List.of());
@@ -84,7 +83,7 @@ class OblivionSowerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.OblivionSowerLandChoice.class))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNull();
         assertThat(gd.getPlayerExiledCards(player2.getId()))
                 .extracting(Card::getId)
@@ -148,7 +147,7 @@ class OblivionSowerTest extends BaseCardTest {
 
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.OblivionSowerLandChoice.class)
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)
                 .validCardIds()).containsExactly(land.getId());
         harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
         harness.assertOnBattlefield(player1, "Forest");
@@ -170,7 +169,7 @@ class OblivionSowerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(library);
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(land);
         assertThat(gd.stack).isEmpty();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.OblivionSowerLandChoice.class))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNull();
     }
 

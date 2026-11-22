@@ -170,4 +170,20 @@ class TravelingPlagueTest extends BaseCardTest {
         harness.addMana(caster, ManaColor.BLACK, 3);
         harness.castAndResolveInstant(caster, 0, target.getId());
     }
+
+    @Test
+    @DisplayName("Does not return an Aura that left the graveyard and came back")
+    void doesNotReturnAnAuraThatLeftTheGraveyardAndCameBack() {
+        Permanent oldCreature = addCreatureReady(player2, new AvenFlock());
+        addCreatureReady(player1, new AvenFlock());
+        castTravelingPlagueOn(player1, oldCreature);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, oldCreature));
+        harness.runStateBasedActions();
+        gd.playerGraveyards.get(player1.getId()).forEach(card -> gd.markGraveyardExit(card.getId()));
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Traveling Plague");
+        harness.assertNotOnBattlefield(player2, "Traveling Plague");
+    }
 }

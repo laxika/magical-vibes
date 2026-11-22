@@ -185,4 +185,21 @@ class GhoulishImpetusTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
     }
+
+    @Test
+    @DisplayName("Returns under the control of the player who controlled it, from its owner's graveyard")
+    void returnsUnderTheInstructedPlayersControl() {
+        Permanent dyingCreature = addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player2, new GrizzlyBears());
+        Permanent aura = attachGhoulishImpetus(player1, dyingCreature);
+        setOwnerAndController(aura, player2, player1);
+
+        destroyCreature(player2, dyingCreature);
+        harness.assertInGraveyard(player2, "Ghoulish Impetus");
+
+        advanceToReturn();
+
+        harness.assertOnBattlefield(player1, "Ghoulish Impetus");
+        harness.assertNotInGraveyard(player2, "Ghoulish Impetus");
+    }
 }

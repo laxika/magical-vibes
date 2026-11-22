@@ -211,4 +211,25 @@ class InfectiousRageTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Infectious Rage");
         assertThat(gd.findExiledCard(auraCard.getId())).isNotNull();
     }
+
+    @Test
+    @DisplayName("Does not return an Aura that left the graveyard and came back")
+    void doesNotReturnAnAuraThatLeftTheGraveyardAndCameBack() {
+        Permanent dying = addCreatureReady(player1, new BattlewiseAven());
+        addCreatureReady(player1, new BattlewiseAven());
+        Permanent rage = attachRageTo(player1, dying);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new ToxicStench()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.castAndResolveInstant(player2, 0, dying.getId());
+        harness.runStateBasedActions();
+        gd.markGraveyardExit(rage.getCard().getId());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Infectious Rage");
+        harness.assertNotOnBattlefield(player1, "Infectious Rage");
+    }
 }

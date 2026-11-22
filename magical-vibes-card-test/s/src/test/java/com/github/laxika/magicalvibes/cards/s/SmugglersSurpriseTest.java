@@ -30,10 +30,8 @@ class SmugglersSurpriseTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(forest, bears, new GrizzlyBears(), new GrizzlyBears()));
         cast(new SmugglersSurprise(), 0, 3);
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0, 1);
 
         harness.assertInHand(player1, "Forest");
         harness.assertInHand(player1, "Grizzly Bears");
@@ -88,8 +86,7 @@ class SmugglersSurpriseTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(angel, bears, forest, milledInstant));
         castModes(new SmugglersSurprise(), 9, 2, 1, 0);
 
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0, 1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest, milledInstant);
         assertThat(gd.interaction.activeInteraction())
@@ -114,8 +111,7 @@ class SmugglersSurpriseTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(forest, bears, instant));
         cast(new SmugglersSurprise(), 0, 3);
 
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest, bears, instant);
@@ -149,8 +145,7 @@ class SmugglersSurpriseTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(forest, angel, new SmugglersSurprise(), new SmugglersSurprise()));
         cast(new SmugglersSurprise(), 0, 3);
 
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(angel);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest, olderCard);

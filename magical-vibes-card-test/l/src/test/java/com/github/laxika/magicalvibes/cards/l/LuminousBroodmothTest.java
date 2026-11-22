@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.r.RadjanSpirit;
+import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.StarlitAngel;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({LuminousBroodmoth.class, GrizzlyBears.class, StarlitAngel.class, RadjanSpirit.class})
+@CardUsed({LuminousBroodmoth.class, GrizzlyBears.class, StarlitAngel.class, RadjanSpirit.class, Shock.class})
 class LuminousBroodmothTest extends BaseCardTest {
 
     @Test
@@ -43,7 +45,7 @@ class LuminousBroodmothTest extends BaseCardTest {
     }
 
     @Test
-    @CardUsed({LuminousBroodmoth.class, RadjanSpirit.class})
+    @CardUsed({LuminousBroodmoth.class, RadjanSpirit.class, Shock.class})
     @DisplayName("Returns itself when it dies without flying")
     void returnsItselfAfterLosingFlying() {
         addCreatureReady(player1, new RadjanSpirit());
@@ -159,5 +161,18 @@ class LuminousBroodmothTest extends BaseCardTest {
         creature.setMarkedDamage(gqs.getEffectiveToughness(gd, creature));
         harness.runStateBasedActions();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("An instant card that was a face-down creature stays in the graveyard")
+    void doesNotReturnAnInstantThatWasAFaceDownCreature() {
+        harness.addToBattlefield(player1, new LuminousBroodmoth());
+        Permanent manifested = harness.addToBattlefieldAndReturn(player1, new Shock());
+        manifested.setFaceDown(2, 2, java.util.Set.of(CardType.CREATURE), java.util.Set.of());
+
+        kill(manifested);
+
+        harness.assertNotOnBattlefield(player1, "Shock");
+        harness.assertInGraveyard(player1, "Shock");
     }
 }

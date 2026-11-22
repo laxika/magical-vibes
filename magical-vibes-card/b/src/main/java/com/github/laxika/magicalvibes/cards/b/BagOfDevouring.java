@@ -3,13 +3,17 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSacrificedPermanentWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnUpToNCardsExiledWithSourceIntoOwnersHandsEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD10Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -50,8 +54,10 @@ public class BagOfDevouring extends Card {
                 "{3}",
                 List.of(
                         new SacrificeSelfCost(),
-                        new RollD10Effect(new ReturnUpToNCardsExiledWithSourceIntoOwnersHandsEffect(
-                                new EventValue()))),
+                        new RollD10Effect(SequenceEffect.of(
+                                ChooseCardEffect.upTo(Subjects.exiledWithSource(), new EventValue(),
+                                        "cards exiled with this artifact"),
+                                new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.CHOOSE))))),
                 "{3}, {T}, Sacrifice this artifact: Roll a d10. Return up to X cards from among cards "
                         + "exiled with this artifact to their owners' hands, where X is the result."));
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.e;
 
+import com.github.laxika.magicalvibes.cards.d.DourPortMage;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.c.CrystallineGiant;
 import com.github.laxika.magicalvibes.cards.d.DelverOfSecrets;
@@ -24,7 +25,7 @@ import java.util.Set;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({ExtinctionEvent.class, GrizzlyBears.class, LlanowarElves.class,
-        CrystallineGiant.class, DelverOfSecrets.class, Forest.class, StonecoilSerpent.class})
+        CrystallineGiant.class, DelverOfSecrets.class, Forest.class, StonecoilSerpent.class, DourPortMage.class})
 class ExtinctionEventTest extends BaseCardTest {
 
     private void castExtinctionEvent() {
@@ -149,5 +150,20 @@ class ExtinctionEventTest extends BaseCardTest {
             assertThat(gd.playerBattlefields.get(player1.getId())).contains(delver);
             assertThat(gd.getPlayerExiledCards(player1.getId())).doesNotContain(card);
         }
+    }
+
+    @Test
+    @DisplayName("The creatures exiled leave as one event")
+    void creaturesLeaveAsOneEvent() {
+        harness.addToBattlefield(player1, new DourPortMage());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        castExtinctionEvent();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.handleListChoice(player1, "EVEN");
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore + 1);
     }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -73,8 +74,8 @@ class Vault13DwellersJourneyTest extends BaseCardTest {
         triggerChapter();
         harness.passBothPriorities();
 
-        PendingInteraction.LibraryRevealChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice.minCount()).isEqualTo(2);
         assertThat(choice.maxCount()).isEqualTo(2);
 
@@ -223,6 +224,11 @@ class Vault13DwellersJourneyTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(ownReturned.getId(), opponentReturned.getId()));
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        gs.handleInteractionAnswer(gd, player2, new InteractionAnswer.CardOrder(List.of(1, 0)));
+
+        assertThat(gd.playerDecks.get(player2.getId())).endsWith(bottomEnchantment, bottomCreature);
+        assertThat(findCardOnBattlefield(player1, ownReturned.getId())).isNotNull();
+        assertThat(findCardOnBattlefield(player2, opponentReturned.getId())).isNotNull();
     }
 
     @Test
@@ -254,6 +260,8 @@ class Vault13DwellersJourneyTest extends BaseCardTest {
     void chapterIIIReturnsAuraAttachedToAChosenExistingCreature() {
         Permanent saga = addSagaWithLore(2);
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new InfestingRadroach());
+        // A second host, so that there is something to choose: a lone one is taken unasked.
+        harness.addToBattlefieldAndReturn(player2, new InfestingRadroach());
         AlmostPerfect aura = new AlmostPerfect();
         gd.addToExile(player2.getId(), aura, saga.getId());
 
@@ -303,5 +311,25 @@ class Vault13DwellersJourneyTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getId().equals(cardId))
                 .findFirst()
                 .orElse(null);
+    }
+
+    @Test
+    @DisplayName("Each of two returned Auras is attached as its owner chooses")
+    void chapterIIIAsksAHostForEachReturnedAura() {
+        Permanent saga = addSagaWithLore(2);
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new InfestingRadroach());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new InfestingRadroach());
+        AlmostPerfect firstAura = new AlmostPerfect();
+        AlmostPerfect secondAura = new AlmostPerfect();
+        gd.addToExile(player2.getId(), firstAura, saga.getId());
+        gd.addToExile(player2.getId(), secondAura, saga.getId());
+
+        triggerChapter();
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player2, first.getId());
+        harness.handlePermanentChosen(player2, second.getId());
+
+        assertThat(findCardOnBattlefield(player2, firstAura.getId()).getAttachedTo()).isEqualTo(first.getId());
+        assertThat(findCardOnBattlefield(player2, secondAura.getId()).getAttachedTo()).isEqualTo(second.getId());
     }
 }

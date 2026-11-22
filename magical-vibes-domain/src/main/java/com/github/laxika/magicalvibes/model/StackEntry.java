@@ -469,6 +469,8 @@ public class StackEntry {
     @Setter private UUID beheldCardOwnerId;
     @Setter private CardSubtype beholdChosenSubtype;
     @Setter private CardSubtype chosenCreatureType;
+    /** "Odd or even" as it was chosen while this resolved, for the steps after the choice. */
+    @Setter private ManaValueParity chosenParity;
     private final Map<UUID, CardSubtype> chosenCreatureTypes = new HashMap<>();
     @Setter private Card damageSourceCard;
     /** Controller of a distinct damage source when it differs from the ability's controller. */
@@ -1457,6 +1459,7 @@ public class StackEntry {
         this.beheldCardOwnerId = source.beheldCardOwnerId;
         this.beholdChosenSubtype = source.beholdChosenSubtype;
         this.chosenCreatureType = source.chosenCreatureType;
+        this.chosenParity = source.chosenParity;
         this.chosenCreatureTypes.putAll(source.chosenCreatureTypes);
         this.damageSourceCard = source.damageSourceCard;
         this.damageSourceControllerId = source.damageSourceControllerId;

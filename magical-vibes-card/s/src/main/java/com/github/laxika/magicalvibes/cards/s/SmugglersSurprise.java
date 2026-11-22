@@ -4,11 +4,15 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PutUpToCardsFromHandOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpreeAdditionalManaCost;
-import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -25,12 +29,14 @@ public class SmugglersSurprise extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Mill four cards. You may put up to two creature and/or land cards from among the milled cards into your hand",
-                        new MillControllerAndMayReturnMilledPermanentToHandEffect(
-                                4,
-                                new CardAnyOfPredicate(List.of(
-                                        new CardTypePredicate(CardType.CREATURE),
-                                        new CardTypePredicate(CardType.LAND))),
-                                2)),
+                        SequenceEffect.of(
+                                new MillEffect(4, Subjects.you()),
+                                ChooseCardEffect.upTo(
+                                        Subjects.cardsThisWay(StepKind.MILL, new CardAnyOfPredicate(List.of(
+                                                        new CardTypePredicate(CardType.CREATURE),
+                                                new CardTypePredicate(CardType.LAND)))), 2,
+                                        "creature and/or land cards milled this way"),
+                                new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.CHOOSE)))),
                 new ChooseOneEffect.ChooseOneOption(
                         "You may put up to two creature cards from your hand onto the battlefield",
                         new PutUpToCardsFromHandOntoBattlefieldEffect(

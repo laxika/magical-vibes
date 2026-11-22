@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedReturnSourceAuraToCreatureOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
@@ -13,7 +15,6 @@ import org.springframework.stereotype.Component;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.DelayedReferents;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOnDeathEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -34,7 +35,9 @@ public class RegisterDelayedReturnSourceAuraToCreatureOnDeathEffectHandler
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Card auraCard = gameQueryService.findCardInGraveyardById(gameData, entry.getCard().getId());
-        if (auraCard == null) {
+        // An Aura that left the graveyard and came back is a new object (CR 400.7).
+        if (auraCard == null || entry.sourceCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(auraCard.getId()) != entry.sourceCardGraveyardEntryVersion()) {
             gameLogService.append(gameData,
                     GameLog.cardThen(entry.getCard(), "'s delayed return fizzles (card not in a graveyard)."));
             return;
@@ -43,7 +46,7 @@ public class RegisterDelayedReturnSourceAuraToCreatureOnDeathEffectHandler
         gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                 entry.getControllerId(), entry.getCard(),
                 new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
-                        new ReturnSourceAuraToCreatureOnDeathEffect()),
+                        new PutCardsOntoBattlefieldEffect(Subjects.sourceCard()).underControlOf(Subjects.you())),
                 entry.getSourcePermanentId(), null, null,
                 DelayedReferents.graveyardCard(auraCard.getId(), gameData.graveyardEntryVersion(auraCard.getId()))));
         gameLogService.append(gameData,

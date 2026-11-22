@@ -6,8 +6,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnAllCreaturesOfChosenPowerParityEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import java.util.List;
 
 @CardRegistration(set = "SOC", collectorNumber = "206")
 @CardRegistration(set = "DSC", collectorNumber = "15")
@@ -20,6 +23,8 @@ public class ZimonesHypothesis extends Card {
                         new PermanentIsCreaturePredicate()),
                 "Put a +1/+1 counter on a creature?"));
         addSpellEffect(new ChooseManaValueParityAtResolutionEffect());
-        addSpellEffect(new ReturnAllCreaturesOfChosenPowerParityEffect());
+        addSpellEffect(ReturnToHandEffect.allPermanentsMatching(new PermanentAllOfPredicate(List.of(
+                new PermanentIsCreaturePredicate(),
+                new PermanentHasChosenParityPredicate(PermanentHasChosenParityPredicate.Quality.POWER)))));
     }
 }

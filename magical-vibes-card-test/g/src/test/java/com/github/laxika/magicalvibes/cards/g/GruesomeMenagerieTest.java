@@ -50,15 +50,14 @@ class GruesomeMenagerieTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(oneManaCreature, firstTwoManaCreature, secondTwoManaCreature, threeManaCreature));
         castAndResolve();
 
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.mandatory()).isTrue();
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Cannot decline forced graveyard choice");
+        assertThat(choice.minCount()).isEqualTo(1);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
 
-        harness.handleGraveyardCardChosen(player1, 2);
+        harness.handleMultipleCardsChosen(player1, List.of(secondTwoManaCreature.getId()));
 
         harness.assertOnBattlefield(player1, "Elvish Mystic");
         harness.assertOnBattlefield(player1, "Grizzly Bears");
@@ -91,13 +90,13 @@ class GruesomeMenagerieTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(oneManaCreature, firstTwoManaCreature, secondTwoManaCreature));
         castAndResolve();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
         harness.assertNotOnBattlefield(player1, "Hired Poisoner");
         harness.assertNotOnBattlefield(player1, "Ornery Goblin");
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .contains(oneManaCreature, firstTwoManaCreature, secondTwoManaCreature);
 
-        harness.handleGraveyardCardChosen(player1, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(firstTwoManaCreature.getId()));
 
         harness.assertOnBattlefield(player1, "Hired Poisoner");
         harness.assertOnBattlefield(player1, "Ornery Goblin");
@@ -123,7 +122,7 @@ class GruesomeMenagerieTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .containsExactly(opponentsOneManaCreature, opponentsTwoManaCreature);
         harness.assertInGraveyard(player1, "Gruesome Menagerie");
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
     }
 
     private void castAndResolve() {

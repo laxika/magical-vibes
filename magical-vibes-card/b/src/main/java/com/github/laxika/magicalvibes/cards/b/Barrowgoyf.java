@@ -3,14 +3,19 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.CardTypesAmongCardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.Sum;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -25,8 +30,12 @@ public class Barrowgoyf extends Card {
         addStaticEffect(new SetPowerToughnessToAmountEffect(
                 cardTypes, new Sum(cardTypes, new Fixed(1))));
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(
-                new MillControllerAndMayReturnMilledPermanentToHandEffect(
-                        new EventValue(), new CardTypePredicate(CardType.CREATURE)),
+                SequenceEffect.of(
+                        new MillEffect(new EventValue(), Subjects.you()),
+                        ChooseCardEffect.upTo(
+                                Subjects.cardsThisWay(StepKind.MILL, new CardTypePredicate(CardType.CREATURE)), 1,
+                                "a creature card milled this way"),
+                        new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.CHOOSE))),
                 "Mill that many cards?"));
     }
 }

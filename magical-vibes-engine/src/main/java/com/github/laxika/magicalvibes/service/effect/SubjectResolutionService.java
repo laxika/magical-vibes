@@ -150,6 +150,15 @@ public class SubjectResolutionService {
             case CardSubject.TargetCard target -> targetCard(gameData, entry, target);
             case CardSubject.TriggeringCards triggering -> triggeringCards(gameData, entry, triggering);
             case CardSubject.SourceCard ignored -> sourceCard(gameData, entry);
+            case CardSubject.InGraveyards in -> inGraveyards(gameData, entry, effect, in);
+            case CardSubject.InExile in -> inExile(gameData, entry, effect, in);
+            case CardSubject.ExiledWithSource with -> exiledWithSource(gameData, entry, effect, with);
+            case CardSubject.Except except -> {
+                Set<UUID> excluded = new LinkedHashSet<>();
+                locatedCards(gameData, entry, effect, except.excluded()).forEach(out -> excluded.add(out.card().getId()));
+                yield locatedCards(gameData, entry, effect, except.cards()).stream()
+                        .filter(card -> !excluded.contains(card.card().getId())).toList();
+            }
             case CardSubject.InYourGraveyard yours -> locatedCards(gameData, entry, effect, yours.cards()).stream()
                     .filter(located -> located.zone() == Zone.GRAVEYARD
                             && entry.getControllerId().equals(located.ownerId()))
@@ -315,6 +324,70 @@ public class SubjectResolutionService {
             named.add(card);
         }
         return named;
+    }
+
+    /** {@link CardSubject.InGraveyards}: no token, which is no card (CR 108.2b). */
+    private List<LocatedCard> inGraveyards(GameData gameData, StackEntry entry, CardEffect effect,
+                                           CardSubject.InGraveyards in) {
+        List<LocatedCard> named = new ArrayList<>();
+        for (UUID ownerId : players(gameData, entry, effect, in.owners())) {
+            for (Card card : List.copyOf(gameData.playerGraveyards.getOrDefault(ownerId, List.of()))) {
+                if (!card.isToken() && cardMatches(gameData, entry, card, ownerId, in.filter())) {
+                    named.add(new LocatedCard(card, Zone.GRAVEYARD, ownerId));
+                }
+            }
+        }
+        return named;
+    }
+
+    /** {@link CardSubject.InExile}. */
+    private List<LocatedCard> inExile(GameData gameData, StackEntry entry, CardEffect effect, CardSubject.InExile in) {
+        List<UUID> owners = in.owners() == null ? null : players(gameData, entry, effect, in.owners());
+        List<ExiledCardEntry> inZone;
+        synchronized (gameData.exiledCards) {
+            inZone = gameData.exiledCards.stream()
+                    .filter(exiled -> owners == null || owners.contains(exiled.ownerId())).toList();
+        }
+        return exiledMatching(gameData, entry, inZone, in.filter());
+    }
+
+    /**
+     * {@link CardSubject.ExiledWithSource}: linked to the source permanent, as the entry or its last-known snapshot
+     * has it, else to the source card.
+     */
+    private List<LocatedCard> exiledWithSource(GameData gameData, StackEntry entry, CardEffect effect,
+                                               CardSubject.ExiledWithSource with) {
+        UUID linked = entry.getSourcePermanentId();
+        if (linked == null && entry.getSourcePermanentSnapshot() != null) {
+            linked = entry.getSourcePermanentSnapshot().getId();
+        }
+        UUID sourceId = linked != null ? linked : entry.getCard().getId();
+        List<UUID> owners = with.owners() == null ? null : players(gameData, entry, effect, with.owners());
+        List<ExiledCardEntry> inZone;
+        synchronized (gameData.exiledCards) {
+            inZone = gameData.exiledCards.stream()
+                    .filter(exiled -> sourceId.equals(exiled.sourcePermanentId()))
+                    .filter(exiled -> owners == null || owners.contains(exiled.ownerId())).toList();
+        }
+        return exiledMatching(gameData, entry, inZone, with.filter());
+    }
+
+    private List<LocatedCard> exiledMatching(GameData gameData, StackEntry entry, List<ExiledCardEntry> exiled,
+                                             CardPredicate filter) {
+        List<LocatedCard> named = new ArrayList<>();
+        for (ExiledCardEntry held : exiled) {
+            // A card exiled face down has no characteristics (CR 406.3a).
+            Card judged = held.faceDown() ? Card.namedRuntimePlaceholder("") : held.card();
+            if (!held.card().isToken() && cardMatches(gameData, entry, judged, held.ownerId(), filter)) {
+                named.add(new LocatedCard(held.card(), Zone.EXILE, held.ownerId()));
+            }
+        }
+        return named;
+    }
+
+    private boolean cardMatches(GameData gameData, StackEntry entry, Card card, UUID ownerId, CardPredicate filter) {
+        return filter == null || predicateEvaluationService.matchesCardPredicate(card, filter, entry.getCard().getId(),
+                gameData, ownerId, null, null, entry.getXValue(), entry.getSourcePermanentSnapshot());
     }
 
     /** {@link CardSubject.SourceCard}: the ability's card in the graveyard stay it was put on the stack from. */

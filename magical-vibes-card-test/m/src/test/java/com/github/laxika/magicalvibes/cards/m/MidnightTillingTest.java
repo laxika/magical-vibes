@@ -37,7 +37,7 @@ class MidnightTillingTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
     }
 
     @Test
@@ -47,7 +47,7 @@ class MidnightTillingTest extends BaseCardTest {
                 new Forest(), new Shock(), new Shock(), new Shock()));
 
         castAndResolveToMay();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Forest");
     }
@@ -59,7 +59,7 @@ class MidnightTillingTest extends BaseCardTest {
                 new Forest(), new Shock(), new Shock(), new Shock()));
 
         castAndResolveToMay();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5);
@@ -87,7 +87,7 @@ class MidnightTillingTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second, new MidnightTilling(), new MidnightTilling()));
 
         castAndResolveToMay();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(second).doesNotContain(first);
@@ -103,8 +103,7 @@ class MidnightTillingTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second, new MidnightTilling(), new MidnightTilling()));
 
         castAndResolveToMay();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first).doesNotContain(second);
@@ -137,7 +136,7 @@ class MidnightTillingTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(forest, new MidnightTilling()));
 
         castAndResolveToMay();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
@@ -171,7 +170,7 @@ class MidnightTillingTest extends BaseCardTest {
                 new MidnightTilling(), new MidnightTilling(), fifth));
 
         castAndResolveToMay();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(creature);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4).doesNotContain(creature);
@@ -189,8 +188,7 @@ class MidnightTillingTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second, new MidnightTilling(), new MidnightTilling()));
 
         castAndResolveToMay();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5).contains(first, second);

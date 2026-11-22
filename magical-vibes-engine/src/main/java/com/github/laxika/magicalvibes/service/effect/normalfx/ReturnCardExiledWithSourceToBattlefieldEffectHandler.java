@@ -216,6 +216,9 @@ public class ReturnCardExiledWithSourceToBattlefieldEffectHandler implements Nor
                                      Set<CardType> enterTappedTypes,
                                      List<Permanent> simultaneouslyEntered,
                                      EnterWithCountersEffect battlefieldEntryReplacement) {
+        if (gameQueryService.cantEnterFaceUp(card)) {
+            return;
+        }
         if (!gameData.removeFromExile(card.getId())) {
             return;
         }

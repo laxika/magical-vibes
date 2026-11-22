@@ -29,7 +29,6 @@ import com.github.laxika.magicalvibes.model.PendingPsychoticEpisodeChoice;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
 import com.github.laxika.magicalvibes.model.PendingThranTomeChoice;
-import com.github.laxika.magicalvibes.model.PendingStudyCounterExileReturn;
 import com.github.laxika.magicalvibes.model.PendingTruthOrTaleCardChoice;
 import com.github.laxika.magicalvibes.model.PendingWhimsOfTheFates;
 import com.github.laxika.magicalvibes.model.PendingValkiCopyChoice;
@@ -98,7 +97,6 @@ class PendingInteractionContractTest {
             PendingAnimalMagnetismChoice.class,
             PendingKarnScionExileReturn.class,
             PendingReturnExiledWithSourceCard.class,
-            com.github.laxika.magicalvibes.model.PendingReturnTwoExiledWithSourceCards.class,
             PendingDubiousChallengeChoice.class,
             PendingPortalPileSearch.class,
             PendingKarnRestart.class,
@@ -110,7 +108,6 @@ class PendingInteractionContractTest {
             PendingBendOrBreak.class,
             PendingGuildFeud.class,
             PendingThranTomeChoice.class,
-            PendingStudyCounterExileReturn.class,
             PendingPsychoticEpisodeChoice.class,
             PendingTruthOrTaleCardChoice.class,
             PendingWhimsOfTheFates.class,

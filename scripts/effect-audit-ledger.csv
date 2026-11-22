@@ -2038,3 +2038,47 @@ ReturnCardByIdFromGraveyardToBattlefieldEffect,unique,9,run 10: the payload of t
 ReturnDelayedCurseAttachedToPlayerEffect,unique,9,run 10: engine payload: that Curse returns attached to you (Lynde)
 ReturnLinkedCardToOwnerGraveyardEffect,unique,9,"run 10: the linked return granted to Hofri's tokens, read from the token as it last existed"
 ReturnVoyagingCardFromExileEffect,unique,9,run 10: the declined half of the voyage counter rule
+ReturnSourceAuraToChosenCreatureOnLeaveEffect,absorbed,9,run 11: PutCardsOntoBattlefieldEffect(sourceCard()).underControlOf(controllerOf(triggering())): the host is the entering player's choice by CR 303.4f; Traveling Plague
+ReturnSourceAuraToCreatureOnDeathEffect,absorbed,9,"run 11: PutCardsOntoBattlefieldEffect(inYourGraveyard(sourceCard())).underControlOf(you()); Screams from Within, Ghoulish Impetus' delayed return"
+ReturnSourceAuraToSharedTypeCreatureOnDeathEffect,absorbed,9,run 11: PutCardsOntoBattlefieldEffect.attachedTo(creatures sharing a type with the triggering permanent as it last existed); Reins of the Vinesteed
+ReturnAuraFromGraveyardAttachedToPermanentEffect,absorbed,9,"run 11: engine payload: PutCardsOntoBattlefieldEffect(sourceCard()).attachedTo(named(id)); Gift of Immortality, Next of Kin"
+ReturnDelayedCurseAttachedToPlayerEffect,absorbed,9,run 11: engine payload: PutCardsOntoBattlefieldEffect(triggeringCards()).attachedTo(you()); Lynde
+ReturnSourceAuraToRandomCreatureOnDeathEffect,unique,9,"run 11: a random host (Infectious Rage): the put step's attachedTo has the hosts, a random pick would be one card's flag; run 11 added the stay check"
+ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect,unique,9,"run 11: another player chooses the host, else it returns as a non-Aura (Takklemaggot); run 11 added the stay check"
+ReturnEnchantedCreatureAndReattachAuraOnDeathEffect,unique,9,"run 11: the delayed return is attached to the permanent the first return made, bound as it entered (Gift of Immortality); its payload is the put step since run 11, which checks both stays"
+ReturnDelayedGraveyardCardUnderControlEffect,unique,9,run 11: engine payload: links the permanent it returns to the loss of control of Seraph and takes the player Endless Whispers targeted as its controller; RegisterDelayedReturnDyingCreatureUnderControlEffect's other riders are the put step's and go with that record
+PutCardsOntoBattlefieldEffect,survivor,9,run 11: attachedTo(permanents or players); an instant or sorcery card enters only face down (CR 400.4a); records RETURN with what entered
+ChooseCardEffect,survivor,9,"run 11: a count (exactly / up to), one choice for each of several qualities, several chosen cards recorded together"
+ChooseManaValueParityAtResolutionEffect,survivor,9,run 11: keeps the answer on the entry for PermanentHasChosenParityPredicate
+ChooseCreatureTypeAtResolutionEffect,survivor,9,run 11: new step record: the chosen type is kept on the entry for the two TypeChosenThisResolution predicates
+PutCardsOnBottomOfLibraryEffect,survivor,9,"run 11: new step record: the named graveyard or exile cards go to the bottom at once, each owner ordering (CR 401.4)"
+ReturnAllCreaturesExceptChosenTypeToHandEffect,split,9,run 11: ChooseCreatureTypeAtResolutionEffect + ReturnToHandEffect.allPermanentsMatching; Raise the Palisade
+ReturnCreaturesOfChosenTypeFromGraveyardEffect,split,9,"run 11: ChooseCreatureTypeAtResolutionEffect + the return all / up to two graveyard steps; Bloodline Bidding, Haunting Voyage"
+ReturnAllCreaturesOfChosenPowerParityEffect,absorbed,9,run 11: ReturnToHandEffect.allPermanentsMatching(PermanentHasChosenParityPredicate(POWER)); Zimone's Hypothesis
+ExileAllCreaturesOfChosenManaValueParityEffect,split,9,run 11: the parity step + ExileAllPermanentsEffect; Extinction Event
+DestroyAllCreaturesOfChosenParityEffect,absorbed,9,run 11: DestroyAllPermanentsEffect(PermanentHasChosenParityPredicate); Mutinous Massacre
+DestroyOtherCreaturesOfChosenManaValueParityEffect,split,9,"run 11: the parity step + DestroyAllPermanentsEffect; Thanos, the Mad Titan"
+ReturnOneCardPerFilterFromGraveyardOnResolutionEffect,split,9,run 11: ChooseCardEffect.upToOneOfEach + PutCardsOntoBattlefieldEffect(cardsThisWay(CHOOSE)); Revival Experiment
+ReturnOneCreatureOfEachManaValueFromGraveyardToBattlefieldEffect,split,9,run 11: ChooseCardEffect.oneOfEach + PutCardsOntoBattlefieldEffect(cardsThisWay(CHOOSE)); Gruesome Menagerie
+ReturnOneOfEachFilterFromControllerGraveyardToHandEffect,split,9,run 11: ChooseCardEffect.oneOfEach + PutCardsIntoHandEffect(cardsThisWay(CHOOSE)); Sudden Reclamation
+ReturnExiledCardNamedToBattlefieldUnderOwnerControlEffect,split,9,run 11: ChooseCardEffect.oneOf(exiledCards(named)) + PutCardsOntoBattlefieldEffect(cardsThisWay(CHOOSE)); Sengir Nosferatu
+ReturnStudyCounterCardEffect,split,9,"run 11: ChooseCardEffect.upTo(exiledCards(you(), study counter)) + PutCardsIntoHandEffect(cardsThisWay(CHOOSE)); Imbraham"
+ReturnTwoExiledCardsWithSourceToBattlefieldAndBottomRestEffect,split,9,run 11: ChooseCardEffect.exactly(exiledWithSource()) + the bottom step over except() + the put step; Vault 13
+ReturnUpToNCardsExiledWithSourceIntoOwnersHandsEffect,split,9,run 11: ChooseCardEffect.upTo(exiledWithSource()) + PutCardsIntoHandEffect(cardsThisWay(CHOOSE)); Bag of Devouring
+ReturnExiledCardToBattlefieldUnderOwnerControlEffect,absorbed,9,"run 11: PutCardsOntoBattlefieldEffect over cardsThisWay(EXILE) bound to the stay, or exiledWithSource() (Timothar)"
+ReturnExiledCardToHandEffect,absorbed,9,run 11: engine payload: PutCardsIntoHandEffect over cardsThisWay(EXILE) bound to the stay (DelayedExiledCardReturns)
+ReturnGraveyardCardsToBattlefieldUnderControlEffect,absorbed,9,run 11: engine payload: PutCardsOntoBattlefieldEffect over the cards bound to their stays; Rescue from the Underworld
+MillControllerAndMayReturnMilledPermanentToHandEffect,split,9,"run 11: MillEffect + ChooseCardEffect.upTo(cardsThisWay(MILL, filter)) + PutCardsIntoHandEffect(cardsThisWay(CHOOSE)); 23 cards"
+MillControllerAndMayReturnMilledLandToHandEffect,split,9,"run 11: the same three steps + HappenedThisWay.toACard(MILL, Lesson); Sparring Dummy"
+MillControllerThenPerpetuallyBoostGraveyardAndMayReturnMilledCardEffect,split,9,run 11: the same three steps around the perpetual boost; Elvish Elegy
+MillControllerAndMayReturnMatchingMilledCardToHandOrPutCounterOnSourceEffect,split,9,run 11: the same three steps + NotCondition(HappenedThisWay(CHOOSE)) for the counter; 8 cards
+MillControllerAndMayReturnMilledPermanentToHandThenCreateFoodIfSquirrelEffect,split,9,run 11: the same three steps + the Squirrel condition; Cache Grab
+MillControllerAndPutAnyNumberOfMilledCreaturesIntoHandEffect,split,9,run 11: the same three steps with any number; Vivien on the Hunt
+ReturnMilledPermanentToHandEffect,absorbed,9,run 11: may payload of the milled offers: gone with them
+ReturnMilledCardToHandOrPutCounterOnSourceEffect,absorbed,9,run 11: may payload of the milled offers: gone with them
+ReturnMilledPermanentToHandAndCreateFoodIfSquirrelEffect,absorbed,9,run 11: may payload of the milled offers: gone with them
+ExileHandFaceDownThenReturnCardsExiledWithSourceEffect,split,9,"run 11: the face-down hand exile with source + PutCardsIntoHandEffect(except(exiledWithSource(you()), cardsThisWay(EXILE))); Duplicity, Moonring Mirror"
+ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect,split,9,"run 11: the exile until + the put step over except(exiledWithSource(), cardsThisWay(EXILE)); Mysterious Limousine"
+ExileTriggeringCreatureUntilSourceLeavesAndReturnOthersEffect,blocked-other,9,"run 11: the return-others step exists (exiledWithSource(), except()); left: ExileTargetPermanentEffect(triggering()) can't link what it exiles to the source, one card (Mirror of Life Trapping)"
+CopyCardsExiledWithSourceAndMayCastCopiesEffect,blocked-other,9,"run 11: the subject exists (exiledWithSource()); left: the copy step CopyImprintedCardAndMayCastCopyEffect has no paid cast (normal, {1}, {3}) and a head of five cards needs it"
+PutAnyNumberOfOwnedLandCardsFromExileOntoBattlefieldEffect,split,9,"run 11: ChooseCardEffect.upTo(exiledCards(target player, land)) + PutCardsOntoBattlefieldEffect(cardsThisWay(CHOOSE)); Oblivion Sower"

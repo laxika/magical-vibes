@@ -45,7 +45,6 @@ import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaysAdditionalLandEachTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.SkipStepOrPhaseKind;
@@ -1532,9 +1531,6 @@ public class GameData {
      *  When the source permanent leaves the battlefield, the exiled cards return.
      *  A source may hold more than one pending return (e.g. Realm Razer exiles all lands). */
     public final Map<UUID, List<PendingExileReturn>> exileReturnOnPermanentLeave = new ConcurrentHashMap<>();
-    /** Maps a permanent to the card its "when this leaves the battlefield" return puts into hand (Ugin, the Ineffable's
-     *  Spirit). Kept outside the permanent's abilities, so losing abilities or being a copy does not affect it. */
-    public final Map<UUID, ReturnExiledCardToHandEffect> exiledCardReturnToHandOnPermanentLeave = new ConcurrentHashMap<>();
     /** Exile returns keyed by the player whose opponent must become monarch. */
     public final Map<UUID, List<PendingExileReturn>> exileReturnOnOpponentBecomesMonarch = new ConcurrentHashMap<>();
     /** Opal-Eye shields already consumed by the open simultaneous damage event; they keep redirecting the
@@ -10701,7 +10697,6 @@ public class GameData {
         // --- Exile-until-source-leaves map (O-ring style) ---
         this.exileReturnOnPermanentLeave.forEach((k, v) ->
                 copy.exileReturnOnPermanentLeave.put(k, new ArrayList<>(v)));
-        copy.exiledCardReturnToHandOnPermanentLeave.putAll(this.exiledCardReturnToHandOnPermanentLeave);
         this.exileReturnOnOpponentBecomesMonarch.forEach((k, v) ->
                 copy.exileReturnOnOpponentBecomesMonarch.put(k, new ArrayList<>(v)));
 
@@ -10762,6 +10757,10 @@ public class GameData {
                 this.graveyardTargetOperation.eachPlayerExilesCardFromGraveyard;
         copy.graveyardTargetOperation.resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume =
                 this.graveyardTargetOperation.resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume;
+        copy.graveyardTargetOperation.chooseCardResume = this.graveyardTargetOperation.chooseCardResume;
+        copy.graveyardTargetOperation.chooseCardAnswer = this.graveyardTargetOperation.chooseCardAnswer;
+        copy.graveyardTargetOperation.chooseCardPicked = this.graveyardTargetOperation.chooseCardPicked;
+        copy.graveyardTargetOperation.chooseCardIndex = this.graveyardTargetOperation.chooseCardIndex;
         copy.graveyardTargetOperation.resolutionTimeExileThenEffectResume =
                 this.graveyardTargetOperation.resolutionTimeExileThenEffectResume;
         copy.graveyardTargetOperation.resolutionTimeExileThenEffectChoiceMade =

@@ -86,6 +86,9 @@ public class StealDyingOpponentPermanentUnlessPaysLifeEffectHandler implements N
             return;
         }
 
+        if (gameQueryService.cantEnterFaceUp(card)) {
+            return;
+        }
         if (card.isAura()) {
             // An Aura put onto the battlefield without being cast is attached to an object its new
             // controller chooses (CR 303.4f).

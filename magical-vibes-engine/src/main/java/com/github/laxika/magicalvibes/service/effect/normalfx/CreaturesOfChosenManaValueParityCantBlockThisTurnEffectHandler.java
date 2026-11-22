@@ -34,11 +34,10 @@ public class CreaturesOfChosenManaValueParityCantBlockThisTurnEffectHandler impl
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        ManaValueParity chosen = gameData.chosenSpellManaValueParity;
+        ManaValueParity chosen = entry.getChosenParity();
         if (chosen == null) {
             return;
         }
-        gameData.chosenSpellManaValueParity = null;
 
         var creatureParity = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

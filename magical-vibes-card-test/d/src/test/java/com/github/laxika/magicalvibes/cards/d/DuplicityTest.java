@@ -252,4 +252,20 @@ class DuplicityTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId()))
                 .extracting(Card::getId).contains(newControllersCard.getId());
     }
+
+    @Test
+    @DisplayName("The swap names no card that is face down in exile or goes to the hand from there")
+    void swapNamesNoFaceDownCard() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest()));
+        castDuplicity();
+        harness.setHand(player1, List.of(new Island()));
+
+        gd.turnNumber = 2;
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gameLogContains("Forest")).isFalse();
+        assertThat(gameLogContains("Island")).isFalse();
+    }
 }

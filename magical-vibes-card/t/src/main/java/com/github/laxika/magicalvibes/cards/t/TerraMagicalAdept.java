@@ -6,8 +6,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
-import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -23,8 +28,12 @@ public class TerraMagicalAdept extends Card {
         setBackFaceCard(new EsperTerra());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MillControllerAndMayReturnMilledPermanentToHandEffect(
-                        5, new CardTypePredicate(CardType.ENCHANTMENT)));
+                SequenceEffect.of(
+                        new MillEffect(5, Subjects.you()),
+                        ChooseCardEffect.upTo(
+                                Subjects.cardsThisWay(StepKind.MILL, new CardTypePredicate(CardType.ENCHANTMENT)), 1,
+                                "an enchantment card milled this way"),
+                        new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.CHOOSE))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -12,8 +16,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,7 +33,12 @@ public class BristlebudFarmer extends Card {
                 SequenceEffect.of(
                         new SacrificePermanentsEffect(1, new PermanentHasSubtypePredicate(CardSubtype.FOOD), Subjects.you()),
                         new ConditionalEffect(HappenedThisWay.sacrificed(),
-                                new MillControllerAndMayReturnMilledPermanentToHandEffect(3))),
+                                SequenceEffect.of(
+                                        new MillEffect(3, Subjects.you()),
+                                        ChooseCardEffect.upTo(
+                                                Subjects.cardsThisWay(StepKind.MILL, new CardIsPermanentPredicate()), 1,
+                                                "a permanent card milled this way"),
+                                        new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.CHOOSE))))),
                 "Sacrifice a Food?"));
     }
 

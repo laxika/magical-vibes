@@ -72,7 +72,8 @@ public class ZoneChangeRequests {
                 thatPlayer(gameData, trigger, event),
                 dies && trigger.causes().isEmpty()
                         && candidate.ability().options().multiplicity() == TriggerMultiplicity.ONE_OR_MORE,
-                dies && trigger.relation() == ObjectRelation.ENCHANTED);
+                dies && trigger.relation() == ObjectRelation.ENCHANTED,
+                trigger.from().equals(Set.of(Zone.BATTLEFIELD)) && trigger.relation() == ObjectRelation.ENCHANTED);
         // A plane's ability names the planar object it is an ability of, as it was when it triggered (CR 608.2h). An
         // emblem's targets are only those its own effects declare: none of its source card's groups is its.
         PlanarObject plane = candidate.plane() == null ? null : candidate.plane().copy();
@@ -265,7 +266,7 @@ public class ZoneChangeRequests {
      */
     private TriggerRecord zoneChangeRecord(GameData gameData, TriggerCandidate candidate, Permanent source,
                                            List<ZoneChangeEvent> events, UUID thatPlayerId, boolean deathBatch,
-                                           boolean enchantedPermanent) {
+                                           boolean enchantedPermanent, boolean enchantedLeft) {
         ZoneChangeEvent event = events.getFirst();
         Permanent snapshot = source == null ? null : new Permanent(source);
         long sourceGraveyardStay = candidate.zone() == Zone.GRAVEYARD
@@ -344,6 +345,9 @@ public class ZoneChangeRequests {
                         entry.getEventCardGraveyardEntryVersions().put(card.getId(),
                                 gameData.graveyardEntryVersion(card.getId()));
                     }
+                }
+                if (enchantedLeft) {
+                    // "Return this Aura": also after "when enchanted creature leaves the battlefield" (CR 400.7f).
                     entry.setAwaitingSourceGraveyardEntry(true);
                 }
             } else if (event.enteredBattlefield() && lastKnown != null) {

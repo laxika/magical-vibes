@@ -486,6 +486,19 @@ public abstract class BaseCardTest {
         }
     }
 
+    /**
+     * Answers a "choose up to" card prompt of {@code player} with the offered cards at {@code positions} in the order
+     * offered; with no position, with none of them.
+     */
+    protected void chooseOfferedCards(Player player, int... positions) {
+        var choice = gd.interaction.activeInteraction(com.github.laxika.magicalvibes.model.PendingInteraction.MultiGraveyardChoice.class);
+        if (choice == null) {
+            throw new IllegalStateException("No card choice is offered");
+        }
+        harness.handleMultipleCardsChosen(player,
+                java.util.Arrays.stream(positions).mapToObj(position -> choice.cards().get(position).getId()).toList());
+    }
+
     protected boolean gameLogContains(String substring) {
         return gd.gameLog.stream().anyMatch(entry -> entry.plainText().contains(substring));
     }

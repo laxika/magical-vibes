@@ -2675,8 +2675,10 @@ public class GraveyardReturnSupport {
      * Returns {@code true} if the given card is currently barred from entering the battlefield from
      * {@code zone} (e.g. a creature card while Grafdigger's Cage is on the battlefield).
      */
+    /** Whether the card can't be put onto the battlefield face up from {@code zone}. */
     public boolean isCardBlockedFromEnteringFromZone(GameData gameData, Card card, Zone zone) {
-        return gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, zone);
+        return gameQueryService.cantEnterFaceUp(card)
+                || gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, zone);
     }
 
     public void applyPermanentGrants(GameData gameData, UUID controllerId, Permanent permanent,

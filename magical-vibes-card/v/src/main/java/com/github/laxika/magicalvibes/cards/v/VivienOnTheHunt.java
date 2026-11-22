@@ -5,11 +5,18 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MillControllerAndPutAnyNumberOfMilledCreaturesIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithOneMoreManaValueThanSacrificedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -36,7 +43,12 @@ public class VivienOnTheHunt extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new MillControllerAndPutAnyNumberOfMilledCreaturesIntoHandEffect(5)),
+                List.of(SequenceEffect.of(
+                        new MillEffect(5, Subjects.you()),
+                        ChooseCardEffect.upTo(
+                                Subjects.cardsThisWay(StepKind.MILL, new CardTypePredicate(CardType.CREATURE)), Integer.MAX_VALUE,
+                                "creature cards milled this way"),
+                        new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.CHOOSE)))),
                 "+1: Mill five cards, then put any number of creature cards milled this way into your hand."
         ));
 

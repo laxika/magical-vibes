@@ -32,8 +32,8 @@ class RickJonesDestinedSidekickTest extends BaseCardTest {
         activateRick();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(hero);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
@@ -47,7 +47,7 @@ class RickJonesDestinedSidekickTest extends BaseCardTest {
         addReadyRick();
 
         activateRick();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(enchantment);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
@@ -72,7 +72,7 @@ class RickJonesDestinedSidekickTest extends BaseCardTest {
         addReadyRick();
 
         activateRick();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4).contains(hero);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(hero);
@@ -87,7 +87,7 @@ class RickJonesDestinedSidekickTest extends BaseCardTest {
         addReadyRick();
 
         activateRick();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(hero).doesNotContain(enchantment);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3).contains(enchantment);
@@ -102,8 +102,7 @@ class RickJonesDestinedSidekickTest extends BaseCardTest {
         addReadyRick();
 
         activateRick();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(enchantment).doesNotContain(hero);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3).contains(hero);
@@ -119,7 +118,7 @@ class RickJonesDestinedSidekickTest extends BaseCardTest {
 
         activateRick();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(hero, land);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(land);

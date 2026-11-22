@@ -41,7 +41,9 @@ public class ReturnSourceFromGraveyardAttachedToEnteringCreatureEffectHandler im
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID sourceCardId = entry.getCard().getId();
         Card sourceCard = gameQueryService.findCardInGraveyardById(gameData, sourceCardId);
-        if (sourceCard == null) {
+        // A card that left the graveyard and came back is a new object (CR 400.7).
+        if (sourceCard == null || entry.sourceCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(sourceCardId) != entry.sourceCardGraveyardEntryVersion()) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     "'s ability does nothing (card is no longer in the graveyard)."));
             return;

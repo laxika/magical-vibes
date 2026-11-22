@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedCreatureAndReattachAuraOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -18,7 +20,6 @@ import java.util.UUID;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.DelayedReferents;
-import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardAttachedToPermanentEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -49,6 +50,14 @@ public class ReturnEnchantedCreatureAndReattachAuraOnDeathEffectHandler implemen
         }
 
         Card creatureCard = gameQueryService.findCardInGraveyardById(gameData, dyingCreatureCardId);
+        Long diedInStay = entry.getEventCardGraveyardEntryVersions().get(dyingCreatureCardId);
+        // A card that left the graveyard and came back is a new object (CR 400.7); an instant or sorcery card that was
+        // a face-down creature remains there (CR 400.4a).
+        if (creatureCard != null && (diedInStay != null
+                && diedInStay != gameData.graveyardEntryVersion(dyingCreatureCardId)
+                || gameQueryService.cantEnterFaceUp(creatureCard))) {
+            creatureCard = null;
+        }
         if (creatureCard == null) {
             gameLogService.append(gameData,
                     GameLog.cardThen(entry.getCard(), "'s ability fizzles (creature not in graveyard)."));
@@ -68,12 +77,15 @@ public class ReturnEnchantedCreatureAndReattachAuraOnDeathEffectHandler implemen
         }
 
         UUID auraCardId = entry.getCard().getId();
-        if (gameQueryService.findCardInGraveyardById(gameData, auraCardId) != null) {
+        long auraStay = entry.sourceCardGraveyardEntryVersion();
+        if (gameQueryService.findCardInGraveyardById(gameData, auraCardId) != null
+                && (auraStay < 0 || auraStay == gameData.graveyardEntryVersion(auraCardId))) {
             gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                     entry.getControllerId(), entry.getCard(),
                     new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
-                            new ReturnAuraFromGraveyardAttachedToPermanentEffect(
-                                    auraCardId, entry.getControllerId(), returnedCreature.getId())),
+                            new PutCardsOntoBattlefieldEffect(Subjects.sourceCard())
+                                    .underControlOf(Subjects.you())
+                                    .attachedTo(Subjects.named(returnedCreature.getId()))),
                     entry.getSourcePermanentId(), null, null,
                     DelayedReferents.graveyardCard(auraCardId, gameData.graveyardEntryVersion(auraCardId))));
         }

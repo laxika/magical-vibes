@@ -25,7 +25,7 @@ class RavenousGigamoleTest extends BaseCardTest {
         setLibrary(bears, new Forest(), new Shock());
 
         Permanent gigamole = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(bears);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -41,7 +41,7 @@ class RavenousGigamoleTest extends BaseCardTest {
         setLibrary(bears, new Forest(), new Shock());
 
         Permanent gigamole = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(bears);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
@@ -69,7 +69,7 @@ class RavenousGigamoleTest extends BaseCardTest {
         setLibrary(first, second, new Shock(), remaining);
 
         Permanent gigamole = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(second).doesNotContain(first);
@@ -86,9 +86,8 @@ class RavenousGigamoleTest extends BaseCardTest {
         setLibrary(first, second, new Forest());
 
         Permanent gigamole = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
         assertThat(gigamole.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first).doesNotContain(second);
@@ -103,8 +102,7 @@ class RavenousGigamoleTest extends BaseCardTest {
         setLibrary(first, second, new Forest());
 
         Permanent gigamole = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, second).hasSize(3);
@@ -133,7 +131,7 @@ class RavenousGigamoleTest extends BaseCardTest {
         setLibrary(bears);
 
         Permanent gigamole = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();

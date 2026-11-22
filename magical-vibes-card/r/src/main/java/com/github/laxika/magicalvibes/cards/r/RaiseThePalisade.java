@@ -2,7 +2,13 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ReturnAllCreaturesExceptChosenTypeToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeAtResolutionEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasTypeChosenThisResolutionPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import java.util.List;
 
 @CardRegistration(set = "MSC", collectorNumber = "278")
 @CardRegistration(set = "MSC", collectorNumber = "340")
@@ -15,6 +21,9 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAllCreaturesExceptChose
 public class RaiseThePalisade extends Card {
 
     public RaiseThePalisade() {
-        addSpellEffect(new ReturnAllCreaturesExceptChosenTypeToHandEffect());
+        addSpellEffect(new ChooseCreatureTypeAtResolutionEffect());
+        addSpellEffect(ReturnToHandEffect.allPermanentsMatching(new PermanentAllOfPredicate(List.of(
+                new PermanentIsCreaturePredicate(),
+                new PermanentNotPredicate(new PermanentHasTypeChosenThisResolutionPredicate())))));
     }
 }

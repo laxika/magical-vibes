@@ -41,9 +41,7 @@ import com.github.laxika.magicalvibes.model.PendingPileSeparation;
 import com.github.laxika.magicalvibes.model.PendingPortalPileSearch;
 import com.github.laxika.magicalvibes.model.PendingPsychoticEpisodeChoice;
 import com.github.laxika.magicalvibes.model.PendingReturnExiledWithSourceCard;
-import com.github.laxika.magicalvibes.model.PendingReturnTwoExiledWithSourceCards;
 import com.github.laxika.magicalvibes.model.PendingSphinxAmbassadorChoice;
-import com.github.laxika.magicalvibes.model.PendingStudyCounterExileReturn;
 import com.github.laxika.magicalvibes.model.PendingValkiCopyChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -189,8 +187,6 @@ public class LibraryChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.GuildFeudSupport guildFeudSupport;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnCardExiledWithSourceToBattlefieldEffectHandler returnCardExiledWithSourceToBattlefieldEffectHandler;
-
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnTwoExiledCardsWithSourceToBattlefieldAndBottomRestEffectHandler returnTwoExiledCardsWithSourceHandler;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.SeekTwoCardsToBattlefieldEffectHandler seekTwoCardsToBattlefieldEffectHandler;
 
@@ -3653,12 +3649,6 @@ public class LibraryChoiceHandlerService {
             return;
         }
 
-        // Imbraham: controller may put one card they own in exile with a study counter into hand.
-        if (gameData.hasPendingInteraction(PendingStudyCounterExileReturn.class)) {
-            handleStudyCounterExileReturn(gameData, allRevealedCards, cardIds, controllerId);
-            return;
-        }
-
         PendingDubiousChallengeChoice dubiousChallenge =
                 gameData.pollPendingInteraction(PendingDubiousChallengeChoice.class);
         if (dubiousChallenge != null) {
@@ -3667,15 +3657,6 @@ public class LibraryChoiceHandlerService {
             } else {
                 handleDubiousChallengeOpponentChoice(gameData, allRevealedCards, cardIds, dubiousChallenge);
             }
-            return;
-        }
-
-        PendingReturnTwoExiledWithSourceCards returnTwoExiled =
-                gameData.pollPendingInteraction(PendingReturnTwoExiledWithSourceCards.class);
-        if (returnTwoExiled != null) {
-            returnTwoExiledCardsWithSourceHandler.completeChoice(
-                    gameData, returnTwoExiled, allRevealedCards, cardIds);
-            finishSearchAndResume(gameData);
             return;
         }
 
@@ -4685,29 +4666,6 @@ public class LibraryChoiceHandlerService {
     private void handleMemoriesReturningChoice(GameData gameData, List<Card> allRevealedCards,
                                                 List<UUID> selectedCardIds) {
         memoriesReturningEffectHandler.completeCardChoice(gameData, allRevealedCards, selectedCardIds);
-        finishSearchAndResume(gameData);
-    }
-
-    private void handleStudyCounterExileReturn(GameData gameData, List<Card> allRevealedCards,
-                                               List<UUID> selectedCardIds, UUID controllerId) {
-        gameData.clearPendingInteractions(PendingStudyCounterExileReturn.class);
-
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        Set<UUID> selectedIds = new HashSet<>(selectedCardIds);
-        for (Card card : allRevealedCards) {
-            if (selectedIds.contains(card.getId())) {
-                gameData.removeFromExile(card.getId());
-                gameData.exiledCardsWithStudyCounters.remove(card.getId());
-                gameData.addCardToHand(controllerId, card);
-
-                gameLogService.append(gameData, GameLog.textCardText(
-                        controllerName + " returns ", card, " from exile to their hand."));
-                log.info("Game {} - {} returns {} from exile (study counter) to hand",
-                        gameData.id, controllerName, card.getName());
-                break;
-            }
-        }
-
         finishSearchAndResume(gameData);
     }
 

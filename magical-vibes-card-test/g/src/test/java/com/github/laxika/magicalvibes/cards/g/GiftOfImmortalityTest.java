@@ -162,4 +162,25 @@ class GiftOfImmortalityTest extends BaseCardTest {
                 .findFirst()
                 .orElse(null);
     }
+
+    @Test
+    @DisplayName("Does not return a creature card that left the graveyard and came back")
+    void doesNotReturnACreatureThatLeftTheGraveyardAndCameBack() {
+        Permanent creature = addCreatureReady(player1, new SedgeScorpion());
+        Card creatureCard = creature.getCard();
+        castGift(creature, new GiftOfImmortality());
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new LashOfTheWhip()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+        harness.castAndResolveInstant(player1, 0, creature.getId());
+        gd.markGraveyardExit(creatureCard.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, creatureCard.getId())).isNull();
+        harness.assertInGraveyard(player1, "Sedge Scorpion");
+    }
 }

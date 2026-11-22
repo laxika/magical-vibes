@@ -28,8 +28,8 @@ class ScoutTheCityTest extends BaseCardTest {
 
         castLookAround();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Forest");
         harness.assertInGraveyard(player1, "Shock");
@@ -78,7 +78,7 @@ class ScoutTheCityTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         castLookAround();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         harness.assertNotInHand(player1, "Forest");
         harness.assertInGraveyard(player1, "Forest");
@@ -96,8 +96,7 @@ class ScoutTheCityTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         castLookAround();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, third);
@@ -127,7 +126,7 @@ class ScoutTheCityTest extends BaseCardTest {
         harness.setLife(player1, 20);
 
         castLookAround();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         harness.assertInHand(player1, "Forest");

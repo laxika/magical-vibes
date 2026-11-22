@@ -28,8 +28,8 @@ class SzarekhTheSilentKingTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(milledArtifactCreature);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -45,8 +45,8 @@ class SzarekhTheSilentKingTest extends BaseCardTest {
         declareAttackers(List.of(0));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(milledVehicle);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -80,7 +80,7 @@ class SzarekhTheSilentKingTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyElementsOf(library);
@@ -100,7 +100,7 @@ class SzarekhTheSilentKingTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(second, third);
@@ -119,8 +119,7 @@ class SzarekhTheSilentKingTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, land);
@@ -137,7 +136,7 @@ class SzarekhTheSilentKingTest extends BaseCardTest {
 
         declareAttackers(List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(eligible);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
@@ -192,7 +191,7 @@ class SzarekhTheSilentKingTest extends BaseCardTest {
 
         declareAttackers(player2, List.of(0));
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player2, true);
+        chooseOfferedCards(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(eligible);
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();

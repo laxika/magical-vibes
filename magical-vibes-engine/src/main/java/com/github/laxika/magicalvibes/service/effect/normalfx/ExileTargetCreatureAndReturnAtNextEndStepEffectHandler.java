@@ -6,10 +6,13 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCreatureAndReturnAtNextEndStepEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -21,6 +24,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.effect.DelayedExiledCardReturns;
 
 @Slf4j
 @Component
@@ -64,9 +68,11 @@ public class ExileTargetCreatureAndReturnAtNextEndStepEffectHandler implements N
                     continue;
                 }
                 gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
-                        Triggers.endStep(ActivePlayer.ANY), entry.getControllerId(), entry.getCard(),
-                        entry.getSourcePermanentId(), null,
-                        new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(exiledCard.getId())));
+                        entry.getControllerId(), entry.getCard(),
+                        new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
+                                new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.EXILE))),
+                        entry.getSourcePermanentId(), null, null,
+                        DelayedExiledCardReturns.exiled(gameData, List.of(exiledCard.getId()))));
                 gameLogService.append(gameData, GameLog.cardThen(exiledCard,
                         " is exiled. It will return at the beginning of the next end step under its owner's control."));
                 log.info("Game {} - {} exiles {}; return delayed until next end step under its owner's control",

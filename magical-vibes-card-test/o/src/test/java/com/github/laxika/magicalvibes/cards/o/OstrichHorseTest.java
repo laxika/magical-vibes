@@ -27,8 +27,8 @@ class OstrichHorseTest extends BaseCardTest {
 
         Permanent ostrichHorse = castAndResolveEtb();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
         assertThat(ostrichHorse.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -42,7 +42,7 @@ class OstrichHorseTest extends BaseCardTest {
         setLibrary(forest, new GrizzlyBears(), new Shock());
 
         Permanent ostrichHorse = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
@@ -79,9 +79,8 @@ class OstrichHorseTest extends BaseCardTest {
         setLibrary(first, second, new OstrichHorse());
 
         Permanent source = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
         assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first).doesNotContain(second).hasSize(2);
@@ -97,7 +96,7 @@ class OstrichHorseTest extends BaseCardTest {
         setLibrary(first, second, third);
 
         Permanent source = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(second, third);
@@ -110,10 +109,8 @@ class OstrichHorseTest extends BaseCardTest {
         setLibrary(new Forest(), new Forest(), new Forest());
 
         Permanent source = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
         assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(source.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -138,7 +135,7 @@ class OstrichHorseTest extends BaseCardTest {
         setLibrary(forest);
 
         Permanent source = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();

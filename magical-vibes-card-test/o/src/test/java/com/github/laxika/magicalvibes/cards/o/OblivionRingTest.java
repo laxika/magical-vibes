@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GoldmeadowStalwart;
 import com.github.laxika.magicalvibes.cards.m.MerrowCommerce;
 import com.github.laxika.magicalvibes.cards.r.Rootgrapple;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -218,5 +219,24 @@ class OblivionRingTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Merrow Commerce");
         harness.assertInGraveyard(player2, "Merrow Commerce");
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An instant card that was a face-down creature stays exiled as the Ring leaves")
+    void instantThatWasAFaceDownCreatureStaysExiled() {
+        Permanent manifested = harness.addToBattlefieldAndReturn(player2, new Rootgrapple());
+        manifested.setFaceDown(2, 2, java.util.Set.of(CardType.CREATURE), java.util.Set.of());
+        castAndResolveOblivionRing(manifested.getId());
+
+        resetForFollowUpSpell();
+        harness.setHand(player2, List.of(new Rootgrapple()));
+        harness.addMana(player2, ManaColor.GREEN, 5);
+        UUID ringId = harness.getPermanentId(player1, "Oblivion Ring");
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, ringId);
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(manifested.getOriginalCard().getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
     }
 }

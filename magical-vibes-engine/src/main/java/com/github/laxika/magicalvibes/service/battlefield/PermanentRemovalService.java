@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesInsteadOfDyingThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileControlledPermanentsInsteadOfDyingThisTurnEffect;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
+import com.github.laxika.magicalvibes.service.effect.DelayedExiledCardReturns;
 import com.github.laxika.magicalvibes.service.effect.GrantedTriggeredAbilitySupport;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityStackService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -64,8 +67,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSour
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.ResolvePendingExileReturnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.UndyingReturnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -1988,7 +1989,7 @@ public class PermanentRemovalService {
             return;
         }
         ExiledCardEntry exiled = gameData.findExiledCard(cardId);
-        if (exiled == null || !gameData.removeFromExile(cardId)) {
+        if (exiled == null || gameQueryService.cantEnterFaceUp(exiled.card()) || !gameData.removeFromExile(cardId)) {
             return;
         }
         Card card = exiled.card();
@@ -3074,8 +3075,11 @@ public class PermanentRemovalService {
                         && !isToken(gameData, leaving)
                         && gameData.findExiledCard(leaving.getId()) != null) {
                     gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
-                            Triggers.endStep(ActivePlayer.ANY), controllerId, leaving, null, null,
-                            new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(leaving.getId())));
+                            controllerId, leaving,
+                            new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
+                                    new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.EXILE))),
+                            null, null, null,
+                            DelayedExiledCardReturns.exiled(gameData, List.of(leaving.getId()))));
                 }
                 } else if (chosenReplacement != null
                         && chosenReplacement.kind() == DeathExileReplacement.Kind.SHUFFLE_INTO_LIBRARY
@@ -3397,14 +3401,6 @@ public class PermanentRemovalService {
             }
             return haunted;
         });
-        ReturnExiledCardToHandEffect exiledCardReturn =
-                gameData.exiledCardReturnToHandOnPermanentLeave.remove(removedPermanent.getId());
-        if (exiledCardReturn != null && gameData.findExiledCard(exiledCardReturn.exiledCardId()) != null) {
-            triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
-                    removedPermanent.getCard(), exiledCardReturn.handPlayerId(),
-                    removedPermanent.getCard().getName() + "'s leaves-the-battlefield ability",
-                    List.of(exiledCardReturn)));
-        }
         List<PendingExileReturn> pendingReturns = gameData.exileReturnOnPermanentLeave.remove(removedPermanent.getId());
         if (pendingReturns != null) {
             List<PendingExileReturn> hauntReturns = pendingReturns.stream()
@@ -3609,6 +3605,9 @@ public class PermanentRemovalService {
             return null;
         }
 
+        if (!pending.returnToGraveyard() && !pending.returnToHand() && gameQueryService.cantEnterFaceUp(exiledCard)) {
+            return null;
+        }
         if (gameData.removeFromExile(exiledCard.getId())) {
             String playerName = gameData.playerIdToName.get(ownerId);
 
@@ -3669,7 +3668,7 @@ public class PermanentRemovalService {
                     && primaryPermanent == null) {
                 continue;
             }
-            if (!primary && !gameData.removeFromExile(card.getId())) {
+            if (!primary && (gameQueryService.cantEnterFaceUp(card) || !gameData.removeFromExile(card.getId()))) {
                 continue;
             }
 

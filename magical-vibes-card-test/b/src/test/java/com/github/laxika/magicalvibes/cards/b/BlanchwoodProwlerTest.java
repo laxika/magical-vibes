@@ -27,8 +27,8 @@ class BlanchwoodProwlerTest extends BaseCardTest {
 
         Permanent prowler = castAndResolveEtb();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
         assertThat(prowler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -42,7 +42,7 @@ class BlanchwoodProwlerTest extends BaseCardTest {
         setLibrary(forest, new EpicConfrontation(), new ArgothianSprite());
 
         Permanent prowler = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
@@ -69,9 +69,8 @@ class BlanchwoodProwlerTest extends BaseCardTest {
         setLibrary(first, nonland, second);
 
         Permanent prowler = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
         assertThat(prowler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(first, nonland);
@@ -87,7 +86,7 @@ class BlanchwoodProwlerTest extends BaseCardTest {
         setLibrary(first, second, third);
 
         Permanent prowler = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(second, third);
@@ -100,10 +99,8 @@ class BlanchwoodProwlerTest extends BaseCardTest {
         setLibrary(new Forest(), new Forest(), new Forest());
 
         Permanent prowler = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
         assertThat(prowler.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
@@ -117,7 +114,7 @@ class BlanchwoodProwlerTest extends BaseCardTest {
         setLibrary(forest);
 
         Permanent prowler = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);

@@ -21,7 +21,8 @@ package com.github.laxika.magicalvibes.model;
  *       other zones;</li>
  *   <li>{@link #RETURN}: the number of permanents or cards returned, the permanents (to a hand: by their id as the step
  *       acted on them; to the battlefield: the permanent each card became, the exile-and-return-transformed of the
- *       source included) or cards, their owners; what went to a hand has its {@link StepOutcome#movedCards()} there
+ *       source included; what {@code PutCardsOntoBattlefieldEffect} put there too) or cards,
+ *       their owners; what went to a hand has its {@link StepOutcome#movedCards()} there
  *       (read by perpetual riders only), and a permanent returned to a hand its last-known stats
  *       ({@link StepOutcome#lastKnownPermanents()});</li>
  *   <li>{@link #CREATE_TOKEN}: the number of tokens, the tokens, the players who got them;</li>
@@ -75,7 +76,9 @@ package com.github.laxika.magicalvibes.model;
  * the top cards of libraries ({@code RevealTopCardOfLibraryEffect}, never prompting) and the any-amount payment
  * ({@code EachPlayerPaysAnyManaEffect}: it resolves again at its own index for each answer and records after the last),
  * the shuffle of each player's zones into their library ({@code EachPlayerShufflesZonesIntoLibraryEffect}, never
- * prompting); deal damage, return a card from a graveyard, remove counters and return to hand only on the paths that
+ * prompting), the put onto the battlefield ({@code PutCardsOntoBattlefieldEffect}: its entry choices come before
+ * anything moves and it records as its batch enters); deal damage, return a card from a graveyard,
+ * remove counters and return to hand only on the paths that
  * don't prompt mid-step. A handler that pauses mid-step by rerunning itself after changes, or by a continuation of its
  * own, is never an earlier step. A damage, discard or sacrifice step records {@link StepOutcome#NONE} as it begins and the
  * engine adds to it as the damage is dealt, the cards discarded and the permanents sacrificed.</p>

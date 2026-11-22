@@ -86,9 +86,9 @@ class WrennAndRealmbreakerTest extends BaseCardTest {
 
         assertThat(wrenn.getCounterCount(CounterType.LOYALTY)).isEqualTo(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
@@ -175,7 +175,7 @@ class WrennAndRealmbreakerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -194,8 +194,7 @@ class WrennAndRealmbreakerTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(first, third);
@@ -251,8 +250,8 @@ class WrennAndRealmbreakerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

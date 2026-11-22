@@ -5,14 +5,18 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CastSpellsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -49,7 +53,11 @@ public class WrennAndRealmbreaker extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new MillControllerAndMayReturnMilledPermanentToHandEffect(3)),
+                List.of(SequenceEffect.of(
+                        new MillEffect(3, Subjects.you()),
+                        ChooseCardEffect.upTo(Subjects.cardsThisWay(StepKind.MILL, new CardIsPermanentPredicate()), 1,
+                                "a permanent card milled this way"),
+                        new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.CHOOSE)))),
                 "-2: Mill three cards. You may put a permanent card from among the milled cards into your hand."
         ));
 

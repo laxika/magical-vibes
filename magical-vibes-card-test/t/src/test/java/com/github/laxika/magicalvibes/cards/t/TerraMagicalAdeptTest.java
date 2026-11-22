@@ -37,8 +37,8 @@ class TerraMagicalAdeptTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(enchantment);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -129,7 +129,7 @@ class TerraMagicalAdeptTest extends BaseCardTest {
         harness.castFromHand(player1, new TerraMagicalAdept(), "{1}{R}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(enchantment);
@@ -158,7 +158,7 @@ class TerraMagicalAdeptTest extends BaseCardTest {
         harness.castFromHand(player1, new TerraMagicalAdept(), "{1}{R}{G}");
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId()).stream()
@@ -236,7 +236,7 @@ class TerraMagicalAdeptTest extends BaseCardTest {
         advanceToNextChapter();
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(enchantment);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);

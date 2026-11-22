@@ -292,6 +292,41 @@ public final class Subjects {
         return new CardSubject.SourceCard();
     }
 
+    /** "A [filter] card from your graveyard", chosen or acted on without a target. */
+    public static CardSubject cardsInYourGraveyard(CardPredicate filter) {
+        return new CardSubject.InGraveyards(you(), filter);
+    }
+
+    /** The cards matching {@code filter} in the graveyards of the players {@code owners} names. */
+    public static CardSubject cardsInGraveyards(PlayerSubject owners, CardPredicate filter) {
+        return new CardSubject.InGraveyards(owners, filter);
+    }
+
+    /** "An exiled [filter] card", whoever owns it. */
+    public static CardSubject exiledCards(CardPredicate filter) {
+        return new CardSubject.InExile(null, filter);
+    }
+
+    /** "A [filter] card you own in exile": the exiled cards the players {@code owners} names own. */
+    public static CardSubject exiledCards(PlayerSubject owners, CardPredicate filter) {
+        return new CardSubject.InExile(owners, filter);
+    }
+
+    /** "The cards exiled with this", "the exiled card" of a linked ability. */
+    public static CardSubject exiledWithSource() {
+        return new CardSubject.ExiledWithSource(null, null);
+    }
+
+    /** "The cards you own exiled with this": of {@link #exiledWithSource()}, those {@code owners} own. */
+    public static CardSubject exiledWithSource(PlayerSubject owners) {
+        return new CardSubject.ExiledWithSource(owners, null);
+    }
+
+    /** "The rest": those of {@code cards} that {@code excluded} doesn't name. */
+    public static CardSubject except(CardSubject cards, CardSubject excluded) {
+        return new CardSubject.Except(cards, excluded);
+    }
+
     /** "[Cards] in your graveyard": those of {@code cards} in the controller's graveyard. */
     public static CardSubject inYourGraveyard(CardSubject cards) {
         return new CardSubject.InYourGraveyard(cards);

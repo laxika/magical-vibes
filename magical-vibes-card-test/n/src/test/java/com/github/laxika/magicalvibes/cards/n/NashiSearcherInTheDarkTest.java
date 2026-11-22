@@ -37,9 +37,8 @@ class NashiSearcherInTheDarkTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(legendary, enchantment);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(invalid);
@@ -58,8 +57,7 @@ class NashiSearcherInTheDarkTest extends BaseCardTest {
         resolveCombat();
         harness.passBothPriorities();
 
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(legendary, enchantment);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(legendary, enchantment);
@@ -91,8 +89,7 @@ class NashiSearcherInTheDarkTest extends BaseCardTest {
 
         resolveCombat();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(second);
@@ -130,8 +127,7 @@ class NashiSearcherInTheDarkTest extends BaseCardTest {
         harness.addMana(player2, ManaColor.RED, 1);
         harness.castAndResolveInstant(player2, 0, nashi.getId());
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0, 1);
 
         harness.assertNotOnBattlefield(player1, "Nashi, Searcher in the Dark");
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
@@ -150,10 +146,8 @@ class NashiSearcherInTheDarkTest extends BaseCardTest {
 
         resolveCombat();
         harness.passBothPriorities();
-        for (int i = 0; i < cards.size(); i++) {
-            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-            harness.handleMayAbilityChosen(player1, true);
-        }
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0, 1, 2, 3);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrderElementsOf(cards);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
@@ -173,9 +167,8 @@ class NashiSearcherInTheDarkTest extends BaseCardTest {
 
         resolveCombat();
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();

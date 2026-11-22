@@ -93,6 +93,29 @@ class GameDataDeepCopyTest {
     }
 
     @Test
+    @DisplayName("Deep copy keeps a card choice step's answers and what a parked resolution chose")
+    void deepCopyKeepsCardChoiceAndResolutionChoices() {
+        UUID picked = UUID.randomUUID();
+        gd.graveyardTargetOperation.chooseCardResume = true;
+        gd.graveyardTargetOperation.chooseCardAnswer = List.of(picked);
+        gd.graveyardTargetOperation.chooseCardPicked = List.of(picked);
+        gd.graveyardTargetOperation.chooseCardIndex = 2;
+        StackEntry parked = new StackEntry(
+                StackEntryType.SORCERY_SPELL, new GrizzlyBears(), player1.getId(), "Parked spell", List.of());
+        parked.setChosenParity(com.github.laxika.magicalvibes.model.ManaValueParity.ODD);
+        gd.pendingEffectResolutionEntry = parked;
+
+        GameData copy = gd.simulationCopy();
+
+        assertThat(copy.graveyardTargetOperation.chooseCardResume).isTrue();
+        assertThat(copy.graveyardTargetOperation.chooseCardAnswer).containsExactly(picked);
+        assertThat(copy.graveyardTargetOperation.chooseCardPicked).containsExactly(picked);
+        assertThat(copy.graveyardTargetOperation.chooseCardIndex).isEqualTo(2);
+        assertThat(copy.pendingEffectResolutionEntry.getChosenParity())
+                .isEqualTo(com.github.laxika.magicalvibes.model.ManaValueParity.ODD);
+    }
+
+    @Test
     @DisplayName("Deep copy keeps the damage shields in force and reduces them independently")
     void deepCopyKeepsShieldsInForce() {
         UUID playerId = UUID.randomUUID();

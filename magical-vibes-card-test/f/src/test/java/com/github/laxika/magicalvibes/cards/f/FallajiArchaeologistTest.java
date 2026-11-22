@@ -33,8 +33,8 @@ class FallajiArchaeologistTest extends BaseCardTest {
 
         Permanent archaeologist = castAndResolveEtb();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(spell);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -50,7 +50,7 @@ class FallajiArchaeologistTest extends BaseCardTest {
         setLibrary(spell, new TocasiasDigSite(), new ArgothianSprite());
 
         Permanent archaeologist = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(spell);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
@@ -78,7 +78,7 @@ class FallajiArchaeologistTest extends BaseCardTest {
         setLibrary(spell, artifact, enchantment);
 
         Permanent archaeologist = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(spell);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(artifact, enchantment);
@@ -95,9 +95,8 @@ class FallajiArchaeologistTest extends BaseCardTest {
         setLibrary(spell, artifact, land);
 
         Permanent archaeologist = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
         assertThat(archaeologist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifact);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell, land);
@@ -114,9 +113,7 @@ class FallajiArchaeologistTest extends BaseCardTest {
         setLibrary(spell, artifact, enchantment);
 
         Permanent archaeologist = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 2);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(enchantment);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(spell, artifact);
@@ -130,11 +127,8 @@ class FallajiArchaeologistTest extends BaseCardTest {
         setLibrary(new ScatterRay(), new EnergyRefractor(), new PrisonSentence());
 
         Permanent archaeologist = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
         assertThat(archaeologist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        harness.handleMayAbilityChosen(player1, false);
-        assertThat(archaeologist.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
@@ -180,7 +174,7 @@ class FallajiArchaeologistTest extends BaseCardTest {
         setLibrary(artifact);
 
         Permanent archaeologist = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(artifact);
@@ -218,7 +212,7 @@ class FallajiArchaeologistTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Fallaji Archaeologist");
         resolveAllTriggers();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(spell);
         assertThat(gd.playerGraveyards.get(player1.getId()))

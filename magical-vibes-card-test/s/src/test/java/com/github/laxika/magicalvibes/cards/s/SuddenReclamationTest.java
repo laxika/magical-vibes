@@ -78,25 +78,19 @@ class SuddenReclamationTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0);
 
-        PendingInteraction.GraveyardChoice creatureChoice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice creatureChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(creatureChoice).isNotNull();
-        assertThat(creatureChoice.validIndices())
-                .containsExactly(gd.playerGraveyards.get(player1.getId()).indexOf(firstCreature),
-                        gd.playerGraveyards.get(player1.getId()).indexOf(secondCreature));
+        assertThat(creatureChoice.cards()).containsExactly(firstCreature, secondCreature);
 
-        harness.handleGraveyardCardChosen(player1,
-                gd.playerGraveyards.get(player1.getId()).indexOf(secondCreature));
+        harness.handleMultipleCardsChosen(player1, List.of(secondCreature.getId()));
 
-        PendingInteraction.GraveyardChoice landChoice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice landChoice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(landChoice).isNotNull();
-        assertThat(landChoice.validIndices())
-                .containsExactly(gd.playerGraveyards.get(player1.getId()).indexOf(firstLand),
-                        gd.playerGraveyards.get(player1.getId()).indexOf(secondLand));
+        assertThat(landChoice.cards()).containsExactly(firstLand, secondLand);
 
-        harness.handleGraveyardCardChosen(player1,
-                gd.playerGraveyards.get(player1.getId()).indexOf(secondLand));
+        harness.handleMultipleCardsChosen(player1, List.of(secondLand.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondCreature, secondLand);
         assertThat(gd.playerGraveyards.get(player1.getId()))

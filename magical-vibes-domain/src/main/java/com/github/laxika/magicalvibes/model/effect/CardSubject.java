@@ -19,7 +19,8 @@ import java.util.Objects;
  * <p>The variants and the wording each stands for are listed in {@code agent-docs/SUBJECTS_REFERENCE.md}.
  */
 public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubject.TargetCard,
-        CardSubject.TriggeringCards, CardSubject.SourceCard, CardSubject.InYourGraveyard {
+        CardSubject.TriggeringCards, CardSubject.SourceCard, CardSubject.InYourGraveyard,
+        CardSubject.InGraveyards, CardSubject.InExile, CardSubject.ExiledWithSource, CardSubject.Except {
 
     /** Whether this subject is the effect's own card target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -98,6 +99,74 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
             Objects.requireNonNull(cards, "cards");
             if (cards.declaresTarget()) {
                 throw new IllegalArgumentException("A target card's graveyard is the target's scope: " + cards);
+            }
+        }
+    }
+
+    /**
+     * "A creature card from your graveyard", "all land cards in each graveyard" where nothing is targeted: the cards
+     * matching {@code filter} in the graveyards of the players {@code owners} names, as they are now.
+     *
+     * @param owners whose graveyards
+     * @param filter which cards; {@code null} for every card
+     */
+    record InGraveyards(PlayerSubject owners, CardPredicate filter) implements CardSubject {
+
+        public InGraveyards {
+            Objects.requireNonNull(owners, "owners");
+            if (owners.declaresTarget()) {
+                throw new IllegalArgumentException("The effect reading the cards declares a player target: " + owners);
+            }
+        }
+    }
+
+    /**
+     * "A card you own in exile with a study counter on it", "an exiled card named Sengir Nosferatu": the exiled cards
+     * matching {@code filter} owned by the players {@code owners} names. The filter sees a card exiled face down as a
+     * card with no characteristics (CR 406.3a).
+     *
+     * @param owners whose cards; {@code null} for everybody's
+     * @param filter which cards; {@code null} for every card
+     */
+    record InExile(PlayerSubject owners, CardPredicate filter) implements CardSubject {
+
+        public InExile {
+            if (owners != null && owners.declaresTarget()) {
+                throw new IllegalArgumentException("The effect reading the cards declares a player target: " + owners);
+            }
+        }
+    }
+
+    /**
+     * "The cards exiled with this artifact", "the exiled card" of a linked ability (CR 607.2a): the cards exiled with
+     * the source, as the permanent it is or last was, that are still in exile; with a {@code filter}, those matching
+     * it as they are now, a card exiled face down as one with no characteristics (CR 406.3a).
+     *
+     * @param owners "you own": whose cards of them; {@code null} for everybody's
+     * @param filter which of them; {@code null} for all of them
+     */
+    record ExiledWithSource(PlayerSubject owners, CardPredicate filter) implements CardSubject {
+
+        public ExiledWithSource {
+            if (owners != null && owners.declaresTarget()) {
+                throw new IllegalArgumentException("The effect reading the cards declares a player target: " + owners);
+            }
+        }
+    }
+
+    /**
+     * "The rest", "each other card exiled with it": the cards {@code cards} names but those {@code excluded} names.
+     *
+     * @param cards    among which cards
+     * @param excluded which of them aren't named
+     */
+    record Except(CardSubject cards, CardSubject excluded) implements CardSubject {
+
+        public Except {
+            Objects.requireNonNull(cards, "cards");
+            Objects.requireNonNull(excluded, "excluded");
+            if (cards.declaresTarget() || excluded.declaresTarget()) {
+                throw new IllegalArgumentException("Neither part of \"the rest\" is a target");
             }
         }
     }

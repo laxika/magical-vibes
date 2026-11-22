@@ -1,25 +1,16 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
-import com.github.laxika.magicalvibes.model.AbilityEffects;
 import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureCardAndCreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
-import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -69,7 +60,7 @@ public class ExileDyingCreatureCardAndCreateTokenEffectHandler implements Normal
         permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, dyingCardId);
         exileService.exileCard(gameData, ownerId, card);
         List<UUID> tokenIds = permanentControlSupport.applyCreateToken(gameData, entry.getControllerId(),
-                bindExiledCardReturn(e.token(), dyingCardId),
+                e.token(),
                 entry.getCard().getSetCode());
         for (UUID tokenId : tokenIds) {
             // The token's "the exiled card" is linked to this token only: copies of the token must not
@@ -85,44 +76,5 @@ public class ExileDyingCreatureCardAndCreateTokenEffectHandler implements Normal
                 "'s ability exiles ", card, " and creates a token."));
         log.info("Game {} - {} exiles {} and creates a token",
                 gameData.id, entry.getCard().getName(), card.getName());
-    }
-
-    private static CreateTokenEffect bindExiledCardReturn(CreateTokenEffect token, UUID exiledCardId) {
-        List<Ability> tokenEffects = token.tokenEffects();
-        if (tokenEffects == null) {
-            return token;
-        }
-        List<Ability> boundTokenEffects = new ArrayList<>(tokenEffects.size());
-        boolean changed = false;
-        for (Ability ability : tokenEffects) {
-            if (ability instanceof TriggeredAbility triggered
-                    && triggered.hasWatchedTrigger(Triggers.dealsCombatDamageToPlayer())) {
-                CardEffect combatDamageEffect = AbilityEffects.effectsOf(ability).getFirst();
-                CardEffect bound = bindReturn(combatDamageEffect, exiledCardId);
-                if (bound != combatDamageEffect) {
-                    boundTokenEffects.add(AbilityEffects.withEffect(ability, bound));
-                    changed = true;
-                    continue;
-                }
-            }
-            boundTokenEffects.add(ability);
-        }
-        return changed ? token.withTokenEffects(boundTokenEffects) : token;
-    }
-
-    private static CardEffect bindReturn(CardEffect effect, UUID exiledCardId) {
-        if (effect instanceof ReturnExiledCardToBattlefieldUnderOwnerControlEffect r && r.exiledCardId() == null) {
-            return new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(
-                    exiledCardId, r.enterTapped(), r.underAbilityController());
-        }
-        if (effect instanceof ConditionalEffect conditional) {
-            CardEffect inner = bindReturn(conditional.wrapped(), exiledCardId);
-            return inner == conditional.wrapped() ? effect : new ConditionalEffect(conditional.condition(), inner);
-        }
-        if (effect instanceof SequenceEffect sequence) {
-            List<CardEffect> steps = sequence.steps().stream().map(step -> bindReturn(step, exiledCardId)).toList();
-            return steps.equals(sequence.steps()) ? effect : sequence.withSteps(steps);
-        }
-        return effect;
     }
 }

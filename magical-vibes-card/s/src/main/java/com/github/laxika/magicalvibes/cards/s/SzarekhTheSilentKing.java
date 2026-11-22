@@ -4,7 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -23,10 +28,12 @@ public class SzarekhTheSilentKing extends Card {
         CardAllOfPredicate artifactCreature = new CardAllOfPredicate(List.of(
                 new CardTypePredicate(CardType.ARTIFACT),
                 new CardTypePredicate(CardType.CREATURE)));
-        addTrigger(Triggers.attacks(), new MillControllerAndMayReturnMilledPermanentToHandEffect(
-                3,
-                new CardAnyOfPredicate(List.of(
-                        artifactCreature,
-                        new CardSubtypePredicate(CardSubtype.VEHICLE)))));
+        addTrigger(Triggers.attacks(), SequenceEffect.of(
+                new MillEffect(3, Subjects.you()),
+                ChooseCardEffect.upTo(
+                        Subjects.cardsThisWay(StepKind.MILL, new CardAnyOfPredicate(List.of(artifactCreature,
+                                new CardSubtypePredicate(CardSubtype.VEHICLE)))), 1,
+                        "an artifact creature or Vehicle card milled this way"),
+                new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.CHOOSE))));
     }
 }

@@ -94,15 +94,6 @@ class SpecializedInteractionAiStrategiesTest {
     }
 
     @Test
-    void oblivionSowerChoosesAllOfferedLands() throws Exception {
-        var ids = List.of(UUID.randomUUID(), UUID.randomUUID());
-        var interaction = new PendingInteraction.OblivionSowerLandChoice(
-                aiPlayerId, UUID.randomUUID(), ids, "Oblivion Sower");
-        AiInteractionStrategies.forInteraction(interaction).answer(interaction, context);
-        assertThat(capturedAnswer()).isEqualTo(new InteractionAnswer.CardsChosen(ids));
-    }
-
-    @Test
     void singleExileProcessingChoosesOneCard() throws Exception {
         UUID first = UUID.randomUUID();
         var interaction = new PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice(

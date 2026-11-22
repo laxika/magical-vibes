@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
@@ -34,11 +36,17 @@ public class PutCardsOntoBattlefieldEffectHandler implements NormalEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var put = (PutCardsOntoBattlefieldEffect) effect;
         List<BattlefieldEntryCard> entering = new ArrayList<>();
+        entry.recordStep(StepKind.RETURN, StepOutcome.NONE);
         UUID named = put.controller() == null ? null
                 : subjectResolutionService.player(gameData, entry, put, put.controller());
         if (put.controller() != null && named == null) {
             return;
         }
+        var host = put.entering() == null ? null : put.entering().host();
+        List<UUID> hosts = host == null ? null : host.permanents() != null
+                ? subjectResolutionService.permanents(gameData, entry, put, host.permanents()).stream()
+                .map(Permanent::getId).toList()
+                : List.copyOf(subjectResolutionService.players(gameData, entry, put, host.players()));
         for (SubjectResolutionService.LocatedCard located
                 : subjectResolutionService.locatedCards(gameData, entry, put, put.cards())) {
             if (located.card().isToken()) {
@@ -57,13 +65,16 @@ public class PutCardsOntoBattlefieldEffectHandler implements NormalEffectHandler
             if (put.entering() != null || put.controller() != null) {
                 // Also marks that the instruction names who controls it, who then keeps another player's card.
                 entryCard = entryCard.withEntering(put.entering() != null ? put.entering()
-                        : new PutCardsOntoBattlefieldEffect.EnteringAs(null, null, 0, List.of()));
+                        : new PutCardsOntoBattlefieldEffect.EnteringAs(null, null, 0, List.of(), null));
+            }
+            if (hosts != null) {
+                entryCard = entryCard.withHosts(hosts);
             }
             if (faceDown != null) {
                 // Face down it has no copy or other entry ability to ask about (CR 708.3).
                 entryCard = entryCard.withPreparedPermanent(permanent, List.of());
             }
-            entering.add(entryCard);
+            entering.add(entryCard.recordingReturn());
         }
         if (!entering.isEmpty()) {
             battlefieldEntryBatchSupport.begin(gameData, entering);

@@ -147,16 +147,14 @@ public class GraveyardTargetOperationState {
     public boolean resolutionTimePutOnBottomThenExileTopCardsResume;
     public boolean resolutionTimePutOnBottomThenExileTopCardsChoiceMade;
     public UUID resolutionTimePutOnBottomThenExileTopCardsChosenCardId;
-    /** Whether a per-filter "return up to one card of each" choice is awaiting its answer. */
-    public boolean resolutionTimeOneCardPerFilterResume;
-    /** Whether the pending per-filter choice has been answered. */
-    public boolean resolutionTimeOneCardPerFilterChoiceMade;
-    /** The card picked for the answered per-filter choice, or {@code null} for a decline. */
-    public UUID resolutionTimeOneCardPerFilterChosenCardId;
-    /** Index of the filter whose choice is pending. */
-    public int resolutionTimeOneCardPerFilterIndex;
-    /** Cards picked so far across the per-filter choices of the resolving effect. */
-    public List<UUID> resolutionTimeOneCardPerFilterChosenIds = new java.util.ArrayList<>();
+    /** Whether a card choice step ({@code ChooseCardEffect}) is awaiting its answer. */
+    public boolean chooseCardResume;
+    /** The answer of the card choice step's last prompt, empty for none chosen; {@code null} until it is answered. */
+    public List<UUID> chooseCardAnswer;
+    /** What the card choice step's earlier prompts chose. */
+    public List<UUID> chooseCardPicked = List.of();
+    /** Which of the card choice step's choices ("one of each") is pending. */
+    public int chooseCardIndex;
     /** Whether an optional graveyard exile with a follow-up is awaiting its answer. */
     public boolean resolutionTimeExileThenEffectResume;
     /** Whether the optional graveyard exile with a follow-up has been answered. */
@@ -258,7 +256,6 @@ public class GraveyardTargetOperationState {
     public AsEntersOpponentExileToGraveyardContext asEntersOpponentExileToGraveyard;
     public MilledCreatureReturnContext milledCreatureReturn;
     public MilledCreatureExileContext milledCreatureExile;
-    public MilledCreaturesToHandContext milledCreaturesToHand;
     public MilledCreaturesToExileForTokenContext milledCreaturesToExileForToken;
     /** Resolution-time choice state for cards milled by Eivor, Wolf-Kissed. */
     public MilledSagaAndLandReturnContext milledSagaAndLandReturn;
@@ -315,12 +312,6 @@ public class GraveyardTargetOperationState {
     public record MilledCreatureExileContext(List<UUID> eligibleCardIds, List<UUID> chosenCardIds) {
         public MilledCreatureExileContext {
             eligibleCardIds = List.copyOf(eligibleCardIds);
-            chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
-        }
-    }
-
-    public record MilledCreaturesToHandContext(List<UUID> chosenCardIds) {
-        public MilledCreaturesToHandContext {
             chosenCardIds = chosenCardIds == null ? null : List.copyOf(chosenCardIds);
         }
     }

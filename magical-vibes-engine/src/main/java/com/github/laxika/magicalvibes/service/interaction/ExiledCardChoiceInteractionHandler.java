@@ -1,10 +1,8 @@
 package com.github.laxika.magicalvibes.service.interaction;
 
-import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnExiledCardNamedToBattlefieldUnderOwnerControlEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutTargetCardExiledWithSourceIntoOwnersGraveyardAndCreateTokenEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutTargetCardExiledWithSourceIntoOwnersGraveyardThenInvestigateEffectHandler;
 import com.github.laxika.magicalvibes.model.effect.PutTargetCardExiledWithSourceIntoOwnersGraveyardAndCreateTokenEffect;
@@ -22,7 +20,6 @@ public class ExiledCardChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.ExiledCardChoice> {
 
     private final InputCompletionService inputCompletionService;
-    private final ReturnExiledCardNamedToBattlefieldUnderOwnerControlEffectHandler returnHandler;
     private final PutTargetCardExiledWithSourceIntoOwnersGraveyardAndCreateTokenEffectHandler putHandler;
     private final PutTargetCardExiledWithSourceIntoOwnersGraveyardThenInvestigateEffectHandler investigateHandler;
 
@@ -64,14 +61,6 @@ public class ExiledCardChoiceInteractionHandler
             return;
         }
 
-        ExiledCardEntry exiled = returnHandler.findMatchingEntry(
-                gameData, cardIds.getFirst(), interaction.cardName());
-        if (exiled == null) {
-            throw new IllegalStateException("Chosen card is no longer available");
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        returnHandler.returnToBattlefield(gameData, exiled);
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+        throw new IllegalStateException("An exiled card choice without an effect to finish");
     }
 }

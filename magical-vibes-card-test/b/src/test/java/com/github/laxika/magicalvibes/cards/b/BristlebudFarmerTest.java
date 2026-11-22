@@ -38,8 +38,8 @@ class BristlebudFarmerTest extends BaseCardTest {
         harness.handleMultiplePermanentsChosen(player1, List.of(harness.getPermanentId(player1, "Food")));
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         assertThat(countPermanents(player1, "Food")).isEqualTo(1);
         harness.assertInHand(player1, "Forest");
@@ -78,8 +78,8 @@ class BristlebudFarmerTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).filteredOn(card -> card.getName().equals("Bristlebud Farmer"))
                 .hasSize(3);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).filteredOn(card -> card.getName().equals("Bristlebud Farmer"))
                 .hasSize(2);
@@ -92,9 +92,7 @@ class BristlebudFarmerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new BristlebudFarmer(), new BristlebudFarmer(), new BristlebudFarmer()));
 
         sacrificeFoodAndResolveMill();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(countPermanents(player1, "Food")).isEqualTo(1);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -110,8 +108,7 @@ class BristlebudFarmerTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new Forest(), new BristlebudFarmer(), new Forest()));
 
         sacrificeFoodAndResolveMill();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         harness.assertInHand(player1, "Bristlebud Farmer");
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);

@@ -798,10 +798,10 @@ public class StepTriggerService {
         List<Card> returningCards;
         if (pending.cardsToAttachToPrimary().isEmpty()) {
             returningCards = cards.stream()
-                    .filter(card -> gameData.removeFromExile(card.getId()))
+                    .filter(card -> !gameQueryService.cantEnterFaceUp(card) && gameData.removeFromExile(card.getId()))
                     .toList();
         } else {
-            if (!gameData.removeFromExile(pending.card().getId())) {
+            if (gameQueryService.cantEnterFaceUp(pending.card()) || !gameData.removeFromExile(pending.card().getId())) {
                 log.info("Game {} - delayed attached return skipped because its primary card is no longer in exile",
                         gameData.id);
                 return;
@@ -812,7 +812,7 @@ public class StepTriggerService {
             // primary card returns as a noncreature they stay in exile.
             if (pending.card().hasType(CardType.CREATURE)) {
                 for (Card additional : pending.additionalCards()) {
-                    if (gameData.removeFromExile(additional.getId())) {
+                    if (!gameQueryService.cantEnterFaceUp(additional) && gameData.removeFromExile(additional.getId())) {
                         returned.add(additional);
                     }
                 }

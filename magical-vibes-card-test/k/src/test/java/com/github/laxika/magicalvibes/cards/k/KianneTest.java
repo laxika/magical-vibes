@@ -82,7 +82,7 @@ class KianneTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.LibraryRevealChoice.class);
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         ChargeThrough chosen = (ChargeThrough) gd.getPlayerExiledCards(player1.getId()).getFirst();
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 

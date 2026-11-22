@@ -161,6 +161,9 @@ public class ReturnAllCardsExiledWithSourceEffectHandler implements NormalEffect
         for (ExiledCardEntry exiledEntry : nonAuraReturns) {
             Card card = exiledEntry.card();
             UUID newControllerId = underControllerControl ? entry.getControllerId() : exiledEntry.ownerId();
+            if (!returnEffect.enterFaceDown() && gameQueryService.cantEnterFaceUp(card)) {
+                continue;
+            }
             if (!gameData.removeFromExile(card.getId())) {
                 continue;
             }

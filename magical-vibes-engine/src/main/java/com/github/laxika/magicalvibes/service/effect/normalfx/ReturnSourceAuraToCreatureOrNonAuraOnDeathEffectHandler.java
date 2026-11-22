@@ -54,6 +54,11 @@ public class ReturnSourceAuraToCreatureOrNonAuraOnDeathEffectHandler implements 
         UUID auraCardId = entry.getCard().getId();
         UUID auraControllerId = entry.getControllerId();
         Card auraCard = gameQueryService.findCardInGraveyardById(gameData, auraCardId);
+        // An Aura that left the graveyard and came back is a new object (CR 400.7).
+        if (auraCard != null && entry.sourceCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(auraCardId) != entry.sourceCardGraveyardEntryVersion()) {
+            auraCard = null;
+        }
         if (auraCard == null) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card not in graveyard)."));
             return;

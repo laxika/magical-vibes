@@ -8,9 +8,10 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
-import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -41,7 +42,8 @@ public class TatsumasaTheDragonsFang extends Card {
 
     private static CreateTokenEffect dragonSpiritToken() {
         List<Ability> tokenEffects =
-                List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(null)));
+                List.of(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
+                        new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.EXILE))));
         return new CreateTokenEffect(1, "Dragon Spirit", 5, 5, CardColor.BLUE,
                 List.of(CardSubtype.DRAGON, CardSubtype.SPIRIT), Set.of(Keyword.FLYING),
                 Set.<CardType>of(), tokenEffects);

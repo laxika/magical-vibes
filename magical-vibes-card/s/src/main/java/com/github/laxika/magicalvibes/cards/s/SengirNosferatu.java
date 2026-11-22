@@ -7,13 +7,17 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
-import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardNamedToBattlefieldUnderOwnerControlEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 
 @CardRegistration(set = "TSP", collectorNumber = "128")
 @CardRegistration(set = "TSR", collectorNumber = "136")
@@ -49,8 +53,10 @@ public class SengirNosferatu extends Card {
                         false,
                         "{1}{B}",
                         List.of(new SacrificeSelfCost(),
-                                new ReturnExiledCardNamedToBattlefieldUnderOwnerControlEffect(
-                                        "Sengir Nosferatu")),
+                                ChooseCardEffect.oneOf(
+                                        Subjects.exiledCards(new CardNamedPredicate("Sengir Nosferatu")),
+                                        "an exiled card named Sengir Nosferatu"),
+                                new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.CHOOSE))),
                         "{1}{B}, Sacrifice this token: Return an exiled card named Sengir Nosferatu "
                                 + "to the battlefield under its owner's control."
                 )),

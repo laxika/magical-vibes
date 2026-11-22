@@ -50,6 +50,9 @@ public class ReturnDyingCreatureToBattlefieldEffectHandler implements NormalEffe
         if (dyingCard != null && !entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(dyingCard.getId()))) {
             dyingCard = null;
         }
+        if (dyingCard != null && gameQueryService.cantEnterFaceUp(dyingCard)) {
+            return;
+        }
         if (dyingCard == null) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s ability fizzles (card is no longer in graveyard)."));
             log.info("Game {} - Return+attach fizzles, card not in {}'s graveyard", gameData.id, playerName);

@@ -1273,14 +1273,6 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
-        if (gameData.graveyardTargetOperation.milledCreaturesToHand != null) {
-            gameData.interaction.clearAwaitingInput();
-            gameData.graveyardTargetOperation.milledCreaturesToHand =
-                    new GraveyardTargetOperationState.MilledCreaturesToHandContext(List.copyOf(cardIds));
-            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            return;
-        }
-
         if (gameData.graveyardTargetOperation.milledCreaturesToExileForToken != null) {
             gameData.interaction.clearAwaitingInput();
             gameData.graveyardTargetOperation.milledCreaturesToExileForToken =
@@ -1697,12 +1689,10 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
-        if (gameData.graveyardTargetOperation.resolutionTimeOneCardPerFilterResume) {
+        if (gameData.graveyardTargetOperation.chooseCardResume) {
             gameData.interaction.clearAwaitingInput();
-            gameData.graveyardTargetOperation.resolutionTimeOneCardPerFilterResume = false;
-            gameData.graveyardTargetOperation.resolutionTimeOneCardPerFilterChoiceMade = true;
-            gameData.graveyardTargetOperation.resolutionTimeOneCardPerFilterChosenCardId =
-                    cardIds.isEmpty() ? null : cardIds.getFirst();
+            gameData.graveyardTargetOperation.chooseCardResume = false;
+            gameData.graveyardTargetOperation.chooseCardAnswer = List.copyOf(cardIds);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

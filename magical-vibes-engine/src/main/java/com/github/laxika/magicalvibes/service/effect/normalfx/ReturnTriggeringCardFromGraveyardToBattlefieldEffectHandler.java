@@ -60,6 +60,10 @@ public class ReturnTriggeringCardFromGraveyardToBattlefieldEffectHandler impleme
             return;
         }
 
+        if (card != null && gameQueryService.cantEnterFaceUp(card)) {
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " does nothing (an instant or sorcery card can't enter the battlefield)."));
+            return;
+        }
         if (card != null && gameQueryService.isCardBlockedFromEnteringFromZone(gameData, card, Zone.GRAVEYARD)) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " does nothing (the card can't enter the battlefield from a graveyard)."));
             return;

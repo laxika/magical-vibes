@@ -160,4 +160,25 @@ class TakklemaggotTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
     }
+
+    @Test
+    @DisplayName("Does not return an Aura that left the graveyard and came back")
+    void doesNotReturnAnAuraThatLeftTheGraveyardAndCameBack() {
+        Permanent dying = addCreatureReady(player2, new BarbaryApes());
+        addCreatureReady(player1, new BarbaryApes());
+        Permanent aura = attachTakklemaggot(player1, dying);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player2, List.of(new ChainLightning()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveSorcery(player2, 0, dying.getId());
+        harness.handleMayAbilityChosen(player2, false);
+        gd.markGraveyardExit(aura.getCard().getId());
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Takklemaggot");
+        harness.assertNotOnBattlefield(player1, "Takklemaggot");
+    }
 }

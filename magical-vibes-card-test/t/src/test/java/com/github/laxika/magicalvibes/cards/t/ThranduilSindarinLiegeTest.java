@@ -72,11 +72,9 @@ class ThranduilSindarinLiegeTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstLand, secondLand);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
@@ -99,9 +97,7 @@ class ThranduilSindarinLiegeTest extends BaseCardTest {
 
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1, 2);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(second, third);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(oldLand, first, fourth);
@@ -119,7 +115,7 @@ class ThranduilSindarinLiegeTest extends BaseCardTest {
 
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();

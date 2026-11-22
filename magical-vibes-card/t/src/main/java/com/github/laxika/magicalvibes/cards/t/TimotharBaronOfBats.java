@@ -11,9 +11,10 @@ import com.github.laxika.magicalvibes.model.effect.CounterUnlessDiscardsEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileDyingCreatureCardAndCreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnExiledCardToBattlefieldUnderOwnerControlEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -49,6 +50,8 @@ public class TimotharBaronOfBats extends Card {
                 List.of(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(), SequenceEffect.of(
                                 new SacrificeSelfEffect(),
-                                new ReturnExiledCardToBattlefieldUnderOwnerControlEffect(null, true, true)))));
+                                new PutCardsOntoBattlefieldEffect(Subjects.exiledWithSource())
+                                        .enteringTapped()
+                                        .underControlOf(Subjects.you())))));
     }
 }

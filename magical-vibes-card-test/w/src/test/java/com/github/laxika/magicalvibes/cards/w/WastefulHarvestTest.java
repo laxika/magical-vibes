@@ -37,7 +37,7 @@ class WastefulHarvestTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(5);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
     }
 
     @Test
@@ -46,7 +46,7 @@ class WastefulHarvestTest extends BaseCardTest {
         setTopFive(new Forest(), new Shock(), new Shock(), new Shock(), new Shock());
 
         castAndResolveToMay();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Forest");
     }
@@ -57,7 +57,7 @@ class WastefulHarvestTest extends BaseCardTest {
         setTopFive(new Forest(), new Shock(), new Shock(), new Shock(), new Shock());
 
         castAndResolveToMay();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(6);
@@ -88,7 +88,7 @@ class WastefulHarvestTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second, new Shock(), new Shock(), new Shock()));
 
         castAndResolveToMay();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(second).doesNotContain(first);
@@ -105,8 +105,7 @@ class WastefulHarvestTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, second, new Shock(), new Shock(), new Shock()));
 
         castAndResolveToMay();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first).doesNotContain(second);
@@ -137,7 +136,7 @@ class WastefulHarvestTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(permanent, new Shock()));
 
         castAndResolveToMay();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(permanent);

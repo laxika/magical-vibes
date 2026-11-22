@@ -24,6 +24,11 @@ Every player chooses in APNAP order before any card moves; picks are only record
 Owner: `CardChoiceHandlerService` (`discardDeferredSelections`), `PutCardsOntoBattlefieldTogetherEffectHandler`.
 Why: an early mover would leak information and split one event's triggers.
 
+### An instant or sorcery card enters only face down (CR 400.4a, 708.3)
+A put or return that isn't face down asks `GameQueryService.cantEnterFaceUp` before the card leaves its zone (the entry batch and `GraveyardReturnSupport` do): it stays there.
+Owner: `GameQueryService`, `BattlefieldEntryBatchSupport`, `GraveyardReturnSupport`.
+Why: a manifested instant that died or was exiled would come back as a permanent.
+
 ### One graveyard-leave event per queue
 `GraveyardReturnSupport.beginGraveyardReturnQueueAsOneEvent` wraps a queue of graveyard choices in one leave batch.
 Owner: `GraveyardReturnSupport`.

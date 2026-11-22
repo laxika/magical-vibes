@@ -28,8 +28,8 @@ class AirliftChaplainTest extends BaseCardTest {
 
         Permanent chaplain = castAndResolveEtb();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(plains);
         assertThat(chaplain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -44,7 +44,7 @@ class AirliftChaplainTest extends BaseCardTest {
 
         Permanent chaplain = castAndResolveEtb();
 
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(bears);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -60,7 +60,7 @@ class AirliftChaplainTest extends BaseCardTest {
         setLibrary(plains, new Forest(), new Disenchant());
 
         Permanent chaplain = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(plains);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
@@ -73,12 +73,9 @@ class AirliftChaplainTest extends BaseCardTest {
         setLibrary(new Plains(), new AmbushParatrooper(), new Forest());
 
         Permanent chaplain = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
-
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
         assertThat(chaplain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
-
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(chaplain.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
@@ -103,7 +100,7 @@ class AirliftChaplainTest extends BaseCardTest {
         setLibrary(plains, creature, new Forest());
 
         Permanent chaplain = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(plains);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature).hasSize(2);
@@ -119,8 +116,7 @@ class AirliftChaplainTest extends BaseCardTest {
         setLibrary(plains, milledChaplain, new Forest());
 
         Permanent chaplain = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(milledChaplain);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(plains).hasSize(2);
@@ -135,7 +131,7 @@ class AirliftChaplainTest extends BaseCardTest {
         setLibrary(plains);
 
         Permanent chaplain = castAndResolveEtb();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(plains);

@@ -26,9 +26,9 @@ class SeedOfHopeTest extends BaseCardTest {
         castAndResolve();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInHand(player1, "Forest");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
@@ -41,7 +41,7 @@ class SeedOfHopeTest extends BaseCardTest {
         setTopCards(new Forest(), new VolcanicSpite());
 
         castAndResolve();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         harness.assertNotInHand(player1, "Forest");
         assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(22);
@@ -78,7 +78,7 @@ class SeedOfHopeTest extends BaseCardTest {
         setTopCards(new Forest());
 
         castAndResolve();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         harness.assertInHand(player1, "Forest");
@@ -96,8 +96,7 @@ class SeedOfHopeTest extends BaseCardTest {
 
         castAndResolve();
         harness.assertLife(player1, 20);
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first).doesNotContain(second);
@@ -116,7 +115,7 @@ class SeedOfHopeTest extends BaseCardTest {
         setTopCards(first, second);
 
         castAndResolve();
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(first);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(older, second).doesNotContain(first);

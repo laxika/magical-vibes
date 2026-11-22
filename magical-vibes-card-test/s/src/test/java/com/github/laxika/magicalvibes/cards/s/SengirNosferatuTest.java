@@ -107,10 +107,10 @@ class SengirNosferatuTest extends BaseCardTest {
         harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(bat), 0, null);
         harness.passBothPriorities();
 
-        PendingInteraction.ExiledCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ExiledCardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactlyInAnyOrderElementsOf(exiledIds);
+        assertThat(choice.cards()).extracting(Card::getId).containsExactlyInAnyOrderElementsOf(exiledIds);
 
         harness.handleMultipleCardsChosen(player1, List.of(exiledIds.getFirst()));
 
@@ -177,7 +177,7 @@ class SengirNosferatuTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Bat");
         harness.assertNotOnBattlefield(player1, "Sengir Nosferatu");
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ExiledCardChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         assertThat(gd.stack).isEmpty();
     }
 

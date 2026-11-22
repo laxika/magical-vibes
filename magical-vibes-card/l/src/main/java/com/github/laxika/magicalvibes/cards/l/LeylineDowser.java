@@ -5,7 +5,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayReturnMilledPermanentToHandEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapMultiplePermanentsCost;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -26,11 +30,14 @@ public class LeylineDowser extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(new MillControllerAndMayReturnMilledPermanentToHandEffect(
-                        1,
-                        new CardAnyOfPredicate(List.of(
-                                new CardTypePredicate(CardType.INSTANT),
-                                new CardTypePredicate(CardType.SORCERY))))),
+                List.of(SequenceEffect.of(
+                        new MillEffect(1, Subjects.you()),
+                        ChooseCardEffect.upTo(
+                                Subjects.cardsThisWay(StepKind.MILL, new CardAnyOfPredicate(List.of(
+                                                new CardTypePredicate(CardType.INSTANT),
+                                        new CardTypePredicate(CardType.SORCERY)))), 1,
+                                "an instant or sorcery card milled this way"),
+                        new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.CHOOSE)))),
                 "{1}, {T}: Mill a card. You may put an instant or sorcery card milled this way into your hand."
         ));
 

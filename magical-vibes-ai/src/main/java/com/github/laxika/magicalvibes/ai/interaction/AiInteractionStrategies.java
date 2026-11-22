@@ -92,7 +92,6 @@ public final class AiInteractionStrategies {
         register(new HostileNegotiationsFaceUpChoiceAiStrategy());
         register(new HostileNegotiationsOpponentPileChoiceAiStrategy());
         register(new MirrorOfFateChoiceAiStrategy());
-        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ReturnExiledCardsToHandChoice.class, 0));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.WerewhatOnEnterChoice.class, 0));
         register(new WerewhatBackFaceChoiceAiStrategy());
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.EachPlayerMayPutLandFromHandThenOpponentsDrawChoice.class, 0));
@@ -164,7 +163,6 @@ public final class AiInteractionStrategies {
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice.class, 2));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.PutOpponentOwnedExiledCardIntoGraveyardCostChoice.class, 1));
-        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.OblivionSowerLandChoice.class, 0));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.CommandZoneCardChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ExchangeOutsideGameCardChoice.class, 0));
     }

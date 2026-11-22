@@ -137,4 +137,17 @@ class MutinousMassacreTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.RED, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
     }
+
+    @Test
+    @DisplayName("A face-down creature's mana value is zero, which is even")
+    void faceDownCreatureIsEven() {
+        Permanent faceDown = harness.addToBattlefieldAndReturn(player2, new LlanowarElves());
+        faceDown.setFaceDown(2, 2, java.util.Set.of(com.github.laxika.magicalvibes.model.CardType.CREATURE));
+        prepareSpell();
+
+        harness.castAndResolveSorcery(player1, 0, (UUID) null);
+        harness.handleListChoice(player1, "EVEN");
+
+        harness.assertInGraveyard(player2, "Llanowar Elves");
+    }
 }

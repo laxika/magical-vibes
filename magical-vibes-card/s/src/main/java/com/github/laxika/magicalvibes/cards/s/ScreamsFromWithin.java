@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceAuraToCreatureOnDeathEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -17,6 +17,7 @@ public class ScreamsFromWithin extends Card {
         target(TargetFilters.creature())
                 .addStaticEffect(new StaticBoostEffect(-1, -1, Subjects.attachedCreature()))
                 .addTrigger(Triggers.dies(ObjectRelation.ENCHANTED),
-                        new ReturnSourceAuraToCreatureOnDeathEffect());
+                        new PutCardsOntoBattlefieldEffect(Subjects.inYourGraveyard(Subjects.sourceCard()))
+                                .underControlOf(Subjects.you()));
     }
 }

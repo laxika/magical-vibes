@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.battlefield.DelayedPermanentActions;
+import com.github.laxika.magicalvibes.service.effect.DelayedExiledCardReturns;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReboundCastFromExileEffectHandler;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -61,7 +62,6 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnExiledCardToHandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SpellweaverVoluteSupport;
 import com.github.laxika.magicalvibes.service.event.GameMutationCoordinator;
 import com.github.laxika.magicalvibes.service.event.VisualCueService;
@@ -1707,10 +1707,10 @@ public class StackResolutionService {
                 && gameData.pendingReturnToHandOnDiscardType == null) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());
             gameData.addToExile(ownerId, physicalCard);
-            gameData.temporaryGlobalTriggeredAbilities.add(ReturnExiledCardToHandEffectHandler.returnAtNextEndStep(
+            gameData.temporaryGlobalTriggeredAbilities.add(DelayedExiledCardReturns.toHandAtNextEndStep(
                     gameData, entry.getControllerId(),
                     entry.getExileAndReturnSourceCard() != null ? entry.getExileAndReturnSourceCard() : entry.getCard(),
-                    null, List.of(physicalCard.getId()), ownerId, 0, false));
+                    null, List.of(physicalCard.getId()), 0, false));
             gameLogService.append(gameData, GameLog.isExiled(entry.getCard()));
         } else if (entry.isCastWithFlashback() && exileSpellEffect == null) {
             gameData.spellsWithDreamCounterOnResolution.remove(physicalCard.getId());

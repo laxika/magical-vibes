@@ -2854,6 +2854,15 @@ public class GameQueryService {
     }
 
     /**
+     * Whether the card can't be put onto the battlefield face up as it is: an instant or sorcery card remains in the
+     * zone it was in (CR 400.4a), also one that was a face-down permanent. One put onto the battlefield face down is
+     * turned face down first (CR 708.3), so a caller putting it there face down doesn't ask.
+     */
+    public boolean cantEnterFaceUp(Card card) {
+        return card.hasType(CardType.INSTANT) || card.hasType(CardType.SORCERY);
+    }
+
+    /**
      * Returns {@code true} if the given card cannot be manifested from {@code zone}. A manifested card
      * enters face down as a 2/2 creature, so a {@link CardsCantEnterBattlefieldFromZonesEffect} whose
      * filter is creature-typed bars manifesting any card from that zone, noncreature cards included

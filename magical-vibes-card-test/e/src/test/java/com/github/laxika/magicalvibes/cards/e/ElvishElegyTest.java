@@ -36,9 +36,9 @@ class ElvishElegyTest extends BaseCardTest {
         assertThat(gd.perpetualPowerToughnessModifiers)
                 .containsEntry(existingCreature.getId(), new PerpetualPowerToughnessModifier(1, 1))
                 .containsEntry(elf.getId(), new PerpetualPowerToughnessModifier(1, 1));
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(elf);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(elf);
@@ -53,7 +53,7 @@ class ElvishElegyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest);
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(forest);
@@ -68,8 +68,7 @@ class ElvishElegyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(elf).doesNotContain(forest);
@@ -84,7 +83,7 @@ class ElvishElegyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castAndResolveSorcery(player1, 0, 0);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 0);
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
 

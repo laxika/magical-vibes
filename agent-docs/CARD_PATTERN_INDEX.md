@@ -192,7 +192,7 @@
 | target creature power damage, then create Elf Warrior tokens for excess damage | `w/WindswiftSlice.java` and `TargetDealsPowerDamageToTargetEffect.recordingExcessDamage()` followed by `CreateTokenEffect(new EventValue(), ...)` |
 | destroy all creatures, then perpetually boost every creature card in hand | `b/BeginAnew.java` + `PerpetuallyBoostMatchingHandCardsEffect` |
 | ETB perpetually boosts creature cards currently in your graveyard | `b/BlightedNightmare.java` + `PerpetuallyBoostCreatureCardsInGraveyardEffect` |
-| mill, perpetually boost creature cards in your graveyard, then optionally return one matching milled card | `e/ElvishElegy.java` + `MillControllerThenPerpetuallyBoostGraveyardAndMayReturnMilledCardEffect` |
+| mill, perpetually boost creature cards in your graveyard, then optionally return one matching milled card | `e/ElvishElegy.java` + `SequenceEffect.of(MillEffect(n, Subjects.you()), ChooseCardEffect.upTo(Subjects.cardsThisWay(StepKind.MILL, filter), max, label), PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.CHOOSE))) with PerpetuallyBoostCreatureCardsInGraveyardEffect(p, t) after the mill` |
 | ETB perpetually boosts creature cards in hand and specializes into five color-specific faces | `k/KlementNoviceAcolyte.java` + `PerpetuallyBoostMatchingHandCardsEffect` + `SpecializeKlementEffect` |
 | cast-granted opponent-target trigger plus five specialize faces | `l/LaezelGithyankiWarrior.java` + `SpecializeLaezelEffect` + `GrantTriggeredAbilityToCastSpellEffect` |
 | attack trigger with an optional attacking-creature target, next-end-step bounce, and five specialize riders | `a/AloraRogueCompanion.java` + `RegisterDelayedEndStepTriggerEffect` + `SpecializeAloraEffect` |
@@ -407,7 +407,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | ETB: starting with you each player chooses up to five permanents; all other permanents except the source phase out and permanents can't phase in | `d/DiscipleOfCaelusNin.java` + `EachPlayerChoosesPermanentsThenPhaseOutRestEffect` + `PermanentsCantPhaseInEffect` |
 | cast a spell from among cards put into your hand this turn | `q/QuicksilverServitor.java` + `.withFilter(new CardPutIntoHandThisTurnPredicate())` on the cast trigger with `new ProliferateEffect()` |
 | bounce, unsummon, return to hand | CARD_PATTERNS_LANDS_SPELLS.md |
-| choose a creature type, return all other creatures to hand | `ReturnAllCreaturesExceptChosenTypeToHandEffect` + resolution-time creature-type choice; `r/RaiseThePalisade.java` |
+| choose a creature type, return all other creatures to hand | `ChooseCreatureTypeAtResolutionEffect() + ReturnToHandEffect.allPermanentsMatching(creature without PermanentHasTypeChosenThisResolutionPredicate)` + resolution-time creature-type choice; `r/RaiseThePalisade.java` |
 | graveyard return, reanimate, flashback | CARD_PATTERNS_LANDS_SPELLS.md |
 | each opponent chooses a creature from their graveyard and the chosen cards enter under your control | `d/DredgeTheMire.java` + `EachOpponentChoosesCreatureCardFromTheirGraveyardToBattlefieldEffect` |
 | reveal the top ten, each opponent chooses a different nonland card to hand, and the rest bottom randomly | `m/ManifoldInsights.java` + `ManifoldInsightsEffect` |

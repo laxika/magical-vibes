@@ -80,6 +80,9 @@ public class ReturnDelayedGraveyardCardUnderControlEffectHandler implements Norm
                     gameData.id, cardId);
             return;
         }
+        if (gameQueryService.cantEnterFaceUp(cardToReturn)) {
+            return;
+        }
         if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, cardToReturn, Zone.GRAVEYARD)) {
             gameLogService.append(gameData,
                     GameLog.cardThen(cardToReturn, " can't return from the graveyard; it stays in the graveyard."));

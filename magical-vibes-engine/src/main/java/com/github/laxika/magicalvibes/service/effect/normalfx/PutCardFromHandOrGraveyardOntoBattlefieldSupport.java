@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
 import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -31,7 +32,6 @@ import java.util.UUID;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.DelayedReferents;
-import com.github.laxika.magicalvibes.model.effect.ReturnAuraFromGraveyardAttachedToPermanentEffect;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -197,8 +197,9 @@ public class PutCardFromHandOrGraveyardOntoBattlefieldSupport {
                     gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
                             controllerId, aura,
                             new TriggeredAbility(Triggers.endStep(ActivePlayer.ANY),
-                                    new ReturnAuraFromGraveyardAttachedToPermanentEffect(
-                                            auraCardId, controllerId, enchantedPermanentId)),
+                                    new PutCardsOntoBattlefieldEffect(Subjects.sourceCard())
+                                            .underControlOf(Subjects.you())
+                                            .attachedTo(Subjects.named(enchantedPermanentId))),
                             null, null, null,
                             DelayedReferents.graveyardCard(auraCardId, gameData.graveyardEntryVersion(auraCardId))));
                     return;

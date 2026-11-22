@@ -156,4 +156,20 @@ class KoyaDeathFromAboveTest extends BaseCardTest {
         harness.passUntil(TurnStep.END_STEP);
         harness.passBothPriorities();
     }
+
+    @Test
+    @DisplayName("Doesn't return a card that left exile and was exiled again")
+    void doesNotReturnACardExiledAgain() {
+        Permanent droid = harness.addToBattlefieldAndReturn(player2, new FugitiveDroid());
+        castKoyaTargeting(droid);
+        var card = droid.getCard();
+        gd.removeFromExile(card.getId());
+        gd.addToExile(player2.getId(), card);
+
+        advanceToNextEndStep();
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        harness.assertNotOnBattlefield(player2, "Fugitive Droid");
+    }
 }

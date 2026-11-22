@@ -44,6 +44,8 @@ public sealed interface CardPredicate permits
         CardHasExactlyNColorsPredicate,
         CardHasNoAbilitiesPredicate,
         CardHasSourceChosenSubtypePredicate,
+        CardHasStudyCounterPredicate,
+        CardHasTypeChosenThisResolutionPredicate,
         CardIsAuraEnchantCreaturePredicate,
         CardIsAuraPredicate,
         CardIsColorlessPredicate,

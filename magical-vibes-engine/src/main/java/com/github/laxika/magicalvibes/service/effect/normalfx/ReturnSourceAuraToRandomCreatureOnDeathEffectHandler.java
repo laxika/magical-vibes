@@ -41,6 +41,11 @@ public class ReturnSourceAuraToRandomCreatureOnDeathEffectHandler implements Nor
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID auraCardId = entry.getCard().getId();
         Card auraCard = gameQueryService.findCardInGraveyardById(gameData, auraCardId);
+        // An Aura that left the graveyard and came back is a new object (CR 400.7).
+        if (auraCard != null && entry.sourceCardGraveyardEntryVersion() >= 0
+                && gameData.graveyardEntryVersion(auraCardId) != entry.sourceCardGraveyardEntryVersion()) {
+            auraCard = null;
+        }
         UUID auraOwnerId = gameQueryService.findGraveyardOwnerById(gameData, auraCardId);
         if (auraCard == null || auraOwnerId == null) {
             gameLogService.append(gameData,

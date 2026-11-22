@@ -55,7 +55,8 @@ public class ReturnDyingCreatureToOwnerBattlefieldEffectHandler implements Norma
         if (!entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(dyingCardId))) {
             return;
         }
-        if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, cardToReturn, Zone.GRAVEYARD)) {
+        if (gameQueryService.cantEnterFaceUp(cardToReturn)
+                || gameQueryService.isCardBlockedFromEnteringFromZone(gameData, cardToReturn, Zone.GRAVEYARD)) {
             return;
         }
 

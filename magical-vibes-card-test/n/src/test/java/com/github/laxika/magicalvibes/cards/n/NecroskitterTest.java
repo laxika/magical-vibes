@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.c.ControlMagic;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -252,5 +254,47 @@ class NecroskitterTest extends BaseCardTest {
         assertThat(returned.getCounterCount(CounterType.MINUS_ONE_MINUS_ONE)).isZero();
         assertThat(returned.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         harness.assertNotInGraveyard(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("An instant card that died as a face-down creature isn't returned face up")
+    void doesNotReturnAnInstantThatWasAFaceDownCreature() {
+        harness.addToBattlefield(player1, new Necroskitter());
+        Permanent manifested = harness.addToBattlefieldAndReturn(player2, new Shock());
+        manifested.setFaceDown(2, 2, Set.of(CardType.CREATURE), Set.of());
+        manifested.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castAndResolveInstant(player1, 0, manifested.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Shock");
+        harness.assertInGraveyard(player2, "Shock");
+    }
+
+    @Test
+    @DisplayName("Doesn't return a card that left the graveyard and came back")
+    void doesNotReturnACardThatLeftTheGraveyardAndCameBack() {
+        harness.addToBattlefield(player1, new Necroskitter());
+        Permanent dying = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        dying.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 1);
+
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castAndResolveInstant(player1, 0, dying.getId());
+        gd.markGraveyardExit(dying.getCard().getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        harness.assertInGraveyard(player2, "Grizzly Bears");
     }
 }

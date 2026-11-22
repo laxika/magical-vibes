@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.t.TheForetoldSoldier;
 import com.github.laxika.magicalvibes.cards.b.BurnishedHart;
 import com.github.laxika.magicalvibes.cards.i.InfernalGrasp;
 import com.github.laxika.magicalvibes.cards.k.KederektParasite;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -322,5 +323,20 @@ class AthreosShroudVeiledTest extends BaseCardTest {
 
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         harness.assertNotOnBattlefield(player1, "Burnished Hart");
+    }
+
+    @Test
+    @DisplayName("An instant card that was a face-down creature stays where it went")
+    void doesNotReturnAnInstantThatWasAFaceDownCreature() {
+        harness.addToBattlefield(player1, new AthreosShroudVeiled());
+        Permanent manifested = harness.addToBattlefieldAndReturn(player2, new InfernalGrasp());
+        manifested.setFaceDown(2, 2, java.util.Set.of(CardType.CREATURE), java.util.Set.of());
+        manifested.setCounterCount(CounterType.COIN, 1);
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, manifested));
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Infernal Grasp");
+        harness.assertInGraveyard(player2, "Infernal Grasp");
     }
 }

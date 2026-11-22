@@ -83,8 +83,8 @@ class OkoLorwynLiegeTest extends BaseCardTest {
         harness.activateAbility(player1, okoIndex, 0, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(forest);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -236,8 +236,7 @@ class OkoLorwynLiegeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        chooseOfferedCards(player1, 1);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(bear).doesNotContain(forest, shock);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest, shock).doesNotContain(bear);
@@ -251,7 +250,7 @@ class OkoLorwynLiegeTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, false);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(forest);

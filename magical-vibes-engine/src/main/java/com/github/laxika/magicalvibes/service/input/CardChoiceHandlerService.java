@@ -46,7 +46,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardToTopOfLibraryInsteadEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -79,6 +78,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.DelayedExiledCardReturns;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
@@ -93,7 +93,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.GraveyardReturnSup
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnExiledCardToHandEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TapUntapSupport;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -2341,10 +2340,10 @@ public class CardChoiceHandlerService {
                 }
                 if (revealedHandChoice.returnAtNextEndStep()) {
                     gameData.temporaryGlobalTriggeredAbilities.add(
-                            ReturnExiledCardToHandEffectHandler.returnAtNextEndStep(gameData, player.getId(),
+                            DelayedExiledCardReturns.toHandAtNextEndStep(gameData, player.getId(),
                                     gameData.pendingEffectResolutionEntry == null ? exiled
                                             : gameData.pendingEffectResolutionEntry.getCard(),
-                                    null, List.of(exiled.getId()), targetPlayerId, 0, true));
+                                    null, List.of(exiled.getId()), 0, true));
                 }
             }
 
