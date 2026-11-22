@@ -4,12 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandAndCreateTokenCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTokensCreatedWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -28,11 +29,10 @@ public class ArcaneArtisan extends Card {
                 "{2}{U}",
                 List.of(
                         new DrawCardEffect(1, Subjects.targetPlayerDeclaredElsewhere()),
-                        new ExileCardFromHandAndCreateTokenCopyEffect(
-                                new CardTruePredicate(),
-                                CreateTokenCopyOfTargetPermanentEffect.trackedForTargetController(),
-                                new CardTypePredicate(CardType.CREATURE),
-                                true)
+                        new ExileCardFromHandEffect(Subjects.targetPlayer(), null, false),
+                        CreateTokenCopyOfCardEffect.of(
+                                Subjects.cardsThisWay(StepKind.EXILE, new CardTypePredicate(CardType.CREATURE)),
+                                CreateTokenCopyOfTargetPermanentEffect.trackedForTargetController())
                 ),
                 "{2}{U}, {T}: Target player draws a card, then exiles a card from their hand. "
                         + "If a creature card is exiled this way, that player creates a token that's a copy of that card.",

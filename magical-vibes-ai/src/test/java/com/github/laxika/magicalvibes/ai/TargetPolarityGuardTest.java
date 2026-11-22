@@ -291,7 +291,9 @@ class TargetPolarityGuardTest {
         UUID aiPlayerId = harness.getPlayer2().getId();
 
         assertThat(classifier.classify(gd,
-                new com.github.laxika.magicalvibes.model.effect.ExileTargetNontokenCreatureAndTopCardsThenCloakEffect(),
+                com.github.laxika.magicalvibes.model.effect.ExileFaceDownPileEffect.thenCloak(
+                        new com.github.laxika.magicalvibes.model.effect.ExileFaceDownPileEffect.PermanentsAndTopCards(
+                                com.github.laxika.magicalvibes.model.effect.Subjects.target(), 2)),
                 aiPlayerId)).isEqualTo(TargetPolarity.BENEFICIAL);
         assertThat(classifier.classify(gd,
                 new com.github.laxika.magicalvibes.model.effect.FalseOrdersEffect(), aiPlayerId))

@@ -1,14 +1,17 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandWithManaValueTimeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.service.GameLogService;
-import com.github.laxika.magicalvibes.service.input.PlayerInputService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -21,7 +24,7 @@ import java.util.UUID;
 public class ExileCardFromHandWithManaValueTimeCountersEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
-    private final PlayerInputService playerInputService;
+    private final SubjectResolutionService subjectResolutionService;
     private final RemoveTimeCounterFromExiledCardEffectHandler removeTimeCounterHandler;
 
     @Override
@@ -31,47 +34,27 @@ public class ExileCardFromHandWithManaValueTimeCountersEffectHandler implements 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        ExileCardFromHandWithManaValueTimeCountersEffect alaundoEffect =
-                (ExileCardFromHandWithManaValueTimeCountersEffect) effect;
         UUID controllerId = entry.getControllerId();
-
-        if (!alaundoEffect.cardChosen()) {
-            List<com.github.laxika.magicalvibes.model.Card> hand = gameData.playerHands.get(controllerId);
-            if (hand != null && !hand.isEmpty()) {
-                playerInputService.beginExileFromHandChoice(gameData, controllerId, alaundoEffect.afterChoice());
-            }
-            return;
-        }
-
-        if (entry.getChosenObjectCard() == null) {
-            return;
-        }
-        UUID chosenCardId = entry.getChosenObjectCard().getId();
-        ExiledCardEntry chosenEntry = gameData.findExiledCard(chosenCardId);
-        if (chosenEntry == null || !controllerId.equals(chosenEntry.ownerId())) {
-            return;
-        }
-
-        int manaValue = chosenEntry.card().getManaValue();
-        if (!alaundoEffect.gainsSuspend()) {
+        UUID chosenCardId = null;
+        for (var located : subjectResolutionService.locatedCards(
+                gameData, entry, effect, Subjects.cardsThisWay(StepKind.EXILE))) {
+            Card chosen = located.card();
+            chosenCardId = chosen.getId();
             gameData.exiledCardsWithAlaundoCastAbility.add(chosenCardId);
-            if (chosenEntry.card().getActivatedAbilities(Zone.HAND).stream()
+            if (chosen.getActivatedAbilities(Zone.HAND).stream()
                     .noneMatch(com.github.laxika.magicalvibes.model.ActivatedAbility::isSuspendsSourceFromHand)) {
                 gameData.exiledCardsWithNonSuspendTimeCounters.add(chosenCardId);
             }
-        }
-        if (manaValue > 0) {
-            gameData.exiledCardTimeCounters.put(chosenCardId, manaValue);
-            gameLogService.append(gameData,
-                    GameLog.cardThen(chosenEntry.card(), " gets " + manaValue + " time counters."));
-        }
-
-        if (!alaundoEffect.advancesOtherExiledCards()) {
-            return;
+            int manaValue = chosen.getManaValue();
+            if (manaValue > 0) {
+                gameData.exiledCardTimeCounters.put(chosenCardId, manaValue);
+                gameLogService.append(gameData,
+                        GameLog.cardThen(chosen, " gets " + manaValue + " time counters."));
+            }
         }
         for (ExiledCardEntry otherEntry : List.copyOf(gameData.exiledCards)) {
             if (!controllerId.equals(otherEntry.ownerId())
-                    || chosenCardId.equals(otherEntry.card().getId())) {
+                    || otherEntry.card().getId().equals(chosenCardId)) {
                 continue;
             }
             Integer counters = gameData.exiledCardTimeCounters.get(otherEntry.card().getId());

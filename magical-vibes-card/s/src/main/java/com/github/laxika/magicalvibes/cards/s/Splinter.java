@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
@@ -15,6 +17,8 @@ public class Splinter extends Card {
         target(new PermanentPredicateTargetFilter(
                 artifact,
                 "Target must be an artifact"
-        )).addSpellEffect(ExileTargetPermanentAndAllWithSameNameFromZonesEffect.allCopiesHiddenZonesOptional(artifact));
+        )).addSpellEffect(new ExileTargetPermanentEffect(artifact))
+                .addSpellEffect(ExileCardsWithSameNameEffect.all(
+                        Subjects.target(), Subjects.controllerOf(Subjects.target())));
     }
 }

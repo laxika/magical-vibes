@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "WHO", collectorNumber = "49")
@@ -14,6 +15,7 @@ public class NanogeneConversion extends Card {
     public NanogeneConversion() {
         // Choose target creature you control. Each other creature becomes a copy of that creature until end of turn, except it isn't legendary.
         target(TargetFilters.creatureYouControl())
-                .addSpellEffect(new EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect(true));
+                .addSpellEffect(new EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUntilEndOfTurnEffect(
+                        new PermanentIsCreaturePredicate(), new PermanentIsCreaturePredicate(), true));
     }
 }

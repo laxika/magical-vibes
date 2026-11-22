@@ -32,6 +32,8 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StagedHandExile;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.TargetOpponentsDiscardThenDrawState;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -1865,14 +1867,7 @@ public class CardChoiceHandlerService {
         List<Integer> validIndices = exileChoice.validIndices();
         if (!validIndices.contains(cardIndex)) {
             log.warn("Game {} - {} sent invalid exile card index {}, re-prompting", gameData.id, player.getUsername(), cardIndex);
-            playerInputService.beginExileFromHandChoice(gameData, player.getId(), exileChoice.sourcePermanentId(),
-                    exileChoice.playPermissionControllerId(), exileChoice.remainingCount(),
-                    exileChoice.remainingChoosers(), exileChoice.cardsPerPlayer(), exileChoice.faceDown(),
-                    exileChoice.returnOnSourceLeave(), exileChoice.untapPermanentId(),
-                    exileChoice.playPermissionToChooser(),
-                    exileChoice.playPermissionTaxSourceControllerId(),
-                    exileChoice.exilePlayOpponentTax(), exileChoice.landsEnterTapped(),
-                    exileChoice.chosenCardThenEffect(), exileChoice.exiledCount());
+            interactionHandlerRegistry.requestActiveDecision(gameData);
             return;
         }
 
@@ -1973,8 +1968,14 @@ public class CardChoiceHandlerService {
             }
         } else if (sourcePermanentId != null) {
             exileService.exileCard(gameData, playerId, card, sourcePermanentId);
+        } else if (exileChoice.faceDown()) {
+            exileService.exileCardFaceDown(gameData, playerId, card, null);
         } else {
             exileService.exileCard(gameData, playerId, card);
+        }
+        if (gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.addToStep(StepKind.EXILE,
+                    StepOutcome.ofObjects(List.of(card.getId()), List.of(playerId)).withFromHand(1));
         }
 
         // Grant the configured player permission to play this card for as long as it remains exiled.
@@ -2030,52 +2031,6 @@ public class CardChoiceHandlerService {
         for (StagedHandExile exile : staged) {
             exileChosenHandCard(gameData, exile.playerId(), exile.card(), exile.choice());
             exiledCounts.merge(exile.playerId(), 1, Integer::sum);
-        }
-    }
-
-    /** Answers the Nexus of Becoming hand-card choice and queues the copy of the selected card. */
-    public void handleExileCardFromHandAndCreateTokenCopyChosen(
-            GameData gameData, Player player, int cardIndex) {
-        PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice choice =
-                gameData.interaction.activeInteraction(
-                        PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice.class);
-        if (choice == null || !player.getId().equals(choice.playerId())) {
-            throw new IllegalStateException("Not your turn to choose");
-        }
-        if (!choice.validIndices().contains(cardIndex)) {
-            log.warn("Game {} - {} sent invalid card index {}, re-prompting",
-                    gameData.id, player.getUsername(), cardIndex);
-            interactionHandlerRegistry.requestActiveDecision(gameData);
-            return;
-        }
-
-        List<Card> hand = gameData.playerHands.get(player.getId());
-        if (hand == null || cardIndex >= hand.size()) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        Card chosenCard = hand.remove(cardIndex);
-        exileService.exileCard(gameData, player.getId(), chosenCard);
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " exiles ", chosenCard, " from hand."));
-
-        StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-        boolean createTokenCopy = choice.effect().copyFilter() == null
-                || predicateEvaluationService.matchesCardPredicate(
-                        chosenCard, choice.effect().copyFilter(),
-                        pendingEntry == null || pendingEntry.getCard() == null
-                                ? null : pendingEntry.getCard().getId());
-        if (pendingEntry != null && createTokenCopy) {
-            pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
-                    List.of(new CreateTokenCopyOfCardEffect(
-                            chosenCard, choice.effect().tokenCopyEffect())));
-            effectResolutionService.resolveEffectsFrom(gameData, pendingEntry,
-                    gameData.pendingEffectResolutionIndex);
-        }
-
-        if (!gameData.interaction.isAwaitingInput()) {
-            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
         }
     }
 
@@ -2927,86 +2882,6 @@ public class CardChoiceHandlerService {
             log.info("Game {} - Source permanent left battlefield, {} exiled without imprinting", gameData.id, card.getName());
         }
 
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    public void handleExileFromHandWithRefineCountersChosen(GameData gameData, Player player, int cardIndex) {
-        PendingInteraction.ExileFromHandWithRefineCountersChoice choice =
-                gameData.interaction.activeInteraction(PendingInteraction.ExileFromHandWithRefineCountersChoice.class);
-        if (choice == null || !player.getId().equals(choice.playerId())) {
-            throw new IllegalStateException("Not your turn to choose");
-        }
-
-        if (!choice.validIndices().contains(cardIndex)) {
-            log.warn("Game {} - {} sent invalid refine-counter card index {}, re-prompting",
-                    gameData.id, player.getUsername(), cardIndex);
-            playerInputService.beginExileFromHandWithRefineCountersChoice(gameData, player.getId(),
-                    new ArrayList<>(choice.validIndices()), "Choose a card from your hand to exile.",
-                    choice.counterCount());
-            return;
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        List<Card> hand = gameData.playerHands.get(player.getId());
-        Card card = hand.remove(cardIndex);
-        exileService.exileCard(gameData, player.getId(), card);
-        gameData.exiledCardRefineCounters.put(card.getId(), choice.counterCount());
-        gameLogService.append(gameData, GameLog.cardThen(card,
-                " is exiled with " + choice.counterCount() + " refine counters."));
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    public void handleExileNonlandCardFromHandWithTimeCountersChosen(
-            GameData gameData, Player player, int cardIndex) {
-        PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice choice =
-                gameData.interaction.activeInteraction(
-                        PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice.class);
-        if (choice == null || !player.getId().equals(choice.playerId())) {
-            throw new IllegalStateException("Not your turn to choose");
-        }
-
-        if (!choice.validIndices().contains(cardIndex)) {
-            log.warn("Game {} - {} sent invalid nonland exile card index {}, re-prompting",
-                    gameData.id, player.getUsername(), cardIndex);
-            playerInputService.beginExileNonlandCardFromHandWithTimeCountersChoice(
-                    gameData, player.getId(), new ArrayList<>(choice.validIndices()), choice.prompt());
-            return;
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        List<Card> hand = gameData.playerHands.get(player.getId());
-        Card card = hand.remove(cardIndex);
-        exileService.exileCard(gameData, player.getId(), card);
-        gameData.exiledCardTimeCounters.put(card.getId(), card.getManaValue());
-        gameLogService.append(gameData, GameLog.cardThen(card,
-                " is exiled with " + card.getManaValue() + " time counters."));
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    public void handleExileCardFromHandWithTimeCountersChosen(
-            GameData gameData, Player player, int cardIndex) {
-        PendingInteraction.ExileCardFromHandWithTimeCountersChoice choice =
-                gameData.interaction.activeInteraction(
-                        PendingInteraction.ExileCardFromHandWithTimeCountersChoice.class);
-        if (choice == null || !player.getId().equals(choice.playerId())) {
-            throw new IllegalStateException("Not your turn to choose");
-        }
-
-        if (!choice.validIndices().contains(cardIndex)) {
-            log.warn("Game {} - {} sent invalid hand exile card index {}, re-prompting",
-                    gameData.id, player.getUsername(), cardIndex);
-            playerInputService.beginExileCardFromHandWithTimeCountersChoice(
-                    gameData, player.getId(), new ArrayList<>(choice.validIndices()), choice.prompt());
-            return;
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        List<Card> hand = gameData.playerHands.get(player.getId());
-        Card card = hand.remove(cardIndex);
-        exileService.exileCard(gameData, player.getId(), card);
-        gameData.exiledCardTimeCounters.put(card.getId(), card.getManaValue());
-        gameLogService.append(gameData, GameLog.cardThen(card,
-                " is exiled with " + card.getManaValue() + " time counters."));
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

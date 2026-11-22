@@ -4,11 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandAndCreateTokenCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -30,12 +33,13 @@ public class NexusOfBecoming extends Card {
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), SequenceEffect.of(
                 new DrawCardEffect(),
                 new MayEffect(
-                        new ExileCardFromHandAndCreateTokenCopyEffect(
-                                ARTIFACT_OR_CREATURE,
-                                new CreateTokenCopyOfTargetPermanentEffect(
-                                        List.of(CardSubtype.GOLEM),
-                                        Set.of(CardType.ARTIFACT, CardType.CREATURE),
-                                        3, 3, Map.of())),
+                        SequenceEffect.of(
+                                new ExileCardFromHandEffect(ARTIFACT_OR_CREATURE),
+                                CreateTokenCopyOfCardEffect.of(Subjects.cardsThisWay(StepKind.EXILE),
+                                        new CreateTokenCopyOfTargetPermanentEffect(
+                                                List.of(CardSubtype.GOLEM),
+                                                Set.of(CardType.ARTIFACT, CardType.CREATURE),
+                                                3, 3, Map.of()))),
                         "Exile an artifact or creature card from your hand?")));
     }
 }

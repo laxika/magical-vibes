@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -105,6 +106,25 @@ class JeskaiInfiltratorTest extends BaseCardTest {
                     assertThat(permanent.isManifested()).isTrue();
                 });
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("With the source gone, the top card is still exiled in the pile before it is manifested")
+    void topCardGoesThroughExileWhenTheSourceIsGone() {
+        Permanent infiltrator = addReadyInfiltrator();
+        Card topCard = new ArashinCleric();
+        harness.setLibrary(player1, List.of(topCard));
+        harness.setHand(player2, List.of(new SupplantForm()));
+        harness.addMana(player2, ManaColor.BLUE, 2);
+        harness.addMana(player2, ManaColor.COLORLESS, 4);
+
+        dealCombatDamage(infiltrator);
+        harness.castInstant(player2, 0, infiltrator.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.exileEntryVersions).containsKey(topCard.getId());
+        assertThat(gd.playerBattlefields.get(player1.getId())).singleElement()
+                .satisfies(permanent -> assertThat(permanent.isManifested()).isTrue());
     }
 
     @Test

@@ -135,7 +135,8 @@ public class ExileChosenPermanentsEffectHandler implements NormalEffectHandlerBe
             // Each as it was before any of them left (CR 608.2h).
             known.add(new LastKnownCardStats(id, gameQueryService.getEffectivePower(gameData, permanent),
                     gameQueryService.getEffectiveToughness(gameData, permanent),
-                    gameQueryService.getPermanentManaValue(permanent)));
+                    gameQueryService.getPermanentManaValue(permanent),
+                    gameQueryService.getEffectiveName(gameData, permanent)));
         }
         String sourceName = entry.getCard().getName();
         boolean together = permanents.size() > 1;

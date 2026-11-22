@@ -11,7 +11,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditi
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantUnearthToTargetCreatureCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetCardFromGraveyardEffect;
@@ -134,9 +133,6 @@ public class GraveyardTargetingSupport {
         if (effect instanceof ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffect discovery) {
             return new Target(discovery.filter(), GraveyardSearchScope.ALL_GRAVEYARDS,
                     "to exile", 1, 0);
-        }
-        if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect exile) {
-            return new Target(exile.targetFilter(), exile.graveyardScope(), "to exile", 1, 1);
         }
         if (effect instanceof CastTargetCardFromGraveyardEffect castTarget) {
             return new Target(castTarget.filter(), castTarget.scope(), "to cast", 1, 1);

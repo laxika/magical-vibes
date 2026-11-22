@@ -44,8 +44,8 @@ class TheWeddingOfRiverSongTest extends BaseCardTest {
                 .isEqualTo(player1.getId());
 
         harness.handleMayAbilityChosen(player1, true);
-        PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice controllerChoice =
-                gd.interaction.activeInteraction(PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice.class);
+        PendingInteraction.ExileFromHandChoice controllerChoice =
+                gd.interaction.activeInteraction(PendingInteraction.ExileFromHandChoice.class);
         assertThat(controllerChoice).isNotNull();
         assertThat(controllerChoice.validIndices()).containsExactly(0);
         harness.handleCardChosen(player1, 0);
@@ -55,8 +55,8 @@ class TheWeddingOfRiverSongTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId()))
                 .containsExactly(opponentCard, opponentDraw1, opponentDraw2);
         harness.handleMayAbilityChosen(player2, true);
-        PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice opponentChoice =
-                gd.interaction.activeInteraction(PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice.class);
+        PendingInteraction.ExileFromHandChoice opponentChoice =
+                gd.interaction.activeInteraction(PendingInteraction.ExileFromHandChoice.class);
         assertThat(opponentChoice).isNotNull();
         assertThat(opponentChoice.playerId()).isEqualTo(player2.getId());
         harness.handleCardChosen(player2, 0);

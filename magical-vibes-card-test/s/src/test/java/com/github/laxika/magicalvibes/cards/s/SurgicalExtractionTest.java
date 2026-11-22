@@ -22,8 +22,27 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.util.concurrent.ConcurrentHashMap;
+
 @CardUsed({SurgicalExtraction.class, GrizzlyBears.class, Peek.class, Plains.class, PhyrexiasCore.class})
 class SurgicalExtractionTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("An exiled card is no longer one put into a graveyard from the battlefield this turn")
+    void exiledCardIsForgottenAsPutIntoTheGraveyardThisTurn() {
+        Card bears = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(bears));
+        gd.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn
+                .computeIfAbsent(player2.getId(), id -> ConcurrentHashMap.newKeySet()).add(bears.getId());
+        harness.setHand(player1, List.of(new SurgicalExtraction()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+
+        harness.castAndResolveInstant(player1, 0, bears.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+
+        assertThat(gd.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.get(player2.getId()))
+                .doesNotContain(bears.getId());
+    }
 
     @Test
     void canTargetNonbasicLand() {

@@ -3877,6 +3877,7 @@ public class GameData {
         return switch (moved.zone()) {
             case EXILE -> exileEntryVersions.getOrDefault(moved.cardId(), 0L);
             case GRAVEYARD -> graveyardEntryVersion(moved.cardId());
+            case HAND -> handEntryVersions.getOrDefault(moved.cardId(), 0L);
             default -> -1;
         };
     }

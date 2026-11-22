@@ -3,7 +3,11 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileAllWithSameNameEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
@@ -18,6 +22,10 @@ public class TestOfTalents extends Card {
                         StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),
                 "Target must be an instant or sorcery spell."
         ));
-        addSpellEffect(new CounterSpellAndExileAllWithSameNameEffect(true, true));
+        addSpellEffect(new CounterSpellEffect());
+        addSpellEffect(ExileCardsWithSameNameEffect.anyNumber(
+                Subjects.targetSpell(), Subjects.controllerOf(Subjects.targetSpell())));
+        addSpellEffect(new DrawCardEffect(
+                AmountThisWay.exiledFromHand(), Subjects.controllerOf(Subjects.targetSpell())));
     }
 }

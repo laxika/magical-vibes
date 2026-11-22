@@ -16,8 +16,23 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DivergentTransformations.class, FountainOfYouth.class, GrizzlyBears.class, LlanowarElves.class, SoulWarden.class})
+@CardUsed({DivergentTransformations.class, DourPortMage.class, FountainOfYouth.class, GrizzlyBears.class, LlanowarElves.class, SoulWarden.class})
 class DivergentTransformationsTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A creature exiled with another one sees that one leave the battlefield with it")
+    void bothCreaturesLeaveAsOneEvent() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new DourPortMage());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new FountainOfYouth(), new FountainOfYouth(), new FountainOfYouth()));
+        prepareCard();
+
+        harness.castAndResolveInstant(player1, 0, List.of(first.getId(), second.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
+    }
 
     @Test
     @DisplayName("Exiles both creatures before replacing each from its controller's library")

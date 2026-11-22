@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.github.laxika.magicalvibes.cards.g.GreenwoodSentinel;
 import com.github.laxika.magicalvibes.cards.m.MammothSpider;
+import com.github.laxika.magicalvibes.cards.w.WitnessProtection;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,8 +17,25 @@ import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-@CardUsed({LegionsEnd.class, GreenwoodSentinel.class, MammothSpider.class})
+@CardUsed({WitnessProtection.class, LegionsEnd.class, GreenwoodSentinel.class, MammothSpider.class})
 class LegionsEndTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A creature whose name an effect changed shares that name, not the printed one")
+    void renamedCreatureIsReadByTheNameItHad() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GreenwoodSentinel());
+        Permanent aura = harness.addToBattlefieldAndReturn(player2, new WitnessProtection());
+        aura.setAttachedTo(target.getId());
+        harness.setHand(player2, List.of(new GreenwoodSentinel()));
+        harness.setHand(player1, List.of(new LegionsEnd()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveSorcery(player1, 0, target.getId());
+
+        harness.assertNotOnBattlefield(player2, "Greenwood Sentinel");
+        harness.assertInHand(player2, "Greenwood Sentinel");
+    }
 
     @Test
     @DisplayName("Exiles the target and same-name creatures, hand cards, and graveyard cards")

@@ -48,31 +48,34 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
         if (register.player() != null && playerId == null) {
             return;
         }
-        StepOutcome bound = register.about() == StepKind.EXILE
-                ? exiled(gameData, entry.getResolutionResults().outcome(StepKind.EXILE))
-                : StepOutcome.ofObjects(entry.getCreatedPermanentIds(), List.of());
+        StepOutcome bound = switch (register.about()) {
+            case EXILE -> exiled(gameData, entry.getResolutionResults().outcome(StepKind.EXILE));
+            case SEEK -> sought(gameData, entry.getResolutionResults().outcome(StepKind.SEEK));
+            default -> StepOutcome.ofObjects(entry.getCreatedPermanentIds(), List.of());
+        };
         if (bound.objectIds().isEmpty() && !register.alsoIfNothingHappened()) {
             return;
         }
         List<CardEffect> effects = register.effects();
         TriggerOptions options = TriggerOptions.DEFAULT;
         if (register.ifAnyStillExiled()) {
+            Zone stayedIn = register.about() == StepKind.SEEK ? Zone.HAND : Zone.EXILE;
             Map<UUID, Long> stays = bound.movedCards().stream()
-                    .filter(moved -> moved.zone() == Zone.EXILE)
+                    .filter(moved -> moved.zone() == stayedIn)
                     .collect(Collectors.toMap(MovedCard::cardId, MovedCard::entryVersion, (first, second) -> first));
-            options = options.withInterveningIf(new CardsStillInZone(Zone.EXILE, stays));
+            options = options.withInterveningIf(new CardsStillInZone(stayedIn, stays));
             if (effects.size() > 1) {
                 // The "if" is checked once as the ability resolves (CR 603.4), not again after each of its steps.
                 effects = List.of(new SequenceEffect(effects));
             }
         }
-        boolean exiled = register.about() == StepKind.EXILE;
-        DelayedReferents referents = (exiled
+        boolean cards = register.about() != StepKind.CREATE_TOKEN;
+        DelayedReferents referents = (cards
                 ? DelayedReferents.cards(bound.movedCards().stream().map(MovedCard::cardId).distinct().toList())
                 : DelayedReferents.permanents(bound.objectIds()))
                 .withStepResults(ResolutionResults.EMPTY.withOutcome(register.about(), bound));
         // "Exile it": an ability about one permanent records it as that permanent.
-        UUID permanentId = !exiled && bound.objectIds().size() == 1 ? bound.objectIds().getFirst() : null;
+        UUID permanentId = !cards && bound.objectIds().size() == 1 ? bound.objectIds().getFirst() : null;
         if (register.afterThisTurn()) {
             referents = referents.afterTurn(gameData.turnNumber);
         }
@@ -80,6 +83,11 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
                 entry.getControllerId(), entry.getCard(),
                 new TriggeredAbility(register.step(), options, effects.toArray(CardEffect[]::new)),
                 entry.getSourcePermanentId(), permanentId, playerId, referents));
+    }
+
+    private static StepOutcome sought(GameData gameData, StepOutcome outcome) {
+        return StepOutcome.ofObjects(outcome.objectIds(), outcome.playerIds(),
+                outcome.movedCards().stream().map(gameData::boundToStay).toList());
     }
 
     private static StepOutcome exiled(GameData gameData, StepOutcome outcome) {
@@ -94,6 +102,6 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
             moved.forEach(card -> cards.add(gameData.boundToStay(card)));
         }
         return new StepOutcome(outcome.amount(), outcome.objectIds(), outcome.playerIds(), cards, List.of(),
-                outcome.lastKnownPermanents());
+                outcome.lastKnownPermanents(), outcome.fromHand());
     }
 }

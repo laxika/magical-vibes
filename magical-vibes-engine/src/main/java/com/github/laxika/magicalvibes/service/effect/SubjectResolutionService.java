@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
+import com.github.laxika.magicalvibes.model.LastKnownCardStats;
 import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
@@ -180,7 +181,40 @@ public class SubjectResolutionService {
         };
     }
 
-    /** A card a {@link CardSubject} names, in the zone it is in ({@link Zone#GRAVEYARD} or {@link Zone#EXILE}). */
+    /**
+     * The names of what {@code subject} names, for "the same name as that permanent": each permanent's as it is on
+     * the battlefield, else as the exile step of this resolution recorded it (CR 608.2h); for {@code targetSpell()}
+     * the spell's as it is on the stack, else as the counter step remembered it. An object with no name (face down,
+     * CR 708.2) adds none, so shares a name with nothing (CR 201.2a).
+     */
+    public Set<String> names(GameData gameData, StackEntry entry, CardEffect effect, PermanentSubject subject) {
+        Set<String> names = new LinkedHashSet<>();
+        if (subject instanceof PermanentSubject.TargetSpell) {
+            UUID spellId = entry.getTargetId();
+            Card spell = gameData.stack.stream()
+                    .filter(onStack -> spellId != null && spellId.equals(onStack.getTargetableId()))
+                    .map(StackEntry::getCard)
+                    .findFirst()
+                    .orElseGet(() -> entry.lastKnownPermanentCard(spellId));
+            if (spell != null && spell.getName() != null && !spell.getName().isEmpty()) {
+                names.addAll(spell.getNames());
+            }
+            return names;
+        }
+        StepOutcome exiled = entry.getResolutionResults().outcome(StepKind.EXILE);
+        for (UUID id : permanentIds(gameData, entry, effect, subject)) {
+            Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+            String name = permanent != null ? gameQueryService.getEffectiveName(gameData, permanent)
+                    : exiled.lastKnownPermanent(id).map(LastKnownCardStats::name).orElse(null);
+            if (name != null && !name.isEmpty()) {
+                names.add(name);
+            }
+        }
+        return names;
+    }
+
+    /** A card a {@link CardSubject} names, in the zone it is in ({@link Zone#GRAVEYARD}, {@link Zone#EXILE}, or
+     * {@link Zone#HAND} for a sought card). */
     public record LocatedCard(Card card, Zone zone, UUID ownerId) {
     }
 
@@ -257,6 +291,15 @@ public class SubjectResolutionService {
         if (zone == Zone.EXILE) {
             ExiledCardEntry exiled = gameData.findExiledCard(cardId);
             return exiled == null ? null : new LocatedCard(exiled.card(), Zone.EXILE, exiled.ownerId());
+        }
+        if (zone == Zone.HAND) {
+            for (UUID playerId : gameData.orderedPlayerIds) {
+                for (Card card : gameData.playerHands.getOrDefault(playerId, List.of())) {
+                    if (card.getId().equals(cardId)) {
+                        return new LocatedCard(card, Zone.HAND, playerId);
+                    }
+                }
+            }
         }
         return null;
     }
@@ -787,11 +830,13 @@ public class SubjectResolutionService {
         GameData gameData = ctx.gameData();
         List<Permanent> named = livePermanents(ctx, sharing.permanent());
         FilterContext filterContext = filterContext(ctx);
-        if (named.isEmpty() || !predicateEvaluationService.matchesPermanentPredicate(named.getFirst(),
-                sharing.filter(), filterContext)) {
+        if (named.isEmpty() || !sharing.sameController() && !predicateEvaluationService.matchesPermanentPredicate(
+                named.getFirst(), sharing.filter(), filterContext)) {
             return List.of();
         }
         Permanent shared = named.getFirst();
+        UUID sharedController = sharing.sameController()
+                ? gameQueryService.findPermanentController(gameData, shared.getId()) : null;
         Predicate<Permanent> shares = switch (sharing.quality()) {
             case COLOR -> {
                 Set<CardColor> colors = gameQueryService.getEffectiveColors(gameData, shared);
@@ -813,6 +858,7 @@ public class SubjectResolutionService {
         List<UUID> others = new ArrayList<>();
         gameData.forEachPermanent((playerId, candidate) -> {
             if (!candidate.getId().equals(shared.getId())
+                    && (sharedController == null || sharedController.equals(playerId))
                     && predicateEvaluationService.matchesPermanentPredicate(candidate, sharing.filter(), filterContext)
                     && shares.test(candidate)) {
                 others.add(candidate.getId());

@@ -13,8 +13,10 @@ import java.util.Objects;
  *
  * @param cards   which cards; never a target (the exile step before it declares any)
  * @param counter the kind of counter
+ * @param count   how many each card gets; more than one only of a counter whose store counts them
  */
-public record PutCounterOnExiledCardsEffect(CardSubject cards, ExiledCardCounter counter) implements CardEffect {
+public record PutCounterOnExiledCardsEffect(CardSubject cards, ExiledCardCounter counter, int count)
+        implements CardEffect {
 
     public PutCounterOnExiledCardsEffect {
         Objects.requireNonNull(cards, "cards");
@@ -22,6 +24,20 @@ public record PutCounterOnExiledCardsEffect(CardSubject cards, ExiledCardCounter
         if (cards.declaresTarget()) {
             throw new IllegalArgumentException("The step names the cards an earlier step moved: " + cards);
         }
+        if (count < 1 || count > 1 && counter != ExiledCardCounter.REFINE) {
+            throw new IllegalArgumentException("Only refine counters are put several at a time: " + count);
+        }
+    }
+
+    /** One counter on each card. */
+    public PutCounterOnExiledCardsEffect(CardSubject cards, ExiledCardCounter counter) {
+        this(cards, counter, 1);
+    }
+
+    /** "Put [count] refine counters on it" of the cards the exile step before it exiled. */
+    public static PutCounterOnExiledCardsEffect refineOnCardsExiledThisWay(int count) {
+        return new PutCounterOnExiledCardsEffect(
+                Subjects.cardsThisWay(StepKind.EXILE), ExiledCardCounter.REFINE, count);
     }
 
     /** "Put a [counter] counter on it" of the cards the exile step before it exiled. */

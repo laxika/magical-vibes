@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -26,7 +28,8 @@ public class CrumbleToDust extends Card {
         target(new PermanentPredicateTargetFilter(
                 nonbasicLand,
                 "Target must be a nonbasic land"
-        )).addSpellEffect(new ExileTargetPermanentAndAllWithSameNameFromZonesEffect(
-                nonbasicLand, null, true));
+        )).addSpellEffect(new ExileTargetPermanentEffect(nonbasicLand))
+                .addSpellEffect(ExileCardsWithSameNameEffect.anyNumber(
+                        Subjects.target(), Subjects.controllerOf(Subjects.target())));
     }
 }

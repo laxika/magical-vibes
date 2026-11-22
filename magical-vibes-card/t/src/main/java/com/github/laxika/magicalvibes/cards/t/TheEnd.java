@@ -2,11 +2,15 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.ControllerLifeAtMost;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
@@ -30,7 +34,10 @@ public class TheEnd extends Card {
         target(new PermanentPredicateTargetFilter(
                 creatureOrPlaneswalker,
                 "Target must be a creature or planeswalker"
-        )).addSpellEffect(new ExileTargetPermanentAndAllWithSameNameFromZonesEffect(
-                creatureOrPlaneswalker, null, true, true));
+        )).addSpellEffect(new ExileTargetPermanentEffect(creatureOrPlaneswalker))
+                .addSpellEffect(ExileCardsWithSameNameEffect.anyNumber(
+                        Subjects.target(), Subjects.controllerOf(Subjects.target())))
+                .addSpellEffect(new DrawCardEffect(
+                        AmountThisWay.exiledFromHand(), Subjects.controllerOf(Subjects.target())));
     }
 }

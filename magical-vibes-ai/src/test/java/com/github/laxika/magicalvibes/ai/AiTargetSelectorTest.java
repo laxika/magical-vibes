@@ -72,12 +72,12 @@ import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDividedDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
@@ -92,6 +92,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SkipNextUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -748,8 +750,9 @@ class AiTargetSelectorTest {
                         Set.of("GY Creature", "GY Artifact")
                 ),
                 Arguments.of(
-                        "ExileTargetGraveyardCardAndSameName excludes basic lands",
-                        new ExileTargetGraveyardCardAndSameNameFromZonesEffect(),
+                        "ExileCardsWithSameName of a target card excludes basic lands",
+                        ExileCardsWithSameNameEffect.anyNumber(Subjects.targetCard(
+                                    new CardNotPredicate(CardPredicateUtils.basicLand()), GraveyardSearchScope.ALL_GRAVEYARDS)),
                         Set.of("GY Creature", "GY Instant", "GY Sorcery", "GY Artifact", "GY Enchantment")
                 ),
                 Arguments.of(

@@ -43,6 +43,21 @@ class HousemeldTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A card that left exile and was exiled again is not put onto the battlefield")
+    void cardExiledAgainDoesNotReturn() {
+        Permanent target = addCreatureReady(player2, new GrizzlyBears());
+        castHousemeld(target);
+        var exiled = gd.findExiledCard(target.getCard().getId());
+        gd.removeFromExile(exiled.card().getId());
+        gd.addToExile(player2.getId(), exiled.card());
+
+        advanceToNextEndStep();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.findExiledCard(exiled.card().getId())).isNotNull();
+    }
+
+    @Test
     @DisplayName("Rejects a noncreature target")
     void rejectsNoncreatureTarget() {
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Forest());

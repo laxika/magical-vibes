@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentsThenEachPlayerRevealsUntilPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -16,6 +19,9 @@ public class ChaosIsMyPlaything extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()),
                 "Target must be a permanent an opponent controls"), 1, Integer.MAX_VALUE)
-                .addSpellEffect(new ExileTargetPermanentsThenEachPlayerRevealsUntilPermanentEffect());
+                .addSpellEffect(new ExileTargetPermanentEffect())
+                .addSpellEffect(RevealUntilCardPredicateRestOnBottomRandomEffect.ontoBattlefield(
+                        new CardIsPermanentPredicate(),
+                        new RevealUntilCardPredicateRestOnBottomRandomEffect.Players(Subjects.eachPlayer())));
     }
 }

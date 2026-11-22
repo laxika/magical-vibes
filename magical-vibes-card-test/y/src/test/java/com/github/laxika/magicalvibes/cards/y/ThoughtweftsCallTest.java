@@ -3,20 +3,35 @@ package com.github.laxika.magicalvibes.cards.y;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.k.KithkinBillyrider;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
+import com.github.laxika.magicalvibes.cards.v.ValMaroonedSurveyor;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ThoughtweftsCall.class, KithkinBillyrider.class, GrizzlyBears.class, Unsummon.class})
+@CardUsed({ThoughtweftsCall.class, ValMaroonedSurveyor.class, KithkinBillyrider.class, GrizzlyBears.class, Unsummon.class})
 class ThoughtweftsCallTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Seeking a Kithkin triggers abilities that watch seeking")
+    void seekingTriggersWheneverYouSeek() {
+        harness.addToBattlefield(player1, new ValMaroonedSurveyor());
+        harness.setLife(player2, 20);
+        harness.setLibrary(player1, List.of(new KithkinBillyrider()));
+
+        castWithMode(0);
+        resolveAllTriggers();
+
+        harness.assertLife(player2, 18);
+    }
 
     @Test
     void seeksKithkinAndExilesItAtNextEndStepIfStillInHand() {

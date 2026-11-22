@@ -299,12 +299,6 @@ public class GraveyardTargetOperationState {
     public record ExileMatchingCardsFromGraveyardAndLibraryContext(UUID controllerId, CardPredicate filter) {
     }
 
-    public record DeadlyCoverUpContext(UUID chosenCardId) {
-    }
-
-    /** Resolution-time choice state for Deadly Cover-Up's non-targeting graveyard exile. */
-    public DeadlyCoverUpContext resolutionTimeDeadlyCoverUp;
-
     public record ExileUpToOneMatchingCardFromEachGraveyardContext(
             UUID controllerId, UUID sourcePermanentId, CardPredicate filter, boolean requireOne) {
     }

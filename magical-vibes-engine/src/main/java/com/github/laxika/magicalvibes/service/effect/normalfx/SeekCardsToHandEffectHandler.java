@@ -3,7 +3,11 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SeekCardsToHandEffect;
@@ -39,7 +43,11 @@ public class SeekCardsToHandEffectHandler implements NormalEffectHandlerBean {
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        seek(gameData, entry, (SeekCardsToHandEffect) effect);
+        List<Card> sought = seek(gameData, entry, (SeekCardsToHandEffect) effect);
+        UUID playerId = entry.getControllerId();
+        entry.recordStep(StepKind.SEEK, StepOutcome.ofObjects(
+                sought.stream().map(Card::getId).toList(), List.of(playerId),
+                sought.stream().map(card -> new MovedCard(card.getId(), card.getId(), Zone.HAND, playerId)).toList()));
     }
 
     /** Resolves a Seek and returns the exact cards moved into the controller's hand. */
@@ -76,7 +84,7 @@ public class SeekCardsToHandEffectHandler implements NormalEffectHandlerBean {
         List<Card> soughtCards = new ArrayList<>(matchingCards.subList(0, soughtCount));
         for (Card card : soughtCards) {
             library.remove(card);
-            hand.add(card);
+            gameData.addCardToHand(controllerId, card);
         }
 
         if (soughtCount > 0) {

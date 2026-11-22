@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.effect.ExileFaceDownPileEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetingRestrictionToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
@@ -53,6 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.RedirectRole;
 import com.github.laxika.magicalvibes.model.effect.RegenerationEffect;
 import com.github.laxika.magicalvibes.model.effect.RemovalEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -126,6 +128,9 @@ public class TargetPolarityClassifier {
      * priority as {@link #classifyCard}. Returns null when no effect classifies.
      */
     TargetPolarity classifyGroup(GameData gameData, List<? extends CardEffect> groupEffects, UUID aiPlayerId) {
+        if (groupEffects.stream().anyMatch(TargetPolarityClassifier::replacesTheTargetForItsController)) {
+            return TargetPolarity.NEUTRAL;
+        }
         TargetPolarity best = null;
         for (CardEffect effect : groupEffects) {
             best = higherPriority(best, classify(gameData, effect, aiPlayerId));
@@ -149,6 +154,11 @@ public class TargetPolarityClassifier {
         }
         if (effect instanceof MayEffect may) {
             return classify(gameData, may.wrapped(), aiPlayerId);
+        }
+        // A permanent put into a face-down pile comes back to the effect's controller.
+        if (effect instanceof ExileFaceDownPileEffect pile
+                && pile.pile() instanceof ExileFaceDownPileEffect.PermanentsAndTopCards) {
+            return TargetPolarity.BENEFICIAL;
         }
         // "You may pay {X}. If you do / don't, …" — classify whichever branch targets a permanent
         // (Knight of the Mists: wrapped null, elseEffect destroys; Spellbomb: wrapped does work).
@@ -498,6 +508,15 @@ public class TargetPolarityClassifier {
      * whose effects carry no direction (Duelist's Flame's combat-damage card advantage, Town-Razer Tyrant's
      * sacrifice-or-damage) is NEUTRAL, and the card's other effects decide the target.
      */
+    /** "Its controller reveals ... until a creature card, puts it onto the battlefield" (Polymorph): as good as bad. */
+    private static boolean replacesTheTargetForItsController(CardEffect effect) {
+        return effect instanceof RevealUntilCardPredicateRestOnBottomRandomEffect reveal
+                && (reveal.revealedBy()
+                instanceof RevealUntilCardPredicateRestOnBottomRandomEffect.ControllerOfEachExiledThisWay
+                || reveal.revealedBy() instanceof RevealUntilCardPredicateRestOnBottomRandomEffect.Players(var players)
+                && players instanceof PlayerSubject.ControllerOf);
+    }
+
     private static TargetPolarity classifyGrantedAbility(Ability grantedAbility) {
         if (grantedAbility == null) {
             return TargetPolarity.NEUTRAL;
@@ -735,7 +754,6 @@ public class TargetPolarityClassifier {
             entry("AttachAllAurasToAnotherPermanentEffect", TargetPolarity.NEUTRAL),
             entry("AttachTargetAuraToAnotherPermanentOfSameTypeEffect", TargetPolarity.NEUTRAL),
             entry("AttachTargetAuraToTargetCreatureEffect", TargetPolarity.NEUTRAL),
-            entry("ExileTargetNontokenCreatureAndTopCardsThenCloakEffect", TargetPolarity.BENEFICIAL),
             entry("FalseOrdersEffect", TargetPolarity.NEUTRAL),
             entry("ReselectAttackingCreatureEffect", TargetPolarity.NEUTRAL),
             entry("ReselectAttackingCreatureAttackTargetEffect", TargetPolarity.NEUTRAL),
@@ -754,13 +772,11 @@ public class TargetPolarityClassifier {
             entry("ConjureDuplicatesOfTargetPermanentsIntoHandEffect", TargetPolarity.NEUTRAL),
             entry("TemptingOfferCreateTokenCopyEffect", TargetPolarity.BENEFICIAL),
             entry("RegisterMysticReflectionEffect", TargetPolarity.NEUTRAL),
-            entry("DestroyTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
             // Fell the Mighty uses the target's power as a threshold and spares the target itself.
             entry("DestroyAllCreaturesWithPowerGreaterThanTargetEffect", TargetPolarity.NEUTRAL),
             entry("DestroyAllCreaturesWithPowerLessThanTargetEffect", TargetPolarity.NEUTRAL),
-            entry("ExileTargetThenRevealUntilTypeToBattlefieldEffect", TargetPolarity.NEUTRAL),
             entry("EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffect", TargetPolarity.NEUTRAL),
-            entry("EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
+            entry("EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.NEUTRAL),
             entry("MakeTargetCopyOfTargetCreatureUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("MakeTargetCopyOfTargetPermanentEffect", TargetPolarity.NEUTRAL),

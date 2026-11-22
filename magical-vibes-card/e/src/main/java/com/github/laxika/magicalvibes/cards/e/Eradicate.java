@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.e;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentAndAllWithSameNameFromZonesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -27,6 +29,8 @@ public class Eradicate extends Card {
         target(new PermanentPredicateTargetFilter(
                 nonblackCreature,
                 "Target must be a nonblack creature"
-        )).addSpellEffect(ExileTargetPermanentAndAllWithSameNameFromZonesEffect.allCopiesHiddenZonesOptional(nonblackCreature));
+        )).addSpellEffect(new ExileTargetPermanentEffect(nonblackCreature))
+                .addSpellEffect(ExileCardsWithSameNameEffect.all(
+                        Subjects.target(), Subjects.controllerOf(Subjects.target())));
     }
 }

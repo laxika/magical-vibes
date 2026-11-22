@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandWithManaValueTimeCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutTimeCountersAndGainSuspendEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
@@ -24,7 +26,9 @@ public class TheEleventhDoctor extends Card {
 
     public TheEleventhDoctor() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                new MayEffect(ExileCardFromHandWithManaValueTimeCountersEffect.gainingSuspend(),
+                new MayEffect(SequenceEffect.of(
+                        new ExileCardFromHandEffect(),
+                        PutTimeCountersAndGainSuspendEffect.equalToManaValueOnCardsExiledThisWay()),
                         "Exile a card from your hand with time counters equal to its mana value?"));
 
         addActivatedAbility(new ActivatedAbility(

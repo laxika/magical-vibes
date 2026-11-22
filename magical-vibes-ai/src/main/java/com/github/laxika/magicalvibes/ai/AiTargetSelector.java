@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
@@ -42,7 +41,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTimeCreatureTypeChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
@@ -1194,9 +1192,6 @@ class AiTargetSelector {
                 } else if (effect instanceof PutCardFromOpponentGraveyardOntoBattlefieldEffect) {
                     candidates = candidates.stream()
                             .filter(c -> c.hasType(CardType.ARTIFACT) || c.hasType(CardType.CREATURE)).toList();
-                } else if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect) {
-                    candidates = candidates.stream()
-                            .filter(c -> !(c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC))).toList();
                 }
             }
 

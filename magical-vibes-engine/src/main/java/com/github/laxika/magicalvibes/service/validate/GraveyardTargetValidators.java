@@ -3,13 +3,11 @@ package com.github.laxika.magicalvibes.service.validate;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.CastTargetInstantOrSorceryFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetCreatureCardInGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEmbalmToTargetCreatureCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect;
@@ -411,24 +409,6 @@ public class GraveyardTargetValidators {
         UUID graveyardOwnerId = gameQueryService.findGraveyardOwnerById(ctx.gameData(), ctx.targetId());
         if (graveyardOwnerId != null && controllerId != null && !graveyardOwnerId.equals(controllerId)) {
             throw new IllegalStateException("Target must be in your graveyard");
-        }
-    }
-
-    @ValidatesTarget(ExileTargetGraveyardCardAndSameNameFromZonesEffect.class)
-    public void validateExileTargetGraveyardCardAndSameName(TargetValidationContext ctx) {
-        if (ctx.targetZone() != Zone.GRAVEYARD) {
-            throw new IllegalStateException("Spell requires a graveyard target");
-        }
-        if (ctx.targetId() == null) {
-            throw new IllegalStateException("Spell requires a target card");
-        }
-        Card graveyardCard = gameQueryService.findCardInGraveyardById(ctx.gameData(), ctx.targetId());
-        if (graveyardCard == null) {
-            throw new IllegalStateException("Target card not found in any graveyard");
-        }
-        if (graveyardCard.hasType(CardType.LAND)
-                && graveyardCard.getSupertypes().contains(CardSupertype.BASIC)) {
-            throw new IllegalStateException("Target must not be a basic land card");
         }
     }
 

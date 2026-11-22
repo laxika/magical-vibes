@@ -15,5 +15,7 @@ public enum ExiledCardCounter {
     /** Pako, Arcane Retriever: the store also keeps the player whose effect put it there as the card's exiler. */
     FETCH,
     /** The Master, Formed Anew. */
-    TAKEOVER
+    TAKEOVER,
+    /** Uvilda, Dean of Perfection: the only counter here that can be put several at a time. */
+    REFINE
 }

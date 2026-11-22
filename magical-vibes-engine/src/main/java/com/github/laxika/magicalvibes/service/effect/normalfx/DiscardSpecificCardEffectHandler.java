@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardSpecificCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +21,7 @@ public class DiscardSpecificCardEffectHandler implements NormalEffectHandlerBean
 
     private final GameLogService gameLogService;
     private final GraveyardService graveyardService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,19 +35,23 @@ public class DiscardSpecificCardEffectHandler implements NormalEffectHandlerBean
         if (hand == null) {
             return;
         }
-        Card card = hand.stream().filter(c -> c.getId().equals(e.cardId())).findFirst().orElse(null);
-        if (card == null) {
+        List<UUID> named = e.cards() == null ? List.of(e.cardId())
+                : subjectResolutionService.cards(gameData, entry, e, e.cards()).stream().map(Card::getId).toList();
+        List<Card> discarded = hand.stream().filter(c -> named.contains(c.getId())).toList();
+        if (discarded.isEmpty()) {
             return;
         }
 
-        hand.remove(card);
+        hand.removeAll(discarded);
         gameData.discardCausedByOpponent = false;
         gameData.beginDiscardEvent(entry.getControllerId());
         try {
-            graveyardService.discardCard(gameData, entry.getControllerId(), card);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    gameData.playerIdToName.get(entry.getControllerId()) + " discards ", card, "."));
-            gameData.discarded(entry.getControllerId(), card);
+            for (Card card : discarded) {
+                graveyardService.discardCard(gameData, entry.getControllerId(), card);
+                gameLogService.append(gameData, GameLog.textCardText(
+                        gameData.playerIdToName.get(entry.getControllerId()) + " discards ", card, "."));
+                gameData.discarded(entry.getControllerId(), card);
+            }
         } finally {
             gameData.finishDiscardEvent();
         }

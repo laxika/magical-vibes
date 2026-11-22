@@ -555,12 +555,19 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
      * "Each other creature that shares a color with it", "all other permanents with the same name as that permanent",
      * "each other nonland permanent with the same mana value as that permanent": every permanent matching
      * {@code filter} other than the one {@code permanent} names that shares {@code quality} with it, found as the
-     * effect resolves; nothing when the named permanent is gone or no longer matches {@code filter}. It only reads
+     * effect resolves; nothing when the named permanent is gone or no longer matches {@code filter}. With
+     * {@code sameController} ("all other creatures that player controls with the same name", "all tokens its controller
+     * controls with the same name") only its controller's, and {@code filter} describes just those others. It only reads
      * {@code permanent} (a {@code target()} there is the target another effect declares), so it declares no target;
      * "target creature and …" is the target's own effect beside it, or an {@code allOf} with it.
      */
-    record OtherPermanentsSharing(PermanentSubject permanent, SharedQuality quality, PermanentPredicate filter)
-            implements PermanentSubject {
+    record OtherPermanentsSharing(PermanentSubject permanent, SharedQuality quality, PermanentPredicate filter,
+                                  boolean sameController) implements PermanentSubject {
+
+        /** The others anyone controls. */
+        public OtherPermanentsSharing(PermanentSubject permanent, SharedQuality quality, PermanentPredicate filter) {
+            this(permanent, quality, filter, false);
+        }
 
         /** What the other permanents share with the named one. */
         public enum SharedQuality {

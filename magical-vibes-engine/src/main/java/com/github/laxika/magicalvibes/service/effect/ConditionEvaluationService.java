@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaPool;
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -1415,7 +1416,9 @@ public class ConditionEvaluationService {
                             && gameData.playersWhosePermanentsLeftBattlefieldThisTurn
                                     .contains(ctx.controllerId());
             case HappenedThisWay c -> c.cardFilter() != null
-                    ? ctx.resolutionResults().outcome(c.kind()).objectIds().stream()
+                    // An exiled permanent is judged as the card it became (Deicide's ruling: the card in exile).
+                    ? Stream.concat(ctx.resolutionResults().outcome(c.kind()).objectIds().stream(),
+                            ctx.resolutionResults().outcome(c.kind()).movedCards().stream().map(MovedCard::cardId))
                     .map(id -> gameQueryService.findCardById(gameData, id))
                     .anyMatch(card -> card != null && predicateEvaluationService.matchesCardPredicate(
                             card, c.cardFilter(), ctx.sourceCard() == null ? null : ctx.sourceCard().getId()))
@@ -1423,7 +1426,7 @@ public class ConditionEvaluationService {
                     ? ctx.resolutionResults().outcome(c.kind()).amount() >= c.minimum()
                     : ctx.resolutionResults().outcome(c.kind()).objectIds().stream()
                     .map(id -> c.kind() == StepKind.SACRIFICE || c.kind() == StepKind.DESTROY
-                            || c.kind() == StepKind.RETURN
+                            || c.kind() == StepKind.RETURN || c.kind() == StepKind.EXILE
                             ? permanentOrLastKnown(gameData, id) : gameQueryService.findPermanentById(gameData, id))
                     .anyMatch(permanent -> permanent != null && matchesPermanent(gameData, permanent, c.filter(), ctx));
             // The context carries no triggering spell: EffectResolutionService judges it against the resolving entry's.

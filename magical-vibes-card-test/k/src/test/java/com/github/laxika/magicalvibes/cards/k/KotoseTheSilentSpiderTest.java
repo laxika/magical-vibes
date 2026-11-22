@@ -7,10 +7,12 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.cards.r.RoguesPassage;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -44,6 +46,35 @@ class KotoseTheSilentSpiderTest extends BaseCardTest {
         assertThat(gd.getCardsExiledByPermanent(kotose.getId())).containsExactly(target);
         assertThat(gd.playerHands.get(player2.getId())).contains(handCopy);
         assertThat(gd.playerDecks.get(player2.getId())).contains(libraryCopy);
+    }
+
+    @Test
+    @DisplayName("The search prompt offers only cards it shows, and the card exiled first stays linked to Kotose")
+    void searchPromptDoesNotOfferTheCardAlreadyExiled() {
+        Card target = new BearerOfMemory();
+        Card handCopy = new BearerOfMemory();
+        harness.setGraveyard(player2, List.of(target));
+        harness.setHand(player2, List.of(handCopy, new Plains()));
+        harness.setLibrary(player2, List.of(new RoguesPassage()));
+        harness.castFromHand(player1, new KotoseTheSilentSpider(), "{3}{U}{B}");
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.getConn1().clearMessages();
+        harness.passBothPriorities();
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(handCopy.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
+        assertThat(harness.getConn1().getMessagesContaining("MULTI_CARD_PICK")).isNotEmpty()
+                .allSatisfy(prompt -> assertThat(prompt)
+                        .contains(handCopy.getId().toString(), "Plains", "Passage", "\"maxCount\":1")
+                        .doesNotContain(target.getId().toString()));
+
+        harness.handleMultipleCardsChosen(player1, List.of());
+        harness.passBothPriorities();
+
+        Permanent kotose = findPermanent(player1, "Kotose, the Silent Spider");
+        assertThat(gd.getCardsExiledByPermanent(kotose.getId())).containsExactly(target);
     }
 
     @Test
@@ -175,12 +206,15 @@ class KotoseTheSilentSpiderTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
         harness.passBothPriorities();
 
-        List<Card> selected = new ArrayList<>();
-        selected.add(target);
-        selected.addAll(handCopies);
-        selected.addAll(libraryCopies);
-        harness.handleMultipleCardsChosen(player1, selected.stream().map(Card::getId).toList());
-        harness.passBothPriorities();
+        // The first sentence exiled the target, so the search can't find it (CR 701.23a).
+        List<Card> found = new ArrayList<>(handCopies);
+        found.addAll(libraryCopies);
+        if (found.isEmpty()) {
+            assertThat(gd.interaction.activeInteraction()).isNull();
+        } else {
+            harness.handleMultipleCardsChosen(player1, found.stream().map(Card::getId).toList());
+            harness.passBothPriorities();
+        }
         return findPermanent(player1, "Kotose, the Silent Spider");
     }
 

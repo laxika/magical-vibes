@@ -6,11 +6,12 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PlayersInGame;
 import com.github.laxika.magicalvibes.model.amount.Sum;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetThenRevealUntilTypeToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
-import java.util.Set;
 
 @CardRegistration(set = "CMM", collectorNumber = "216")
 @CardRegistration(set = "CMM", collectorNumber = "534")
@@ -21,6 +22,9 @@ public class DivergentTransformations extends Card {
         addStaticEffect(new ReduceOwnCastCostEffect(new Sum(new PlayersInGame(), new Fixed(-1))));
 
         target(TargetFilters.creature(), 2, 2)
-                .addSpellEffect(new ExileTargetThenRevealUntilTypeToBattlefieldEffect(Set.of(CardType.CREATURE)));
+                .addSpellEffect(new ExileTargetPermanentEffect())
+                .addSpellEffect(RevealUntilCardPredicateRestOnBottomRandomEffect.ontoBattlefield(
+                        new CardTypePredicate(CardType.CREATURE),
+                        new RevealUntilCardPredicateRestOnBottomRandomEffect.ControllerOfEachExiledThisWay()).shufflingRest());
     }
 }

@@ -2060,6 +2060,33 @@ public class PermanentRemovalService {
     }
 
     /**
+     * Removes {@code cards} from {@code ownerId}'s graveyard to be exiled as one event, with what
+     * {@link #removeCardFromGraveyardByIdForExile} clears for a card that left (CR 400.7).
+     */
+    public void removeCardsFromGraveyardForExile(GameData gameData, UUID ownerId, List<Card> cards) {
+        List<Card> graveyard = gameData.playerGraveyards.get(ownerId);
+        if (graveyard == null || cards.isEmpty()) {
+            return;
+        }
+        List<Card> leaving = graveyard.stream()
+                .filter(held -> cards.stream().anyMatch(card -> card.getId().equals(held.getId())))
+                .toList();
+        graveyard.removeAll(leaving);
+        Set<UUID> tracked = gameData.creatureCardsPutIntoGraveyardFromBattlefieldThisTurn.get(ownerId);
+        Set<UUID> allTracked = gameData.cardsPutIntoGraveyardFromBattlefieldThisTurn.get(ownerId);
+        for (Card card : leaving) {
+            if (tracked != null) {
+                tracked.remove(card.getId());
+            }
+            if (allTracked != null) {
+                allTracked.remove(card.getId());
+            }
+            gameData.endFloatingEffectsOnCard(card.getId(), Zone.GRAVEYARD);
+        }
+        graveyardService.notifyCardsExiledFromGraveyard(gameData, ownerId, leaving);
+    }
+
+    /**
      * Whether a resolved effect makes the creatures {@code controllerId} controls be exiled instead of dying this turn
      * (CR 614.1): the one that exiles every creature, or one that exiles only an opponent's creatures, resolved by
      * another player.

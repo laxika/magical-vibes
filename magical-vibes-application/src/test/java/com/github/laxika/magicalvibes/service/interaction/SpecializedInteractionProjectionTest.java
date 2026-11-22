@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.InteractionPromptMessage;
@@ -10,10 +11,12 @@ import com.github.laxika.magicalvibes.networking.model.InteractionShape;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
 import com.github.laxika.magicalvibes.service.event.InteractionPromptProjectionRegistry;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,6 +65,25 @@ class SpecializedInteractionProjectionTest {
         assertThat(pileChoice.prompt()).contains("Pile 1 (First)", "Pile 2 (Second)");
         assertThat(playChoice.shape()).isEqualTo(InteractionShape.MULTI_CARD_PICK);
         assertThat(playChoice.prompt()).contains("play lands and cast spells");
+    }
+
+    @Test
+    @DisplayName("A searched hand is shown whole, and a library that wasn't searched not at all")
+    void sameNameSearchShowsExactlyTheSearchedZones() {
+        Card match = card("Match");
+        Card otherInHand = card("Other in hand");
+        Card inLibrary = card("In library");
+        gameData.playerHands.put(opponentId, new ArrayList<>(List.of(match, otherInHand)));
+        gameData.playerDecks.put(opponentId, new ArrayList<>(List.of(inLibrary)));
+
+        InteractionPromptMessage search = prompt(new PendingInteraction.MultiZoneExileChoice(
+                controllerId, List.of(match.getId()), 1, opponentId, controllerId, "Match", false, null, null, null,
+                null, false,
+                new PendingInteraction.MultiZoneExileChoice.SearchedZones(Set.of(Zone.HAND), 0), false, true));
+
+        assertThat(search.cardIds()).containsExactly(match.getId(), null);
+        assertThat(search.cards()).hasSize(2);
+        assertThat(search.maxCount()).isEqualTo(1);
     }
 
     @Test

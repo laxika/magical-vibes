@@ -72,7 +72,9 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
         /** The last-known mana value of what the step sacrificed, destroyed or exiled. */
         MANA_VALUE,
         /** How many of the cards the step exiled are still exiled, in the same stay (CR 400.7). */
-        STILL_EXILED
+        STILL_EXILED,
+        /** How many of the cards the step exiled came from a hand. */
+        FROM_HAND
     }
 
     public AmountThisWay {
@@ -97,6 +99,9 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
         }
         if (stat == Stat.STILL_EXILED && kind != StepKind.EXILE) {
             throw new IllegalArgumentException("Only an exile step's cards can still be exiled: " + kind);
+        }
+        if (stat == Stat.FROM_HAND && kind != StepKind.EXILE) {
+            throw new IllegalArgumentException("Only an exile step counts the cards from a hand: " + kind);
         }
         if (negativeKept && stat != Stat.POWER && stat != Stat.TOUGHNESS) {
             throw new IllegalArgumentException("Only a power or toughness can be negative: " + stat);
@@ -197,6 +202,11 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
     /** "For each of those cards that are still exiled": the exile step's cards that haven't left exile since. */
     public static AmountThisWay stillExiled() {
         return new AmountThisWay(StepKind.EXILE, Stat.STILL_EXILED);
+    }
+
+    /** "For each card exiled from their hand this way": the exile step's cards that came from a hand. */
+    public static AmountThisWay exiledFromHand() {
+        return new AmountThisWay(StepKind.EXILE, Stat.FROM_HAND);
     }
 
     /** "The exiled creature card's power" after an exile step. */

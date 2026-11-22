@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentExilesFromHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -39,6 +41,7 @@ public class EachOpponentExilesFromHandEffectHandler implements NormalEffectHand
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
         var e = (EachOpponentExilesFromHandEffect) effect;
         // A "until this leaves the battlefield" exile never happens if the source already left.
         if (e.returnOnSourceLeave() && (entry.getSourcePermanentId() == null

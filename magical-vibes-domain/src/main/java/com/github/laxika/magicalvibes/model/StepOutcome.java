@@ -23,9 +23,12 @@ import java.util.UUID;
  * @param lastKnownPermanents for the permanents the step exiled, each by its id as it last existed on the battlefield
  *                       (CR 608.2h), which a reflexive or delayed ability reads too ("the exiled creature's power");
  *                       empty for every other object and step
+ * @param fromHand       how many of the cards an exile step exiled came from a hand ("for each card exiled from their
+ *                       hand this way"); 0 for every other step
  */
 public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds, List<MovedCard> movedCards,
-                          List<LastKnownCardStats> lastKnownCards, List<LastKnownCardStats> lastKnownPermanents) {
+                          List<LastKnownCardStats> lastKnownCards, List<LastKnownCardStats> lastKnownPermanents,
+                          int fromHand) {
 
     /** A step that did nothing. */
     public static final StepOutcome NONE = new StepOutcome(0, List.of(), List.of());
@@ -39,6 +42,12 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
         movedCards = movedCards == null ? List.of() : List.copyOf(movedCards);
         lastKnownCards = lastKnownCards == null ? List.of() : List.copyOf(lastKnownCards);
         lastKnownPermanents = lastKnownPermanents == null ? List.of() : List.copyOf(lastKnownPermanents);
+    }
+
+    /** An outcome that exiled no card from a hand. */
+    public StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds, List<MovedCard> movedCards,
+                       List<LastKnownCardStats> lastKnownCards, List<LastKnownCardStats> lastKnownPermanents) {
+        this(amount, objectIds, playerIds, movedCards, lastKnownCards, lastKnownPermanents, 0);
     }
 
     /** An outcome that recorded no permanent as it last existed on the battlefield. */
@@ -74,12 +83,17 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
 
     /** This outcome with {@code cards}, the cards it exiled from a graveyard as each last existed there. */
     public StepOutcome withLastKnownCards(List<LastKnownCardStats> cards) {
-        return new StepOutcome(amount, objectIds, playerIds, movedCards, cards, lastKnownPermanents);
+        return new StepOutcome(amount, objectIds, playerIds, movedCards, cards, lastKnownPermanents, fromHand);
     }
 
     /** This outcome with {@code permanents}, the permanents it exiled as each last existed on the battlefield. */
     public StepOutcome withLastKnownPermanents(List<LastKnownCardStats> permanents) {
-        return new StepOutcome(amount, objectIds, playerIds, movedCards, lastKnownCards, permanents);
+        return new StepOutcome(amount, objectIds, playerIds, movedCards, lastKnownCards, permanents, fromHand);
+    }
+
+    /** This outcome with {@code count} of its cards exiled from a hand. */
+    public StepOutcome withFromHand(int count) {
+        return new StepOutcome(amount, objectIds, playerIds, movedCards, lastKnownCards, lastKnownPermanents, count);
     }
 
     /** {@code permanentId} as it last existed on the battlefield this step exiled it from, if the step recorded it. */
@@ -113,6 +127,6 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
         List<LastKnownCardStats> knownPermanents = new ArrayList<>(lastKnownPermanents);
         knownPermanents.addAll(more.lastKnownPermanents);
         return new StepOutcome(SaturatingMath.add(amount, more.amount), objects, players, moved, known,
-                knownPermanents);
+                knownPermanents, SaturatingMath.add(fromHand, more.fromHand));
     }
 }

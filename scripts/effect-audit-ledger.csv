@@ -1714,3 +1714,54 @@ ExileTargetNonlandPermanentAndCardWithSourceEffect,blocked-other,9,"run 6: both 
 ExileTargetPermanentAndReturnAtNextEndStepUnlessPaysEffect,blocked-other,9,"run 6: the delayed trigger exists, but ForcedCostOrElseEffect runs its fallback through a per-class list with no step results: the cost-combinator merge of step 10, which needs sign-off (Koya)"
 ExileTargetPlayerAttackingCreaturesAndSearchBasicLandsToBattlefieldTappedEffect,blocked-other,9,"run 6: SearchLibraryEffect has no ""that player may search for that many"" that may search at zero and skips the shuffle when declined; with Winds of Abandon two cards (Settle the Wreckage)"
 ExileTrackedTokensAndCreateTokenCopyOfTargetPermanentEffect,blocked-other,9,"run 6: no subject for tokens created with the source, which except(..., createdThisResolution()) would narrow; one card (Faerie Artisans)"
+ExileCardsWithSameNameEffect,survivor,9,run 7: new step record: the cards (and permanents) in named zones with the same name as what the effect names; ANY_NUMBER / ALL (CR 701.23b) / EVERY; records EXILE and how many came from a hand
+ExileFaceDownPileEffect,survivor,9,"run 7: new record: exile [pile] face down, shuffle, then manifest or cloak those cards; absorbed the four pile records"
+ExileCardFromHandEffect,survivor,9,"run 7: new step record: a player exiles a chosen card from their hand (filter, face down), pausing at its end with EXILE recorded"
+BecomeForetoldEffect,survivor,9,run 7: new step record: the exiled cards become foretold with a reduced cost (Ethereal Valkyrie)
+PerpetuallyBecomeOnlyCardTypeEffect,survivor,9,run 7: new step record: the exiled cards perpetually have only one card type (Housemeld)
+ExileTargetPermanentAndAllWithSameNameFromZonesEffect,split,9,run 7: ExileTargetPermanentEffect + ExileCardsWithSameNameEffect.all / anyNumber(target()) (The End + a draw of exiledFromHand(); Deicide gated on HappenedThisWay.toACard)
+ExileTargetGraveyardCardAndSameNameFromZonesEffect,split,9,"run 7: ExileCardsWithSameNameEffect over targetCard(...) (Surgical Extraction, Extirpate); Kotose after ExileGraveyardCardsEffect, exiledWithSource()"
+CounterSpellAndExileAllWithSameNameEffect,split,9,"run 7: CounterSpellEffect + ExileCardsWithSameNameEffect(targetSpell(), controllerOf(targetSpell()))"
+ExileNonBasicLandGraveyardAndSameNameFromLibraryEffect,split,9,run 7: ExileGraveyardCardsEffect + ExileCardsWithSameNameEffect.all(cardsThisWay(EXILE)) searching the library
+ExileTargetGraveyardCardAndAllWithSameNameEffect,absorbed,9,"run 7: ExileCardsWithSameNameEffect.every(targetCard, eachPlayer(), GRAVEYARD, BATTLEFIELD)"
+ExileTargetPermanentAndAllControlledTokensWithSameNameEffect,absorbed,9,"run 7: ExileTargetPermanentEffect(allOf(target(), othersItsControllerControlsSharing(target(), NAME, token)))"
+ExileTargetCreatureAndSameNameFromBattlefieldHandAndGraveyardEffect,split,9,"run 7: ExileTargetPermanentEffect(allOf(target(), othersItsControllerControlsSharing)) + ExileCardsWithSameNameEffect.every(HAND, GRAVEYARD)"
+ExileTargetCreatureAndSameNameFromHandIfGodEffect,split,9,"run 7: exile + HappenedThisWay.toA(EXILE, God) gate + ExileCardsWithSameNameEffect.every(HAND)"
+ExileCardFromOpponentGraveyardAndSameNameFromZonesEffect,split,9,run 7: ExileUpToOneCardFromGraveyardEffect.from(eachOpponent()) + ExileCardsWithSameNameEffect + draw of exiledFromHand()
+ExileTargetNonlandCardFromGraveyardAndSearchSameNameEffect,blocked-other,9,"run 7: the same-name cause is built for exiles; this searches to a hand: SearchLibraryEffect has no ""any number of cards with that name"" (its remaining count is the amount given, so the prompt would miscount) and no card filter over the exiled card; one card (Secret Salvage)"
+ExileTargetCreatureAndSameNameControlledByItsControllerThenInvestigateEffect,blocked-other,9,"run 7: the same-name set exists (othersItsControllerControlsSharing); the exile step records no token flag for ""each nontoken creature exiled this way"" (a token-topped merged permanent leaves cards); one card (Declaration in Stone)"
+RevealHandChooseCardFromItAndExileAllCopiesEffect,blocked-step-model,9,"run 7: ExileCardsWithSameNameEffect is its second half; the revealed-hand choice runs in its continuation and records no chosen card, as ChooseCardsFromTargetHandEffect (Lobotomy, Shimian Specter, Pick the Brain)"
+ChooseCardNameAndExileFromZonesEffect,blocked-other,9,run 7: ExileCardsWithSameNameEffect is its second half; no recorded chosen-name step for it to read (a name subject)
+ExileTargetNontokenCreatureAndTopCardsThenCloakEffect,absorbed,9,"run 7: ExileFaceDownPileEffect.thenCloak(PermanentsAndTopCards(target(), 2)).enteringTapped()"
+ExileSelfAndTopCardThenManifestEffect,absorbed,9,"run 7: ExileFaceDownPileEffect.thenManifest(PermanentsAndTopCards(source(), 1))"
+ExileAndCloakDisguisedCreaturesEffect,absorbed,9,run 7: ExileFaceDownPileEffect.thenCloak(AnyNumberYouControl)
+ExileCreaturesFromTargetGraveyardThenManifestEffect,absorbed,9,"run 7: ExileFaceDownPileEffect.thenManifest(AllFromGraveyard(targetPlayer(), creature))"
+ExileCardFromHandAndBecomeForetoldEffect,split,9,run 7: ExileCardFromHandEffect.exiledFaceDown() + BecomeForetoldEffect
+ExileCardFromHandWithRefineCountersEffect,split,9,run 7: ExileCardFromHandEffect + PutCounterOnExiledCardsEffect.refineOnCardsExiledThisWay(3)
+ExileNonlandCardFromHandWithManaValueTimeCountersEffect,split,9,run 7: ExileCardFromHandEffect + PutTimeCountersAndGainSuspendEffect.equalToManaValueOnCardsExiledThisWay()
+ExileCardFromHandAndCreateTokenCopyEffect,split,9,run 7: ExileCardFromHandEffect + CreateTokenCopyOfCardEffect.of(cardsThisWay(EXILE))
+ExileCardAndUntapSelfEffect,split,9,run 7: ExileCardFromHandEffect + HappenedThisWay.exiled() untap
+ExileCardFromHandWithManaValueTimeCountersEffect,unique,9,"run 7: its exile is ExileCardFromHandEffect now and The Eleventh Doctor left it; what stays is Alaundo's cast ability with the time counters and ""remove a time counter from each other card you own in exile"""
+ExileSameNameCardsFromHandAndLibraryThenSeekEffect,blocked-step-model,9,"run 7: both halves have steps (ExileCardsWithSameNameEffect, SeekCardsToHandEffect), but its first is one hand prompt that may be declined, run inside the revealed-hand continuation (as ChooseCardsFromTargetHandEffect); one card (Unexpected Conversion)"
+ExileArtifactOrCreatureCardFromHandOrGraveyardWithCageCounterEffect,unique,9,"run 7: one prompt over a hand and a graveyard, then the cage counter linked to Mairsil's static; one card"
+ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffect,unique,9,"run 7: one prompt over the battlefield and a graveyard, then a perpetual base P/T with types written onto the sought card's copy; one card (Cogwork Progenitor)"
+ExileTargetCreaturesThenRevealUntilCreatureToBattlefieldRestOnBottomRandomEffect,split,9,run 7: ExileTargetPermanentEffect + RevealUntilCardPredicateRestOnBottomRandomEffect.ontoBattlefield(ControllerOfEachExiledThisWay)
+ExileTargetPermanentsThenEachPlayerRevealsUntilPermanentEffect,split,9,run 7: ExileTargetPermanentEffect + RevealUntilCardPredicateRestOnBottomRandomEffect.ontoBattlefield(Players(eachPlayer()))
+ExileTargetThenRevealUntilTypeToBattlefieldEffect,split,9,"run 7: exile + the reveal-until step with Players(controllerOf(target())) or ControllerOfEachExiledThisWay, shufflingRest()"
+DestroyTargetThenRevealUntilTypeToBattlefieldEffect,split,9,run 7: DestroyTargetPermanentEffect(true) + the reveal-until step with Players(controllerOf(target())).shufflingRest() (Polymorph)
+RevealUntilCardPredicateRestOnBottomRandomEffect,survivor,9,"run 7: revealedBy (players at once, or each exiled permanent's controller in turn) and shufflingRest()"
+SacrificeTargetThenRevealUntilTypeToBattlefieldEffect,blocked-other,9,"run 7: the reveal-until step takes ""its controller"" now; left: Reweave's filter over the sacrificed permanent's last-known card types, which no card predicate reads (one card; Shape Anew alone would not delete the record)"
+SeekLibraryToHandAndRegisterDiscardAtNextEndStepEffect,split,9,run 7: SeekCardsToHandEffect + RegisterDelayedStepTriggerEffect.aboutSought + DiscardSpecificCardEffect.of(cardsThisWay(SEEK))
+SeekLibraryToHandAndRegisterExileAtNextEndStepEffect,split,9,run 7: SeekCardsToHandEffect + aboutSought(...).onlyIfStillInHand() + ExileSpecificCardFromHandEffect (Thoughtweft's Call)
+ExileSpecificCardFromHandEffect,survivor,9,run 7: takes a CardSubject in place of the id its deleted registering handler bound
+DiscardSpecificCardEffect,survivor,9,"run 7: a CardSubject form, discarded as one event"
+ExileTargetCreatureCardFromGraveyardThenSeekWithMenaceEffect,split,9,run 7: graveyard exile + gated seek + PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(cardsThisWay(SEEK))
+ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionWithPerpetualCharacteristicsEffect,split,9,"run 7: ExileTopCardMayPlayThisTurnEffect + PerpetuallyGrantCardCharacteristicsEffect.to(cardsThisWay(EXILE, nonland permanent)) (Pep)"
+PerpetuallyGrantCardCharacteristicsEffect,survivor,9,run 7: a CardSubject form
+PerpetuallyGrantKeywordsToTriggeringCardEffect,survivor,9,run 7: a CardSubject form
+ExileTargetCreaturePerpetuallyBecomesEnchantmentAndReturnAtNextEndStepEffect,split,9,run 7: exile + PerpetuallyBecomeOnlyCardTypeEffect + RegisterDelayedStepTriggerEffect.aboutExiled return
+EachPlayerGainsControlOfOwnedCreaturesEffect,absorbed,9,run 7: EachPlayerGainsControlOfOwnedPermanentsMatchingEffect(creature)
+EachPlayerGainsControlOfOwnedPermanentsMatchingEffect,survivor,9,run 7: absorbed the creatures record with its capability and its skip of a permanent that needs no new effect
+EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect,absorbed,9,"run 7: EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUntilEndOfTurnEffect(creature, creature[, removeLegendary])"
+EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUntilEndOfTurnEffect,survivor,9,run 7: absorbed the creature record unchanged
+ExileSelfAndBecomeForetoldEffect,blocked-other,9,"run 7: BecomeForetoldEffect exists now; folding it would take three parameters only this card sets (a face-down permanent exile, the owner as the foretelling player, the card's own foretell cost); one card (The Foretold Soldier)"

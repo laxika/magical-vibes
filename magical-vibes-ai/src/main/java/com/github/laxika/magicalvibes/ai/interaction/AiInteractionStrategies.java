@@ -77,7 +77,6 @@ public final class AiInteractionStrategies {
         register(new AssimilationAegisCopyChoiceAiStrategy());
         register(new ExiledCreatureCopyChoiceAiStrategy());
         register(new KohExiledCreatureChoiceAiStrategy());
-        register(new ExileCardFromHandAndCreateTokenCopyChoiceAiStrategy());
         register(new LudevicCopyChoiceAiStrategy());
         register(new TargetHandSpellCopyChoiceAiStrategy());
         register(new WordOfCommandCardChoiceAiStrategy());
@@ -100,7 +99,6 @@ public final class AiInteractionStrategies {
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SuspendedCardTimeCounterChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ArtifactPermanentOrGraveyardCardChoice.class, 1));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.TargetPlayerChoosesCardsFromHandChoice.class));
-        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.ExileCardFromHandWithTimeCountersChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualTriggeredAbilityCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualStaticEffectCardChoice.class));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.PerpetualTriggeredAbilityCardsChoice.class, 0));

@@ -1,7 +1,16 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
+import java.util.Objects;
 
-/** Exiles the identified card from the resolving controller's hand if it is still there. */
-public record ExileSpecificCardFromHandEffect(UUID cardId) implements CardEffect {
+/**
+ * "Exile it" of cards an earlier step put into a hand ("if that card is in your hand, exile it" after a seek): those
+ * still in the resolving controller's hand.
+ *
+ * @param cards the cards
+ */
+public record ExileSpecificCardFromHandEffect(CardSubject cards) implements CardEffect {
+
+    public ExileSpecificCardFromHandEffect {
+        Objects.requireNonNull(cards, "cards");
+    }
 }

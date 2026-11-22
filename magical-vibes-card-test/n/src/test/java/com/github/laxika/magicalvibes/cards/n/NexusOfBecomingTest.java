@@ -31,7 +31,7 @@ class NexusOfBecomingTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         harness.handleMayAbilityChosen(player1, true);
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice.class);
+                .isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
 
         harness.handleCardChosen(player1, 0);
 
@@ -56,7 +56,7 @@ class NexusOfBecomingTest extends BaseCardTest {
 
         harness.handleCardChosen(player1, 0);
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice.class);
+                .isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
         harness.handleCardChosen(player1, 1);
 
         Permanent token = findPermanent(player1, "Spellbook");

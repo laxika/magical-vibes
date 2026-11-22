@@ -62,16 +62,7 @@ public class CreateTokenCopyOfCardEffectHandler implements NormalEffectHandlerBe
         if (sourceCard == null) {
             return;
         }
-        UUID tokenControllerId = entry.getControllerId();
-        if (options.createForTargetController() && entry.getTargetId() != null) {
-            Permanent targetPermanent = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-            UUID targetControllerId = targetPermanent == null
-                    ? gameData.playerIds.contains(entry.getTargetId()) ? entry.getTargetId() : null
-                    : gameQueryService.findPermanentController(gameData, entry.getTargetId());
-            if (targetControllerId != null) {
-                tokenControllerId = targetControllerId;
-            }
-        }
+        UUID tokenControllerId = tokenController(gameData, entry, options);
         tokenCopySupport.createTokenCopiesWithCopyException(gameData, entry,
                 Collections.nCopies(copyCount, sourceCard),
                 sourcePermanent, tokenControllerId, options, creatureTypesInstead(copyEffect));
@@ -105,8 +96,22 @@ public class CreateTokenCopyOfCardEffectHandler implements NormalEffectHandlerBe
             UUID attackTargetId = source == null ? entry.getAttackedTargetId() : source.getAttackTarget();
             attackTargetIds = attackTargetId == null ? null : List.of(attackTargetId);
         }
-        tokenCopySupport.createTokenCopies(gameData, entry, sourceCards, null, entry.getControllerId(), options,
-                attackTargetIds, creatureTypesInstead(copyEffect));
+        tokenCopySupport.createTokenCopies(gameData, entry, sourceCards, null,
+                tokenController(gameData, entry, options), options, attackTargetIds, creatureTypesInstead(copyEffect));
+    }
+
+    /** "That player creates": the target player or the target permanent's controller; else the effect's controller. */
+    private UUID tokenController(GameData gameData, StackEntry entry, CreateTokenCopyOfTargetPermanentEffect options) {
+        if (options.createForTargetController() && entry.getTargetId() != null) {
+            Permanent targetPermanent = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+            UUID targetControllerId = targetPermanent == null
+                    ? gameData.playerIds.contains(entry.getTargetId()) ? entry.getTargetId() : null
+                    : gameQueryService.findPermanentController(gameData, entry.getTargetId());
+            if (targetControllerId != null) {
+                return targetControllerId;
+            }
+        }
+        return entry.getControllerId();
     }
 
     private Consumer<Card> creatureTypesInstead(CreateTokenCopyOfCardEffect copyEffect) {

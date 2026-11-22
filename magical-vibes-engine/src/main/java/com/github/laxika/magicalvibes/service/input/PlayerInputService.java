@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.PendingInteraction.MultiZoneExileChoice.SearchedZones;
 import com.github.laxika.magicalvibes.model.PowerToughnessForm;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -3058,7 +3059,7 @@ public class PlayerInputService {
                 drawForHandExiled, tokenTemplate, sourceSetCode, false);
     }
 
-    /** As above; {@code showsSearchedZones} shows the searcher every card in the searched zones (CR 701.23a). */
+    /** As above; {@code showsSearchedZones} shows the searcher every card in the three searched zones (CR 701.23a). */
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
                                           int maxCount, UUID targetPlayerId, String cardName,
                                           boolean drawForHandExiled, CreateTokenEffect tokenTemplate,
@@ -3068,7 +3069,8 @@ public class PlayerInputService {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
                 choosingPlayerId, validCardIds, Math.min(maxCount, matchingCards.size()), targetPlayerId,
                 choosingPlayerId, cardName, drawForHandExiled, tokenTemplate, sourceSetCode, null, null,
-                maxCount == Integer.MAX_VALUE, showsSearchedZones));
+                maxCount == Integer.MAX_VALUE, showsSearchedZones
+                        ? SearchedZones.HAND_GRAVEYARD_AND_LIBRARY : SearchedZones.NONE));
     }
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
@@ -3082,6 +3084,7 @@ public class PlayerInputService {
                 choosingPlayerId, cardName, drawForHandExiled, tokenTemplate, sourceSetCode, sourcePermanentId, null));
     }
 
+    /** "Exile a card from your hand or graveyard": no library is searched, so none is shuffled. */
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
                                           int maxCount, UUID targetPlayerId, String cardName,
                                           boolean drawForHandExiled, UUID sourcePermanentId,
@@ -3091,7 +3094,7 @@ public class PlayerInputService {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
                 choosingPlayerId, validCardIds, Math.min(maxCount, matchingCards.size()), targetPlayerId,
                 choosingPlayerId, cardName, drawForHandExiled, null, null, sourcePermanentId,
-                followUpEffect, false));
+                followUpEffect, false, SearchedZones.NONE, false, false));
     }
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
@@ -3099,6 +3102,22 @@ public class PlayerInputService {
                                           int maxCount) {
         beginMultiZoneExileChoice(gameData, choosingPlayerId, matchingCards, maxCount, targetPlayerId,
                 cardName, drawForHandExiled);
+    }
+
+    /**
+     * "Search ... for cards with the same name and exile them": any number of {@code matchingCards}, added to the
+     * resolving step as they are exiled. The searcher is shown what is in {@code searchedZones} and nothing
+     * else (CR 701.23a); {@code shufflesLibrary} is independent of it. With {@code allInGraveyard} those in the
+     * graveyard are found whether chosen or not (CR 701.23b).
+     */
+    public void beginSameNameExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards,
+                                         UUID searchedPlayerId, String cardNames, UUID sourcePermanentId,
+                                         SearchedZones searchedZones, boolean shufflesLibrary,
+                                         boolean allInGraveyard) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.MultiZoneExileChoice(
+                choosingPlayerId, matchingCards.stream().map(Card::getId).toList(), matchingCards.size(),
+                searchedPlayerId, choosingPlayerId, cardNames, false, null, null, sourcePermanentId, null,
+                allInGraveyard, searchedZones, shufflesLibrary, true));
     }
 
     /**
@@ -3161,25 +3180,6 @@ public class PlayerInputService {
         beginExileFromHandChoice(gameData, playerId, null, null, 1,
                 List.of(), 0, false, false, null, false, null, 0, false,
                 chosenCardThenEffect);
-    }
-
-    public void beginExileFromHandWithRefineCountersChoice(GameData gameData, UUID playerId,
-                                                            List<Integer> validIndices, String prompt,
-                                                            int counterCount) {
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileFromHandWithRefineCountersChoice(
-                playerId, new ArrayList<>(validIndices), prompt, counterCount));
-    }
-
-    public void beginExileNonlandCardFromHandWithTimeCountersChoice(GameData gameData, UUID playerId,
-                                                                     List<Integer> validIndices, String prompt) {
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice(
-                playerId, new ArrayList<>(validIndices), prompt));
-    }
-
-    public void beginExileCardFromHandWithTimeCountersChoice(GameData gameData, UUID playerId,
-                                                              List<Integer> validIndices, String prompt) {
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileCardFromHandWithTimeCountersChoice(
-                playerId, new ArrayList<>(validIndices), prompt));
     }
 
     public void beginExileFromHandChoice(GameData gameData, UUID playerId, UUID sourcePermanentId,
@@ -3265,6 +3265,14 @@ public class PlayerInputService {
                 cardsPerPlayer, faceDown, returnOnSourceLeave, untapPermanentId,
                 playPermissionToChooser, playPermissionTaxSourceControllerId,
                 exilePlayOpponentTax, landsEnterTapped, chosenCardThenEffect, exiledCount));
+    }
+
+    /** "Exile a [filter] card from your hand": one of {@code validIndices}. */
+    public void beginExileOneCardFromHandChoice(GameData gameData, UUID playerId, List<Integer> validIndices,
+                                                boolean faceDown) {
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ExileFromHandChoice(
+                playerId, List.copyOf(validIndices), null, null, 1, "Choose a card to exile.", List.of(), 0,
+                faceDown, false, null, false, null, 0, false, null, 0));
     }
 
     public void beginDiscardChoice(GameData gameData, UUID playerId, int remainingCount) {

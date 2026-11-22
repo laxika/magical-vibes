@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.AvenMindcensor;
 import com.github.laxika.magicalvibes.cards.f.Frostling;
+import com.github.laxika.magicalvibes.cards.m.MindlockOrb;
 import com.github.laxika.magicalvibes.cards.t.TendoIceBridge;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,8 +18,30 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Splinter.class, Shuko.class, TendoIceBridge.class, Frostling.class})
+@CardUsed({MindlockOrb.class, AvenMindcensor.class, Splinter.class, Shuko.class, TendoIceBridge.class, Frostling.class})
 class SplinterTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A library that can't be searched is left out of the search, the hand is still searched")
+    void searchProhibitionLeavesTheLibraryOutOfTheSearch() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Shuko()).getId();
+        harness.addToBattlefield(player2, new MindlockOrb());
+        Card handCopy = new Shuko();
+        Card libraryCopy = new Shuko();
+        harness.setHand(player2, List.of(handCopy));
+        harness.setLibrary(player2, List.of(libraryCopy));
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(new Splinter()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class).validCardIds())
+                .containsExactly(handCopy.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(handCopy.getId()));
+        assertThat(gd.playerHands.get(player2.getId())).doesNotContain(handCopy);
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCopy);
+    }
 
     @Test
     @DisplayName("The caster may leave matching cards in hidden zones")
@@ -32,6 +57,59 @@ class SplinterTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Shuko");
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    @DisplayName("The caster is shown the searched hand but not a library that can't be searched, which is still shuffled")
+    void doesNotShowALibraryThatCantBeSearched() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Shuko()).getId();
+        harness.addToBattlefield(player2, new MindlockOrb());
+        Card handCopy = new Shuko();
+        Card libraryCopy = new Shuko();
+        harness.setHand(player2, List.of(handCopy, new Frostling()));
+        harness.setLibrary(player2, List.of(libraryCopy, new TendoIceBridge()));
+        harness.setGraveyard(player2, List.of());
+        harness.setHand(player1, List.of(new Splinter()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.getConn1().clearMessages();
+
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
+
+        assertThat(harness.getConn1().getMessagesContaining("MULTI_CARD_PICK")).isNotEmpty()
+                .allSatisfy(prompt -> assertThat(prompt)
+                        .contains(handCopy.getId().toString(), "Frostling")
+                        .doesNotContain(libraryCopy.getId().toString(), "Tendo Ice Bridge"));
+
+        harness.handleMultipleCardsChosen(player1, List.of(handCopy.getId()));
+
+        assertThat(gameLogContains("from " + gd.playerIdToName.get(player2.getId()) + "'s hand and graveyard."))
+                .isTrue();
+        assertThat(gameLogContains("shuffles their library")).isTrue();
+    }
+
+    @Test
+    @DisplayName("With Aven Mindcensor only the top four cards of the library are shown and can be found")
+    void searchesOnlyTheTopFourCardsUnderAvenMindcensor() {
+        UUID targetId = harness.addToBattlefieldAndReturn(player2, new Shuko()).getId();
+        harness.addToBattlefield(player2, new AvenMindcensor());
+        Card topCopy = new Shuko();
+        Card deepCopy = new Shuko();
+        harness.setHand(player2, List.of());
+        harness.setGraveyard(player2, List.of());
+        harness.setLibrary(player2, List.of(topCopy, new Frostling(), new Frostling(), new Frostling(),
+                new TendoIceBridge(), deepCopy));
+        harness.setHand(player1, List.of(new Splinter()));
+        harness.addMana(player1, ManaColor.GREEN, 4);
+        harness.getConn1().clearMessages();
+
+        harness.castAndResolveSorcery(player1, 0, 0, targetId);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class).validCardIds())
+                .containsExactly(topCopy.getId());
+        assertThat(harness.getConn1().getMessagesContaining("MULTI_CARD_PICK")).isNotEmpty()
+                .allSatisfy(prompt -> assertThat(prompt)
+                        .contains(topCopy.getId().toString(), "Frostling")
+                        .doesNotContain(deepCopy.getId().toString(), "Tendo Ice Bridge"));
     }
 
     @Test

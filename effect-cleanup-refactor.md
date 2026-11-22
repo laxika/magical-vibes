@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 6 done: Exile, 40, 22, 42, 51, 92 and 93 audited; 15 rare Exile records left for run 7) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 7 done: Exile closed, no rare record unaudited, four ledgered causes left for run 8 to build; Each started, 113 rare records left) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -611,6 +611,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 4 | Exile: run 3's shared blockers (put-into-hand step, "onto the battlefield or into your hand", the source-linked library exile), then the one-card tail (no two-card record was left) | done (51 audited: 3 absorbed, 16 split, 7 survivors (one new step record), 14 blocked-other, 11 unique; 22 card files rewritten; `PutCardsIntoHandEffect`, `CardManaValueAtMostAmountPredicate`, `ReturnAllCardsExiledWithSourceEffect.putOntoBattlefield`, `ExileTopCardOfOwnLibraryEffect.linkedToSource`, `AllowPlayCardsFromExileEffect.playableOnlyIf` / `.playableByOwner()`, `EachOpponentExilesFromHandEffect.byPlayers`; the targeted graveyard exile no longer exiles a card that left and came back) |
 | 5 | Exile: run 4's God-Pharaoh's Gift row and Agatha's `step-9` row, a graveyard-owner subject on the choose-a-card exile, a counter step on exiled cards, a card-filtered exile count, then the one-card tail | done (92 audited: 3 absorbed, 20 split, 2 dead, 2 survivors (one new step record), 55 blocked-other, 10 unique; 27 card files rewritten; `ExileUpToOneCardFromGraveyardEffect.from`, `PutCounterOnExiledCardsEffect`, `AmountThisWay.exiledCards`; six resume flag groups deleted; Fishing Gear's empty library fixed by Oracle text) |
 | 6 | Exile: run 5's shared blockers (exile target spell, a delayed trigger bound to a step result, the face-down hand exile) with their ledgered rows, then the rare tail | done (93 audited: 9 absorbed, 27 split, 1 dead, 7 survivors (five new step records), 8 blocked-other, 2 blocked-step-model, 39 unique; 39 card files rewritten; `RegisterDelayedStepTriggerEffect`, `ExileTargetSpellEffect`, `ExileChosenPermanentsEffect`, `ExileTargetPlayerHandEffect.exiledFaceDown`, `StepKind.PUT_INTO_GRAVEYARD`; 15 rare records left on five shared blockers) |
+| 7 | Exile: the five shared blockers with their ledgered rows, the family's rare tail closed; Each started | done for Exile, Each open (51 audited: 8 absorbed, 21 split, 12 survivors, 5 blocked-other, 2 blocked-step-model, 3 unique; 50 card files changed; `ExileCardsWithSameNameEffect`, `ExileCardFromHandEffect`, `ExileFaceDownPileEffect`, `revealedBy` on the reveal-until step, `StepKind.SEEK`; four ledgered Exile causes and 113 rare Each records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -6625,6 +6626,116 @@ card-test sources compile. Not run: the full suites, the AI fuzz and stress test
   Hellraiser, Conspiracy Theorist), per-player results of an exile step (Oversimplify, Grand Ossuary, Winds of Abandon, Martyr's Cry),
   become a copy over a `CardSubject` (Dimir Doppelganger, Lazav, Identity Thief), a delayed trigger on an event rather than a step
   (Portcullis, Lagrella, The Ruinous Powers).
+
+### Step 9, run 7 (2026-11-22, Each only started)
+
+The Exile tail's shared blockers (same-name zones, hand-choice exile, face-down pile, reveal-until player, seek and perpetual subjects)
+with the ledger rows that waited for them, then the first two Each absorptions. Ratchet 4,537 / 3,776 → 4,513 / 3,752 records / handlers
+(29 records and 29 handlers deleted, 5 and 5 added). 50 card files changed (49 rewritten by scratch scripts; Homeward Path lost an unused
+import). Oracle text checked with `get_card` for the 49; rulings with `get_rulings` for the cards whose handler or text left a doubt.
+CR 201.2a, 400.7, 400.7j, 406.3, 603.4, 603.7c, 608.2h, 609.3, 701.23a, 701.23b, 701.40a, 701.58a, 701.58f, 702.62b, 708.2, 708.2a and
+709.4a checked with `get_rule` (2026-11-22).
+
+| Family | Audited | Absorbed | Split | Survivor | Dead | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|---|
+| Exile | 47 rows (the 15 rare records, 22 ledgered rows waiting for the blockers or narrowed by them, the survivors) | 6 | 21 | 10 (five new records) | 0 | 7: 5 blocked-other, each now a cause of one card or a chosen name, 2 blocked-step-model (the revealed-hand continuation) | 3 | no rare record |
+| Each | 4 (2 absorbed, their 2 survivors) | 2 | 0 | 2 | 0 | 0 | 0 | 113 rare records. All families: 2,732 rare records without a row |
+
+- **Same name.** New `ExileCardsWithSameNameEffect` (named by permanents, `targetSpell()` or cards; ANY_NUMBER, ALL per CR 701.23b,
+  EVERY), recording EXILE and `StepOutcome.fromHand` (`AmountThisWay.exiledFromHand()`). An exile step records the exiled permanent's
+  name (`LastKnownCardStats.name`); `othersItsControllerControlsSharing` names "all others that player controls with the same name".
+  Nine records went. The prompt is `MultiZoneExileChoice`, changed: it carries the zones searched (`SearchedZones`, with how many
+  cards from the top of a library) and shows exactly those (CR 701.23a), apart from whether the library is shuffled. The deleted
+  handlers showed only the matching cards. (The run's first tree showed all three zones, the hand to a library-only search too;
+  corrected in the orchestrator's review.)
+- **Exile from hand.** New `ExileCardFromHandEffect`, pausing at its end with EXILE recorded by the shared answer; five records, four
+  bespoke prompts and their completions went. `BecomeForetoldEffect`, a refine count on `PutCounterOnExiledCardsEffect`, the mana-value
+  form of `PutTimeCountersAndGainSuspendEffect`.
+- **Face-down pile.** New `ExileFaceDownPileEffect` (three ways to make a pile, manifest or cloak) absorbed four records.
+- **Reveal until.** `RevealUntilCardPredicateRestOnBottomRandomEffect` gained `revealedBy` (players at once, or one reveal per exiled
+  permanent's controller in turn, as Divergent Transformations' rulings say) and `shufflingRest()`; four records went, Polymorph's too.
+- **Seek and perpetual.** `StepKind.SEEK`; `cardsThisWay(SEEK)` follows a sought card into the hand (the one hidden-zone case, digital
+  only), bound to its stay for `RegisterDelayedStepTriggerEffect.aboutSought`. Two perpetual grants and two specific-card steps take a
+  `CardSubject`. Four records went; Housemeld split onto `PerpetuallyBecomeOnlyCardTypeEffect`.
+- **`HappenedThisWay` over an exile step.** `toACard` judges an exiled permanent as its card in exile (Deicide's ruling); `toA` as it
+  last existed (Hour of Glory, CR 608.2h).
+
+**Behaviour changes.**
+
+1. Mairsil's choice from hand or graveyard doesn't shuffle the library (Oracle: no search).
+   `MairsilThePretenderTest.cagingACardFromHandKeepsTheLibraryOrder`.
+2. A converted same-name search shows the searcher every card of the zones it searches and no other (CR 701.23a;
+   `HauntingEchoesTest.showsTheSearchedLibraryButNotTheHand`, `SpecializedInteractionProjectionTest` for a hand without a library,
+   a shape no card has). A library that can't be searched is neither offered nor shown, and is still shuffled (CR 609.3;
+   `SplinterTest.searchProhibitionLeavesTheLibraryOutOfTheSearch`, `doesNotShowALibraryThatCantBeSearched`); under Aven Mindcensor
+   only its top four cards are (Oracle; `SplinterTest.searchesOnlyTheTopFourCardsUnderAvenMindcensor`). Kotose's search doesn't
+   offer the card her first sentence exiled, which stays linked to her, and asks nothing when nothing else matches
+   (`KotoseTheSilentSpiderTest.searchPromptDoesNotOfferTheCardAlreadyExiled`). The answer's log names the zones searched.
+3. A graveyard card a multi-zone choice exiles is no longer "put into a graveyard from the battlefield this turn" (CR 400.7).
+   `SurgicalExtractionTest.exiledCardIsForgottenAsPutIntoTheGraveyardThisTurn`.
+4. "The same name as that creature" is the name it had on the battlefield, effects included (CR 201.2a, 608.2h; Legion's End, Hour of
+   Glory, Legions to Ashes). `LegionsEndTest.renamedCreatureIsReadByTheNameItHad`.
+5. Jeskai Infiltrator's pile enters together, and with the source gone the top card is still exiled first (Oracle; CR 609.3).
+   `JeskaiInfiltratorTest.topCardGoesThroughExileWhenTheSourceIsGone`.
+6. Alaundo removes the time counters also when no card was exiled (Oracle's "Then"; CR 609.3).
+   `AlaundoTheSeerTest.removesTimeCountersWithNoCardToExile`.
+7. A sought card that left the hand and came back isn't discarded (CR 603.7c, 400.7), and a seek to hand is a new stay there.
+   `AriusFlybyTrawlerTest.soughtCardThatReturnedToTheHandIsNotDiscarded`.
+8. The sought cards of one ability are discarded as one event (Oracle's "discard those cards").
+   `PhyrexianHarvesterTest.discardsTheSoughtCardsAsOneEvent`.
+9. Thoughtweft's Call's seek triggers "whenever you seek" (Oracle). `ThoughtweftsCallTest.seekingTriggersWheneverYouSeek`.
+10. Housemeld doesn't put a card onto the battlefield that left exile and was exiled again (CR 603.7c).
+    `HousemeldTest.cardExiledAgainDoesNotReturn`.
+11. Ethereal Valkyrie's log no longer names the face-down card (CR 406.3). `EtherealValkyrieTest.faceDownCardIsNotNamedInTheLog`.
+12. Same-name matching reads each half's name of a split card, the pile choice honours "can't be chosen" and Moratorium Stone's
+    permanents leave as one event and are matched by the names they have (a Room with both doors locked has none, CR 709.5): the
+    resolver's and the sibling verbs' rules. No card test exercises these edge cases.
+13. AI only: the counter-and-exile spells are counterspells to it; the hand exiles use the generic hand-choice answer (the token-copy
+    choice picked the highest mana value); Chaos Mutation's target is neutral like Polymorph's; the owned-permanents control effect
+    carries the absorbed record's `ControlStealingEffect`.
+14. Log lines and prompt classes are the steps'.
+
+**Seen, not changed.**
+
+- Perilous Iteration makes two delayed abilities, one per seek, where its text has one ("Discard those cards"): a second seek step
+  replaces the first one's outcome.
+- `GameQueryService.isManifestBlockedFromZone` judges the card, not the face-down object, so Worms of the Earth stops a land card from
+  being manifested (CR 701.58f, 708.2a). The pile step doesn't call it.
+- Two perpetual keyword stores: `PerpetuallyGrantKeywordsToTriggeringCardEffect`'s triggering form writes `perpetualCardKeywords` (by
+  the current card's id, unread by the flash permission), most others `perpetualKeywords`. The cards form writes the latter.
+- Shape Anew reveals nothing when the artifact can't be sacrificed, though its "then reveals" doesn't depend on it (CR 609.3).
+- The name-choice and revealed-hand same-name searches (Memoricide, Lobotomy, Unexpected Conversion, Grizzled Huntmaster) still offer a
+  library that can't be searched, or all of it under Aven Mindcensor; Memoricide's family also shows that library to the searcher
+  (CR 701.23a), and the other three show only the matches of what they search.
+- A same-name search with no match asks nothing, so the searcher doesn't get the look CR 701.23a allows.
+- `ExileFromHandChoice.untapPermanentId` has no setter left.
+
+**Tests edited.** The new cases above and `DivergentTransformationsTest.bothCreaturesLeaveAsOneEvent`. `HauntingEchoesTest`'s log
+assertion names the exile step's line (the survivor's log wins). `KotoseTheSilentSpiderTest.resolveKotose` no longer picks the
+already exiled target from the search, and asserts no prompt when nothing else matches (CR 701.23a: exile isn't searched). Five card tests name `ExileFromHandChoice` for the deleted prompt
+classes (same assertions). Deleted with their classes: two handler tests (their cases are in the Counterbore and Surgical Extraction
+card tests) and the token-copy prompt's AI strategy case. `ValidTargetServiceTest`, `AiTargetSelectorTest`, `TargetPolarityGuardTest`
+and `LibraryChoiceHandlerServiceTest` name the replacing records (same assertions); `PendingInteractionContractTest` and
+`CardImmutabilityArchTest` lost or renamed the deleted classes' lines.
+
+**Tests run** (one Gradle run, forced rerun of the final tree, one `--tests` list per task, counted by XML file name): 813 classes
+(957 suites, 8,361 cases), all pass: the changed cards' tests and the card tests constructing one, every card test of the survivors with changed semantics
+and of their readers, samples of `ExileTargetPermanentEffect` (90), `CounterSpellEffect`, `DestroyTargetPermanentEffect`,
+`ExileGraveyardCardsEffect` and `SearchLibraryEffect`; the application's ratchets, resolver, targeting, input-handler and contract
+tests; the AI polarity, selector, strategy and evaluator tests; after the review, every card test of the same-name step and of the
+other users of `MultiZoneExileChoice`, and its projection test. The application, AI, engine testFixtures and all 26 letters' card-test sources compile. Not run: the full suites, the AI fuzz
+and stress tests.
+
+**For the next run (Each, run 8).**
+
+- Not built here, the other three-plus Exile causes run 6 listed, all still ledgered: choose one of `cardsThisWay` (Lord of the Void,
+  Chandra Pyromaster, Capricious Hellraiser, Conspiracy Theorist: a choose step recording the card, the copy-cast prompt of two of
+  them reusable), per-player results of an exile step (Oversimplify, Grand Ossuary, Winds of Abandon, Martyr's Cry: departures on
+  `ExileAllPermanentsEffect`), become a copy over a `CardSubject` (Dimir Doppelganger, Lazav, Identity Thief), a delayed trigger on
+  an event rather than a step (Portcullis, Lagrella, The Ruinous Powers). Build those first: none is out of the plan's scope.
+- Then the 113 rare Each records. Read "Not in this plan" first: an each-player choose-then-act loop stays `blocked-player-loop`, but a
+  record without a prompt is a subject fold (`each(...)`, `matching(players, filter)`, `playersThisWay`), and a prompt per player may
+  be the `revealedBy` / `byPlayers` shape the survivors now have.
 
 ## Prompt
 

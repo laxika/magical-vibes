@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.p;
 
+import com.github.laxika.magicalvibes.cards.a.AriusFlybyTrawler;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,8 +18,29 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PhyrexianHarvester.class, Forest.class, GrizzlyBears.class, Shock.class})
+@CardUsed({AriusFlybyTrawler.class, PhyrexianHarvester.class, Forest.class, GrizzlyBears.class, Shock.class})
 class PhyrexianHarvesterTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("Discards all the sought cards as one event")
+    void discardsTheSoughtCardsAsOneEvent() {
+        Permanent harvester = harness.addToBattlefieldAndReturn(player1, new PhyrexianHarvester());
+        Permanent arius = harness.addToBattlefieldAndReturn(player1, new AriusFlybyTrawler());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Shock()));
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, harvester.getId());
+        resolveAllTriggers();
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(arius.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
+    }
 
     @Test
     @DisplayName("Seeks nonland cards equal to damage and discards those exact cards at the next end step")

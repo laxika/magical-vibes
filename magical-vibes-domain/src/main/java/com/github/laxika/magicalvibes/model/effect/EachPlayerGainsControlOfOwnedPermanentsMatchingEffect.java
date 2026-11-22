@@ -4,11 +4,16 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 /** Each player gains permanent control of each matching permanent they own. */
 public record EachPlayerGainsControlOfOwnedPermanentsMatchingEffect(PermanentPredicate filter)
-        implements CardEffect {
+        implements ControlStealingEffect {
 
     public EachPlayerGainsControlOfOwnedPermanentsMatchingEffect {
         if (filter == null) {
             throw new IllegalArgumentException("filter must not be null");
         }
+    }
+
+    @Override
+    public Duration controlDuration() {
+        return Duration.PERMANENT;
     }
 }

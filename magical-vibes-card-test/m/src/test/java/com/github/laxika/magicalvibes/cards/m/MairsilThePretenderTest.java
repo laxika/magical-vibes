@@ -2,13 +2,16 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
 import com.github.laxika.magicalvibes.cards.t.TurnToFrog;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,6 +49,28 @@ class MairsilThePretenderTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         assertThatThrownBy(() -> harness.activateAbility(player1, mairsilIndex, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("Exiling a card from hand doesn't shuffle the library")
+    void cagingACardFromHandKeepsTheLibraryOrder() {
+        RodOfRuin rodOfRuin = new RodOfRuin();
+        List<Card> library = new ArrayList<>();
+        for (int i = 0; i < 12; i++) {
+            library.add(new RodOfRuin());
+        }
+        harness.setLibrary(player1, library);
+        harness.setHand(player1, List.of(new MairsilThePretender(), rodOfRuin));
+        addMairsilMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(rodOfRuin.getId()));
+
+        assertThat(gd.exiledCardsWithCageCounters).contains(rodOfRuin.getId());
+        assertThat(gd.playerDecks.get(player1.getId())).extracting(Card::getId)
+                .containsExactlyElementsOf(library.stream().map(Card::getId).toList());
     }
 
     @Test

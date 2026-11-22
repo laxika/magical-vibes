@@ -39,11 +39,15 @@ public class PutTimeCountersAndGainSuspendEffectHandler implements NormalEffectH
             if (located.zone() != Zone.EXILE || card.isToken()) {
                 continue;
             }
-            gameData.exiledCardTimeCounters.put(card.getId(), suspend.timeCounters());
+            int counters = suspend.equalToEachManaValue() ? card.getManaValue() : suspend.timeCounters();
+            if (counters < 1) {
+                continue;
+            }
+            gameData.exiledCardTimeCounters.put(card.getId(), counters);
             gameLogService.append(gameData, GameLog.cardThen(card,
-                    " gets " + suspend.timeCounters() + " time counters and gains suspend."));
+                    " gets " + counters + " time counters and gains suspend."));
             log.info("Game {} - {} gets {} time counters and gains suspend",
-                    gameData.id, card.getName(), suspend.timeCounters());
+                    gameData.id, card.getName(), counters);
         }
     }
 }

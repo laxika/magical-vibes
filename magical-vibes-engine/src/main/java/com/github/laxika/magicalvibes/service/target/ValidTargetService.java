@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.EffectResolution;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -27,7 +26,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreatureBlockingThisEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardWithConditionalBonusEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetGraveyardCardAndSameNameFromZonesEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantHarmonizeToTargetGraveyardCardEffect;
@@ -2306,12 +2304,6 @@ public class ValidTargetService {
         } else if (effect instanceof ReturnTargetCardsFromGraveyardToBattlefieldEffect e) {
             return e.filter() == null || predicateEvaluationService.matchesCardPredicate(c, e.filter(),
                     sourceCardId, gameData, controllerId, null, null, xValue);
-        } else if (effect instanceof ExileTargetGraveyardCardAndSameNameFromZonesEffect e) {
-            if (e.targetFilter() != null) {
-                return predicateEvaluationService.matchesCardPredicate(c, e.targetFilter(), sourceCardId,
-                        gameData, controllerId, null, null, xValue);
-            }
-            return !(c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
         }
         return effect.targetSpec().declaredTarget() instanceof TargetPredicate.GraveyardCards;
     }

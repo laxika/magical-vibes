@@ -40,6 +40,25 @@ class HauntingEchoesTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The caster is shown the searched library and not the target player's hand")
+    void showsTheSearchedLibraryButNotTheHand() {
+        Card libraryImp = new DuskImp();
+        harness.setGraveyard(player2, List.of(new DuskImp()));
+        harness.setHand(player2, List.of(new CabalPit()));
+        harness.setLibrary(player2, List.of(libraryImp, new Plains()));
+        harness.setHand(player1, List.of(new HauntingEchoes()));
+        harness.addMana(player1, ManaColor.BLACK, 5);
+        harness.getConn1().clearMessages();
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+
+        assertThat(harness.getConn1().getMessagesContaining("MULTI_CARD_PICK")).isNotEmpty()
+                .allSatisfy(prompt -> assertThat(prompt)
+                        .contains(libraryImp.getId().toString(), "Plains")
+                        .doesNotContain("Cabal Pit"));
+    }
+
+    @Test
     @DisplayName("Caster chooses which matching library cards to exile")
     void matchingLibraryCardsRequireCasterChoice() {
         Card graveyardImp = new DuskImp();
@@ -371,7 +390,7 @@ class HauntingEchoesTest extends BaseCardTest {
         harness.handleMultipleCardsChosen(player1, List.of(imp2.getId()));
 
         // Should log exile counts from graveyard and library
-        assertThat(gameLogContains("exiles 1 card from")).isTrue();
+        assertThat(gameLogContains("exiles Dusk Imp from their graveyard.")).isTrue();
         assertThat(gameLogContains("exiles 1 card named \"Dusk Imp\" from")).isTrue();
     }
 }

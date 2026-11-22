@@ -3130,16 +3130,6 @@ public class GraveyardReturnSupport {
      */
 
     /**
-     * Resolves a {@link ExileNonBasicLandGraveyardAndSameNameFromLibraryEffect} by exiling all
-     * non-basic-land cards from the target player's graveyard, then searching that player's library
-     * for all cards with the same name as any card exiled this way and exiling them too.
-     * Finally, the target player shuffles their library.
-     *
-     * @param gameData the current game state
-     * @param entry    the stack entry being resolved (target player ID is in targetId)
-     */
-
-    /**
      * Resolves a {@link PutImprintedCreatureOntoBattlefieldEffect} by revealing the card imprinted
      * on the source and, if it is a creature card, putting it onto the battlefield under the
      * controller's control. Non-creature cards remain in exile.

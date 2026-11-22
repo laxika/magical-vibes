@@ -157,11 +157,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.LibrarySearchDestinationChoice,
         PendingInteraction.SylvanLibraryChoice,
         PendingInteraction.DiscardChoice, PendingInteraction.ExileFromHandChoice,
-        PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice,
         PendingInteraction.ImprintFromHandChoice,
-        PendingInteraction.ExileFromHandWithRefineCountersChoice,
-        PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice,
-        PendingInteraction.ExileCardFromHandWithTimeCountersChoice,
         PendingInteraction.DiscardCostChoice,
         PendingInteraction.PlanarAbilityHandCardChoice,
         PendingInteraction.PerpetualPowerToughnessChoice,
@@ -388,65 +384,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         public InteractionOptions legalOptions() {
             int count = chooseForOpponent ? 1 : Math.min(2, cards.size());
             return new InteractionOptions.MultiCardPick(validCardIds(), count, count);
-        }
-    }
-
-    record ExileFromHandWithRefineCountersChoice(UUID playerId,
-                                                  java.util.List<Integer> validIndices,
-                                                  String prompt, int counterCount)
-            implements PendingInteraction, HandChoice {
-        public ExileFromHandWithRefineCountersChoice {
-            validIndices = java.util.List.copyOf(validIndices);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(validIndices, false);
-        }
-    }
-
-    /** Exile a selected nonland hand card with time counters equal to its mana value. */
-    record ExileNonlandCardFromHandWithTimeCountersChoice(UUID playerId,
-                                                           java.util.List<Integer> validIndices,
-                                                           String prompt)
-            implements PendingInteraction, HandChoice {
-        public ExileNonlandCardFromHandWithTimeCountersChoice {
-            validIndices = java.util.List.copyOf(validIndices);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(validIndices, false);
-        }
-    }
-
-    /** Exile a selected hand card with time counters equal to its mana value. */
-    record ExileCardFromHandWithTimeCountersChoice(UUID playerId,
-                                                    java.util.List<Integer> validIndices,
-                                                    String prompt)
-            implements PendingInteraction, HandChoice {
-        public ExileCardFromHandWithTimeCountersChoice {
-            validIndices = java.util.List.copyOf(validIndices);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(validIndices, false);
         }
     }
 
@@ -2524,14 +2461,15 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     }
 
     /**
-     * "Exile up to the offered maximum of cards named X" from {@code targetPlayerId}'s hand,
-     * graveyard, and library (e.g. Memoricide-style effects). {@code validCardIds} keeps the begin-time
      * "Exile up to {@code maxCount} cards named X" from {@code targetPlayerId}'s hand, graveyard,
      * and library (e.g. Memoricide-style effects). {@code validCardIds} keeps the begin-time
      * hand → graveyard → library scan order; views are re-derived by the same scan at prompt
      * time. {@code controllerId} is the effect's controller (same as the deciding player).
-     * {@code showsSearchedZones} marks an effect that searches those zones, so the prompt shows the
-     * searcher every card in them, not just the selectable ones (CR 701.23a).
+     * {@code searchedZones} is what of those zones is searched: the prompt shows the searcher every card
+     * there, and no card of another zone (CR 701.23a); with none, only the selectable cards.
+     * {@code shufflesLibrary} is whether that player shuffles afterwards, which doesn't depend on what was
+     * searched (a library that couldn't be searched is still shuffled). {@code recordsExileStep}
+     * adds what is exiled to the resolving step's exile.
      */
     record MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                 UUID targetPlayerId, UUID controllerId, String cardName,
@@ -2541,8 +2479,42 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                 UUID sourcePermanentId,
                                 CardEffect followUpEffect,
                                 boolean exileAllMatchingGraveyardCards,
-                                boolean showsSearchedZones)
+                                SearchedZones searchedZones,
+                                boolean shufflesLibrary,
+                                boolean recordsExileStep)
             implements PendingInteraction {
+
+        /**
+         * What a search looks at (CR 701.23a).
+         *
+         * @param zones           the zones searched, among the hand, the graveyard and the library
+         * @param libraryTopCards how many cards from the top of a searched library are searched: fewer than all
+         *                        when "that player searches the top four cards of that library instead"
+         */
+        public record SearchedZones(java.util.Set<Zone> zones, int libraryTopCards) {
+
+            /** Nothing is shown but the cards that can be chosen. */
+            public static final SearchedZones NONE = new SearchedZones(java.util.Set.of(), 0);
+
+            /** The hand, the graveyard and the whole library. */
+            public static final SearchedZones HAND_GRAVEYARD_AND_LIBRARY = new SearchedZones(
+                    java.util.Set.of(Zone.HAND, Zone.GRAVEYARD, Zone.LIBRARY), Integer.MAX_VALUE);
+
+            public SearchedZones {
+                zones = java.util.Set.copyOf(zones);
+            }
+        }
+
+        public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
+                                    UUID targetPlayerId, UUID controllerId, String cardName,
+                                    boolean drawForHandExiled,
+                                    com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
+                                    String sourceSetCode, UUID sourcePermanentId, CardEffect followUpEffect,
+                                    boolean exileAllMatchingGraveyardCards, SearchedZones searchedZones) {
+            this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
+                    drawForHandExiled, tokenTemplate, sourceSetCode, sourcePermanentId, followUpEffect,
+                    exileAllMatchingGraveyardCards, searchedZones, true, false);
+        }
 
         public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                     UUID targetPlayerId, UUID controllerId, String cardName,
@@ -2552,7 +2524,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                     boolean exileAllMatchingGraveyardCards) {
             this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
                     drawForHandExiled, tokenTemplate, sourceSetCode, sourcePermanentId, followUpEffect,
-                    exileAllMatchingGraveyardCards, false);
+                    exileAllMatchingGraveyardCards, SearchedZones.NONE);
         }
 
         public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
@@ -5086,29 +5058,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                     prompt, remainingChoosers, cardsPerPlayer, faceDown, returnOnSourceLeave,
                     untapPermanentId, playPermissionToChooser, playPermissionTaxSourceControllerId,
                     exilePlayOpponentTax, landsEnterTapped, chosenCardThenEffect, 0);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(validIndices, false);
-        }
-    }
-
-    /** Chooses a card to exile from hand before creating a token copy of that card. */
-    record ExileCardFromHandAndCreateTokenCopyChoice(
-            UUID playerId,
-            java.util.List<Integer> validIndices,
-            String prompt,
-            com.github.laxika.magicalvibes.model.effect.ExileCardFromHandAndCreateTokenCopyEffect effect)
-            implements PendingInteraction, HandChoice {
-
-        public ExileCardFromHandAndCreateTokenCopyChoice {
-            validIndices = java.util.List.copyOf(validIndices);
         }
 
         @Override

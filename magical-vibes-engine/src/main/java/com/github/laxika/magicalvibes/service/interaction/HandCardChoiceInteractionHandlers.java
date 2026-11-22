@@ -329,32 +329,6 @@ public final class HandCardChoiceInteractionHandlers {
         }
     }
 
-    /** Exile a selected hand card and create a token copy of it. */
-    @Component
-    public static class ExileCardFromHandAndCreateTokenCopyChoiceInteractionHandler
-            extends Base<PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice> {
-
-        private final CardChoiceHandlerService cardChoiceHandlerService;
-
-        public ExileCardFromHandAndCreateTokenCopyChoiceInteractionHandler(
-                CardChoiceHandlerService cardChoiceHandlerService) {
-            this.cardChoiceHandlerService = cardChoiceHandlerService;
-        }
-
-        @Override
-        public Class<PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice> handledType() {
-            return PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice.class;
-        }
-
-        @Override
-        public void handleAnswer(GameData gameData, Player player,
-                                 PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice interaction,
-                                 InteractionAnswer answer) {
-            cardChoiceHandlerService.handleExileCardFromHandAndCreateTokenCopyChosen(
-                    gameData, player, cardIndex(answer));
-        }
-    }
-
     /** IMPRINT_FROM_HAND_CHOICE — exile a card from hand and imprint it on the source permanent. */
     @Component
     public static class ImprintFromHandChoiceInteractionHandler extends Base<PendingInteraction.ImprintFromHandChoice> {
@@ -375,84 +349,6 @@ public final class HandCardChoiceInteractionHandlers {
         public void handleAnswer(GameData gameData, Player player, PendingInteraction.ImprintFromHandChoice interaction,
                                  InteractionAnswer answer) {
             cardChoiceHandlerService.handleImprintFromHandCardChosen(gameData, player, cardIndex(answer));
-        }
-    }
-
-    /** EXILE_FROM_HAND_WITH_REFINE_COUNTERS_CHOICE — exile the selected card with refine counters. */
-    @Component
-    public static class ExileFromHandWithRefineCountersChoiceInteractionHandler
-            extends Base<PendingInteraction.ExileFromHandWithRefineCountersChoice> {
-
-        private final CardChoiceHandlerService cardChoiceHandlerService;
-
-        public ExileFromHandWithRefineCountersChoiceInteractionHandler(
-                CardChoiceHandlerService cardChoiceHandlerService) {
-            this.cardChoiceHandlerService = cardChoiceHandlerService;
-        }
-
-        @Override
-        public Class<PendingInteraction.ExileFromHandWithRefineCountersChoice> handledType() {
-            return PendingInteraction.ExileFromHandWithRefineCountersChoice.class;
-        }
-
-        @Override
-        public void handleAnswer(GameData gameData, Player player,
-                                 PendingInteraction.ExileFromHandWithRefineCountersChoice interaction,
-                                 InteractionAnswer answer) {
-            cardChoiceHandlerService.handleExileFromHandWithRefineCountersChosen(
-                    gameData, player, cardIndex(answer));
-        }
-    }
-
-    /** Exile a selected nonland hand card with mana-value time counters. */
-    @Component
-    public static class ExileNonlandCardFromHandWithTimeCountersChoiceInteractionHandler
-            extends Base<PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice> {
-
-        private final CardChoiceHandlerService cardChoiceHandlerService;
-
-        public ExileNonlandCardFromHandWithTimeCountersChoiceInteractionHandler(
-                CardChoiceHandlerService cardChoiceHandlerService) {
-            this.cardChoiceHandlerService = cardChoiceHandlerService;
-        }
-
-        @Override
-        public Class<PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice> handledType() {
-            return PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice.class;
-        }
-
-        @Override
-        public void handleAnswer(GameData gameData, Player player,
-                                 PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice interaction,
-                                 InteractionAnswer answer) {
-            cardChoiceHandlerService.handleExileNonlandCardFromHandWithTimeCountersChosen(
-                    gameData, player, cardIndex(answer));
-        }
-    }
-
-    /** Exile a selected hand card with mana-value time counters. */
-    @Component
-    public static class ExileCardFromHandWithTimeCountersChoiceInteractionHandler
-            extends Base<PendingInteraction.ExileCardFromHandWithTimeCountersChoice> {
-
-        private final CardChoiceHandlerService cardChoiceHandlerService;
-
-        public ExileCardFromHandWithTimeCountersChoiceInteractionHandler(
-                CardChoiceHandlerService cardChoiceHandlerService) {
-            this.cardChoiceHandlerService = cardChoiceHandlerService;
-        }
-
-        @Override
-        public Class<PendingInteraction.ExileCardFromHandWithTimeCountersChoice> handledType() {
-            return PendingInteraction.ExileCardFromHandWithTimeCountersChoice.class;
-        }
-
-        @Override
-        public void handleAnswer(GameData gameData, Player player,
-                                 PendingInteraction.ExileCardFromHandWithTimeCountersChoice interaction,
-                                 InteractionAnswer answer) {
-            cardChoiceHandlerService.handleExileCardFromHandWithTimeCountersChosen(
-                    gameData, player, cardIndex(answer));
         }
     }
 

@@ -166,7 +166,8 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
     private LastKnownCardStats asLastKnown(GameData gameData, Permanent permanent) {
         return new LastKnownCardStats(permanent.getId(), gameQueryService.getEffectivePower(gameData, permanent),
                 gameQueryService.getEffectiveToughness(gameData, permanent),
-                gameQueryService.getPermanentManaValue(permanent));
+                gameQueryService.getPermanentManaValue(permanent),
+                gameQueryService.getEffectiveName(gameData, permanent));
     }
 
     private void exileNamed(GameData gameData, StackEntry entry, ExileTargetPermanentEffect exile,

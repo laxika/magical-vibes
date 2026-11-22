@@ -32,7 +32,7 @@ class ArcaneArtisanTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice.class))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ExileFromHandChoice.class))
                 .isNotNull();
         harness.handleCardChosen(player2, 1);
 

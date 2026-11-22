@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -39,6 +40,22 @@ class AlaundoTheSeerTest extends BaseCardTest {
                 .containsEntry(otherOwned.getId(), 1)
                 .containsEntry(opponentOwned.getId(), 2);
         assertThat(gd.exiledCardsWithNonSuspendTimeCounters).containsExactly(chosen.getId());
+    }
+
+    @Test
+    @DisplayName("With no card to exile, a time counter is still removed from each other card")
+    void removesTimeCountersWithNoCardToExile() {
+        Permanent alaundo = alaundo();
+        GrizzlyBears otherOwned = new GrizzlyBears();
+        harness.setExile(player1, List.of(otherOwned));
+        gd.exiledCardTimeCounters.put(otherOwned.getId(), 2);
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of());
+
+        harness.activateAbility(player1, gd.playerBattlefields.get(player1.getId()).indexOf(alaundo), null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.exiledCardTimeCounters).containsEntry(otherOwned.getId(), 1);
     }
 
     @Test

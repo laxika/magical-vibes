@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandWithRefineCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnExiledCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -28,8 +30,9 @@ public class UvildaDeanOfPerfection extends Card {
                 true,
                 null,
                 List.of(new MayEffect(
-                        new ExileCardFromHandWithRefineCountersEffect(
-                                instantOrSorcery, 3, "an instant or sorcery card"),
+                        SequenceEffect.of(
+                                new ExileCardFromHandEffect(instantOrSorcery),
+                                PutCounterOnExiledCardsEffect.refineOnCardsExiledThisWay(3)),
                         "Exile an instant or sorcery card from your hand?")),
                 "{T}: You may exile an instant or sorcery card from your hand and put three refine counters on it."));
 

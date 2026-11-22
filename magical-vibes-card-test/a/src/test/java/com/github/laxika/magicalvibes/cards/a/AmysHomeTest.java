@@ -50,8 +50,8 @@ class AmysHomeTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice.class);
+        PendingInteraction.ExileFromHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ExileFromHandChoice.class);
         assertThat(choice.validIndices()).containsExactly(1);
         harness.handleCardChosen(player1, 1);
 
@@ -71,8 +71,8 @@ class AmysHomeTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
         harness.handleMayAbilityChosen(player1, true);
-        PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice.class);
+        PendingInteraction.ExileFromHandChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.ExileFromHandChoice.class);
         assertThat(choice.validIndices()).containsExactly(1);
         harness.handleCardChosen(player1, 1);
 

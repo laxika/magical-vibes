@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpecificCardFromHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -21,6 +22,7 @@ public class ExileSpecificCardFromHandEffectHandler implements NormalEffectHandl
 
     private final ExileService exileService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,18 +37,14 @@ public class ExileSpecificCardFromHandEffectHandler implements NormalEffectHandl
             return;
         }
 
-        UUID cardId = ((ExileSpecificCardFromHandEffect) effect).cardId();
-        Card card = hand.stream()
-                .filter(candidate -> candidate.getId().equals(cardId))
-                .findFirst()
-                .orElse(null);
-        if (card == null) {
-            return;
+        var exile = (ExileSpecificCardFromHandEffect) effect;
+        for (Card named : subjectResolutionService.cards(gameData, entry, exile, exile.cards())) {
+            if (!hand.removeIf(held -> held.getId().equals(named.getId()))) {
+                continue;
+            }
+            exileService.exileCard(gameData, controllerId, named);
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
+                    "'s delayed trigger exiles " + named.getName() + " from hand."));
         }
-
-        hand.remove(card);
-        exileService.exileCard(gameData, controllerId, card);
-        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                "'s delayed trigger exiles " + card.getName() + " from hand."));
     }
 }

@@ -430,7 +430,9 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /** Exile the selected face-up creatures with disguise and cloak them. */
-    record RecloakDisguisedCreatures(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
+    record ExileInFaceDownPile(StackEntry resolvingEntry,
+                               com.github.laxika.magicalvibes.model.effect.ExileFaceDownPileEffect effect)
+            implements MultiPermanentChoiceContext {
     }
 
     /** Choose up to one creature that saddled the source this turn, then flicker the source and it. */

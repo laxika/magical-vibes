@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -46,6 +47,21 @@ class EtherealValkyrieTest extends BaseCardTest {
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("The card exiled face down isn't named in the log")
+    void faceDownCardIsNotNamedInTheLog() {
+        GrizzlyBears bears = new GrizzlyBears();
+        harness.setHand(player1, List.of(bears));
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        harness.enterBattlefieldAndReturn(player1, new EtherealValkyrie());
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.foretoldCardIds).contains(bears.getId());
+        assertThat(gameLogContains("Grizzly Bears")).isFalse();
     }
 
     @Test

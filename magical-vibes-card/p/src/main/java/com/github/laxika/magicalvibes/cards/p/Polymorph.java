@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetThenRevealUntilTypeToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
-import java.util.Set;
 
 @CardRegistration(set = "M10", collectorNumber = "67")
 @CardRegistration(set = "9ED", collectorNumber = "90")
@@ -16,6 +18,10 @@ public class Polymorph extends Card {
 
     public Polymorph() {
         target(TargetFilters.creature())
-                .addSpellEffect(new DestroyTargetThenRevealUntilTypeToBattlefieldEffect(true, Set.of(CardType.CREATURE)));
+                .addSpellEffect(new DestroyTargetPermanentEffect(true))
+                .addSpellEffect(RevealUntilCardPredicateRestOnBottomRandomEffect.ontoBattlefield(
+                        new CardTypePredicate(CardType.CREATURE),
+                        new RevealUntilCardPredicateRestOnBottomRandomEffect.Players(
+                                Subjects.controllerOf(Subjects.target()))).shufflingRest());
     }
 }

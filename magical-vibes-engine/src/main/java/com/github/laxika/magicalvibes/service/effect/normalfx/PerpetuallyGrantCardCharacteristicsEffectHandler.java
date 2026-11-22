@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantCardCharacteristicsEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ import java.util.UUID;
 public class PerpetuallyGrantCardCharacteristicsEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,6 +37,11 @@ public class PerpetuallyGrantCardCharacteristicsEffectHandler implements NormalE
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         PerpetuallyGrantCardCharacteristicsEffect perpetual =
                 (PerpetuallyGrantCardCharacteristicsEffect) effect;
+        if (perpetual.cards() != null) {
+            subjectResolutionService.cards(gameData, entry, perpetual, perpetual.cards())
+                    .forEach(card -> grant(gameData, card.getId(), perpetual));
+            return;
+        }
         Permanent source = entry.getSourcePermanentId() != null
                 ? gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId()) : null;
         Card card = source == null || source.getOriginalCard() == null
@@ -42,8 +49,10 @@ public class PerpetuallyGrantCardCharacteristicsEffectHandler implements NormalE
         if (card == null) {
             return;
         }
-        UUID cardId = card.getId();
+        grant(gameData, card.getId(), perpetual);
+    }
 
+    private void grant(GameData gameData, UUID cardId, PerpetuallyGrantCardCharacteristicsEffect perpetual) {
         mergeCardTypes(gameData, cardId, perpetual.cardTypes());
         if (perpetual.replacesCreatureTypes()) {
             gameData.perpetualCreatureTypeReplacedCardIds.add(cardId);

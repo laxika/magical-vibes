@@ -21,6 +21,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AriusFlybyTrawlerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A sought card that left the hand and came back is not discarded")
+    void soughtCardThatReturnedToTheHandIsNotDiscarded() {
+        addCreatureReady(player1, new AriusFlybyTrawler());
+        Card sought = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(sought));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+        gd.playerHands.get(player1.getId()).removeIf(card -> card.getId().equals(sought.getId()));
+        gd.addCardToHand(player1.getId(), sought);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(TurnStep.END_STEP);
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(sought);
+    }
+
+    @Test
     @DisplayName("Seeks a non-Shark card and discards that exact card at the next end step")
     void seeksAndDiscardsTheSelectedCard() {
         Permanent arius = addCreatureReady(player1, new AriusFlybyTrawler());

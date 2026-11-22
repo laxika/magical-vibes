@@ -3,7 +3,9 @@ package com.github.laxika.magicalvibes.cards.q;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.effect.CounterSpellAndExileAllWithSameNameEffect;
+import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
 
@@ -18,7 +20,9 @@ public class Quash extends Card {
         // library for all cards with the same name as that spell and exile them. Then that player
         // shuffles. Instant/sorcery-only sibling of Counterbore. Graveyard matches are exiled
         // automatically; the controller may find none of the hand and library matches (CR 701.23b).
-        addSpellEffect(new CounterSpellAndExileAllWithSameNameEffect(false, false, true));
+        addSpellEffect(new CounterSpellEffect());
+        addSpellEffect(ExileCardsWithSameNameEffect.all(
+                Subjects.targetSpell(), Subjects.controllerOf(Subjects.targetSpell())));
         target(new StackEntryPredicateTargetFilter(
                 new StackEntryTypeInPredicate(Set.of(
                         StackEntryType.INSTANT_SPELL, StackEntryType.SORCERY_SPELL)),

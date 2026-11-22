@@ -14,13 +14,28 @@ import java.util.Set;
  * <p>When {@code replacesCreatureTypes} is set the granted subtypes are the card's new creature types,
  * replacing the ones it had ("perpetually becomes a Dragon"); otherwise they are added to the existing
  * subtypes ("in addition to its other types").
+ *
+ * <p>{@code cards} names other cards than the source's ("it perpetually becomes an artifact" after an exile step).
  */
 public record PerpetuallyGrantCardCharacteristicsEffect(
         Set<CardType> cardTypes,
         Set<CardSubtype> subtypes,
         List<ActivatedAbility> activatedAbilities,
-        boolean replacesCreatureTypes
+        boolean replacesCreatureTypes,
+        CardSubject cards
 ) implements CardEffect {
+
+    public PerpetuallyGrantCardCharacteristicsEffect(Set<CardType> cardTypes, Set<CardSubtype> subtypes,
+                                                     List<ActivatedAbility> activatedAbilities,
+                                                     boolean replacesCreatureTypes) {
+        this(cardTypes, subtypes, activatedAbilities, replacesCreatureTypes, null);
+    }
+
+    /** This grant to the cards {@code cards} names. */
+    public PerpetuallyGrantCardCharacteristicsEffect to(CardSubject cards) {
+        return new PerpetuallyGrantCardCharacteristicsEffect(
+                cardTypes, subtypes, activatedAbilities, replacesCreatureTypes, cards);
+    }
 
     public PerpetuallyGrantCardCharacteristicsEffect {
         cardTypes = Set.copyOf(cardTypes);

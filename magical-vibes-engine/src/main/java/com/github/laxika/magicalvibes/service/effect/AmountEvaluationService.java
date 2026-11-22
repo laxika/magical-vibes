@@ -1145,6 +1145,9 @@ public class AmountEvaluationService {
         if (thisWay.stat() == AmountThisWay.Stat.STILL_EXILED) {
             return stillExiled(gameData, results.outcome(StepKind.EXILE));
         }
+        if (thisWay.stat() == AmountThisWay.Stat.FROM_HAND) {
+            return results.outcome(StepKind.EXILE).fromHand();
+        }
         if (thisWay.stat() == AmountThisWay.Stat.AMOUNT && thisWay.filter() == null && !thisWay.yours()
                 && !thisWay.includesUnremoved()) {
             return results.outcome(thisWay.kind()).amount();
@@ -1186,7 +1189,7 @@ public class AmountEvaluationService {
                 case POWER -> result.lastKnownPower();
                 case TOUGHNESS -> result.lastKnownToughness();
                 case MANA_VALUE -> result.lastKnownManaValue();
-                case STILL_EXILED -> 0;
+                case STILL_EXILED, FROM_HAND -> 0;
             };
             total = SaturatingMath.add(total, value == null ? 0 : value);
         }
@@ -1239,7 +1242,7 @@ public class AmountEvaluationService {
                     case POWER -> recorded.power();
                     case TOUGHNESS -> recorded.toughness();
                     case MANA_VALUE -> recorded.manaValue();
-                    case AMOUNT, DIED, STILL_EXILED -> 0;
+                    case AMOUNT, DIED, STILL_EXILED, FROM_HAND -> 0;
                 };
             } else if (entry.getLastKnownPermanentPowers().containsKey(id)) {
                 Card lastKnown = entry.lastKnownPermanentCard(id);
@@ -1247,7 +1250,7 @@ public class AmountEvaluationService {
                     case POWER -> entry.getLastKnownPermanentPowers().get(id);
                     case TOUGHNESS -> entry.getLastKnownPermanentToughnesses().get(id);
                     case MANA_VALUE -> lastKnown == null ? null : lastKnown.getManaValue();
-                    case AMOUNT, DIED, STILL_EXILED -> 0;
+                    case AMOUNT, DIED, STILL_EXILED, FROM_HAND -> 0;
                 };
             } else {
                 Card card = gameQueryService.findCardById(gameData, id);
@@ -1255,7 +1258,7 @@ public class AmountEvaluationService {
                     case POWER -> gameQueryService.getEffectiveCardPower(gameData, card);
                     case TOUGHNESS -> gameQueryService.getEffectiveCardToughness(gameData, card);
                     case MANA_VALUE -> card.getManaValue();
-                    case AMOUNT, DIED, STILL_EXILED -> 0;
+                    case AMOUNT, DIED, STILL_EXILED, FROM_HAND -> 0;
                 };
             }
             total = SaturatingMath.add(total, value == null ? 0 : value);

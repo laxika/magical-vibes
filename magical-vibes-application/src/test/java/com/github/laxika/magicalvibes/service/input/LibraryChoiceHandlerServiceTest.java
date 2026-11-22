@@ -21,13 +21,15 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.BecomeForetoldEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachOneOfEquipmentToSamuraiEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandAndBecomeForetoldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardManaValueLessThanXPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -997,7 +999,7 @@ class LibraryChoiceHandlerServiceTest {
                             .canFailToFind(true)
                             .destination(LibrarySearchDestination.HAND)
                             .followUp(LibrarySearchFollowUp.forSelectedCard(new CardTypePredicate(CardType.CREATURE),
-                                    ExileCardFromHandAndBecomeForetoldEffect.afterChoice()))
+                                    new BecomeForetoldEffect(Subjects.cardsThisWay(StepKind.EXILE), 2)))
                             .build(), "Choose a card", true));
             StackEntry paused = new StackEntry(StackEntryType.SORCERY_SPELL, createCard("Source"),
                     player1Id, "Source", List.of());
@@ -1011,7 +1013,7 @@ class LibraryChoiceHandlerServiceTest {
 
             assertThat(gd.playerHands.get(player1Id)).containsExactly(found);
             assertThat(paused.getEffectsToResolve())
-                    .containsExactly(ExileCardFromHandAndBecomeForetoldEffect.afterChoice());
+                    .containsExactly(new BecomeForetoldEffect(Subjects.cardsThisWay(StepKind.EXILE), 2));
             assertThat(paused.getChosenObjectCard()).isSameAs(found);
         }
     }

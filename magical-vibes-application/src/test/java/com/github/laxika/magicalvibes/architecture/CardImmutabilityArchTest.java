@@ -85,7 +85,7 @@ class CardImmutabilityArchTest {
             "RegisterDelayedEndStepTriggerEffectHandler", // assembles targeting on a fresh runtime copy for the delayed trigger
             "ExileSourceCardFromOpeningHandAndCreateTimeWalkTokenCardsEffectHandler", // assembles and freezes fresh Time Walk token cards
             "BecomeCopyOfCardUntilEndOfTurnEffectHandler", // changes a fresh runtime copy
-            "ExileTargetCreaturePerpetuallyBecomesEnchantmentAndReturnAtNextEndStepEffectHandler", // changes a fresh runtime copy
+            "PerpetuallyBecomeOnlyCardTypeEffectHandler", // changes a fresh runtime copy
             "GrizzledHuntmasterEffectHandler", // stamps newly conjured copies
             "ReturnCardAndConjureOpponentGraveyardDuplicateEffectHandler", // decorates a newly conjured copy
             "SacrificeTriggeringPermanentThenConjureDuplicateEffectHandler", // stamps a newly conjured copy
@@ -98,7 +98,6 @@ class CardImmutabilityArchTest {
             "BecomeCopyOfExiledCreaturePermanentlyEffectHandler", // decorates the fresh clone-copy card
             "CreateModalDoubleFacedCardFromTopTwoEffectHandler", // combines two fresh runtime copies
             "DestroyTargetArtifactsThenConjurePerpetualCopiesIntoHandEffectHandler", // decorates a conjured copy
-            "EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffectHandler", // removes legendary from fresh clone-copy cards
             "SeekLibraryAndConjureDuplicatesInGraveyardEffectHandler", // stamps newly conjured copies
             "TargetPlayerSacrificesNontokenCreatureThenConjuresDuplicateEffectHandler", // stamps a conjured copy
             "UnspecializeLukaminaEffectHandler", // restores a fresh runtime copy of the base face
@@ -113,7 +112,6 @@ class CardImmutabilityArchTest {
             "ExileArtifactThenSeekArtifactAndPerpetuallyBecomeCreatureEffectHandler", // alters a fresh runtime copy
             "ExileTargetCreatureCardThenConjureSkeletonDuplicateEffectHandler", // decorates a fresh conjured duplicate
             "PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffectHandler", // alters a fresh runtime copy
-            "SeekLibraryToHandAndRegisterExileAtNextEndStepEffectHandler", // clears targeting on a fresh delayed-trigger copy
             "ReduceCastCostForFirstMatchingSpellEachTurnEffectHandler", // assembles fresh face-down characteristics for cost evaluation
             "ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffectHandler", // retains abilities on a fresh copy
             "LayerSystemService", // assembles a fresh runtime copy for copy effects

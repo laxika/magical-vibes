@@ -315,6 +315,17 @@ public final class Subjects {
     }
 
     /**
+     * "All other creatures that player controls with the same name as that creature", "all tokens that player controls
+     * with the same name as that permanent": the others matching {@code filter} of the controller of the permanent
+     * {@code permanent} names that share {@code quality} with it.
+     */
+    public static PermanentSubject othersItsControllerControlsSharing(
+            PermanentSubject permanent, PermanentSubject.OtherPermanentsSharing.SharedQuality quality,
+            PermanentPredicate filter) {
+        return new PermanentSubject.OtherPermanentsSharing(permanent, quality, filter, true);
+    }
+
+    /**
      * "This creature and the creature it's paired with" (soulbond, CR 702.95): the source and its pair, judged as a
      * set.
      */

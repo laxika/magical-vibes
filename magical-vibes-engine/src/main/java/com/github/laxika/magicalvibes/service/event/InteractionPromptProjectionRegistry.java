@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.PendingKnowledgePoolCast;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.ScrycastCast;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
@@ -283,15 +284,7 @@ public class InteractionPromptProjectionRegistry {
                         ((PendingInteraction.DiscardChoice) interaction).declinable()));
         register(PendingInteraction.ExileFromHandChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
-        register(PendingInteraction.ExileCardFromHandAndCreateTokenCopyChoice.class,
-                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.ImprintFromHandChoice.class,
-                (gameData, interaction) -> projectHandChoice(interaction, false));
-        register(PendingInteraction.ExileFromHandWithRefineCountersChoice.class,
-                (gameData, interaction) -> projectHandChoice(interaction, false));
-        register(PendingInteraction.ExileNonlandCardFromHandWithTimeCountersChoice.class,
-                (gameData, interaction) -> projectHandChoice(interaction, false));
-        register(PendingInteraction.ExileCardFromHandWithTimeCountersChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.DiscardCostChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
@@ -1163,15 +1156,24 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.MultiZoneExileChoice interaction) {
         UUID targetPlayerId = interaction.targetPlayerId();
         String prompt = "Choose any number of cards named \"" + interaction.cardName() + "\" to exile.";
-        if (interaction.showsSearchedZones()) {
-            // A search looks at every card in the searched zones (CR 701.23a). Each card view is paired
-            // with its id when it can be chosen and with null when it is only shown.
+        var searched = interaction.searchedZones();
+        if (!searched.zones().isEmpty()) {
+            // A search looks at every card in the searched zones, and at no other (CR 701.23a). Each card view is
+            // paired with its id when it can be chosen and with null when it is only shown.
             List<CardView> searchedViews = new ArrayList<>();
             List<UUID> pickableIds = new ArrayList<>();
-            for (List<Card> zone : List.of(
-                    gameData.playerHands.getOrDefault(targetPlayerId, List.of()),
-                    gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()),
-                    gameData.playerDecks.getOrDefault(targetPlayerId, List.of()))) {
+            List<List<Card>> shown = new ArrayList<>();
+            if (searched.zones().contains(Zone.HAND)) {
+                shown.add(gameData.playerHands.getOrDefault(targetPlayerId, List.of()));
+            }
+            if (searched.zones().contains(Zone.GRAVEYARD)) {
+                shown.add(gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()));
+            }
+            if (searched.zones().contains(Zone.LIBRARY)) {
+                List<Card> library = gameData.playerDecks.getOrDefault(targetPlayerId, List.of());
+                shown.add(library.subList(0, Math.min(searched.libraryTopCards(), library.size())));
+            }
+            for (List<Card> zone : shown) {
                 for (Card card : zone) {
                     searchedViews.add(cardViewFactory.create(card));
                     pickableIds.add(interaction.validCardIds().contains(card.getId()) ? card.getId() : null);

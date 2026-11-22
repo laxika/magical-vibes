@@ -11,8 +11,12 @@ import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect.ControllerOfEachExiledThisWay;
+import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect.InOrder;
+import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect.Players;
 import com.github.laxika.magicalvibes.model.effect.RevealUntilCardPredicateRestOnBottomRandomEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -24,11 +28,13 @@ import com.github.laxika.magicalvibes.service.battlefield.LegendRuleService;
 import com.github.laxika.magicalvibes.service.combat.attack.AttackLegalityService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -52,6 +58,7 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
     private final EquipSupport equipSupport;
     private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -60,7 +67,73 @@ public class RevealUntilCardPredicateRestOnBottomRandomEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        resolve(gameData, entry, (RevealUntilCardPredicateRestOnBottomRandomEffect) effect, false);
+        var reveal = (RevealUntilCardPredicateRestOnBottomRandomEffect) effect;
+        switch (reveal.revealedBy()) {
+            case null -> resolve(gameData, entry, reveal, reveal.shuffleRest());
+            case Players(var players) -> revealTogether(gameData, entry, reveal,
+                    subjectResolutionService.players(gameData, entry, reveal, players));
+            case ControllerOfEachExiledThisWay() -> revealInOrder(gameData, entry, reveal,
+                    controllersOfEachExiled(gameData, entry));
+            case InOrder(var playerIds) -> revealInOrder(gameData, entry, reveal, playerIds);
+        }
+    }
+
+    private void revealTogether(GameData gameData, StackEntry entry,
+                                RevealUntilCardPredicateRestOnBottomRandomEffect reveal, List<UUID> playerIds) {
+        if (reveal.destination() != LibrarySearchDestination.BATTLEFIELD || reveal.enterTappedAndAttacking()) {
+            for (UUID playerId : playerIds) {
+                resolve(gameData, revealedBy(entry, playerId), reveal, reveal.shuffleRest());
+            }
+            return;
+        }
+        List<BattlefieldEntryCard> cards = new ArrayList<>();
+        List<BattlefieldEntryLibraryRemainder> remainders = new ArrayList<>();
+        for (UUID playerId : playerIds) {
+            resolve(gameData, revealedBy(entry, playerId), reveal, reveal.shuffleRest(), cards, remainders);
+        }
+        if (!playerIds.isEmpty()) {
+            battlefieldEntryBatchSupport.begin(gameData, cards, remainders);
+        }
+    }
+
+    /** One reveal now; those left are a step of their own, so each finishes before the next one starts. */
+    private void revealInOrder(GameData gameData, StackEntry entry,
+                               RevealUntilCardPredicateRestOnBottomRandomEffect reveal, List<UUID> playerIds) {
+        if (playerIds.isEmpty()) {
+            return;
+        }
+        if (playerIds.size() > 1) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, List.of(
+                    new RevealUntilCardPredicateRestOnBottomRandomEffect(reveal.predicate(), reveal.destination(),
+                            reveal.enterTappedAndAttacking(), reveal.recordRevealedCount(),
+                            reveal.recordFoundCardManaValue(), reveal.shuffleRest(),
+                            new InOrder(playerIds.subList(1, playerIds.size())))));
+        }
+        resolve(gameData, revealedBy(entry, playerIds.getFirst()), reveal, reveal.shuffleRest());
+    }
+
+    /** Each exiled permanent's last controller, so a player once per permanent, in turn order from the active player. */
+    private List<UUID> controllersOfEachExiled(GameData gameData, StackEntry entry) {
+        List<UUID> turnOrder = new ArrayList<>(gameData.orderedPlayerIds);
+        int activeIndex = turnOrder.indexOf(gameData.activePlayerId);
+        if (activeIndex > 0) {
+            Collections.rotate(turnOrder, -activeIndex);
+        }
+        List<UUID> controllers = new ArrayList<>();
+        for (UUID permanentId : entry.getResolutionResults().outcome(StepKind.EXILE).objectIds()) {
+            UUID controllerId = entry.lastKnownPermanentController(permanentId);
+            if (controllerId != null) {
+                controllers.add(controllerId);
+            }
+        }
+        controllers.sort(Comparator.comparingInt(turnOrder::indexOf));
+        return controllers;
+    }
+
+    private static StackEntry revealedBy(StackEntry entry, UUID playerId) {
+        StackEntry revealEntry = new StackEntry(entry);
+        revealEntry.setControllerId(playerId);
+        return revealEntry;
     }
 
     void resolveUsingSourcePermanentSnapshot(GameData gameData, StackEntry entry, CardEffect effect,

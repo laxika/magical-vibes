@@ -733,7 +733,7 @@ Matchers record the event whatever the effects are; effects read it as they reso
 - **Event value**: "that much / that many", read by `EventValue` and the event-value predicates.
 - **Linked exiled card** (`linkedExiledCardId`, Hoarding Dragon, CR 607.2a): set from the imprint as it triggers.
 - **Choice results.** A chosen card (`setChosenObjectCard`, set before the follow-up is inserted unchanged; effects that
-  ask then act insert their own step: `ExileCardFromHandAndBecomeForetoldEffect.afterChoice()`,
+  ask then act insert their own step: `ExileSameNameCardsFromHandAndLibraryThenSeekEffect.afterChoice()`,
   `GrizzledHuntmasterEffect.Step`; a held card rides `PendingMayAbility.withHeldCard`), accepted players
   (`setAcceptedPlayerIds`, `Subjects.acceptedPlayers()`), produced mana (`setProducedManaColors`), picks
   (`StackEntry.recordPicks`, `ResolutionResults.pickedIds`, recorded by `LibraryChoiceHandlerService` and read by

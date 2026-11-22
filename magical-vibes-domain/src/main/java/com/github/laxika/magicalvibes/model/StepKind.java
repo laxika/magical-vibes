@@ -17,7 +17,8 @@ package com.github.laxika.magicalvibes.model;
  *       keep each one's last-known controller, power, toughness and mana value and where it went (whether it died); a
  *       removed permanent's {@link StepOutcome#movedCards()} name the card it became in the zone it went to; an
  *       {@link #EXILE} step that exiles cards from a graveyard, a library or a hand records those cards and their
- *       owners;</li>
+ *       owners, and how many came from a hand ({@link StepOutcome#fromHand()}) where the step exiles from a hand among
+ *       other zones;</li>
  *   <li>{@link #RETURN}: the number of permanents or cards returned, the permanents (to a hand: by their id as the step
  *       acted on them; to the battlefield: the permanent each card became, the exile-and-return-transformed of the
  *       source included) or cards, their owners;</li>
@@ -29,6 +30,8 @@ package com.github.laxika.magicalvibes.model;
  *       spell's {@link StepOutcome#movedCards()} name the card it became in its graveyard or in exile;</li>
  *   <li>{@link #MANIFEST}: the number of permanents manifested, those permanents, their controllers;</li>
  *   <li>{@link #TRANSFORM}: 1 when the source transformed (or converted), else 0; that permanent, its controller;</li>
+ *   <li>{@link #SEEK}: the number of cards sought into a hand ({@code SeekCardsToHandEffect}), those cards, the
+ *       player; a sought card is followed into the hand it went to, as seek's cards are (digital only);</li>
  *   <li>{@link #PUT_INTO_GRAVEYARD}: the number of exiled cards put into a graveyard ({@code
  *       PutExiledCardsIntoOwnersGraveyardEffect}; a card a replacement sent elsewhere is not counted), those cards,
  *       their owners.</li>
@@ -39,7 +42,7 @@ package com.github.laxika.magicalvibes.model;
  * result recorded by then. The recording handlers: draw, gain and lose life, exile a permanent, exile the source's or
  * the triggering card or target cards from a graveyard ({@code ExileGraveyardCardsEffect} except where its player
  * chooses at a prompt), exile the top card of a library, a hand or a spell ({@code ExileTargetPlayerHandEffect},
- * {@code ExileTargetSpellEffect}), put exiled cards into a graveyard, destroy, copy, create a token, manifest, mill and exile the
+ * {@code ExileTargetSpellEffect}), seek cards to a hand, put exiled cards into a graveyard, destroy, copy, create a token, manifest, mill and exile the
  * source and return it transformed ({@code ExileSelfAndReturnTransformedEffect}), transform the source
  * ({@code TransformSelfEffect}) (never prompt, or
  * rerun before any change); the self sacrifice ({@code departAsStep}), discard and
@@ -48,7 +51,8 @@ package com.github.laxika.magicalvibes.model;
  * ({@code ReturnPermanentControlledByPlayerToHandEffect}: its {@code BounceCreature} choice adds the returned
  * permanent), put counters (a replacement order answered later adds the rest; on each matching permanent,
  * {@code PutCounterOnEachMatchingPermanentEffect}, never prompting) and counter a spell; the chosen-permanent exile ({@code ExileChosenPermanentsEffect}: its
- * choices add to the result as they are answered) and the pay-X token step ({@code PayXManaCreateXTokensEffect}); deal damage, return a card from a graveyard, remove counters and return to hand only on the paths that
+ * choices add to the result as they are answered), the chosen hand-card exile ({@code ExileCardFromHandEffect}), the
+ * same-name exile ({@code ExileCardsWithSameNameEffect}) and the pay-X token step ({@code PayXManaCreateXTokensEffect}); deal damage, return a card from a graveyard, remove counters and return to hand only on the paths that
  * don't prompt mid-step. A handler that pauses mid-step by rerunning itself after changes, or by a continuation of its
  * own, is never an earlier step. A damage, discard or sacrifice step records {@link StepOutcome#NONE} as it begins and the
  * engine adds to it as the damage is dealt, the cards discarded and the permanents sacrificed.</p>
@@ -71,5 +75,6 @@ public enum StepKind {
     COPY_SPELL,
     MANIFEST,
     TRANSFORM,
-    PUT_INTO_GRAVEYARD
+    PUT_INTO_GRAVEYARD,
+    SEEK
 }

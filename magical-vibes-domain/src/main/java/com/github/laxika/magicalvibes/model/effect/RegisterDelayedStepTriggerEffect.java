@@ -36,8 +36,9 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
         Objects.requireNonNull(about, "about");
         Objects.requireNonNull(step, "step");
         effects = List.copyOf(effects);
-        if (about != StepKind.EXILE && about != StepKind.CREATE_TOKEN) {
-            throw new IllegalArgumentException("A delayed ability is about exiled cards or created permanents: " + about);
+        if (about != StepKind.EXILE && about != StepKind.CREATE_TOKEN && about != StepKind.SEEK) {
+            throw new IllegalArgumentException(
+                    "A delayed ability is about exiled or sought cards or created permanents: " + about);
         }
         if (player != null && player.declaresTarget()) {
             throw new IllegalArgumentException("The step that did it declares the target: " + player);
@@ -45,8 +46,8 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
         if (ifAnyStillExiled && alsoIfNothingHappened) {
             throw new IllegalArgumentException("With no cards exiled none remains exiled, so it could never trigger");
         }
-        if (ifAnyStillExiled && about != StepKind.EXILE) {
-            throw new IllegalArgumentException("Only exiled cards remain exiled: " + about);
+        if (ifAnyStillExiled && about != StepKind.EXILE && about != StepKind.SEEK) {
+            throw new IllegalArgumentException("Only exiled or sought cards can still be where they went: " + about);
         }
     }
 
@@ -61,6 +62,17 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
                 false);
     }
 
+    /** At {@code step}, {@code effects} about the cards the last seek put into a hand. */
+    public static RegisterDelayedStepTriggerEffect aboutSought(StepTrigger step, CardEffect... effects) {
+        return new RegisterDelayedStepTriggerEffect(StepKind.SEEK, step, List.of(effects), null, false, false, false);
+    }
+
+    /** This ability, waiting for a turn after this one ("at the beginning of your next turn's end step"). */
+    public RegisterDelayedStepTriggerEffect waitingForALaterTurn() {
+        return new RegisterDelayedStepTriggerEffect(about, step, effects, player, true, ifAnyStillExiled,
+                alsoIfNothingHappened);
+    }
+
     /** This ability, about {@code thatPlayer} as well, waiting for a turn after this one. */
     public RegisterDelayedStepTriggerEffect ofThatPlayersNextTurn(PlayerSubject thatPlayer) {
         return new RegisterDelayedStepTriggerEffect(about, step, effects, Objects.requireNonNull(thatPlayer, "player"),
@@ -69,6 +81,15 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
 
     /** This ability with "if any of those cards remain exiled". */
     public RegisterDelayedStepTriggerEffect onlyIfAnyStillExiled() {
+        return new RegisterDelayedStepTriggerEffect(about, step, effects, player, afterThisTurn, true,
+                alsoIfNothingHappened);
+    }
+
+    /** This ability with "if that card is in your hand", of one about sought cards. */
+    public RegisterDelayedStepTriggerEffect onlyIfStillInHand() {
+        if (about != StepKind.SEEK) {
+            throw new IllegalArgumentException("Only sought cards went to a hand: " + about);
+        }
         return new RegisterDelayedStepTriggerEffect(about, step, effects, player, afterThisTurn, true,
                 alsoIfNothingHappened);
     }

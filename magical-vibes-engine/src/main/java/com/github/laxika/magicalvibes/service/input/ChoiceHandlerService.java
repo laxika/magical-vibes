@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromCardTypesEffect;
@@ -8509,11 +8511,12 @@ public class ChoiceHandlerService {
         Set<UUID> selectedIds = new java.util.HashSet<>(cardIds);
         if (ctx.exileAllMatchingGraveyardCards()) {
             gameData.playerGraveyards.getOrDefault(targetPlayerId, List.of()).stream()
-                    .filter(card -> cardName.equals(card.getName()) && validIds.contains(card.getId()))
+                    .filter(card -> validIds.contains(card.getId()))
                     .map(Card::getId).forEach(selectedIds::add);
         }
         int exiledCount = 0;
         int handExiledCount = 0;
+        List<UUID> exiledIds = new java.util.ArrayList<>();
 
         // Remove selected cards from hand
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
@@ -8524,6 +8527,7 @@ public class ChoiceHandlerService {
                 addSelectedMultiZoneExileCard(gameData, ctx, targetPlayerId, card);
             }
             exiledCount += toExile.size();
+            toExile.forEach(card -> exiledIds.add(card.getId()));
             handExiledCount = toExile.size();
         }
 
@@ -8531,14 +8535,12 @@ public class ChoiceHandlerService {
         List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
         if (graveyard != null) {
             List<Card> toExile = graveyard.stream().filter(c -> selectedIds.contains(c.getId())).toList();
-            graveyard.removeAll(toExile);
+            permanentRemovalService.removeCardsFromGraveyardForExile(gameData, targetPlayerId, toExile);
             for (Card card : toExile) {
                 addSelectedMultiZoneExileCard(gameData, ctx, targetPlayerId, card);
             }
-            if (!toExile.isEmpty()) {
-                graveyardService.notifyCardsExiledFromGraveyard(gameData, targetPlayerId, toExile);
-            }
             exiledCount += toExile.size();
+            toExile.forEach(card -> exiledIds.add(card.getId()));
         }
 
         // Remove selected cards from library
@@ -8550,18 +8552,25 @@ public class ChoiceHandlerService {
                 addSelectedMultiZoneExileCard(gameData, ctx, targetPlayerId, card);
             }
             exiledCount += toExile.size();
+            toExile.forEach(card -> exiledIds.add(card.getId()));
         }
 
         // Shuffle the target player's library, unless the resolving spell shuffles it itself afterwards
         // (Reap Intellect), so that player shuffles only once.
         boolean shuffledLaterByEffect = isTargetPlayerShuffleStillPending(gameData);
-        if (library != null && !shuffledLaterByEffect) {
+        boolean shuffles = ctx.shufflesLibrary() && !shuffledLaterByEffect;
+        if (library != null && shuffles) {
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
+        }
+        if (ctx.recordsExileStep() && exiledCount > 0 && gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.addToStep(StepKind.EXILE, StepOutcome
+                    .ofObjects(exiledIds, List.of(targetPlayerId))
+                    .withFromHand(handExiledCount));
         }
 
         String exileLog = controllerName + " exiles " + exiledCount + " card" + (exiledCount != 1 ? "s" : "")
-                + " named \"" + cardName + "\" from " + targetName + "'s hand, graveyard, and library."
-                + (shuffledLaterByEffect ? "" : " " + targetName + " shuffles their library.");
+                + " named \"" + cardName + "\" from " + targetName + "'s " + multiZoneExileSourceText(ctx) + "."
+                + (shuffles ? " " + targetName + " shuffles their library." : "");
         gameLogService.append(gameData, GameLog.text(exileLog));
         log.info("Game {} - {} exiled {} card(s) named \"{}\" from {}'s zones",
                 gameData.id, controllerName, exiledCount, cardName, targetName);
@@ -8595,6 +8604,24 @@ public class ChoiceHandlerService {
         List<CardEffect> effects = pending.getEffectsToResolve();
         return effects.subList(Math.min(gameData.pendingEffectResolutionIndex, effects.size()), effects.size())
                 .stream().anyMatch(effect -> effect instanceof ShuffleLibraryEffect shuffle && shuffle.targetPlayer());
+    }
+
+    /** The zones the cards of a multi-zone exile choice could come from, as its log names them. */
+    private static String multiZoneExileSourceText(PendingInteraction.MultiZoneExileChoice ctx) {
+        Set<Zone> zones = ctx.searchedZones().zones();
+        if (zones.isEmpty()) {
+            // No search to show: only a choice that shuffles the library could have found a card there.
+            return ctx.shufflesLibrary() ? "hand, graveyard, and library" : "hand and graveyard";
+        }
+        List<String> names = java.util.stream.Stream.of(Zone.HAND, Zone.GRAVEYARD, Zone.LIBRARY)
+                .filter(zones::contains)
+                .map(zone -> zone.name().toLowerCase(java.util.Locale.ROOT))
+                .toList();
+        return switch (names.size()) {
+            case 1 -> names.getFirst();
+            case 2 -> names.getFirst() + " and " + names.getLast();
+            default -> names.get(0) + ", " + names.get(1) + ", and " + names.get(2);
+        };
     }
 
     private void addSelectedMultiZoneExileCard(GameData gameData,

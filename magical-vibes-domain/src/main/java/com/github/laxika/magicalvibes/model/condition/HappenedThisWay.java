@@ -22,13 +22,14 @@ import java.util.Objects;
  *
  * <p>{@code filter} is "if a [Dinosaur | nonred permanent] is dealt damage this way", "if you sacrifice an Island this
  * way" ({@link #toA}): one of the permanents the step recorded, as it is on the battlefield now, matches it
- * ({@code minimum} is then 1). A permanent a sacrifice or destroy step removed is judged as it last existed on the
+ * ({@code minimum} is then 1). A permanent a sacrifice, destroy or exile step removed is judged as it last existed on the
  * battlefield, with its layered characteristics (CR 608.2h).
  *
  * <p>{@code cardFilter} is "if it was a creature card", "when you exile a nonland card this way", "if a land card is
  * discarded this way" ({@link #toACard}): one of the cards an {@link StepKind#EXILE} step exiled from a graveyard, a
  * library or a hand, or a {@link StepKind#DISCARD} step discarded, matches it, judged as the card is now wherever it
- * went (a card keeps its characteristics in a graveyard or exile; CR 608.2h).
+ * went (a card keeps its characteristics in a graveyard or exile; CR 608.2h); a permanent an exile step exiled as the
+ * card it became in exile ("if the exiled card is a God card", Deicide).
  *
  * @param kind       the kind of step read
  * @param minimum    the least amount the step must have recorded; at least 1
@@ -176,6 +177,7 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
             case MANIFEST -> "manifested";
             case TRANSFORM -> "transformed";
             case PUT_INTO_GRAVEYARD -> "put into a graveyard";
+            case SEEK -> "sought";
         };
     }
 }

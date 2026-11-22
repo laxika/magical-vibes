@@ -146,8 +146,8 @@ public class MultiPermanentChoiceHandlerService {
     private final PermanentCounterSupport permanentCounterSupport;
     private final AnimationSupport animationSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.FlickerEffectHandler flickerEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.ExileAndCloakDisguisedCreaturesEffectHandler
-            exileAndCloakDisguisedCreaturesEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ExileFaceDownPileEffectHandler
+            exileFaceDownPileEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ExileSelfAndSaddledCreatureEffectHandler
             exileSelfAndSaddledCreatureEffectHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopiesOfSaddledCreatureEffectHandler
@@ -865,18 +865,9 @@ public class MultiPermanentChoiceHandlerService {
                 && !flickerEffectHandler.eligibleChoices(gameData, flickerChoice).containsAll(permanentIds)) {
             throw new IllegalStateException("A selected permanent is no longer an eligible permanent you control");
         }
-        if (context instanceof MultiPermanentChoiceContext.RecloakDisguisedCreatures
-                && permanentIds.stream().anyMatch(id -> {
-                    Permanent permanent = gameQueryService.findPermanentById(gameData, id);
-                    return permanent == null
-                            || permanent.isFaceDown()
-                            || !playerId.equals(gameQueryService.findPermanentController(gameData, id))
-                            || !gameQueryService.isCreature(gameData, permanent)
-                            || !gameQueryService.hasKeyword(
-                            gameData, permanent, Keyword.DISGUISE);
-                })) {
-            throw new IllegalStateException(
-                    "A selected permanent is no longer a face-up creature with disguise you control");
+        if (context instanceof MultiPermanentChoiceContext.ExileInFaceDownPile pile
+                && !exileFaceDownPileEffectHandler.canChoose(gameData, permanentIds, pile)) {
+            throw new IllegalStateException("A selected permanent can't be chosen for the face-down pile");
         }
         if (context instanceof MultiPermanentChoiceContext.CreateTokenCopiesOfChosenDistinctControlledTokens) {
             Set<String> chosenNames = new HashSet<>();
@@ -1036,8 +1027,8 @@ public class MultiPermanentChoiceHandlerService {
                     && !gameData.interaction.isAwaitingInput()) {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
             }
-        } else if (context instanceof MultiPermanentChoiceContext.RecloakDisguisedCreatures ctx) {
-            exileAndCloakDisguisedCreaturesEffectHandler.completeChoice(gameData, permanentIds, ctx);
+        } else if (context instanceof MultiPermanentChoiceContext.ExileInFaceDownPile ctx) {
+            exileFaceDownPileEffectHandler.completeChoice(gameData, permanentIds, ctx);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof MultiPermanentChoiceContext.ExileSelfAndSaddledCreature ctx) {
             exileSelfAndSaddledCreatureEffectHandler.completeChoice(gameData, permanentIds, ctx);

@@ -1072,16 +1072,6 @@ public class GraveyardChoiceHandlerService {
                     + multiGraveyardChoice.maxTotalManaValue() + " limit");
         }
 
-        var deadlyCoverUpContext = gameData.graveyardTargetOperation.resolutionTimeDeadlyCoverUp;
-        if (deadlyCoverUpContext != null && deadlyCoverUpContext.chosenCardId() == null) {
-            gameData.graveyardTargetOperation.resolutionTimeDeadlyCoverUp =
-                    new com.github.laxika.magicalvibes.model.GraveyardTargetOperationState.DeadlyCoverUpContext(
-                            cardIds.getFirst());
-            gameData.interaction.clearAwaitingInput();
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
         if (gameData.graveyardTargetOperation.resolutionTimeCollectEvidenceResume) {
             gameData.graveyardTargetOperation.resolutionTimeCollectEvidenceResume = false;
             gameData.rerunCurrentEffectAfterInteraction = false;

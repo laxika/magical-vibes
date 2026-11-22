@@ -13,15 +13,27 @@ import java.util.Objects;
  * gets none.
  *
  * @param cards        the cards that get the counters
- * @param timeCounters how many time counters each gets
+ * @param timeCounters        how many time counters each gets; 0 when it is each card's own mana value
+ * @param equalToEachManaValue "a number of time counters on it equal to its mana value"; a card of mana value 0 gets
+ *                            none, so it isn't suspended (CR 702.62b)
  */
-public record PutTimeCountersAndGainSuspendEffect(CardSubject cards, int timeCounters) implements CardEffect {
+public record PutTimeCountersAndGainSuspendEffect(CardSubject cards, int timeCounters, boolean equalToEachManaValue)
+        implements CardEffect {
 
     public PutTimeCountersAndGainSuspendEffect {
         Objects.requireNonNull(cards, "cards");
-        if (timeCounters < 1) {
-            throw new IllegalArgumentException("timeCounters must be positive");
+        if (equalToEachManaValue ? timeCounters != 0 : timeCounters < 1) {
+            throw new IllegalArgumentException("timeCounters must be positive, or each card's mana value");
         }
+    }
+
+    public PutTimeCountersAndGainSuspendEffect(CardSubject cards, int timeCounters) {
+        this(cards, timeCounters, false);
+    }
+
+    /** "With a number of time counters on it equal to its mana value", on the cards the exile step exiled. */
+    public static PutTimeCountersAndGainSuspendEffect equalToManaValueOnCardsExiledThisWay() {
+        return new PutTimeCountersAndGainSuspendEffect(Subjects.cardsThisWay(StepKind.EXILE), 0, true);
     }
 
     /** The cards the preceding exile step of the same resolution exiled. */

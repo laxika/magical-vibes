@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerGainsControlOfOwned
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
@@ -35,7 +36,7 @@ public class EachPlayerGainsControlOfOwnedPermanentsMatchingEffectHandler implem
         List<OwnedPermanent> toReturn = new ArrayList<>();
         gameData.forEachPermanent((controllerId, permanent) -> {
             UUID ownerId = gameData.defaultControllerOf(permanent.getId());
-            if (ownerId != null
+            if (ownerId != null && needsPermanentControlByOwner(gameData, permanent, ownerId, controllerId)
                     && predicateEvaluationService.matchesPermanentPredicate(
                     permanent, resolvingEffect.filter(), FilterContext.of(gameData)
                             .withSourceControllerId(entry.getControllerId()))) {
@@ -48,6 +49,21 @@ public class EachPlayerGainsControlOfOwnedPermanentsMatchingEffectHandler implem
             creatureControlService.applyControlEffect(gameData, ownedPermanent.ownerId(), ownedPermanent.permanent(),
                     controlEffect, Duration.PERMANENT, null, entry.getCard().getName());
         }
+    }
+
+    /**
+     * An owner already holding a permanent through a temporary control effect still gains control of it permanently,
+     * so the permanent effect outlives the temporary one. One whose newest control effect already gives it to its
+     * owner permanently, or that has none, needs no new effect.
+     */
+    private boolean needsPermanentControlByOwner(GameData gameData, Permanent permanent, UUID ownerId,
+                                                 UUID controllerId) {
+        if (!ownerId.equals(controllerId)) {
+            return true;
+        }
+        FloatingContinuousEffect newest = gameData.newestControlEffectFor(permanent.getId());
+        return newest != null && !(Duration.PERMANENT.equals(newest.duration())
+                && ownerId.equals(gameData.resolveControlEffectController(newest)));
     }
 
     private record OwnedPermanent(UUID ownerId, Permanent permanent) {

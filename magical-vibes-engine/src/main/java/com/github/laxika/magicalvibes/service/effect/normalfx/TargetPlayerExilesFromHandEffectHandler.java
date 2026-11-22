@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -29,6 +31,7 @@ public class TargetPlayerExilesFromHandEffectHandler implements NormalEffectHand
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
         var e = (TargetPlayerExilesFromHandEffect) effect;
 
         UUID targetPlayerId = entry.getTargetId();

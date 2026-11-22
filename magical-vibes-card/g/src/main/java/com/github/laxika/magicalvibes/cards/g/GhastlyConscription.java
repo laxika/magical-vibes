@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.g;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromTargetGraveyardThenManifestEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.ExileFaceDownPileEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 @CardRegistration(set = "FRF", collectorNumber = "70")
 @CardRegistration(set = "C19", collectorNumber = "115")
@@ -10,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileCreaturesFromTargetGrave
 public class GhastlyConscription extends Card {
 
     public GhastlyConscription() {
-        addSpellEffect(new ExileCreaturesFromTargetGraveyardThenManifestEffect());
+        addSpellEffect(ExileFaceDownPileEffect.thenManifest(new ExileFaceDownPileEffect.AllFromGraveyard(
+                Subjects.targetPlayer(), new CardTypePredicate(CardType.CREATURE))));
     }
 }

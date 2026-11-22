@@ -37,7 +37,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.ExileFromHandWithRefineCountersChoice.class);
+                .isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
         harness.handleCardChosen(player1, 1);
 
         assertThat(gd.findExiledCard(ritual.getId())).isNotNull();
@@ -125,7 +125,7 @@ class UvildaDeanOfPerfectionTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(bears, curve);
         assertThat(gd.findExiledCard(bears.getId())).isNull();
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.ExileFromHandWithRefineCountersChoice.class);
+                .isInstanceOf(PendingInteraction.ExileFromHandChoice.class);
 
         harness.handleCardChosen(player1, 1);
         assertThat(gd.findExiledCard(curve.getId())).isNotNull();
