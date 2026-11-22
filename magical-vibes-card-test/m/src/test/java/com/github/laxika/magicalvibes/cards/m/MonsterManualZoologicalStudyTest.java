@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.z.ZoologicalStudy;
@@ -12,7 +13,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,12 +35,11 @@ class MonsterManualZoologicalStudyTest extends BaseCardTest {
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
 
-        List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
-        assertThat(choice.validIndices()).containsExactly(indexOf(graveyard, creature));
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.cards()).containsExactly(creature);
 
-        harness.handleGraveyardCardChosen(player1, indexOf(graveyard, creature));
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(creature);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -120,12 +119,12 @@ class MonsterManualZoologicalStudyTest extends BaseCardTest {
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
 
-        List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
-        assertThat(choice.validIndices()).containsExactly(indexOf(graveyard, milledCreature));
-        assertThat(choice.mandatory()).isTrue();
-        harness.handleGraveyardCardChosen(player1, indexOf(graveyard, milledCreature));
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.cards()).containsExactly(milledCreature);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        harness.handleMultipleCardsChosen(player1, List.of(milledCreature.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(milledCreature);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(oldCreature, land);
@@ -150,12 +149,5 @@ class MonsterManualZoologicalStudyTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Monster Manual");
         assertThat(gd.findExiledCard(card.getId())).isNull();
-    }
-
-    private int indexOf(List<Card> cards, Card card) {
-        return IntStream.range(0, cards.size())
-                .filter(index -> cards.get(index).getId().equals(card.getId()))
-                .findFirst()
-                .orElseThrow();
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.c.CoastWatcher;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -148,5 +149,21 @@ class SoulCollectorTest extends BaseCardTest {
         gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
         resolveCombat();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("A card that left the graveyard and came back is not returned")
+    void doesNotReturnACardThatLeftTheGraveyardAndCameBack() {
+        addCreatureReady(player1, new SoulCollector());
+        Permanent watcher = addCreatureReady(player2, new CoastWatcher());
+
+        declareAttackersAndPrepareBlockers(List.of(0));
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        resolveCombat();
+        gd.markGraveyardExit(watcher.getCard().getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Coast Watcher");
+        harness.assertInGraveyard(player2, "Coast Watcher");
     }
 }

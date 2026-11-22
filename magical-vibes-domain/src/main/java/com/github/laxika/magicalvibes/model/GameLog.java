@@ -78,6 +78,12 @@ public final class GameLog {
         return builder().card(card).text(suffix).build();
     }
 
+    /** As {@link #cardThen}, but a card that is in exile face down isn't named (CR 406.3). */
+    public static GameLogEntry cardThenUnlessHidden(GameData gameData, Card card, String suffix) {
+        return gameData.isExiledFaceDown(card.getId())
+                ? text("A face-down card in exile" + suffix) : cardThen(card, suffix);
+    }
+
     /** "{prefix}{card}{suffix}" — for messages with a card name in the middle. */
     public static GameLogEntry textCardText(String prefix, Card card, String suffix) {
         return builder().text(prefix).card(card).text(suffix).build();

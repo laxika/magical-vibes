@@ -213,7 +213,6 @@ public class ChoiceHandlerService {
     private final AmountEvaluationService amountEvaluationService;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport lifeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PlayerInteractionSupport playerInteractionSupport;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.BounceSupport bounceSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport damageSupport;
     private final EachPlayerChoosesColorThenExileOtherPermanentsEffectHandler
             eachPlayerChoosesColorThenExileOtherPermanentsEffectHandler;
@@ -1150,10 +1149,6 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseColorThenDiscardFromTargetHandChoice ctx) {
             handleChooseColorThenDiscardFromTargetHandChoice(gameData, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.ReturnAllPermanentsOfChosenColorChoice ctx) {
-            handleReturnAllPermanentsOfChosenColorChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.DestroyAllPermanentsOfChosenColorChoice ctx) {
@@ -5138,20 +5133,6 @@ public class ChoiceHandlerService {
         if (!gameData.interaction.isAwaitingInput()) {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
         }
-    }
-
-    private void handleReturnAllPermanentsOfChosenColorChoice(GameData gameData, String chosenValue,
-            ChoiceContext.ReturnAllPermanentsOfChosenColorChoice ctx) {
-        CardColor color = CardColor.valueOf(chosenValue);
-
-        gameData.interaction.clearAwaitingInput();
-
-        if (gameData.pendingEffectResolutionEntry != null) {
-            bounceSupport.applyReturnAllPermanentsOfColorToHand(gameData,
-                    gameData.pendingEffectResolutionEntry, color, ctx.filter());
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
     private void handleDestroyAllPermanentsOfChosenColorChoice(GameData gameData, String chosenValue,

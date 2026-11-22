@@ -149,6 +149,11 @@ public class SubjectResolutionService {
                     .toList();
             case CardSubject.TargetCard target -> targetCard(gameData, entry, target);
             case CardSubject.TriggeringCards triggering -> triggeringCards(gameData, entry, triggering);
+            case CardSubject.SourceCard ignored -> sourceCard(gameData, entry);
+            case CardSubject.InYourGraveyard yours -> locatedCards(gameData, entry, effect, yours.cards()).stream()
+                    .filter(located -> located.zone() == Zone.GRAVEYARD
+                            && entry.getControllerId().equals(located.ownerId()))
+                    .toList();
         };
     }
 
@@ -253,7 +258,9 @@ public class SubjectResolutionService {
                     continue;
                 }
                 LocatedCard found = locate(gameData, card.cardId(), card.zone());
-                if (found != null) {
+                // A destroyed or sacrificed token is no card, in the moment before it ceases to exist (CR 108.2b).
+                if (found != null && !((kind == StepKind.DESTROY || kind == StepKind.SACRIFICE)
+                        && found.card().isToken())) {
                     located.add(found);
                 }
             }
@@ -261,26 +268,62 @@ public class SubjectResolutionService {
         return located;
     }
 
-    /** {@link CardSubject.TriggeringCards}: the event's cards in the graveyard stay it put them in (CR 400.7). */
+    /**
+     * {@link CardSubject.TriggeringCards}: the event's cards in the graveyard stay it put them in, the one card of an
+     * event that exiled it in that exile stay, face up or face down (CR 400.2, 400.7e). The filter sees a card exiled
+     * face down as a card with no characteristics (CR 406.3a).
+     */
     private List<LocatedCard> triggeringCards(GameData gameData, StackEntry entry,
                                               CardSubject.TriggeringCards triggering) {
         List<UUID> ids = entry.triggeringCardIds();
-        if (ids.isEmpty() && entry.getTriggeringCardId() != null) {
-            ids = List.of(entry.getTriggeringCardId());
+        // An ability of the exiled object's own ("when this is put into exile") is about its card.
+        UUID eventCardId = entry.getTriggeringCardId() == null && entry.getTriggeringCardExileEntryVersion() >= 0
+                ? entry.getCard().getId() : entry.getTriggeringCardId();
+        if (ids.isEmpty() && eventCardId != null) {
+            ids = List.of(eventCardId);
         }
         List<LocatedCard> named = new ArrayList<>();
         for (UUID id : new LinkedHashSet<>(ids)) {
-            long stay = gameData.graveyardEntryVersion(id);
-            if (entry.getEventCardGraveyardEntryVersions().getOrDefault(id, stay) != stay) {
+            LocatedCard card;
+            boolean faceDown = false;
+            if (id.equals(eventCardId) && entry.getTriggeringCardExileEntryVersion() >= 0) {
+                ExiledCardEntry exiled = gameData.findExiledCard(id);
+                card = exiled == null || gameData.exileEntryVersions.getOrDefault(id, 0L)
+                        != entry.getTriggeringCardExileEntryVersion()
+                        ? null : new LocatedCard(exiled.card(), Zone.EXILE, exiled.ownerId());
+                faceDown = exiled != null && exiled.faceDown();
+            } else {
+                long stay = gameData.graveyardEntryVersion(id);
+                Long eventStay = entry.getEventCardGraveyardEntryVersions().get(id);
+                if (eventStay != null ? eventStay != stay
+                        : id.equals(entry.getTriggeringCardId()) && !entry.isTriggeringCardIncarnation(stay)) {
+                    continue;
+                }
+                card = locate(gameData, id, Zone.GRAVEYARD);
+            }
+            if (card == null || card.card().isToken()) {
                 continue;
             }
-            LocatedCard card = locate(gameData, id, Zone.GRAVEYARD);
-            if (card != null && (triggering.filter() == null || predicateEvaluationService.matchesCardPredicate(
-                    card.card(), triggering.filter(), entry.getCard().getId(), gameData, card.ownerId()))) {
-                named.add(card);
+            if (triggering.filter() != null) {
+                // A card of its own, so neither the hidden face nor what is remembered by its id is read.
+                Card judged = faceDown ? Card.namedRuntimePlaceholder("") : card.card();
+                if (!predicateEvaluationService.matchesCardPredicate(
+                        judged, triggering.filter(), entry.getCard().getId(), gameData, card.ownerId())) {
+                    continue;
+                }
             }
+            named.add(card);
         }
         return named;
+    }
+
+    /** {@link CardSubject.SourceCard}: the ability's card in the graveyard stay it was put on the stack from. */
+    private List<LocatedCard> sourceCard(GameData gameData, StackEntry entry) {
+        UUID cardId = entry.getCard().getId();
+        long stay = entry.sourceCardGraveyardEntryVersion();
+        LocatedCard card = stay >= 0 && gameData.graveyardEntryVersion(cardId) != stay
+                ? null : locate(gameData, cardId, Zone.GRAVEYARD);
+        return card == null ? List.of() : List.of(card);
     }
 
     /**

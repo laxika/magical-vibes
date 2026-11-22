@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 9 done: Exile and Each closed, with the reveal, per-player search, mana payment and shuffle steps built in run 9; next Return) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 10: Exile and Each closed; Return done but 17 rare records on five shared blockers named in run 10; next those, then Put) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -615,6 +615,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 7 | Exile: the five shared blockers with their ledgered rows, the family's rare tail closed; Each started | done for Exile, Each open (51 audited: 8 absorbed, 21 split, 12 survivors, 5 blocked-other, 2 blocked-step-model, 3 unique; 50 card files changed; `ExileCardsWithSameNameEffect`, `ExileCardFromHandEffect`, `ExileFaceDownPileEffect`, `revealedBy` on the reveal-until step, `StepKind.SEEK`; four ledgered Exile causes and 113 rare Each records left) |
 | 8 | The five shared blockers run 7 named with their ledgered rows; Each's rare tail, continued | done for the blockers, Each open (77 audited: 6 absorbed, 19 split, 1 dead, 15 survivors, 27 blocked-player-loop, 1 blocked-step-model, 3 blocked-other, 5 unique; 34 card files changed; `StepKind.CHOOSE`, `ChooseCardEffect`, `ChoosePlayerAtRandomEffect`, `BecomeCopyOfSubjectEffect`, `RegisterDelayedEventTriggerEffect`, EXILE recorded by the exile wipe and the revealed-hand choice; 69 rare Each records left) |
 | 9 | The Yangchen fix, run 8's shared blockers with the waiting records and ledgered rows, the rest of Each's rare tail | done, Each closed (101 rows: 26 absorbed, 18 split, 1 dead, 17 survivors, 33 blocked-player-loop, 4 blocked-other, 2 unique; 76 card files changed; `StepKind.REVEAL`, `PAY_MANA`, `SHUFFLE_INTO_LIBRARY`, `EachPlayerSearchesLibraryEffect`, `EachPlayerPaysAnyManaEffect`, `PutCardsOntoBattlefieldEffect`, `villainousChoiceFacedBy`) |
+| 10 | Run 9's two search defects, the Return family's shared blockers with the waiting rows, then its rare tail | done but 17 rare Return records (95 rows: 20 absorbed, 14 split, 3 dead, 8 survivors, 14 blocked-other, 36 unique; 53 card files changed; `ReturnChosenPermanentsToHandEffect`, `cardsThisWay(RETURN)`, `triggeringCards()` / `sourceCard()` / `inYourGraveyard`, `PutCardsOntoBattlefieldEffect` with controller, face down and entering effects; Krenko's Buzzcrusher on the search queue) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -6972,6 +6973,160 @@ needs three players (the villainous choice's order, several losers).
   records (their own loop, no recorded step), the counter-on-match record (the triggering spell as a counter subject).
 - The other villainous-choice records (Ensnared by the Mara, the Genesis, Great Intelligence and Master ones) can take
   `TargetPlayerChoosesOneEffect` in their families' runs; removing the dead hand-choice flag belongs to Choose.
+
+### Step 9, run 10 (2026-11-22, Return mostly done)
+
+The two search defects run 9 saw, the shared blockers of the Return family with the ledger rows that waited for them, then the family's
+rare records. Ratchet 4,450 / 3,686 → 4,415 / 3,651 records / handlers (37 records and 37 handlers deleted, 2 and 2 added). 53 card files
+changed by scratch scripts (Meren only lost an unused import). Oracle text checked with `get_card` for all 53 (an adventure half under its
+front face); rulings with `get_rulings` where the handler or the text left a doubt. CR 101.2, 101.4, 108.2b, 110.2a, 111.8, 115.1, 205.1a, 303.4f,
+303.4g, 400.2, 400.3, 400.4a, 400.7, 400.7e, 400.7j, 406.3, 406.3a, 603.3d,
+603.6, 603.6a, 603.6c, 603.7c, 603.10a, 608.2d, 608.2e, 608.2h, 614.1c, 701.17c, 701.23a, 707.2, 708.2a,
+708.3 and 708.9 checked with `get_rule` (2026-11-22).
+
+| Family | Audited | Absorbed | Split | Survivor | Dead | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|---|
+| Return | 87 rows (80 of the 97 rare records, ledgered rows, survivors) | 20 | 10 | 4 (one new record) | 3 | 14 other: each a gap one or two classes have (named in its note) | 36 | 17 rare records on the five shared blockers below; 27 records of three or more cards |
+| Other families (waiting rows and the steps they use) | 8 rows | 0 | 4 (Mill) | 4 (one new record) | 0 | 0 | 0 | Mill none, Perpetually 57, Put 97. All families: 2,537 rare records without a row |
+
+- **Chosen permanents to a hand.** New `ReturnChosenPermanentsToHandEffect` (candidates subject, minimum, maximum), recording RETURN. It
+  took five records (10 cards) with their three prompts and contexts.
+- **What a return left.** RETURN records each permanent returned to a hand as it last existed and the cards in that hand:
+  `AmountThisWay(RETURN, POWER)`, and `cardsThisWay(RETURN)` for perpetual riders (digital only, as a sought card). Five records went with
+  it, `PerpetuallyBoostCardEffect.toCards` and the new `PerpetuallyChangeCastCostEffect`.
+- **That card, this card.** `triggeringCards()` also names the card an event exiled, face up or face down, and checks a single event card's stay;
+  `sourceCard()` and `inYourGraveyard(cards)` are new. `PutCardsIntoHandEffect` takes graveyard cards.
+  `PutCardsOntoBattlefieldEffect` takes a controller, face-down characteristics and what a card enters with (counters, effects without a
+  duration). They took 15 of the family's records and the four Mill rows whose second half is "put into your hand".
+- **Search queue.** `startNextEachPlayerBasicLandSearch`, its two follow-up components and the deferred-lands `GameData` field are gone
+  with their only user, Krenko's Buzzcrusher.
+
+**Behaviour changes.**
+
+1. Krenko's Buzzcrusher's "may search" is the queue's: asked under Aven Mindcensor whatever the library holds, nothing logged of it, who
+   takes no card hasn't searched (Oracle; CR 701.23a). `KrenkosBuzzcrusherTest.mindcensoredMaySearchDoesNotDependOnTheLibrary` (failed
+   before the fix). What was found enters together (CR 608.2e). `.foundLandsEnterTogether`.
+2. Borderland Explorer's finds are set aside and revealed together after the last search (its ruling).
+   `BorderlandExplorerTest.findsAreRevealedTogether` (failed before the fix).
+3. A card that left its graveyard or exile and came back is not returned by Ashnod's Intervention, Kaya the Inexorable, Soul Collector,
+   Dread Slaver, Ashcloud Phoenix, Deathmist Raptor (face down), Missy, Princess Yue, Vraska, Yarus, It That Betrays (graveyard), Cleansing
+   Meditation and Heart-Shaped Herb (CR 400.7).
+   `AshnodsInterventionTest.doesNotReturnACardExiledAgain`, `SoulCollectorTest.doesNotReturnACardThatLeftTheGraveyardAndCameBack`,
+   `DeathmistRaptorTest.doesNotReturnFaceDownAfterLeavingTheGraveyard`,
+   `YarusRoarOfTheOldGodsTest.doesNotReturnACardThatLeftTheGraveyardAndCameBack`.
+4. Permanents one instruction returns leave as one event (CR 603.10a): Wash Out, Dromar, Llawan, Trial, Cephalid Constable, Kazandu
+   Stomper, Khalni Gem, Split the Party, the sweep spells and Rambling Possum. `WashOutTest.permanentsLeaveAsOneEvent`,
+   `TrialErrorTest.trialReturnsAsOneEvent`, `CephalidConstableTest.targetsLeaveAsOneEvent`,
+   `SplitThePartyTest.chosenCreaturesLeaveAsOneEvent`.
+5. Mistblade Shinobi's target is chosen as the ability is put on the stack, the "may" as it resolves (CR 603.3d, 115.1; it chose among
+   hexproof-checked permanents as it resolved). `MistbladeShinobiTest`'s four cases.
+6. The returns now on the entry batch ask what a returned Aura enchants (It That Betrays' ruling; CR 303.4f, 303.4g) and a face-up card's
+   as-enters choices. `ItThatBetraysTest.returnedAuraAsksWhatItEnchants`.
+7. A card returned face down is seen entering (CR 603.6a; Yedora's Forest triggers landfall, Missy's Cyberman creature watchers) and
+   none of its own as-enters choices is asked, nor is it named as it enters (CR 708.3).
+   `YedoraGraveGardenerTest.returningForestTriggersLandfall`, `MissyTest.faceDownReturnAsksNoEntryChoice`.
+8. Vraska's Treasure and Princess Yue's Moon are effects on the permanent: what Vraska makes it is no copiable value (CR 707.2, 205.1a;
+   her ruling on what it keeps). `VraskaTheSilencerTest.payingReturnsCreatureAsTappedTreasure`.
+9. Lae'zel's Acrobatics' delayed return doesn't return a card that left exile and was exiled again (CR 603.7c, 400.7).
+   `LaezelsAcrobaticsTest.delayedReturnDoesNotFollowACardExiledAgain`.
+10. A milled card a replacement exiled can be put into the hand also by Grub's Command, Free the Fae, Speak Secrets and Zoological Study
+    (CR 701.17c). `GrubsCommandTest.milledGoblinExiledInsteadIsPutIntoHand`.
+11. Heart-Shaped Herb doesn't offer a sacrifice with no creature to sacrifice, and takes a lone one unasked (CR 608.2d).
+    `HeartShapedHerbTest.noCreatureToSacrificeDoesNotMakeMonarch`.
+12. A destroyed, sacrificed or triggering token is no card to a card subject (CR 108.2b), and a perpetual rider after a return marks the
+    returned physical card. `StarfallInvocationTest`'s token cases.
+13. AI only: Grub's mill is benign as `MillEffect`'s target; Consign to Dream's polarity is its bounce half's; three dies / sacrifice
+    returns no longer carry `ControlStealingEffect`, which the AI reads only on spells and enters abilities.
+14. Log lines and prompt classes are the steps'.
+15. "That card" finds a card exiled face down, in that stay: exile is a public zone (CR 400.2, 400.7e; CR 406.3 says only who may look).
+    Athreos, Kaya's Ghostform, Ashnod's Intervention and Kaya the Inexorable keep what their old handlers did; It That Betrays gains it,
+    whose handler skipped such a card. A card put onto the battlefield from there is face up unless the effect says otherwise.
+    `AthreosShroudVeiledTest.returnsACreatureExiledFaceDownFaceUp` and `AshnodsInterventionTest.returnsACreatureExiledFaceDownWithoutNamingIt`
+    use The Foretold Soldier's own exile; `TriggeringCardsFaceDownExileTest` is engine level, for the readers no card combines with it.
+16. A filter of `triggeringCards` sees a card exiled face down without characteristics (CR 406.3a), and `CardIsPermanentPredicate` accepts
+    a card without a type. Conspiracy Theorist is the only filtered user and none of this applies to it: its discard records set no exile
+    stay, so it reads only the graveyard.
+17. A permanent put into a graveyard and exiled from there in the same batch records no exile stay: "that card" of a dies trigger is
+    looked for only in the first zone (CR 603.6c). `AthreosShroudVeiledTest.doesNotFollowADeadCreatureToItsSecondZone` (failed before).
+18. The choice, perpetual cost and type, counter, suspend and plot steps don't name a card in exile face down in their log line
+    (CR 406.3); the put into a hand already didn't.
+
+**Conditions against the deleted handlers.** Stays: items 3 and 9 (CR 400.7, 603.7c). Tokens: no card to return (CR 108.2b, 111.8). The
+graveyard and controller conditions of `inYourGraveyard` are the old handlers'. The entry batch's "can't enter" check is new on Athreos's
+exile half and the returns whose handler had none (CR 101.2), and such a card, or an Aura without a host (CR 303.4g), stays without a log
+line. Face down was the only narrowing without a rule behind it.
+
+**Seen, not changed.**
+
+- `ReturnDyingOpponentCreatureUnderYourControlEffect` (Necroskitter, Lim-Dûl the Necromancer, The Reaper, King No More), the four
+  host-choosing Aura returns (Traveling Plague, Takklemaggot, Infectious Rage, Reins of the Vinesteed) and Gift of Immortality's creature
+  return a card that left the graveyard and came back (CR 400.7: no stay check in their handlers).
+- Infectious Rage returns under its owner's control; the instructed player is the ability's controller (CR 110.2a).
+- Reins of the Vinesteed reads the dead creature's printed subtypes, not its types as it last existed (CR 608.2h).
+- Veko adds Spirit where "becomes a Spirit" replaces the creature types (CR 205.1a).
+- Kairi's bound reads a face-down permanent's card mana value (CR 708.2a), and it, Leadership Vacuum and Resounding Wave's cycling return
+  one permanent at a time (CR 603.10a). Resounding Wave's cycling trigger also chooses up to two as it resolves where its text has two
+  targets (CR 603.3d).
+- Vault 13's chapter III asks a host for the first of several returned Auras only; the others stay in exile (CR 303.4f).
+- Unfinished Business puts its two attachments onto the battlefield one after the other.
+- Rambling Possum offers only saddlers its controller still controls; its text doesn't say "you control".
+- A face-down entry's triggers are suppressed by the card's printed types, so a face-down Forest of a creature card counts as a creature
+  to a "creatures entering don't cause triggers" effect (CR 708.2a).
+- The chosen returns to a hand don't leave out a permanent that can't be chosen (`CantBeChosenEffect`, one playtest card whose text
+  Scryfall didn't return here).
+
+- `cardsThisWay(kind, filter)`, the readers that copy, offer to cast or read the name or mana value of a named card, and the entry
+  batch's "can't enter" filter read a face-down exiled card's hidden face (CR 406.3a); no card points the first readers at
+  `triggeringCards`.
+- An entry from face-down exile that asks its controller a choice (an Aura's host) names the card in that player's prompt as it enters,
+  also to a controller who couldn't look at it (CR 406.3); the opponent doesn't get the prompt (tested).
+- Neither the old returns nor the entry batch check that the card is a permanent card, so a manifested instant that died can come back
+  face up (CR 400.4a).
+
+**Tests edited.** The new cases above. Renamed prompts, same assertions: `KhalniGemTest` (one prompt for both lands),
+`StarfallInvocationTest`, `PatientNaturalistTest`, `PicklockPranksterFreeTheFaeTest`, `MostDecrepitOldBirdTest` and
+`MonsterManualZoologicalStudyTest` (the choice step, answered by card id). `MistbladeShinobiTest` asserted the timing item 5 fixes.
+`VraskaTheSilencerTest` asserted that the card's printed type changes (item 8) and now reads the layered type and subtypes.
+`HeartShapedHerbTest` lost the answer to a choice with one option, and one case the offer CR 608.2d forbids.
+`ReturnToHandEffectHandlerTest` builds `BounceSupport` without its unused collaborator; `CardImmutabilityArchTest` no longer lists
+Vraska's handler. Deleted with their code: `LibrarySearchSupportEachPlayerBasicLandTest`, five queue cases of
+`LibraryChoiceHandlerServiceTest` (the queue's card tests cover them), `ReturnDiscardedCardFromGraveyardToHandEffectHandlerTest` (Pitchstone
+Wall's tests cover it) and `ReturnPermanentsOnCombatDamageToPlayerEffectHandlerTest` (it tested the choose-at-resolution branch item 5
+removes).
+
+**Tests run.** One Gradle run of the final tree, one `--tests` list per task, counted from that run's XML by file name: 640 classes
+(955 suites, 9,492 cases, 29 skipped by `TriggerRouteRecordTest`'s assumptions), all pass: every changed card's tests and the fronts
+constructing one, every card test of the new and changed steps, of the cards reading the changed subjects and of Aven Mindcensor, Panglacial
+Wurm, Opposition Agent and Stormfront Riders, samples of `ReturnToHandEffect` (110), `ReturnCardFromGraveyardEffect` (90),
+`SearchLibraryEffect` (90) and `MillEffect` (30), the application's architecture tests and the application and AI tests naming a changed
+class. After it only a banner comment left a service test, which was rerun with `EffectCountRatchetTest`. The application, AI, engine
+testFixtures and all 26 letters' card-test sources compile. Not run: the full suites, the AI fuzz and stress tests, the frontend. Not
+tested: more than two players; a copy or other as-enters choice (beyond the Aura's) on the returns moved to the entry batch; that the new
+cases other than the two search fixes fail on HEAD.
+
+After the orchestrator's review (items 15 to 18): 12 of the 14 new cases failed before the fix (the two that pass both ways assert that
+a hidden card which stays is not named), then one run of 177 classes (209 suites, 1,981 cases), all pass: the tests of every `triggeringCards` and `sourceCard` user,
+of the readers of the exile stay and of the changed log lines, the card tests using Leyline of the Void or Rest in Peace,
+`TriggeringCardsFaceDownExileTest`, `EffectCountRatchetTest` and `CardImmutabilityArchTest`. Not run: the other users of
+`CardIsPermanentPredicate` (a null guard only) and of the zone-change record.
+
+**For the next run (the Return family's 17 rare records, then Put 97, Reveal 120).** None of the 17 has a row, as each waits for something
+three or more share; build these first:
+
+- "up to N" on `ChooseCardEffect`: the three milled-offer payload records go with the Mill rows that build them
+  (`MillControllerAndMayReturnMilled...`, the Squirrel, land, counter and perpetual ones, the any-number one). The second half is ready
+  (`PutCardsIntoHandEffect` over graveyard cards); about 30 card tests answer one may per card today and will answer one choice.
+- a `CardSubject` for exiled cards (exiled with the source, by name, with a counter) with that choice: Vault 13, Bag of Devouring,
+  Imbraham, Sengir Nosferatu; also the ledgered Duplicity and Mysterious Limousine rows ("the cards exiled with the source").
+- a creature-type choice step and predicates that read it and the chosen parity, as the colour step has: Raise the Palisade, the
+  Haunting Voyage record, Zimone's Hypothesis; also ledgered Extinction Event and about 25 unaudited chosen-type records elsewhere.
+- one "choose a card for each filter, then they return together" step: Sudden Reclamation, Gruesome Menagerie, Revival Experiment.
+- the four engine-built payloads with baked card ids (`ReturnExiledCardToBattlefieldUnderOwnerControlEffect`,
+  `ReturnExiledCardToHandEffect`, the two delayed graveyard returns): their builders move to `RegisterDelayed*` with
+  `PutCardsOntoBattlefieldEffect` / `PutCardsIntoHandEffect` over the step's cards (both can express the payloads now).
+- Narrowed, still ledgered or unaudited: the triggering-card return heads (`ReturnTriggeringCardFromGraveyardToBattlefieldEffect`,
+  `ReturnDyingCreatureToOwnerBattlefieldEffect` and the two kindred heads) have their one path in `PutCardsOntoBattlefieldEffect`;
+  `SacrificeUnlessReturnOwnPermanentTypeToHandEffect`'s return primitive records RETURN.
 
 ## Prompt
 

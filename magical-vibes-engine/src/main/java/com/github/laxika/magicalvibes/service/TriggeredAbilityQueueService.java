@@ -278,13 +278,10 @@ public class TriggeredAbilityQueueService {
             var combatBounce = pending.effects().stream()
                     .filter(com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect.class::isInstance)
                     .map(com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect.class::cast)
-                    .filter(com.github.laxika.magicalvibes.model.effect.ReturnPermanentsOnCombatDamageToPlayerEffect::targetsChosenAtTriggerTime)
                     .findFirst().orElse(null);
             if (combatBounce != null) {
                 List<UUID> validIds = gameData.playerBattlefields
                         .getOrDefault(pending.attackedTargetId(), List.of()).stream()
-                        .filter(permanent -> combatBounce.filter() == null
-                                || predicateEvaluationService.matchesPermanentPredicate(gameData, permanent, combatBounce.filter()))
                         .filter(permanent -> validTargetService.isValidTriggeredAbilityPermanentTarget(gameData,
                                 pending.sourceCard(), pending.effects(),
                                 com.github.laxika.magicalvibes.model.filter.TargetFilters.permanent(),
@@ -292,7 +289,7 @@ public class TriggeredAbilityQueueService {
                         .map(Permanent::getId).toList();
                 gameData.pollPendingInteraction(PermanentChoiceContext.AttackTriggerTarget.class);
                 // "Up to that many": the damage dealt, the choice's event value.
-                int damage = combatBounce.fixedCount() > 0 ? combatBounce.fixedCount() : pending.eventValue();
+                int damage = pending.eventValue();
                 int maxCount = Math.min(damage, validIds.size());
                 if (maxCount == 0) {
                     // "Up to that many" with none to choose: the ability goes on the stack with no target.

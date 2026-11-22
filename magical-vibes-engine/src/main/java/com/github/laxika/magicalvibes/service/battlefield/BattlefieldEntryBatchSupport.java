@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.service.battlefield;
 
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryLibraryRemainder;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryRequest;
@@ -247,6 +251,12 @@ public class BattlefieldEntryBatchSupport {
             permanent.setProtectorPlayerId(candidate.protectorPlayerId());
             if (candidate.origin() == Zone.EXILE) permanent.setEnteredFromExile(true);
             BattlefieldEntryCard prepared = candidate.withPreparedPermanent(permanent, candidate.afterEntryTriggers());
+            if (candidate.entering() != null && permanent.isFaceDown()) {
+                // Turned face down before it enters, so its card's as-enters choices have no effect (CR 708.3).
+                gameData.pendingBattlefieldEntryRequests.remove(candidate.card().getId());
+                ready.add(prepared);
+                continue;
+            }
             BattlefieldEntryRequest request = gameData.pendingBattlefieldEntryRequests.get(candidate.card().getId());
             request = request == null ? new BattlefieldEntryRequest(candidate.controllerId(), permanent,
                     enterTappedTypes, List.of(), 0, false, List.of()) : request.withPermanent(permanent, List.of());
@@ -301,6 +311,7 @@ public class BattlefieldEntryBatchSupport {
                 if (candidate.origin() == Zone.GRAVEYARD) {
                     permanent.setEnteredFromGraveyardOwnerId(candidate.zoneOwnerId());
                 }
+                applyEnteringAs(gameData, candidate, permanent);
                 BattlefieldEntryRequest request = gameData.pendingBattlefieldEntryRequests.get(candidate.card().getId());
                 if (request == null) {
                     battlefieldEntryService.putPermanentOntoBattlefield(gameData, candidate.controllerId(), permanent,
@@ -311,6 +322,7 @@ public class BattlefieldEntryBatchSupport {
                 }
                 if (gameQueryService.findPermanentController(gameData, permanent.getId()) != null) {
                     entered.add(permanent);
+                    keepUnderNonOwnersControl(gameData, candidate, permanent);
                     gameData.stack.addAll(candidate.afterEntryTriggers());
                     gameLogService.append(gameData, permanent.isFaceDown()
                             ? GameLog.text("A face-down card enters the battlefield.")
@@ -351,6 +363,37 @@ public class BattlefieldEntryBatchSupport {
                 gameData.simultaneousCreatureEntryTriggers.clear();
             }
         }
+    }
+
+    /** The counters and effects the instruction that puts it onto the battlefield gives it (CR 614.1c). */
+    private void applyEnteringAs(GameData gameData, BattlefieldEntryCard candidate, Permanent permanent) {
+        var as = candidate.entering();
+        if (as == null) return;
+        UUID controllerId = candidate.controllerId();
+        if (as.counter() != null && as.counters() > 0
+                && !gameQueryService.cantHaveCountersForController(gameData, permanent, controllerId)) {
+            int counters = gameQueryService.replaceCounters(gameData, permanent, controllerId,
+                    as.counter(), as.counters(), controllerId);
+            if (counters > 0) {
+                permanent.setCounterCount(as.counter(), permanent.getCounterCount(as.counter()) + counters);
+                permanent.setCounterTimestamp(as.counter(), gameData.nextTimestamp());
+            }
+        }
+        for (CardEffect grant : as.grants()) {
+            gameData.addEffectOnPermanent(candidate.card().getName(), permanent.getId(), controllerId, grant,
+                    permanent.getId(), Duration.PERMANENT);
+        }
+    }
+
+    /** A permanent put onto the battlefield under another player's control than its owner's stays that player's. */
+    private void keepUnderNonOwnersControl(GameData gameData, BattlefieldEntryCard candidate, Permanent permanent) {
+        if (candidate.entering() == null) return;
+        if (candidate.controllerId().equals(candidate.zoneOwnerId())
+                || gameData.stolenCreatures.containsKey(permanent.getId())) return;
+        gameData.stolenCreatures.put(permanent.getId(), candidate.zoneOwnerId());
+        gameData.addFloatingEffect(new FloatingContinuousEffect(UUID.randomUUID(), null, null,
+                candidate.controllerId(), new GainControlOfTargetEffect(Duration.PERMANENT),
+                permanent.getId(), null, null, Duration.PERMANENT, 0));
     }
 
     private boolean entersWithPlayerChoice(Permanent permanent) {

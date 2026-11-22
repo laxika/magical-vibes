@@ -56,7 +56,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InOrder;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -735,60 +734,9 @@ class LibraryChoiceHandlerServiceTest {
         gd.interaction.beginInteraction(new PendingInteraction.LibrarySearch(params, "Search your library for a basic land card and put it onto the battlefield.", true));
     }
 
-    // =========================================================================
-    // handleLibraryCardChosen — each-player basic-land-search follow-up processing
-    // =========================================================================
-
     @Nested
-    @DisplayName("handleLibraryCardChosen with each-player basic-land-search follow-up")
-    class HandleLibraryCardChosenWithEachPlayerQueue {
-
-        @Test
-        @DisplayName("After successful choice, starts next player's search from follow-up")
-        void successfulChoiceStartsNextPlayerSearch() {
-            stubCardViewFactory();
-
-            // Player1 is currently searching; player2 rides the follow-up remainder
-            Card plains = createBasicLand("Plains");
-            gd.playerDecks.get(player1Id).add(plains);
-            beginBasicLandBattlefieldSearch(player1Id, List.of(plains),
-                    LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player2Id), false));
-
-            Card forest = createBasicLand("Forest");
-            gd.playerDecks.get(player2Id).add(forest);
-
-
-            // Player1 picks index 0
-            service.handleLibraryCardChosen(gd, player1, 0);
-
-            // Player2 should now be prompted to search, with an exhausted remainder
-            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
-            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)
-                    .params().followUp().remainingEachPlayerBasicLandSearches()).isEmpty();
-        }
-
-        @Test
-        @DisplayName("After fail-to-find, starts next player's search from follow-up")
-        void failToFindStartsNextPlayerSearch() {
-            stubCardViewFactory();
-
-            // Player1 is currently searching; player2 rides the follow-up remainder
-            Card plains = createBasicLand("Plains");
-            beginBasicLandBattlefieldSearch(player1Id, List.of(plains),
-                    LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player2Id), false));
-            gd.playerDecks.get(player1Id).add(plains);
-
-            Card forest = createBasicLand("Forest");
-            gd.playerDecks.get(player2Id).add(forest);
-
-            // Player1 declines (-1)
-            service.handleLibraryCardChosen(gd, player1, -1);
-
-            // Player2 should now be prompted to search
-            assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.LibrarySearch.class);
-            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId()).isEqualTo(player2Id);
-        }
+    @DisplayName("handleLibraryCardChosen with no follow-up queue")
+    class HandleLibraryCardChosenWithoutQueue {
 
         @Test
         @DisplayName("After last player in queue completes, resolves auto-pass")
@@ -802,52 +750,6 @@ class LibraryChoiceHandlerServiceTest {
 
             // Should resolve auto-pass since no searcher remains
             verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
-        }
-
-        @Test
-        @DisplayName("Skips queued player with no basic lands and tries next")
-        void skipsQueuedPlayerWithNoBasicLands() {
-            stubCardViewFactory();
-
-            // Player1 is currently searching
-            Card plains = createBasicLand("Plains");
-            gd.playerDecks.get(player1Id).add(plains);
-            beginBasicLandBattlefieldSearch(player1Id, List.of(plains),
-                    LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player2Id), false));
-
-            // Remainder: player2 has no basic lands
-            gd.playerDecks.get(player2Id).add(createCard("Grizzly Bears", CardType.CREATURE));
-
-
-            service.handleLibraryCardChosen(gd, player1, 0);
-
-            // Player2 was skipped (no basic lands), auto-pass called
-            InOrder order = inOrder(gameLogService, inputCompletionService);
-            order.verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
-                    logEntry.plainText().contains("Player2") && logEntry.plainText().contains("finds no basic land cards")));
-            order.verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
-        }
-
-        @Test
-        @DisplayName("Skips queued player with empty library and tries next")
-        void skipsQueuedPlayerWithEmptyLibrary() {
-            stubCardViewFactory();
-
-            // Player1 is currently searching
-            Card plains = createBasicLand("Plains");
-            gd.playerDecks.get(player1Id).add(plains);
-            beginBasicLandBattlefieldSearch(player1Id, List.of(plains),
-                    LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player2Id), false));
-
-            // Remainder: player2 has empty library (already empty from setUp)
-
-
-            service.handleLibraryCardChosen(gd, player1, 0);
-
-            // Player2 was skipped (empty library), auto-pass called
-            verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
-            verify(gameLogService).append(eq(gd), argThat((GameLogEntry logEntry) ->
-                    logEntry.plainText().contains("Player2") && logEntry.plainText().contains("it is empty")));
         }
 
         @Test
@@ -865,33 +767,6 @@ class LibraryChoiceHandlerServiceTest {
             verify(inputCompletionService).processMayAbilitiesThenAutoPassPreservingPriority(gd);
         }
 
-        @Test
-        @DisplayName("Search only presents basic land cards to queued player")
-        void searchOnlyPresentsBasicLandsToQueuedPlayer() {
-            stubCardViewFactory();
-
-            // Player1 is currently searching
-            Card plains = createBasicLand("Plains");
-            gd.playerDecks.get(player1Id).add(plains);
-            beginBasicLandBattlefieldSearch(player1Id, List.of(plains),
-                    LibrarySearchFollowUp.eachPlayerBasicLand(List.of(player2Id), false));
-
-            // Remainder: player2 has mixed library
-            gd.playerDecks.get(player2Id).addAll(List.of(
-                    createBasicLand("Forest"),
-                    createBasicLand("Island"),
-                    createCard("Grizzly Bears", CardType.CREATURE),
-                    createCard("Ghost Quarter", CardType.LAND) // nonbasic
-            ));
-
-
-            service.handleLibraryCardChosen(gd, player1, 0);
-
-            // Player2 should only see basic land cards
-            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).hasSize(2);
-            assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards())
-                    .allMatch(c -> c.hasType(CardType.LAND) && c.getSupertypes().contains(CardSupertype.BASIC));
-        }
     }
 
     // =========================================================================

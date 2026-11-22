@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringLandFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,6 +19,6 @@ public class SacredGround extends Card {
         // graveyard from the battlefield, return that card to the battlefield. "That card" is the stack entry's
         // triggering card.
         addTrigger(Triggers.dies(Triggers.LAND, ObjectRelation.YOU_OWN).causedBy(PlayerRelation.OPPONENT),
-                new ReturnTriggeringLandFromGraveyardToBattlefieldEffect());
+                new PutCardsOntoBattlefieldEffect(Subjects.triggeringCards()));
     }
 }

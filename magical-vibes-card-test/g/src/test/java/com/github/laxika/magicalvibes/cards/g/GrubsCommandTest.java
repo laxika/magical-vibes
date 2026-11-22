@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfTheVoid;
 import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -180,5 +182,25 @@ class GrubsCommandTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
+    }
+
+    @Test
+    @CardUsed({LeylineOfTheVoid.class})
+    @DisplayName("A milled Goblin that was exiled instead is still put into that player's hand")
+    void milledGoblinExiledInsteadIsPutIntoHand() {
+        harness.addToBattlefield(player1, new LeylineOfTheVoid());
+        GoblinSappers goblin = new GoblinSappers();
+        Forest forest = new Forest();
+        harness.setLibrary(player2, List.of(goblin, forest));
+        harness.setHand(player2, List.of());
+        harness.setHand(player1, List.of(new GrubsCommand()));
+        addMana();
+
+        harness.castModalSorceryWithModes(player1, 0, 2, new int[]{1, 3},
+                List.of(player2.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(goblin);
+        assertThat(gd.findExiledCard(forest.getId())).isNotNull();
     }
 }

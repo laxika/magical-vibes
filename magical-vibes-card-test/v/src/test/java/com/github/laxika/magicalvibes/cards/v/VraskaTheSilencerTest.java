@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.v;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -40,8 +39,10 @@ class VraskaTheSilencerTest extends BaseCardTest {
 
         Permanent returned = findPermanent(player1, "Llanowar Elves");
         assertThat(returned.isTapped()).isTrue();
-        assertThat(returned.getCard().getType()).isEqualTo(CardType.ARTIFACT);
-        assertThat(returned.getCard().getSubtypes()).containsExactly(CardSubtype.TREASURE);
+        // What the effect makes it isn't copiable (CR 707.2), so it's read as the layers show it.
+        assertThat(gqs.isArtifact(gd, returned)).isTrue();
+        assertThat(gqs.getEffectiveSubtypes(gd, returned)).containsExactly(CardSubtype.TREASURE);
+        assertThat(returned.getCard().getSubtypes()).doesNotContain(CardSubtype.TREASURE);
         assertThat(gqs.isCreature(gd, returned)).isFalse();
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.COLORLESS)).isZero();
     }

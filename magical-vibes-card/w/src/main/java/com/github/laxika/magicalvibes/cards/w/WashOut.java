@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenSpellColorPredicate;
+import com.github.laxika.magicalvibes.model.effect.ClearChosenColorEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseColorAtResolutionEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ReturnAllPermanentsOfChosenColorToHandEffect;
 
 @CardRegistration(set = "INV", collectorNumber = "87")
 @CardRegistration(set = "2X2", collectorNumber = "67")
@@ -11,6 +14,8 @@ import com.github.laxika.magicalvibes.model.effect.ReturnAllPermanentsOfChosenCo
 public class WashOut extends Card {
 
     public WashOut() {
-        addSpellEffect(new ReturnAllPermanentsOfChosenColorToHandEffect());
+        addSpellEffect(new ChooseColorAtResolutionEffect());
+        addSpellEffect(ReturnToHandEffect.allPermanentsMatching(new PermanentHasChosenSpellColorPredicate()));
+        addSpellEffect(new ClearChosenColorEffect());
     }
 }

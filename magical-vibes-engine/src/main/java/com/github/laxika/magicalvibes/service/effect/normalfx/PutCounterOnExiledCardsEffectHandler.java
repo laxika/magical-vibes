@@ -50,7 +50,7 @@ public class PutCounterOnExiledCardsEffectHandler implements NormalEffectHandler
                 case TAKEOVER -> gameData.exiledCardsWithTakeoverCounters.add(card.getId());
                 case REFINE -> gameData.exiledCardRefineCounters.merge(card.getId(), put.count(), Integer::sum);
             }
-            gameLogService.append(gameData, GameLog.cardThen(card, put.count() == 1
+            gameLogService.append(gameData, GameLog.cardThenUnlessHidden(gameData, card, put.count() == 1
                     ? " gets a " + counterName + " counter."
                     : " gets " + put.count() + " " + counterName + " counters."));
             log.info("Game {} - {} in exile gets a {} counter", gameData.id, card.getName(), counterName);

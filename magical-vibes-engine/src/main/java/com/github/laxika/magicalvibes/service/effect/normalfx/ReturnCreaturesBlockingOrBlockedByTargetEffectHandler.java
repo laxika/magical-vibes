@@ -1,14 +1,11 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCreaturesBlockingOrBlockedByTargetEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -24,8 +21,7 @@ import java.util.UUID;
 public class ReturnCreaturesBlockingOrBlockedByTargetEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
-    private final PermanentRemovalService permanentRemovalService;
+    private final BounceSupport bounceSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -61,15 +57,7 @@ public class ReturnCreaturesBlockingOrBlockedByTargetEffectHandler implements No
             }
         }
 
-        for (Permanent permanent : toReturn) {
-            if (permanentRemovalService.removePermanentToHand(gameData, permanent)) {
-                gameLogService.append(gameData,
-                        GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
-            }
-        }
-
-        if (!toReturn.isEmpty()) {
-            permanentRemovalService.removeOrphanedAuras(gameData);
-        }
+        // They leave as one event (CR 603.10a).
+        bounceSupport.applyReturnPermanentsToHand(gameData, entry, toReturn);
     }
 }

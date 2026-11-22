@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -10,7 +11,6 @@ import com.github.laxika.magicalvibes.model.condition.DevotionToColorsAtLeast;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTriggeringPermanentToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -46,9 +46,11 @@ public class AthreosShroudVeiled extends Card {
 
         PermanentPredicate coinCounter = new PermanentHasCountersPredicate(CounterType.COIN);
         addTrigger(Triggers.creatureDies(coinCounter, ObjectRelation.ANY),
-                new ReturnTriggeringPermanentToBattlefieldEffect(Zone.GRAVEYARD));
+                new PutCardsOntoBattlefieldEffect(Subjects.triggeringCards())
+                        .underControlOf(Subjects.you()));
         addTrigger(Triggers.exiledFrom(Set.of(Zone.BATTLEFIELD),
                         new PermanentAllOfPredicate(List.of(Triggers.CREATURE, coinCounter)), ObjectRelation.ANY),
-                new ReturnTriggeringPermanentToBattlefieldEffect(Zone.EXILE));
+                new PutCardsOntoBattlefieldEffect(Subjects.triggeringCards())
+                        .underControlOf(Subjects.you()));
     }
 }

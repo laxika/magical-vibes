@@ -34,7 +34,7 @@ public class DestroyUpToOneNonbasicLandPerPlayerThenSearchEffectHandler
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final DestructionSupport destructionSupport;
-    private final LibrarySearchSupport librarySearchSupport;
+    private final BasicLandSearchQueueSupport basicLandSearchQueueSupport;
     private final PermanentRemovalService permanentRemovalService;
 
     @Override
@@ -101,8 +101,13 @@ public class DestroyUpToOneNonbasicLandPerPlayerThenSearchEffectHandler
                 .toList();
 
         if (!destroyedControllers.isEmpty()) {
-            librarySearchSupport.startNextEachPlayerBasicLandSearch(gameData,
-                    LibrarySearchFollowUp.eachPlayerBasicLand(destroyedControllers, true));
+            // "Its controller may search ..., then shuffle": the queue asks whatever the library holds, and who takes
+            // no card hasn't searched.
+            LibrarySearchFollowUp searches = LibrarySearchFollowUp.basicLandSearches(destroyedControllers.stream()
+                    .map(controllerId -> new LibrarySearchFollowUp.BasicLandsPick(controllerId, 1, true))
+                    .toList(), List.of(), true);
+            basicLandSearchQueueSupport.advance(gameData,
+                    searches.withBasicLandSearchQueue(searches.basicLandSearchQueue().deferBattlefieldEntry()));
         }
         permanentRemovalService.removeOrphanedAuras(gameData);
     }

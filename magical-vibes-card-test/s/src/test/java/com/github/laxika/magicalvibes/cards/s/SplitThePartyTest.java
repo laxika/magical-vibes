@@ -150,4 +150,24 @@ class SplitThePartyTest extends BaseCardTest {
                 .containsExactly(second.getId());
         assertThat(gd.playerHands.get(player2.getId())).contains(first.getCard(), third.getCard());
     }
+
+    @Test
+    @CardUsed({StormfrontRiders.class})
+    @DisplayName("The chosen creatures leave as one event, so the first one sees the other returned")
+    void chosenCreaturesLeaveAsOneEvent() {
+        Permanent riders = harness.addToBattlefieldAndReturn(player2, new StormfrontRiders());
+        Permanent dryad = harness.addToBattlefieldAndReturn(player2, new NeverwinterDryad());
+        harness.addToBattlefield(player2, new NeverwinterDryad());
+        harness.setHand(player1, List.of(new SplitTheParty()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleMultiplePermanentsChosen(player1, List.of(riders.getId(), dryad.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(2);
+    }
 }

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AbilityZones;
 import com.github.laxika.magicalvibes.model.Card;
@@ -8,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnTurnFaceUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldFaceDownEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -32,7 +33,7 @@ public class DeathmistRaptor extends Card {
                         new ChooseOneEffect.ChooseOneOption("Face up",
                                 new ReturnSourceCardFromGraveyardToBattlefieldEffect(false)),
                         new ChooseOneEffect.ChooseOneOption("Face down",
-                                new ReturnSourceCardFromGraveyardToBattlefieldFaceDownEffect())
+                                new PutCardsOntoBattlefieldEffect(Subjects.sourceCard()).faceDown())
                 )),
                 "Return Deathmist Raptor to the battlefield?"));
     }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,6 +19,7 @@ public class PerpetuallyBoostCardEffectHandler implements NormalEffectHandlerBea
 
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -32,6 +34,12 @@ public class PerpetuallyBoostCardEffectHandler implements NormalEffectHandlerBea
         AmountContext context = AmountContext.forStackEntry(entry, source);
         int powerBoost = amountEvaluationService.evaluate(gameData, boost.powerBoost(), context);
         int toughnessBoost = amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), context);
+        if (boost.cards() != null) {
+            for (Card card : subjectResolutionService.cards(gameData, entry, boost, boost.cards())) {
+                PerpetualCardPowerToughnessSupport.remember(gameData, card, powerBoost, toughnessBoost);
+            }
+            return;
+        }
         if (boost.card() == null) {
             // "That Vehicle perpetually gets …": the card of the permanent the trigger event was about, as it was then;
             // "it perpetually gets …" of a drawn card: the entry's triggering card.

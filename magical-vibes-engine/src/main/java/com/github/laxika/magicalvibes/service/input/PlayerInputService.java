@@ -850,23 +850,6 @@ public class PlayerInputService {
                 gameData.id, playerName);
     }
 
-    public void beginReturnAllPermanentsOfChosenColorChoice(GameData gameData, UUID controllerId) {
-        beginReturnAllPermanentsOfChosenColorChoice(gameData, controllerId, null);
-    }
-
-    public void beginReturnAllPermanentsOfChosenColorChoice(GameData gameData, UUID controllerId,
-            PermanentPredicate filter) {
-        ChoiceContext.ReturnAllPermanentsOfChosenColorChoice ctx =
-                new ChoiceContext.ReturnAllPermanentsOfChosenColorChoice(controllerId, filter);
-
-        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                controllerId, null, null, ctx, colors, "Choose a color."));
-
-        String playerName = gameData.playerIdToName.get(controllerId);
-        log.info("Game {} - Awaiting {} to choose a color (return all permanents of that color)", gameData.id, playerName);
-    }
-
     public void beginDestroyAllPermanentsOfChosenColorChoice(GameData gameData, UUID controllerId,
             PermanentPredicate filter) {
         ChoiceContext.DestroyAllPermanentsOfChosenColorChoice ctx =

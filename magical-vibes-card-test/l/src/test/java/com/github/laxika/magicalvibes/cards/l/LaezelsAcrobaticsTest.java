@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.cards.e.ElvishVisionary;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -179,5 +181,21 @@ class LaezelsAcrobaticsTest extends BaseCardTest {
         public int roll() {
             return result;
         }
+    }
+
+    @Test
+    @DisplayName("The delayed return doesn't return a card that left exile and was exiled again")
+    void delayedReturnDoesNotFollowACardExiledAgain() {
+        setRoll(1);
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        castAcrobatics();
+        gd.removeFromExile(bears.getCard().getId());
+        gd.addToExile(player1.getId(), bears.getCard());
+        advanceToEndStep();
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.findExiledCard(bears.getCard().getId())).isNotNull();
     }
 }

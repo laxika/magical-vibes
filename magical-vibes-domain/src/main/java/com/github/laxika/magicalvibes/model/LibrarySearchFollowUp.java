@@ -48,8 +48,6 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
  * whose found cards enter the battlefield together (Gaea's Balance).
  */
 public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToGraveyardPick cardToGraveyard,
-                                    List<UUID> remainingEachPlayerBasicLandSearches,
-                                    boolean eachPlayerSearchTapped,
                                     PendingOpponentExileChoice opponentExileChoice,
                                     UUID imprintSourcePermanentId,
                                     List<UUID> remainingTargetPlayerTopSearches,
@@ -512,11 +510,10 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     }
 
     public static final LibrarySearchFollowUp NONE =
-            new LibrarySearchFollowUp(null, null, List.of(), false, null, null, null, null,
+            new LibrarySearchFollowUp(null, null, null, null, null, null,
                     List.of(), null, null, null);
 
     public LibrarySearchFollowUp {
-        remainingEachPlayerBasicLandSearches = List.copyOf(remainingEachPlayerBasicLandSearches);
         remainingTargetPlayerTopSearches = List.copyOf(remainingTargetPlayerTopSearches);
         remainingToHandPicks = List.copyOf(remainingToHandPicks);
         remainingInstantManaValueToHandPicks = remainingInstantManaValueToHandPicks == null
@@ -526,8 +523,6 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
     /** Follow-up without a subtype-to-battlefield pick queue. */
     public LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToGraveyardPick cardToGraveyard,
-                                 List<UUID> remainingEachPlayerBasicLandSearches,
-                                 boolean eachPlayerSearchTapped,
                                  PendingOpponentExileChoice opponentExileChoice,
                                  UUID imprintSourcePermanentId,
                                  List<UUID> remainingTargetPlayerTopSearches,
@@ -538,16 +533,13 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                  BasicLandSearchQueue basicLandSearchQueue,
                                  GrimReminderSearch grimReminderSearch,
                                  SelectedCardFollowUp selectedCardFollowUp) {
-        this(basicLandToHand, cardToGraveyard, remainingEachPlayerBasicLandSearches,
-                eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId, remainingTargetPlayerTopSearches,
+        this(basicLandToHand, cardToGraveyard, opponentExileChoice, imprintSourcePermanentId, remainingTargetPlayerTopSearches,
                 secondBoundedPick, remainingSameNamePicks, remainingToHandPicks,
                 remainingInstantManaValueToHandPicks, basicLandSearchQueue, grimReminderSearch, selectedCardFollowUp, null);
     }
 
     /** Backward-compatible constructor for follow-ups that do not use targeted top searches. */
     public LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToGraveyardPick cardToGraveyard,
-                                 List<UUID> remainingEachPlayerBasicLandSearches,
-                                 boolean eachPlayerSearchTapped,
                                  PendingOpponentExileChoice opponentExileChoice,
                                  UUID imprintSourcePermanentId,
                                  SecondBoundedPick secondBoundedPick,
@@ -556,16 +548,13 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                  List<Integer> remainingInstantManaValueToHandPicks,
                                  BasicLandSearchQueue basicLandSearchQueue,
                                  GrimReminderSearch grimReminderSearch) {
-        this(basicLandToHand, cardToGraveyard, remainingEachPlayerBasicLandSearches,
-                eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId, List.of(), secondBoundedPick,
+        this(basicLandToHand, cardToGraveyard, opponentExileChoice, imprintSourcePermanentId, List.of(), secondBoundedPick,
                 remainingSameNamePicks, remainingToHandPicks, remainingInstantManaValueToHandPicks,
                 basicLandSearchQueue, grimReminderSearch, null);
     }
 
     /** Follow-up without a selected-card follow-up. */
     public LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToGraveyardPick cardToGraveyard,
-                                 List<UUID> remainingEachPlayerBasicLandSearches,
-                                 boolean eachPlayerSearchTapped,
                                  PendingOpponentExileChoice opponentExileChoice,
                                  UUID imprintSourcePermanentId,
                                  List<UUID> remainingTargetPlayerTopSearches,
@@ -575,8 +564,7 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                  List<Integer> remainingInstantManaValueToHandPicks,
                                  BasicLandSearchQueue basicLandSearchQueue,
                                  GrimReminderSearch grimReminderSearch) {
-        this(basicLandToHand, cardToGraveyard, remainingEachPlayerBasicLandSearches,
-                eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId, remainingTargetPlayerTopSearches,
+        this(basicLandToHand, cardToGraveyard, opponentExileChoice, imprintSourcePermanentId, remainingTargetPlayerTopSearches,
                 secondBoundedPick, remainingSameNamePicks, remainingToHandPicks,
                 remainingInstantManaValueToHandPicks, basicLandSearchQueue, grimReminderSearch, null);
     }
@@ -586,24 +574,24 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     }
 
     public static LibrarySearchFollowUp forSelectedCard(CardPredicate predicate, CardEffect effect) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), null, null, List.of(), null, null, null,
+        return new LibrarySearchFollowUp(null, null, null, null, List.of(), null, null, List.of(), null, null, null,
                 new SelectedCardFollowUp(predicate, effect));
     }
 
     public static LibrarySearchFollowUp forSelectedCard(CardPredicate predicate, CardEffect effect,
                                                          CardEffect effectIfNoCardChosen) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), null, null, List.of(), null, null, null,
+        return new LibrarySearchFollowUp(null, null, null, null, List.of(), null, null, List.of(), null, null, null,
                 new SelectedCardFollowUp(predicate, effect, false, effectIfNoCardChosen));
     }
 
     public static LibrarySearchFollowUp forNoCard(CardEffect effect) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), null, null, List.of(), null, null, null,
+        return new LibrarySearchFollowUp(null, null, null, null, List.of(), null, null, List.of(), null, null, null,
                 new SelectedCardFollowUp(null, null, false, effect));
     }
 
     public static LibrarySearchFollowUp forSelectedCardWithManaValue(
             CardPredicate predicate, CardEffect effect) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), null, null, List.of(), null, null, null,
+        return new LibrarySearchFollowUp(null, null, null, null, List.of(), null, null, List.of(), null, null, null,
                 new SelectedCardFollowUp(predicate, effect, true));
     }
 
@@ -611,7 +599,7 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
             com.github.laxika.magicalvibes.model.effect.D20BasicLandPlacementEffect oneToNine,
             com.github.laxika.magicalvibes.model.effect.D20BasicLandPlacementEffect tenToNineteen,
             com.github.laxika.magicalvibes.model.effect.D20BasicLandPlacementEffect twenty) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), null, null, List.of(), null, null, null,
+        return new LibrarySearchFollowUp(null, null, null, null, List.of(), null, null, List.of(), null, null, null,
                 new SelectedCardFollowUp(null, null, false, null,
                         new D20BasicLandSearch(oneToNine, tenToNineteen, twenty)));
     }
@@ -619,7 +607,7 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     /** Runs a selected-card follow-up before putting the unchosen bounded-pick cards back randomly. */
     public static LibrarySearchFollowUp forSelectedCardWithRandomRest(
             CardPredicate predicate, CardEffect effect) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, List.of(), SecondBoundedPick.terminal(true), null, List.of(), null,
+        return new LibrarySearchFollowUp(null, null, null, null, List.of(), SecondBoundedPick.terminal(true), null, List.of(), null,
                 null, null, new SelectedCardFollowUp(predicate, effect));
     }
 
@@ -628,21 +616,20 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
      * (Nissa's Pilgrimage searches for basic Forest cards only).
      */
     public static LibrarySearchFollowUp forBasicLandToHand(int count, CardSubtype subtype) {
-        return new LibrarySearchFollowUp(new BasicLandToHandPick(count, subtype), null, List.of(), false, null, null, null, null,
+        return new LibrarySearchFollowUp(new BasicLandToHandPick(count, subtype), null, null, null, null, null,
                 List.of(), null, null, null);
     }
 
     /** Further land-subtype cards to hand, including nonbasic cards with that subtype. */
     public static LibrarySearchFollowUp forLandSubtypeToHand(int count, CardSubtype subtype) {
-        return new LibrarySearchFollowUp(new BasicLandToHandPick(count, subtype, false), null, List.of(), false, null, null, null, null,
+        return new LibrarySearchFollowUp(new BasicLandToHandPick(count, subtype, false), null, null, null, null, null,
                 List.of(), null, null, null);
     }
 
     /** Further cards matching a custom predicate to hand. */
     public static LibrarySearchFollowUp forCardsToHand(int count, CardPredicate filter,
                                                        String description) {
-        return new LibrarySearchFollowUp(new BasicLandToHandPick(count, filter, description), null,
-                List.of(), false, null, null, null, null,
+        return new LibrarySearchFollowUp(new BasicLandToHandPick(count, filter, description), null, null, null, null, null,
                 List.of(), null, null, null);
     }
 
@@ -653,7 +640,7 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
     /** Second pick to graveyard with the same filter / fail / reveal settings as the first pick. */
     public static LibrarySearchFollowUp forCardToGraveyard(CardToGraveyardPick pick) {
-        return new LibrarySearchFollowUp(null, pick, List.of(), false, null, null, null, null,
+        return new LibrarySearchFollowUp(null, pick, null, null, null, null,
                 List.of(), null, null, null);
     }
 
@@ -676,7 +663,7 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     public static LibrarySearchFollowUp forSecondBoundedPick(CardType type, boolean restToGraveyard,
                                                               boolean randomRest,
                                                               LibrarySearchDestination destination) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null,
+        return new LibrarySearchFollowUp(null, null, null, null,
                 new SecondBoundedPick(type, restToGraveyard, null, List.of(), randomRest, List.of(), destination),
                 null, List.of(), null, null, null);
     }
@@ -722,34 +709,29 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     }
 
     public static LibrarySearchFollowUp forBoundedPick(SecondBoundedPick pick) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null,
+        return new LibrarySearchFollowUp(null, null, null, null,
                 pick, null, List.of(), null, null, null);
-    }
-
-    public static LibrarySearchFollowUp eachPlayerBasicLand(List<UUID> remainingSearchers, boolean tapped) {
-        return new LibrarySearchFollowUp(null, null, remainingSearchers, tapped, null, null,
-                null, null, List.of(), null, null, null);
     }
 
     /** The remaining targeted players in a multi-player search-to-top effect. */
     public static LibrarySearchFollowUp targetPlayersLibraryToTop(List<UUID> remainingSearchers) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null,
+        return new LibrarySearchFollowUp(null, null, null, null,
                 remainingSearchers, null, null, List.of(), null, null, null);
     }
 
     public static LibrarySearchFollowUp opponentExile(PendingOpponentExileChoice choice) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, choice, null, null,
+        return new LibrarySearchFollowUp(null, null, choice, null, null,
                 null, List.of(), null, null, null);
     }
 
     public static LibrarySearchFollowUp imprint(UUID sourcePermanentId) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, sourcePermanentId, null, null, List.of(), null, null, null);
+        return new LibrarySearchFollowUp(null, null, null, sourcePermanentId, null, null, List.of(), null, null, null);
     }
 
     /** The queue of permanent names still to search for, one entry per permanent (Clarion Ultimatum, Doubling Chant). */
     public static LibrarySearchFollowUp sameNamePicks(List<String> names, boolean creatureOnly,
                                                       LibrarySearchDestination destination) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, null,
+        return new LibrarySearchFollowUp(null, null, null, null, null,
                 new SameNamePickQueue(names, creatureOnly, destination), List.of(), null, null, null);
     }
 
@@ -757,7 +739,7 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     public static LibrarySearchFollowUp sameNamePicks(List<String> names, boolean creatureOnly,
                                                       LibrarySearchDestination destination,
                                                       UUID libraryOwnerId, UUID battlefieldControllerId) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, null,
+        return new LibrarySearchFollowUp(null, null, null, null, null,
                 new SameNamePickQueue(names, creatureOnly, destination, libraryOwnerId, battlefieldControllerId, true),
                 List.of(), null, null, null);
     }
@@ -767,7 +749,7 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
                                                       LibrarySearchDestination destination,
                                                       UUID libraryOwnerId, UUID battlefieldControllerId,
                                                       boolean optional) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, null,
+        return new LibrarySearchFollowUp(null, null, null, null, null,
                 new SameNamePickQueue(names, creatureOnly, destination, libraryOwnerId, battlefieldControllerId, optional),
                 List.of(), null, null, null);
     }
@@ -806,7 +788,7 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     }
 
     private static LibrarySearchFollowUp toHandPicks(List<ToHandPick> picks) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, null, null,
+        return new LibrarySearchFollowUp(null, null, null, null, null, null,
                 picks, null, null, null);
     }
 
@@ -837,7 +819,7 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
      * an empty list means every value has already been searched (shuffle once).
      */
     public static LibrarySearchFollowUp instantManaValueToHandPicks(List<Integer> manaValues) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, null, null,
+        return new LibrarySearchFollowUp(null, null, null, null, null, null,
                 List.of(), List.copyOf(manaValues), null, null);
     }
 
@@ -848,27 +830,19 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
     public static LibrarySearchFollowUp basicLandSearches(List<BasicLandsPick> remainingPicks,
                                                         List<PendingForcedSacrifice> sacrifices,
                                                         boolean shuffleAfterQueue) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null, null,
+        return new LibrarySearchFollowUp(null, null, null, null, null,
                 null, List.of(), null, new BasicLandSearchQueue(remainingPicks, sacrifices, shuffleAfterQueue), null);
     }
 
     /** Completion data for a reveal-only search followed by Grim Reminder's life-loss clause. */
     public static LibrarySearchFollowUp grimReminderSearch(int lifeLoss) {
-        return new LibrarySearchFollowUp(null, null, List.of(), false, null, null,
+        return new LibrarySearchFollowUp(null, null, null, null,
                 null, null, List.of(), null, null, new GrimReminderSearch(lifeLoss));
-    }
-
-    /** The same follow-up with the each-player basic-land remainder advanced past the current searcher. */
-    public LibrarySearchFollowUp withRemainingEachPlayerBasicLandSearches(List<UUID> remaining) {
-        return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard, remaining,
-                eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId, secondBoundedPick, remainingSameNamePicks,
-                remainingToHandPicks, remainingInstantManaValueToHandPicks, basicLandSearchQueue, grimReminderSearch);
     }
 
     /** The same follow-up with the targeted top-search remainder advanced past the current player. */
     public LibrarySearchFollowUp withRemainingTargetPlayerTopSearches(List<UUID> remaining) {
-        return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard,
-                remainingEachPlayerBasicLandSearches, eachPlayerSearchTapped, opponentExileChoice,
+        return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard, opponentExileChoice,
                 imprintSourcePermanentId, remaining,
                 secondBoundedPick, remainingSameNamePicks, remainingToHandPicks,
                 remainingInstantManaValueToHandPicks, basicLandSearchQueue, grimReminderSearch);
@@ -876,8 +850,7 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
     /** The same follow-up with the same-name-pick queue advanced past the current name. */
     public LibrarySearchFollowUp withRemainingSameNamePicks(SameNamePickQueue remaining) {
-        return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard,
-                remainingEachPlayerBasicLandSearches, eachPlayerSearchTapped, opponentExileChoice,
+        return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard, opponentExileChoice,
                 imprintSourcePermanentId,
                 secondBoundedPick, remaining, remainingToHandPicks, remainingInstantManaValueToHandPicks,
                 basicLandSearchQueue, grimReminderSearch);
@@ -885,8 +858,7 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
     /** The same follow-up with the to-hand pick queue advanced past the current pick. */
     public LibrarySearchFollowUp withRemainingToHandPicks(List<ToHandPick> remaining) {
-        return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard,
-                remainingEachPlayerBasicLandSearches, eachPlayerSearchTapped, opponentExileChoice,
+        return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard, opponentExileChoice,
                 imprintSourcePermanentId,
                 secondBoundedPick, remainingSameNamePicks, remaining,
                 remainingInstantManaValueToHandPicks, basicLandSearchQueue, grimReminderSearch);
@@ -897,8 +869,7 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
      * (Firemind's Foresight).
      */
     public LibrarySearchFollowUp withRemainingInstantManaValueToHandPicks(List<Integer> remaining) {
-        return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard,
-                remainingEachPlayerBasicLandSearches, eachPlayerSearchTapped, opponentExileChoice,
+        return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard, opponentExileChoice,
                 imprintSourcePermanentId,
                 secondBoundedPick, remainingSameNamePicks, remainingToHandPicks, remaining, basicLandSearchQueue,
                 grimReminderSearch);
@@ -906,8 +877,7 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
     /** The same follow-up with Natural Balance's pick queue advanced past the current searcher. */
     public LibrarySearchFollowUp withBasicLandSearchQueue(BasicLandSearchQueue queue) {
-        return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard,
-                remainingEachPlayerBasicLandSearches, eachPlayerSearchTapped, opponentExileChoice,
+        return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard, opponentExileChoice,
                 imprintSourcePermanentId,
                 secondBoundedPick, remainingSameNamePicks, remainingToHandPicks,
                 remainingInstantManaValueToHandPicks, queue, grimReminderSearch);
@@ -915,8 +885,7 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
     /** The same follow-up with the subtype-to-battlefield pick queue replaced. */
     public LibrarySearchFollowUp withSubtypeToBattlefieldPicks(SubtypeToBattlefieldPickQueue queue) {
-        return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard, remainingEachPlayerBasicLandSearches,
-                eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId, remainingTargetPlayerTopSearches,
+        return new LibrarySearchFollowUp(basicLandToHand, cardToGraveyard, opponentExileChoice, imprintSourcePermanentId, remainingTargetPlayerTopSearches,
                 secondBoundedPick, remainingSameNamePicks, remainingToHandPicks,
                 remainingInstantManaValueToHandPicks, basicLandSearchQueue, grimReminderSearch, selectedCardFollowUp, queue);
     }
@@ -928,15 +897,13 @@ public record LibrarySearchFollowUp(BasicLandToHandPick basicLandToHand, CardToG
 
     /** The same follow-up with the basic-land-to-hand pick replaced (null = no picks left). */
     public LibrarySearchFollowUp withBasicLandToHand(BasicLandToHandPick pick) {
-        return new LibrarySearchFollowUp(pick, cardToGraveyard, remainingEachPlayerBasicLandSearches,
-                eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId, secondBoundedPick, remainingSameNamePicks,
+        return new LibrarySearchFollowUp(pick, cardToGraveyard, opponentExileChoice, imprintSourcePermanentId, secondBoundedPick, remainingSameNamePicks,
                 remainingToHandPicks, remainingInstantManaValueToHandPicks, basicLandSearchQueue, grimReminderSearch);
     }
 
     /** The same follow-up with the consumed card-to-graveyard pick cleared. */
     public LibrarySearchFollowUp clearCardToGraveyard() {
-        return new LibrarySearchFollowUp(basicLandToHand, null, remainingEachPlayerBasicLandSearches,
-                eachPlayerSearchTapped, opponentExileChoice, imprintSourcePermanentId, secondBoundedPick, remainingSameNamePicks,
+        return new LibrarySearchFollowUp(basicLandToHand, null, opponentExileChoice, imprintSourcePermanentId, secondBoundedPick, remainingSameNamePicks,
                 remainingToHandPicks, remainingInstantManaValueToHandPicks, basicLandSearchQueue, grimReminderSearch);
     }
 }

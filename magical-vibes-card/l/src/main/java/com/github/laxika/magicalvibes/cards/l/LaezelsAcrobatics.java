@@ -1,12 +1,16 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceAtNextStepEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnAllCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTiming;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
@@ -42,7 +46,8 @@ public class LaezelsAcrobatics extends Card {
 
         addSpellEffect(new ExileAllPermanentsEffect(nontokenCreaturesYouControl, true));
         addSpellEffect(new RollD20Effect(
-                new ReturnAllCardsExiledWithSourceAtNextStepEffect(TurnStep.END_STEP),
+                RegisterDelayedStepTriggerEffect.aboutExiled(Triggers.endStep(ActivePlayer.ANY),
+                        new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.EXILE))),
                 SequenceEffect.of(
                         new ReturnAllCardsExiledWithSourceEffect(false),
                         reExileReturnedAtNextEndStep)));

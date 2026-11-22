@@ -1166,6 +1166,11 @@ public class AmountEvaluationService {
                     thisWay.yours() ? controlledBy(exiled, ctx.controllerId()) : exiled.objectIds());
             return thisWay.negativeKept() ? total : Math.max(0, total);
         }
+        if (thisWay.kind() == StepKind.RETURN) {
+            StepOutcome returned = results.outcome(StepKind.RETURN);
+            int total = exiledStat(gameData, entry, returned, thisWay.stat(), returned.objectIds());
+            return thisWay.negativeKept() ? total : Math.max(0, total);
+        }
         boolean sacrifice = thisWay.kind() == StepKind.SACRIFICE;
         Set<UUID> recorded = new HashSet<>(results.outcome(thisWay.kind()).objectIds());
         if (thisWay.includesUnremoved() && !recorded.equals(results.departures().stream()

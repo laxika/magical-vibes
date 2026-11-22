@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GraveyardCardThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCardsDestroyedThisWayFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 
@@ -20,6 +22,7 @@ public class CleansingMeditation extends Card {
                 destroyAllEnchantments,
                 SequenceEffect.of(
                         destroyAllEnchantments,
-                        new ReturnCardsDestroyedThisWayFromGraveyardEffect())));
+                        new PutCardsOntoBattlefieldEffect(
+                                Subjects.inYourGraveyard(Subjects.cardsThisWay(StepKind.DESTROY))))));
     }
 }

@@ -1,24 +1,24 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
-import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.state.StateTriggerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import com.github.laxika.magicalvibes.model.LastKnownCardStats;
+import com.github.laxika.magicalvibes.model.StepKind;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,7 +33,6 @@ import java.util.UUID;
 public class BounceSupport {
 
     private final GameQueryService gameQueryService;
-    private final PredicateEvaluationService predicateEvaluationService;
     private final GameLogService gameLogService;
     private final PermanentRemovalService permanentRemovalService;
     private final StateTriggerService stateTriggerService;
@@ -99,53 +98,39 @@ public class BounceSupport {
         return returnedControlledNontokens[0];
     }
 
-    public void applyReturnAllPermanentsOfColorToHand(GameData gameData, StackEntry entry, CardColor color) {
-        applyReturnAllPermanentsOfColorToHand(gameData, entry, color, null);
-    }
-
-    public void applyReturnAllPermanentsOfColorToHand(GameData gameData, StackEntry entry, CardColor color,
-            PermanentPredicate filter) {
-        applyReturnAllPermanentsOfColorToHand(gameData, entry, color, filter, false);
-    }
-
-    public void applyReturnAllPermanentsOfColorToHand(GameData gameData, StackEntry entry, CardColor color,
-            PermanentPredicate filter, boolean opponentsOnly) {
-        FilterContext filterContext = FilterContext.of(gameData)
-                .withSourceCardId(entry.getCard().getId())
-                .withSourceControllerId(entry.getControllerId())
-                .withSourcePermanentId(entry.getSourcePermanentId())
-                .withSourcePermanentSnapshot(entry.getSourcePermanentSnapshot());
-        UUID sourceControllerId = entry.getControllerId();
-        if (sourceControllerId == null && entry.getSourcePermanentId() != null) {
-            Permanent source = gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-            sourceControllerId = source == null ? null : gameData.findControllerOf(source);
+    /**
+     * A choice's permanents return as one event (CR 603.10a) and are added to the RETURN step: only those that went to
+     * a hand, not one a replacement exiled instead.
+     */
+    public void returnChosenTogether(GameData gameData, StackEntry entry, List<Permanent> chosen) {
+        Map<UUID, LastKnownCardStats> known = new LinkedHashMap<>();
+        Map<UUID, List<Card>> leaving = new LinkedHashMap<>();
+        for (Permanent permanent : chosen) {
+            known.put(permanent.getId(), ReturnStepSupport.lastKnown(gameData, gameQueryService, permanent));
+            leaving.put(permanent.getId(), List.copyOf(permanent.cardsLeavingBattlefield()));
         }
-        UUID finalSourceControllerId = sourceControllerId;
-        List<Permanent> toReturn = new ArrayList<>();
-        gameData.forEachBattlefield((playerId, battlefield) ->
-                toReturn.addAll(battlefield.stream()
-                        .filter(permanent -> (!opponentsOnly || !playerId.equals(finalSourceControllerId))
-                                && gameQueryService.getEffectiveColors(gameData, permanent).contains(color)
-                                && (filter == null || predicateEvaluationService.matchesPermanentPredicate(
-                                permanent, filter, filterContext)))
-                        .toList()));
-
+        List<Permanent> returned = new ArrayList<>();
         permanentRemovalService.beginPermanentLeaveBatch(gameData);
         try {
-            for (Permanent permanent : toReturn) {
-                permanentRemovalService.removePermanentToHand(gameData, permanent);
-
-                gameLogService.append(gameData, GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
-                log.info("Game {} - {} returned to owner's hand by {}",
-                        gameData.id, permanent.getCard().getName(), entry.getCard().getName());
-            }
+            permanentRemovalService.performSimultaneousRemovals(gameData, chosen, () -> {
+                for (Permanent permanent : chosen) {
+                    if (permanentRemovalService.removePermanentToHand(gameData, permanent, true)) {
+                        returned.add(permanent);
+                        entry.rememberRemovedPermanentController(permanent.getId(),
+                                known.get(permanent.getId()).controllerId());
+                        gameLogService.append(gameData,
+                                GameLog.cardThen(permanent.getCard(), " is returned to its owner's hand."));
+                    }
+                }
+            });
         } finally {
             permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
-
-        if (!toReturn.isEmpty()) {
-            permanentRemovalService.removeOrphanedAuras(gameData);
+        for (Permanent permanent : returned) {
+            entry.addToStep(StepKind.RETURN, ReturnStepSupport.returned(gameData, permanent,
+                    leaving.get(permanent.getId()), known.get(permanent.getId())));
         }
+        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     /**

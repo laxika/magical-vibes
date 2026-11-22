@@ -43,6 +43,10 @@ public class ReturnDyingCreatureToOwnerBattlefieldFaceDownThenTurnFaceUpEffectHa
         if (dyingCardId == null) {
             return;
         }
+        // A card that left the graveyard and came back is another object (CR 400.7).
+        if (!entry.isTriggeringCardIncarnation(gameData.graveyardEntryVersion(dyingCardId))) {
+            return;
+        }
 
         Card cardToReturn = gameQueryService.findCardInGraveyardById(gameData, dyingCardId);
         UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, dyingCardId);

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -28,6 +30,8 @@ public class PutCardsIntoHandEffectHandler implements NormalEffectHandlerBean {
 
     private final SubjectResolutionService subjectResolutionService;
     private final GameLogService gameLogService;
+    private final GraveyardService graveyardService;
+    private final PermanentRemovalService permanentRemovalService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,8 +41,10 @@ public class PutCardsIntoHandEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var put = (PutCardsIntoHandEffect) effect;
-        for (SubjectResolutionService.LocatedCard located
-                : subjectResolutionService.locatedCards(gameData, entry, put, put.cards())) {
+        List<SubjectResolutionService.LocatedCard> named =
+                subjectResolutionService.locatedCards(gameData, entry, put, put.cards());
+        returnFromGraveyards(gameData, named);
+        for (SubjectResolutionService.LocatedCard located : named) {
             Card card = located.card();
             if (located.zone() == Zone.LIBRARY) {
                 List<Card> library = gameData.playerDecks.get(located.ownerId());
@@ -65,6 +71,26 @@ public class PutCardsIntoHandEffectHandler implements NormalEffectHandlerBean {
                     ? GameLog.text(ownerName + " puts a face-down card from exile into their hand.")
                     : GameLog.textCardText(ownerName + " puts ", card, " into their hand."));
             log.info("Game {} - {} puts {} from exile into their hand", gameData.id, ownerName, card.getName());
+        }
+    }
+
+    /** The named graveyard cards leave as one event, each for its owner's hand (CR 400.3). */
+    private void returnFromGraveyards(GameData gameData, List<SubjectResolutionService.LocatedCard> named) {
+        graveyardService.beginGraveyardLeaveBatch(gameData);
+        try {
+            for (SubjectResolutionService.LocatedCard located : named) {
+                if (located.zone() != Zone.GRAVEYARD) {
+                    continue;
+                }
+                Card card = located.card();
+                UUID ownerId = located.ownerId();
+                permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+                permanentRemovalService.addCardToHandFromGraveyard(gameData, ownerId, ownerId, card);
+                gameLogService.append(gameData, GameLog.textCardText(gameData.playerIdToName.get(ownerId) + " puts ",
+                        card, " from their graveyard into their hand."));
+            }
+        } finally {
+            graveyardService.endGraveyardLeaveBatch(gameData);
         }
     }
 }

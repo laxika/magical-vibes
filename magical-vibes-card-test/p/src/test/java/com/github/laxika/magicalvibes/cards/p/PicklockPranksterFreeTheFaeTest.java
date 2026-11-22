@@ -12,7 +12,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -36,15 +35,13 @@ class PicklockPranksterFreeTheFaeTest extends BaseCardTest {
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
 
-        List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
-        assertThat(choice.validIndices()).containsExactlyInAnyOrder(
-                indexOf(graveyard, instant), indexOf(graveyard, sorcery), indexOf(graveyard, faerie));
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.cards()).containsExactlyInAnyOrder(instant, sorcery, faerie);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
 
-        harness.handleGraveyardCardChosen(player1, indexOf(graveyard, instant));
+        harness.handleMultipleCardsChosen(player1, List.of(instant.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(instant);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -106,13 +103,12 @@ class PicklockPranksterFreeTheFaeTest extends BaseCardTest {
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
 
-        List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).validIndices())
-                .containsExactly(indexOf(graveyard, sorcery));
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, indexOf(graveyard, olderInstant)))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).cards())
+                .containsExactly(sorcery);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(olderInstant.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleGraveyardCardChosen(player1, indexOf(graveyard, sorcery));
+        harness.handleMultipleCardsChosen(player1, List.of(sorcery.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(sorcery);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrder(olderInstant, nonmatching);
@@ -133,22 +129,14 @@ class PicklockPranksterFreeTheFaeTest extends BaseCardTest {
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
 
-        List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class).validIndices())
-                .containsExactly(indexOf(graveyard, faerie));
-        harness.handleGraveyardCardChosen(player1, indexOf(graveyard, faerie));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).cards())
+                .containsExactly(faerie);
+        harness.handleMultipleCardsChosen(player1, List.of(faerie.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(faerie);
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactlyInAnyOrderElementsOf(nonmatching);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(fifth);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
         assertThat(gd.interaction.activeInteraction()).isNull();
-    }
-
-    private int indexOf(List<Card> cards, Card card) {
-        return IntStream.range(0, cards.size())
-                .filter(index -> cards.get(index).getId().equals(card.getId()))
-                .findFirst()
-                .orElseThrow();
     }
 }

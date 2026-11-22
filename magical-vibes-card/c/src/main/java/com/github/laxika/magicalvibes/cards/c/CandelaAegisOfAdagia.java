@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -16,7 +20,6 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandAndPerpetuallyBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapCreatureCost;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -44,7 +47,9 @@ public class CandelaAegisOfAdagia extends Card {
                 )),
                 "Target must be a creature you control"
         ), 0, 1).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ReturnTargetCreatureToHandAndPerpetuallyBoostEffect(1, 1));
+                SequenceEffect.of(
+                        ReturnToHandEffect.target(new PermanentIsCreaturePredicate()),
+                        PerpetuallyBoostCardEffect.toCards(Subjects.cardsThisWay(StepKind.RETURN), 1, 1)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

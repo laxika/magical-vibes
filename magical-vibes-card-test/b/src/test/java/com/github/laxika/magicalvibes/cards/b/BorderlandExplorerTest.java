@@ -152,4 +152,39 @@ class BorderlandExplorerTest extends BaseCardTest {
         assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player1.getId());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyElementsOf(library);
     }
+
+    @Test
+    @DisplayName("The cards found are set aside and revealed together after the last search")
+    void findsAreRevealedTogether() {
+        Forest forest = new Forest();
+        Plains plains = new Plains();
+        harness.setHand(player1, List.of(new BorderlandExplorer(), new GrizzlyBears()));
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setLibrary(player1, List.of(forest));
+        harness.setLibrary(player2, List.of(plains));
+        addMana();
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player2, true);
+        harness.handleCardChosen(player2, 0);
+        harness.clearMessages();
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
+                .isEqualTo(player2.getId());
+        assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains("Forest"));
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(harness.getConn2().getSentMessages()).noneMatch(message -> message.contains("Forest"));
+
+        harness.handleCardChosen(player2, 0);
+
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("reveals Forest"));
+        assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("reveals Plains"));
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(forest);
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(plains);
+    }
 }

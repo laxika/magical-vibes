@@ -34,12 +34,36 @@ public class PutCardsOntoBattlefieldEffectHandler implements NormalEffectHandler
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var put = (PutCardsOntoBattlefieldEffect) effect;
         List<BattlefieldEntryCard> entering = new ArrayList<>();
+        UUID named = put.controller() == null ? null
+                : subjectResolutionService.player(gameData, entry, put, put.controller());
+        if (put.controller() != null && named == null) {
+            return;
+        }
         for (SubjectResolutionService.LocatedCard located
                 : subjectResolutionService.locatedCards(gameData, entry, put, put.cards())) {
+            if (located.card().isToken()) {
+                // A token that has left the battlefield can't come back onto it (CR 111.8).
+                continue;
+            }
+            Permanent permanent = new Permanent(located.card(), located.zone());
+            var faceDown = put.entering() == null ? null : put.entering().faceDown();
+            if (faceDown != null) {
+                permanent.setFaceDown(faceDown.power(), faceDown.toughness(), faceDown.types(), faceDown.subtypes());
+            }
             UUID controllerId = battlefieldEntryService.resolveEnteringController(
-                    gameData, located.ownerId(), new Permanent(located.card()));
-            entering.add(new BattlefieldEntryCard(
-                    controllerId, located.ownerId(), located.card(), located.zone(), null).withTapped(put.tapped()));
+                    gameData, named == null ? located.ownerId() : named, permanent);
+            BattlefieldEntryCard entryCard = new BattlefieldEntryCard(
+                    controllerId, located.ownerId(), located.card(), located.zone(), null).withTapped(put.tapped());
+            if (put.entering() != null || put.controller() != null) {
+                // Also marks that the instruction names who controls it, who then keeps another player's card.
+                entryCard = entryCard.withEntering(put.entering() != null ? put.entering()
+                        : new PutCardsOntoBattlefieldEffect.EnteringAs(null, null, 0, List.of()));
+            }
+            if (faceDown != null) {
+                // Face down it has no copy or other entry ability to ask about (CR 708.3).
+                entryCard = entryCard.withPreparedPermanent(permanent, List.of());
+            }
+            entering.add(entryCard);
         }
         if (!entering.isEmpty()) {
             battlefieldEntryBatchSupport.begin(gameData, entering);

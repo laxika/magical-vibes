@@ -99,7 +99,7 @@ class ReturnToHandEffectHandlerTest {
             return null;
         }).when(permanentRemovalService).performSimultaneousRemovals(any(), any(), any());
 
-        bounceSupport = new BounceSupport(gameQueryService, predicateEvaluationService, gameLogService,
+        bounceSupport = new BounceSupport(gameQueryService, gameLogService,
                 permanentRemovalService, stateTriggerService);
         LifeSupport lifeSupport = new LifeSupport(gameQueryService, gameLogService, permanentRemovalService, drawService);
         SubjectResolutionService subjectResolutionService = new SubjectResolutionService(gameQueryService,

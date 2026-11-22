@@ -282,6 +282,21 @@ public final class Subjects {
         return new CardSubject.TriggeringCards(filter);
     }
 
+    /** "That card", "it": {@link #triggeringCards(CardPredicate)} without a filter. */
+    public static CardSubject triggeringCards() {
+        return new CardSubject.TriggeringCards(null);
+    }
+
+    /** "This card" in an ability that works from a graveyard. */
+    public static CardSubject sourceCard() {
+        return new CardSubject.SourceCard();
+    }
+
+    /** "[Cards] in your graveyard": those of {@code cards} in the controller's graveyard. */
+    public static CardSubject inYourGraveyard(CardSubject cards) {
+        return new CardSubject.InYourGraveyard(cards);
+    }
+
     /**
      * "Target [filter] card in your graveyard / in a graveyard": the effect's card target in a graveyard of
      * {@code scope}; the effect reading it declares the target.

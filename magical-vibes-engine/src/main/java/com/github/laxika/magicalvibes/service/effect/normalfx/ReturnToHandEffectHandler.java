@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import java.util.function.Consumer;
+import com.github.laxika.magicalvibes.model.LastKnownCardStats;
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -64,8 +67,15 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         Map<UUID, Permanent> before = new LinkedHashMap<>();
         gameData.forEachPermanent((playerId, permanent) -> before.put(permanent.getId(), permanent));
-        returnToHand(gameData, entry, (ReturnToHandEffect) effect);
-        recordReturned(gameData, entry, before);
+        ReturnToHandEffect returning = (ReturnToHandEffect) effect;
+        // What each was as it left, and the cards it was, for "that creature's power" and a perpetual rider.
+        Map<UUID, LastKnownCardStats> known = new HashMap<>();
+        Map<UUID, List<Card>> leaving = new HashMap<>();
+        returnToHand(gameData, entry, returning, permanent -> {
+            known.put(permanent.getId(), ReturnStepSupport.lastKnown(gameData, gameQueryService, permanent));
+            leaving.put(permanent.getId(), List.copyOf(permanent.cardsLeavingBattlefield()));
+        });
+        recordReturned(gameData, entry, before, known, leaving);
     }
 
     /**
@@ -73,22 +83,32 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
      * their id as the step acted on them), and the players whose hand each went to, its owner. A permanent a
      * replacement exiled instead was not returned.
      */
-    private void recordReturned(GameData gameData, StackEntry entry, Map<UUID, Permanent> before) {
+    private void recordReturned(GameData gameData, StackEntry entry, Map<UUID, Permanent> before,
+                                Map<UUID, LastKnownCardStats> known, Map<UUID, List<Card>> leaving) {
         Map<UUID, UUID> handOwners = new HashMap<>();
         gameData.playerHands.forEach((playerId, hand) -> hand.forEach(card -> handOwners.put(card.getId(), playerId)));
         List<UUID> returned = new ArrayList<>();
         List<UUID> owners = new ArrayList<>();
+        List<MovedCard> moved = new ArrayList<>();
+        List<LastKnownCardStats> lastKnown = new ArrayList<>();
         before.forEach((permanentId, permanent) -> {
             UUID ownerId = handOwners.get(permanent.getOriginalCard().getId());
             if (ownerId != null && gameQueryService.findPermanentById(gameData, permanentId) == null) {
                 returned.add(permanentId);
                 owners.add(ownerId);
+                if (known.containsKey(permanentId)) {
+                    StepOutcome left = ReturnStepSupport.returned(gameData, permanent, leaving.get(permanentId),
+                            known.get(permanentId));
+                    moved.addAll(left.movedCards());
+                    lastKnown.addAll(left.lastKnownPermanents());
+                }
             }
         });
-        entry.recordStep(StepKind.RETURN, StepOutcome.ofObjects(returned, owners));
+        entry.recordStep(StepKind.RETURN, StepOutcome.ofObjects(returned, owners, moved)
+                .withLastKnownPermanents(lastKnown));
     }
 
-    private void returnToHand(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
+    private void returnToHand(GameData gameData, StackEntry entry, ReturnToHandEffect e, Consumer<Permanent> leaves) {
         if (e.returnsResolvingSpell()) {
             resolveSelfSpell(gameData, entry);
             return;
@@ -98,16 +118,21 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
             return;
         }
         switch (e.subject()) {
-            case PermanentSubject.Target ignored -> resolveTarget(gameData, entry, e);
+            case PermanentSubject.Target ignored -> resolveTarget(gameData, entry, e, leaves);
             case PermanentSubject.Triggering ignored -> {
                 for (UUID permanentId : subjectResolutionService.permanentIds(gameData, entry, e, e.subject())) {
-                    bounceTarget(gameData, entry, e, permanentId);
+                    bounceTarget(gameData, entry, e, permanentId, leaves);
                 }
                 permanentRemovalService.removeOrphanedAuras(gameData);
             }
-            case PermanentSubject.Source ignored -> bounceSupport.applyReturnSelfToHand(gameData, entry,
-                    subjectResolutionService.permanent(gameData, entry, e, e.subject()));
-            default -> resolveBatch(gameData, entry, e);
+            case PermanentSubject.Source ignored -> {
+                Permanent source = subjectResolutionService.permanent(gameData, entry, e, e.subject());
+                if (source != null) {
+                    leaves.accept(source);
+                }
+                bounceSupport.applyReturnSelfToHand(gameData, entry, source);
+            }
+            default -> resolveBatch(gameData, entry, e, leaves);
         }
     }
 
@@ -136,7 +161,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
      * targets) is returned on its own; none chosen returns nothing. With {@link ReturnToHandEffect#ofChosenCreatureType()}
      * only a creature of the type chosen while casting returns.
      */
-    private void resolveTarget(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
+    private void resolveTarget(GameData gameData, StackEntry entry, ReturnToHandEffect e, Consumer<Permanent> leaves) {
         PermanentPredicate chosenTypeFilter = null;
         FilterContext filterContext = null;
         if (e.ofChosenCreatureType()) {
@@ -159,7 +184,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
                     continue;
                 }
             }
-            bounceTarget(gameData, entry, e, targetId);
+            bounceTarget(gameData, entry, e, targetId, leaves);
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);
@@ -189,7 +214,8 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
                 entry.getDescription() + " returns ", exiled.card(), " from exile to its owner's hand."));
     }
 
-    private void bounceTarget(GameData gameData, StackEntry entry, ReturnToHandEffect e, UUID targetId) {
+    private void bounceTarget(GameData gameData, StackEntry entry, ReturnToHandEffect e, UUID targetId,
+                              Consumer<Permanent> leaves) {
         Permanent target = gameQueryService.findPermanentById(gameData, targetId);
         if (target == null) {
             return;
@@ -200,6 +226,7 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
                 : null;
 
         UUID returnedControllerId = gameQueryService.findPermanentController(gameData, target.getId());
+        leaves.accept(target);
         boolean returned = permanentRemovalService.removePermanentToHand(gameData, target);
         if (returned) {
             entry.rememberRemovedPermanentController(target.getId(), returnedControllerId);
@@ -229,8 +256,9 @@ public class ReturnToHandEffectHandler implements NormalEffectHandlerBean {
      * Every permanent the subject names leaves as one simultaneous batch; then the optional follow-up resolves when
      * enough of the controller's nontoken permanents returned (Flood of Tears).
      */
-    private void resolveBatch(GameData gameData, StackEntry entry, ReturnToHandEffect e) {
+    private void resolveBatch(GameData gameData, StackEntry entry, ReturnToHandEffect e, Consumer<Permanent> leaves) {
         List<Permanent> toReturn = subjectResolutionService.permanents(gameData, entry, e, e.subject());
+        toReturn.forEach(leaves);
         int returnedControlledNontokens = bounceAll(gameData, entry, toReturn);
         if (e.thenEffect() != null && returnedControlledNontokens >= e.minimumControlledNontokenCount()) {
             int effectIndex = entry.getEffectsToResolve().indexOf(e);

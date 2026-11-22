@@ -937,7 +937,7 @@ public class PredicateEvaluationService {
                     card.hasKeyword(Keyword.DEWORDED)
                             || (card.getCardText() == null && card.getKeywords().isEmpty());
             case CardIsPermanentPredicate ignored ->
-                    card.getType().isPermanentType();
+                    card.getType() != null && card.getType().isPermanentType();
             case CardIsTokenPredicate ignored ->
                     card.isToken();
             case CardIsHistoricPredicate ignored ->

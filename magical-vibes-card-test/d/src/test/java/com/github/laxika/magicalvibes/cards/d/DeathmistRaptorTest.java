@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -137,5 +138,18 @@ class DeathmistRaptorTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         return findPermanent(player1, "Deathmist Raptor");
+    }
+
+    @Test
+    @DisplayName("Isn't returned face down once it left the graveyard and came back")
+    void doesNotReturnFaceDownAfterLeavingTheGraveyard() {
+        DeathmistRaptor raptorCard = prepareGraveyardTrigger();
+
+        harness.handleMayAbilityChosen(player1, true);
+        gd.markGraveyardExit(raptorCard.getId());
+        harness.handleListChoice(player1, "Face down");
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Deathmist Raptor");
     }
 }

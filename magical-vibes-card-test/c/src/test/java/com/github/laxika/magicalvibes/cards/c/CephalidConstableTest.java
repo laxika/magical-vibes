@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
+import com.github.laxika.magicalvibes.cards.s.StormfrontRiders;
 import com.github.laxika.magicalvibes.cards.b.BorderPatrol;
 import com.github.laxika.magicalvibes.cards.b.BrigidClachansHeart;
 import com.github.laxika.magicalvibes.cards.e.EpicStruggle;
@@ -356,5 +358,24 @@ class CephalidConstableTest extends BaseCardTest {
         harness.assertInHand(player1, "Cephalid Constable");
         harness.assertInHand(player2, "Suntail Hawk");
         harness.assertNotOnBattlefield(player2, "Suntail Hawk");
+    }
+
+    @Test
+    @CardUsed({StormfrontRiders.class})
+    @DisplayName("The targets leave as one event, so the first one sees the other returned")
+    void targetsLeaveAsOneEvent() {
+        Permanent constable = addCreatureReady(player1, new CephalidConstable());
+        constable.setAttacking(true);
+        PermanentGrants.setPowerBoost(gd, constable, 1);
+        Permanent riders = addCreatureReady(player2, new StormfrontRiders());
+        Permanent hawk = addCreatureReady(player2, new SuntailHawk());
+
+        resolveCombat();
+        harness.handleMultiplePermanentsChosen(player1, List.of(riders.getId(), hawk.getId()));
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(2);
     }
 }

@@ -34,8 +34,8 @@ class MostDecrepitOldBirdTest extends BaseCardTest {
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNotNull();
-        harness.handleGraveyardCardChosen(player1, gd.playerGraveyards.get(player1.getId()).indexOf(instant));
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
+        harness.handleMultipleCardsChosen(player1, List.of(instant.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).contains(instant);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(creature);
@@ -56,7 +56,7 @@ class MostDecrepitOldBirdTest extends BaseCardTest {
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNull();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
         assertThat(gd.findExiledCard(card.getId())).isNotNull();
     }
@@ -89,7 +89,7 @@ class MostDecrepitOldBirdTest extends BaseCardTest {
 
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
-        harness.handleGraveyardCardChosen(player1, gd.playerGraveyards.get(player1.getId()).indexOf(sorcery));
+        harness.handleMultipleCardsChosen(player1, List.of(sorcery.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(sorcery);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(1);
@@ -110,11 +110,11 @@ class MostDecrepitOldBirdTest extends BaseCardTest {
         harness.castAdventure(player1, 0, List.of());
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(older.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleGraveyardCardChosen(player1, gd.playerGraveyards.get(player1.getId()).indexOf(milled));
+        harness.handleMultipleCardsChosen(player1, List.of(milled.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(milled);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(older);

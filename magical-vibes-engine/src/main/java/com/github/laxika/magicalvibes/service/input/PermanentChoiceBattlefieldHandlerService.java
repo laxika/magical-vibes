@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
+import com.github.laxika.magicalvibes.model.LastKnownCardStats;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnStepSupport;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
 import com.github.laxika.magicalvibes.model.ReflectDamageToSourceControllerShield;
@@ -30,7 +32,6 @@ import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.SourceDamageRedirectShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
-import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.TargetSpellDamagePreventionShield;
@@ -56,9 +57,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UnattachEquipmentEffect;
-import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.ActionEvent;
 import com.github.laxika.magicalvibes.model.rules.AttachmentEvent;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -114,7 +113,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.PopulateSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutCounterOnEitherTargetPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutSacrificedPermanentCountersAndAttachEquipmentEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOneOfCombatDamageDealersThenRevealUntilSharedCreatureTypeEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler;
@@ -143,7 +141,6 @@ import com.github.laxika.magicalvibes.service.trigger.pipeline.TriggeredAbilityS
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -329,8 +326,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final MayReturnPermanentToHandAndEnterWithCountersEffectHandler mayReturnPermanentToHandAndEnterWithCountersEffectHandler;
 
-    private final ReturnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffectHandler
-            returnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffectHandler;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BlightEffectHandler blightEffectHandler;
 
@@ -1723,6 +1718,9 @@ public class PermanentChoiceBattlefieldHandlerService {
             throw new IllegalStateException("Target creature no longer exists");
         }
 
+        LastKnownCardStats known = context.recordsStep()
+                ? ReturnStepSupport.lastKnown(gameData, gameQueryService, target) : null;
+        List<Card> leaving = List.copyOf(target.cardsLeavingBattlefield());
         boolean returned = permanentRemovalService.removePermanentToHand(gameData, target, true);
         if (returned) {
             permanentRemovalService.removeOrphanedAuras(gameData);
@@ -1733,48 +1731,9 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         StackEntry resolvingEntry = gameData.pendingEffectResolutionEntry;
         if (returned && context.recordsStep() && resolvingEntry != null) {
-            UUID handOwnerId = gameData.playerHands.entrySet().stream()
-                    .filter(hand -> hand.getValue().stream()
-                            .anyMatch(card -> card.getId().equals(target.getOriginalCard().getId())))
-                    .map(Map.Entry::getKey)
-                    .findFirst().orElse(null);
-            resolvingEntry.addToStep(StepKind.RETURN, StepOutcome.ofObjects(List.of(target.getId()),
-                    handOwnerId == null ? List.of() : List.of(handOwnerId)));
+            resolvingEntry.addToStep(StepKind.RETURN, ReturnStepSupport.returned(gameData, target, leaving, known));
         }
 
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleBouncePermanentAndPerpetuallyBecomeAngel(
-            GameData gameData, UUID permanentId,
-            PermanentChoiceContext.BouncePermanentAndPerpetuallyBecomeAngel context) {
-        returnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffectHandler.completeChoice(
-                gameData, permanentId, context);
-    }
-
-    public void handleReturnCreatureToHandAndPutCountersOnSourceEqualToPower(
-            GameData gameData, UUID permanentId,
-            PermanentChoiceContext.ReturnCreatureToHandAndPutCountersOnSourceEqualToPower context) {
-        Permanent target = gameQueryService.findPermanentById(gameData, permanentId);
-        if (target == null) {
-            throw new IllegalStateException("Chosen creature no longer exists");
-        }
-        int power = Math.max(0, gameQueryService.getEffectivePower(gameData, target));
-
-        if (permanentRemovalService.removePermanentToHand(gameData, target)) {
-            permanentRemovalService.removeOrphanedAuras(gameData);
-            gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
-                    " is returned to its owner's hand."));
-            Permanent source = context.sourcePermanentId() == null
-                    ? gameData.playerBattlefields.getOrDefault(context.controllerId(), List.of()).stream()
-                    .filter(permanent -> permanent.getCard() == context.sourceCard())
-                    .findFirst()
-                    .orElse(null)
-                    : gameQueryService.findPermanentById(gameData, context.sourcePermanentId());
-            if (source != null) {
-                permanentCounterSupport.applyPlusOnePlusOneCounters(gameData, null, source, power, context.controllerId());
-            }
-        }
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

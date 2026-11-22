@@ -281,9 +281,11 @@ public class ZoneChangeRequests {
         }
         Card movedCard = movedCard(event);
         // The card's stay in exile when it went there, or a replacement effect exiled it instead (Leyline of the
-        // Void); -1 when it isn't in exile.
-        long exileStay = event.to() == Zone.EXILE || gameQueryService.findCardInExileById(gameData, movedCard.getId())
-                != null ? gameData.exileEntryVersions.getOrDefault(movedCard.getId(), 0L) : -1L;
+        // Void); -1 when it didn't. One put into a graveyard and exiled from there within the same batch didn't: only
+        // the first zone it went to counts (CR 603.6c).
+        boolean wentToExile = event.to() == Zone.EXILE || event.to() != Zone.GRAVEYARD
+                && gameQueryService.findCardInExileById(gameData, movedCard.getId()) != null;
+        long exileStay = wentToExile ? gameData.exileEntryVersions.getOrDefault(movedCard.getId(), 0L) : -1L;
         Permanent lastKnown = event.permanent();
         Permanent entered = event.enteredBattlefield() && lastKnown != null
                 ? gameQueryService.findPermanentById(gameData, lastKnown.getId()) : null;

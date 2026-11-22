@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.cards.t.TheForetoldSoldier;
 import com.github.laxika.magicalvibes.cards.b.BurnishedHart;
 import com.github.laxika.magicalvibes.cards.i.InfernalGrasp;
 import com.github.laxika.magicalvibes.cards.k.KederektParasite;
@@ -16,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AthreosShroudVeiled.class, Auramancer.class, BurnishedHart.class, InfernalGrasp.class, KederektParasite.class})
+@CardUsed({AthreosShroudVeiled.class, Auramancer.class, BurnishedHart.class, InfernalGrasp.class, KederektParasite.class, TheForetoldSoldier.class})
 class AthreosShroudVeiledTest extends BaseCardTest {
 
     @Test
@@ -277,5 +280,47 @@ class AthreosShroudVeiledTest extends BaseCardTest {
         for (int i = 0; i < count; i++) {
             harness.addToBattlefield(player1, new KederektParasite());
         }
+    }
+
+    @Test
+    @DisplayName("A countered creature exiled face down returns face up under its controller's control")
+    void returnsACreatureExiledFaceDownFaceUp() {
+        harness.addToBattlefield(player1, new AthreosShroudVeiled());
+        TheForetoldSoldier card = new TheForetoldSoldier();
+        card.setOwnerId(player2.getId());
+        Permanent soldier = addCreatureReady(player2, card);
+        soldier.setCounterCount(CounterType.COIN, 1);
+        soldier.setAttacking(true);
+
+        resolveCombat(player2);
+        resolveAllTriggers();
+
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        Permanent returned = findPermanent(player1, "The Foretold Soldier");
+        assertThat(returned.isFaceDown()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature that died and was then exiled from the graveyard in the same event is not followed")
+    void doesNotFollowADeadCreatureToItsSecondZone() {
+        harness.addToBattlefield(player1, new AthreosShroudVeiled());
+        Permanent hart = harness.addToBattlefieldAndReturn(player2, new BurnishedHart());
+        Card card = hart.getCard();
+        hart.setCounterCount(CounterType.COIN, 1);
+
+        harness.inMutationScope(() -> {
+            gd.rulesEvents.beginBatch();
+            try {
+                harness.getPermanentRemovalService().removePermanentToGraveyard(gd, hart);
+                harness.getPermanentRemovalService().removeCardFromGraveyardById(gd, card.getId());
+                gd.addToExile(player2.getId(), card);
+            } finally {
+                gd.rulesEvents.endBatch();
+            }
+        });
+        harness.passBothPriorities();
+
+        assertThat(gd.findExiledCard(card.getId())).isNotNull();
+        harness.assertNotOnBattlefield(player1, "Burnished Hart");
     }
 }

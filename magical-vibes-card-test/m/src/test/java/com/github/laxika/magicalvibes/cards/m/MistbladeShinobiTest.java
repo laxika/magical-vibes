@@ -27,12 +27,13 @@ class MistbladeShinobiTest extends BaseCardTest {
         Permanent creature = addCreatureReady(player2, new GnarledMass());
 
         resolveCombat();
-        resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).playerId())
+        // The target is chosen as the ability is put on the stack (CR 603.3d), whether to return it as it resolves.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
                 .isEqualTo(player1.getId());
-
-        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+        harness.handlePermanentChosen(player1, creature.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertNotOnBattlefield(player2, "Gnarled Mass");
         harness.assertInHand(player2, "Gnarled Mass");
@@ -43,12 +44,12 @@ class MistbladeShinobiTest extends BaseCardTest {
     void bounceIsOptional() {
         Permanent shinobi = addCreatureReady(player1, new MistbladeShinobi());
         shinobi.setAttacking(true);
-        addCreatureReady(player2, new GnarledMass());
+        Permanent creature = addCreatureReady(player2, new GnarledMass());
 
         resolveCombat();
+        harness.handlePermanentChosen(player1, creature.getId());
         resolveAllTriggers();
-
-        harness.handleMultiplePermanentsChosen(player1, List.of());
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertOnBattlefield(player2, "Gnarled Mass");
     }
@@ -59,14 +60,16 @@ class MistbladeShinobiTest extends BaseCardTest {
         Permanent shinobi = addCreatureReady(player1, new MistbladeShinobi());
         shinobi.setAttacking(true);
         PermanentGrants.setPowerBoost(gd, shinobi, 3);
-        addCreatureReady(player2, new GnarledMass());
-        addCreatureReady(player2, new GnarledMass());
+        Permanent first = addCreatureReady(player2, new GnarledMass());
+        Permanent second = addCreatureReady(player2, new GnarledMass());
 
         resolveCombat();
+        harness.handlePermanentChosen(player1, first.getId());
         resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).maxCount())
-                .isEqualTo(1);
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(second);
     }
 
     @Test
@@ -93,7 +96,7 @@ class MistbladeShinobiTest extends BaseCardTest {
         resolveCombat();
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
     @Test
@@ -105,13 +108,13 @@ class MistbladeShinobiTest extends BaseCardTest {
         harness.addToBattlefieldAndReturn(player2, new TendoIceBridge());
 
         resolveCombat();
-        resolveAllTriggers();
 
-        PendingInteraction.MultiPermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(choice.validIds()).containsExactly(creature.getId());
-
-        harness.handleMultiplePermanentsChosen(player1, List.of(creature.getId()));
+        harness.handlePermanentChosen(player1, creature.getId());
+        resolveAllTriggers();
+        harness.handleMayAbilityChosen(player1, true);
 
         harness.assertInHand(player2, "Gnarled Mass");
         harness.assertOnBattlefield(player2, "Tendo Ice Bridge");

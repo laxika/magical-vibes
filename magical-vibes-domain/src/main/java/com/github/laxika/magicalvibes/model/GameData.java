@@ -2652,12 +2652,6 @@ public class GameData {
     /** Counts colored mana symbols on the most recently milled card. */
     public final Map<ManaColor, Integer> lastMilledCardColorSymbols = new ConcurrentHashMap<>();
 
-    /**
-     * Basic lands that players picked during an "each player searches ... puts it onto the battlefield"
-     * instruction (Field of Ruin), held out of the library per player until every player has chosen:
-     * the choices are made in APNAP order but the lands enter the battlefield at the same time (CR 101.4).
-     */
-    public final Map<UUID, List<Card>> eachPlayerSearchDeferredToBattlefield = new ConcurrentHashMap<>();
 
     /** Revealed hand cards waiting to be stamped onto the spell whose additional cost they paid. */
     public final Map<UUID, Card> pendingRevealedPowerCostCards = new ConcurrentHashMap<>();
@@ -9406,6 +9400,12 @@ public class GameData {
                 .orElse(null);
     }
 
+    /** Whether {@code cardId} is a card in exile face down, which no log line may name (CR 406.3). */
+    public boolean isExiledFaceDown(UUID cardId) {
+        ExiledCardEntry exiled = findExiledCard(cardId);
+        return exiled != null && exiled.faceDown();
+    }
+
     /** The card imprinted on {@code source} (see {@link #imprintedCards}), or null if none. */
     public Card getImprintedCard(Card source) {
         return source != null ? imprintedCards.get(source.getId()) : null;
@@ -10331,8 +10331,6 @@ public class GameData {
         copy.greatestDiscardedCardManaValue = this.greatestDiscardedCardManaValue;
         copy.lastDiscardedCardTypes = Set.copyOf(this.lastDiscardedCardTypes);
         copy.lastMilledCardColorSymbols.putAll(this.lastMilledCardColorSymbols);
-        this.eachPlayerSearchDeferredToBattlefield.forEach((playerId, cards) ->
-                copy.eachPlayerSearchDeferredToBattlefield.put(playerId, new ArrayList<>(cards)));
         copy.pendingRevealedPowerCostCards.putAll(this.pendingRevealedPowerCostCards);
         copy.pendingDiscardedCostCards.putAll(this.pendingDiscardedCostCards);
         copy.lifeGainedThisTurn.putAll(this.lifeGainedThisTurn);

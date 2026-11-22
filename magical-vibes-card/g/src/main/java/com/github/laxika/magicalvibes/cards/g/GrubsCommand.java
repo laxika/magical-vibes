@@ -1,5 +1,9 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -10,7 +14,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPerman
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.MillTargetPlayerAndReturnMilledCardsToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
@@ -61,8 +64,9 @@ public class GrubsCommand extends Card {
                         artifactOrCreature),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target player mills five cards, then puts each Goblin card milled this way into their hand",
-                        new MillTargetPlayerAndReturnMilledCardsToHandEffect(
-                                5, new CardSubtypePredicate(CardSubtype.GOBLIN)),
+                        SequenceEffect.of(
+                                new MillEffect(5, Subjects.targetPlayer()),
+                                new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.MILL, new CardSubtypePredicate(CardSubtype.GOBLIN)))),
                         anyPlayer)
         ), 2));
     }

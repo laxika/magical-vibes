@@ -69,7 +69,7 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 
 | Pattern | Reference | Notes |
 |---------|-----------|-------|
-| ETB mill and return-or-token | `p/PatientNaturalist.java` | Triggers.enters(ObjectRelation.THIS) `MillControllerAndReturnMilledCardToHandOrCreateTokenEffect(3, CardTypePredicate(LAND), CreateTokenEffect.ofTreasureToken(1))` — choose a milled land for hand; if none was milled, create a Treasure |
+| ETB mill and return-or-token | `p/PatientNaturalist.java` | Triggers.enters(ObjectRelation.THIS) `SequenceEffect.of(MillEffect(3, you()), ChooseCardEffect.announced(cardsThisWay(MILL, land), label), PutCardsIntoHandEffect(cardsThisWay(CHOOSE)), ConditionalEffect(NotCondition(HappenedThisWay(CHOOSE)), Treasure))` — choose a milled land for hand; if none was milled, create a Treasure |
 | ETB pump target creature | `b/BriarpackAlpha.java` | `target(CreaturePredicate).addTrigger(Triggers.enters(ObjectRelation.THIS), BoostTargetCreatureEffect(P, T))` — any creature. See also `v/VulshokHeartstoker.java` (+2/+0). Flash is auto-loaded from Scryfall, no constructor code needed |
 | ETB pump target creature (own only, +keyword) | `i/ImperialAerosaur.java` | PermanentAllOfPredicate(IsCreature, ControlledBySourceController, NotSource) + BoostTargetCreatureEffect + GrantKeywordEffect(FLYING, Subjects.target()) |
 | ETB doubles the power of other creatures you control + vigilance | `g/GodEternalRhonas.java` | Triggers.enters(ObjectRelation.THIS) `DoubleOtherOwnCreaturesPowerEffect()` followed by `GrantKeywordEffect(VIGILANCE, Subjects.otherCreaturesYouControl())`; the first effect snapshots each other creature's current power independently and both effects exclude the source |

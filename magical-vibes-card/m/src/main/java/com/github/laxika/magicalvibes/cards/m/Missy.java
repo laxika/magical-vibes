@@ -1,12 +1,15 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChaosEnsuesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesDealDamageToTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnDyingCreatureToBattlefieldFaceDownAsCybermanEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesOneEffect;
@@ -37,7 +40,10 @@ public class Missy extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentNotPredicate(new PermanentIsArtifactPredicate()))),
                         ObjectRelation.ANOTHER),
-                new ReturnDyingCreatureToBattlefieldFaceDownAsCybermanEffect());
+                new PutCardsOntoBattlefieldEffect(Subjects.triggeringCards())
+                        .underControlOf(Subjects.you())
+                        .enteringTapped()
+                        .faceDown(2, 2, Set.of(CardType.ARTIFACT, CardType.CREATURE), Set.of(CardSubtype.CYBERMAN)));
         addTrigger(Triggers.endStep(ActivePlayer.YOU),
                 TargetPlayerChoosesOneEffect.villainousChoiceFacedBy(Subjects.eachOpponent(), List.of(
                         new ChooseOneEffect.ChooseOneOption(DAMAGE_OPTION,

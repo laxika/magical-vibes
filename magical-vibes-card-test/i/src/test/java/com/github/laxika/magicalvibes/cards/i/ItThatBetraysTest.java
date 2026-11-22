@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.p.Pacifism;
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
@@ -124,5 +127,25 @@ class ItThatBetraysTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         harness.assertNotOnBattlefield(player1, "Spellbook");
+    }
+
+    @Test
+    @CardUsed({GrizzlyBears.class, Pacifism.class})
+    @DisplayName("A returned Aura's new controller chooses what it enchants")
+    void returnedAuraAsksWhatItEnchants() {
+        Permanent betrayer = addCreatureReady(player1, new ItThatBetrays());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefieldAndReturn(player2, new Pacifism()).setAttachedTo(bears.getId());
+        harness.addToBattlefield(player2, new Spellbook());
+
+        declareAttackers(player1, List.of(gd.playerBattlefields.get(player1.getId()).indexOf(betrayer)));
+        resolveAllTriggers();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .contains(betrayer.getId(), bears.getId());
+        harness.handlePermanentChosen(player1, bears.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player1, "Pacifism").getAttachedTo()).isEqualTo(bears.getId());
     }
 }

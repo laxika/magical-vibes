@@ -579,7 +579,6 @@ public class TargetPolarityClassifier {
             entry("PutTargetSpellOrPermanentOnTopOrBottomOfLibraryEffect", TargetPolarity.HARMFUL_REMOVAL),
             // Commit // Memory: library tuck of a spell or nonland permanent.
             entry("PutTargetSpellOrPermanentIntoLibraryNFromTopEffect", TargetPolarity.HARMFUL_REMOVAL),
-            entry("ReturnTargetPermanentToHandOrLibraryTopByPredicateEffect", TargetPolarity.HARMFUL_REMOVAL),
             entry("ReturnTargetPermanentToHandThenEffect", TargetPolarity.HARMFUL_REMOVAL),
             // Slave of Bolas: the stolen target is sacrificed at end step — net removal. Own-board
             // uses (Hazoret's Favor) are safe: their target filters restrict candidates anyway.

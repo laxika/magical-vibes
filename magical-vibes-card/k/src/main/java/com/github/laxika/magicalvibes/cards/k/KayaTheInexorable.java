@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
@@ -18,7 +20,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastLegendarySpellFromAnyZoneEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromExileToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToOwnerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -59,7 +60,7 @@ public class KayaTheInexorable extends Card {
                 new CreateTokenEffect("Spirit", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of()));
         SequenceEffect returnFromExile = SequenceEffect.of(
-                new ReturnSourceCardFromExileToOwnerHandEffect(),
+                new PutCardsIntoHandEffect(Subjects.triggeringCards()),
                 new CreateTokenEffect("Spirit", 1, 1, CardColor.WHITE,
                         List.of(CardSubtype.SPIRIT), Set.of(Keyword.FLYING), Set.of()));
 

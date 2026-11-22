@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.d.Divination;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
@@ -199,5 +200,21 @@ class YarusRoarOfTheOldGodsTest extends BaseCardTest {
         resolveAllTriggers();
 
         harness.assertNotOnBattlefield(player1, "Island");
+    }
+
+    @Test
+    @DisplayName("A card that left the graveyard and came back is not returned")
+    void doesNotReturnACardThatLeftTheGraveyardAndCameBack() {
+        harness.addToBattlefield(player1, new YarusRoarOfTheOldGods());
+        Permanent island = harness.addToBattlefieldAndReturn(player1, new Island());
+        island.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        island.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+        gd.markGraveyardExit(island.getCard().getId());
+        resolveAllTriggers();
+
+        harness.assertNotOnBattlefield(player1, "Island");
+        harness.assertInGraveyard(player1, "Island");
     }
 }

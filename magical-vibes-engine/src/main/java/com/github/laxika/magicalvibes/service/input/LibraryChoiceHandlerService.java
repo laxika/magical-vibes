@@ -263,12 +263,6 @@ public class LibraryChoiceHandlerService {
         boolean restToExile = librarySearch.restToExile();
         boolean shuffleAfterSelection = librarySearch.shuffleAfterSelection();
         LibrarySearchFollowUp followUp = librarySearch.followUp();
-        // Mandatory "each player searches ... puts it onto the battlefield" (Field of Ruin): the lands
-        // enter together once everyone has chosen. Optional chains keep per-player entry.
-        boolean deferEachPlayerBattlefield = isPlainBattlefieldDestination(librarySearch)
-                && !librarySearch.declineSkipsShuffle()
-                && (!followUp.remainingEachPlayerBasicLandSearches().isEmpty()
-                || !gameData.eachPlayerSearchDeferredToBattlefield.isEmpty());
         LibrarySearchDestination destination = librarySearch.destination() != null
                 ? librarySearch.destination()
                 : LibrarySearchDestination.HAND;
@@ -1139,8 +1133,6 @@ public class LibraryChoiceHandlerService {
                 finishSearchAndResume(gameData);
                 return;
             }
-            if (startPendingEachPlayerBasicLandSearch(gameData, followUp.clearBasicLandToHand(),
-                    librarySearch.declineSkipsShuffle())) return;
             if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
             if (startNextToHandPick(gameData, playerId, followUp, librarySearch.shuffleAfterSelection())) return;
@@ -1930,9 +1922,6 @@ public class LibraryChoiceHandlerService {
                         animateFound, battlefieldCounter, enterWithCounters, false, playerId);
                 }
                 addCardFromLibraryToHand(gameData, handOwnerId, chosenCard, deckOwnerId, sourceZone == deck);
-            } else if (remainingCount <= 1 && deferEachPlayerBattlefield) {
-                gameData.eachPlayerSearchDeferredToBattlefield
-                        .computeIfAbsent(battlefieldControllerId, ignored -> new ArrayList<>()).add(chosenCard);
             } else if (remainingCount > 1) {
                 // CR 608.2f: Accumulate for simultaneous battlefield entry
                 accumulatedCards.add(chosenCard);
@@ -2211,7 +2200,6 @@ public class LibraryChoiceHandlerService {
 
         if (startPendingBasicLandToHandSearch(gameData, playerId, followUp, searchCards)) return;
         if (startPendingCardToGraveyardSearch(gameData, playerId, followUp)) return;
-        if (startPendingEachPlayerBasicLandSearch(gameData, followUp, librarySearch.declineSkipsShuffle())) return;
         if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
         if (startNextToHandPick(gameData, playerId, followUp, librarySearch.shuffleAfterSelection())) return;
@@ -2301,7 +2289,6 @@ public class LibraryChoiceHandlerService {
         UUID playerId = librarySearch.playerId();
         if (startPendingBasicLandToHandSearch(gameData, playerId, followUp, librarySearch.cards())) return;
         if (startPendingCardToGraveyardSearch(gameData, playerId, followUp)) return;
-        if (startPendingEachPlayerBasicLandSearch(gameData, followUp, librarySearch.declineSkipsShuffle())) return;
         if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
         if (startNextToHandPick(gameData, playerId, followUp, librarySearch.shuffleAfterSelection())) return;
@@ -3515,105 +3502,6 @@ public class LibraryChoiceHandlerService {
 
         beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(params, prompt, pick.canFailToFind()));
         return true;
-    }
-
-    /**
-     * If a pending "each player searches for a basic land to battlefield" queue is non-empty,
-     * starts the next player's library search and returns true. Otherwise returns false.
-     * Respects {@code followUp.eachPlayerSearchTapped()} for the destination.
-     * Used by Field of Ruin, Old-Growth Dryads. When the search that just finished was an optional one
-     * ({@code maySearch}), the next player's search is offered the same way, so declining it neither
-     * searches nor shuffles.
-     */
-    private boolean startPendingEachPlayerBasicLandSearch(GameData gameData, LibrarySearchFollowUp followUp,
-                                                          boolean maySearch) {
-        if (startNextPendingEachPlayerBasicLandSearch(gameData, followUp, maySearch)) return true;
-        putDeferredEachPlayerBasicLandsOntoBattlefield(gameData, followUp.eachPlayerSearchTapped());
-        return false;
-    }
-
-    private static boolean isPlainBattlefieldDestination(LibrarySearchParams librarySearch) {
-        return librarySearch.destination() == LibrarySearchDestination.BATTLEFIELD
-                || librarySearch.destination() == LibrarySearchDestination.BATTLEFIELD_TAPPED;
-    }
-
-    /**
-     * Once every player has searched, the basic lands they picked enter the battlefield at the same
-     * time (CR 101.4), grouped by controller in APNAP order.
-     */
-    private void putDeferredEachPlayerBasicLandsOntoBattlefield(GameData gameData, boolean tapped) {
-        if (gameData.eachPlayerSearchDeferredToBattlefield.isEmpty()) return;
-        List<UUID> order = new ArrayList<>();
-        order.add(gameData.activePlayerId);
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!playerId.equals(gameData.activePlayerId)) order.add(playerId);
-        }
-        Map<UUID, List<Card>> picks = new java.util.LinkedHashMap<>();
-        for (UUID playerId : order) {
-            List<Card> cards = gameData.eachPlayerSearchDeferredToBattlefield.remove(playerId);
-            if (cards != null && !cards.isEmpty()) picks.put(playerId, cards);
-        }
-        gameData.eachPlayerSearchDeferredToBattlefield.clear();
-        picks.forEach((playerId, cards) -> placeCardsOnBattlefieldSimultaneously(gameData, cards, playerId,
-                tapped, false, false, false, null, null, null));
-    }
-
-    private boolean startNextPendingEachPlayerBasicLandSearch(GameData gameData, LibrarySearchFollowUp followUp,
-                                                              boolean maySearch) {
-        if (followUp.remainingEachPlayerBasicLandSearches().isEmpty()) return false;
-        if (maySearch) {
-            return librarySearchSupport.startNextEachPlayerBasicLandSearch(gameData, followUp, true);
-        }
-
-        LibrarySearchDestination destination = followUp.eachPlayerSearchTapped()
-                ? LibrarySearchDestination.BATTLEFIELD_TAPPED
-                : LibrarySearchDestination.BATTLEFIELD;
-        String prompt = followUp.eachPlayerSearchTapped()
-                ? "You may search your library for a basic land card and put it onto the battlefield tapped."
-                : "Search your library for a basic land card and put it onto the battlefield.";
-
-        List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerBasicLandSearches());
-        while (!remaining.isEmpty()) {
-            UUID nextPlayerId = remaining.remove(0);
-            String playerName = gameData.playerIdToName.get(nextPlayerId);
-
-            List<Card> deck = gameData.playerDecks.get(nextPlayerId);
-            if (deck == null || deck.isEmpty()) {
-                String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-                gameLogService.append(gameData, GameLog.text(logMsg));
-                continue;
-            }
-
-            int topLimit = Math.min(librarySearchSupport.opponentSearchTopCardsLimit(gameData, nextPlayerId),
-                    deck.size());
-            List<Card> basicLands = deck.subList(0, topLimit).stream()
-                    .filter(card -> card.hasType(CardType.LAND)
-                            && gameQueryService.cardHasSupertype(
-                            card, CardSupertype.BASIC, gameData, nextPlayerId))
-                    .toList();
-
-            if (basicLands.isEmpty()) {
-                LibraryShuffleHelper.shuffleLibrary(gameData, nextPlayerId);
-                String logMsg = playerName + " searches their library but finds no basic land cards. Library is shuffled.";
-                gameLogService.append(gameData, GameLog.text(logMsg));
-                continue;
-            }
-
-            LibrarySearchParams params = LibrarySearchParams.builder(nextPlayerId, new ArrayList<>(basicLands))
-                    .reveals(false)
-                    .canFailToFind(true)
-                    .destination(destination)
-                    .followUp(followUp.withRemainingEachPlayerBasicLandSearches(remaining))
-                    .build();
-
-            beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(params, prompt, true));
-
-            String logMsg = playerName + " searches their library.";
-            gameLogService.append(gameData, GameLog.text(logMsg));
-            return true;
-        }
-
-        return false;
     }
 
     public void handleLibraryRevealChoice(GameData gameData, Player player, List<UUID> cardIds) {

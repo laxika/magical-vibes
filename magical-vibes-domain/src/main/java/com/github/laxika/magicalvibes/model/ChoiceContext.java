@@ -2159,18 +2159,6 @@ public sealed interface ChoiceContext {
     record ChooseColorThenDiscardFromTargetHandChoice(UUID controllerId, UUID targetPlayerId)
             implements ChoiceContext {}
 
-    /**
-     * The controller chooses a color at resolution, then every permanent of that color returns to
-     * its owner's hand (Wash Out).
-     */
-    record ReturnAllPermanentsOfChosenColorChoice(UUID controllerId, PermanentPredicate filter)
-            implements ChoiceContext {
-
-        public ReturnAllPermanentsOfChosenColorChoice(UUID controllerId) {
-            this(controllerId, null);
-        }
-    }
-
     /** The controller chooses a color at resolution, then destroys every matching permanent. */
     record DestroyAllPermanentsOfChosenColorChoice(UUID controllerId, PermanentPredicate filter)
             implements ChoiceContext {}

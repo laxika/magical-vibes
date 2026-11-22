@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsMatchingPredicateEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnAllPermanentsOfColorToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
@@ -23,8 +26,10 @@ public class LlawanCephalidEmpress extends Card {
 
     public LlawanCephalidEmpress() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ReturnAllPermanentsOfColorToHandEffect(CardColor.BLUE,
-                        new PermanentAllOfPredicate(List.of(new PermanentIsCreaturePredicate())), true));
+                new ReturnToHandEffect(Subjects.controlledBy(Subjects.eachOpponent(),
+                        new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentColorInPredicate(Set.of(CardColor.BLUE)))))));
 
         CardPredicate blueCreatureSpell = new CardAllOfPredicate(List.of(
                 new CardColorPredicate(CardColor.BLUE),

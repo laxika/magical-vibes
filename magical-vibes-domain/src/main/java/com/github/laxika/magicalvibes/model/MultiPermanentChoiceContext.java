@@ -369,10 +369,7 @@ public sealed interface MultiPermanentChoiceContext {
     }
 
     /** The controller returns the chosen permanents to their owners' hands (Resounding Wave cycling trigger). */
-    record ReturnTargetPermanentsToHand(int requiredCount) implements MultiPermanentChoiceContext {
-        public ReturnTargetPermanentsToHand() {
-            this(0);
-        }
+    record ReturnTargetPermanentsToHand() implements MultiPermanentChoiceContext {
     }
 
     record PlayerChoosesUpToPermanentsThenSacrificesRestChoice(List<UUID> candidateIds)
@@ -397,19 +394,9 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
-    /** Return the chosen permanents and record the number returned on the resolving stack entry. */
-    record ReturnAnyNumberAndRecordCount(StackEntry resolvingEntry) implements MultiPermanentChoiceContext {
-    }
-
-    /** Return exactly the required number of matching permanents, or all available if fewer exist. */
-    record ReturnNControlledPermanentsToHand(
-            com.github.laxika.magicalvibes.model.effect.ReturnNControlledPermanentsToHandEffect effect)
-            implements MultiPermanentChoiceContext {
-    }
-
-    /** Return up to N matching permanents controlled by the resolving player. */
-    record ReturnUpToNControlledPermanentsToHand(
-            com.github.laxika.magicalvibes.model.effect.ReturnUpToNControlledPermanentsToHandEffect effect)
+    /** The controller's choice of a {@code ReturnChosenPermanentsToHandEffect}: at least {@code minimum} of the offered. */
+    record ReturnChosenPermanentsToHand(
+            com.github.laxika.magicalvibes.model.effect.ReturnChosenPermanentsToHandEffect effect, int minimum)
             implements MultiPermanentChoiceContext {
     }
 
@@ -746,10 +733,6 @@ public sealed interface MultiPermanentChoiceContext {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
             chosenIds = List.copyOf(chosenIds);
         }
-    }
-
-    /** Return the chosen permanents {@code targetPlayerId} controls to their owner's hand. */
-    record CombatDamageBounce(UUID targetPlayerId) implements MultiPermanentChoiceContext {
     }
 
     /** Put an aim counter on each chosen permanent, then resume effect resolution. */

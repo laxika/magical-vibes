@@ -3250,14 +3250,6 @@ public class GraveyardReturnSupport {
      */
 
     /**
-     * Resolves a {@link ReturnOneOfEachSubtypeFromGraveyardToHandEffect} by queuing sequential
-     * graveyard choices — one per subtype. For each subtype that has matching cards in the
-     * controller's graveyard, a choice entry is queued. If only one card matches a subtype,
-     * it is returned automatically without prompting. Cards already returned for a previous
-     * subtype are naturally excluded because they have been removed from the graveyard.
-     */
-
-    /**
      * Starts the queued graveyard choices of one effect as a single graveyard-leave event, so every
      * card they move counts as leaving together for "one or more cards leave your graveyard" triggers.
      * The event ends once the queue runs out.

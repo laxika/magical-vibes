@@ -1943,3 +1943,98 @@ EachPlayerMayExileGraveyardCardsThenLoseLifeEffect,blocked-player-loop,9,"run 9:
 EachPlayerReturnsCreaturesOfChosenTypeFromGraveyardEffect,blocked-player-loop,9,"run 9: each player chooses a type, then every chosen type returns (Patriarch's Bidding)"
 EachPlayerReturnsCreaturesOfChosenTypeFromGraveyardToHandEffect,blocked-player-loop,9,"run 9: each player chooses a type, then the graveyard-return queue (Grave Sifter)"
 RevealTopCardAndCounterTriggeringSpellIfMatchesEffect,blocked-other,9,"run 9: the REVEAL step exists now; left: CounterSpellEffect cannot name the triggering spell, and the match reads that spell as it last was (Counterbalance, Swindler's Scheme)"
+ReturnNControlledPermanentsToHandEffect,absorbed,9,"run 10: ReturnChosenPermanentsToHandEffect.exactly(n, creaturesYouControl()); Stormfront Riders, Dust Elemental"
+ReturnUpToNControlledPermanentsToHandEffect,absorbed,9,"run 10: ReturnChosenPermanentsToHandEffect.upTo(2, landsYouControl()); Kazandu Stomper"
+ReturnPermanentsToHandSimultaneouslyEffect,absorbed,9,"run 10: ReturnChosenPermanentsToHandEffect.exactly(2, landsYouControl()).announced(); Khalni Gem"
+ReturnHalfCreaturesToHandEffect,absorbed,9,"run 10: ReturnChosenPermanentsToHandEffect.exactly(half, creaturesTargetPlayerControls()).announced(); Split the Party"
+ReturnAnyNumberOfPermanentsToHandEffect,absorbed,9,run 10: ReturnChosenPermanentsToHandEffect.anyNumber + AmountThisWay(RETURN) for the event value; the five cards
+ReturnChosenPermanentsToHandEffect,survivor,9,"run 10: new step: candidates subject, minimum and maximum; returns together and records RETURN with each as it last existed"
+ReturnCreatureToHandAndPutCountersOnSourceEqualToPowerEffect,split,9,"run 10: ReturnPermanentControlledByPlayerToHandEffect.controller + PutCountersOnSelfEffect(AmountThisWay(RETURN, POWER)); First Responder"
+ReturnPermanentControlledByPlayerToHandEffect,survivor,9,run 10: its step records the returned cards in the hand and each permanent as it last existed
+ReturnToHandEffect,survivor,9,run 10: its step records the returned cards in the hand and each permanent as it last existed; took the colour wipes
+ReturnPermanentControlledByPlayerToHandAndPerpetuallyBecomeAngelEffect,split,9,"run 10: controller return + boost, keyword and subtype grants to cardsThisWay(RETURN, non-Angel creature); Skyline Savior"
+ReturnTargetCardFromGraveyardToHandAndPerpetuallyBoostIfCreatureEffect,split,9,"run 10: graveyard return + PerpetuallyBoostCardEffect.toCards(cardsThisWay(RETURN, creature)); Giant Regrowth"
+ReturnTargetCreatureToHandAndPerpetuallyModifyCastCostEffect,split,9,run 10: bounce + PerpetuallyChangeCastCostEffect(cardsThisWay(RETURN)); Paths of Tuinvale
+ReturnTargetCreatureToHandAndPerpetuallyBoostEffect,split,9,"run 10: the waited-for subject exists: bounce + PerpetuallyBoostCardEffect.toCards(cardsThisWay(RETURN)); Candela, Alora"
+PerpetuallyChangeCastCostEffect,survivor,9,run 10: new step: the cost change over a CardSubject
+PerpetuallyBoostCardEffect,survivor,9,run 10: cards component (toCards)
+ReturnTargetSpellOrNonlandPermanentToHandAndPerpetuallyIncreaseCastCostEffect,blocked-other,9,"run 10: the cost step and cardsThisWay(RETURN) exist now; left: the spell-or-nonland-permanent return records no step and its sibling has another target form (Nightclub Bouncer, Talion)"
+ReturnSourceCardFromExileToOwnerHandEffect,absorbed,9,"run 10: PutCardsIntoHandEffect(triggeringCards()); Kaya the Inexorable, Ashnod's Intervention"
+ReturnTriggeringLandFromGraveyardToBattlefieldEffect,absorbed,9,"run 10: PutCardsOntoBattlefieldEffect(triggeringCards()); Sacred Ground, Hedge Shredder"
+ReturnDiscardedCardFromGraveyardToHandEffect,absorbed,9,run 10: ReturnTriggeringCardToOwnerHandEffect; Pitchstone Wall
+ReturnDyingDamagedCreatureUnderControlEffect,absorbed,9,"run 10: PutCardsOntoBattlefieldEffect(triggeringCards()).underControlOf(you()) + entering grants; Soul Collector, Dread Slaver"
+ReturnSacrificedCardUnderControlEffect,absorbed,9,run 10: PutCardsOntoBattlefieldEffect(triggeringCards()).underControlOf(you()); It That Betrays
+ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect,absorbed,9,run 10: PutCardsOntoBattlefieldEffect(triggeringCards()).underControlOf(you()); Kaya's Ghostform
+ReturnTriggeringPermanentToBattlefieldEffect,absorbed,9,run 10: the one path exists: PutCardsOntoBattlefieldEffect(triggeringCards()).underControlOf(you()); Athreos
+ReturnSacrificedPermanentToBattlefieldEffect,split,9,run 10: sacrifice step + PutCardsOntoBattlefieldEffect(cardsThisWay(SACRIFICE)).withCounters; Heart-Shaped Herb
+ReturnCardsDestroyedThisWayFromGraveyardEffect,absorbed,9,run 10: PutCardsOntoBattlefieldEffect(inYourGraveyard(cardsThisWay(DESTROY))); Cleansing Meditation
+ReturnOneCreatureCardPutIntoGraveyardThisWayEffect,split,9,"run 10: ChooseCardEffect over inYourGraveyard(cardsThisWay(DESTROY, creature)) + PutCardsOntoBattlefieldEffect; Starfall Invocation"
+ReturnSourceCardFromGraveyardToBattlefieldFaceDownEffect,absorbed,9,"run 10: PutCardsOntoBattlefieldEffect.faceDown over triggeringCards() / sourceCard(); Ashcloud Phoenix, Deathmist Raptor"
+ReturnDyingCreatureToBattlefieldFaceDownAsCybermanEffect,absorbed,9,run 10: PutCardsOntoBattlefieldEffect.faceDown(2/2 Cyberman artifact creature); Missy
+ReturnDyingCreatureToOwnerBattlefieldFaceDownAsLandEffect,absorbed,9,run 10: PutCardsOntoBattlefieldEffect.faceDown(Forest land); Yedora
+ReturnDyingCreatureToBattlefieldAsNamedLandEffect,absorbed,9,"run 10: PutCardsOntoBattlefieldEffect.enteringWith(name, land, mana ability); Princess Yue"
+ReturnDyingOpponentCreatureAsTreasureEffect,absorbed,9,"run 10: PutCardsOntoBattlefieldEffect.enteringWith(artifact, Treasure, ability); Vraska, the Silencer"
+PutCardsOntoBattlefieldEffect,survivor,9,"run 10: controller, face-down and entering counters / grants; reads triggeringCards(), sourceCard(), inYourGraveyard()"
+PutCardsIntoHandEffect,survivor,9,"run 10: also moves a named graveyard card, as one leave event"
+ReturnAllPermanentsOfColorToHandEffect,absorbed,9,"run 10: ReturnToHandEffect(controlledBy(eachOpponent(), blue creature)); Llawan"
+ReturnAllPermanentsOfChosenColorToHandEffect,split,9,"run 10: colour choice step + ReturnToHandEffect(chosen colour) + clear; Wash Out, Dromar"
+ReturnTargetPermanentToHandOrLibraryTopByPredicateEffect,split,9,"run 10: ConditionalReplacementEffect(TargetPermanentMatches, bounce, put on top); Consign to Dream"
+ReturnAllCardsExiledWithSourceAtNextStepEffect,split,9,run 10: RegisterDelayedStepTriggerEffect.aboutExiled + PutCardsOntoBattlefieldEffect(cardsThisWay(EXILE)); Lae'zel's Acrobatics
+ReturnExiledCardToBattlefieldUnderControlEffect,dead,9,run 10: nothing built it; record and handler deleted
+ReturnTargetCardFromGraveyardByExperienceEffect,dead,9,"run 10: Meren uses the by-mana-value head (an unused import was left); record, handler and targeting branch deleted"
+ReturnOneOfEachSubtypeFromGraveyardToHandEffect,dead,9,run 10: nothing built it; record and handler deleted
+MillControllerAndReturnMilledCardsToHandEffect,split,9,"run 10: MillEffect + PutCardsIntoHandEffect(cardsThisWay(MILL, filter)); four cards"
+MillTargetPlayerAndReturnMilledCardsToHandEffect,split,9,"run 10: MillEffect(targetPlayer()) + PutCardsIntoHandEffect(cardsThisWay(MILL, Goblin)); Grub's Command"
+MillControllerAndReturnMilledCardToHandEffect,split,9,run 10: mill + ChooseCardEffect + PutCardsIntoHandEffect(cardsThisWay(CHOOSE)); three cards
+MillControllerAndReturnMilledCardToHandOrCreateTokenEffect,split,9,run 10: mill + choice + put + token when none was chosen; Patient Naturalist
+ReturnTargetInstantAndSorceryCardsFromGraveyardToHandEffect,absorbed,9,"run 10: ReturnUpToOneCardOfEachColorFromGraveyardToHandEffect, the same handler; Shreds of Sanity"
+ReturnUpToOneCardOfEachColorFromGraveyardToHandEffect,survivor,9,run 10: returns every target group's card together; took Shreds of Sanity (rename in step 10)
+ReturnPermanentsOnCombatDamageToPlayerEffect,blocked-other,9,"run 10: Mistblade Shinobi is a targeted bounce now; left for Cephalid Constable: up to the damage many targets, declared through its own branch of the trigger queue (no event-value target count on ReturnToHandEffect)"
+ReturnTargetCreatureCardsFromGraveyardToBattlefieldWithTotalPowerEffect,blocked-other,9,"run 10: the targeted reanimation head caps total mana value, not total power, which only this record would set (Nethroi, Reunion of the House)"
+ReturnOtherCreatureCardsWithTotalPowerFromGraveyardToBattlefieldEffect,blocked-other,9,run 10: a resolution choice capped by the event power; the chosen-return head caps mana value only; one card (Moorland Rescuer)
+ReturnAnyNumberOfPermanentsToHandCost,unique,9,run 10: an X-many cast cost read by cast and AI code (Infernal Harvest)
+ReturnTargetCardFromGraveyardOrExileToHandEffect,unique,9,run 10: one target over two zones with a filter each (Sorceress's Schemes)
+ReturnCardFromGraveyardToHandCost,unique,9,"run 10: an ""unless you"" cost of ForcedCostOrElseEffect (Harvest Wurm)"
+ReturnTargetCreaturesOfChosenTypeFromGraveyardToHandEffect,unique,9,run 10: the type chosen while casting restricts the card targets (Aphetto Dredging)
+ReturnCardFromGraveyardToHandOfOpponentsChoiceEffect,unique,9,"run 10: an opponent chooses the target as it goes on the stack, through the trigger queue (Mausoleum Turnkey)"
+ReturnCreatureCardFromTargetOwnerGraveyardEffect,unique,9,run 10: payload bound to the dead creature's owner by the when-it-dies registration (Reincarnation)
+ReturnFromGraveyardInsteadOfDrawEffect,unique,9,run 10: a draw replacement read by DrawService (Forbidden Crypt)
+ReturnFromGraveyardInsteadOfLearnEffect,unique,9,run 10: a learn replacement that works from the graveyard (Retriever Phoenix)
+ReturnCreatureFromGraveyardInsteadOfEmptyLibraryDrawEffect,unique,9,run 10: an empty-library draw replacement (Out of the Tombs)
+ReturnEnchantedCreaturesYouControlToHandInsteadOfDyingEffect,unique,9,run 10: a death replacement (Necromancer's Magemark)
+ReturnNextInstantOrSorceryCastFromHandToHandThisTurnEffect,unique,9,run 10: a one-shot replacement of where the next spell goes (Soulfire Grand Master)
+ReturnTargetCreatureToHandAndOwnerCantCastSameNameUntilNextTurnEffect,unique,9,run 10: the name of the creature as it left restricts its owner's casting; the record is the stored restriction too (Reflector Mage)
+ReturnTargetEquipmentFromGraveyardAndAttachToCreatedTokenEffect,unique,9,run 10: attaches the returned Equipment to the token its reflexive ability is about (Ratonhnhaketon)
+ReturnTargetCreatureAndAurasOrEquipmentEffect,unique,9,run 10: the second group enters attached to the creature the first returned (Unfinished Business)
+ReturnAurasAttachedToDyingCreatureAndAttachEquipmentEffect,unique,9,run 10: the dead creature's attachments of two kinds in two choices (Cass)
+ReturnAurasFromGraveyardAttachedToCreaturesEffect,unique,9,"run 10: a host chosen per Aura before they enter, with a leave replacement and one delayed exile (Storm Herald)"
+ReturnEnchantedCreatureAndReattachAuraOnDeathEffect,unique,9,run 10: a delayed return of this card attached to the permanent the return made (Gift of Immortality)
+ReturnAuraFromGraveyardAttachedToPermanentEffect,unique,9,"run 10: engine payload: this Aura enters attached to one permanent bound when it was made (Gift of Immortality, the hand-or-graveyard put)"
+ReturnSourceAuraToChosenCreatureOnLeaveEffect,unique,9,run 10: that creature's controller chooses the host and gets the Aura (Traveling Plague)
+ReturnSourceAuraToCreatureOrNonAuraOnDeathEffect,unique,9,"run 10: another player chooses the host, else it returns as a non-Aura with a granted ability (Takklemaggot)"
+ReturnSourceAuraToRandomCreatureOnDeathEffect,unique,9,run 10: a random host among those it can enchant (Infectious Rage)
+ReturnSourceAuraToSharedTypeCreatureOnDeathEffect,unique,9,run 10: the host shares a type with the dead creature as it last existed (Reins of the Vinesteed)
+ReturnCardAndConjureOpponentGraveyardDuplicateEffect,unique,9,"run 10: a conjured duplicate of a second, kicked-only target group (Nantuko Slicer)"
+ReturnCreaturesBlockingOrBlockedByTargetEffect,blocked-other,9,run 10: no subject or predicate names what blocks or is blocked by the target; one card (Trial)
+ReturnDamagedCreaturesThatDiedUnderControlEffect,unique,9,run 10: reads this turn's damaged-and-died cards of the source and links the control-loss sacrifice (Krovikan Vampire)
+ReturnDyingCreatureToOwnerBattlefieldFaceDownThenTurnFaceUpEffect,blocked-other,9,run 10: the face-down entry exists; left: the entry step records no permanent for a turn-face-up step to name; one card (Yarus)
+ReturnOpponentCreaturesFromGraveyardAsFoodEffect,blocked-other,9,run 10: no CardSubject for the cards put into graveyards from the battlefield this turn; one card (Supper for Spiders)
+ReturnTargetCreatureCardsFromGraveyardToBattlefieldFaceDownAsCybermenEffect,blocked-other,9,run 10: the face-down entry exists; left: targetCard names one target and the put step declares none; one card (The Moonbase)
+ReturnOpponentsCreaturesWithToughnessLessThanSacrificedEffect,blocked-other,9,run 10: no predicate compares toughness with an amount (the exploited creature's); one card (Profaner of the Dead)
+ReturnPermanentSharingTypeWithEnteringPermanentToHandEffect,blocked-other,9,"run 10: no shared permanent type quality, and the entered permanent is read as it last existed once it left; one card (Cloudstone Curio)"
+ReturnTargetCreatureAndSameNameCardsFromGraveyardToBattlefieldEffect,blocked-other,9,"run 10: no CardSubject for the cards with the target card's name; its to-hand sibling moves through another path (Rat King, Verminister)"
+ReturnTargetCreatureAndSameNameCardsFromGraveyardToHandEffect,blocked-other,9,run 10: no CardSubject for the cards with the target card's name; its battlefield sibling moves through another path (Echoing Return)
+ReturnTargetCreatureCardToHandAndPerpetuallyModifyEffect,blocked-other,9,run 10: cardsThisWay(RETURN) exists; left: no perpetual base power/toughness or alternative-cost grant over cards; one card (Veko)
+ReturnTargetPermanentFromOpponentGraveyardToHandThenDefendingPlayerChoosesPermanentFromGraveyardEffect,unique,9,"run 10: the target's owner then chooses from your graveyard, bound through the combat trigger's queue (Neyam Shai Murad)"
+ReturnTargetPermanentToHandAndReduceControllerSpeedEffect,blocked-other,9,run 10: no reduce-speed step; one card (Spikeshell Harrier)
+ReturnTargetPermanentToHandOrExileIfUnearthedEffect,unique,9,run 10: an instead-exile that still ends in the hand (Meticulous Excavation)
+ReturnTargetPermanentToHandThenMayCopyEffect,unique,9,run 10: the chain: that controller may pay a land to copy this spell (Chain of Vapor)
+ReturnTargetPermanentsWithinTotalManaValueEffect,unique,9,run 10: targets under a total mana value declared by AggregateManaValueTargetEffect (Kairi)
+ReturnTargetPlayerCommandersToCommandZoneEffect,unique,9,run 10: the only return to the command zone (Leadership Vacuum)
+ReturnThisSpellToHandThenDiscardAtRandomEffect,unique,9,run 10: the resolving spell is among the cards that may be discarded (Hanabi Blast)
+ReturnUpToOneCardOfEachManaValueFromGraveyardToHandEffect,unique,9,"run 10: any number with different mana values, through the queue's distinct-value choice (Seasons Past)"
+ReturnEarthbendedLandEffect,unique,9,run 10: the payload of the earthbend keyword action
+ReturnCardByIdFromGraveyardToBattlefieldEffect,unique,9,run 10: the payload of the learn replacement's answer (Retriever Phoenix)
+ReturnDelayedCurseAttachedToPlayerEffect,unique,9,run 10: engine payload: that Curse returns attached to you (Lynde)
+ReturnLinkedCardToOwnerGraveyardEffect,unique,9,"run 10: the linked return granted to Hofri's tokens, read from the token as it last existed"
+ReturnVoyagingCardFromExileEffect,unique,9,run 10: the declined half of the voyage counter rule

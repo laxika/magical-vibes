@@ -47,7 +47,7 @@ public class PerpetuallyBecomeOnlyCardTypeEffectHandler implements NormalEffectH
                     exiled.exilerId(), exiled.exiledTurnNumber(), exiled.controllerTurnsTakenAtExile(),
                     exiled.abilityLink())
                     : exiled);
-            gameLogService.append(gameData, GameLog.cardThen(changed, " perpetually becomes only "
+            gameLogService.append(gameData, GameLog.cardThenUnlessHidden(gameData, changed, " perpetually becomes only "
                     + become.cardType().name().toLowerCase(Locale.ROOT) + "."));
         }
     }

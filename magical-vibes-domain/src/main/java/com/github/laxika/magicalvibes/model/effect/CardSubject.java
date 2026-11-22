@@ -19,7 +19,7 @@ import java.util.Objects;
  * <p>The variants and the wording each stands for are listed in {@code agent-docs/SUBJECTS_REFERENCE.md}.
  */
 public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubject.TargetCard,
-        CardSubject.TriggeringCards {
+        CardSubject.TriggeringCards, CardSubject.SourceCard, CardSubject.InYourGraveyard {
 
     /** Whether this subject is the effect's own card target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -36,7 +36,9 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
      * for {@link StepKind#MILL} the milled cards, in the graveyard or in exile where a replacement put them
      * (CR 701.17c); for {@link StepKind#CHOOSE} the chosen cards, in the zone they were chosen in (also a revealed
      * hand), while they are still the objects that were chosen; for {@link StepKind#REVEAL} the cards revealed from the
-     * top of libraries, while each is still in that library (CR 701.20b).
+     * top of libraries, while each is still in that library (CR 701.20b); for {@link StepKind#RETURN} the cards
+     * returned to a hand, followed into that hand as a sought card is, for "it perpetually gets +3/+3" (digital only:
+     * otherwise a card put into a hidden zone is no longer found, CR 400.7j).
      * The rest of the effect can find a card it moved to a public zone (CR 400.7j); a card that has
      * left that zone since is a new object and is not named.
      *
@@ -55,7 +57,7 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
         public CardsThisWay {
             Objects.requireNonNull(kind, "kind");
             switch (kind) {
-                case EXILE, DESTROY, SACRIFICE, DISCARD, COUNTER_SPELL, SEEK, MILL, CHOOSE, REVEAL -> {
+                case EXILE, DESTROY, SACRIFICE, DISCARD, COUNTER_SPELL, SEEK, MILL, CHOOSE, REVEAL, RETURN -> {
                 }
                 default -> throw new IllegalArgumentException("A " + kind + " step leaves no card for a card "
                         + "subject to name");
@@ -64,13 +66,40 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
     }
 
     /**
-     * "One of them" in "whenever you discard one or more nonland cards, you may exile one of them from your
-     * graveyard": the cards the trigger event was about that match {@code filter} and are still in the graveyard stay
-     * the event put them in (CR 400.7).
+     * "That card", "it" after "whenever a creature dies", "one of them" in "whenever you discard one or more nonland
+     * cards, you may exile one of them from your graveyard": the cards the trigger event was about that match
+     * {@code filter} and are still in the graveyard stay the event put them in, or, for a card the event exiled
+     * ("dies or is put into exile"; a replacement exiled the sacrificed card), in that exile stay (CR 400.7). A card
+     * exiled face down is named too, as exile is a public zone (CR 400.2, 400.7e), but {@code filter} sees it as a card
+     * with no characteristics (CR 406.3a).
      *
      * @param filter which of the event's cards are named; {@code null} for all of them
      */
     record TriggeringCards(CardPredicate filter) implements CardSubject {
+    }
+
+    /**
+     * "This card" in an ability that works from a graveyard ("you may return this card from your graveyard to the
+     * battlefield"): the ability's card, while it is in the graveyard stay it was in as the ability was put on the
+     * stack (CR 400.7).
+     */
+    record SourceCard() implements CardSubject {
+    }
+
+    /**
+     * "All cards in your graveyard destroyed this way", "a creature card put into your graveyard this way": those of
+     * the cards {@code cards} names that are in the controller's graveyard.
+     *
+     * @param cards among which cards
+     */
+    record InYourGraveyard(CardSubject cards) implements CardSubject {
+
+        public InYourGraveyard {
+            Objects.requireNonNull(cards, "cards");
+            if (cards.declaresTarget()) {
+                throw new IllegalArgumentException("A target card's graveyard is the target's scope: " + cards);
+            }
+        }
     }
 
     /**

@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ReturnDyingDamagedCreatureUnderControlEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,6 +14,7 @@ public class SoulCollector extends Card {
     public SoulCollector() {
         addMorph("{B}{B}{B}");
         addTrigger(Triggers.creatureDies(ObjectRelation.DAMAGED_BY_THIS),
-                new ReturnDyingDamagedCreatureUnderControlEffect(null, null));
+                new PutCardsOntoBattlefieldEffect(Subjects.triggeringCards())
+                        .underControlOf(Subjects.you()));
     }
 }

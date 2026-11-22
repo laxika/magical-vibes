@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HopToIt;
 import com.github.laxika.magicalvibes.model.Card;
@@ -49,19 +50,20 @@ class StarfallInvocationTest extends BaseCardTest {
 
         cast(true);
 
-        PendingInteraction.GraveyardChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(1, 2);
-        assertThat(choice.mandatory()).isTrue();
+        assertThat(choice.cards()).extracting(Card::getId)
+                .containsExactly(ownCreature.getId(), secondOwnCreature.getId());
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandSize + 1);
 
-        harness.handleGraveyardCardChosen(player1, choice.validIndices().getFirst());
+        harness.handleMultipleCardsChosen(player1, List.of(ownCreature.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getId())
-                .containsExactly(choice.validIndices().getFirst().equals(1)
-                        ? ownCreature.getId() : secondOwnCreature.getId());
+                .containsExactly(ownCreature.getId());
         assertThat(gd.playerBattlefields.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId)
                 .contains(oldGraveyardCreature.getId());
@@ -108,14 +110,14 @@ class StarfallInvocationTest extends BaseCardTest {
 
         cast(true);
 
-        PendingInteraction.GraveyardChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(0);
+        assertThat(choice.cards()).extracting(Card::getId).containsExactly(destroyedCreature.getId());
         assertThat(survivor.isTapped()).isTrue();
         assertThat(gd.regenerationShieldCount(survivor.getId())).isZero();
 
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(destroyedCreature.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getId())
@@ -134,11 +136,11 @@ class StarfallInvocationTest extends BaseCardTest {
 
         cast(true);
 
-        PendingInteraction.GraveyardChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(0);
-        harness.handleGraveyardCardChosen(player1, 0);
+        assertThat(choice.cards()).extracting(Card::getId).containsExactly(ownedCreature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(ownedCreature.getId()));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getId())
@@ -167,13 +169,11 @@ class StarfallInvocationTest extends BaseCardTest {
 
         cast(true);
 
-        PendingInteraction.GraveyardChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        List<Card> graveyard = gd.playerGraveyards.get(player1.getId());
-        assertThat(choice.validIndices().stream().map(graveyard::get).map(Card::getId).toList())
-                .containsExactly(creature.getId());
-        harness.handleGraveyardCardChosen(player1, graveyard.indexOf(creature));
+        assertThat(choice.cards()).extracting(Card::getId).containsExactly(creature.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(permanent -> permanent.getCard().getId())
                 .containsExactly(creature.getId());

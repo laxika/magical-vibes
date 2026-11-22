@@ -70,7 +70,6 @@ class HeartShapedHerbTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         Permanent returned = gd.playerBattlefields.get(player2.getId()).stream()
@@ -88,7 +87,7 @@ class HeartShapedHerbTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
 
         harness.assertNotOnBattlefield(player1, "Heart-Shaped Herb");
         harness.assertInGraveyard(player1, "Heart-Shaped Herb");
@@ -106,7 +105,6 @@ class HeartShapedHerbTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
 
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(creature.getCard().getId()))
@@ -140,7 +138,6 @@ class HeartShapedHerbTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Heart-Shaped Herb");
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, creature.getId());
 
         Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
                 .filter(permanent -> permanent.getCard().getId().equals(creature.getCard().getId()))
@@ -187,7 +184,6 @@ class HeartShapedHerbTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handlePermanentChosen(player1, token.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard().getId().equals(creatureCard.getId()));

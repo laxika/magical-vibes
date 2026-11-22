@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.cards.t.TheForetoldSoldier;
 import com.github.laxika.magicalvibes.cards.g.GoForTheThroat;
 import com.github.laxika.magicalvibes.cards.m.MakeshiftMannequin;
 import com.github.laxika.magicalvibes.model.Card;
@@ -15,7 +17,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DisplayName("Ashnod's Intervention")
-@CardUsed({AshnodsIntervention.class, ArgothianSprite.class, GoForTheThroat.class, MakeshiftMannequin.class})
+@CardUsed({AshnodsIntervention.class, ArgothianSprite.class, GoForTheThroat.class, MakeshiftMannequin.class, TheForetoldSoldier.class})
 class AshnodsInterventionTest extends BaseCardTest {
 
     @Test
@@ -196,5 +198,42 @@ class AshnodsInterventionTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GoForTheThroat()));
         harness.addMana(player2, ManaColor.BLACK, 2);
         harness.castAndResolveInstant(player2, 0, creature.getId());
+    }
+
+    @Test
+    @DisplayName("A card that left exile and was exiled again is not returned")
+    void doesNotReturnACardExiledAgain() {
+        Permanent creature = addCreature();
+        Card creatureCard = creature.getCard();
+
+        castOn(creature);
+        harness.inMutationScope(() ->
+                harness.getPermanentRemovalService().removePermanentToExile(gd, creature));
+        gd.removeFromExile(creatureCard.getId());
+        gd.addToExile(player1.getId(), creatureCard);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).doesNotContain(creatureCard.getId());
+        assertThat(gd.findExiledCard(creatureCard.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("A creature exiled face down returns to its owner's hand without the return naming it")
+    void returnsACreatureExiledFaceDownWithoutNamingIt() {
+        Permanent soldier = addCreatureReady(player1, new TheForetoldSoldier());
+        Card card = soldier.getCard();
+        castOn(soldier);
+        soldier.setAttacking(true);
+        int logged = gd.gameLog.size();
+
+        resolveCombat();
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).extracting(Card::getId).contains(card.getId());
+        assertThat(gd.findExiledCard(card.getId())).isNull();
+        // The ability's own source, public as it left the battlefield, is all that may name it.
+        assertThat(gd.gameLog.subList(logged, gd.gameLog.size())).extracting(GameLogEntry::plainText)
+                .anyMatch(line -> line.endsWith("puts a face-down card from exile into their hand."))
+                .noneMatch(line -> line.contains(" puts " + card.getName()));
     }
 }

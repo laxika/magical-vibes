@@ -100,8 +100,6 @@ public class PermanentChoiceHandlerService {
     private final BendOrBreakEffectHandler bendOrBreakEffectHandler;
     private final OpponentChoosesCardFromGraveyardToHandEffectHandler opponentChoosesCardHandler;
     private final DawnbreakReclaimerEffectHandler dawnbreakReclaimerEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.ReturnPermanentsToHandSimultaneouslyEffectHandler
-            returnPermanentsToHandSimultaneouslyEffectHandler;
     private final AllureOfTheUnknownEffectHandler allureOfTheUnknownEffectHandler;
     private final EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffectHandler dispersalEffectHandler;
     private final GuidedPassageEffectHandler guidedPassageEffectHandler;
@@ -918,22 +916,12 @@ public class PermanentChoiceHandlerService {
         } else if (context instanceof PermanentChoiceContext.TargetOpponentChoosesPlayerForRestriction restriction) {
             targetOpponentChoosesPlayerForRestrictionEffectHandler.completeChoice(gameData, permanentId, restriction);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        } else if (context instanceof PermanentChoiceContext.BounceBatch bounceBatch) {
-            returnPermanentsToHandSimultaneouslyEffectHandler.completeChoice(gameData, permanentId, bounceBatch);
-            if (!gameData.interaction.isAwaitingInput()) {
-                inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            }
         } else if (context instanceof PermanentChoiceContext.BounceCreature bounceCreature) {
             battlefieldHandler.handleBounceCreature(gameData, permanentId, bounceCreature);
-        } else if (context instanceof PermanentChoiceContext.BouncePermanentAndPerpetuallyBecomeAngel becomeAngel) {
-            battlefieldHandler.handleBouncePermanentAndPerpetuallyBecomeAngel(gameData, permanentId, becomeAngel);
         } else if (context instanceof PermanentChoiceContext.ConjureDuplicateOfCombatDamageDealerChoice conjureChoice) {
             conjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler.completeChoice(
                     gameData, permanentId, conjureChoice);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-        } else if (context instanceof PermanentChoiceContext.ReturnCreatureToHandAndPutCountersOnSourceEqualToPower returnAndCounter) {
-            battlefieldHandler.handleReturnCreatureToHandAndPutCountersOnSourceEqualToPower(
-                    gameData, permanentId, returnAndCounter);
         } else if (context instanceof PermanentChoiceContext.MayReturnPermanentToHandAndEnterWithCounters returnChoice) {
             battlefieldHandler.handleMayReturnPermanentToHandAndEnterWithCounters(gameData, permanentId, returnChoice);
         } else if (context instanceof PermanentChoiceContext.BounceOwnPermanentOrSacrificeSelf) {

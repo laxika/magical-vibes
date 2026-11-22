@@ -44,7 +44,7 @@ public class PutTimeCountersAndGainSuspendEffectHandler implements NormalEffectH
                 continue;
             }
             gameData.exiledCardTimeCounters.put(card.getId(), counters);
-            gameLogService.append(gameData, GameLog.cardThen(card,
+            gameLogService.append(gameData, GameLog.cardThenUnlessHidden(gameData, card,
                     " gets " + counters + " time counters and gains suspend."));
             log.info("Game {} - {} gets {} time counters and gains suspend",
                     gameData.id, card.getName(), counters);

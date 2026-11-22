@@ -222,7 +222,7 @@ All paths relative to `cards/`.
 | Untapped Guardian Beast protects own noncreature artifacts | `g/GuardianBeast.java` | STATIC three `ConditionalEffect(SourceUntapped, ...)` grants: `INDESTRUCTIBLE`, `CantBeEnchantedByOtherAurasEffect`, and `CantBeControlledByOtherPlayersEffect`, all scoped to `Subjects.permanentsYouControl()` with an artifact-and-not-creature filter |
 | Can't cast type | `s/SteelGolem.java` | STATIC CantCastSpellTypeEffect |
 | Can't cast spells sharing a type with any library top card | `s/Skybreen.java` | STATIC PlayWithTopCardRevealedEffect.forAllPlayers() + CantCastSpellsSharingCardTypeWithTopCardEffect |
-| ETB return opponents' blue creatures + blue creature-spell lock | `l/LlawanCephalidEmpress.java` | Triggers.enters(ObjectRelation.THIS) ReturnAllPermanentsOfColorToHandEffect(BLUE, creature, opponentsOnly=true) + STATIC OpponentsCantCastSpellsMatchingPredicateEffect(blue + creature) |
+| ETB return opponents' blue creatures + blue creature-spell lock | `l/LlawanCephalidEmpress.java` | Triggers.enters(ObjectRelation.THIS) ReturnToHandEffect(controlledBy(eachOpponent(), blue creature)) + STATIC OpponentsCantCastSpellsMatchingPredicateEffect(blue + creature) |
 | Can't cast noncreature MV/X spells | `g/GaddockTeeg.java` | STATIC NoncreatureSpellsCantBeCastEffect(4, true) — add `false` as the third argument for a controller-only lock (Nullhide Ferox) |
 | Opponents can't cast MV â‰¤ N | `b/BriselaVoiceOfNightmares.java` | STATIC OpponentsCantCastSpellsWithManaValueAtMostEffect(3) |
 | Opponents locked out during your turn | `g/GrandAbolisher.java` | STATIC OpponentsCantCastOrActivateDuringYourTurnEffect |

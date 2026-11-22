@@ -1,9 +1,14 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnCreatureToHandAndPutCountersOnSourceEqualToPowerEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -20,13 +25,14 @@ public class FirstResponder extends Card {
 
     public FirstResponder() {
         addTrigger(Triggers.endStep(ActivePlayer.YOU), new MayEffect(
-                new ReturnCreatureToHandAndPutCountersOnSourceEqualToPowerEffect(
-                        new PermanentAllOfPredicate(List.of(
+                SequenceEffect.of(
+                        ReturnPermanentControlledByPlayerToHandEffect.controller(new PermanentAllOfPredicate(List.of(
                                 new PermanentIsCreaturePredicate(),
                                 new PermanentControlledBySourceControllerPredicate(),
                                 new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate())
-                        )),
-                        "another creature"),
+                        )), "another creature"),
+                        new PutCountersOnSelfEffect(CounterType.PLUS_ONE_PLUS_ONE,
+                                new AmountThisWay(StepKind.RETURN, AmountThisWay.Stat.POWER))),
                 "Return another creature you control to its owner's hand?"));
     }
 }

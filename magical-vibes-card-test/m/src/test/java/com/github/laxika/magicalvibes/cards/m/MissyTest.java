@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.a.AdricMathematicalGenius;
 import com.github.laxika.magicalvibes.cards.c.ClockworkDroid;
 import com.github.laxika.magicalvibes.cards.p.Ponder;
@@ -208,5 +209,25 @@ class MissyTest extends BaseCardTest {
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(player1, TurnStep.END_STEP);
         harness.passBothPriorities();
+    }
+
+    @Test
+    @CardUsed({Mycoloth.class})
+    @DisplayName("A card returned face down asks none of its own as-enters choices and isn't named as it enters")
+    void faceDownReturnAsksNoEntryChoice() {
+        harness.addToBattlefield(player1, new Missy());
+        harness.addToBattlefield(player1, new ClockworkDroid());
+        Permanent dragon = harness.addToBattlefieldAndReturn(player2, new Mycoloth());
+        dragon.setMarkedDamage(4);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        Permanent returned = gd.playerBattlefields.get(player1.getId()).stream()
+                .filter(permanent -> permanent.getCard().getId().equals(dragon.getCard().getId()))
+                .findFirst().orElseThrow();
+        assertThat(returned.isFaceDown()).isTrue();
+        assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains("Mycoloth enters"));
     }
 }

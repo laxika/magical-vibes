@@ -11,6 +11,6 @@ public class CephalidConstable extends Card {
 
     public CephalidConstable() {
         addTrigger(Triggers.dealsCombatDamageToPlayer(),
-                ReturnPermanentsOnCombatDamageToPlayerEffect.upToThatManyTargets());
+                new ReturnPermanentsOnCombatDamageToPlayerEffect());
     }
 }

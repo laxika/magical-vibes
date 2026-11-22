@@ -43,8 +43,9 @@ public class PlotExiledCardsEffectHandler implements NormalEffectHandlerBean {
             gameData.grantExilePlayPermission(card.getId(), ownerId, Duration.PERMANENT);
             gameData.setExilePlayWithoutPayingManaCost(card.getId(), true);
             ActionEvents.plotted(gameData, ownerId, card);
-            gameLogService.append(gameData,
-                    GameLog.cardTextCard(card, " becomes plotted by ", entry.getCard(), "."));
+            gameLogService.append(gameData, gameData.isExiledFaceDown(card.getId())
+                    ? GameLog.textCardText("A face-down card in exile becomes plotted by ", entry.getCard(), ".")
+                    : GameLog.cardTextCard(card, " becomes plotted by ", entry.getCard(), "."));
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -63,6 +64,7 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
                 permanentsByCard.put(permanent.getOriginalCard().getId(), permanent.getId()));
         List<UUID> returned = new ArrayList<>();
         List<UUID> owners = new ArrayList<>();
+        List<MovedCard> moved = new ArrayList<>();
         before.forEach((cardId, ownerId) -> {
             if (inGraveyards.contains(cardId)) {
                 return;
@@ -71,9 +73,12 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
             if (returnedId != null) {
                 returned.add(returnedId);
                 owners.add(ownerId);
+                if (inHands.contains(cardId)) {
+                    moved.add(new MovedCard(cardId, cardId, Zone.HAND, ownerId));
+                }
             }
         });
-        entry.recordStep(StepKind.RETURN, StepOutcome.ofObjects(returned, owners));
+        entry.recordStep(StepKind.RETURN, StepOutcome.ofObjects(returned, owners, moved));
     }
 
     private void returnCard(GameData gameData, StackEntry entry, ReturnCardFromGraveyardEffect e) {

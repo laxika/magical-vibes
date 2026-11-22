@@ -21,7 +21,9 @@ package com.github.laxika.magicalvibes.model;
  *       other zones;</li>
  *   <li>{@link #RETURN}: the number of permanents or cards returned, the permanents (to a hand: by their id as the step
  *       acted on them; to the battlefield: the permanent each card became, the exile-and-return-transformed of the
- *       source included) or cards, their owners;</li>
+ *       source included) or cards, their owners; what went to a hand has its {@link StepOutcome#movedCards()} there
+ *       (read by perpetual riders only), and a permanent returned to a hand its last-known stats
+ *       ({@link StepOutcome#lastKnownPermanents()});</li>
  *   <li>{@link #CREATE_TOKEN}: the number of tokens, the tokens, the players who got them;</li>
  *   <li>{@link #DEAL_DAMAGE}: the total damage dealt, the permanents dealt damage, the players dealt damage;</li>
  *   <li>{@link #GAIN_LIFE}, {@link #LOSE_LIFE}: the total life gained or lost, nothing, the players;</li>
@@ -64,7 +66,7 @@ package com.github.laxika.magicalvibes.model;
  * sacrifice (their prompts add to the result as they are answered, through {@code GameData.discarded} and
  * {@code DestructionSupport.sacrificeTogether}), the chosen return to hand
  * ({@code ReturnPermanentControlledByPlayerToHandEffect}: its {@code BounceCreature} choice adds the returned
- * permanent), put counters (a replacement order answered later adds the rest; on each matching permanent,
+ * permanent; {@code ReturnChosenPermanentsToHandEffect}: its answer adds all of them), put counters (a replacement order answered later adds the rest; on each matching permanent,
  * {@code PutCounterOnEachMatchingPermanentEffect}, never prompting) and counter a spell; the chosen-permanent exile ({@code ExileChosenPermanentsEffect}: its
  * choices add to the result as they are answered), the chosen hand-card exile ({@code ExileCardFromHandEffect}), the
  * same-name exile ({@code ExileCardsWithSameNameEffect}), the card and random-player choices

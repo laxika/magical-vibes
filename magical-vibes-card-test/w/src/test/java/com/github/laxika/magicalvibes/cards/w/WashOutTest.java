@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.w;
 
+import com.github.laxika.magicalvibes.cards.b.BenalishKnight;
+import com.github.laxika.magicalvibes.cards.s.StormfrontRiders;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.f.FiresOfYavimaya;
 import com.github.laxika.magicalvibes.cards.r.RagingKavu;
@@ -142,5 +144,22 @@ class WashOutTest extends BaseCardTest {
         harness.setHand(player1, List.of(new WashOut()));
         harness.addMana(player1, ManaColor.BLUE, 4);
         harness.castAndResolveSorcery(player1, 0, 0);
+    }
+
+    @Test
+    @CardUsed({StormfrontRiders.class, BenalishKnight.class})
+    @DisplayName("The permanents leave as one event, so the first one sees the others returned")
+    void permanentsLeaveAsOneEvent() {
+        harness.addToBattlefield(player2, new StormfrontRiders());
+        harness.addToBattlefield(player2, new BenalishKnight());
+        harness.addToBattlefield(player2, new BenalishKnight());
+        castWashOut();
+
+        harness.handleListChoice(player1, "WHITE");
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(3);
     }
 }

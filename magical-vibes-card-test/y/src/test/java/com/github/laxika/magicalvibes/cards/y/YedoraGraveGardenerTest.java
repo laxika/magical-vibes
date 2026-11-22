@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.y;
 
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.s.SteppeLynx;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HallowedMoonlight;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -205,5 +207,22 @@ class YedoraGraveGardenerTest extends BaseCardTest {
 
         harness.tapPermanent(player1, gd.playerBattlefields.get(player1.getId()).indexOf(returned));
         assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(1);
+    }
+
+    @Test
+    @CardUsed({SteppeLynx.class})
+    @DisplayName("The face-down Forest enters as a land, so landfall triggers")
+    void returningForestTriggersLandfall() {
+        harness.addToBattlefield(player1, new YedoraGraveGardener());
+        Permanent lynx = harness.addToBattlefieldAndReturn(player1, new SteppeLynx());
+        Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        bears.setMarkedDamage(2);
+
+        harness.runStateBasedActions();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        resolveAllTriggers();
+
+        assertThat(gqs.getEffectivePower(gd, lynx)).isEqualTo(2);
     }
 }

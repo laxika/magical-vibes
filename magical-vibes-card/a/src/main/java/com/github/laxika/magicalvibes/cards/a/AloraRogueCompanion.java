@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -15,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEndStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandAndPerpetuallyBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.SpecializeAloraEffect;
@@ -81,7 +82,10 @@ public class AloraRogueCompanion extends Card {
             case RED -> SequenceEffect.of(
                     ReturnToHandEffect.target(),
                     new ConditionalEffect(HappenedThisWay.returned(), CreateTokenEffect.ofTreasureToken(1)));
-            case GREEN -> new ReturnTargetCreatureToHandAndPerpetuallyBoostEffect(1, 1);
+            case GREEN -> SequenceEffect.of(
+                    ReturnToHandEffect.target(),
+                    new ConditionalEffect(HappenedThisWay.returned(),
+                            PerpetuallyBoostCardEffect.toCards(Subjects.cardsThisWay(StepKind.RETURN), 1, 1)));
         };
     }
 

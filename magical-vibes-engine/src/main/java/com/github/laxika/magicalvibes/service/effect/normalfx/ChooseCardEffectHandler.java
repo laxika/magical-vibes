@@ -75,7 +75,9 @@ public class ChooseCardEffectHandler implements NormalEffectHandlerBean {
         entry.recordStep(StepKind.CHOOSE, StepOutcome.ofObjects(List.of(cardId),
                 chosen.ownerId() == null ? List.of() : List.of(chosen.ownerId()),
                 List.of(gameData.boundToStay(new MovedCard(cardId, cardId, chosen.zone(), chosen.ownerId())))));
-        gameLogService.append(gameData, GameLog.textCardText(
-                gameData.playerIdToName.get(entry.getControllerId()) + " chooses ", chosen.card(), "."));
+        String playerName = gameData.playerIdToName.get(entry.getControllerId());
+        gameLogService.append(gameData, gameData.isExiledFaceDown(cardId)
+                ? GameLog.text(playerName + " chooses a face-down card in exile.")
+                : GameLog.textCardText(playerName + " chooses ", chosen.card(), "."));
     }
 }

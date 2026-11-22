@@ -1,8 +1,8 @@
 package com.github.laxika.magicalvibes.cards.i;
 
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ReturnSacrificedCardUnderControlEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
@@ -19,6 +19,7 @@ public class ItThatBetrays extends Card {
         addTrigger(Triggers.attacks(), new SacrificePermanentsEffect(
                 2, new PermanentTruePredicate(), Subjects.defendingPlayer()));
         addTrigger(Triggers.sacrificed(Triggers.NONTOKEN, ObjectRelation.OPPONENT_CONTROLS),
-                new ReturnSacrificedCardUnderControlEffect());
+                new PutCardsOntoBattlefieldEffect(Subjects.triggeringCards())
+                        .underControlOf(Subjects.you()));
     }
 }

@@ -27,13 +27,12 @@ class PatientNaturalistTest extends BaseCardTest {
 
         castAndResolve();
 
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).hasSize(2);
+        assertThat(choice.cards()).hasSize(2);
 
-        int plainsIndex = gd.playerGraveyards.get(player1.getId()).indexOf(plains);
-        harness.handleGraveyardCardChosen(player1, plainsIndex);
+        harness.handleMultipleCardsChosen(player1, List.of(plains.getId()));
 
         harness.assertInHand(player1, "Plains");
         harness.assertInGraveyard(player1, "Forest");
@@ -62,15 +61,15 @@ class PatientNaturalistTest extends BaseCardTest {
 
         castAndResolve();
 
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(1);
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, -1))
+        assertThat(choice.cards()).containsExactly(milledPlains);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handleGraveyardCardChosen(player1, 0))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(oldForest.getId())))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleGraveyardCardChosen(player1, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(milledPlains.getId()));
 
         harness.assertInHand(player1, "Plains");
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(oldForest);

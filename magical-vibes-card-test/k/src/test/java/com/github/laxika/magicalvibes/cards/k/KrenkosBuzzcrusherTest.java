@@ -180,4 +180,52 @@ class KrenkosBuzzcrusherTest extends BaseCardTest {
     private void setLibrary(Player player, Card... cards) {
         harness.setLibrary(player, List.of(cards));
     }
+
+    @Test
+    @CardUsed(AvenMindcensor.class)
+    @DisplayName("A player who may search under Aven Mindcensor is asked whatever their library holds")
+    void mindcensoredMaySearchDoesNotDependOnTheLibrary() {
+        harness.addToBattlefield(player1, new AvenMindcensor());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new EscapeTunnel());
+        List<Card> library = List.of(new EscapeTunnel(), new EscapeTunnel(), new EscapeTunnel(),
+                new EscapeTunnel(), new Island());
+        harness.setLibrary(player2, library);
+
+        cast();
+        harness.handleMultiplePermanentsChosen(player1, List.of(land.getId()));
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().playerId()).isEqualTo(player2.getId());
+        assertThat(search.params().cards()).isEmpty();
+        assertThat(harness.getConn1().getSentMessages()).noneMatch(message -> message.contains("Island"));
+
+        harness.handleCardChosen(player2, -1);
+
+        assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains("finds no")
+                || entry.plainText().contains("Island"));
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player2.getId());
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(library);
+    }
+
+    @Test
+    @DisplayName("The lands found enter together after the last search")
+    void foundLandsEnterTogether() {
+        Permanent ownLand = harness.addToBattlefieldAndReturn(player1, new EscapeTunnel());
+        Permanent opponentLand = harness.addToBattlefieldAndReturn(player2, new EscapeTunnel());
+        setLibrary(player1, new Forest());
+        setLibrary(player2, new Island());
+
+        cast();
+        harness.handleMultiplePermanentsChosen(player1, List.of(ownLand.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(opponentLand.getId()));
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertNotOnBattlefield(player1, "Forest");
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertOnBattlefield(player1, "Forest");
+        harness.assertOnBattlefield(player2, "Island");
+    }
 }

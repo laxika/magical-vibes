@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * card the card of the stack entry's triggering permanent as the ability triggered ("that Vehicle perpetually gets
  * +1/+0", Tiana, Angelic Mechanic; {@link #ofTriggeringPermanent}).
  */
-public record PerpetuallyBoostCardEffect(Card card, DynamicAmount powerBoost, DynamicAmount toughnessBoost)
+public record PerpetuallyBoostCardEffect(Card card, DynamicAmount powerBoost, DynamicAmount toughnessBoost,
+                                         CardSubject cards)
         implements CardEffect {
 
     /**
@@ -17,7 +18,7 @@ public record PerpetuallyBoostCardEffect(Card card, DynamicAmount powerBoost, Dy
      * stack entry's triggering card ({@link #ofTriggeringCard}). The same record as {@link #ofTriggeringCard}.
      */
     public static PerpetuallyBoostCardEffect ofTriggeringPermanent(int powerBoost, int toughnessBoost) {
-        return new PerpetuallyBoostCardEffect(null, new Fixed(powerBoost), new Fixed(toughnessBoost));
+        return new PerpetuallyBoostCardEffect(null, new Fixed(powerBoost), new Fixed(toughnessBoost), null);
     }
 
     /**
@@ -29,6 +30,15 @@ public record PerpetuallyBoostCardEffect(Card card, DynamicAmount powerBoost, Dy
     }
 
     public PerpetuallyBoostCardEffect(Card card, int powerBoost, int toughnessBoost) {
-        this(card, new Fixed(powerBoost), new Fixed(toughnessBoost));
+        this(card, new Fixed(powerBoost), new Fixed(toughnessBoost), null);
+    }
+
+    public PerpetuallyBoostCardEffect(Card card, DynamicAmount powerBoost, DynamicAmount toughnessBoost) {
+        this(card, powerBoost, toughnessBoost, null);
+    }
+
+    /** "It perpetually gets +N/+M" of the cards an earlier step moved ("return ... If it's a creature card, it ..."). */
+    public static PerpetuallyBoostCardEffect toCards(CardSubject cards, int powerBoost, int toughnessBoost) {
+        return new PerpetuallyBoostCardEffect(null, new Fixed(powerBoost), new Fixed(toughnessBoost), cards);
     }
 }

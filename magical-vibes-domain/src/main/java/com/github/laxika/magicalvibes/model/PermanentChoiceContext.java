@@ -264,25 +264,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    /** One choice of a batch of permanents that are returned to hand together once all are chosen. */
-    record BounceBatch(UUID controllerId, Card sourceCard, PermanentPredicate filter, String noun,
-                       int count, List<UUID> chosenIds) implements PermanentChoiceContext {
-        public BounceBatch {
-            chosenIds = List.copyOf(chosenIds);
-        }
-    }
-
-    /** A chosen permanent is returned to hand, then a non-Angel creature card is upgraded. */
-    record BouncePermanentAndPerpetuallyBecomeAngel(UUID controllerId, Card sourceCard,
-                                                    UUID sourcePermanentId)
-            implements PermanentChoiceContext {}
     /** Vodalian Tide Mage: choose one of the creatures from the triggering combat-damage event. */
     record ConjureDuplicateOfCombatDamageDealerChoice(UUID controllerId, Card sourceCard,
                                                        List<UUID> combatDamageDealerIds)
-            implements PermanentChoiceContext {}
-    /** Return a chosen creature, then put +1/+1 counters on the source equal to its power. */
-    record ReturnCreatureToHandAndPutCountersOnSourceEqualToPower(UUID controllerId, Card sourceCard,
-                                                                   UUID sourcePermanentId)
             implements PermanentChoiceContext {}
     record ChoosePlayerThenReturnCreatureToHand(String sourceCardName) implements PermanentChoiceContext {}
     record ZndrsplatsJudgmentCreatureChoice(

@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import java.util.List;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.a.AshayaSoulOfTheWild;
 import com.github.laxika.magicalvibes.cards.s.ScuteMob;
@@ -31,15 +33,13 @@ class KhalniGemTest extends BaseCardTest {
         resolveAllTriggers();
 
         GameData gd = harness.getGameData();
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .containsExactlyInAnyOrder(firstLandId, secondLandId, thirdLandId);
+        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of(firstLandId)))
+                .isInstanceOf(IllegalStateException.class);
 
-        harness.handlePermanentChosen(player1, firstLandId);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactlyInAnyOrder(secondLandId, thirdLandId);
-
-        harness.handlePermanentChosen(player1, secondLandId);
+        harness.handleMultiplePermanentsChosen(player1, List.of(firstLandId, secondLandId));
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .extracting(Permanent::getId)
@@ -69,7 +69,7 @@ class KhalniGemTest extends BaseCardTest {
         harness.castFromHand(player1, new KhalniGem(), "{4}");
         resolveAllTriggers();
 
-        harness.handlePermanentChosen(player1, landId);
+        harness.handleMultiplePermanentsChosen(player1, List.of(landId));
 
         harness.assertInHand(player1, "Island");
         harness.assertOnBattlefield(player1, "Khalni Gem");
@@ -99,14 +99,9 @@ class KhalniGemTest extends BaseCardTest {
         harness.castFromHand(player1, new KhalniGem(), "{4}");
         resolveAllTriggers();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).validIds())
                 .containsExactlyInAnyOrder(ashayaId, scuteMobId);
-        harness.handlePermanentChosen(player1, ashayaId);
-
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.PermanentChoice.class);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .contains(scuteMobId);
-        harness.handlePermanentChosen(player1, scuteMobId);
+        harness.handleMultiplePermanentsChosen(player1, List.of(ashayaId, scuteMobId));
 
         harness.assertInHand(player1, "Ashaya, Soul of the Wild");
         harness.assertInHand(player1, "Scute Mob");
@@ -124,7 +119,7 @@ class KhalniGemTest extends BaseCardTest {
         harness.castFromHand(player1, new KhalniGem(), "{4}");
         resolveAllTriggers();
 
-        harness.handlePermanentChosen(player1, landId);
+        harness.handleMultiplePermanentsChosen(player1, List.of(landId));
 
         harness.assertInHand(player2, "Island");
         harness.assertNotInHand(player1, "Island");

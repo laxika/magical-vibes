@@ -1,8 +1,9 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,6 +25,7 @@ public class KayasGhostform extends Card {
                 "Target must be a creature or planeswalker you control"
         ));
         addTrigger(Triggers.putIntoGraveyardOrExileFromBattlefield(null, ObjectRelation.ENCHANTED),
-                new ReturnEnchantedPermanentToBattlefieldOnDeathOrExileEffect());
+                new PutCardsOntoBattlefieldEffect(Subjects.triggeringCards())
+                        .underControlOf(Subjects.you()));
     }
 }

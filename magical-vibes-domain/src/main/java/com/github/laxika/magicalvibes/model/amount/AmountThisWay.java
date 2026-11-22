@@ -41,6 +41,9 @@ import java.util.Objects;
  * "the total power of creatures they controlled that were exiled this way" (Oversimplify), "for each creature exiled
  * this way, its controller draws a card" (Martyr's Cry).
  *
+ * <p>A return to hand records each permanent as it last existed on the battlefield: "counters equal to that
+ * creature's power" after "return another creature you control to its owner's hand" (First Responder, CR 608.2h).
+ *
  * <p>A reveal step keeps its cards where they are: {@link Stat#MANA_VALUE} over one is "the total mana value of all
  * cards revealed this way", each card as it is now, and {@code yours} only those from the amount's controller's library
  * ("each player ... loses life equal to that card's mana value", Duskmantle Seer). Over a payment step {@code yours} is
@@ -89,9 +92,9 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
         Objects.requireNonNull(stat, "stat");
         boolean removal = kind == StepKind.SACRIFICE || kind == StepKind.DESTROY;
         if ((stat == Stat.POWER || stat == Stat.TOUGHNESS || stat == Stat.MANA_VALUE)
-                && !removal && kind != StepKind.EXILE && !(kind == StepKind.REVEAL && stat == Stat.MANA_VALUE)) {
+                && !removal && kind != StepKind.EXILE && kind != StepKind.RETURN && !(kind == StepKind.REVEAL && stat == Stat.MANA_VALUE)) {
             throw new IllegalArgumentException(
-                    "Only a sacrifice, destroy or exile step records last-known " + stat + ": " + kind);
+                    "Only a sacrifice, destroy, exile or return step records last-known " + stat + ": " + kind);
         }
         if ((stat == Stat.DIED || filter != null) && !removal) {
             throw new IllegalArgumentException(

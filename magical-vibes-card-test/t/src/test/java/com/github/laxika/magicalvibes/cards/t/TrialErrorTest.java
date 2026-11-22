@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.s.StormfrontRiders;
 import com.github.laxika.magicalvibes.cards.a.AzoriusFirstWing;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.model.Card;
@@ -226,5 +227,32 @@ class TrialErrorTest extends BaseCardTest {
     private void connectBlockerToAttacker(Permanent blocker, Permanent attacker) {
         blocker.setBlocking(true);
         blocker.addBlockingTargetId(attacker.getId());
+    }
+
+    @Test
+    @CardUsed({StormfrontRiders.class})
+    @DisplayName("Trial's creatures leave as one event, so the first one sees the other returned")
+    void trialReturnsAsOneEvent() {
+        Permanent attacker = addCreatureReady(player1, new MistralCharger());
+        attacker.setAttacking(true);
+        Permanent riders = addCreatureReady(player2, new StormfrontRiders());
+        Permanent other = addCreatureReady(player2, new MistralCharger());
+        connectBlockerToAttacker(riders, attacker);
+        connectBlockerToAttacker(other, attacker);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new TrialError()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.castInstant(player1, 0, 0, attacker.getId());
+        harness.passBothPriorities();
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player2.getId()))
+                .filteredOn(permanent -> permanent.getCard().isToken())
+                .hasSize(2);
     }
 }
