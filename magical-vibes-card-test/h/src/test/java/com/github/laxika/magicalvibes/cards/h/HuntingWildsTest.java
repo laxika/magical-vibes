@@ -153,4 +153,23 @@ class HuntingWildsTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         harness.assertLife(player1, 20);
     }
+
+    @Test
+    @org.junit.jupiter.api.DisplayName("When kicked, a single Forest found is untapped")
+    void kickedSpellUntapsTheOnlyForestFound() {
+        harness.setHand(player1, List.of(new HuntingWilds()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island()));
+        harness.addMana(player1, ManaColor.GREEN, 8);
+        harness.castKickedSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        harness.handleCardChosen(player1, 0);
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleCardChosen(player1, -1);
+        }
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .singleElement()
+                .matches(permanent -> !permanent.isTapped());
+    }
 }

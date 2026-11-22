@@ -3,10 +3,12 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantJumpStartToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
@@ -14,6 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "M3C", collectorNumber = "56")
 @CardRegistration(set = "M3C", collectorNumber = "108")
@@ -25,7 +28,8 @@ public class FiligreeRacer extends Card {
                 new PayEnergyCost(2),
                 List.of(),
                 true,
-                List.of(new QueueReflexiveAbilityEffect(new GrantJumpStartToTargetGraveyardCardEffect()))));
+                List.of(new QueueReflexiveAbilityEffect(new GrantFlashbackToTargetGraveyardCardEffect(
+                        Set.of(CardType.INSTANT, CardType.SORCERY), GrantedCardAbilityEffect.Ability.JUMP_START)))));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

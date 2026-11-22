@@ -8,6 +8,8 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.model.effect.CantBeChosenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -154,5 +156,17 @@ class WeaponizedScrapTest extends BaseCardTest {
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToLibraryBottom(gd, artifact));
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
+    }
+
+    @Test
+    @org.junit.jupiter.api.DisplayName("Upgrade can't cover an artifact that can't be chosen")
+    void cantCoverArtifactThatCantBeChosen() {
+        Permanent artifact = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        TestCards.mutableCard(artifact).addStaticEffect(new CantBeChosenEffect());
+        harness.castFromHand(player1, new WeaponizedScrap(), "{4}");
+        harness.passBothPriorities();
+
+        assertThat(artifact.getCard()).isNotInstanceOf(WeaponizedScrap.class);
+        assertThat(gd.getPlayerExiledCards(player1.getId())).anyMatch(WeaponizedScrap.class::isInstance);
     }
 }

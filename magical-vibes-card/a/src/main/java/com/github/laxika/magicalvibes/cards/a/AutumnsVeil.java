@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.a;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
-import com.github.laxika.magicalvibes.model.effect.GrantControllerCreaturesCantBeTargetedByColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerSpellsCantBeCounteredByColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTargetingRestrictionToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 
 import java.util.Set;
 
@@ -15,6 +17,7 @@ public class AutumnsVeil extends Card {
     public AutumnsVeil() {
         Set<CardColor> colors = Set.of(CardColor.BLUE, CardColor.BLACK);
         addSpellEffect(new GrantControllerSpellsCantBeCounteredByColorsEffect(colors));
-        addSpellEffect(new GrantControllerCreaturesCantBeTargetedByColorsEffect(colors));
+        addSpellEffect(new GrantTargetingRestrictionToTargetUntilEndOfTurnEffect(
+                TargetingRestrictionEffect.fromSpellColors(colors), Subjects.creaturesYouControl()));
     }
 }

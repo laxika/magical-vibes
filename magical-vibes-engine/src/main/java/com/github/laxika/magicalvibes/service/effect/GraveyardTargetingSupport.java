@@ -144,7 +144,7 @@ public class GraveyardTargetingSupport {
                     .map(type -> (CardPredicate) new CardTypePredicate(type))
                     .toList());
             return new Target(filter, GraveyardSearchScope.CONTROLLERS_GRAVEYARD,
-                    "to gain flashback", 1, 1);
+                    "to gain " + grantFlashback.abilityName(), 1, 1);
         }
         if (effect instanceof PerpetuallyGrantUnearthToTargetCreatureCardEffect) {
             return new Target(PerpetuallyGrantUnearthToTargetCreatureCardEffect.targetFilter(),

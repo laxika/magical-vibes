@@ -2,12 +2,14 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.d.DrudgeSkeletons;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.testutil.TestCards;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -45,6 +47,26 @@ class HazelsBrewmasterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.regenerationShieldCount(food.getId())).isEqualTo(1);
+    }
+
+    @Test
+    @org.junit.jupiter.api.DisplayName("Hazel's Brewmaster has the exiled cards' abilities while it is a Food itself")
+    void hasTheAbilitiesWhileItIsAFood() {
+        Card skeletons = new DrudgeSkeletons();
+        harness.setGraveyard(player1, new ArrayList<>(List.of(skeletons)));
+        harness.setHand(player1, List.of(new HazelsBrewmaster()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(skeletons.getId()));
+        harness.passBothPriorities();
+        Permanent hazel = findPermanent(player1, "Hazel's Brewmaster");
+        assertThat(gs.getEffectiveActivatedAbilities(gd, hazel)).isEmpty();
+
+        TestCards.mutableCard(hazel).setSubtypes(List.of(CardSubtype.FOOD));
+
+        assertThat(gs.getEffectiveActivatedAbilities(gd, hazel)).hasSize(1);
     }
 
     @Test

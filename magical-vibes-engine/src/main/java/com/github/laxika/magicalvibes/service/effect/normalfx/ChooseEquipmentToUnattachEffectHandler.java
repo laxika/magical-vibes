@@ -40,8 +40,9 @@ public class ChooseEquipmentToUnattachEffectHandler implements NormalEffectHandl
         List<UUID> equipmentIds = new ArrayList<>();
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent equipment : battlefield) {
-                if (!GameQueryService.permanentHasSubtype(equipment, CardSubtype.EQUIPMENT)
-                        || equipment.getAttachedTo() == null) {
+                if (equipment.getAttachedTo() == null
+                        || !gameQueryService.hasEffectiveSubtype(gameData, equipment, CardSubtype.EQUIPMENT)
+                        || gameQueryService.cantBeChosen(gameData, equipment)) {
                     continue;
                 }
 
@@ -75,7 +76,7 @@ public class ChooseEquipmentToUnattachEffectHandler implements NormalEffectHandl
         UUID equipmentId = permanentIds.get(0);
         Permanent equipment = gameQueryService.findPermanentById(gameData, equipmentId);
         if (equipment == null
-                || !GameQueryService.permanentHasSubtype(equipment, CardSubtype.EQUIPMENT)
+                || !gameQueryService.hasEffectiveSubtype(gameData, equipment, CardSubtype.EQUIPMENT)
                 || equipment.getAttachedTo() == null) {
             return;
         }

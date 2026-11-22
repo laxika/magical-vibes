@@ -10,14 +10,16 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.GainActivatedAbilitiesOfCreatureCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilitiesOfCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SpendManaAsAnyColorForActivatedAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.GraveyardCardPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -28,7 +30,9 @@ public class AgathasSoulCauldron extends Card {
 
     public AgathasSoulCauldron() {
         addStaticEffect(SpendManaAsAnyColorForActivatedAbilitiesEffect.controlledCreatures());
-        addStaticEffect(new GainActivatedAbilitiesOfCreatureCardsExiledWithSourceEffect());
+        addStaticEffect(new GrantActivatedAbilitiesOfCardsExiledWithSourceEffect(
+                CardType.CREATURE, Subjects.creaturesYouControl(),
+                new PermanentHasCountersPredicate(CounterType.PLUS_ONE_PLUS_ONE)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

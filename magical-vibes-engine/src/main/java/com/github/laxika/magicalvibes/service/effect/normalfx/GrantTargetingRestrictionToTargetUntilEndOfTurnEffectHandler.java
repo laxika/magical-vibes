@@ -88,7 +88,8 @@ public class GrantTargetingRestrictionToTargetUntilEndOfTurnEffectHandler implem
                 0));
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
-                .text(" makes creatures you control unable to be targeted by opponents' spells or abilities until end of turn.")
+                .text(" restricts what can target " + (Subjects.permanentsYouControl().equals(set) ? "permanents" : "creatures")
+                        + " its controller controls until end of turn.")
                 .build());
     }
 }

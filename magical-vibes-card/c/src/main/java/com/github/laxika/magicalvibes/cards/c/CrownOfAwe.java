@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorsToEnchantedAndSharingCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -28,8 +29,9 @@ public class CrownOfAwe extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new GrantProtectionFromColorsToEnchantedAndSharingCreaturesUntilEndOfTurnEffect(
-                                Set.of(CardColor.BLACK, CardColor.RED))
+                        new GrantEffectToTargetUntilEndOfTurnEffect(
+                                StaticAbility.of(new ProtectionFromColorsEffect(Set.of(CardColor.BLACK, CardColor.RED))),
+                                Subjects.attachedAndSharingCreatureType())
                 ),
                 "Sacrifice this Aura: Enchanted creature and other creatures that share a creature type with it gain protection from black and from red until end of turn."
         ));

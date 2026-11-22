@@ -1,7 +1,10 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantControllerCreaturesCantBeTargetedByColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerSpellsCantBeCounteredByColorsEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
@@ -25,7 +28,6 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.cards.v.Voidslime;
 import com.github.laxika.magicalvibes.cards.u.Unsummon;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
-import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -124,8 +126,7 @@ class AutumnsVeilTest extends BaseCardTest {
 
             // Protection flags should NOT be set since Autumn's Veil was countered
             assertThat(protectedColors(player1)).isEmpty();
-            assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(),
-                    GrantControllerCreaturesCantBeTargetedByColorsEffect.class)).isFalse();
+            assertThat(colorsOfSpellsThatCantTarget(player1)).isEmpty();
 
             // Autumn's Veil should be in graveyard
             harness.assertInGraveyard(player1, "Autumn's Veil");
@@ -390,11 +391,7 @@ class AutumnsVeilTest extends BaseCardTest {
             harness.addMana(player1, ManaColor.GREEN, 1);
             harness.castAndResolveInstant(player1, 0);
 
-            assertThat(gd.floatingEffectsOnPlayer(player1.getId(),
-                    GrantControllerCreaturesCantBeTargetedByColorsEffect.class))
-                    .singleElement()
-                    .extracting(veil -> ((GrantControllerCreaturesCantBeTargetedByColorsEffect) veil.effect()).colors())
-                    .asInstanceOf(InstanceOfAssertFactories.COLLECTION)
+            assertThat(colorsOfSpellsThatCantTarget(player1))
                     .containsExactlyInAnyOrder(CardColor.BLUE, CardColor.BLACK);
         }
     }
@@ -412,17 +409,19 @@ class AutumnsVeilTest extends BaseCardTest {
             gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
                 new GrantControllerSpellsCantBeCounteredByColorsEffect(Set.of(CardColor.BLUE, CardColor.BLACK)), player1.getId(), Duration.UNTIL_END_OF_TURN));
 
-            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
-                    new GrantControllerCreaturesCantBeTargetedByColorsEffect(Set.of(CardColor.BLUE, CardColor.BLACK)),
-                    player1.getId(), Duration.UNTIL_END_OF_TURN));
+            gd.addFloatingEffect(new FloatingContinuousEffect(java.util.UUID.randomUUID(), "Test", null, player1.getId(),
+                    new GrantNonAbilityEffectEffect(
+                            TargetingRestrictionEffect.fromSpellColors(Set.of(CardColor.BLUE, CardColor.BLACK)),
+                            Subjects.target()),
+                    null, null, new PermanentControlledBySourceControllerPredicate(), Duration.UNTIL_END_OF_TURN, 0));
+            assertThat(colorsOfSpellsThatCantTarget(player1)).containsExactlyInAnyOrder(CardColor.BLUE, CardColor.BLACK);
 
             TurnCleanupService svc = GameTestEngineContext.get().getBean(TurnCleanupService.class);
             svc.resetEndOfTurnModifiers(gd);
             gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
             assertThat(protectedColors(player1)).isEmpty();
-            assertThat(gd.hasFloatingEffectOnPlayer(player1.getId(),
-                    GrantControllerCreaturesCantBeTargetedByColorsEffect.class)).isFalse();
+            assertThat(colorsOfSpellsThatCantTarget(player1)).isEmpty();
         }
     }
 
@@ -513,6 +512,14 @@ class AutumnsVeilTest extends BaseCardTest {
     }
     private Permanent addCreature(Player player) {
         return addCreatureReady(player, new GrizzlyBears());
+    }
+
+    /** The colors of spells that can't target a creature {@code player} controls, as a creature arriving now shows. */
+    private Set<CardColor> colorsOfSpellsThatCantTarget(Player player) {
+        Permanent creature = addCreature(player);
+        return java.util.Arrays.stream(CardColor.values())
+                .filter(color -> gqs.cantBeTargetedBySpellColor(gd, creature, color, player.getId()))
+                .collect(java.util.stream.Collectors.toSet());
     }
 
     private Set<CardColor> protectedColors(com.github.laxika.magicalvibes.model.Player player) {

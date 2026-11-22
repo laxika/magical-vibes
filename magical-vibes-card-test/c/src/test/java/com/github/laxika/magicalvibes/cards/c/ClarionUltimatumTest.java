@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkablePlaytest;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({ClarionUltimatum.class, Forest.class, Island.class, DruidOfTheAnima.class, CosisTrickster.class, Clone.class,
-        ObNixilisUnshackled.class, OppositionAgent.class})
+        ObNixilisUnshackled.class, OppositionAgent.class, GlimpseTheUnthinkablePlaytest.class})
 class ClarionUltimatumTest extends BaseCardTest {
 
     @Test
@@ -283,6 +284,22 @@ class ClarionUltimatumTest extends BaseCardTest {
                 .hasSize(2)
                 .allMatch(card -> "Forest".equals(card.getName()));
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+    }
+
+    @Test
+    @DisplayName("A permanent that can't be chosen is not among the five permanents to choose")
+    void doesNotOfferPermanentThatCantBeChosen() {
+        List<Permanent> forests = setupForests(2);
+        harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
+        setupLibrary();
+        castClarion();
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds())
+                .containsExactlyInAnyOrderElementsOf(forests.stream().map(Permanent::getId).toList());
+        assertThat(choice.maxCount()).isEqualTo(2);
     }
 
     private List<Permanent> setupForests(int count) {

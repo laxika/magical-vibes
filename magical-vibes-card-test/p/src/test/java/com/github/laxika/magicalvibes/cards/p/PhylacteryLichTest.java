@@ -11,6 +11,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.model.effect.CantBeChosenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -373,5 +375,18 @@ class PhylacteryLichTest extends BaseCardTest {
         // Indestructible does NOT prevent sacrifice — Lich goes to graveyard
         harness.assertNotOnBattlefield(player1, "Phylactery Lich");
         harness.assertInGraveyard(player1, "Phylactery Lich");
+    }
+
+    @Test
+    @DisplayName("An artifact that can't be chosen gets no phylactery counter")
+    void artifactThatCantBeChosenGetsNoCounter() {
+        var artifact = harness.addToBattlefieldAndReturn(player1, new ElixirOfImmortality());
+        TestCards.mutableCard(artifact).addStaticEffect(new CantBeChosenEffect());
+        harness.setHand(player1, List.of(new PhylacteryLich()));
+        harness.addMana(player1, ManaColor.BLACK, 3);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(artifact.getCounterCount(CounterType.PHYLACTERY)).isZero();
     }
 }

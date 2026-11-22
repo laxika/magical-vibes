@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.UntapSearchedPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 
@@ -38,6 +38,6 @@ public class HuntingWilds extends Card {
                 new SearchLibraryEffect(new Fixed(2), forestFilter,
                         LibrarySearchDestination.BATTLEFIELD_TAPPED, null, 1, false,
                         false, false, false, animation, Subjects.you(), false, true)));
-        addSpellEffect(new ConditionalEffect(new Kicked(), new UntapSearchedPermanentsEffect()));
+        addSpellEffect(new ConditionalEffect(new Kicked(), new UntapPermanentsEffect(Subjects.searched())));
     }
 }

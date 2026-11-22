@@ -5,8 +5,8 @@ import com.github.laxika.magicalvibes.model.AbilityEffects;
 
 /**
  * When resolved, grants the targeted permanent an ability: a floating layer-6 effect on it
- * ({@code GameData.grantAbilityToPermanent}) until end of turn, until the effect controller's next
- * upkeep, or with no stated duration ({@link Duration#PERMANENT}).
+ * ({@code GameData.grantAbilityToPermanent}) for the stated duration, or with none stated
+ * ({@link Duration#PERMANENT}).
  *
  * <p>Example: Balduvian Shaman grants {@code Triggers.upkeep(ActivePlayer.YOU)} +
  * {@link CumulativeUpkeepEffect} indefinitely.
@@ -17,7 +17,8 @@ import com.github.laxika.magicalvibes.model.AbilityEffects;
  *                       target), {@link Subjects#source()} (the source permanent), or
  *                       {@link Subjects#attached()} (the permanent the source
  *                       Aura is attached to, re-derived at resolution and without targeting — the
- *                       Genju cycle's granted "whenever this creature deals damage" ability)
+ *                       Genju cycle's granted "whenever this creature deals damage" ability), or any
+ *                       other subject that doesn't target, found once as the effect resolves (CR 611.2c)
  */
 public record GrantEffectToTargetEffect(
         Ability grantedAbility,

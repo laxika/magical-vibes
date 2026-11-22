@@ -78,6 +78,7 @@ public class UpgradeSupport {
         return gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
                 .filter(permanent -> !permanent.getId().equals(enteringPermanent.getId()))
                 .filter(permanent -> gameQueryService.isArtifact(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .toList();
     }
 }

@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorsUntilYourNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -23,7 +26,9 @@ public class SyggWanderbrineShield extends Card {
         // gains protection from each color until your next turn.
         target(TargetFilters.creatureYouControl());
         addTrigger(Triggers.transformsToBackFace(ObjectRelation.THIS),
-                new GrantProtectionFromColorsUntilYourNextTurnEffect(EnumSet.allOf(CardColor.class)));
+                new GrantEffectToTargetEffect(
+                        StaticAbility.of(new ProtectionFromColorsEffect(EnumSet.allOf(CardColor.class))),
+                        Duration.UNTIL_YOUR_NEXT_TURN, false));
 
         // At the beginning of your first main phase, you may pay {U}. If you do, transform Sygg.
         addTrigger(Triggers.precombatMainPhase(ActivePlayer.YOU),

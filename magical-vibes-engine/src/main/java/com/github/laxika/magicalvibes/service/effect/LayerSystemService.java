@@ -43,6 +43,7 @@ import com.github.laxika.magicalvibes.model.effect.EnchantedPermanentConditional
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PayRansomEffect;
 import com.github.laxika.magicalvibes.model.effect.ShareLoyaltyAbilitiesWithOtherPlaneswalkersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeToOwnNonlandPermanentsEffect;
@@ -70,8 +71,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantNonAbilityEffectEffect;
 import com.github.laxika.magicalvibes.model.effect.ErrataCreatureTypeForMatchEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToEnchantedPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToAllNonlandPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToPermanentsWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantSupertypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledLandsBecomeTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeBecomeTypeEffect;
@@ -2322,20 +2321,9 @@ public class LayerSystemService {
                             null, false, false, null, grant.supertype()));
                 }
             }
-            case GrantSupertypeToAllNonlandPermanentsEffect grant -> {
+            case GrantSupertypeEffect grant -> {
                 manage(board, instance);
-                for (PermanentSlot target : slots) {
-                    CharacteristicState state = states.get(target.permanent().getId());
-                    if (state == null || state.hasCardType(CardType.LAND)) continue;
-                    state.addSupertype(grant.supertype());
-                    record(board, instance, target, new L4Contribution(
-                            null, false, false, null, grant.supertype()));
-                }
-            }
-            case GrantSupertypeToPermanentsWithCountersEffect grant -> {
-                manage(board, instance);
-                for (PermanentSlot target : slots) {
-                    if (target.permanent().getCounterCount(grant.counterType()) <= 0) continue;
+                for (PermanentSlot target : scopeTargets(gameData, instance, grant.subject(), grant.filter(), slots, slotsById, board)) {
                     states.get(target.permanent().getId()).addSupertype(grant.supertype());
                     record(board, instance, target, new L4Contribution(
                             null, false, false, null, grant.supertype()));

@@ -15,7 +15,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GriftersBlade.class, BorosRecruit.class})
+@CardUsed({GriftersBlade.class, BorosRecruit.class, GlimpseTheUnthinkablePlaytest.class})
 class GriftersBladeTest extends BaseCardTest {
 
     @Test
@@ -184,5 +184,19 @@ class GriftersBladeTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(blade.getAttachedTo()).isNull();
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature that can't be chosen isn't chosen to attach Grifter's Blade to")
+    void doesNotOfferCreatureThatCantBeChosen() {
+        harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
+        harness.setHand(player1, List.of(new GriftersBlade()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(findPermanent(player1, "Grifter's Blade").getAttachedTo()).isNull();
     }
 }

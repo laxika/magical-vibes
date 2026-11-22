@@ -45,7 +45,6 @@ import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.effect.AllLandsProduceChosenColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantSacrificeTargetThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantControllerCreaturesCantBeTargetedByColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.LandManaProducesFixedColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeProduceFixedManaColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeUntilNextTurnEffect;
@@ -385,9 +384,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerAndPermanentsHexproofFromColorsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantControllerHexproofUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantControllerKeywordUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersGainKeywordUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromEverythingUntilNextTurnEffect;
@@ -1950,15 +1947,9 @@ public class GameQueryService {
 
     private boolean graveyardGrantApplies(GameData gameData, UUID ownerId, Card card,
                                          GraveyardAbilityGrantingEffect grant) {
-        if (grant instanceof com.github.laxika.magicalvibes.model.effect.GrantGraveyardAbilityToCreatureCardsOfSubtypeEffect subtypeGrant) {
-            return cardHasType(card, CardType.CREATURE, gameData, ownerId)
-                    && cardHasSubtype(card, subtypeGrant.subtype(), gameData, ownerId);
-        }
-        if (grant instanceof com.github.laxika.magicalvibes.model.effect.GrantEncoreToCreatureCardsOfSubtypeEffect encoreGrant) {
-            return cardHasType(card, CardType.CREATURE, gameData, ownerId)
-                    && cardHasSubtype(card, encoreGrant.subtype(), gameData, ownerId);
-        }
-        return grant.appliesTo(card);
+        CardPredicate filter = grant.cardFilter();
+        return card != null && grant.appliesTo(card) && (filter == null
+                || predicateEvaluationService.matchesCardPredicate(card, filter, null, gameData, ownerId));
     }
 
     /** Whether Highway Reaver currently permits this player's first unearth activation to be free. */
@@ -9475,19 +9466,6 @@ public class GameQueryService {
             }
         }
 
-        // Check per-player turn-duration protection (Autumn's Veil style)
-        if (sourceIsSpell && isCreature(gameData, target)) {
-            UUID controllerId = findPermanentController(gameData, target.getId());
-            if (controllerId != null) {
-                if (gameData.floatingEffectsOnPlayer(controllerId,
-                        GrantControllerCreaturesCantBeTargetedByColorsEffect.class).stream()
-                        .anyMatch(veil -> ((GrantControllerCreaturesCantBeTargetedByColorsEffect) veil.effect())
-                                .colors().contains(spellColor))) {
-                    return true;
-                }
-            }
-        }
-
         return false;
     }
 
@@ -9975,17 +9953,14 @@ public class GameQueryService {
 
     /**
      * Returns whether a floating effect gives the player {@code keyword} for a stated duration ("you gain shroud until
-     * end of turn", "until your next turn"). Hexproof is also given by {@link GrantControllerHexproofUntilEndOfTurnEffect}.
+     * end of turn", "until your next turn").
      */
     private boolean playerHasTemporaryKeyword(GameData gameData, UUID playerId, Keyword keyword) {
         for (CardEffect effect : gameData.floatingPlayerEffects(playerId,
-                PlayersGainKeywordUntilEndOfTurnEffect.class, GrantControllerKeywordUntilEndOfTurnEffect.class,
-                GrantControllerKeywordUntilNextTurnEffect.class, GrantControllerHexproofUntilEndOfTurnEffect.class)) {
+                PlayersGainKeywordUntilEndOfTurnEffect.class, GrantControllerKeywordUntilEndOfTurnEffect.class)) {
             Keyword granted = switch (effect) {
                 case PlayersGainKeywordUntilEndOfTurnEffect gain -> gain.keyword();
                 case GrantControllerKeywordUntilEndOfTurnEffect gain -> gain.keyword();
-                case GrantControllerKeywordUntilNextTurnEffect gain -> gain.keyword();
-                case GrantControllerHexproofUntilEndOfTurnEffect ignored -> Keyword.HEXPROOF;
                 default -> null;
             };
             if (granted == keyword) {

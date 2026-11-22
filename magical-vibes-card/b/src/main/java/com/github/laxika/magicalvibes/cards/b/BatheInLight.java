@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceToTargetAndSharingCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantProtectionChoiceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "RAV", collectorNumber = "2")
@@ -12,6 +13,7 @@ public class BatheInLight extends Card {
 
     public BatheInLight() {
         target(TargetFilters.creature())
-                .addSpellEffect(new GrantProtectionChoiceToTargetAndSharingCreaturesUntilEndOfTurnEffect());
+                .addSpellEffect(new GrantProtectionChoiceUntilEndOfTurnEffect(
+                        Subjects.withCreaturesSharingAColor(Subjects.target())));
     }
 }

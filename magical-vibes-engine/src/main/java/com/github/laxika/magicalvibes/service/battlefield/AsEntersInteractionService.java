@@ -183,6 +183,7 @@ public class AsEntersInteractionService {
         if (exchangesTextOnEntry && enteringPermanent.getChosenPermanentId() == null) {
             List<UUID> choices = gameData.playerBattlefields.values().stream().flatMap(List::stream)
                     .filter(p -> p != enteringPermanent && gameQueryService.isCreature(gameData, p))
+                    .filter(p -> !gameQueryService.cantBeChosen(gameData, p))
                     .map(Permanent::getId).toList();
             if (!choices.isEmpty()) {
                 gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.ChooseCreatureAsEnter(
@@ -288,6 +289,7 @@ public class AsEntersInteractionService {
             List<UUID> validIds = gameData.playerBattlefields.get(controllerId).stream()
                     .filter(permanent -> permanent != justEntered)
                     .filter(permanent -> gameQueryService.isArtifact(gameData, permanent))
+                    .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                     .map(Permanent::getId)
                     .toList();
             if (validIds.size() == 1) {
@@ -317,6 +319,7 @@ public class AsEntersInteractionService {
                     .filter(permanent -> permanent != justEntered)
                     .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
                     .filter(permanent -> equipSupport.canAttachEquipment(gameData, justEntered, permanent))
+                    .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                     .map(Permanent::getId)
                     .toList();
             if (!validIds.isEmpty()) {
@@ -342,6 +345,7 @@ public class AsEntersInteractionService {
             List<UUID> validIds = subjectResolutionService
                     .permanents(gameData, justEntered, controllerId, permanentChoice.candidates()).stream()
                     .filter(permanent -> permanent != justEntered)
+                    .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                     .map(Permanent::getId)
                     .toList();
             if (!validIds.isEmpty()) {
@@ -364,6 +368,7 @@ public class AsEntersInteractionService {
                     .flatMap(List::stream)
                     .filter(permanent -> permanent != justEntered)
                     .filter(permanent -> !gameQueryService.isLand(gameData, permanent))
+                    .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                     .map(Permanent::getId)
                     .toList();
             if (!validIds.isEmpty()) {

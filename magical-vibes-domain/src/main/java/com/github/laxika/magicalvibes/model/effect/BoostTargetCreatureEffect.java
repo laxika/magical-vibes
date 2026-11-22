@@ -47,7 +47,8 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
     public BoostTargetCreatureEffect {
         subject = subject == null ? Subjects.target() : subject;
         if (!subject.declaresTarget() && !(subject instanceof PermanentSubject.ThisWay)
-                && !(subject instanceof PermanentSubject.Except)) {
+                && !(subject instanceof PermanentSubject.Except)
+                && !(subject instanceof PermanentSubject.AttachedAndSharingCreatureType)) {
             throw new IllegalArgumentException("BoostTargetCreatureEffect boosts its target or what a choice named "
                     + "or left; another non-targeting subject is BoostSelfEffect: " + subject);
         }
@@ -122,6 +123,11 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
     @Override
     public DynamicAmount castTimeXValue() {
         return castTimeXValue;
+    }
+
+    @Override
+    public boolean resolvesAgainstAttachedPermanent() {
+        return subject instanceof PermanentSubject.AttachedAndSharingCreatureType;
     }
 
     @Override

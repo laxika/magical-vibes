@@ -7,9 +7,11 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.GrantSupertypeToPermanentsWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -22,8 +24,8 @@ public class RimefeatherOwl extends Card {
         PermanentCount snowPermanents = new PermanentCount(
                 new PermanentHasSupertypePredicate(CardSupertype.SNOW), CountScope.ANY_PLAYER);
         addStaticEffect(new SetPowerToughnessToAmountEffect(snowPermanents, snowPermanents));
-        addStaticEffect(new GrantSupertypeToPermanentsWithCountersEffect(
-                CounterType.ICE, CardSupertype.SNOW));
+        addStaticEffect(new GrantSupertypeEffect(CardSupertype.SNOW, Subjects.allPermanents(),
+                new PermanentHasCountersPredicate(CounterType.ICE)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

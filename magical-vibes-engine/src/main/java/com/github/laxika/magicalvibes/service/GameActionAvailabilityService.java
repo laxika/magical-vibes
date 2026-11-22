@@ -1034,9 +1034,10 @@ public class GameActionAvailabilityService {
     /**
      * The mana costs this card could actually be cast for. Normally just its printed cost; a modal
      * spell whose modes declare their own totals (a split card with fuse — CR 709.3, CR 702.102c)
-     * adds one candidate per mode, and keeps the printed cost only when some mode declares none.
+     * adds one candidate per mode that isn't a forbidden name's half, and keeps the printed cost only when
+     * some such mode declares none.
      */
-    private static List<ManaCost> castableCosts(Card card) {
+    private static List<ManaCost> castableCosts(Card card, Set<String> forbiddenCardNames) {
         ManaCost printed = card.getParsedManaCost();
         ChooseOneEffect modal = card.getSpellEffects().stream()
                 .filter(ChooseOneEffect.class::isInstance)
@@ -1047,7 +1048,11 @@ public class GameActionAvailabilityService {
         }
         List<ManaCost> costs = new ArrayList<>();
         boolean anyUsesPrintedCost = false;
-        for (ChooseOneEffect.ChooseOneOption option : modal.options()) {
+        for (int mode = 0; mode < modal.options().size(); mode++) {
+            if (CastingPermissionService.isSplitModeForbiddenByName(card, forbiddenCardNames, mode)) {
+                continue;
+            }
+            ChooseOneEffect.ChooseOneOption option = modal.options().get(mode);
             if (option.manaCost() == null) {
                 anyUsesPrintedCost = true;
             } else {
@@ -1126,7 +1131,7 @@ public class GameActionAvailabilityService {
 
         // A split card with fuse offers several mutually exclusive costs (each half, plus the fused
         // total) — it is castable if any one of them is payable, so every candidate is tried below.
-        List<ManaCost> candidateCosts = castableCosts(card);
+        List<ManaCost> candidateCosts = castableCosts(card, ctx.forbiddenCardNames());
         boolean collectEvidenceCostPaid = castingCostService.canPayCollectEvidenceCost(gameData, playerId, card);
         int additionalCost = castingCostService.getCastCostModifier(
                 gameData, playerId, card, ctx.costSnapshot(), 0, collectEvidenceCostPaid)

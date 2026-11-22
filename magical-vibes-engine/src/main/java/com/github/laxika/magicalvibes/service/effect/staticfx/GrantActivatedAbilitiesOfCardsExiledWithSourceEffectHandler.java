@@ -2,41 +2,35 @@ package com.github.laxika.magicalvibes.service.effect.staticfx;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilitiesOfCreatureCardsExiledWithSourceToMatchingPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilitiesOfCardsExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.service.effect.StaticBonusAccumulator;
 import com.github.laxika.magicalvibes.service.effect.StaticEffectContext;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-
+/** Gives the named permanents the activated abilities of the cards of that type exiled with the source. */
 @Component
 @RequiredArgsConstructor
-public class GrantActivatedAbilitiesOfCreatureCardsExiledWithSourceToMatchingPermanentsEffectHandler
+public class GrantActivatedAbilitiesOfCardsExiledWithSourceEffectHandler
         implements StaticEffectHandlerBean {
 
     private final StaticEffectSupport support;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return GrantActivatedAbilitiesOfCreatureCardsExiledWithSourceToMatchingPermanentsEffect.class;
+        return GrantActivatedAbilitiesOfCardsExiledWithSourceEffect.class;
     }
 
     @Override
-    public void apply(StaticEffectContext context, CardEffect effect,
-                      StaticBonusAccumulator accumulator) {
-        var grant = (GrantActivatedAbilitiesOfCreatureCardsExiledWithSourceToMatchingPermanentsEffect) effect;
-        if (!context.targetOnSameBattlefield()
-                || !support.matchesStaticFilter(context, context.target(), grant.targetFilter())) {
+    public void apply(StaticEffectContext context, CardEffect effect, StaticBonusAccumulator accumulator) {
+        var grant = (GrantActivatedAbilitiesOfCardsExiledWithSourceEffect) effect;
+        if (!support.names(context, grant.subject(), grant.filter())) {
             return;
         }
-
-        List<Card> exiledCards = context.gameData().getCardsExiledByPermanent(context.sourceId());
-        for (Card card : exiledCards) {
-            if (!card.hasType(CardType.CREATURE)) {
+        for (Card card : context.gameData().getCardsExiledByPermanent(context.sourceId())) {
+            if (!card.hasType(grant.cardType())) {
                 continue;
             }
             for (ActivatedAbility ability : ManaAbilities.withIntrinsic(card)) {

@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToOwnPermanentsUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantTargetingRestrictionToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetingRestrictionEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -34,8 +35,9 @@ public class DisplayOfDominance extends Card {
                                 "Target must be a blue or black noncreature permanent.")),
                 new ChooseOneEffect.ChooseOneOption(
                         "Permanents you control can't be the targets of blue or black spells your opponents control this turn",
-                        new GrantStaticEffectToOwnPermanentsUntilEndOfTurnEffect(
-                                TargetingRestrictionEffect.fromOpponentSpellColors(colors)))
+                        new GrantTargetingRestrictionToTargetUntilEndOfTurnEffect(
+                                TargetingRestrictionEffect.fromOpponentSpellColors(colors),
+                                Subjects.permanentsYouControl()))
         )));
     }
 }

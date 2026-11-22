@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 17: Exile, Each, Return, Put, Reveal and Choose closed; 2,192 rare records left, Grant next) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 18: Exile, Each, Return, Put, Reveal, Choose and Grant closed; 2,082 rare records left, Create next) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -623,6 +623,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 15 | Run 14's defects (the other name prompts, the perpetual choices' log, the three draw handlers), the choose-permanents and perpetual grant steps, users of the player and name steps, then Choose's rare records | done for the defects and the two steps, Choose open (26 rows: 2 absorbed, 19 split, 5 survivors, 21 records deleted; 29 card files changed; `ChoosePermanentsEffect` with `thisWay(CHOOSE)`, `DestroyAllPermanentsEffect.sparing`, `PerpetuallyGrantAbilitiesEffect`; 64 rare Choose records left) |
 | 16 | Run 15's defects (exile-by-name searches, as-enters copy log, APNAP draws, the AI's dig), the chosen name's remaining users, the choose-permanents step per player and at random, then Choose's rare records | done for the defects and those parts, Choose open (28 rows: 1 absorbed, 8 split, 4 survivors, 15 unique, 9 records deleted; 20 card files changed; `ExileCardsWithSameNameEffect` by the chosen name, `CantPlayChosenNameUntilNextTurnEffect`, `ChoosePermanentsEffect.oneForEach` / `.atRandom`; 43 rare Choose records left) |
 | 17 | Run 16's small defects and dead code (Mindblaze's shuffle, split names), its shared parts, then the rest of Choose's rare records | done, Choose closed (50 rows: 2 absorbed, 12 split, 6 survivors, 8 blocked-other, 22 unique; 14 records deleted; 27 card files changed, 16 rewritten; `RegisterDelayedStepTriggerEffect.aboutPutOntoBattlefield`, subjects on four survivors, `ChoosePermanentOnEnterEffect`) |
+| 18 | Run 17's four small defects, the Grant family's waiting rows' shared parts (the Crowns' host set, the searched permanent), then its rare records | done, Grant closed (108 rare records: 29 absorbed, 2 split, 1 dead, 12 blocked-other, 64 unique; with the other rows 37 records deleted; 41 card files rewritten; `GrantGraveyardAbilityToCardsEffect`, `GrantSupertypeEffect`, `GrantAbilityToNextSpellThisTurnEffect`, `searched()`, `attachedAndSharingCreatureType()`) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -7897,6 +7898,100 @@ search-cast paths of item 2 by a test.
 - The delayed ability about a put now exists: grep the ledger's delayed-sacrifice rows before giving one that blocker.
 - The gain-control record takes a subject: the sibling records that only name whose permanent is gained can fold.
 - Seven latest `step-9` ledger rows are left (Sacrifice, Destroy, the can't-be-countered trio, the two may-draws).
+
+### Step 9, run 18 (2026-11-22, Grant closed)
+
+Run 17's four small defects, the parts the Grant family's waiting rows needed, then a verdict for each of its 108 rare records: Grant has
+none left. Ratchet 4,207 / 3,436 → 4,174 / 3,409 records / handlers (37 records and 32 handlers deleted, 4 records and 5 handlers added).
+41 card files rewritten by scratch scripts; Oracle text checked with `get_card` for all 41 (Sygg through its front face), and for the
+cards of the defects but Glimpse (not in the feeds) and the split and Room cards (by rule). The unique and blocked verdicts come from
+reading each record, handler and card, with `get_card` or `get_rulings` only where one is cited. Rulings with `get_rulings` for Akiri,
+Phylactery Lich, Autumn's Veil, Display of Dominance, Bathe in Light, Cursecloth Wrappings, Crown of Awe (none) and The Chain Veil.
+CR 205.3i, 603.7b, 607.2a, 608.2b, 608.2d, 608.2h, 611.2c, 613.1f, 616.1, 702.14a, 702.14c, 702.34a, 702.40a, 702.85a, 708.2, 709.3a,
+709.3b, 709.5b and 709.5j checked with `get_rule` (2026-11-22).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | `step-9` | Left unaudited |
+|---|---|---|---|---|---|---|---|---|
+| Grant | 117 rows (108 rare records, 1 waiting row, 8 survivors, 4 of them new) | 30, and 1 dead | 2 | 8 | 12 other (all-zones characteristic grants 5, a player recipient on the protection choice 2, protection from a player 2, a departed source's choice in a next-spell rule 2, perpetual offspring 1) | 64 | 0 | no rare record |
+| Other families | 5 rows (Boost's and two Untap waiting rows, Gain's exiled-abilities record, the granted-ability payload) | 4 | 0 | 0 | 0 | 1 | 0 | Boost 23, Untap 0, Gain 32. All families: 2,082 rare records without a row |
+
+- **New records.** `GrantGraveyardAbilityToCardsEffect` (eight statics), `GrantAbilityToNextSpellThisTurnEffect` (storm, cascade),
+  `GrantSupertypeEffect` (two statics; the 4-card enchanted-permanent twin waits for step 10) and
+  `GrantActivatedAbilitiesOfCardsExiledWithSourceEffect` (three statics, one of them Gain's).
+- **Subjects.** `attachedAndSharingCreatureType()` is what the Crowns' two blocked rows waited for, with the third Crown record.
+  `searched()` is what the two untap-the-searched rows waited for, with Savage Order. It reads the entry's two existing channels; the
+  search still records no `StepKind`, so the SEARCH blockers of step 8 stand.
+- **Parameters.** The target graveyard grant takes the ability, the until-end-of-turn controller keyword a duration, the permanent
+  ability grant any non-targeting subject and any duration, the protection choice the radiance subject. No record of three or more cards
+  was collapsed.
+
+**Behaviour changes.** "Failed before" means on a `git archive` copy of HEAD in the scratch directory, with the new test copied in.
+
+1. A permanent that can't be chosen isn't among the candidates of these choices (the marker's "every choice of an object"; each text was
+   read first). The prompts already dropped it, so the defect was the count or emptiness taken before that: Clarion Ultimatum demanded
+   more permanents than it offered, and Spry and Mighty and the as-enters markers opened a prompt without an answer. Scheming Fence's
+   prompt didn't drop it at all. Akiri now asks nothing when no Equipment can be chosen. The same held for four more as-enters choices
+   of `AsEntersInteractionService`: Grifter's Blade ("choose a creature"), Phylactery Lich ("You must choose an artifact", ruling;
+   it put the counter on a lone one), Deadpool and Weaponized Scrap. Tests in all nine classes' cards (failed before; Pitlord and Sludge
+   share Dauntless Bodyguard's marker).
+2. A forbidden name stops only that door of a Room (CR 709.3a, 709.5j): `WalkInClosetForgottenCellarTest` (failed before).
+3. Akiri sees an artifact that became an Equipment: `AkiriFearlessVoyagerTest` (failed before).
+4. A split card isn't hinted playable for a forbidden half's cost (CR 709.3a): `FireIceTest.hintSkipsForbiddenHalf` (failed before).
+5. The graveyard-ability statics judge their filter by the card's current characteristics: a changeling card is an outlaw (Graywater's
+   Fixer), a creature card made an artifact has Mishra's unearth. `GraywatersFixerTest`, `MishraTamerOfMakFawaTest` (failed before).
+6. Hazel's Brewmaster has the exiled cards' abilities while it is a Food you control itself (Oracle: "Foods you control"):
+   `HazelsBrewmasterTest.hasTheAbilitiesWhileItIsAFood` (failed before).
+7. Prompts and log lines are the survivors': a target prompt "to gain harmonize / jump-start / embalm" where the steps' own targeting
+   asks, the storm and cascade line, a line for each Crown boost and for Sygg's and Stilt-Man's grant, the targeting rule's line (reworded,
+   as it said "opponents' spells or abilities" and "creatures" for every restriction), Clarion's empty line.
+8. Not observable by a test found here: Savage Order's grant no longer requires a creature (Oracle: "It").
+9. AI only, untested: a Crown's sacrifice counts as a pump now that its boost is a `CreatureBoostEffect` (so it waits for a pump's
+   timing), and the target choice for harmonize, jump-start and embalm filters candidates by the grant's card types.
+
+**What a player sees.** The new subjects name battlefield permanents, the graveyard grants graveyard cards: both public. The two survivors'
+new log lines use card segments, which the log masks for a face-down permanent.
+
+**Seen, not changed** (for the owner's decision where it is a leak). Run 17's other items stand.
+
+- Pestilent Spirit's deathtouch also goes to abilities of instant and sorcery cards with no source permanent (a cycling trigger's damage):
+  `GameQueryService.sourceHasKeyword` doesn't ask whether the entry is a spell, and can't simply, as the carriers of a resolving spell
+  are triggered-ability entries. By reading; no test.
+- A Room spell on the stack keeps both doors' names: `selectedSplitModeCharacteristics` skips Rooms (CR 709.3b; 709.5b excepts only
+  that both halves exist).
+- Barbarian Guides offers the five basic land types (its text: "a land type", CR 205.3i), as its Javadoc says.
+- Several kept Grant handlers name a floating effect's source by `entry.getCard().getName()` instead of asking `FaceDownVisibility`
+  (CR 708.2); not traced to what a player sees.
+- `beginAnyTargetChoice` and the permanent-or-player prompt don't drop what can't be chosen, and other callers that count before the
+  permanent prompts drop it (the as-enters sacrifices among them) weren't swept.
+- Green Goblin's mayhem filter is judged without game data, so by printed characteristics.
+- The split hint offers an aftermath card for its second half's cost from a hand, by reading `castableCosts`; no test.
+- The can't-be-countered trio's `step-9` rows (Controller and Creature families) still hold Grant's two blocked one-shot rows.
+- A colour-word change doesn't rewrite the floating targeting rule of Autumn's Veil (LAYER_SYSTEM's known gap, as before).
+
+**Tests edited.** The new cases above, with two guards that pass on HEAD too (`HuntingWildsTest.kickedSpellUntapsTheOnlyForestFound`,
+`FlameOnTest.cantTargetAPlayer`). Named or asserted a deleted record: `AutumnsVeilTest` (three cases read that record's floating effect;
+they now ask `cantBeTargetedBySpellColor` of a creature arriving later, for the same colours) and `SpellTriggersTest` (the cascade
+constructor, same assertions). `EffectCountRatchetTest`'s baselines.
+
+**Tests run.** The final sources in one Gradle run with every test task forced (`--rerun`), one `--tests` list per task, counted from that
+run's XML by the test cases' class names: 897 classes (1,389 suites, 13,658 cases, 30 skipped: the 29 of `TriggerRouteRecordTest`'s
+assumption and the layer benchmark's case; 0 failures): the 100 test classes that name one of the 41 rewritten cards or a card of the
+defects, every changed test class, the cards of the changed survivors (`--tests-for`; at most 60 cards each for the keyword, boost, untap,
+subtype, search and modal heads), the Room and split cards, 174 application classes (architecture with `EffectCountRatchetTest`, and
+those naming a changed mechanism) and 27 AI classes likewise. No deleted handler asked death replacements first, so `Mastery|DeathReplacement`
+wasn't selected. Every project's main and test Java sources compile on the final tree. The new cases were run on the copy of HEAD: they
+failed but the two guards; the edited `AutumnsVeilTest` and `SpellTriggersTest` weren't run there. Not run: the full suites, the AI fuzz
+and stress tests, the frontend. Not verified: items 8 and 9, MCTS over the converted effects, more than two players, the survivors' head
+cards outside the samples, the sampled heads' card text.
+
+**For the next run (run 19: Create 67; then Prevent 66, May 58, Perpetually 55, Conjure 49, Register 48, Target 48).**
+
+- Grant's blocked causes have two classes each but two: the five all-zones grants need the out-of-battlefield characteristic queries
+  redesigned (outside this plan), and offspring waits for the Perpetually run with Choose's perpetual rows.
+- The protection causes get their third class in Prevent or Protection (17 rare): a player recipient and protection from a player.
+- `searched()` exists: grep the Search, Untap and Put rows waiting for the searched permanent before giving that blocker.
+- The graveyard-ability grant and the scavenge record, and the supertype grant and its enchanted twin, are step 10 pairs.
+- Seven `step-9` ledger rows are left, as run 17 listed them; the can't-be-countered trio settles Grant's two blocked rows.
 
 ## Prompt
 

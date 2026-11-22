@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.GrantCascadeToNextCreatureSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.GrantAbilityToNextSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 import java.util.List;
@@ -21,7 +23,7 @@ public class SloppityBilepiper extends Card {
                                 new PermanentIsCreaturePredicate(),
                                 "a creature",
                                 false),
-                        new GrantCascadeToNextCreatureSpellThisTurnEffect()),
+                        GrantAbilityToNextSpellThisTurnEffect.cascade(new CardTypePredicate(CardType.CREATURE))),
                 "{2}, {T}, Sacrifice a creature: The next creature spell you cast this turn has cascade."
         ));
     }

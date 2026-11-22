@@ -6,6 +6,10 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.b.BludgeonBrawl;
+import com.github.laxika.magicalvibes.cards.t.TitanForge;
+import com.github.laxika.magicalvibes.testutil.TestCards;
+import com.github.laxika.magicalvibes.model.effect.CantBeChosenEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -15,7 +19,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({AkiriFearlessVoyager.class, GrizzlyBears.class, LeoninScimitar.class})
+@CardUsed({AkiriFearlessVoyager.class, GrizzlyBears.class, LeoninScimitar.class, BludgeonBrawl.class, TitanForge.class})
 class AkiriFearlessVoyagerTest extends BaseCardTest {
 
     @Test
@@ -171,5 +175,41 @@ class AkiriFearlessVoyagerTest extends BaseCardTest {
         assertThat(equipment.getAttachedTo()).isEqualTo(creature.getId());
         assertThat(creature.isTapped()).isFalse();
         assertThat(gqs.hasKeyword(gd, creature, Keyword.INDESTRUCTIBLE)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Akiri doesn't offer an Equipment that can't be chosen")
+    void doesNotOfferEquipmentThatCantBeChosen() {
+        addCreatureReady(player1, new AkiriFearlessVoyager());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent unchoosable = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
+        unchoosable.setAttachedTo(creature.getId());
+        TestCards.mutableCard(unchoosable).addStaticEffect(new CantBeChosenEffect());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(unchoosable.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Akiri can unattach an artifact that became an Equipment")
+    void unattachesArtifactThatBecameEquipment() {
+        addCreatureReady(player1, new AkiriFearlessVoyager());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new BludgeonBrawl());
+        Permanent forge = harness.addToBattlefieldAndReturn(player1, new TitanForge());
+        forge.setAttachedTo(creature.getId());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNotNull();
+        harness.handleMultiplePermanentsChosen(player1, List.of(forge.getId()));
+
+        assertThat(forge.getAttachedTo()).isNull();
+        assertThat(creature.isTapped()).isTrue();
     }
 }

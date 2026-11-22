@@ -58,6 +58,11 @@ public record GrantEffectToTargetUntilEndOfTurnEffect(
     }
 
     @Override
+    public boolean resolvesAgainstAttachedPermanent() {
+        return subject instanceof PermanentSubject.AttachedAndSharingCreatureType;
+    }
+
+    @Override
     public TargetSpec targetSpec() {
         return subject.declaresTarget()
                 ? TargetSpec.benign(anyPermanent ? TargetPredicates.permanent() : TargetPredicates.creature())

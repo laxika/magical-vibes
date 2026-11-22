@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.t.TidalWarrior;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkablePlaytest;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -13,8 +14,20 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DeadpoolTradingCard.class, TidalWarrior.class})
+@CardUsed({DeadpoolTradingCard.class, TidalWarrior.class, GlimpseTheUnthinkablePlaytest.class})
 class DeadpoolTradingCardTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("With only a creature that can't be chosen Deadpool asks for no exchange")
+    void doesNotOfferCreatureThatCantBeChosen() {
+        harness.addToBattlefield(player2, new GlimpseTheUnthinkablePlaytest());
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.castFromHand(player1, new DeadpoolTradingCard(), "{2}{B}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
 
     private void castAndChoose(Permanent target, boolean accept) {
         harness.forceActivePlayer(player1);

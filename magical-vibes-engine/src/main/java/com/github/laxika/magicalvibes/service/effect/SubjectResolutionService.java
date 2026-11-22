@@ -912,6 +912,8 @@ public class SubjectResolutionService {
                     .toList();
             case PermanentSubject.TriggeringSpellTargets ignored -> triggeringSpellTargetIds(ctx);
             case PermanentSubject.CreatedThisResolution ignored -> List.copyOf(ctx.entry().getCreatedPermanentIds());
+            case PermanentSubject.Searched ignored -> searchedIds(ctx.entry());
+            case PermanentSubject.AttachedAndSharingCreatureType ignored -> attachedAndSharingCreatureTypeIds(ctx);
             case PermanentSubject.ThisWay thisWay -> thisWayIds(ctx, thisWay);
             case PermanentSubject.BandmatesOf bandmates -> bandmateIds(ctx, bandmates.permanent());
             case PermanentSubject.WithCreaturesSharingAColor sharing -> sharingAColorIds(ctx, sharing.permanent());
@@ -1054,6 +1056,50 @@ public class SubjectResolutionService {
             }
         });
         return sharing;
+    }
+
+    /**
+     * {@link PermanentSubject.Searched}: every permanent the entry recorded a search as putting onto the battlefield,
+     * else the one it recorded as found.
+     */
+    private static List<UUID> searchedIds(StackEntry entry) {
+        return entry.getSearchedPermanentIds().isEmpty()
+                ? listOf(entry.getChosenPermanentId()) : List.copyOf(entry.getSearchedPermanentIds());
+    }
+
+    /**
+     * {@link PermanentSubject.AttachedAndSharingCreatureType}: the host recorded as the ability was activated, as it
+     * is, else as the entry last knew it (CR 608.2h), and the creatures sharing a creature type with it.
+     */
+    private List<UUID> attachedAndSharingCreatureTypeIds(Context ctx) {
+        GameData gameData = ctx.gameData();
+        StackEntry entry = ctx.entry();
+        UUID hostId = entry.getTargetId() != null ? entry.getTargetId() : attachedId(ctx);
+        if (hostId == null) {
+            return List.of();
+        }
+        Permanent current = gameQueryService.findPermanentById(gameData, hostId);
+        Permanent host;
+        if (current != null) {
+            if (!gameQueryService.isCreature(gameData, current)) {
+                return List.of();
+            }
+            host = current;
+        } else {
+            Card lastKnown = entry.lastKnownPermanentCard(hostId);
+            if (lastKnown == null || !lastKnown.hasType(CardType.CREATURE)) {
+                return List.of();
+            }
+            host = new Permanent(lastKnown);
+        }
+        List<UUID> named = new ArrayList<>();
+        gameData.forEachPermanent((playerId, candidate) -> {
+            if (gameQueryService.isCreature(gameData, candidate) && (candidate.getId().equals(hostId)
+                    || gameQueryService.shareCreatureType(gameData, host, candidate))) {
+                named.add(candidate.getId());
+            }
+        });
+        return named;
     }
 
     /**

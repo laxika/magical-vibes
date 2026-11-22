@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.cards.g.GraspingLongneck;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.m.MeddlingMage;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -14,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({WalkInClosetForgottenCellar.class, Forest.class, LightningBolt.class, GraspingLongneck.class})
+@CardUsed({WalkInClosetForgottenCellar.class, Forest.class, LightningBolt.class, GraspingLongneck.class, MeddlingMage.class})
 class WalkInClosetForgottenCellarTest extends BaseCardTest {
 
     @Test
@@ -240,6 +242,33 @@ class WalkInClosetForgottenCellarTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player1.getId()))
                 .anySatisfy(card -> assertThat(card.getId()).isEqualTo(room.getCard().getId()));
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @org.junit.jupiter.api.DisplayName("A forbidden door's name leaves the other door castable (CR 709.3a)")
+    void namedDoorLeavesTheOtherDoorCastable() {
+        Permanent mage = harness.addToBattlefieldAndReturn(player2, new MeddlingMage());
+        mage.setChosenName("Forgotten Cellar");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        castRoom(0, 3);
+
+        harness.assertOnBattlefield(player1, "Walk-In Closet // Forgotten Cellar");
+    }
+
+    @Test
+    @org.junit.jupiter.api.DisplayName("A forbidden door can't be cast (CR 709.3a)")
+    void namedDoorCantBeCast() {
+        Permanent mage = harness.addToBattlefieldAndReturn(player2, new MeddlingMage());
+        mage.setChosenName("Forgotten Cellar");
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.setHand(player1, List.of(new WalkInClosetForgottenCellar()));
+        harness.addMana(player1, ManaColor.GREEN, 5);
+
+        assertThatThrownBy(() -> harness.castModalSorcery(player1, 0, 1, List.of()))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     private void castRoom(int doorIndex, int manaAmount) {

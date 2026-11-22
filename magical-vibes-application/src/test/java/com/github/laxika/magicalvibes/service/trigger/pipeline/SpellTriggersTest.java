@@ -76,7 +76,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantCascadeToNextCreatureSpellThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantAbilityToNextSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CascadeEffect;
@@ -368,7 +368,7 @@ class SpellTriggersTest {
         everySpellMatches();
         Card maker = createCard("Sloppity Bilepiper");
         TemporaryGlobalTriggeredAbility next = TemporaryGlobalTriggeredAbility.nextThisTurn(player1Id, maker,
-                new GrantCascadeToNextCreatureSpellThisTurnEffect().grantedAbility(), null);
+                GrantAbilityToNextSpellThisTurnEffect.cascade(new CardTypePredicate(CardType.CREATURE)).grantedAbility(), null);
         gd.temporaryGlobalTriggeredAbilities.add(next);
         when(triggerIndex.delayedAbilities(gd))
                 .thenAnswer(invocation -> List.copyOf(gd.temporaryGlobalTriggeredAbilities));

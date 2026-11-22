@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.GrantEmbalmToTargetCreatureCardEffect;
+import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashbackToTargetGraveyardCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantedCardAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -24,7 +26,8 @@ public class CurseclothWrappings extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new GrantEmbalmToTargetCreatureCardEffect()),
+                List.of(new GrantFlashbackToTargetGraveyardCardEffect(
+                        Set.of(CardType.CREATURE), GrantedCardAbilityEffect.Ability.EMBALM)),
                 "{T}: Target creature card in your graveyard gains embalm until end of turn. The embalm cost is equal to its mana cost."
         ));
     }

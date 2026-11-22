@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkablePlaytest;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import java.util.Set;
 import org.junit.jupiter.api.DisplayName;
@@ -20,7 +21,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({DauntlessBodyguard.class, BalothGorger.class, Plains.class, SylvanAwakening.class})
+@CardUsed({DauntlessBodyguard.class, BalothGorger.class, Plains.class, SylvanAwakening.class, GlimpseTheUnthinkablePlaytest.class})
 class DauntlessBodyguardTest extends BaseCardTest {
 
     @Test
@@ -230,5 +231,19 @@ class DauntlessBodyguardTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, hidden.getId());
 
         assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Baloth Gorger"));
+    }
+
+    @Test
+    @DisplayName("A creature that can't be chosen is not offered as Dauntless Bodyguard enters")
+    void doesNotOfferCreatureThatCantBeChosen() {
+        harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
+        harness.setHand(player1, List.of(new DauntlessBodyguard()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(findPermanent(player1, "Dauntless Bodyguard").getChosenPermanentId()).isNull();
     }
 }

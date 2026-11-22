@@ -38,6 +38,7 @@ public class ChooseTwoCreaturesByPowerDifferenceEffectHandler implements NormalE
                 .getOrDefault(entry.getControllerId(), List.of())
                 .stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
+                .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .map(Permanent::getId)
                 .toList();
 

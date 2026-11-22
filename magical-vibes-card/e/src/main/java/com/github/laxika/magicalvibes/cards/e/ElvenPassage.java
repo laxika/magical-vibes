@@ -12,7 +12,8 @@ import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
-import com.github.laxika.magicalvibes.model.effect.UntapSearchedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 
 import java.util.List;
@@ -33,7 +34,7 @@ public class ElvenPassage extends Card {
                         new ConditionalEffect(
                                 new CanBeholdSubtype(CardSubtype.ELF),
                                 new MayEffect(
-                                        new BeholdEffect(CardSubtype.ELF, new UntapSearchedPermanentEffect()),
+                                        new BeholdEffect(CardSubtype.ELF, new UntapPermanentsEffect(Subjects.searched())),
                                         "Behold an Elf?"))
                 ),
                 "{T}, Pay 1 life, Sacrifice this land: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle. You may behold an Elf. If you do, untap that land."

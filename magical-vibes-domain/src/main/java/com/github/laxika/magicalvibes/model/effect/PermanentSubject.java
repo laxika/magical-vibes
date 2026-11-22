@@ -24,7 +24,8 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         PermanentSubject.Named, PermanentSubject.ControlledBy, PermanentSubject.OwnedBy, PermanentSubject.AttachmentsOf,
         PermanentSubject.AllOf, PermanentSubject.Except, PermanentSubject.OneOf, PermanentSubject.TriggeringAttackers,
         PermanentSubject.TriggeringSpellTargets, PermanentSubject.CreatedThisResolution, PermanentSubject.BandmatesOf,
-        PermanentSubject.WithCreaturesSharingAColor, PermanentSubject.OtherPermanentsSharing, PermanentSubject.ThisWay {
+        PermanentSubject.WithCreaturesSharingAColor, PermanentSubject.OtherPermanentsSharing, PermanentSubject.AttachedAndSharingCreatureType,
+        PermanentSubject.Searched, PermanentSubject.ThisWay {
 
     /** Whether this subject is the effect's own target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -467,6 +468,38 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
      * recorded as created this resolution, those still on the battlefield. A step result.
      */
     record CreatedThisResolution() implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+    }
+
+    /**
+     * "Enchanted creature and other creatures that share a creature type with it" in an ability of the attachment
+     * itself (the Crowns): the host recorded as the ability was activated, before a cost detached the attachment, as it
+     * is or last was (CR 608.2h), and every creature sharing a creature type with it, found as the effect resolves;
+     * nothing while the host is on the battlefield and no creature. An effect reading it resolves against the attached
+     * permanent ({@link CardEffect#resolvesAgainstAttachedPermanent}).
+     */
+    record AttachedAndSharingCreatureType() implements PermanentSubject {
+
+        @Override
+        public boolean needsStackEntry() {
+            return true;
+        }
+
+        @Override
+        public boolean isSet() {
+            return true;
+        }
+    }
+
+    /**
+     * "It", "that land", "those lands" after "search your library for ..., put it onto the battlefield": the
+     * permanents the entry recorded the search as having put onto the battlefield, those still there.
+     */
+    record Searched() implements PermanentSubject {
 
         @Override
         public boolean needsStackEntry() {

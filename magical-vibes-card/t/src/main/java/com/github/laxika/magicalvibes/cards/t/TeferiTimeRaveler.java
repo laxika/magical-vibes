@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCanCastSpellsOnlyAtSorcerySpeedEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -29,7 +30,7 @@ public class TeferiTimeRaveler extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new GrantFlashToCardTypeUntilNextTurnEffect(CardType.SORCERY)),
+                List.of(new GrantFlashToCardTypeThisTurnEffect(CardType.SORCERY, Duration.UNTIL_YOUR_NEXT_TURN)),
                 "+1: Until your next turn, you may cast sorcery spells as though they had flash."
         ));
 

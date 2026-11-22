@@ -29,8 +29,10 @@ public class GrantControllerKeywordUntilEndOfTurnEffectHandler implements Normal
         var grant = (GrantControllerKeywordUntilEndOfTurnEffect) effect;
         UUID controllerId = entry.getControllerId();
         gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
-                entry.getSourcePermanentId(), controllerId, grant, controllerId, Duration.UNTIL_END_OF_TURN));
+                entry.getSourcePermanentId(), controllerId, grant, controllerId, grant.duration()));
         gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId)
-                + " gains " + grant.keyword().name().toLowerCase() + " until end of turn."));
+                + " gains " + grant.keyword().name().toLowerCase()
+                + (Duration.UNTIL_YOUR_NEXT_TURN.equals(grant.duration())
+                ? " until their next turn." : " until end of turn.")));
     }
 }

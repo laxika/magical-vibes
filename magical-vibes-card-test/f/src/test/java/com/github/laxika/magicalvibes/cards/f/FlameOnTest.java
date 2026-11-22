@@ -138,6 +138,17 @@ class FlameOnTest extends BaseCardTest {
         assertThat(target.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
     }
 
+    @Test
+    @org.junit.jupiter.api.DisplayName("Flame On! can't target a player")
+    void cantTargetAPlayer() {
+        harness.setHand(player1, List.of(new FlameOn()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 4);
+
+        assertThatThrownBy(() -> harness.castSorcery(player1, 0, player2.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
     private void cast(Permanent target) {
         harness.setHand(player1, List.of(new FlameOn()));
         harness.addMana(player1, ManaColor.RED, 1);

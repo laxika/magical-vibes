@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.a.AvianChangeling;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 
 import com.github.laxika.magicalvibes.model.Card;
@@ -21,7 +22,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({GraywatersFixer.class, GrizzlyBears.class, DressDown.class})
+@CardUsed({GraywatersFixer.class, GrizzlyBears.class, DressDown.class, AvianChangeling.class})
 @DisplayName("Graywater's Fixer")
 class GraywatersFixerTest extends BaseCardTest {
 
@@ -182,5 +183,20 @@ class GraywatersFixerTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player2.getId())).contains(token);
+    }
+
+    @Test
+    @DisplayName("A changeling creature card is an outlaw and has encore")
+    void grantsEncoreToChangelingCreatureCards() {
+        harness.addToBattlefield(player1, new GraywatersFixer());
+        harness.setGraveyard(player1, List.of(new AvianChangeling()));
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+
+        harness.activateGraveyardAbility(player1, 0);
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
     }
 }

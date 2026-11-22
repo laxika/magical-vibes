@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilitiesOfCreatureCardsExiledWithSourceToMatchingPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilitiesOfCardsExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -21,7 +23,8 @@ public class HazelsBrewmaster extends Card {
         addTrigger(Triggers.attacks(),
                 ExileGraveyardCardsEffect.upToOneTargetFromAnyGraveyardWithSource(),
                 CreateTokenEffect.ofFoodToken(1));
-        addStaticEffect(new GrantActivatedAbilitiesOfCreatureCardsExiledWithSourceToMatchingPermanentsEffect(
-                        new PermanentHasSubtypePredicate(CardSubtype.FOOD)));
+        addStaticEffect(new GrantActivatedAbilitiesOfCardsExiledWithSourceEffect(
+                CardType.CREATURE, Subjects.permanentsYouControl(),
+                new PermanentHasSubtypePredicate(CardSubtype.FOOD)));
     }
 }

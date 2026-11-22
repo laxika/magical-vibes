@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.cards.g.GlimpseTheUnthinkablePlaytest;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.TestCards;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SpryAndMighty.class, SizzlingChangeling.class, ThoughtweftImbuer.class, Forest.class})
+@CardUsed({SpryAndMighty.class, SizzlingChangeling.class, ThoughtweftImbuer.class, Forest.class, GlimpseTheUnthinkablePlaytest.class})
 class SpryAndMightyTest extends BaseCardTest {
 
     @Test
@@ -139,6 +140,17 @@ class SpryAndMightyTest extends BaseCardTest {
 
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @org.junit.jupiter.api.DisplayName("A creature that can't be chosen doesn't make up the two creatures to choose")
+    void creatureThatCantBeChosenIsNotOneOfTheTwo() {
+        Permanent only = addCreature(2);
+        harness.addToBattlefield(player1, new GlimpseTheUnthinkablePlaytest());
+        castSpryAndMighty();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gqs.hasKeyword(gd, only, Keyword.TRAMPLE)).isFalse();
     }
 
     private void castSpryAndMighty() {

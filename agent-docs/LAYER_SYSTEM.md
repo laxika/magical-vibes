@@ -368,7 +368,7 @@ permanent a permanent spell becomes (CR 400.7a).
 Chosen-as-enters colors stay handled by the resolution-time `chosenColor` update. **Known gaps**
 (effect types with color/basic-land-type words that are continuously read but NOT yet rewritten;
 extend the transformer's visitor when a card needs them): `PreventDamageEffect.fromColors(...)`,
-`TargetingRestrictionEffect`, `GrantControllerCreaturesCantBeTargetedByColorsEffect`,
+`TargetingRestrictionEffect` (also inside a floating `GrantNonAbilityEffectEffect`),
 `GrantControllerSpellsCantBeCounteredByColorsEffect`, `GrantLifelinkToControllerSpellsByColorEffect`,
 `BoostColorSourceDamageThisTurnEffect`, a life-gain trigger's `causedBySpell` filter,
 `AwardAnyColorManaEffect`'s `subtype`, color/land-type words inside trigger effects other

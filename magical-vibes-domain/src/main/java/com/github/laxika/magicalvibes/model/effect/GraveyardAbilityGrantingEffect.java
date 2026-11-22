@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
  * Capability interface for static effects that grant graveyard-activated abilities to cards in
@@ -17,6 +18,14 @@ public interface GraveyardAbilityGrantingEffect extends CardEffect {
      * grants scavenge for a cost equal to the card's mana cost) reads it from {@code card}.
      */
     ActivatedAbility grantedGraveyardAbilityFor(Card card);
+
+    /**
+     * The cards that have the ability, judged by the engine with their current characteristics, or {@code null} when
+     * {@link #appliesTo} alone says.
+     */
+    default CardPredicate cardFilter() {
+        return null;
+    }
 
     /** Whether this grant applies to the supplied graveyard card. */
     default boolean appliesTo(Card card) {

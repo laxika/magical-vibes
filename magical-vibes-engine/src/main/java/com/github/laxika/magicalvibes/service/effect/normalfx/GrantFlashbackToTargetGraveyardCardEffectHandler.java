@@ -47,7 +47,8 @@ public class GrantFlashbackToTargetGraveyardCardEffectHandler implements NormalE
         }
 
         Card targetCard = gameQueryService.findCardInGraveyardById(gameData, targetCardId);
-        if (targetCard == null) {
+        if (targetCard == null
+                || !entry.getControllerId().equals(gameQueryService.findGraveyardOwnerById(gameData, targetCardId))) {
             gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target no longer in graveyard)."));
             return;
         }
@@ -65,13 +66,20 @@ public class GrantFlashbackToTargetGraveyardCardEffectHandler implements NormalE
             return;
         }
 
-        gameData.addCardEffect(entry, new GrantedCardAbilityEffect(GrantedCardAbilityEffect.Ability.FLASHBACK,
+        GrantedCardAbilityEffect.Ability ability = e.ability();
+        if (ability == GrantedCardAbilityEffect.Ability.EMBALM
+                && (targetCard.getManaCost() == null || targetCard.getManaCost().isBlank())) {
+            gameLogService.append(gameData, GameLog.text(entry.getDescription() + " fizzles (target has no mana cost)."));
+            return;
+        }
+        boolean flashback = ability == GrantedCardAbilityEffect.Ability.FLASHBACK;
+        gameData.addCardEffect(entry, new GrantedCardAbilityEffect(ability,
                 e.flashbackCost(), e.withoutPayingManaCost(),
-                gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)),
+                flashback && gameQueryService.graveyardCardsHaveLostAllAbilities(gameData)),
                 targetCard.getId(), Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
 
         
-        gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " grants flashback to ", targetCard, " until end of turn."));
+        gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " grants " + e.abilityName() + " to ", targetCard, " until end of turn."));
         log.info("Game {} - {} grants flashback to {} until end of turn", gameData.id, entry.getCard().getName(), targetCard.getName());
     }
 }

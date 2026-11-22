@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUnti
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerLibraryTopPermissionForTargetPlayerUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTurnEffect;
@@ -1064,11 +1063,11 @@ public class CastingPermissionService {
      * Whether the names {@link #getForbiddenCardNames} gives keep {@code card} from being cast. Of a split card that
      * isn't yet cast as one of its halves only a half that can be cast from anywhere has to be allowed, as only the
      * chosen half is evaluated (CR 709.3a): {@link #isSplitModeForbiddenByName} judges that half as it is chosen.
-     * A Room is judged by both its names.
+     * A Room's doors are such halves (CR 709.5j).
      */
     public static boolean isCastForbiddenByName(Card card, Set<String> forbiddenCardNames) {
         List<OracleData> halves = card.getSplitHalves();
-        if (!isWholeSplitCard(card) || card.getSubtypes().contains(CardSubtype.ROOM)) {
+        if (!isWholeSplitCard(card)) {
             return forbiddenCardNames.stream().anyMatch(card::hasName);
         }
         // An aftermath half is cast only from a graveyard, where it is judged by itself (CR 702.127a).
@@ -1082,11 +1081,16 @@ public class CastingPermissionService {
      * {@code modeIndex}: a half by that half's name, the fused spell, which has both names (CR 709.4d), by either.
      */
     public boolean isSplitModeForbiddenByName(GameData gameData, UUID playerId, Card card, int modeIndex) {
+        return isWholeSplitCard(card)
+                && isSplitModeForbiddenByName(card, getForbiddenCardNames(gameData, playerId), modeIndex);
+    }
+
+    /** As the instance form, over names {@link #getForbiddenCardNames} gave. */
+    public static boolean isSplitModeForbiddenByName(Card card, Set<String> forbidden, int modeIndex) {
         if (!isWholeSplitCard(card)) {
             return false;
         }
         List<OracleData> halves = card.getSplitHalves();
-        Set<String> forbidden = getForbiddenCardNames(gameData, playerId);
         return modeIndex < halves.size()
                 ? forbidden.contains(halves.get(modeIndex).name())
                 : halves.stream().anyMatch(half -> forbidden.contains(half.name()));
@@ -1475,12 +1479,6 @@ public class CastingPermissionService {
         if (gameData.floatingEffectsOnPlayer(playerId, GrantFlashToCardTypeThisTurnEffect.class).stream()
                 .anyMatch(fe -> predicateEvaluationService.matchesCardPredicate(card,
                         ((GrantFlashToCardTypeThisTurnEffect) fe.effect()).filter(), null, gameData, playerId))) {
-            return true;
-        }
-        if (gameData.floatingEffectsOnPlayer(playerId, GrantFlashToCardTypeUntilNextTurnEffect.class).stream()
-                .anyMatch(fe -> predicateEvaluationService.matchesCardPredicate(card,
-                        ((GrantFlashToCardTypeUntilNextTurnEffect) fe.effect()).filter(), null, gameData,
-                        playerId))) {
             return true;
         }
         // Quicken: an unconsumed grant for the next spell of a given type this turn.

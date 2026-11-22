@@ -45,6 +45,9 @@ public final class Subjects {
     private static final PermanentSubject TRIGGERING_ATTACKERS = new PermanentSubject.TriggeringAttackers();
     private static final PermanentSubject TRIGGERING_SPELL_TARGETS = new PermanentSubject.TriggeringSpellTargets();
     private static final PermanentSubject CREATED_THIS_RESOLUTION = new PermanentSubject.CreatedThisResolution();
+    private static final PermanentSubject SEARCHED = new PermanentSubject.Searched();
+    private static final PermanentSubject ATTACHED_AND_SHARING_CREATURE_TYPE =
+            new PermanentSubject.AttachedAndSharingCreatureType();
 
     private static final PlayerSubject YOU = new PlayerSubject.You();
     private static final PlayerSubject TARGET_PLAYER = new PlayerSubject.TargetPlayer(null, true);
@@ -228,6 +231,16 @@ public final class Subjects {
     /** "Those tokens": the permanents an earlier step of the same resolution created. */
     public static PermanentSubject createdThisResolution() {
         return CREATED_THIS_RESOLUTION;
+    }
+
+    /** "It", "that land": the permanents a search of the same resolution put onto the battlefield. */
+    public static PermanentSubject searched() {
+        return SEARCHED;
+    }
+
+    /** "Enchanted creature and other creatures that share a creature type with it" (the Crowns). */
+    public static PermanentSubject attachedAndSharingCreatureType() {
+        return ATTACHED_AND_SHARING_CREATURE_TYPE;
     }
 
     /**

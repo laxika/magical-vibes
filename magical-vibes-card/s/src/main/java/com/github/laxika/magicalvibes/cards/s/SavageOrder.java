@@ -7,9 +7,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -34,7 +35,7 @@ public class SavageOrder extends Card {
                         new CardTypePredicate(CardType.CREATURE),
                         new CardSubtypePredicate(CardSubtype.DINOSAUR))),
                 LibrarySearchDestination.BATTLEFIELD));
-        addSpellEffect(new GrantKeywordToChosenCreatureEffect(
-                Keyword.INDESTRUCTIBLE, Duration.UNTIL_YOUR_NEXT_TURN));
+        addSpellEffect(new GrantKeywordEffect(
+                Keyword.INDESTRUCTIBLE, Subjects.searched(), Duration.UNTIL_YOUR_NEXT_TURN));
     }
 }

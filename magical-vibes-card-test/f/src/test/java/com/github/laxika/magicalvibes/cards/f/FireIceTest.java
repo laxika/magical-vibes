@@ -210,6 +210,18 @@ class FireIceTest extends BaseCardTest {
         assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 
+    @Test
+    @DisplayName("A split card isn't hinted playable when only its forbidden half is payable")
+    void hintSkipsForbiddenHalf() {
+        Permanent mage = harness.addToBattlefieldAndReturn(player2, new MeddlingMage());
+        mage.setChosenName("Ice");
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new FireIce()));
+        addMana(ManaColor.BLUE);
+
+        assertThat(harness.getGameActionAvailabilityService().getPlayableCardIndices(gd, player1.getId())).isEmpty();
+    }
+
     private void castFire(Map<java.util.UUID, Integer> damageAssignments, List<java.util.UUID> targets) {
         harness.forceActivePlayer(player1);
         harness.setHand(player1, List.of(new FireIce()));

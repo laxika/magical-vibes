@@ -25,6 +25,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * control".
  * Subject {@link Subjects#allCreatures()} is the untargeted global form; it applies the chosen
  * protection to every creature on the battlefield.
+ * Subject {@link Subjects#withCreaturesSharingAColor} of the target is the radiance form: the target creature and
+ * each other creature that shares a color with it (Bathe in Light).
  */
 public record GrantProtectionChoiceUntilEndOfTurnEffect(boolean includeArtifacts,
                                                         boolean targetControllerChooses,
@@ -34,9 +36,11 @@ public record GrantProtectionChoiceUntilEndOfTurnEffect(boolean includeArtifacts
 
     public GrantProtectionChoiceUntilEndOfTurnEffect {
         if (!(subject instanceof PermanentSubject.Target) && !(subject instanceof PermanentSubject.Source)
+                && !(subject instanceof PermanentSubject.WithCreaturesSharingAColor sharing && sharing.declaresTarget())
                 && !Subjects.creaturesYouControl().equals(subject) && !Subjects.allCreatures().equals(subject)) {
             throw new IllegalArgumentException("GrantProtectionChoiceUntilEndOfTurnEffect supports only target(), "
-                    + "source(), creaturesYouControl() and allCreatures(), got " + subject);
+                    + "source(), withCreaturesSharingAColor(target()), creaturesYouControl() and allCreatures(), got "
+                    + subject);
         }
         if (filter != null && !Subjects.creaturesYouControl().equals(subject)) {
             throw new IllegalArgumentException("A filter is only consulted for creaturesYouControl(), not " + subject);
@@ -94,6 +98,7 @@ public record GrantProtectionChoiceUntilEndOfTurnEffect(boolean includeArtifacts
     public TargetSpec targetSpec() {
         return switch (subject) {
             case PermanentSubject.Target ignored -> TargetSpec.benign(TargetPredicates.permanent());
+            case PermanentSubject.WithCreaturesSharingAColor ignored -> TargetSpec.benign(TargetPredicates.creature());
             case PermanentSubject.Source ignored -> new TargetSpec(null, false, null, true, 1);
             default -> TargetSpec.NONE;
         };

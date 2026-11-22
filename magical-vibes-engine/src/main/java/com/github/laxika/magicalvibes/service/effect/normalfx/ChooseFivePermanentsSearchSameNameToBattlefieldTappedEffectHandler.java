@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseFivePermanentsSearchSameNameToBattlefieldTappedEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +30,7 @@ public class ChooseFivePermanentsSearchSameNameToBattlefieldTappedEffectHandler
         implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
 
     @Override
@@ -44,13 +46,16 @@ public class ChooseFivePermanentsSearchSameNameToBattlefieldTappedEffectHandler
         List<UUID> permanentIds = new ArrayList<>();
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
+                if (gameQueryService.cantBeChosen(gameData, perm)) {
+                    continue;
+                }
                 permanentIds.add(perm.getId());
             }
         }
 
         if (permanentIds.isEmpty()) {
             com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            String logEntry = gameData.playerIdToName.get(controllerId) + " controls no permanents to choose.";
+            String logEntry = gameData.playerIdToName.get(controllerId) + " controls no permanents that can be chosen.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} has no permanents for {}",
                     gameData.id, gameData.playerIdToName.get(controllerId), entry.getCard().getName());

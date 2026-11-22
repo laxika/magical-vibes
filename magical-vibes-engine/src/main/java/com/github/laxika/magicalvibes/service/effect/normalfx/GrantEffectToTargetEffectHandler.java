@@ -64,6 +64,14 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
+        if (!(e.subject() instanceof PermanentSubject.Target)) {
+            // Found once, as the effect resolves (CR 611.2c).
+            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect, e.subject())) {
+                grantTo(gameData, entry, e, permanent);
+            }
+            return;
+        }
+
         for (Permanent target : subjectResolutionService.permanents(gameData, entry, effect,
                 Subjects.target())) {
             grantTo(gameData, entry, e, target);
@@ -81,13 +89,12 @@ public class GrantEffectToTargetEffectHandler implements NormalEffectHandlerBean
 
         // "Until your next upkeep" ends at the upkeep of the effect's controller; with no stated duration the
         // grant lasts until the permanent leaves (CR 611.2a).
-        Duration duration = Duration.UNTIL_END_OF_TURN.equals(e.duration())
-                || Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(e.duration())
-                ? e.duration() : Duration.PERMANENT;
-        gameData.grantAbilityToPermanent(entry, e.grantedAbility(), target.getId(), duration);
+        gameData.grantAbilityToPermanent(entry, e.grantedAbility(), target.getId(), e.duration());
 
         String durationText = Duration.UNTIL_END_OF_TURN.equals(e.duration()) ? " until end of turn"
-                : Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(e.duration()) ? " until your next upkeep" : "";
+                : Duration.UNTIL_CONTROLLERS_NEXT_UPKEEP.equals(e.duration()) ? " until your next upkeep"
+                : Duration.UNTIL_YOUR_NEXT_TURN.equals(e.duration()) ? " until your next turn"
+                : Duration.UNTIL_END_OF_YOUR_NEXT_TURN.equals(e.duration()) ? " until the end of your next turn" : "";
         gameLogService.append(gameData, GameLog.builder()
                 .card(entry.getCard())
                 .text(" grants a " + AbilityEffects.label(e.grantedAbility()) + " ability to ")

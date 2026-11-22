@@ -36,6 +36,9 @@ public class GrantProtectionChoiceUntilEndOfTurnEffectHandler implements NormalE
         // Multi-target spells (Prismatic Boon's "X target creatures") carry their targets in the
         // flat list; single-target spells and abilities carry theirs on targetId.
         List<Permanent> targets = subjectResolutionService.permanents(gameData, entry, effect, recipients(e));
+        if (e.subject() instanceof PermanentSubject.WithCreaturesSharingAColor && targets.isEmpty()) {
+            return; // With the target gone nobody is affected (Bathe in Light's ruling).
+        }
         UUID choosingPlayerId = e.targetControllerChooses()
                 && !targets.isEmpty()
                 ? gameQueryService.findPermanentController(gameData, targets.getFirst().getId())
@@ -51,12 +54,12 @@ public class GrantProtectionChoiceUntilEndOfTurnEffectHandler implements NormalE
     /**
      * Self-scoped abilities ("this creature gains protection from the color of your choice") have no
      * target and resolve against the source permanent; the mass form scans the controller's own
-     * creatures on resolution; targeted ones use the flat list (Prismatic Boon's "X target
-     * creatures") or the single {@code targetId}.
+     * creatures on resolution; the radiance form is the target with the creatures sharing a color with it; targeted
+     * ones use the flat list (Prismatic Boon's "X target creatures") or the single {@code targetId}.
      */
     private static PermanentSubject recipients(GrantProtectionChoiceUntilEndOfTurnEffect e) {
         PermanentSubject subject = e.subject();
-        if (subject instanceof PermanentSubject.Source) {
+        if (subject instanceof PermanentSubject.Source || subject instanceof PermanentSubject.WithCreaturesSharingAColor) {
             return subject;
         }
         return subject.isSet() ? Subjects.narrowed(subject, e.filter()) : Subjects.allTargets();

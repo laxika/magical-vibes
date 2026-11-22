@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordsToOwnPermanentsOfChosenSubtypeUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeAtResolutionEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasTypeChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,7 +20,8 @@ public class SelflessSafewright extends Card {
 
     public SelflessSafewright() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new GrantKeywordsToOwnPermanentsOfChosenSubtypeUntilEndOfTurnEffect(
-                        Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE)));
+                new ChooseCreatureTypeAtResolutionEffect(),
+                new GrantKeywordEffect(Set.of(Keyword.HEXPROOF, Keyword.INDESTRUCTIBLE),
+                        Subjects.otherPermanentsYouControl(), new PermanentHasTypeChosenThisResolutionPredicate()));
     }
 }

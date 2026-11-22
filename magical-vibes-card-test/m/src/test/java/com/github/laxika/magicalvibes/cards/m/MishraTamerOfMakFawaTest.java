@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.b.Biotransference;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
 import com.github.laxika.magicalvibes.cards.g.GiantSpider;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -23,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({MishraTamerOfMakFawa.class, Disenchant.class, GiantSpider.class,
-        GrizzlyBears.class, IcyManipulator.class, Shock.class, ThranPowerSuit.class, Humble.class})
+        GrizzlyBears.class, IcyManipulator.class, Shock.class, ThranPowerSuit.class, Humble.class, Biotransference.class})
 class MishraTamerOfMakFawaTest extends BaseCardTest {
 
     @Test
@@ -272,6 +273,20 @@ class MishraTamerOfMakFawaTest extends BaseCardTest {
         assertThat(mishra.isTapped()).isFalse();
         harness.assertOnBattlefield(player2, "Icy Manipulator");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A creature card that is an artifact by a continuous effect has unearth")
+    void grantsUnearthToCardThatBecameArtifact() {
+        harness.addToBattlefield(player1, new MishraTamerOfMakFawa());
+        harness.addToBattlefield(player1, new Biotransference());
+        harness.setGraveyard(player1, List.of(new GrizzlyBears()));
+        addUnearthMana();
+
+        harness.activateGraveyardAbility(player1, 0, 0);
+        harness.passBothPriorities();
+
+        assertThat(gqs.hasKeyword(gd, findPermanent(player1, "Grizzly Bears"), Keyword.HASTE)).isTrue();
     }
 
     private void addUnearthMana() {

@@ -2470,3 +2470,125 @@ GainControlOfTargetEffect,survivor,9,"run 17: ofTriggeringPermanent became a Per
 AttachAnyNumberOfControlledEquipmentToTargetCreatureEffect,survivor,9,"run 17: takes a PermanentSubject (thisWay(CHOOSE))"
 ReturnPermanentControlledByPlayerToHandEffect,survivor,9,"run 17: actingPlayerIsController became a PlayerSubject (byPlayer)"
 AllowCastTargetCardFromGraveyardThisTurnEffect,survivor,9,"run 17: takes a CardSubject for graveyard cards that are no target (of(cards, exile)); the source-card form still waits"
+GrantGraveyardAbilityToCreatureCardsEffect,absorbed,9,"run 18: GrantGraveyardAbilityToCardsEffect(CardTypePredicate(CREATURE), ability)"
+GrantGraveyardAbilityToArtifactCardsEffect,absorbed,9,"run 18: GrantGraveyardAbilityToCardsEffect(CardTypePredicate(ARTIFACT), ability): the filter reads the current types (Biotransference)"
+GrantGraveyardAbilityToCreatureCardsOfSubtypeEffect,absorbed,9,"run 18: GrantGraveyardAbilityToCardsEffect(creature + subtype, ability)"
+GrantEncoreToCreatureCardsOfSubtypeEffect,absorbed,9,"run 18: GrantGraveyardAbilityToCardsEffect(creature + subtype, ENCORE_FOR_MANA_VALUE)"
+GrantEncoreToCreatureCardsOfSubtypesEffect,absorbed,9,"run 18: GrantGraveyardAbilityToCardsEffect(creature + any subtype, ENCORE_FOR_MANA_VALUE): changelings count"
+GrantEncoreToArtifactCreatureCardsEffect,absorbed,9,"run 18: GrantGraveyardAbilityToCardsEffect(artifact creature, ENCORE_FOR_MANA_COST)"
+GrantEmbalmEqualToManaCostToCreatureCardsEffect,absorbed,9,"run 18: GrantGraveyardAbilityToCardsEffect(creature, EMBALM_FOR_MANA_COST)"
+GrantUnearthEqualToManaCostToColoredCreatureCardsEffect,absorbed,9,"run 18: GrantGraveyardAbilityToCardsEffect(creature + color, UNEARTH_FOR_MANA_COST)"
+GrantGraveyardAbilityToCardsEffect,survivor,9,run 18: new record: eight graveyard-ability statics; the scavenge record (3 cards) is left for step 10
+GrantFlashbackToTargetGraveyardCardEffect,survivor,9,"run 18: gained an Ability component: absorbs the embalm, harmonize and jump-start target grants"
+GrantEmbalmToTargetCreatureCardEffect,absorbed,9,"run 18: GrantFlashbackToTargetGraveyardCardEffect(types, ability)"
+GrantHarmonizeToTargetGraveyardCardEffect,absorbed,9,"run 18: GrantFlashbackToTargetGraveyardCardEffect(types, ability)"
+GrantJumpStartToTargetGraveyardCardEffect,absorbed,9,"run 18: GrantFlashbackToTargetGraveyardCardEffect(types, ability)"
+GrantAbilityToNextSpellThisTurnEffect,survivor,9,"run 18: new record: the next matching spell has a triggered ability of its own (storm, cascade)"
+GrantStormToNextInstantOrSorceryCastThisTurnEffect,absorbed,9,run 18: GrantAbilityToNextSpellThisTurnEffect.storm(filter)
+GrantCascadeToNextCreatureSpellThisTurnEffect,absorbed,9,run 18: GrantAbilityToNextSpellThisTurnEffect.cascade(filter)
+GrantFlashToCardTypeUntilNextTurnEffect,absorbed,9,"run 18: GrantFlashToCardTypeThisTurnEffect(type, UNTIL_YOUR_NEXT_TURN)"
+GrantHexproofToChosenPlaneswalkerTypeEffect,absorbed,9,"run 18: GrantKeywordEffect(HEXPROOF, permanentsYouControl(), planeswalker + source chosen subtype)"
+GrantProtectionFromNonSubtypeCreaturesUntilEndOfTurnEffect,absorbed,9,"run 18: GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(protection), creaturesYouControl())"
+GrantEffectToTargetEffect,survivor,9,run 18: takes any non-targeting subject and honours any duration: four rare grants folded
+GrantProtectionFromColorsUntilYourNextTurnEffect,absorbed,9,"run 18: GrantEffectToTargetEffect(StaticAbility.of(effect), duration, false)"
+GrantStaticEffectToTargetUntilEndOfYourNextTurnEffect,absorbed,9,"run 18: GrantEffectToTargetEffect(StaticAbility.of(effect), duration, false)"
+GrantStaticEffectToOtherCreaturesControlledByTargetEffect,split,9,"run 18: GrantSubtypeUntilEndOfTurnEffect(set, PERMANENT) + GrantEffectToTargetEffect(ability, PERMANENT, set) over controlledBy(controllerOf(target()), not the target)"
+GrantTriggeredAbilityToCreatedPermanentsEffect,absorbed,9,"run 18: GrantEffectToTargetEffect(ability, PERMANENT, false, createdThisResolution())"
+GrantStaticEffectToOwnPermanentsUntilEndOfTurnEffect,absorbed,9,"run 18: GrantTargetingRestrictionToTargetUntilEndOfTurnEffect(restriction, set): a rule of the set (CR 611.2c)"
+GrantControllerCreaturesCantBeTargetedByColorsEffect,absorbed,9,"run 18: GrantTargetingRestrictionToTargetUntilEndOfTurnEffect(restriction, set): a rule of the set (CR 611.2c)"
+GrantProtectionChoiceUntilEndOfTurnEffect,survivor,9,run 18: accepts withCreaturesSharingAColor(target())
+GrantProtectionChoiceToTargetAndSharingCreaturesUntilEndOfTurnEffect,absorbed,9,run 18: GrantProtectionChoiceUntilEndOfTurnEffect(withCreaturesSharingAColor(target()))
+GrantSupertypeEffect,survivor,9,"run 18: new record, the supertype twin of GrantCardTypeEffect; GrantSupertypeToEnchantedPermanentEffect (4 cards) is left for step 10"
+GrantSupertypeToAllNonlandPermanentsEffect,absorbed,9,"run 18: GrantSupertypeEffect(supertype, allPermanents(), filter)"
+GrantSupertypeToPermanentsWithCountersEffect,absorbed,9,"run 18: GrantSupertypeEffect(supertype, allPermanents(), filter)"
+GrantKeywordToEnchantedAndSharingCreaturesUntilEndOfTurnEffect,absorbed,9,"run 18: GrantKeywordEffect over attachedAndSharingCreatureType(), the subject the Crowns waited for (last-known host)"
+BoostEnchantedAndSharingCreaturesUntilEndOfTurnEffect,absorbed,9,"run 18: BoostTargetCreatureEffect over attachedAndSharingCreatureType(), the subject the Crowns waited for (last-known host)"
+GrantProtectionFromColorsToEnchantedAndSharingCreaturesUntilEndOfTurnEffect,absorbed,9,"run 18: GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(protection)) over attachedAndSharingCreatureType(), the subject the Crowns waited for (last-known host)"
+GrantKeywordsToOwnPermanentsOfChosenSubtypeUntilEndOfTurnEffect,split,9,"run 18: ChooseCreatureTypeAtResolutionEffect + GrantKeywordEffect(otherPermanentsYouControl(), PermanentHasTypeChosenThisResolutionPredicate)"
+GrantControllerKeywordUntilEndOfTurnEffect,survivor,9,run 18: gained a Duration
+GrantControllerKeywordUntilNextTurnEffect,absorbed,9,"run 18: GrantControllerKeywordUntilEndOfTurnEffect(keyword, UNTIL_YOUR_NEXT_TURN)"
+GrantControllerHexproofUntilEndOfTurnEffect,dead,9,"run 18: no card or code made it, only its handler and the keyword query named it"
+GrantKeywordToChosenCreatureEffect,absorbed,9,"run 18: GrantKeywordEffect(keyword, searched(), duration): ""it"" is what the search put onto the battlefield"
+UntapSearchedPermanentEffect,absorbed,9,run 18: UntapPermanentsEffect(searched()): the searched subject built
+UntapSearchedPermanentsEffect,absorbed,9,run 18: UntapPermanentsEffect(searched()): the searched subject built
+GrantActivatedAbilitiesOfCardsExiledWithSourceEffect,survivor,9,"run 18: new record: (card type, recipients, filter) for the three exiled-with-source ability grants"
+GainActivatedAbilitiesOfCreatureCardsExiledWithSourceEffect,absorbed,9,"run 18: GrantActivatedAbilitiesOfCardsExiledWithSourceEffect(card type, subject, filter)"
+GrantActivatedAbilitiesOfLandCardsExiledWithSourceEffect,absorbed,9,"run 18: GrantActivatedAbilitiesOfCardsExiledWithSourceEffect(card type, subject, filter)"
+GrantActivatedAbilitiesOfCreatureCardsExiledWithSourceToMatchingPermanentsEffect,absorbed,9,"run 18: GrantActivatedAbilitiesOfCardsExiledWithSourceEffect(card type, subject, filter)"
+GrantCardTypeToOwnNonlandPermanentsEffect,blocked-other,9,"run 18: an all-zones characteristic grant is read by each characteristic's own out-of-battlefield query through its capability (card types, creature types, land types, supertypes): one record needs those queries redesigned, outside this plan; also covers permanent spells you control, whoever owns them"
+GrantCardTypeToOwnCardsEffect,blocked-other,9,"run 18: an all-zones characteristic grant is read by each characteristic's own out-of-battlefield query through its capability (card types, creature types, land types, supertypes): one record needs those queries redesigned, outside this plan; filters cards you own in any zone"
+GrantSubtypeToOwnCreaturesInAllZonesEffect,blocked-other,9,"run 18: an all-zones characteristic grant is read by each characteristic's own out-of-battlefield query through its capability (card types, creature types, land types, supertypes): one record needs those queries redesigned, outside this plan (Roshan)"
+GrantSubtypeToOwnLandsAndLandCardsEffect,blocked-other,9,"run 18: an all-zones characteristic grant is read by each characteristic's own out-of-battlefield query through its capability (card types, creature types, land types, supertypes): one record needs those queries redesigned, outside this plan (Dune Chanter)"
+GrantSupertypeToOwnLandsAndLandCardsEffect,blocked-other,9,"run 18: an all-zones characteristic grant is read by each characteristic's own out-of-battlefield query through its capability (card types, creature types, land types, supertypes): one record needs those queries redesigned, outside this plan (Rootpath Purifier: library only)"
+GrantProtectionChoiceToControllerUntilEndOfTurnEffect,blocked-other,9,"run 18: the color-choice protection step grants to permanents only: a player recipient through the choice's completion; two classes (Seht's Tiger, Faith's Shield)"
+GrantProtectionChoiceToControllerAndPermanentsUntilEndOfTurnEffect,blocked-other,9,"run 18: the color-choice protection step grants to permanents only: a player recipient through the choice's completion; two classes (Seht's Tiger, Faith's Shield)"
+GrantProtectionFromChosenPlayerToControllerAndTargetPermanentUntilEndOfTurnEffect,blocked-other,9,"run 18: protection from a player for you and some permanents: no step gives a player that protection (the query reads both records by class); two classes (Guardian Archon, Eon Frolicker)"
+GrantProtectionFromTargetPlayerToControllerAndPlaneswalkersUntilNextTurnEffect,blocked-other,9,"run 18: protection from a player for you and some permanents: no step gives a player that protection (the query reads both records by class); two classes (Guardian Archon, Eon Frolicker)"
+GrantFlashToNextSpellOfChosenSubtypeThisTurnEffect,blocked-other,9,"run 18: binds the source's chosen value, as it is or last was, into the next-spell rule's predicate: no card predicate is bound as an effect resolves from a departed source's choice; two classes (Progenitor's Icon, Apex Observatory)"
+GrantFreeCastForNextSpellOfChosenCardTypeEffect,blocked-other,9,"run 18: binds the source's chosen value, as it is or last was, into the next-spell rule's predicate: no card predicate is bound as an effect resolves from a departed source's choice; two classes (Progenitor's Icon, Apex Observatory)"
+GrantOffspringToWhiteCreatureCardInHandEffect,blocked-other,9,run 18: no perpetual offspring grant over cardsThisWay(CHOOSE): recount with the perpetual verbs in the Perpetually run (Cottontail Caretaker)
+GrantBlitzToSpellsEffect,unique,9,"run 18: the blitz grant itself: fixed or reduced cost with a filter, read by the blitz cast path"
+GrantEvokeToSpellsEffect,unique,9,"run 18: the evoke grant itself, read by the evoke cast path through EvokeGrantingEffect (Ashling the Limitless)"
+GrantFreerunningToSpellsEffect,unique,9,"run 18: the freerunning grant itself, read by that cast path through FreerunningGrantingEffect (Ezio)"
+GrantProwlToSpellsEffect,unique,9,"run 18: the prowl grant itself, read by that cast path through ProwlGrantingEffect (Hunting Velociraptor)"
+GrantMadnessEqualToManaCostEffect,unique,9,"run 18: the madness grant itself, snapshotted at discard through MadnessGrantingEffect (Falkenrath Gorger)"
+GrantMiracleToCardsInHandEffect,unique,9,"run 18: the fixed-cost miracle grant itself, read by the draw-time reveal"
+GrantMiracleReducedByManaCostEffect,unique,9,"run 18: miracle for the card's cost reduced, with the X reduction only this card has (Aminatou)"
+GrantMayhemToGraveyardCardsEffect,unique,9,run 18: the mayhem grant itself: a graveyard cast with a discarded-this-turn condition (Green Goblin)
+GrantOffspringToCreatureSpellsEffect,unique,9,run 18: offspring materialised as a kicker on the runtime hand copy (Zinnia)
+GrantAdventureToCreatureCardsInHandEffect,unique,9,run 18: a synthetic Adventure face on hand cards (Starting Town NPC)
+GrantKeywordsToKickedSpellEffect,unique,9,"run 18: a keyword the spell itself has on the stack when kicked, read at cast (Molten Disaster)"
+GrantDeathtouchToControllerSpellsEffect,unique,9,"run 18: deathtouch of spells as damage sources: spells are no permanents, so no keyword grant names them (Pestilent Spirit)"
+GrantSplitSecondToControllerSpellsUsingArtifactManaEffect,unique,9,"run 18: split second by the mana spent, read by the stack query (Shadow the Hedgehog)"
+GrantControllerFlagbearerEffect,unique,9,run 18: the player is a Flagbearer: a rule of target choice (Enroll in the Coalition)
+GrantAdditionalBlockPerEquipmentEffect,unique,9,run 18: an extra block for each attached Equipment; the block grant takes a fixed count (Kemba's Legion)
+GrantFlashToFirstMatchingSpellEachTurnEffect,unique,9,"run 18: the first-matching-spell flash rule itself, read through FirstMatchingSpellFlashGrant"
+GrantConvokeToNextSpellThisTurnEffect,unique,9,run 18: the next-spell convoke rule itself: the record is its floating effect
+GrantPayLifeEqualToSpellManaValueForNextSpellEffect,unique,9,run 18: the next-spell life alternative cost itself: the record is its floating effect (Marshland Bloodcaster)
+GrantFreeCastForNextMatchingSpellEffect,unique,9,run 18: the next-spell free-cast rule itself: the floating effect two other steps make too
+GrantFlashToNextMatchingSpellEffect,unique,9,run 18: the floating payload of the next-spell flash steps; no card names it
+GrantNonAbilityEffectEffect,unique,9,run 18: the floating payload of a rule on permanents that loses-all-abilities leaves; no card names it
+GrantSourceActivatedAbilitiesUntilEndOfTurnEffect,unique,9,"run 18: built by the cast path for Havengul Lich's linked when-you-cast-it trigger, with that card's abilities"
+GrantTargetCreatureCardGraveyardCastAndCopyActivatedAbilitiesEffect,unique,9,run 18: a cast permission linked to its own when-you-cast-it-this-turn trigger (Havengul Lich)
+GrantExtraLoyaltyActivationToSourceEffect,unique,9,"run 18: the extra loyalty activation of this planeswalker itself, adding (Comet) or raising to twice (Kaito)"
+GrantExtraLoyaltyActivationToPlaneswalkersEffect,unique,9,"run 18: a rule for planeswalkers you control later too (ruling 2014-07-18), so no set of the source record (The Chain Veil)"
+GrantFlyingToTargetCreatureOrPlayerEffect,unique,9,run 18: a keyword to a creature or a player (Sarah's Wings); Flame On! now uses GrantKeywordEffect
+GrantCardTypeToOwnPermanentsUntilEndOfTurnEffect,unique,9,"run 18: the one-shot additive card-type grant over your permanents, already filtered; the animate step also sets base P/T"
+GrantChosenBasicLandTypeToOwnLandsEffect,unique,9,run 18: the chosen type in layer 4 with its intrinsic mana ability in layer 6 (Realmwright)
+GrantControllerAndPermanentsHexproofFromColorsEffect,unique,9,"run 18: the player half has no other record, and the color-choice completion makes the same floating effect (Veil of Summer)"
+GrantLandwalkOfSacrificedLandToTargetEffect,unique,9,run 18: the keywords are read off the sacrificed cost's land (Excavator)
+GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect,unique,9,"run 18: the player's half is read by class, the creatures' binds the source's chosen card type (Serra's Emissary)"
+GrantProtectionFromChosenTypeToOwnCreaturesEffect,unique,9,run 18: protection from creature sources of the chosen type: no payload reads a chosen subtype (Riders of Gavony)
+GrantProtectionFromChosenColorToPermanentsEffect,unique,9,run 18: a set that includes the source; ProtectionFromChosenColorEffect's subject is read as an Aura's host by the attachment and view code (Ward Sliver)
+GrantControllerLibraryTopPermissionForTargetPlayerUntilEndOfTurnEffect,unique,9,run 18: look at and play from a named other library top with any-color mana (Xanathar)
+GrantControllerSpellsCantBeCounteredByColorsEffect,unique,9,"run 18: filters the countering spell, not the protected one, unlike the can't-be-countered records (Autumn's Veil)"
+GrantEquipByManaValueEffect,unique,9,run 18: equip and boost computed from each recipient's mana value (Bludgeon Brawl)
+GrantExileIfLeavesBattlefieldUntilEndOfTurnEffect,unique,9,run 18: a timestamped exile-if-it-would-leave replacement read by the removal service (Elemental Expressionist)
+GrantHexproofFromOwnColorsEffect,unique,9,run 18: hexproof from each recipient's own current colors (Tam)
+GrantKeywordToCreaturesOfChosenParityEffect,unique,9,run 18: the source's as-enters parity: the parity predicate reads a resolution's choice and is never static (Ashling's Prerogative)
+GrantKeywordToOwnCreaturesFromGraveyardEffect,unique,9,run 18: a static keyword grant that functions from the graveyard (Valor)
+GrantAdditionalLoyaltyCountersToCastSpellEffect,unique,9,"run 18: joins the starting loyalty as one counter event (CR 616.1), which the entry-counter map would double apart (Dark Intimations)"
+GrantBaseStatsToCounterBearersEffect,unique,9,"run 18: a rule while that counter placement lasts, by its removal version (Aven Mimeomancer)"
+GrantBloodthirstToCastSpellEffect,unique,9,run 18: bloodthirst instances carried on the spell entry to the as-enters replacement (Bloodlord of Vaasgoth)
+GrantDevourToCastSpellEffect,unique,9,run 18: devour carried on the spell entry to the as-enters choice (Jund)
+GrantEntersTappedToTriggeringCreatureSpellEffect,unique,9,run 18: enters-tapped set on the triggering spell entry (Loch Larent)
+GrantChosenLandwalkToSelfEffect,unique,9,run 18: offers every land type (CR 205.3i); GrantChosenLandwalkEffect offers the basic five (Illusionary Presence)
+GrantChosenLandwalkEffect,unique,9,run 18: built by Giant Slug's delayed choice of a basic land type; no card names it
+GrantChosenSnowLandwalkToTargetEffect,unique,9,"run 18: snow landwalk needs supertype and subtype together, which no keyword expresses (Barbarian Guides)"
+GrantChosenSubtypeToOwnGraveyardCreatureCardsEffect,unique,9,run 18: a chosen subtype on graveyard cards through GraveyardSubtypeGrantingEffect (Ashes of the Fallen)
+GrantEffectToSourceOfChosenColorUntilEndOfTurnEffect,unique,9,run 18: binds the chosen color into the granted trigger's blocker filter (Zombie Boa)
+GrantHexproofVariantsSharedByOwnCreaturesUntilEndOfTurnEffect,unique,9,run 18: collects every hexproof-from variant present as it resolves (Odric)
+GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffect,unique,9,"run 18: collects every protection present, with chosen values fixed (Concerted Effort)"
+GrantKeywordToBlockingCreaturesUnlessAttackerPaysEffect,unique,9,"run 18: one payment for each attacker by its controller, then that attacker's blockers (Tidal Flats)"
+GrantKeywordsToOwnCreaturesWithPowerAtMostTargetEffect,unique,9,"run 18: power at most the target land's: the target-bound predicate is strictly-less, and the variant would be this card's alone (Earthshape)"
+GrantProtectionFromChosenColorUntilEndOfTurnEffect,unique,9,"run 18: the sacrificed source's chosen color as it last was, bound into the grant (Floating Shield)"
+GrantProtectionFromTargetPermanentColorsUntilEndOfTurnEffect,unique,9,run 18: protection from the target's colors for a set that doesn't include it necessarily (Samite Elder)
+GrantProtectionFromTriggeringSpellColorsEffect,unique,9,run 18: the triggering spell's last-known colors (Opal Titan)
+GrantRandomColorToSourceEffect,unique,9,"run 18: a random color it lacks, for good (Opulent Clomper)"
+GrantRandomKeywordEffect,unique,9,"run 18: a keyword at random: GrantChosenKeywordEffect asks, and at-random would be this card's alone (Blitzwing)"
+GrantStaticEffectToOpponentPermanentsUntilEndOfTurnEffect,unique,9,run 18: binds who cast it into the granted trigger's condition (Hellish Rebuke)
+GrantTrampleToCreaturesBlockedByTargetEffect,unique,9,"run 18: the declared blocks of the target, none if it entered blocking (Ride Down ruling)"
+GrantTurnFaceUpAbilityToOwnFaceDownCreaturesEffect,unique,9,run 18: binds a turn-face-up cost reduction to each permanent beside the trigger (Harrowing Swarm)
+GrantUnearthToGraveyardCardsEffect,unique,9,run 18: the one temporary non-flashback grant to every matching graveyard card (Ghost Ark)
+GrantWarpToChosenCardUntilEndOfTurnEffect,unique,9,"run 18: warp until end of turn on the sought card in hand, its only grant (Gravitic Herald)"
+GrantedCardAbilityEffect,unique,9,"run 18: the floating payload of the granted graveyard and hand abilities, which three cards now name for its Ability"

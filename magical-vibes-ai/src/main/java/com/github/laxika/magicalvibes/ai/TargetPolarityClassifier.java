@@ -703,7 +703,6 @@ public class TargetPolarityClassifier {
             entry("CanBlockAnyNumberOfCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("CantBeBlockedEffect", TargetPolarity.BENEFICIAL),
             entry("TurnTargetCreatureFaceUpIfFaceDownEffect", TargetPolarity.BENEFICIAL),
-            entry("GrantProtectionChoiceToTargetAndSharingCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantAdditionalBlockToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantChosenKeywordEffect", TargetPolarity.BENEFICIAL),
             entry("GrantEffectToTargetEffect", TargetPolarity.BENEFICIAL),

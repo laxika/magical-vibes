@@ -56,6 +56,11 @@ public record GrantKeywordEffect(Set<Keyword> keywords, PermanentSubject subject
     }
 
     @Override
+    public boolean resolvesAgainstAttachedPermanent() {
+        return subject instanceof PermanentSubject.AttachedAndSharingCreatureType;
+    }
+
+    @Override
     public TargetSpec targetSpec() {
         return switch (subject) {
             case PermanentSubject.Target ignored -> TargetSpec.benign(TargetPredicates.permanent(), filter);
