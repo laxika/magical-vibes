@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.ColorManaSymbolsAmongControlledPermanents;
-import com.github.laxika.magicalvibes.model.effect.PreventXDamageToTargetCreatureAndRedirectToAnyTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventNextDamageAndRedirectEffect;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -29,7 +29,7 @@ public class AcolytesReward extends Card {
                 )),
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be any target"
-        )).addSpellEffect(new PreventXDamageToTargetCreatureAndRedirectToAnyTargetEffect(
+        )).addSpellEffect(PreventNextDamageAndRedirectEffect.toTargetCreature(
                         new ColorManaSymbolsAmongControlledPermanents(ManaColor.WHITE)));
     }
 }

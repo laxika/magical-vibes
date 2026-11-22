@@ -47,7 +47,6 @@ import com.github.laxika.magicalvibes.model.effect.MillControllerCost;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
-import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
@@ -969,25 +968,6 @@ class ActivatedAbilityExecutionServiceTest {
                     .map(e -> (MustBlockSourceEffect) e)
                     .findFirst().orElseThrow();
             assertThat(snapshot.sourcePermanentId()).isEqualTo(perm.getId());
-        }
-
-        @Test
-        @DisplayName("PreventNextColorDamageToControllerEffect gets chosen color baked in")
-        void preventColorDamageGetsChosenColorBakedIn() {
-            Card card = createCard("Test Artifact", CardType.ARTIFACT);
-            Permanent perm = addReadyPermanent(player1Id, card);
-            perm.setChosenColor(CardColor.RED);
-            List<CardEffect> effects = List.of(new PreventNextColorDamageToControllerEffect());
-            ActivatedAbility ability = new ActivatedAbility(false, null, effects, "Prevent color damage");
-
-            service.completeActivationAfterCosts(gameData, player1, perm, ability, effects, 0, null, null, false);
-
-            assertThat(gameData.stack).hasSize(1);
-            PreventNextColorDamageToControllerEffect snapshot = gameData.stack.getFirst().getEffectsToResolve().stream()
-                    .filter(e -> e instanceof PreventNextColorDamageToControllerEffect)
-                    .map(e -> (PreventNextColorDamageToControllerEffect) e)
-                    .findFirst().orElseThrow();
-            assertThat(snapshot.chosenColor()).isEqualTo(CardColor.RED);
         }
 
         @Test

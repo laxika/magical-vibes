@@ -215,6 +215,21 @@ class RiaIvorBaneOfBladeholdTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("The shield's log line doesn't name a face-down target creature")
+    void logHidesAFaceDownTarget() {
+        addCreatureReady(player1, new RiaIvorBaneOfBladehold());
+        Permanent attacker = addCreatureReady(player1, new ChromeProwler());
+        attacker.setFaceDown(2, 2, java.util.Set.of(CardType.CREATURE));
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, attacker.getId());
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("would deal combat damage to a player this combat")).isTrue();
+        assertThat(gameLogContains("Chrome Prowler")).isFalse();
+    }
+
     private void advanceToCombat(Player activePlayer) {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

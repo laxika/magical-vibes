@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.b.BalduvianBears;
 import com.github.laxika.magicalvibes.cards.s.SwordsToPlowshares;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -230,6 +232,20 @@ class MercenariesTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, player2.getId());
         harness.passBothPriorities();
         harness.assertLife(player2, 19);
+    }
+
+    @Test
+    @DisplayName("The shield's log line doesn't name a source that was turned face down")
+    void shieldLogHidesAFaceDownSource() {
+        Permanent mercs = addReadyMercenaries(player1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+
+        harness.activateAbility(player2, 0, null, null);
+        mercs.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("The next time a face-down card would deal damage to")).isTrue();
+        assertThat(gameLogContains("The next time Mercenaries")).isFalse();
     }
 
     private Permanent addMercenariesWithDamageAbility(Player player) {

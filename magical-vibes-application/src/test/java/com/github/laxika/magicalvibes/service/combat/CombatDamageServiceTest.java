@@ -463,8 +463,6 @@ class CombatDamageServiceTest {
     private void stubRegularPlayerDamage() {
         when(damagePreventionService.isSourceDamagePreventedForPlayer(
                 eq(gameData), any(UUID.class), any(UUID.class), eq(true))).thenReturn(false);
-        when(damagePreventionService.applyColorDamagePreventionForPlayer(
-                eq(gameData), any(UUID.class), any(), eq(true))).thenReturn(false);
         when(damagePreventionService.applyOpponentSourceDamageReduction(
                 eq(gameData), any(UUID.class), any(), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));
@@ -497,8 +495,6 @@ class CombatDamageServiceTest {
     private void stubInfectToPlayer() {
         when(damagePreventionService.isSourceDamagePreventedForPlayer(
                 eq(gameData), any(UUID.class), any(UUID.class), eq(true))).thenReturn(false);
-        when(damagePreventionService.applyColorDamagePreventionForPlayer(
-                eq(gameData), any(UUID.class), any(), eq(true))).thenReturn(false);
         when(damagePreventionService.applyOpponentSourceDamageReduction(
                 eq(gameData), any(UUID.class), any(), anyInt(), eq(true)))
                 .thenAnswer(inv -> (int) inv.getArgument(3));

@@ -306,6 +306,21 @@ class HealingGraceTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Healing Grace");
     }
 
+    @Test
+    @DisplayName("The shield's log line doesn't name a face-down chosen source")
+    void logHidesAFaceDownSource() {
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        opponentCreature.setFaceDown(2, 2, java.util.Set.of(com.github.laxika.magicalvibes.model.CardType.CREATURE));
+        harness.setHand(player1, List.of(new HealingGrace()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+
+        assertThat(gameLogContains("would deal to")).isTrue();
+        assertThat(gameLogContains("Grizzly Bears")).isFalse();
+    }
+
     private Permanent addReadyCreatureWithStats(Player player, int power, int toughness) {
         GrizzlyBears card = new GrizzlyBears();
         card.setPower(power);

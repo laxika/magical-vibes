@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.prevention;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetFromColorlessSourcesEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DamageCantBePreventedThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.testutil.Prevention;
@@ -199,30 +198,6 @@ class DamagePreventionSpecTest extends BaseCardTest {
     @Nested
     @DisplayName("Color prevention")
     class ColorPrevention {
-
-        @Test
-        @DisplayName("A color-prevention charge absorbs one whole damage event and is decremented once")
-        void colorChargeConsumedOncePerEvent() {
-            harness.setLife(player2, 20);
-            gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
-                    new PreventNextColorDamageToControllerEffect(CardColor.RED), player2.getId(),
-                    Duration.UNTIL_END_OF_TURN));
-
-            harness.setHand(player1, List.of(new Shock(), new Shock()));
-            harness.addMana(player1, ManaColor.RED, 2);
-
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
-            // First red event fully prevented, charge consumed.
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(20);
-            assertThat(gd.hasFloatingEffectOnPlayer(player2.getId(), PreventNextColorDamageToControllerEffect.class))
-                    .isFalse();
-
-            harness.castInstant(player1, 0, player2.getId());
-            harness.passBothPriorities();
-            // No charge left: the second Shock lands in full.
-            assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        }
 
         @Test
         @DisplayName("Target-specific colorless prevention stops colorless damage")

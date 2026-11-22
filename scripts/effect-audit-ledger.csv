@@ -2692,3 +2692,28 @@ PreventDamageToOpponentsAndMillEffect,unique,9,run 20: not fused: a static repla
 PreventDamageToSelfAndOpponentGainsControlEffect,unique,9,run 20: not fused: a static replacement whose control change is its replacing event (Khârn the Betrayer)
 PreventCombatDamageBySelfToCreaturesAndShuffleEffect,unique,9,run 20: not fused: a static replacement whose shuffle of the creature is its replacing event (Weeping Angel)
 PreventDamageToTargetCreatureFromTargetingSpellOrAbilityEffect,unique,9,"run 20: prevention keyed to damage from a spell or ability that targets the creature, not to a source filter (Silhouette)"
+PreventNextDamageAndRedirectEffect,survivor,9,"run 21: new; prevent the next N damage to you, to you and permanents you control, or to target creature, and the source deals that much to a target (Vengeful Archon, Divine Deflection, Acolyte's Reward)"
+PreventXDamageToControllerAndRedirectToTargetPlayerEffect,absorbed,9,run 21: PreventNextDamageAndRedirectEffect.toYouX(playerOrPlaneswalker()) (Vengeful Archon)
+PreventXDamageToControllerAndPermanentsAndRedirectToAnyTargetEffect,absorbed,9,run 21: PreventNextDamageAndRedirectEffect.toYouAndYourPermanentsX() (Divine Deflection)
+PreventXDamageToTargetCreatureAndRedirectToAnyTargetEffect,absorbed,9,run 21: PreventNextDamageAndRedirectEffect.toTargetCreature(amount) (Acolyte's Reward)
+PreventNextColorDamageToControllerEffect,dead,9,"run 21: no card built it (the Circles use PreventDamageFromChosenSourceEffect); deleted with its damage option"
+PreventDamageToTargetFromChosenSourceEffect,unique,9,"run 21: the chosen-source-to-target shield of Healing Grace and Shieldmage Advocate; the other two TargetSourceDamagePreventionShield makers name their source by a target or a spell"
+PreventAllDamageToSelfFromTargetCreatureEffect,unique,9,"run 21: to this from target creature this turn (Stonewise Fortifier); shares only the shield record, its source mode has no other user"
+PreventNextDamageToSourceFromCardEffect,unique,9,run 21: granted while Torrent of Lava is on the stack with that spell baked in as the source; no subject names a spell
+PreventAllDamageToTargetFromColorlessSourcesEffect,unique,9,"run 21: a floating prevention from colorless sources on the target (Lithomancer's Focus); Avacyn's record chooses a colour"
+PreventAllDamageToTargetFromChosenColorEffect,unique,9,"run 21: a colour chosen at resolution, then a floating prevention on the target (Avacyn, Guardian Angel's two abilities)"
+PreventAllCombatDamageToControllerAndCreateTokensEffect,unique,9,"run 21: a shield whose tokens follow each later prevention, not the resolution (Inkshield; run 29's verdict on the counter shields)"
+PreventNextCombatDamageByTargetCreatureAndCreateTokensEffect,unique,9,"run 21: the target's next combat damage to players, with tokens per later prevention (Ria Ivor)"
+PreventOpponentCreatureWardTriggersEffect,unique,9,run 21: not damage: ward abilities of opponents' creatures don't trigger (Nowhere to Run)
+PreventTransformEffect,unique,9,run 21: not damage: a transform restriction (Immerwolf)
+PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffect,unique,9,"run 21: not damage prevention: a regeneration ban keyed to this turn's damage record (Runesword, Bone Shaman)"
+PreventDamageToControllerPerClericEffect,unique,9,run 21: Battletide Alchemist's engine-built optional prevention around a parked damage event
+PreventCombatDamageFromAttackingCreaturesUnlessPaysEffect,unique,9,"run 21: one pay-or-prevent choice per attacking creature (Heroism), a cost combinator of step 10's ""unless"" design"
+PreventCombatDamageByTargetCreatureIfSharesColorWithChosenPermanentEffect,unique,9,run 21: a permanent chosen at resolution gates the target's prevention by a shared colour (Guard Dogs)
+PreventAllDamageFromOpponentSourcesToControllerAndCommanderRetaliationEffect,unique,9,run 21: commander retaliation per prevented creature damage (Judgment of Alexander)
+PreventAllDamageFromOpponentSourcesToControllerAndPlaneswalkersEffect,unique,9,run 21: reflected damage to the creature or the source's controller per prevention (Comeuppance)
+PreventDamageFromNamedPlanesToControlledPermanentsEffect,unique,9,run 21: a game-long prevention of damage from planes of one name (Mount Keralia)
+PreventDamageToSelfFromTargetingSpellsEffect,unique,9,"run 21: keyed to spells that target it, while you control another creature (Bronze Horse), as Silhouette's run-20 verdict"
+PreventDamageUpToAmountToSelfEffect,unique,9,run 21: prevents a whole damage event of at most N (Callous Giant); no other record has that amount mode
+PreventDamageFromDesertsToSelfAndBandedCreaturesEffect,unique,9,"run 21: while attacking, to itself and creatures banded with it (Camel); no subject names a band"
+PreventNextDamageFromSelfToYouEffect,unique,9,"run 21: the activating player's shield against the next damage event from this creature, any player may activate (Mercenaries)"

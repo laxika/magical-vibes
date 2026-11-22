@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.EyeForAnEyeShield;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextInstantOrSorceryDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.RedirectAllCreatureDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.PlayerSourceDamagePrevention;
-import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetFromChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToTargetFromColorlessSourcesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
@@ -2906,27 +2905,6 @@ public class DamagePreventionService {
         }
     }
 
-    public boolean applyColorDamagePreventionForPlayer(GameData gameData, UUID playerId, CardColor sourceColor) {
-        return applyColorDamagePreventionForPlayer(gameData, playerId, sourceColor, false);
-    }
-
-    public boolean applyColorDamagePreventionForPlayer(GameData gameData, UUID playerId, CardColor sourceColor,
-                                                       boolean combatDamage) {
-        if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return false;
-        // Ghostly Flame: a source it covers is colourless for damage, so a Circle of Protection
-        // for its printed colour no longer applies.
-        sourceColor = gameQueryService.getDamageSourceColor(gameData, sourceColor);
-        if (sourceColor == null) return false;
-        for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPlayer(playerId,
-                PreventNextColorDamageToControllerEffect.class)) {
-            if (sourceColor == ((PreventNextColorDamageToControllerEffect) fe.effect()).chosenColor()) {
-                gameData.endFloatingEffect(fe);
-                return true;
-            }
-        }
-        return false;
-    }
-
     public boolean isColorDamagePreventedForTarget(GameData gameData, UUID targetId, Set<CardColor> sourceColors) {
         return isColorDamagePreventedForTarget(gameData, targetId, sourceColors, false);
     }
@@ -3622,17 +3600,6 @@ public class DamagePreventionService {
         }
         return gameData.shields(JudgmentOfAlexanderDamagePreventionShield.class).stream()
                 .anyMatch(shield -> protectedPlayerId.equals(shield.protectedPlayerId()));
-    }
-
-    /** Whether a one-shot Circle of Protection-style color prevention covers {@code sourceColor}. */
-    public boolean hasColorDamagePreventionForPlayer(GameData gameData, UUID playerId, CardColor sourceColor,
-                                                     boolean combatDamage) {
-        if (!gameQueryService.isDamagePreventable(gameData, combatDamage)) return false;
-        CardColor damageColor = gameQueryService.getDamageSourceColor(gameData, sourceColor);
-        if (damageColor == null) return false;
-        return gameData.floatingPlayerEffects(playerId, PreventNextColorDamageToControllerEffect.class).stream()
-                .anyMatch(prevention -> damageColor == ((PreventNextColorDamageToControllerEffect) prevention)
-                        .chosenColor());
     }
 
     /** Whether an Eye for an Eye shield watches damage from {@code sourcePermanentId} to {@code playerId}. */

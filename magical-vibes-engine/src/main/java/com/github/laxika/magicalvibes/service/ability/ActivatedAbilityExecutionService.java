@@ -82,7 +82,6 @@ import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToCommanderColorI
 import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.effect.PayXEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PreventNextColorDamageToControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryCost;
@@ -460,7 +459,7 @@ public class ActivatedAbilityExecutionService {
      *   <li>Logs the activation and records the canonical player-view invalidation.</li>
      *   <li>Snapshots the effect list — filters out cost effects and bakes runtime values into effects
      *       like {@code CantBlockSourceEffect} (source permanent ID) and
-     *       {@code PreventNextColorDamageToControllerEffect} (chosen color).</li>
+     *       {@code AwardChosenColorManaEffect} (chosen color).</li>
      *   <li>Detects whether the ability is a mana ability (CR 605.1a: no target, could add mana,
      *       not a loyalty ability) and resolves it immediately without the stack, or pushes a
      *       {@link StackEntry} onto the stack for non-mana abilities.</li>
@@ -1381,8 +1380,6 @@ public class ActivatedAbilityExecutionService {
             } else if (effect instanceof MustBlockSourceEffect mustBlock) {
                 snapshotEffects.add(new MustBlockSourceEffect(permanent.getId(),
                         mustBlock.targetRestriction(), mustBlock.untilEndOfCombat()));
-            } else if (effect instanceof PreventNextColorDamageToControllerEffect && permanent.getChosenColor() != null) {
-                snapshotEffects.add(new PreventNextColorDamageToControllerEffect(permanent.getChosenColor()));
             } else if (effect instanceof AwardChosenColorManaEffect chosen && permanent.getChosenColor() != null) {
                 ManaColor chosenColor = ManaColor.valueOf(permanent.getChosenColor().name());
                 snapshotEffects.add(chosen.restriction() == null

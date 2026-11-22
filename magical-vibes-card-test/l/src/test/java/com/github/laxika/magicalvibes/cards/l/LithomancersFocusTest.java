@@ -133,6 +133,17 @@ class LithomancersFocusTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, target.getId());
     }
 
+    @Test
+    @DisplayName("The prevention's log line doesn't name a face-down target")
+    void logHidesAFaceDownTarget() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        target.setFaceDown(2, 2, java.util.Set.of(CardType.CREATURE));
+        castFocus(target);
+
+        assertThat(gameLogContains("colorless sources is prevented")).isTrue();
+        assertThat(gameLogContains("Grizzly Bears")).isFalse();
+    }
+
     private void castFocus(Permanent target) {
         harness.setHand(player1, List.of(new LithomancersFocus()));
         harness.addMana(player1, ManaColor.WHITE, 1);

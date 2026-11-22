@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PlayerSourceNextDamageShield;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNextDamageFromSelfToYouEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -39,7 +40,7 @@ public class PreventNextDamageFromSelfToYouEffectHandler implements NormalEffect
         gameData.addShield(new PlayerSourceNextDamageShield(playerId, sourceId));
 
         String playerName = gameData.playerIdToName.get(playerId);
-        String sourceName = entry.getCard().getName();
+        String sourceName = FaceDownVisibility.sourceName(gameData, entry);
         gameLogService.append(gameData, GameLog.text(
                 "The next time " + sourceName + " would deal damage to " + playerName
                         + " this turn, it is prevented."));

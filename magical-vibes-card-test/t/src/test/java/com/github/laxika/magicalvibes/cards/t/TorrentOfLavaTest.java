@@ -203,6 +203,24 @@ class TorrentOfLavaTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(2);
     }
 
+    @Test
+    @DisplayName("The granted ability's log line doesn't name a face-down creature")
+    void logHidesAFaceDownCreature() {
+        Permanent goblin = addCreatureReady(player2, new GoblinEliteInfantry());
+        goblin.setFaceDown(2, 2, java.util.Set.of(com.github.laxika.magicalvibes.model.CardType.CREATURE));
+
+        harness.setHand(player1, List.of(new TorrentOfLava()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castSorcery(player1, 0, 2);
+        harness.passPriority(player1);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gameLogContains("The next 1 damage that would be dealt to")).isTrue();
+        assertThat(gameLogContains("Goblin Elite Infantry")).isFalse();
+    }
+
     private StackEntry castTorrentAndCopyIt(int x) {
         TorrentOfLava torrent = new TorrentOfLava();
         harness.setHand(player1, List.of(torrent));

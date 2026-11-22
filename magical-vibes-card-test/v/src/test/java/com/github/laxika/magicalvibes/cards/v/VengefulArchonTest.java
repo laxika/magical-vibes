@@ -8,6 +8,10 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 
 import java.util.List;
+import java.util.Set;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardColor;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -20,6 +24,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({VengefulArchon.class, RuneclawBear.class, LightningBolt.class, ChandraNalaar.class})
 class VengefulArchonTest extends BaseCardTest {
@@ -278,6 +283,35 @@ class VengefulArchonTest extends BaseCardTest {
         harness.assertLife(player1, 17);
         harness.assertLife(player2, 20);
         assertThat(gd.shields(DamageRedirectShield.class)).isEmpty();
+    }
+
+    @Test
+    @DisplayName("Can't target a planeswalker with protection from white")
+    void cannotTargetPlaneswalkerWithProtectionFromWhite() {
+        addReadyArchon(player1);
+        Card walker = new ChandraNalaar();
+        walker.addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, walker);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        assertThatThrownBy(() -> harness.activateAbility(player1, 0, 3, chandra.getId()))
+                .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A planeswalker with protection from white isn't offered as the ability's target")
+    void protectedPlaneswalkerIsNotOffered() {
+        Permanent archon = addReadyArchon(player1);
+        Card walker = new ChandraNalaar();
+        walker.addStaticEffect(new ProtectionFromColorsEffect(Set.of(CardColor.WHITE)));
+        Permanent chandra = harness.addToBattlefieldAndReturn(player2, walker);
+        Permanent other = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
+
+        var response = harness.getValidTargetService().computeValidTargetsForAbility(
+                gd, archon.getCard(), archon.getCard().getActivatedAbilities(com.github.laxika.magicalvibes.model.Zone.BATTLEFIELD).getFirst(),
+                player1.getId(), gd.playerBattlefields.get(player1.getId()).indexOf(archon));
+
+        assertThat(response.validPermanentIds()).contains(other.getId()).doesNotContain(chandra.getId());
     }
 
     private void boltController() {

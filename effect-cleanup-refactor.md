@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 20: Exile, Each, Return, Put, Reveal, Choose, Grant and Create closed, Prevent started; 1,996 rare records left, Prevent next) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 21: Exile, Each, Return, Put, Reveal, Choose, Grant and Create closed, Prevent partly done; 1,972 rare records left, Prevent's static preventions next) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -626,6 +626,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 18 | Run 17's four small defects, the Grant family's waiting rows' shared parts (the Crowns' host set, the searched permanent), then its rare records | done, Grant closed (108 rare records: 29 absorbed, 2 split, 1 dead, 12 blocked-other, 64 unique; with the other rows 37 records deleted; 41 card files rewritten; `GrantGraveyardAbilityToCardsEffect`, `GrantSupertypeEffect`, `GrantAbilityToNextSpellThisTurnEffect`, `searched()`, `attachedAndSharingCreatureType()`) |
 | 19 | Run 18's small defects (Room spell names, mayhem types, unchoosable candidates of the non-target choices), then the Create family's rare records | done, Create closed (67 rare records: 17 absorbed, 3 split, 1 survivor, 10 blocked-other, 37 unique (one is Esix's engine-built record); 20 records deleted; 24 card files rewritten; `exiledAsCost()`, `CardHasMemoryCounterPredicate`, subjects on the token copy and the attached token, CREATE_TOKEN from the attached token) |
 | 20 | The seven face-down Create rows, run 19's small defects (Battle for Bretagard, Liberated Livestock, the Create prompts' source names, Gather Specimens, the attached tokens' pairing), then Prevent's rare records | done for Create and the defects, Prevent open (28 rows: 7 absorbed, 2 survivors (one new record), 1 blocked-other, 18 unique; 7 records deleted; 8 card files rewritten; the token copy's set path chooses attack targets in one event, `PreventAllButOneDamageToControllerAndPermanentsEffect`; two defects not reproduced; 47 rare Prevent records left) |
+| 21 | Run 20's Mercenaries log, the Prevent shields with subjects (redirect, source-to-recipient, filtered target, tokens), then Prevent's rare records | done for the shields, Prevent open (25 rows: 3 absorbed, 1 survivor (new), 1 dead, 20 unique; 5 records and 5 handlers deleted, 1 of each added; 3 card files rewritten; `PreventNextDamageAndRedirectEffect`; the static prevention record designed, not built; 23 rare Prevent records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -8187,6 +8188,95 @@ stress tests, the frontend. Not verified: more than two players, the AI's estima
   own branch of `DamagePreventionService` / `GameQueryService`; a static record with a recipient subject and a source filter would
   take most of them, which is a damage-pipeline design: ask the owner before building it.
 - Esix's copies keep none of the replaced copy's instructions; with that closed, Dance of Many folds into the token copy.
+
+### Step 9, run 21 (2026-11-23, Prevent partly done)
+
+Run 20's Mercenaries log, the Prevent shields run 20 grouped, then verdicts for every rare Prevent record that is not a pure static
+prevention. Ratchet 4,148 / 3,384 → 4,145 / 3,381 records / handlers (4 records and 4 handlers deleted with the redirect fold and the
+dead colour shield, 1 of each added). 3 card files rewritten by hand; Oracle text checked with `get_card` for all 3 and for the 21
+cards of the unique verdicts. CR 608.2b, 615.7, 616.1, 702.16b and 708.5 checked with `get_rule` (2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Dead | Left unaudited |
+|---|---|---|---|---|---|---|---|---|
+| Prevent | 25 rows (24 rare records, 1 new survivor) | 3 | 0 | 1 | 0 | 20 | 1 | 23 rare records (36 records in all), every one a static prevention |
+
+All families: 1,972 rare records without a row (run 20: 1,996).
+
+- **The redirect shields.** `PreventNextDamageAndRedirectEffect(amount, protectedPermanent, andPermanentsYouControl, redirectTarget,
+  redirectTargetGroup)` takes Vengeful Archon (`toYouX(playerOrPlaneswalker())`), Divine Deflection (`toYouAndYourPermanentsX()`) and
+  Acolyte's Reward (`toTargetCreature(devotion)`). All three wrote the same `DamageRedirectShield`; "permanents you control" stays a
+  check made as the damage would be dealt (a shield, CR 615.7), not a set found at resolution. Acolyte's Reward still shields its
+  creature when its second target became illegal (CR 608.2b). The AI's polarity entry is the absorbed records' `HARMFUL_DAMAGE`,
+  which Vengeful Archon's record lacked. The chosen-source redirect (Harm's Way, Shining Shoal, Refraction Trap) writes a
+  `SourceDamageRedirectShield` after a source prompt: a different shield, kept (run 29's unique verdict stands).
+- **No shared shape in the other shield groups.** The three `TargetSourceDamagePreventionShield` makers name their source three ways
+  (a resolution choice, a target creature, Torrent of Lava's spell baked into a granted ability), and only Healing Grace's has two
+  cards; Lithomancer's Focus (colourless) and Avacyn (a colour chosen at resolution) are each the only user of their filter; Inkshield
+  and Ria Ivor write different shields whose tokens follow each later prevention (run 29's verdict on the counter shields). A common
+  record would carry a mode per card, so each is unique.
+- **Dead.** `PreventNextColorDamageToControllerEffect`: no card constructed it (the Circles of Protection are
+  `PreventDamageFromChosenSourceEffect`); its handler, its chosen-colour snapshot in `ActivatedAbilityExecutionService`, its two
+  `DamagePreventionService` methods and the player pool's `ColorShield` option are deleted with the tests that built it by hand.
+- **The static prevention record (not built).** The 23 rare records left are all static: recipients (this permanent, the attached
+  creature, you, you and your permanents, creatures / planeswalkers you control), a source filter (Deserts, spells, instant and sorcery
+  spells, sources you control, a chosen name, a chosen colour, creatures it blocks or that block it, a shared colour), a combat scope
+  (combat, noncombat, any), a by-side form (damage dealt by this, by your creatures, by creatures except) and an amount (all, N per source,
+  half). Each is read by its own branch: `GameQueryService` (`isCreatureSourceDamageToSelfPrevented`, the two Desert checks, the spell,
+  chosen-name and shared-colour checks, the combat source queries near `hasAuraWithEffect`), `DamagePreventionService.creatureDamageSteps`
+  and its per-source helpers, `PlayerDamagePreventions`, `CombatDamageService` and `DamageSupport`, and the AI's static-effect scans in
+  `AiDecisionEngine`. Building one record means one reader per damage path (player, permanent; combat, noncombat; the AI's prediction)
+  replacing about 20 branches, with the order of the pool options kept; that did not fit beside this run's other work.
+
+**Behaviour changes.** "Failed before" means the new test failed on a `git archive` copy of HEAD with the new tests copied in.
+
+1. Mercenaries' shield log line names a face-down source "a face-down card" (CR 708.5; it was built from the card's name as text, which
+   the log's redaction can't see): `MercenariesTest.shieldLogHidesAFaceDownSource` (failed before, on HEAD's sources).
+2. Vengeful Archon's target is harmful, so a planeswalker with protection from white isn't offered (CR 702.16b):
+   `VengefulArchonTest.protectedPlaneswalkerIsNotOffered` (failed before). Activating at it was already refused
+   (`cannotTargetPlaneswalkerWithProtectionFromWhite`, a guard).
+3. The three redirect shields' log lines are the survivor's ("<source> — the next N damage that would be dealt to <protected> this turn is
+   prevented. If damage is prevented this way, <source> deals that much damage to <target>.").
+4. A Circle-style one-use colour shield no longer exists as a damage option; no card made one.
+
+**What a player sees.** The redirect log names its source by `FaceDownVisibility.sourceName` and permanents by `publicName`.
+
+**Seen, not changed.**
+
+- About 21 option labels of the damage pools (`PlayerDamagePreventions`, `PlayerDamageRedirects`, the creature steps) name a source by
+  `ctx.source().getName()`, so the replacement-order prompt can name a face-down source (CR 708.5). A sweep of its own, like the prompt
+  sweep.
+- Ria Ivor, Lithomancer's Focus, Torrent of Lava's granted ability and the chosen-source shield (Healing Grace) log the card as a card
+  segment, which `GameLogService` already redacts: four guard tests added (they pass on HEAD), no change.
+- Esix's copies keep none of the replaced copy's instructions (run 20's item): not a small fix (the may-ability replacement re-runs a
+  separate handler with no access to the replaced effect); Dance of Many still waits for it.
+- Several `VengefulArchonTest` and `MercenariesTest` methods have no `@DisplayName`; not touched.
+
+**Tests edited.** The new cases above and the four guards (`RiaIvorBaneOfBladeholdTest`, `LithomancersFocusTest`, `TorrentOfLavaTest`,
+`HealingGraceTest`). Named the deleted colour shield: `DamagePreventionSpecTest`'s "A color-prevention charge absorbs one whole damage
+event" and `ActivatedAbilityExecutionServiceTest`'s chosen-colour snapshot case deleted, `CombatDamageServiceTest`'s two stubs of the deleted
+method removed. `EffectCountRatchetTest`'s baselines.
+
+**Tests run.** The final sources in one Gradle run with every task forced (`--rerun`, `--continue`), one `--tests` list per task,
+counted from that run's XML: 32 classes (583 cases, 0 failures, 0 skipped): the 14 test classes that name one of the 10 changed or
+audited shield cards (Kazarov, Pillar of Flame, Runed Terror and `FaceDownTextIdentityTest` among them), the 10 card classes naming
+`DamageRedirectShield` or the redirect records, `DamagePreventionSpecTest`, `CombatDamageServiceTest`,
+`DealDamageToAnyTargetEffectHandlerTest`, `TurnCleanupServiceTest`, `ActivatedAbilityExecutionServiceTest`,
+`PermanentRemovalServiceTest`, `EffectCountRatchetTest` and the AI's `TargetPolarityGuardTest`. Every project's main, test and
+test-fixture Java sources compiled before the last test edits; the edited test modules compiled in the run. No deleted handler asked
+death replacements first. On HEAD with the new tests: the Vengeful Archon list case failed, Mercenaries' case failed (run on HEAD's
+sources before the fix), the five guards passed. Not run: the full suites, the AI fuzz and stress tests, the frontend. Not verified:
+more than two players, the AI's choice of Vengeful Archon's target with the new polarity.
+
+**For the next run (run 22: Prevent's 23 static records; then May 58, Perpetually 55, Conjure 49, Register 48, Target 48).**
+
+- Build the static prevention record (owner's go-ahead in run 21's brief): recipient subject, source filter, combat scope, by-side
+  form and amount, read by one rule per damage path; fold the 23 rare statics listed by `--unaudited --family Prevent`, keeping each
+  card's scope, shield-or-static nature and the pool's option order (CR 615, 616.1). Start with the all-damage, recipient-and-source
+  ones (Desert Nomads, Energy Storm, Light of Sanction, Rem Karolus, The Wanderer, Gideon's Intervention, the Walls, Armored Transport),
+  then the per-source amounts (Hedron-Field Purists, Daunting Defender, Djeru, Shield of the Realm, Cover of Winter), then the by-side
+  ones. Records of three or more cards (`PreventDamageToSelfFromCreaturesEffect`, `PreventAllDamageDealtByEnchantedCreatureEffect`, ...)
+  need the owner's sign-off.
+- The pool labels' face-down names, and Esix's dropped instructions, as above.
 
 ## Prompt
 

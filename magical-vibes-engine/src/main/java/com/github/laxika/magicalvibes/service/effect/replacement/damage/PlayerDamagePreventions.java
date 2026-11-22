@@ -138,16 +138,6 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                 preventAll("ProtectionFromCardType", "Protection from the chosen card type",
                         ctx -> preventable(ctx) && gameQueryService.playerHasProtectionFromChosenCardType(
                                 ctx.gameData(), ctx.playerId(), ctx.source(), ctx.sourcePermanent())),
-                effect("ColorShield", PREVENTION,
-                        ctx -> sourceColor(ctx) != null && prevention.hasColorDamagePreventionForPlayer(
-                                ctx.gameData(), ctx.playerId(), sourceColor(ctx), ctx.combat()),
-                        ctx -> "Prevent the damage from a " + sourceColor(ctx).name().toLowerCase()
-                                + " source (one use)",
-                        ctx -> {
-                            prevention.applyColorDamagePreventionForPlayer(
-                                    ctx.gameData(), ctx.playerId(), sourceColor(ctx), ctx.combat());
-                            return prevented(ctx);
-                        }),
                 pure("OpponentSourceReduction", PREVENTION,
                         ctx -> opponentSourceReduction(ctx) < ctx.amount(),
                         ctx -> "Prevent " + (ctx.amount() - opponentSourceReduction(ctx))
