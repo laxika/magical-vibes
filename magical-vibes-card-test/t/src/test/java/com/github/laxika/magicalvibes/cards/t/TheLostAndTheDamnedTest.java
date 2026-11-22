@@ -143,7 +143,7 @@ class TheLostAndTheDamnedTest extends BaseCardTest {
 
         harness.castSorcery(player1, 0);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(gd.playerHands.get(player1.getId()).getFirst().getId()));
 
         harness.assertOnBattlefield(player1, "Forest");
         assertThat(gd.stack).isEmpty();

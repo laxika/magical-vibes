@@ -97,7 +97,7 @@ class VeteranGhoulcallerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 2);
 
         harness.castAndResolveInstant(player1, 0);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(returned.getId()));
         resolveAllTriggers();
 
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(returned);

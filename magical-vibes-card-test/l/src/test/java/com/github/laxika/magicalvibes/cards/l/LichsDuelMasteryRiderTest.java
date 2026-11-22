@@ -305,8 +305,8 @@ class LichsDuelMasteryRiderTest extends BaseCardTest {
     @Test
     @CardUsed({SaplingOfColfenor.class, GiantSpider.class})
     @FailOnLegacyDepartureFallback
-    @DisplayName("Sapling of Colfenor asks the Mastery before the gain, the loss and the card going to hand")
-    void saplingAsksTheMasteryBeforeAnythingChanges() {
+    @DisplayName("Sapling of Colfenor asks the Mastery after the gain, before the loss and the card going to hand")
+    void saplingAsksTheMasteryAfterTheGainBeforeTheLoss() {
         Permanent mastery = noncreatureShieldlessMasteryBetweenWheelAndLeyline();
         Permanent sapling = addCreatureReady(player2, new SaplingOfColfenor());
         Card spider = new GiantSpider();
@@ -316,10 +316,12 @@ class LichsDuelMasteryRiderTest extends BaseCardTest {
         declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(sapling)));
         resolveAllTriggers();
 
+        // The gain, the loss and the card going to hand are three sequential events (ruling 2008-08-01, CR 608.2c),
+        // and the question is asked as the loss would happen (CR 616.1).
         assertMasteryAskedLibraryOrExile();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(spider);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
-        harness.assertLife(player2, 20);
+        harness.assertLife(player2, 24);
 
         harness.handleListChoice(player2, EXILE);
 
@@ -704,7 +706,7 @@ class LichsDuelMasteryRiderTest extends BaseCardTest {
     @Test
     @CardUsed({SaplingOfColfenor.class, GiantSpider.class, TaintedRemedy.class})
     @FailOnLegacyDepartureFallback
-    @DisplayName("Sapling of Colfenor asks the Mastery up front when the gain turned into a loss uses up its last shield")
+    @DisplayName("Sapling of Colfenor asks the Mastery at the loss after the gain turned into a loss used up its last shield")
     void saplingAsksTheMasteryWhenTheReplacedGainUsesUpTheLastShield() {
         Permanent mastery = noncreatureShieldlessMasteryBetweenWheelAndLeyline();
         Card shield = new GrizzlyBears();
@@ -718,9 +720,11 @@ class LichsDuelMasteryRiderTest extends BaseCardTest {
         declareAttackers(player2, List.of(gd.playerBattlefields.get(player2.getId()).indexOf(sapling)));
         resolveAllTriggers();
 
+        // The gain is its own event (ruling 2008-08-01): turned into a loss, it has already put the last shield into
+        // the hand when the loss that follows asks (CR 616.1).
         assertMasteryAskedLibraryOrExile();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(spider);
-        assertThat(gd.playerHands.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(shield);
         harness.assertLife(player2, 20);
 
         harness.handleListChoice(player2, EXILE);
