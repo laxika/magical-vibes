@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.k;
 import com.github.laxika.magicalvibes.cards.g.Gristleback;
 import com.github.laxika.magicalvibes.cards.h.HatchingPlans;
 import com.github.laxika.magicalvibes.cards.s.SkySwallower;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -118,4 +119,25 @@ class KillerInstinctTest extends BaseCardTest {
         harness.assertNotInGraveyard(player1, "Gristleback");
     }
 
+    @Test
+    @DisplayName("A creature that left and came back is a new object and isn't sacrificed (CR 603.7c, 400.7)")
+    void returnedCreatureIsNotSacrificed() {
+        harness.addToBattlefield(player1, new KillerInstinct());
+        harness.setLibrary(player1, List.of(new Gristleback()));
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        Permanent first = findPermanent(player1, "Gristleback");
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, first));
+        Card returned = gd.playerHands.get(player1.getId()).stream()
+                .filter(card -> card.getName().equals("Gristleback")).findFirst().orElseThrow();
+        gd.playerHands.get(player1.getId()).remove(returned);
+        harness.addToBattlefield(player1, returned);
+
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.passUntil(player1, TurnStep.END_STEP);
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Gristleback");
+    }
 }

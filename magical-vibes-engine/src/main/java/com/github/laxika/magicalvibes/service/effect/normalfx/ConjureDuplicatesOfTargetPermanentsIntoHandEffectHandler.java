@@ -66,8 +66,8 @@ public class ConjureDuplicatesOfTargetPermanentsIntoHandEffectHandler implements
                 entry.getControllerId(), entry.getControllerId(), validIndices, 1,
                 false, false, List.of(), entry.getSourcePermanentId(),
                 "You may put one of the conjured cards onto the battlefield.",
-                false, true, false, null, null, 0, null,
-                false, false, false, false, false, false, 0, false,
+                false, true, false, 0, null,
+                false, false, false, false, false, 0, false,
                 null, null, new PutChosenCardFromHandOntoBattlefieldEffect(), 0
         ).withKeepInHand());
     }

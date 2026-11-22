@@ -3660,6 +3660,9 @@ public abstract class AiDecisionEngine {
             int encoded = coe.variableModeCount()
                     ? ChooseOneEffect.encodeModeSelection(coe.choicesRequired(), coe.choicesMax(), new int[]{i})
                     : i;
+            if (castingPermissionService.isSplitModeForbiddenByName(gameData, aiPlayer.getId(), card, i)) {
+                continue;
+            }
             if (!isModalModeValid(gameData, card, option)
                     || !isModalModeAffordable(gameData, card, encoded, virtualPool)) {
                 continue;

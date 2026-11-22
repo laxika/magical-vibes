@@ -6,7 +6,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.ChooseTwoFilteredCardsFromTargetHandToDiscardEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMinManaValuePredicate;
@@ -39,10 +44,15 @@ public class DistendedMindbender extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addTrigger(Triggers.youCastThisSpell(), new ChooseTwoFilteredCardsFromTargetHandToDiscardEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
-                        new CardMaxManaValuePredicate(3))),
-                new CardMinManaValuePredicate(4)));
+        )).addTrigger(Triggers.youCastThisSpell(),
+                RevealCardsFromHandEffect.hand(Subjects.targetPlayer()),
+                new ChooseCardEffect(Subjects.revealedThisWay(), "a card for each", true, new Fixed(1), false, List.of(
+                        new ChooseCardEffect.Each(new CardAllOfPredicate(List.of(
+                                new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
+                                new CardMaxManaValuePredicate(3))),
+                                "a nonland card with mana value 3 or less to discard"),
+                        new ChooseCardEffect.Each(new CardMinManaValuePredicate(4),
+                                "a card with mana value 4 or greater to discard"))),
+                new DiscardCardsEffect(Subjects.cardsThisWay(StepKind.CHOOSE)));
     }
 }

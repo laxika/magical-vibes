@@ -4,6 +4,8 @@ import com.github.laxika.magicalvibes.ai.AiGameActions;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetNonlandPermanentAndCardWithSourceEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
@@ -135,6 +137,57 @@ class MultiGraveyardChoiceAiStrategyTest {
                 opponentCards.get(0).getId(),
                 opponentCards.get(1).getId(),
                 opponentCards.get(2).getId());
+    }
+
+    @Test
+    @DisplayName("The AI's own choice among another player's revealed hand takes the highest mana value")
+    void revealedHandChoiceTakesMostValuable() throws Exception {
+        Card cheap = cardWithManaValue(1);
+        Card expensive = cardWithManaValue(5);
+        gameData.playerHands.put(UUID.randomUUID(), new ArrayList<>(List.of(cheap, expensive)));
+        resolvingCardChoiceOf(aiPlayerId);
+
+        strategy.answer(new PendingInteraction.MultiGraveyardChoice(
+                aiPlayerId, List.of(cheap, expensive), 1, "Choose a card.", 1), context());
+
+        assertChosen(expensive.getId());
+    }
+
+    @Test
+    @DisplayName("The AI's own choice among its graveyard takes the highest mana value")
+    void ownGraveyardChoiceTakesMostValuable() throws Exception {
+        Card cheap = cardWithManaValue(1);
+        Card expensive = cardWithManaValue(5);
+        gameData.playerGraveyards.put(aiPlayerId, new ArrayList<>(List.of(cheap, expensive)));
+        resolvingCardChoiceOf(aiPlayerId);
+
+        strategy.answer(new PendingInteraction.MultiGraveyardChoice(
+                aiPlayerId, List.of(cheap, expensive), 1, "Choose a card.", 1), context());
+
+        assertChosen(expensive.getId());
+    }
+
+    @Test
+    @DisplayName("A choice another player's effect tells the AI to make keeps the order offered")
+    void anotherPlayersChoiceKeepsOfferedOrder() throws Exception {
+        Card cheap = mock(Card.class);
+        Card expensive = mock(Card.class);
+        when(cheap.getId()).thenReturn(UUID.randomUUID());
+        when(expensive.getId()).thenReturn(UUID.randomUUID());
+        gameData.playerGraveyards.put(aiPlayerId, new ArrayList<>(List.of(cheap, expensive)));
+        resolvingCardChoiceOf(UUID.randomUUID());
+
+        strategy.answer(new PendingInteraction.MultiGraveyardChoice(
+                aiPlayerId, List.of(cheap, expensive), 1, "Choose a card.", 1), context());
+
+        assertChosen(cheap.getId());
+    }
+
+    private void resolvingCardChoiceOf(UUID controllerId) {
+        gameData.graveyardTargetOperation.effects = new ArrayList<>();
+        gameData.graveyardTargetOperation.chooseCardResume = true;
+        gameData.pendingEffectResolutionEntry = new StackEntry(StackEntryType.SORCERY_SPELL, new Card(), controllerId,
+                "Source", List.of(), (UUID) null, (UUID) null);
     }
 
     private PendingInteraction.MultiGraveyardChoice choice(List<Card> cards) {

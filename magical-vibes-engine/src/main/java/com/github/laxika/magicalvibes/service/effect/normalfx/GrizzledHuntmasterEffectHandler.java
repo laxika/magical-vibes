@@ -49,7 +49,7 @@ public class GrizzledHuntmasterEffectHandler implements NormalEffectHandlerBean 
                 List<Card> matchingCards = matchingCards(gameData, controllerId, cardName);
                 if (!matchingCards.isEmpty()) {
                     playerInputService.beginMultiZoneExileChoice(
-                            gameData, controllerId, matchingCards, controllerId, cardName, false,
+                            gameData, controllerId, matchingCards, controllerId, cardName,
                             new GrizzledHuntmasterEffect(Step.SAME_NAME_CARDS_EXILED, cardName, 1));
                     return;
                 }
@@ -74,7 +74,7 @@ public class GrizzledHuntmasterEffectHandler implements NormalEffectHandlerBean 
         try {
             playerInteractionSupport.resolveHandRevealAndChooseWithChosenCardThen(
                     gameData, entry, 1, List.of(), List.of(CardType.CREATURE), null,
-                    false, true, null, true, false, 0, false,
+                    false, true, null, true, 0, false,
                     false, false, false, 0, null,
                     new GrizzledHuntmasterEffect(Step.HAND_CARD_CHOSEN, null, 0));
         } finally {

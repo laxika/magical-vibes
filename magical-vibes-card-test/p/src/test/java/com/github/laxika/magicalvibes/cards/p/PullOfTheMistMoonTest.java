@@ -6,9 +6,11 @@ import com.github.laxika.magicalvibes.cards.m.Memnite;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -51,10 +53,10 @@ class PullOfTheMistMoonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.PerpetualEnterExileHandCardChoice.class);
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        harness.handleCardChosen(player1, 0);
-        assertThat(gd.perpetualEnterEffectsByCardId).containsKey(chosenCard.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player1, 0)));
+        assertThat(gd.perpetualAbilities(chosenCard.getId())).hasSize(1);
 
         Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.forceActivePlayer(player1);
@@ -110,8 +112,8 @@ class PullOfTheMistMoonTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.PerpetualEnterExileHandCardChoice.class);
-        harness.handleCardChosen(player1, 0);
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player1, 0)));
         harness.assertInHand(player1, "Grizzly Bears");
         harness.assertInGraveyard(player2, "Grizzly Bears");
     }
@@ -163,9 +165,14 @@ class PullOfTheMistMoonTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player1, 0)));
 
         assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Memnite"));
         assertThat(gd.gameLog).anyMatch(line -> line.plainText().contains("perpetually gains"));
+    }
+
+    /** The id of the card at {@code index} of {@code player}'s hand. */
+    private UUID handCard(Player player, int index) {
+        return gd.playerHands.get(player.getId()).get(index).getId();
     }
 }

@@ -27,7 +27,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentChoose
 import com.github.laxika.magicalvibes.service.effect.normalfx.EarthbendTargetLandThenFightEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCounterTypeOnControlledCreatureThenPutOnOtherCreaturesEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCounterTypeOnControlledPermanentThenPutOnTargetPermanentEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseDwarfAndAttachAnyNumberOfControlledEquipmentEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GrantKeywordToChosenCreatureUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PutKeywordCountersOnControlledCreaturesThenPutPlusOneCountersOnSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.GuidedPassageEffectHandler;
@@ -154,8 +153,6 @@ public class PermanentChoiceHandlerService {
     private final CelestialJudgmentEffectHandler celestialJudgmentEffectHandler;
     private final AttachCurseToOpponentAndDrawEffectHandler attachCurseToOpponentAndDrawEffectHandler;
     private final AttachSelectedAurasToLegalTargetsEffectHandler attachSelectedAurasHandler;
-    private final ChooseDwarfAndAttachAnyNumberOfControlledEquipmentEffectHandler
-            chooseDwarfAndAttachAnyNumberOfControlledEquipmentHandler;
     private final EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffectHandler
             benthicAnomalyEffectHandler;
     private final EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamageEffectHandler
@@ -669,9 +666,6 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleAttachSacrificedEquipmentToTarget(gameData, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AttachControlledEquipmentToTargetCreature attachEquip) {
             battlefieldHandler.handleAttachControlledEquipmentToTargetCreature(gameData, permanentId, attachEquip);
-        } else if (context instanceof PermanentChoiceContext.ChooseDwarfAndAttachAnyNumberOfControlledEquipment chooseDwarf) {
-            chooseDwarfAndAttachAnyNumberOfControlledEquipmentHandler.completeChoice(
-                    gameData, playerId, permanentId, chooseDwarf);
         } else if (context instanceof PermanentChoiceContext.AttachEquipmentToSamurai attachEquip) {
             battlefieldHandler.handleAttachEquipmentToSamurai(gameData, playerId, permanentId, attachEquip);
         } else if (context instanceof PermanentChoiceContext.AttachMatchingEquipmentToCreatedPermanent attachEquip) {
@@ -892,8 +886,6 @@ public class PermanentChoiceHandlerService {
             attachCurseToOpponentAndDrawEffectHandler.completeOpponentChoice(
                     gameData, permanentId, lyndeOpponentChoice);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        } else if (context instanceof PermanentChoiceContext.ChoosePlayerThenReturnCreatureToHand choosePlayer) {
-            battlefieldHandler.handleChoosePlayerThenReturnCreatureToHand(gameData, permanentId, choosePlayer);
         } else if (context instanceof PermanentChoiceContext.ZndrsplatsJudgmentCreatureChoice judgmentChoice) {
             zndrsplatsJudgmentEffectHandler.completeCreatureChoice(gameData, permanentId, judgmentChoice);
             if (!gameData.interaction.isAwaitingInput()) {
@@ -1079,8 +1071,8 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleJuxtaposeTieBreak(gameData, permanentId, juxtaposeTieBreak);
         } else if (context instanceof PermanentChoiceContext.ChooseCreatureAsEnter ccae) {
             battlefieldHandler.handleChooseCreatureAsEnter(gameData, permanentId, ccae);
-        } else if (context instanceof PermanentChoiceContext.ChooseOpponentPermanentAsEnter opa) {
-            battlefieldHandler.handleChooseOpponentPermanentAsEnter(gameData, permanentId, opa);
+        } else if (context instanceof PermanentChoiceContext.ChoosePermanentAsEnter cpeae) {
+            battlefieldHandler.handleChoosePermanentAsEnter(gameData, permanentId, cpeae);
         } else if (context instanceof PermanentChoiceContext.ChoosePlayerAsEnter cpae) {
             battlefieldHandler.handleChoosePlayerAsEnter(gameData, permanentId, cpae);
         } else if (context instanceof PermanentChoiceContext.ChooseTwoPlayersAsEnter ctpae) {

@@ -8,8 +8,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachAnyNumberOfControlledEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,7 @@ public class AttachAnyNumberOfControlledEquipmentToTargetCreatureEffectHandler
     private final GameQueryService gameQueryService;
     private final PlayerInputService playerInputService;
     private final EquipSupport equipSupport;
+    private final SubjectResolutionService subjectResolutionService;
     private final GameLogService gameLogService;
 
     @Override
@@ -37,7 +40,10 @@ public class AttachAnyNumberOfControlledEquipmentToTargetCreatureEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        Permanent creature = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        var attach = (AttachAnyNumberOfControlledEquipmentToTargetCreatureEffect) effect;
+        Permanent creature = attach.subject() instanceof PermanentSubject.Target
+                ? gameQueryService.findPermanentById(gameData, entry.getTargetId())
+                : subjectResolutionService.permanent(gameData, entry, effect, attach.subject());
         if (creature == null
                 || !gameQueryService.isCreature(gameData, creature)
                 || !entry.getControllerId().equals(gameQueryService.findPermanentController(gameData, creature.getId()))) {
@@ -47,7 +53,7 @@ public class AttachAnyNumberOfControlledEquipmentToTargetCreatureEffectHandler
         beginChoiceForCreature(gameData, entry.getControllerId(), creature, entry.getCard().getName());
     }
 
-    public void beginChoiceForCreature(GameData gameData, UUID controllerId, Permanent creature,
+    private void beginChoiceForCreature(GameData gameData, UUID controllerId, Permanent creature,
                                        String sourceCardName) {
         List<UUID> legalEquipmentIds = controlledEquipmentIds(gameData, controllerId, creature);
         if (legalEquipmentIds.isEmpty()) {

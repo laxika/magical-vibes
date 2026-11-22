@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorForSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ChoosePositiveNumberEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseNumberAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTargetHandDrawIfExactlyChosenNumberOfChosenColorEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -19,7 +19,7 @@ public class ScryingGlass extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true, "{3}",
                 List.of(
-                        new ChoosePositiveNumberEffect(),
+                        new ChooseNumberAtResolutionEffect(1, Integer.MAX_VALUE),
                         new ChooseColorForSourceEffect(),
                         new RevealTargetHandDrawIfExactlyChosenNumberOfChosenColorEffect()
                 ),

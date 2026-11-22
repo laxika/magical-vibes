@@ -40,7 +40,6 @@ public class ReckonerShakedown extends Card {
                 0,
                 true,
                 false,
-                false,
                 true,
                 false,
                 false,

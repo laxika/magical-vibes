@@ -39,10 +39,8 @@ class ArmedAndArmoredTest extends BaseCardTest {
         assertThat(ownVehicle.getCard().hasType(CardType.ARTIFACT)).isTrue();
         assertThat(gqs.isCreature(gd, opponentVehicle)).isFalse();
 
-        PendingInteraction.PermanentChoice dwarfChoice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(dwarfChoice.validIds()).contains(ownDwarf.getId()).doesNotContain(opponentDwarf.getId());
-        harness.handlePermanentChosen(player1, ownDwarf.getId());
+        // The only Dwarf its controller has is the one chosen, unasked
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
 
         PendingInteraction.MultiPermanentChoice equipmentChoice =
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
@@ -50,7 +48,7 @@ class ArmedAndArmoredTest extends BaseCardTest {
                 .doesNotContain(illegalEquipment.getId());
         harness.handleMultiplePermanentsChosen(player1, List.of(equipment.getId()));
 
-        assertThat(equipment.getAttachedTo()).isEqualTo(ownDwarf.getId());
+        assertThat(equipment.getAttachedTo()).isEqualTo(ownDwarf.getId()).isNotEqualTo(opponentDwarf.getId());
         assertThat(illegalEquipment.getAttachedTo()).isNull();
     }
 
@@ -62,7 +60,6 @@ class ArmedAndArmoredTest extends BaseCardTest {
         Permanent equipment = harness.addToBattlefieldAndReturn(player1, new LeoninScimitar());
 
         cast();
-        harness.handlePermanentChosen(player1, dwarf.getId());
         harness.handleMultiplePermanentsChosen(player1, List.of(equipment.getId()));
 
         harness.forceStep(TurnStep.END_STEP);
@@ -149,11 +146,8 @@ class ArmedAndArmoredTest extends BaseCardTest {
 
         cast();
 
-        PendingInteraction.PermanentChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
-        assertThat(choice).isNotNull();
-        assertThat(choice.validIds()).containsExactly(vehicle.getId());
-        harness.handlePermanentChosen(player1, vehicle.getId());
+        // The animated Vehicle is the only Dwarf, so it is the one chosen, unasked
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         harness.handleMultiplePermanentsChosen(player1, List.of(equipment.getId()));
 
         assertThat(equipment.getAttachedTo()).isEqualTo(vehicle.getId());

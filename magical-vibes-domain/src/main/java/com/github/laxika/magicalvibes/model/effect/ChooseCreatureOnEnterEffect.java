@@ -6,7 +6,7 @@ package com.github.laxika.magicalvibes.model.effect;
  * ("As this Aura enters, choose a creature."). The chosen creature's ID is stored on the entering
  * permanent via {@code chosenPermanentId}.
  *
- * <p>Unlike {@link ChooseAnotherCreatureOnEnterEffect} the choice is not restricted to other
+ * <p>Unlike {@link ChoosePermanentOnEnterEffect} the choice is not restricted to other
  * creatures the controller controls, and it is supported for Auras (which are not creatures
  * themselves), not just entering creatures. Used by Metamorphic Alteration.
  */

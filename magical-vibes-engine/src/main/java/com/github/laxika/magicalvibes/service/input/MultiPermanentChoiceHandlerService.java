@@ -43,7 +43,6 @@ import com.github.laxika.magicalvibes.service.combat.attack.CombatAttackService;
 import com.github.laxika.magicalvibes.service.combat.block.CombatBlockService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.AnimationSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseTwoCreaturesByPowerDifferenceEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseAnotherAttackingCreatureWithLesserPowerEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseUpToThreeNonlandPermanentsThenOpponentChoosesOneEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySpellForEachOtherCreatureWithManaEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
@@ -148,8 +147,6 @@ public class MultiPermanentChoiceHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopiesOfSaddledCreatureEffectHandler
             createTokenCopiesOfSaddledCreatureEffectHandler;
     private final ChooseTwoCreaturesByPowerDifferenceEffectHandler chooseTwoCreaturesByPowerDifferenceEffectHandler;
-    private final ChooseAnotherAttackingCreatureWithLesserPowerEffectHandler
-            chooseAnotherAttackingCreatureWithLesserPowerEffectHandler;
     private final ChoosePermanentsEffectHandler choosePermanentsEffectHandler;
     private final CopySpellForEachOtherCreatureWithManaEffectHandler
             copySpellForEachOtherCreatureWithManaEffectHandler;
@@ -641,10 +638,6 @@ public class MultiPermanentChoiceHandlerService {
                 && permanentIds.size() != 2) {
             throw new IllegalStateException("Exactly two creatures must be selected");
         }
-        if (context instanceof MultiPermanentChoiceContext.ChooseAnotherAttackingCreatureWithLesserPower
-                && permanentIds.size() != 1) {
-            throw new IllegalStateException("Exactly one attacking creature must be selected");
-        }
         if (context instanceof MultiPermanentChoiceContext.ChoosePermanents choice) {
             choosePermanentsEffectHandler.validateChoice(gameData, permanentIds, choice);
         }
@@ -1131,8 +1124,6 @@ public class MultiPermanentChoiceHandlerService {
             equipoiseSupport.handleChosen(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.ChooseTwoCreaturesByPowerDifference) {
             handleChooseTwoCreaturesByPowerDifference(gameData, permanentIds);
-        } else if (context instanceof MultiPermanentChoiceContext.ChooseAnotherAttackingCreatureWithLesserPower) {
-            handleChooseAnotherAttackingCreatureWithLesserPower(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.CreateTokenCopiesOfChosenDistinctControlledTokens) {
             handleCreateTokenCopiesOfChosenDistinctControlledTokens(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.ExileAnyNumberUntilSourceLeaves ctx) {
@@ -1247,17 +1238,6 @@ public class MultiPermanentChoiceHandlerService {
             throw new IllegalStateException("No pending effect resolution entry");
         }
         chooseTwoCreaturesByPowerDifferenceEffectHandler.completeChoice(gameData, permanentIds, entry);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleChooseAnotherAttackingCreatureWithLesserPower(GameData gameData,
-                                                                      List<UUID> permanentIds) {
-        StackEntry entry = gameData.pendingEffectResolutionEntry;
-        if (entry == null) {
-            throw new IllegalStateException("No pending effect resolution entry");
-        }
-        chooseAnotherAttackingCreatureWithLesserPowerEffectHandler.completeChoice(
-                gameData, permanentIds, entry);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 

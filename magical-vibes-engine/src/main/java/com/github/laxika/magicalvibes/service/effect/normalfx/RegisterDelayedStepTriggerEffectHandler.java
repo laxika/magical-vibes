@@ -51,6 +51,7 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
         StepOutcome bound = switch (register.about()) {
             case EXILE -> exiled(gameData, entry.getResolutionResults().outcome(StepKind.EXILE));
             case SEEK -> sought(gameData, entry.getResolutionResults().outcome(StepKind.SEEK));
+            case RETURN -> putOntoBattlefield(gameData, entry.getResolutionResults().outcome(StepKind.RETURN));
             default -> StepOutcome.ofObjects(entry.getCreatedPermanentIds(), List.of());
         };
         if (bound.objectIds().isEmpty() && !register.alsoIfNothingHappened()) {
@@ -69,7 +70,7 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
                 effects = List.of(new SequenceEffect(effects));
             }
         }
-        boolean cards = register.about() != StepKind.CREATE_TOKEN;
+        boolean cards = register.about() == StepKind.EXILE || register.about() == StepKind.SEEK;
         DelayedReferents referents = (cards
                 ? DelayedReferents.cards(bound.movedCards().stream().map(MovedCard::cardId).distinct().toList())
                 : DelayedReferents.permanents(bound.objectIds()))
@@ -83,6 +84,17 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
                 entry.getControllerId(), entry.getCard(),
                 new TriggeredAbility(register.step(), options, effects.toArray(CardEffect[]::new)),
                 entry.getSourcePermanentId(), permanentId, playerId, referents));
+    }
+
+    /** The permanents the step made that are still there; one that left is a new object (CR 400.7). */
+    private static StepOutcome putOntoBattlefield(GameData gameData, StepOutcome outcome) {
+        List<UUID> there = new ArrayList<>();
+        gameData.forEachPermanent((controllerId, permanent) -> {
+            if (outcome.objectIds().contains(permanent.getId())) {
+                there.add(permanent.getId());
+            }
+        });
+        return StepOutcome.ofObjects(there, outcome.playerIds());
     }
 
     private static StepOutcome sought(GameData gameData, StepOutcome outcome) {

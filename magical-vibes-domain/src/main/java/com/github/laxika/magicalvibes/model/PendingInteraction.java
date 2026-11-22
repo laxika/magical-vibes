@@ -137,7 +137,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.PerpetualStaticEffectCardChoice,
         PendingInteraction.PerpetualTargetCardChoice,
         PendingInteraction.WordOfCommandCardChoice,
-        PendingInteraction.PerpetualEnterExileHandCardChoice,
         PendingInteraction.StrongholdGambitCardChoice,
         PendingInteraction.TargetedHandCardChoice,
         PendingInteraction.MasterOfPredicamentsCardChoice,
@@ -2411,9 +2410,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      */
     record MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                 UUID targetPlayerId, UUID controllerId, String cardName,
-                                boolean drawForHandExiled,
-                                com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
-                                String sourceSetCode,
                                 UUID sourcePermanentId,
                                 CardEffect followUpEffect,
                                 boolean exileAllMatchingGraveyardCards,
@@ -2443,48 +2439,11 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             }
         }
 
-        public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
-                                    UUID targetPlayerId, UUID controllerId, String cardName,
-                                    boolean drawForHandExiled,
-                                    com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
-                                    String sourceSetCode, UUID sourcePermanentId, CardEffect followUpEffect,
-                                    boolean exileAllMatchingGraveyardCards, SearchedZones searchedZones) {
-            this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
-                    drawForHandExiled, tokenTemplate, sourceSetCode, sourcePermanentId, followUpEffect,
-                    exileAllMatchingGraveyardCards, searchedZones, true, false);
-        }
-
-        public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
-                                    UUID targetPlayerId, UUID controllerId, String cardName,
-                                    boolean drawForHandExiled,
-                                    com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
-                                    String sourceSetCode, UUID sourcePermanentId, CardEffect followUpEffect,
-                                    boolean exileAllMatchingGraveyardCards) {
-            this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
-                    drawForHandExiled, tokenTemplate, sourceSetCode, sourcePermanentId, followUpEffect,
-                    exileAllMatchingGraveyardCards, SearchedZones.NONE);
-        }
-
-        public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
-                                    UUID targetPlayerId, UUID controllerId, String cardName,
-                                    boolean drawForHandExiled,
-                                    com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate,
-                                    String sourceSetCode, UUID sourcePermanentId, CardEffect followUpEffect) {
-            this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
-                    drawForHandExiled, tokenTemplate, sourceSetCode, sourcePermanentId, followUpEffect, false);
-        }
-
+        /** A choice among the cards offered, after which that player shuffles. */
         public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
                                     UUID targetPlayerId, UUID controllerId, String cardName) {
             this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
-                    false, null, null, null, null);
-        }
-
-        public MultiZoneExileChoice(UUID playerId, java.util.List<UUID> validCardIds, int maxCount,
-                                    UUID targetPlayerId, UUID controllerId, String cardName,
-                                    boolean drawForHandExiled) {
-            this(playerId, validCardIds, maxCount, targetPlayerId, controllerId, cardName,
-                    drawForHandExiled, null, null, null, null);
+                    null, null, false, SearchedZones.NONE, true, false);
         }
 
         @Override
@@ -3021,9 +2980,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
      * two cards").
      * remaining hand card matches. {@code choosableFilter}, when non-null, is re-applied to the
      * target's hand before every follow-up pick so a multi-pick flow keeps its restriction (Reap
-     * Intellect's "up to X nonland cards"). {@code exileAllCopiesOfChosenNames} (exile mode only)
-     * additionally exiles every card with a chosen card's name from the target's hand, graveyard,
-     * and library and shuffles that library. {@code libraryPosition} is the zero-based insertion
+     * Intellect's "up to X nonland cards"). {@code libraryPosition} is the zero-based insertion
      * position for library-placement choices, clamped to the bottom when the library is shorter.
      */
     record RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
@@ -3032,10 +2989,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                               java.util.List<Card> chosenCards, UUID sourcePermanentId,
                               String prompt, boolean bottomThenDrawMode, boolean optional,
                               boolean gainLifeToChooserEqualToChosenToughness,
-                              com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
-                              String followUpPrompt, int declineFallbackDiscardCount,
+                              int declineFallbackDiscardCount,
                               com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
-                              boolean exileAllCopiesOfChosenNames,
                               boolean imprintOnSource,
                               boolean shuffleIntoLibraryMode,
                               boolean discardThenDrawMode,
@@ -3062,10 +3017,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   java.util.List<Card> chosenCards, UUID sourcePermanentId,
                                   String prompt, boolean bottomThenDrawMode, boolean optional,
                                   boolean gainLifeToChooserEqualToChosenToughness,
-                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
-                                  String followUpPrompt, int declineFallbackDiscardCount,
+                                  int declineFallbackDiscardCount,
                                   com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
-                                  boolean exileAllCopiesOfChosenNames,
                                   boolean imprintOnSource,
                                   boolean shuffleIntoLibraryMode,
                                   boolean discardThenDrawMode,
@@ -3079,8 +3032,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   int libraryPosition) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
-                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
-                    declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
+                    gainLifeToChooserEqualToChosenToughness, declineFallbackDiscardCount, choosableFilter,
                     imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode,
                     grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax, plot,
                     declineEffect, chosenCardCondition, chosenCardThenEffect, libraryPosition, false);
@@ -3092,10 +3044,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   java.util.List<Card> chosenCards, UUID sourcePermanentId,
                                   String prompt, boolean bottomThenDrawMode, boolean optional,
                                   boolean gainLifeToChooserEqualToChosenToughness,
-                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
-                                  String followUpPrompt, int declineFallbackDiscardCount,
+                                  int declineFallbackDiscardCount,
                                   com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
-                                  boolean exileAllCopiesOfChosenNames,
                                   boolean imprintOnSource,
                                   boolean shuffleIntoLibraryMode,
                                   boolean discardThenDrawMode,
@@ -3106,8 +3056,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   CardEffect declineEffect) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
-                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
-                    declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
+                    gainLifeToChooserEqualToChosenToughness, declineFallbackDiscardCount, choosableFilter,
                     imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode,
                     grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax, plot,
                     declineEffect, null, null, 0);
@@ -3119,10 +3068,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   java.util.List<Card> chosenCards, UUID sourcePermanentId,
                                   String prompt, boolean bottomThenDrawMode, boolean optional,
                                   boolean gainLifeToChooserEqualToChosenToughness,
-                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
-                                  String followUpPrompt, int declineFallbackDiscardCount,
+                                  int declineFallbackDiscardCount,
                                   com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
-                                  boolean exileAllCopiesOfChosenNames,
                                   boolean imprintOnSource,
                                   boolean shuffleIntoLibraryMode,
                                   boolean discardThenDrawMode,
@@ -3132,8 +3079,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   int libraryPosition) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
-                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
-                    declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
+                    gainLifeToChooserEqualToChosenToughness, declineFallbackDiscardCount, choosableFilter,
                     imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode,
                     grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax, false,
                     null, null, null, libraryPosition);
@@ -3145,10 +3091,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   java.util.List<Card> chosenCards, UUID sourcePermanentId,
                                   String prompt, boolean bottomThenDrawMode, boolean optional,
                                   boolean gainLifeToChooserEqualToChosenToughness,
-                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
-                                  String followUpPrompt, int declineFallbackDiscardCount,
+                                  int declineFallbackDiscardCount,
                                   com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
-                                  boolean exileAllCopiesOfChosenNames,
                                   boolean imprintOnSource,
                                   boolean shuffleIntoLibraryMode,
                                   boolean discardThenDrawMode,
@@ -3157,8 +3101,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   int exilePlayOpponentTax) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
-                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
-                    declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
+                    gainLifeToChooserEqualToChosenToughness, declineFallbackDiscardCount, choosableFilter,
                     imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode,
                     grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax, false, null,
                     null, null, 0);
@@ -3170,10 +3113,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   java.util.List<Card> chosenCards, UUID sourcePermanentId,
                                   String prompt, boolean bottomThenDrawMode, boolean optional,
                                   boolean gainLifeToChooserEqualToChosenToughness,
-                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
-                                  String followUpPrompt, int declineFallbackDiscardCount,
+                                  int declineFallbackDiscardCount,
                                   com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
-                                  boolean exileAllCopiesOfChosenNames,
                                   boolean imprintOnSource,
                                   boolean shuffleIntoLibraryMode,
                                   boolean discardThenDrawMode,
@@ -3182,8 +3123,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   boolean plot) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
-                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
-                    declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
+                    gainLifeToChooserEqualToChosenToughness, declineFallbackDiscardCount, choosableFilter,
                     imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode,
                     grantPlayPermission, returnAtNextEndStep, 0, plot, null, null, null, 0);
         }
@@ -3192,8 +3132,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             return new RevealedHandChoice(choosingPlayerId, targetPlayerId, validIndices, remainingCount,
                     discardMode, exileMode, chosenCards, sourcePermanentId, prompt,
                     bottomThenDrawMode, optional, gainLifeToChooserEqualToChosenToughness,
-                    followUpFilter, followUpPrompt, declineFallbackDiscardCount, choosableFilter,
-                    exileAllCopiesOfChosenNames, imprintOnSource, shuffleIntoLibraryMode,
+                    declineFallbackDiscardCount, choosableFilter,
+                    imprintOnSource, shuffleIntoLibraryMode,
                     discardThenDrawMode, grantPlayPermission, returnAtNextEndStep,
                     exilePlayOpponentTax, plot, effect, chosenCardCondition, chosenCardThenEffect,
                     libraryPosition);
@@ -3203,8 +3143,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             return new RevealedHandChoice(choosingPlayerId, targetPlayerId, validIndices, remainingCount,
                     discardMode, exileMode, chosenCards, sourcePermanentId, prompt,
                     bottomThenDrawMode, optional, gainLifeToChooserEqualToChosenToughness,
-                    followUpFilter, followUpPrompt, declineFallbackDiscardCount, choosableFilter,
-                    exileAllCopiesOfChosenNames, imprintOnSource, shuffleIntoLibraryMode,
+                    declineFallbackDiscardCount, choosableFilter,
+                    imprintOnSource, shuffleIntoLibraryMode,
                     discardThenDrawMode, grantPlayPermission, returnAtNextEndStep,
                     exilePlayOpponentTax, plot, declineEffect, chosenCardCondition,
                     chosenCardThenEffect, libraryPosition, true);
@@ -3216,8 +3156,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             return new RevealedHandChoice(choosingPlayerId, targetPlayerId, validIndices, remainingCount,
                     discardMode, exileMode, chosenCards, sourcePermanentId, prompt,
                     bottomThenDrawMode, optional, gainLifeToChooserEqualToChosenToughness,
-                    followUpFilter, followUpPrompt, declineFallbackDiscardCount, choosableFilter,
-                    exileAllCopiesOfChosenNames, imprintOnSource, shuffleIntoLibraryMode,
+                    declineFallbackDiscardCount, choosableFilter,
+                    imprintOnSource, shuffleIntoLibraryMode,
                     discardThenDrawMode, grantPlayPermission, returnAtNextEndStep,
                     exilePlayOpponentTax, plot, declineEffect, condition, thenEffect, libraryPosition);
         }
@@ -3228,10 +3168,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   java.util.List<Card> chosenCards, UUID sourcePermanentId,
                                   String prompt, boolean bottomThenDrawMode, boolean optional,
                                   boolean gainLifeToChooserEqualToChosenToughness,
-                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
-                                  String followUpPrompt, int declineFallbackDiscardCount,
+                                  int declineFallbackDiscardCount,
                                   com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
-                                  boolean exileAllCopiesOfChosenNames,
                                   boolean imprintOnSource,
                                   boolean shuffleIntoLibraryMode,
                                   boolean discardThenDrawMode,
@@ -3242,8 +3180,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   CardEffect chosenCardThenEffect) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
-                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
-                    declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
+                    gainLifeToChooserEqualToChosenToughness, declineFallbackDiscardCount, choosableFilter,
                     imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode,
                     grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax,
                     chosenCardCondition, chosenCardThenEffect, 0);
@@ -3255,10 +3192,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   java.util.List<Card> chosenCards, UUID sourcePermanentId,
                                   String prompt, boolean bottomThenDrawMode, boolean optional,
                                   boolean gainLifeToChooserEqualToChosenToughness,
-                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
-                                  String followUpPrompt, int declineFallbackDiscardCount,
+                                  int declineFallbackDiscardCount,
                                   com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
-                                  boolean exileAllCopiesOfChosenNames,
                                   boolean imprintOnSource,
                                   boolean shuffleIntoLibraryMode,
                                   boolean discardThenDrawMode,
@@ -3270,8 +3205,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   int libraryPosition) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
-                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
-                    declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
+                    gainLifeToChooserEqualToChosenToughness, declineFallbackDiscardCount, choosableFilter,
                     imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode,
                     grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax, false, null,
                     chosenCardCondition, chosenCardThenEffect, libraryPosition);
@@ -3283,10 +3217,8 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   java.util.List<Card> chosenCards, UUID sourcePermanentId,
                                   String prompt, boolean bottomThenDrawMode, boolean optional,
                                   boolean gainLifeToChooserEqualToChosenToughness,
-                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
-                                  String followUpPrompt, int declineFallbackDiscardCount,
+                                  int declineFallbackDiscardCount,
                                   com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
-                                  boolean exileAllCopiesOfChosenNames,
                                   boolean imprintOnSource,
                                   boolean shuffleIntoLibraryMode,
                                   boolean discardThenDrawMode,
@@ -3294,8 +3226,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   boolean returnAtNextEndStep) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
-                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
-                    declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
+                    gainLifeToChooserEqualToChosenToughness, declineFallbackDiscardCount, choosableFilter,
                     imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode,
                     grantPlayPermission, returnAtNextEndStep, 0);
         }
@@ -3306,17 +3237,14 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   java.util.List<Card> chosenCards, UUID sourcePermanentId,
                                   String prompt, boolean bottomThenDrawMode, boolean optional,
                                   boolean gainLifeToChooserEqualToChosenToughness,
-                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
-                                  String followUpPrompt, int declineFallbackDiscardCount,
+                                  int declineFallbackDiscardCount,
                                   com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
-                                  boolean exileAllCopiesOfChosenNames,
                                   boolean imprintOnSource,
                                   boolean shuffleIntoLibraryMode,
                                   boolean discardThenDrawMode) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
-                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
-                    declineFallbackDiscardCount, choosableFilter, exileAllCopiesOfChosenNames,
+                    gainLifeToChooserEqualToChosenToughness, declineFallbackDiscardCount, choosableFilter,
                     imprintOnSource, shuffleIntoLibraryMode, discardThenDrawMode, false, false);
         }
 
@@ -3327,7 +3255,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   String prompt, boolean bottomThenDrawMode, boolean optional) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional, false,
-                    null, null, 0, null, false, false, false, false, false, false);
+                    0, null, false, false, false, false, false);
         }
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
@@ -3338,7 +3266,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   boolean gainLifeToChooserEqualToChosenToughness) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
-                    gainLifeToChooserEqualToChosenToughness, null, null, 0, null, false, false, false, false);
+                    gainLifeToChooserEqualToChosenToughness, 0, null, false, false, false);
         }
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
@@ -3347,12 +3275,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   java.util.List<Card> chosenCards, UUID sourcePermanentId,
                                   String prompt, boolean bottomThenDrawMode, boolean optional,
                                   boolean gainLifeToChooserEqualToChosenToughness,
-                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
-                                  String followUpPrompt) {
+                                  int declineFallbackDiscardCount) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
-                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
-                    0, null, false, false, false, false);
+                    gainLifeToChooserEqualToChosenToughness, declineFallbackDiscardCount, null, false, false, false);
         }
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
@@ -3361,12 +3287,10 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   java.util.List<Card> chosenCards, UUID sourcePermanentId,
                                   String prompt, boolean bottomThenDrawMode, boolean optional,
                                   boolean gainLifeToChooserEqualToChosenToughness,
-                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
-                                  String followUpPrompt, int declineFallbackDiscardCount) {
+                                  com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
-                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
-                    declineFallbackDiscardCount, null, false, false, false, false);
+                    gainLifeToChooserEqualToChosenToughness, 0, choosableFilter, false, false, false);
         }
 
         public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
@@ -3375,32 +3299,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
                                   java.util.List<Card> chosenCards, UUID sourcePermanentId,
                                   String prompt, boolean bottomThenDrawMode, boolean optional,
                                   boolean gainLifeToChooserEqualToChosenToughness,
-                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
-                                  String followUpPrompt,
                                   com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
-                                  boolean exileAllCopiesOfChosenNames) {
-            this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
-                    chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
-                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
-                    0, choosableFilter, exileAllCopiesOfChosenNames, false, false, false);
-        }
-
-        public RevealedHandChoice(UUID choosingPlayerId, UUID targetPlayerId,
-                                  java.util.List<Integer> validIndices, int remainingCount,
-                                  boolean discardMode, boolean exileMode,
-                                  java.util.List<Card> chosenCards, UUID sourcePermanentId,
-                                  String prompt, boolean bottomThenDrawMode, boolean optional,
-                                  boolean gainLifeToChooserEqualToChosenToughness,
-                                  com.github.laxika.magicalvibes.model.filter.CardPredicate followUpFilter,
-                                  String followUpPrompt,
-                                  com.github.laxika.magicalvibes.model.filter.CardPredicate choosableFilter,
-                                  boolean exileAllCopiesOfChosenNames,
                                   boolean imprintOnSource,
                                   boolean shuffleIntoLibraryMode) {
             this(choosingPlayerId, targetPlayerId, validIndices, remainingCount, discardMode, exileMode,
                     chosenCards, sourcePermanentId, prompt, bottomThenDrawMode, optional,
-                    gainLifeToChooserEqualToChosenToughness, followUpFilter, followUpPrompt,
-                    0, choosableFilter, exileAllCopiesOfChosenNames, imprintOnSource,
+                    gainLifeToChooserEqualToChosenToughness, 0, choosableFilter, imprintOnSource,
                     shuffleIntoLibraryMode, false);
         }
 
@@ -3444,17 +3348,9 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
     /** Choose one matching card from a player's hand to put onto the battlefield. */
     record TargetedHandBattlefieldChoice(UUID choosingPlayerId, UUID targetPlayerId,
                                          java.util.List<Integer> validIndices, String prompt,
-                                         boolean grantHaste, boolean sacrificeAtEndStep,
                                          boolean enterTapped, boolean enterAttacking,
                                          boolean returnToHandAtEndStep, UUID attackTargetId)
             implements PendingInteraction {
-
-        public TargetedHandBattlefieldChoice(UUID choosingPlayerId, UUID targetPlayerId,
-                                             java.util.List<Integer> validIndices, String prompt,
-                                             boolean grantHaste, boolean sacrificeAtEndStep) {
-            this(choosingPlayerId, targetPlayerId, validIndices, prompt, grantHaste,
-                    sacrificeAtEndStep, false, false, false, null);
-        }
 
         public TargetedHandBattlefieldChoice {
             validIndices = java.util.List.copyOf(validIndices);
@@ -4349,25 +4245,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             implements PendingInteraction, HandChoice {
 
         public PutCardFromHandIntoGraveyardChoice {
-            validIndices = java.util.List.copyOf(validIndices);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(validIndices, false);
-        }
-    }
-
-    /** Pull of the Mist Moon: choose a nonland permanent card from hand for a perpetual ETB ability. */
-    record PerpetualEnterExileHandCardChoice(UUID playerId, java.util.List<Integer> validIndices, String prompt)
-            implements PendingInteraction, HandChoice {
-
-        public PerpetualEnterExileHandCardChoice {
             validIndices = java.util.List.copyOf(validIndices);
         }
 

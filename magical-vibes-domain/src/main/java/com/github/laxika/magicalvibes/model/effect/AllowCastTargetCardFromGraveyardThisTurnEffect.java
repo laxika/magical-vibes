@@ -15,13 +15,35 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  *
  * <p>{@code entersTapped} applies when the granted permission is used for a permanent card: the
  * permanent enters tapped, including when the card is played as a land.</p>
+ *
+ * <p>{@code cards} names graveyard cards that are no target instead: "choose an instant or sorcery card in your
+ * graveyard. You may cast it this turn" is {@link #of} over {@code cardsThisWay(StepKind.CHOOSE)} (Mission
+ * Briefing); {@code filter} and {@code scope} are then unused.</p>
  */
 public record AllowCastTargetCardFromGraveyardThisTurnEffect(
         CardPredicate filter,
         GraveyardSearchScope scope,
         boolean exileInsteadOfGraveyard,
-        boolean entersTapped
+        boolean entersTapped,
+        CardSubject cards
 ) implements CardEffect {
+
+    public AllowCastTargetCardFromGraveyardThisTurnEffect {
+        if (cards != null && cards.declaresTarget()) {
+            throw new IllegalArgumentException("The permission's own spec declares its target: " + cards);
+        }
+    }
+
+    public AllowCastTargetCardFromGraveyardThisTurnEffect(CardPredicate filter, GraveyardSearchScope scope,
+                                                          boolean exileInsteadOfGraveyard, boolean entersTapped) {
+        this(filter, scope, exileInsteadOfGraveyard, entersTapped, null);
+    }
+
+    /** "You may cast it this turn" of the graveyard cards {@code cards} names, none of them targeted. */
+    public static AllowCastTargetCardFromGraveyardThisTurnEffect of(CardSubject cards,
+                                                                    boolean exileInsteadOfGraveyard) {
+        return new AllowCastTargetCardFromGraveyardThisTurnEffect(null, null, exileInsteadOfGraveyard, false, cards);
+    }
 
     public AllowCastTargetCardFromGraveyardThisTurnEffect(CardPredicate filter,
                                                           GraveyardSearchScope scope,
@@ -31,6 +53,6 @@ public record AllowCastTargetCardFromGraveyardThisTurnEffect(
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.graveyardCards(filter, scope));
+        return cards == null ? TargetSpec.benign(TargetPredicates.graveyardCards(filter, scope)) : TargetSpec.NONE;
     }
 }

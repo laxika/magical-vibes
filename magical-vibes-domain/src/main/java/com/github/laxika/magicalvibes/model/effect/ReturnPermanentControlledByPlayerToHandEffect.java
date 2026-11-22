@@ -23,14 +23,14 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *
  * @param controllerChooses when true, the resolving ability's controller chooses a permanent
  *                          controlled by the acting player (Sigil of Sleep)
- * @param actingPlayerIsController when true, the resolving ability's controller is the acting
- *                                 player even when the stack entry has an unrelated target
- *                                 (Sparkcaster)
+ * @param player     the acting player when it isn't the entry's: {@code you()} even when the stack entry has an
+ *                   unrelated target (Sparkcaster), a player an earlier step chose ("choose a player. They return a
+ *                   creature they control", Multiple Choice); {@code null} for the entry's
  * @param candidates when non-null, the permanents the resolving controller chooses among (the filter is then unused)
  */
 public record ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate filter, String noun,
                                                             boolean controllerChooses,
-                                                            boolean actingPlayerIsController,
+                                                            PlayerSubject player,
                                                             PermanentSubject candidates)
         implements CardEffect {
 
@@ -38,25 +38,34 @@ public record ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate f
         if (candidates != null && candidates.declaresTarget()) {
             throw new IllegalArgumentException("The permanents to choose among are not targeted: " + candidates);
         }
+        if (player != null && player.declaresTarget()) {
+            throw new IllegalArgumentException("The acting player is no target of this step: " + player);
+        }
     }
 
     public ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate filter, String noun) {
-        this(filter, noun, false, false, null);
+        this(filter, noun, false, null, null);
     }
 
     public ReturnPermanentControlledByPlayerToHandEffect(PermanentPredicate filter, String noun,
                                                          boolean controllerChooses) {
-        this(filter, noun, controllerChooses, false, null);
+        this(filter, noun, controllerChooses, null, null);
     }
 
     public static ReturnPermanentControlledByPlayerToHandEffect controller(PermanentPredicate filter,
                                                                             String noun) {
-        return new ReturnPermanentControlledByPlayerToHandEffect(filter, noun, false, true, null);
+        return byPlayer(Subjects.you(), filter, noun);
+    }
+
+    /** The player {@code player} names chooses a permanent they control and returns it. */
+    public static ReturnPermanentControlledByPlayerToHandEffect byPlayer(PlayerSubject player,
+                                                                          PermanentPredicate filter, String noun) {
+        return new ReturnPermanentControlledByPlayerToHandEffect(filter, noun, false, player, null);
     }
 
     /** The resolving controller chooses one of the permanents {@code candidates} names and returns it. */
     public static ReturnPermanentControlledByPlayerToHandEffect choosingOneOf(PermanentSubject candidates,
                                                                                String noun) {
-        return new ReturnPermanentControlledByPlayerToHandEffect(null, noun, false, true, candidates);
+        return new ReturnPermanentControlledByPlayerToHandEffect(null, noun, false, Subjects.you(), candidates);
     }
 }

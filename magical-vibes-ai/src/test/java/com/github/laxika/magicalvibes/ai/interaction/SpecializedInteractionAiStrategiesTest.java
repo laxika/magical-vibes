@@ -451,7 +451,7 @@ class SpecializedInteractionAiStrategiesTest {
 
         new TargetedHandBattlefieldChoiceAiStrategy().answer(
                 new PendingInteraction.TargetedHandBattlefieldChoice(
-                        aiPlayerId, opponentId, List.of(0, 1), "Choose a card.", false, false),
+                        aiPlayerId, opponentId, List.of(0, 1), "Choose a card.", true, true, true, null),
                 context);
 
         assertThat(capturedAnswer())

@@ -1,10 +1,13 @@
 package com.github.laxika.magicalvibes.cards.m;
 
+import com.github.laxika.magicalvibes.cards.c.CosisTrickster;
 import com.github.laxika.magicalvibes.cards.d.DevotedRetainer;
 import com.github.laxika.magicalvibes.cards.l.LanternKami;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -166,5 +169,20 @@ class MindblazeTest extends BaseCardTest {
         harness.assertLife(player2, 20);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
         harness.assertInGraveyard(player1, "Mindblaze");
+    }
+
+    @Test
+    @CardUsed(CosisTrickster.class)
+    @DisplayName("The target player's shuffle is a shuffle that abilities see (CR 701.24a)")
+    void shuffleTriggersShuffleAbilities() {
+        Permanent trickster = harness.addToBattlefieldAndReturn(player1, new CosisTrickster());
+        castAt(new ArrayList<>(List.of(new DevotedRetainer(), new LanternKami())));
+
+        harness.handleListChoice(player1, "Devoted Retainer");
+        harness.handleListChoice(player1, "2");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(trickster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

@@ -26,7 +26,6 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                               CardPredicate filter,
                                               int declineFallbackDiscardCount,
                                               boolean upTo,
-                                              boolean exileAllCopiesOfChosenNames,
                                               boolean imprintOnSource,
                                               boolean revealHand,
                                               boolean grantPlayPermission,
@@ -52,7 +51,6 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            CardPredicate filter,
                                            int declineFallbackDiscardCount,
                                            boolean upTo,
-                                           boolean exileAllCopiesOfChosenNames,
                                            boolean imprintOnSource,
                                            boolean revealHand,
                                            boolean grantPlayPermission,
@@ -63,7 +61,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            boolean revealMatchingOnly,
                                            boolean returnsOnSourceLeavesTrigger) {
         this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
-                declineFallbackDiscardCount, upTo, exileAllCopiesOfChosenNames, imprintOnSource,
+                declineFallbackDiscardCount, upTo, imprintOnSource,
                 revealHand, grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax,
                 declineEffect, libraryPosition,
                 revealMatchingOnly, returnsOnSourceLeavesTrigger, false);
@@ -76,7 +74,6 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            CardPredicate filter,
                                            int declineFallbackDiscardCount,
                                            boolean upTo,
-                                           boolean exileAllCopiesOfChosenNames,
                                            boolean imprintOnSource,
                                            boolean revealHand,
                                            boolean grantPlayPermission,
@@ -86,7 +83,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            int libraryPosition,
                                            boolean revealMatchingOnly) {
         this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
-                declineFallbackDiscardCount, upTo, exileAllCopiesOfChosenNames, imprintOnSource,
+                declineFallbackDiscardCount, upTo, imprintOnSource,
                 revealHand, grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax,
                 declineEffect, libraryPosition,
                 revealMatchingOnly, false);
@@ -99,14 +96,13 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            CardPredicate filter,
                                            int declineFallbackDiscardCount,
                                            boolean upTo,
-                                           boolean exileAllCopiesOfChosenNames,
                                            boolean imprintOnSource,
                                            boolean revealHand,
                                            boolean grantPlayPermission,
                                            boolean returnAtNextEndStep,
                                            int exilePlayOpponentTax) {
         this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
-                declineFallbackDiscardCount, upTo, exileAllCopiesOfChosenNames, imprintOnSource,
+                declineFallbackDiscardCount, upTo, imprintOnSource,
                 revealHand, grantPlayPermission, returnAtNextEndStep, exilePlayOpponentTax,
                 null, 0, false);
     }
@@ -118,13 +114,12 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            CardPredicate filter,
                                            int declineFallbackDiscardCount,
                                            boolean upTo,
-                                           boolean exileAllCopiesOfChosenNames,
                                            boolean imprintOnSource,
                                            boolean revealHand,
                                            boolean grantPlayPermission,
                                            boolean returnAtNextEndStep) {
         this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
-                declineFallbackDiscardCount, upTo, exileAllCopiesOfChosenNames, imprintOnSource,
+                declineFallbackDiscardCount, upTo, imprintOnSource,
                 revealHand, grantPlayPermission, returnAtNextEndStep, 0);
     }
 
@@ -135,11 +130,10 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            CardPredicate filter,
                                            int declineFallbackDiscardCount,
                                            boolean upTo,
-                                           boolean exileAllCopiesOfChosenNames,
                                            boolean imprintOnSource,
                                            boolean revealHand) {
         this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
-                declineFallbackDiscardCount, upTo, exileAllCopiesOfChosenNames, imprintOnSource,
+                declineFallbackDiscardCount, upTo, imprintOnSource,
                 revealHand, false, false);
     }
 
@@ -149,7 +143,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            boolean returnOnSourceLeave,
                                            CardPredicate filter) {
         this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
-                0, false, false, false, true, false, false);
+                0, false, false, true, false, false);
     }
 
     public ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes,
@@ -158,17 +152,16 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            boolean returnOnSourceLeave,
                                            CardPredicate filter, int declineFallbackDiscardCount) {
         this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
-                declineFallbackDiscardCount, false, false, false, true, false, false);
+                declineFallbackDiscardCount, false, false, true, false, false);
     }
 
     public ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType> excludedTypes,
                                            List<CardType> includedTypes,
                                            HandChoiceDestination destination,
                                            boolean returnOnSourceLeave,
-                                           CardPredicate filter, boolean upTo,
-                                           boolean exileAllCopiesOfChosenNames) {
+                                           CardPredicate filter, boolean upTo) {
         this(count, excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
-                0, upTo, exileAllCopiesOfChosenNames, false, true, false, false);
+                0, upTo, false, true, false, false);
     }
 
     public ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes,
@@ -184,20 +177,20 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            boolean grantPlayPermission,
                                            boolean returnAtNextEndStep) {
         this(new Fixed(count), excludedTypes, includedTypes, destination, returnOnSourceLeave, filter,
-                0, false, false, false, true, grantPlayPermission, returnAtNextEndStep);
+                0, false, false, true, grantPlayPermission, returnAtNextEndStep);
     }
 
     public ChooseCardsFromTargetHandEffect(int count, List<CardType> excludedTypes,
                                            HandChoiceDestination destination, boolean imprintOnSource) {
         this(new Fixed(count), excludedTypes, List.of(), destination, false, null,
-                0, false, false, imprintOnSource, true, false, false);
+                0, false, imprintOnSource, true, false, false);
     }
 
     public static ChooseCardsFromTargetHandEffect exileAndGrantPlayPermission(
             int count, List<CardType> excludedTypes, int exilePlayOpponentTax) {
         return new ChooseCardsFromTargetHandEffect(new Fixed(count), excludedTypes, List.of(),
                 HandChoiceDestination.EXILE, false, null,
-                0, true, false, false, false, true, false, exilePlayOpponentTax);
+                0, true, false, false, true, false, exilePlayOpponentTax);
     }
 
     /**
@@ -207,7 +200,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
     public ChooseCardsFromTargetHandEffect withRevealMatchingOnly() {
         return new ChooseCardsFromTargetHandEffect(count, excludedTypes, includedTypes, destination,
                 returnOnSourceLeave, filter, declineFallbackDiscardCount, upTo,
-                exileAllCopiesOfChosenNames, imprintOnSource, revealHand, grantPlayPermission,
+                imprintOnSource, revealHand, grantPlayPermission,
                 returnAtNextEndStep, exilePlayOpponentTax,
                 declineEffect, libraryPosition, true, returnsOnSourceLeavesTrigger, triggeringPlayersHand);
     }
@@ -220,7 +213,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
     public ChooseCardsFromTargetHandEffect withReturnsOnSourceLeavesTrigger() {
         return new ChooseCardsFromTargetHandEffect(count, excludedTypes, includedTypes, destination,
                 returnOnSourceLeave, filter, declineFallbackDiscardCount, upTo,
-                exileAllCopiesOfChosenNames, imprintOnSource, revealHand, grantPlayPermission,
+                imprintOnSource, revealHand, grantPlayPermission,
                 returnAtNextEndStep, exilePlayOpponentTax,
                 declineEffect, libraryPosition, revealMatchingOnly, true, triggeringPlayersHand);
     }
@@ -229,7 +222,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
     public ChooseCardsFromTargetHandEffect withUpTo(boolean newUpTo) {
         return new ChooseCardsFromTargetHandEffect(count, excludedTypes, includedTypes, destination,
                 returnOnSourceLeave, filter, declineFallbackDiscardCount, newUpTo,
-                exileAllCopiesOfChosenNames, imprintOnSource, revealHand, grantPlayPermission,
+                imprintOnSource, revealHand, grantPlayPermission,
                 returnAtNextEndStep, exilePlayOpponentTax,
                 declineEffect, libraryPosition, revealMatchingOnly, returnsOnSourceLeavesTrigger,
                 triggeringPlayersHand);
@@ -247,7 +240,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
                                            HandChoiceDestination destination,
                                            CardEffect declineEffect) {
         this(new Fixed(count), List.of(), includedTypes, destination, false, null,
-                0, true, false, false, true, false, false, 0, declineEffect, 0, false);
+                0, true, false, true, false, false, 0, declineEffect, 0, false);
     }
 
     /**
@@ -258,7 +251,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
             int count, List<CardType> excludedTypes, int libraryPosition) {
         return new ChooseCardsFromTargetHandEffect(
                 new Fixed(count), excludedTypes, List.of(), HandChoiceDestination.TOP_OF_LIBRARY,
-                false, null, 0, false, false, false, true, false, false, 0,
+                false, null, 0, false, false, true, false, false, 0,
                 null, libraryPosition, false);
     }
 
@@ -290,7 +283,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
     public static ChooseCardsFromTargetHandEffect lookAtTargetHand(
             DynamicAmount count, HandChoiceDestination destination) {
         return new ChooseCardsFromTargetHandEffect(count, List.of(), List.of(), destination,
-                false, null, 0, false, false, false, false, false, false);
+                false, null, 0, false, false, false, false, false);
     }
 
     /**
@@ -306,7 +299,7 @@ public record ChooseCardsFromTargetHandEffect(DynamicAmount count, List<CardType
     public ChooseCardsFromTargetHandEffect ofTriggeringPlayer() {
         return new ChooseCardsFromTargetHandEffect(count, excludedTypes, includedTypes, destination,
                 returnOnSourceLeave, filter, declineFallbackDiscardCount, upTo,
-                exileAllCopiesOfChosenNames, imprintOnSource, revealHand, grantPlayPermission,
+                imprintOnSource, revealHand, grantPlayPermission,
                 returnAtNextEndStep, exilePlayOpponentTax,
                 declineEffect, libraryPosition, revealMatchingOnly, returnsOnSourceLeavesTrigger, true);
     }

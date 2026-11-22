@@ -1626,23 +1626,6 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleChoosePlayerThenReturnCreatureToHand(
-            GameData gameData, UUID chosenPlayerId,
-            PermanentChoiceContext.ChoosePlayerThenReturnCreatureToHand context) {
-        List<UUID> creatureIds = gameData.playerBattlefields.getOrDefault(chosenPlayerId, List.of()).stream()
-                .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
-                .map(Permanent::getId)
-                .toList();
-        if (creatureIds.isEmpty()) {
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.BounceCreature(chosenPlayerId));
-        playerInputService.beginPermanentChoice(gameData, chosenPlayerId, creatureIds,
-                context.sourceCardName() + " — Choose a creature you control to return to its owner's hand.");
-    }
-
     /**
      * Returns the chosen permanent to its owner's hand. A choice that ends a RETURN step adds the returned permanent
      * and its owner (the player whose hand its card went to) to the parked entry's step result.
@@ -2790,17 +2773,17 @@ public class PermanentChoiceBattlefieldHandlerService {
         }
     }
 
-    public void handleChooseOpponentPermanentAsEnter(
+    /** The answer to a {@code ChoosePermanentOnEnterEffect}'s choice. */
+    public void handleChoosePermanentAsEnter(
             GameData gameData, UUID chosenPermanentId,
-            PermanentChoiceContext.ChooseOpponentPermanentAsEnter context) {
+            PermanentChoiceContext.ChoosePermanentAsEnter context) {
         Permanent entering = gameQueryService.findPermanentById(gameData, context.enteringPermanentId());
         Permanent chosen = gameQueryService.findPermanentById(gameData, chosenPermanentId);
         if (entering == null) {
             throw new IllegalStateException("Entering permanent no longer exists");
         }
-        if (chosen == null
-                || context.controllerId().equals(gameQueryService.findPermanentController(gameData, chosenPermanentId))) {
-            throw new IllegalStateException("Choose a permanent you don't control");
+        if (chosen == null) {
+            throw new IllegalStateException("Chosen permanent no longer exists");
         }
 
         entering.setChosenPermanentId(chosenPermanentId);

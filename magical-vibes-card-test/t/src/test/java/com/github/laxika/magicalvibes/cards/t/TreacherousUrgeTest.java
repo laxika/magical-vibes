@@ -7,16 +7,15 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentAction;
-import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.testutil.DelayedPermanentMoves;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -30,21 +29,20 @@ class TreacherousUrgeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Extirpate(), new GossamerPhantasm()));
         castTreacherousUrge();
 
-        PendingInteraction.TargetedHandBattlefieldChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.TargetedHandBattlefieldChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(1);
+        assertThat(choice.validCardIds()).containsExactly(handCard(player2, 1));
 
-        harness.handleCardChosen(player1, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 1)));
 
         Permanent phantasm = findPermanent(player1, "Gossamer Phantasm");
         assertThat(gqs.hasKeyword(gd, phantasm, Keyword.HASTE)).isTrue();
         assertThat(als.canAttack(gd, phantasm, gd.findControllerOf(phantasm))).isTrue();
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
                 .containsExactly("Extirpate");
-        assertThat(DelayedPermanentMoves.waiting(gd))
-                .contains(new DelayedPermanentAction(phantasm.getId(),
-                        DelayedPermanentActionKind.SACRIFICE_AT_END_STEP).scheduledBy(gd.resolutionOrdinal));
+        assertThat(gd.temporaryGlobalTriggeredAbilities).singleElement()
+                .matches(delayed -> phantasm.getId().equals(delayed.watchedPermanentId()));
     }
 
     @Test
@@ -54,7 +52,7 @@ class TreacherousUrgeTest extends BaseCardTest {
         opponentCreature.setOwnerId(player2.getId());
         harness.setHand(player2, List.of(opponentCreature));
         castTreacherousUrge();
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 0)));
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -70,12 +68,12 @@ class TreacherousUrgeTest extends BaseCardTest {
         harness.setHand(player2, List.of(new GossamerPhantasm()));
         castTreacherousUrge();
 
-        harness.handleCardChosen(player1, -1);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
                 .containsExactly("Gossamer Phantasm");
         assertThat(gd.playerBattlefields.get(player1.getId())).isEmpty();
-        assertThat(DelayedPermanentMoves.waiting(gd)).isEmpty();
+        assertThat(gd.temporaryGlobalTriggeredAbilities).isEmpty();
     }
 
     @Test
@@ -99,7 +97,8 @@ class TreacherousUrgeTest extends BaseCardTest {
 
         harness.setHand(player2, List.of(new GossamerPhantasm()));
         castTreacherousUrge();
-        harness.withAutoStop(TurnStep.END_STEP, () -> harness.handleCardChosen(player1, 0));
+        harness.withAutoStop(TurnStep.END_STEP,
+                () -> harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 0))));
 
         Permanent phantasm = findPermanent(player1, "Gossamer Phantasm");
         assertThat(gqs.hasKeyword(gd, phantasm, Keyword.HASTE)).isTrue();
@@ -126,7 +125,7 @@ class TreacherousUrgeTest extends BaseCardTest {
     void delayedSacrificeAllowsResponses() {
         harness.setHand(player2, List.of(new GossamerPhantasm()));
         castTreacherousUrge();
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 0)));
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -145,7 +144,7 @@ class TreacherousUrgeTest extends BaseCardTest {
     void cannotSacrificeCreatureControlledByOpponent() {
         harness.setHand(player2, List.of(new GossamerPhantasm()));
         castTreacherousUrge();
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 0)));
 
         Permanent creature = findPermanent(player1, "Gossamer Phantasm");
         setOwnerAndController(creature, player2, player2);
@@ -163,7 +162,7 @@ class TreacherousUrgeTest extends BaseCardTest {
     void cannotSacrificeAfterControlChangesInResponse() {
         harness.setHand(player2, List.of(new GossamerPhantasm()));
         castTreacherousUrge();
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 0)));
 
         harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
         harness.passUntil(TurnStep.END_STEP);
@@ -185,5 +184,10 @@ class TreacherousUrgeTest extends BaseCardTest {
     private void addManaForSpell() {
         harness.addMana(player1, ManaColor.BLACK, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 4);
+    }
+
+    /** The id of the card at {@code index} of {@code player}'s hand. */
+    private UUID handCard(Player player, int index) {
+        return gd.playerHands.get(player.getId()).get(index).getId();
     }
 }

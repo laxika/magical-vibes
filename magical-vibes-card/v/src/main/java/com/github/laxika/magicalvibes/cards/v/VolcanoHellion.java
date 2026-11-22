@@ -4,9 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.amount.ChosenNumberOnSource;
 import com.github.laxika.magicalvibes.model.amount.ControllerLifeTotal;
-import com.github.laxika.magicalvibes.model.effect.ChooseAnyNumberEffect;
+import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.effect.ChooseNumberAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.EchoEffect;
@@ -22,15 +22,15 @@ import java.util.List;
 public class VolcanoHellion extends Card {
 
     public VolcanoHellion() {
-        var chooseAnyNumber = new ChooseAnyNumberEffect();
-        var dealDamageToTargetCreature = new DealDamageToTargetCreatureEffect(new ChosenNumberOnSource(), true);
+        var chooseAnyNumber = new ChooseNumberAtResolutionEffect(0, Integer.MAX_VALUE);
+        var dealDamageToTargetCreature = new DealDamageToTargetCreatureEffect(new XValue(), true);
         target(TargetFilters.creature())
                 .bindEffect(chooseAnyNumber)
                 .bindEffect(dealDamageToTargetCreature);
         addTriggeredAbility(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS), TriggerOptions.DEFAULT, List.of(
                 new EffectRegistration(chooseAnyNumber),
                 new EffectRegistration(dealDamageToTargetCreature),
-                new EffectRegistration(new DealDamageToPlayersEffect(new ChosenNumberOnSource(), Subjects.you(), true),
+                new EffectRegistration(new DealDamageToPlayersEffect(new XValue(), Subjects.you(), true),
                         true))));
         addStaticEffect(new EchoEffect(new ControllerLifeTotal()));
     }

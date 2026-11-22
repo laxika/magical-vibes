@@ -1978,13 +1978,6 @@ public sealed interface ChoiceContext {
      */
     record DiscardChosenColorChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
 
-    /**
-     * The controller chooses a color at resolution, then chooses one card of that color from the
-     * target player's revealed hand for that player to discard.
-     */
-    record ChooseColorThenDiscardFromTargetHandChoice(UUID controllerId, UUID targetPlayerId)
-            implements ChoiceContext {}
-
     /** The controller chooses a color at resolution, then destroys every matching permanent. */
     record DestroyAllPermanentsOfChosenColorChoice(UUID controllerId, PermanentPredicate filter)
             implements ChoiceContext {}

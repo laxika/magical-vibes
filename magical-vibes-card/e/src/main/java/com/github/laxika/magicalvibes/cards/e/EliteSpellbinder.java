@@ -25,7 +25,7 @@ public class EliteSpellbinder extends Card {
                 "Target must be an opponent"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
                 new ChooseCardsFromTargetHandEffect(new Fixed(1), List.of(CardType.LAND), List.of(),
-                        HandChoiceDestination.EXILE, false, null, 0, false, false, false, false, true, false, 2),
+                        HandChoiceDestination.EXILE, false, null, 0, false, false, false, true, false, 2),
                 "You may exile a nonland card from that hand."
         ));
     }

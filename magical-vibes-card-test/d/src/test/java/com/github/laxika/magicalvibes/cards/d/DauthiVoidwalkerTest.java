@@ -51,10 +51,9 @@ class DauthiVoidwalkerTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        PendingInteraction.ExiledCardMayPlayChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ExiledCardMayPlayChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(opponentCard.getId());
-        assertThat(choice.withoutPayingManaCost()).isTrue();
 
         harness.handleMultipleCardsChosen(player1, List.of(opponentCard.getId()));
 

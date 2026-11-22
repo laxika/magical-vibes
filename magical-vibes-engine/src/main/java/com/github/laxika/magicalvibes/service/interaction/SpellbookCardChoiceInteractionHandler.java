@@ -91,8 +91,8 @@ public class SpellbookCardChoiceInteractionHandler
                         player.getId(), player.getId(), validIndices, 1,
                         false, false, List.of(), null,
                         "Choose one of those cards to put onto the battlefield.",
-                        false, false, false, null, null, 0, null,
-                        false, false, false, false, false, false, 0, false,
+                        false, false, false, 0, null,
+                        false, false, false, false, false, 0, false,
                         null, null, interaction.chosenCardThenEffect(), 0).withKeepInHand());
                 return;
             }

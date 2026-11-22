@@ -5426,7 +5426,8 @@ public class LibraryChoiceHandlerService {
         List<Integer> modeIndices = new ArrayList<>();
         for (int modeIndex = 0; modeIndex < modal.options().size(); modeIndex++) {
             // These cards are cast from a library or exile, never a hand, so a split card can't be fused.
-            if (SplitCardCastSupport.isFusedMode(card, modeIndex)) {
+            if (SplitCardCastSupport.isFusedMode(card, modeIndex)
+                    || castingPermissionService.isSplitModeForbiddenByName(gameData, controllerId, card, modeIndex)) {
                 continue;
             }
             ChooseOneEffect.ChooseOneOption option = modal.options().get(modeIndex);

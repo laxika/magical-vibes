@@ -83,7 +83,6 @@ import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardFromHandToPerpetuallyGrantEnterExileEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
@@ -786,32 +785,6 @@ public class CardChoiceHandlerService {
         if (gameData.interaction.isAwaitingInput()) {
             return;
         }
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    public void handlePerpetualEnterExileHandCardChosen(GameData gameData, Player player, int cardIndex) {
-        PendingInteraction.PerpetualEnterExileHandCardChoice choice =
-                gameData.interaction.activeInteraction(PendingInteraction.PerpetualEnterExileHandCardChoice.class);
-        if (choice == null || !player.getId().equals(choice.playerId())) {
-            throw new IllegalStateException("Not your turn to choose");
-        }
-        if (!choice.validIndices().contains(cardIndex)) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
-        }
-
-        List<Card> hand = gameData.playerHands.get(player.getId());
-        if (hand == null || cardIndex >= hand.size()) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
-        }
-
-        Card selectedCard = hand.get(cardIndex);
-        gameData.interaction.clearAwaitingInput();
-        gameData.perpetualEnterEffectsByCardId
-                .computeIfAbsent(selectedCard.getId(), ignored ->
-                        java.util.Collections.synchronizedList(new ArrayList<>()))
-                .add(ChooseCardFromHandToPerpetuallyGrantEnterExileEffectHandler.grantedEnterEffect());
-        gameLogService.append(gameData, chosenHandCardLog(player, "perpetually gains its exile ability."));
-
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
@@ -1910,29 +1883,6 @@ public class CardChoiceHandlerService {
         boolean discardMode = revealedHandChoice.discardMode();
         boolean exileMode = revealedHandChoice.exileMode();
         boolean bottomThenDrawMode = revealedHandChoice.bottomThenDrawMode();
-        // Distended Mindbender: after the first filtered pick, begin a second pick under followUpFilter.
-        if (remainingChoices == 0 && revealedHandChoice.followUpFilter() != null && !targetHand.isEmpty()) {
-            CardPredicate followUp = revealedHandChoice.followUpFilter();
-            List<Integer> followUpIndices = new ArrayList<>();
-            for (int i = 0; i < targetHand.size(); i++) {
-                if (predicateEvaluationService.matchesCardPredicate(targetHand.get(i), followUp, null)) {
-                    followUpIndices.add(i);
-                }
-            }
-            if (!followUpIndices.isEmpty()) {
-                String followUpPrompt = revealedHandChoice.followUpPrompt() != null
-                        ? revealedHandChoice.followUpPrompt()
-                        : "Choose another card to discard.";
-                interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
-                        player.getId(), targetPlayerId, followUpIndices, 1,
-                        discardMode, exileMode, chosenCards, revealedHandChoice.sourcePermanentId(),
-                        followUpPrompt, false, false,
-                        revealedHandChoice.gainLifeToChooserEqualToChosenToughness(), null, null));
-                return;
-            }
-            // No second-band match — fall through and discard only what was already chosen.
-        }
-
         // A choosableFilter (Reap Intellect) keeps its restriction on every follow-up pick.
         CardPredicate choosableFilter = revealedHandChoice.choosableFilter();
         List<Integer> newValidIndices = new ArrayList<>();
@@ -1960,8 +1910,7 @@ public class CardChoiceHandlerService {
             PendingInteraction.RevealedHandChoice nextInteraction = new PendingInteraction.RevealedHandChoice(
                     player.getId(), targetPlayerId, newValidIndices, remainingChoices,
                     discardMode, exileMode, chosenCards, null, prompt, false, revealedHandChoice.optional(),
-                    false, null, null, 0, choosableFilter, revealedHandChoice.exileAllCopiesOfChosenNames(),
-                    false, revealedHandChoice.shuffleIntoLibraryMode(), false,
+                    false, 0, choosableFilter, false, revealedHandChoice.shuffleIntoLibraryMode(), false,
                     revealedHandChoice.grantPlayPermission(), revealedHandChoice.returnAtNextEndStep(),
                     revealedHandChoice.exilePlayOpponentTax(), revealedHandChoice.chosenCardCondition(),
                     revealedHandChoice.chosenCardThenEffect(), revealedHandChoice.libraryPosition());
@@ -2203,10 +2152,6 @@ public class CardChoiceHandlerService {
                             new PendingExileReturn(exiled, targetPlayerId, false, true));
                 }
             }
-
-            if (revealedHandChoice.exileAllCopiesOfChosenNames()) {
-                offerSameNamedCopiesExile(gameData, player, targetPlayerId, chosenCards);
-            }
         } else if (shuffleIntoLibraryMode) {
             List<Card> deck = gameData.playerDecks.get(targetPlayerId);
             deck.addAll(chosenCards);
@@ -2327,10 +2272,6 @@ public class CardChoiceHandlerService {
         if (choice.enterTapped()) {
             permanent.tap();
         }
-        if (choice.grantHaste()) {
-            gameData.addEffectOnPermanent(chosenCard.getName(), permanent.getId(), player.getId(),
-                    new GrantKeywordEffect(Keyword.HASTE, Subjects.target()), permanent.getId(), Duration.PERMANENT);
-        }
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, player.getId(), permanent);
         if (choice.enterAttacking()) {
             permanent.enterAttacking(true);
@@ -2342,11 +2283,6 @@ public class CardChoiceHandlerService {
         }
         battlefieldEntryService.handleCreatureEnteredBattlefield(
                 gameData, player.getId(), chosenCard, null, false);
-        if (choice.sacrificeAtEndStep()) {
-            DelayedPermanentActions.scheduleForResolution(gameData, player.getId(), permanent,
-                    new DelayedPermanentAction(permanent.getId(), DelayedPermanentActionKind.SACRIFICE_AT_END_STEP),
-                    ActivePlayer.ANY);
-        }
         if (choice.returnToHandAtEndStep()) {
             DelayedPermanentActions.scheduleForResolution(gameData, player.getId(), permanent,
                     new DelayedPermanentAction(permanent.getId(),
@@ -2357,28 +2293,6 @@ public class CardChoiceHandlerService {
                 player.getUsername() + " puts ", chosenCard, " onto the battlefield under their control."));
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    /**
-     * Each chosen card's name opens an optional search of the target's hand, graveyard, and library: the
-     * caster exiles any number of cards with that name (CR 701.23a search, "for any number of cards").
-     * Offered as one multi-zone choice covering every chosen name.
-     */
-    private void offerSameNamedCopiesExile(GameData gameData, Player player, UUID targetPlayerId,
-                                           List<Card> chosenCards) {
-        List<String> names = chosenCards.stream().map(Card::getName).distinct().toList();
-        List<Card> matchingCards = new ArrayList<>();
-        for (List<Card> zone : List.of(gameData.playerHands.get(targetPlayerId),
-                gameData.playerGraveyards.get(targetPlayerId), gameData.playerDecks.get(targetPlayerId))) {
-            if (zone != null) {
-                zone.stream().filter(card -> names.contains(card.getName())).forEach(matchingCards::add);
-            }
-        }
-        if (matchingCards.isEmpty()) {
-            return;
-        }
-        playerInputService.beginMultiZoneExileChoice(gameData, player.getId(), matchingCards,
-                matchingCards.size(), targetPlayerId, String.join(", ", names), false);
     }
 
     /** The caster declines an optional revealed-hand choice (e.g. Vendilion Clique's "may"). */

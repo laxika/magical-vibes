@@ -159,7 +159,7 @@
 | each opponent chooses between a free cast from their library and four-card total-mana-value damage | `e/EnsnaredByTheMara.java` + `EnsnaredByTheMaraVillainousChoiceEffect` |
 | villainous-choice replacement plus optional additional vote | `t/TheValeyard.java` + `TheValeyardEffect` + `MayVoteAdditionalTimeEffect` |
 | draw three, then target opponent chooses between discarding three and a controller free-cast from hand | `g/GreatIntelligencesPlan.java` + `GreatIntelligencesPlanVillainousChoiceEffect` |
-| randomly choose a creature, steal it until end of turn, untap and haste it, then destroy the other creatures | `t/TheNiptonLottery.java` + `ChooseRandomCreatureGainControlUntilEndOfTurnThenDestroyOtherCreaturesEffect` |
+| randomly choose a creature, steal it until end of turn, untap and haste it, then destroy the other creatures | `t/TheNiptonLottery.java` + `ChoosePermanentsEffect.atRandom` and the verbs over `thisWay(CHOOSE)` |
 | command-zone Secret Mission: pregame secret choice, end-step reveal special action, reward trigger | `m/MarchesasSurpriseParty.java` + `addStaticEffect(AbilityZones.COMMAND, new SecretMissionEffect(List<Mission(label, Condition)>, reward))` |
 | command-zone conspiracy restricting attacks to an even number and doubling a target creature's power | `r/RuleWithAnEvenHand.java` + `addStaticEffect(AbilityZones.COMMAND, CombatAttackCountRestrictionEffect)` + `Triggers.youAttack() from the command zone` |
 | commander cast-cost reduction plus draw when that commander enters the command zone | `m/MythUnbound.java` + `ReduceCommanderCastCostEffect(CommanderCastsFromCommandZoneThisGame)` + `Triggers.putIntoCommandZone(PermanentIsCommanderPredicate(true), ObjectRelation.YOU_OWN) DrawCardEffect` ("your commander" is the filter) |
@@ -535,7 +535,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | artifact, charge counter, spellbomb | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | create a token this turn, conditional draw artifact ability | `i/IdolOfOblivion.java` |
 | vehicle, crew | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
-| vehicle animation, choose a Dwarf you control, attach any number of Equipment | `a/ArmedAndArmored.java` + `AddCardTypeToOwnPermanentsUntilEndOfTurnEffect(CREATURE, Vehicle)` + `ChooseDwarfAndAttachAnyNumberOfControlledEquipmentEffect` |
+| vehicle animation, choose a Dwarf you control, attach any number of Equipment | `a/ArmedAndArmored.java` + `AddCardTypeToOwnPermanentsUntilEndOfTurnEffect(CREATURE, Vehicle)` + `ChoosePermanentsEffect.exactly(1, controlledBy(you(), Dwarf creature), label) + AttachAnyNumberOfControlledEquipmentToTargetCreatureEffect(thisWay(CHOOSE))` |
 | equipment, equip, living weapon | CARD_PATTERNS_PERMANENTS_ARTIFACTS.md |
 | Equipment attack trigger with a conditional perpetual boost based on a shared creature name or graveyard creature card | `m/MaceOfDisruption.java` + `PerpetuallyBoostEquippedCreatureIfNameSharedEffect` |
 | activated ability, tap ability, sacrifice ability | CARD_PATTERNS_ABILITIES_WALKERS_SAGAS.md |

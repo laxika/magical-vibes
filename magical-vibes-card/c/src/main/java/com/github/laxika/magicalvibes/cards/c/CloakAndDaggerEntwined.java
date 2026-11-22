@@ -39,7 +39,7 @@ public class CloakAndDaggerEntwined extends Card {
         RevealTargetHandEffect revealHand = new RevealTargetHandEffect();
         ChooseCardsFromTargetHandEffect exileFromHand = new ChooseCardsFromTargetHandEffect(
                 new Fixed(1), List.of(CardType.LAND), List.of(), HandChoiceDestination.EXILE,
-                true, null, 0, true, false, false, false, false, false);
+                true, null, 0, true, false, false, false, false);
         ExileTargetPermanentUntilSourceLeavesEffect exileCreature =
                 new ExileTargetPermanentUntilSourceLeavesEffect(false, creaturePredicate);
         ChooseOneAtResolutionEffect choice = new ChooseOneAtResolutionEffect(new ChooseOneEffect(List.of(

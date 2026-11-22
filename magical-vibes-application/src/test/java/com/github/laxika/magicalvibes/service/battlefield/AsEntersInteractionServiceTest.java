@@ -6,11 +6,13 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCounterTypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseManaValueParityOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TributeEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -109,12 +111,15 @@ class AsEntersInteractionServiceTest {
     @Test
     void chooseAnotherCreatureStartsEntryChoiceBeforeEtbTriggers() {
         Card card = creature("Bodyguard");
-        card.addStaticEffect(new ChooseAnotherCreatureOnEnterEffect());
+        var choice = new ChoosePermanentOnEnterEffect(Subjects.otherCreaturesYouControl(), "another creature you control");
+        card.addStaticEffect(choice);
         Permanent other = new Permanent(creature("Other Creature"));
         Permanent entering = new Permanent(card);
         gameData.playerBattlefields.get(controllerId).add(other);
         gameData.playerBattlefields.get(controllerId).add(entering);
-        when(gameQueryService.isCreature(gameData, other)).thenReturn(true);
+        SubjectResolutionService subjects = org.mockito.Mockito.mock(SubjectResolutionService.class);
+        service.setSubjectResolutionService(subjects);
+        when(subjects.permanents(gameData, entering, controllerId, choice.candidates())).thenReturn(List.of(other));
 
         service.handleCreatureEnteredBattlefield(gameData, controllerId, card, null, false);
 

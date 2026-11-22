@@ -38,12 +38,12 @@ class KamizObscuraOculusTest extends BaseCardTest {
         harness.passBothPriorities();
         discardByName("Grizzly Bears");
 
-        PendingInteraction.MultiPermanentChoice secondChoice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        PendingInteraction.PermanentChoice secondChoice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
         assertThat(secondChoice.validIds()).containsExactlyInAnyOrder(kamiz.getId(), wizard.getId())
                 .doesNotContain(bears.getId());
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(wizard.getId()));
+        harness.handlePermanentChosen(player1, wizard.getId());
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
@@ -66,7 +66,7 @@ class KamizObscuraOculusTest extends BaseCardTest {
         harness.passBothPriorities();
         discardByName("Grizzly Bears");
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         assertThat(wizard.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, wizard)).isTrue();
         assertThat(gqs.hasKeyword(gd, kamiz, Keyword.DOUBLE_STRIKE)).isFalse();
@@ -91,10 +91,9 @@ class KamizObscuraOculusTest extends BaseCardTest {
         harness.passBothPriorities();
         discardByName("Mountain");
 
-        PendingInteraction.MultiPermanentChoice secondChoice =
-                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
-        assertThat(secondChoice.validIds()).containsExactly(wizard.getId());
-        harness.handleMultiplePermanentsChosen(player1, List.of(wizard.getId()));
+        // The only other attacker with lesser power is the one chosen, unasked
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gqs.hasKeyword(gd, otherBears, Keyword.DOUBLE_STRIKE)).isFalse();
 
         assertThat(bears.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
         assertThat(gqs.hasCantBeBlocked(gd, bears)).isTrue();
@@ -118,7 +117,7 @@ class KamizObscuraOculusTest extends BaseCardTest {
         assertThat(kamiz.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(gqs.hasCantBeBlocked(gd, kamiz)).isTrue();
         assertThat(gqs.hasKeyword(gd, kamiz, Keyword.DOUBLE_STRIKE)).isFalse();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
         harness.assertInHand(player1, "Mountain");
         harness.assertInGraveyard(player1, "Grizzly Bears");
     }

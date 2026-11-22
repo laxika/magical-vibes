@@ -45,9 +45,9 @@ public class ExileArtifactOrCreatureCardFromHandOrGraveyardWithCageCounterEffect
             return;
         }
 
-        playerInputService.beginMultiZoneExileChoice(
+        playerInputService.beginHandOrGraveyardExileChoice(
                 gameData, entry.getControllerId(), matchingCards, 1, entry.getControllerId(),
-                "an artifact or creature card", false, entry.getSourcePermanentId(),
+                "an artifact or creature card", entry.getSourcePermanentId(),
                 new PutCageCounterOnExiledCardWithSourceEffect());
     }
 

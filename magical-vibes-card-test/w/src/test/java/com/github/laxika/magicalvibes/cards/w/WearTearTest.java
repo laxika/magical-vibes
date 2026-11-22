@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.m.MeddlingMage;
 import com.github.laxika.magicalvibes.cards.p.Persecute;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -279,5 +280,56 @@ class WearTearTest extends BaseCardTest {
         Permanent perm = new Permanent(card);
         gd.playerBattlefields.get(player.getId()).add(perm);
         return perm;
+    }
+
+    @Test
+    @CardUsed(MeddlingMage.class)
+    @DisplayName("Naming Tear forbids the fused spell, which has both names, but not Wear (CR 709.3a, 709.4d)")
+    void namedHalfForbidsFuseOnly() {
+        harness.addToBattlefieldAndReturn(player2, new MeddlingMage()).setChosenName("Tear");
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        UUID artifactId = harness.getPermanentId(player2, "Fountain of Youth");
+        UUID enchantmentId = harness.getPermanentId(player2, "Angelic Chorus");
+        harness.setHand(player1, List.of(new WearTear()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.castModalInstant(player1, 0, FUSE, List.of(artifactId, enchantmentId)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+        assertThatThrownBy(() -> harness.castInstant(player1, 0, TEAR, enchantmentId))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+
+        harness.castInstant(player1, 0, WEAR, artifactId);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player2, "Fountain of Youth");
+    }
+
+    @Test
+    @CardUsed(MeddlingMage.class)
+    @DisplayName("From exile, too, only the half with the chosen name can't be cast (CR 709.3a)")
+    void namedHalfFromExile() {
+        harness.addToBattlefieldAndReturn(player2, new MeddlingMage()).setChosenName("Tear");
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        WearTear spell = new WearTear();
+        harness.setExile(player1, List.of(spell));
+        gd.setExilePlayWithoutPayingManaCost(spell.getId(), true);
+        UUID artifact = harness.getPermanentId(player2, "Fountain of Youth");
+        UUID enchantment = harness.getPermanentId(player2, "Angelic Chorus");
+
+        assertThatThrownBy(() -> harness.inMutationScope(() -> harness.getSpellCastingService()
+                .playCardFromExileAsResolutionCast(gd, player1, spell.getId(), TEAR, enchantment)))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
+
+        harness.inMutationScope(() -> harness.getSpellCastingService()
+                .playCardFromExileAsResolutionCast(gd, player1, spell.getId(), WEAR, artifact));
+
+        assertThat(gd.stack.getLast().getCard().getName()).isEqualTo("Wear");
     }
 }

@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 16: Exile, Each, Return, Put and Reveal closed; Choose partly done, 43 rare records left) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 17: Exile, Each, Return, Put, Reveal and Choose closed; 2,192 rare records left, Grant next) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -622,6 +622,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 14 | Run 13's defects (pooled index prompts, the two discards, Invasion of Alara, replaced draws), the reveal-from-hand row and the planar verdicts, then Choose: the chosen name and player and the hand and exile choices with existing second halves | done for the defects and parts, Choose open (30 rows: 21 split, 2 survivors, 7 blocked-other, six of them corrected planar verdicts, 21 records deleted; 28 card files changed; `ChooseCardNameAtResolutionEffect` with `CardHasNameChosenThisResolutionPredicate`, `ChoosePlayerEffect`; 80 rare Choose records left) |
 | 15 | Run 14's defects (the other name prompts, the perpetual choices' log, the three draw handlers), the choose-permanents and perpetual grant steps, users of the player and name steps, then Choose's rare records | done for the defects and the two steps, Choose open (26 rows: 2 absorbed, 19 split, 5 survivors, 21 records deleted; 29 card files changed; `ChoosePermanentsEffect` with `thisWay(CHOOSE)`, `DestroyAllPermanentsEffect.sparing`, `PerpetuallyGrantAbilitiesEffect`; 64 rare Choose records left) |
 | 16 | Run 15's defects (exile-by-name searches, as-enters copy log, APNAP draws, the AI's dig), the chosen name's remaining users, the choose-permanents step per player and at random, then Choose's rare records | done for the defects and those parts, Choose open (28 rows: 1 absorbed, 8 split, 4 survivors, 15 unique, 9 records deleted; 20 card files changed; `ExileCardsWithSameNameEffect` by the chosen name, `CantPlayChosenNameUntilNextTurnEffect`, `ChoosePermanentsEffect.oneForEach` / `.atRandom`; 43 rare Choose records left) |
+| 17 | Run 16's small defects and dead code (Mindblaze's shuffle, split names), its shared parts, then the rest of Choose's rare records | done, Choose closed (50 rows: 2 absorbed, 12 split, 6 survivors, 8 blocked-other, 22 unique; 14 records deleted; 27 card files changed, 16 rewritten; `RegisterDelayedStepTriggerEffect.aboutPutOntoBattlefield`, subjects on four survivors, `ChoosePermanentOnEnterEffect`) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -7744,9 +7745,11 @@ step's `SearchedZones`). The name prompts are run 15's. A permanent choice lists
 
 **Seen, not changed** (for the owner's decision where it is a leak).
 
-- Opaque card ids and targeting predicates over face-down spells: not looked at.
-- Copy log lines built as text name a face-down permanent's card (CR 708.2; read, not reproduced): `BecomeCopyOfSubjectEffectHandler`, the
-  `MakeTargetCopy…` and `BecomeCopyOfTargetPermanent…` handlers, `TurnFaceUpCopyService`'s source.
+- Opaque card ids: not looked at. Targeting predicates over face-down spells: fixed outside this plan by bcead89079
+  (`CastingPermissionService.spellAsEffectsSeeIt`).
+- Copy log lines built as text naming a face-down permanent's card (CR 708.2), with lists of names among them
+  (`BecomeCopyOfSubjectEffectHandler`, the `MakeTargetCopy…` and `BecomeCopyOfTargetPermanent…` handlers, `TurnFaceUpCopyService`'s
+  source): fixed outside this plan by bcead89079 (`FaceDownVisibility`).
 - Scour the Scene's choice offers battlefield creatures by card id, and the perpetual hand choices left (offspring, static, enter-exile)
   still go by their own prompts; not audited for what they show.
 - Mindblaze's completion shuffles with `Collections.shuffle`, so nothing sees a shuffle.
@@ -7788,6 +7791,112 @@ converted steps, the AI's valuation of Thought Hemorrhage's damage step.
   counter and suspended filters over `exiledCards` (Dauthi Voidwalker, Amy Pond).
 - Player step users: Multiple Choice, Boreas Charger, the relay pair. Numbers: the five number choices beside
   `ChooseNumberAtResolutionEffect` differ in where the answer is kept; Mindblaze waits for one with no upper bound that the AI answers.
+
+### Step 9, run 17 (2026-11-22, Choose closed)
+
+Run 16's small defects and dead code, the shared parts it named that cards could use, then a verdict for each of the family's 43 rare
+records: Choose has none left. Ratchet 4,220 / 3,448 → 4,207 / 3,436 records / handlers (14 records and 12 handlers deleted, 1 record
+added). 16 card files rewritten by scratch scripts and 11 more with one constructor argument fewer (the dead flag). Oracle text checked
+with `get_card` for all 16 rewritten cards
+and for the cards given a blocked or most of those given a unique verdict (not the subtype, at-random, form, number, Esper Terra and Valki
+cards); rulings with `get_rulings` for Treacherous Urge, Kamiz, Mission Briefing, Dauthi Voidwalker, The Nipton Lottery, Volcano Hellion,
+Multiple Choice, Mindblaze, Armed and Armored, Distended Mindbender and Spry and Mighty. CR 400.2, 400.7, 406.3a, 508.4, 603.7a, 603.7c,
+603.7e, 608.2c, 608.2d, 608.2h, 609.3, 610.3b, 611.2a, 614.1c, 701.20b, 701.21a, 701.24a, 702.127a, 709.3a, 709.4a and 709.4d checked
+with `get_rule` (2026-11-22).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | `step-9` | Left unaudited |
+|---|---|---|---|---|---|---|---|---|
+| Choose | 44 rows (43 rare records, 1 new record) | 2 | 11 | 1 (new) | 8 other (conjure over a card subject 2, a counter-kind choice 2, same-name searches per permanent, an exactly-that-many condition, entering attacking, the token copy's step) | 22 | 0 | no rare record |
+| Other families | 6 rows (Killer Instinct's waiting row, five survivors, one of them Attach's rare record) | 0 | 1 | 5 | 0 | 0 | 0 | All families: 2,192 rare records without a row |
+
+- **Delayed, about a put.** `RegisterDelayedStepTriggerEffect.aboutPutOntoBattlefield` was waited for by three classes (run 13's two and
+  the hand-to-battlefield choice): Treacherous Urge and Killer Instinct split; the else-graveyard record still needs a put of the revealed
+  card into the graveyard, and Zara an entering attacking.
+- **Subjects on survivors.** Gain control and attach any number take a permanent subject, the chosen return a player, the graveyard cast
+  permission a card subject. Kamiz's "with lesser power" is a predicate the resolver binds like `PermanentIsTargetCardPredicate`.
+- **As-enters.** `ChoosePermanentOnEnterEffect(candidates, label)` is both permanent markers, with one context and completion. Scheming
+  Fence's decline stays its own.
+- **Dead code.** Run 16's two items went (`offerSameNamedCopiesExile` with its flag through the effect, the prompt and the support's
+  overloads; the multi-zone prompt's draw, token and set-code fields with seven overloads), and what this run orphaned: the revealed-hand
+  choice's second band, three choice contexts, one interaction with its handler, the targeted form of the hand-to-battlefield choice.
+
+**Behaviour changes.**
+
+1. Mindblaze's shuffle is a shuffle that abilities see (Oracle, CR 701.24a). `MindblazeTest.shuffleTriggersShuffleAbilities` (failed before).
+2. A forbidden name (Meddling Mage, Conjurer's Ban and every other name rule) stops only that half of a split card, as only the half being
+   cast is evaluated (CR 709.3a), and the fused spell by either (CR 709.4d). Before, the card wasn't offered as playable from a hand,
+   couldn't be cast from exile at all, and a cast during a resolution offered, and would cast, the forbidden half.
+   `FireIceTest.meddlingMageNamingIceLeavesFireCastable`, `WearTearTest.namedHalfFromExile`,
+   `GalvanothTest.splitCardOffersNoHalfWithForbiddenName` (failed before); `ConjurersBanTest.chosenHalfLeavesOtherHalfCastable` and
+   `WearTearTest.namedHalfForbidsFuseOnly` guard what already held. An aftermath card is judged by its first half outside a graveyard
+   (CR 702.127a); suspend uses the same check; a land is compared by `hasName`. The AI skips a forbidden half.
+3. The converted choices are the steps': a lone Dwarf or lesser attacker is taken unasked (CR 608.2d: there is nothing to choose), a
+   permanent that can't be chosen is neither offered nor drawn at random (Kamiz, Armed and Armored, The Nipton Lottery), Kamiz's "lesser
+   power" reads a target that left as it last was (CR 608.2h), Distended Mindbender's two cards leave the hand together. Prompts, answers
+   by card id and log lines are the steps'.
+4. Killer Instinct's sacrifice is at the next end step, whoever's (Oracle; it was "your next", the same on your own upkeep). What both
+   delayed sacrifices are about is bound as that permanent (`KillerInstinctTest.returnedCreatureIsNotSacrificed`, a guard).
+5. Volcano Hellion's and Scrying Glass's number is the resolution's, no longer written on the permanent; Multiple Choice's return records
+   its RETURN; Dauntless Bodyguard's and Tyrannical Pitlord's entry hands X, targets, costs and convoke on to the enters abilities as
+   Predatory Sludge's did.
+6. AI only: a `ChooseCardEffect` of the AI's own among another player's revealed hand or its own graveyard takes the highest mana value,
+   as the deleted prompts' strategies did (so Revealing Eye and the choices among its own milled cards do too); a creature to attach
+   Equipment to is its own strongest. `MultiGraveyardChoiceAiStrategyTest` (3 cases), `MultiPermanentChoiceAiStrategyTest.attachesToItsOwnStrongest`.
+
+**What a player sees.** The revealed-hand choices follow a public reveal (CR 701.20b) and offer that hand's matching cards to the chooser.
+Pull of the Mist Moon's choice is the owner's hand alone and logs no name (`logDoesNotNameTheChosenHandCard`). Dauthi Voidwalker's lists
+only cards with a void counter; a face-down card is judged without characteristics and none is offered (CR 406.3a). The permanent choices
+list battlefield ids and log no face-down permanent's card.
+
+**Seen, not changed** (for the owner's decision where it is a leak).
+
+- Run 16's copy log lines and the face-down spell predicates: fixed outside this plan by bcead89079.
+- Token copies of face-down permanents, other consumers of a face-down object's real characteristics and opaque card ids: not looked at.
+- The as-enters permanent choices (these two, Scheming Fence) offer a permanent that can't be chosen; so do Clarion Ultimatum, Spry and
+  Mighty and Akiri.
+- A Room is judged by both its doors' names, so one forbidden name stops both doors (CR 709.3a); the whole-card type and colour
+  prohibitions of a split card weren't traced.
+- Zara attacks what the attackers' defender was: her controller doesn't choose between that player and a planeswalker of theirs (Oracle,
+  CR 508.4).
+- Nashi's graveyard choice is secret; nothing here changed it, and `ChooseCardEffect` would name the card (why it is blocked).
+- Akiri's handler reads Equipment by the printed subtype (`permanentHasSubtype`).
+- Scour the Scene's choice offers battlefield creatures by card id (run 16).
+- The frontend's multi-pick minimum (run 15).
+- A hand's playable hint for a split card is the card's: with one half forbidden and only that half payable it is still offered, and
+  the cast refuses it.
+
+**Tests edited.** The new cases above. Contradicted the steps' rules of item 3 (a lone candidate is unasked): `ArmedAndArmoredTest` (three
+cases answer no Dwarf prompt and assert none is open) and `KamizObscuraOculusTest.landDiscardDoesNotIncreasePowerAndNonattackingKamizCannotBeChosen`
+(no prompt; the other attacker gets no double strike). Renamed prompts and answers by card id, same assertions: `AddleTest`,
+`DistendedMindbenderTest` (the deleted second band's two field assertions became "no second prompt follows"; the hand is whole until both
+are chosen, so the second id is index 2), `TreacherousUrgeTest` (the scheduled action became the delayed ability watching that permanent),
+`PullOfTheMistMoonTest` (the grant is a perpetual ability), `DauthiVoidwalkerTest` (the prompt's free flag is asserted on the permission),
+`MissionBriefingTest`, `KamizObscuraOculusTest`'s other cases. Constructors and renamed methods: `AsEntersInteractionServiceTest` (stubs
+the subject resolver), `GainControlOfTargetEffectHandlerTest`, `PlayerInputServiceTest`, `SpecializedInteractionProjectionTest`,
+`SpecializedInteractionAiStrategiesTest`.
+
+**Tests run.** The final sources in one Gradle run, one `--tests` list per task, counted from that run's XML by the test cases' class
+names: 1,100 classes (1,604 suites, 15,120 cases, 29 skipped, 0 failures): the 39 test classes that name one of the 27 changed card
+classes, every changed test class, the cards of the changed survivors and steps (`--tests-for`), the split-card, name-rule, revealed-hand
+and multi-zone prompt tests, `Mastery|DeathReplacement`, the application's architecture tests with `EffectCountRatchetTest`, and the
+application and AI tests naming a changed mechanism (227 of 360 and 34 of 57 classes). After it one test assertion was added and the
+baselines were set: both classes ran again (14 cases, 0 failures). Every project's main and test sources compile on the final tree. Failed
+before their fixes: the four tests so marked (`namedHalfFromExile` before its free-cast setup was completed: the card wasn't playable).
+Not run: the full suites, the AI fuzz, stress and benchmark tests, the frontend. Not
+verified: that the other new cases fail on HEAD; the AI's skip of a forbidden half and Kamiz's last-known power by a test of their own;
+the new delayed binding with several permanents; more than two players; MCTS over the converted steps; aftermath, suspend and
+search-cast paths of item 2 by a test.
+
+**For the next run (run 18: Grant, 108 rare records; then Create 67, Prevent 66, May 58, Perpetually 55, Conjure 49, Target 48).**
+
+- Choose's blocked causes have two classes or one each, so the family that brings a third builds the part: a conjure step over a card
+  subject (Holographic Double, Nashi; Conjure's 49 will), a recorded counter-kind choice, same-name searches over a permanent subject, an
+  exactly-that-many condition, entering attacking on the put step.
+- The perpetual verbs Choose left unique (blitz, the damage bonus, spell-casting grants, incorporate) are one card each here: recount
+  them in the Perpetually run, with `ChooseCardEffect` as their first half.
+- The delayed ability about a put now exists: grep the ledger's delayed-sacrifice rows before giving one that blocker.
+- The gain-control record takes a subject: the sibling records that only name whose permanent is gained can fold.
+- Seven latest `step-9` ledger rows are left (Sacrifice, Destroy, the can't-be-countered trio, the two may-draws).
 
 ## Prompt
 

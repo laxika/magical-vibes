@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGravey
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class AllowCastTargetCardFromGraveyardThisTurnEffectHandler implements No
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,6 +38,14 @@ public class AllowCastTargetCardFromGraveyardThisTurnEffectHandler implements No
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var permission = (AllowCastTargetCardFromGraveyardThisTurnEffect) effect;
         UUID controllerId = entry.getControllerId();
+        if (permission.cards() != null) {
+            for (var located : subjectResolutionService.locatedCards(gameData, entry, effect, permission.cards())) {
+                if (located.zone() == Zone.GRAVEYARD) {
+                    grant(gameData, entry, permission, located.card());
+                }
+            }
+            return;
+        }
 
         List<UUID> targetCardIds = !entry.getTargetCardIds().isEmpty()
                 ? entry.getTargetCardIds()
@@ -62,21 +72,27 @@ public class AllowCastTargetCardFromGraveyardThisTurnEffectHandler implements No
                 continue;
             }
 
-            // The card stays in the graveyard; the permission and the exile replacement both hold
-            // until turn cleanup drops them, so the controller may cast it whenever timing allows.
-            gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, permission.entersTapped()),
-                    targetCard.getId(), Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
-            if (permission.exileInsteadOfGraveyard()) {
-                gameData.exileInsteadOfGraveyard(entry, targetCard.getId());
-            }
-
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(gameData.playerIdToName.get(controllerId) + " may cast ")
-                    .card(targetCard)
-                    .text(" from their graveyard this turn.")
-                    .build());
-            log.info("Game {} - {} may cast {} from their graveyard this turn",
-                    gameData.id, gameData.playerIdToName.get(controllerId), targetCard.getName());
+            grant(gameData, entry, permission, targetCard);
         }
+    }
+
+    private void grant(GameData gameData, StackEntry entry, AllowCastTargetCardFromGraveyardThisTurnEffect permission,
+                       Card card) {
+        UUID controllerId = entry.getControllerId();
+        // The card stays in the graveyard; the permission and the exile replacement both hold
+        // until turn cleanup drops them, so the controller may cast it whenever timing allows.
+        gameData.addCardEffect(entry, new GameData.GraveyardCardPlayGrant(controllerId, permission.entersTapped()),
+                card.getId(), Zone.GRAVEYARD, Duration.UNTIL_END_OF_TURN);
+        if (permission.exileInsteadOfGraveyard()) {
+            gameData.exileInsteadOfGraveyard(entry, card.getId());
+        }
+
+        gameLogService.append(gameData, GameLog.builder()
+                .text(gameData.playerIdToName.get(controllerId) + " may cast ")
+                .card(card)
+                .text(" from their graveyard this turn.")
+                .build());
+        log.info("Game {} - {} may cast {} from their graveyard this turn",
+                gameData.id, gameData.playerIdToName.get(controllerId), card.getName());
     }
 }

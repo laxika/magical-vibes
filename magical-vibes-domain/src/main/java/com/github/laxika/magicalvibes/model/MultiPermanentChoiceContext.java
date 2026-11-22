@@ -908,10 +908,6 @@ public sealed interface MultiPermanentChoiceContext {
     record ChooseTwoCreaturesByPowerDifference() implements MultiPermanentChoiceContext {
     }
 
-    /** The controller chooses another attacking creature with lesser power. */
-    record ChooseAnotherAttackingCreatureWithLesserPower() implements MultiPermanentChoiceContext {
-    }
-
     /**
      * Tap each chosen untapped creature the controller controls, then the controller creates one
      * {@code tokenTemplate} token per creature tapped this way (Devout Invocation). The template's

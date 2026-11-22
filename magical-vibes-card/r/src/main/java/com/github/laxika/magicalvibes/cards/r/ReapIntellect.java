@@ -31,7 +31,7 @@ public class ReapIntellect extends Card {
         // when no card is chosen.
         addSpellEffect(new ChooseCardsFromTargetHandEffect(
                 new XValue(), List.of(), List.of(), HandChoiceDestination.EXILE, false,
-                new CardNotPredicate(new CardTypePredicate(CardType.LAND)), true, false));
+                new CardNotPredicate(new CardTypePredicate(CardType.LAND)), true));
         // "If you don't exile any cards from the player's hand, you don't search that player's library" (its ruling).
         addSpellEffect(new ConditionalEffect(HappenedThisWay.exiled(),
                 ExileCardsWithSameNameEffect.anyNumber(Subjects.cardsThisWay(StepKind.EXILE))

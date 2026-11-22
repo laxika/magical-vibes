@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import java.util.Objects;
 
 /**
- * Gains control of target permanent for the given {@link Duration}.
+ * Gains control of target permanent, or of the permanents {@link #subject()} names, for the given
+ * {@link Duration}.
  *
  * <p>The card's own target filter handles type restrictions (e.g. creature-only for
  * Threaten, artifact-only for Metallic Mastery, Vampire-only for Olivia Voldaren).
@@ -23,25 +25,38 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param targetPredicate optional additional restriction on the target permanent
  * @param maintainTargetPredicate when true, the target predicate is also maintained for the
  *                           duration of the control effect (e.g. Old Man of the Sea's power check)
- * @param ofTriggeringPermanent when true, the permanent is no target but "that permanent" the trigger event was about,
- *                           the stack entry's triggering permanent (Treasure Nabber's "gain control of that artifact")
+ * @param subject            {@code target()}, the declared target, or permanents that are no target: {@code triggering()}
+ *                           (Treasure Nabber's "gain control of that artifact"), the ones an earlier step chose
+ *                           ("choose a creature at random. You gain control of that creature")
  */
 public record GainControlOfTargetEffect(Duration duration, CardSubtype grantedSubtype,
                                         boolean tapWhenControlLost,
                                         PermanentPredicate targetPredicate, boolean opponentChoosesTarget,
-                                        boolean maintainTargetPredicate, boolean ofTriggeringPermanent)
+                                        boolean maintainTargetPredicate, PermanentSubject subject)
         implements ControlStealingEffect {
+
+    public GainControlOfTargetEffect {
+        Objects.requireNonNull(subject, "subject");
+        if (!(subject instanceof PermanentSubject.Target) && subject.declaresTarget()) {
+            throw new IllegalArgumentException("Control is gained of the target or of no target: " + subject);
+        }
+    }
 
     public GainControlOfTargetEffect(Duration duration, CardSubtype grantedSubtype,
                                      boolean tapWhenControlLost, PermanentPredicate targetPredicate,
                                      boolean opponentChoosesTarget, boolean maintainTargetPredicate) {
         this(duration, grantedSubtype, tapWhenControlLost, targetPredicate, opponentChoosesTarget,
-                maintainTargetPredicate, false);
+                maintainTargetPredicate, Subjects.target());
     }
 
     /** "Gain control of that permanent" for the given duration: the trigger event's permanent, no target. */
     public static GainControlOfTargetEffect ofTriggeringPermanent(Duration duration) {
-        return new GainControlOfTargetEffect(duration, null, false, null, false, false, true);
+        return of(Subjects.triggering(), duration);
+    }
+
+    /** Control of the permanents {@code subject} names, none of them targeted. */
+    public static GainControlOfTargetEffect of(PermanentSubject subject, Duration duration) {
+        return new GainControlOfTargetEffect(duration, null, false, null, false, false, subject);
     }
 
     public GainControlOfTargetEffect(Duration duration) {
@@ -81,6 +96,7 @@ public record GainControlOfTargetEffect(Duration duration, CardSubtype grantedSu
 
     @Override
     public TargetSpec targetSpec() {
-        return ofTriggeringPermanent ? TargetSpec.NONE : TargetSpec.benign(TargetPredicates.permanent(), targetPredicate);
+        return subject instanceof PermanentSubject.Target
+                ? TargetSpec.benign(TargetPredicates.permanent(), targetPredicate) : TargetSpec.NONE;
     }
 }

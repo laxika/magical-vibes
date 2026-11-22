@@ -50,7 +50,7 @@ public class ChooseCreatureCardFromHandAndConjureDuplicateIntoHandEffectHandler
         try {
             playerInteractionSupport.resolveHandRevealAndChooseWithChosenCardThen(
                     gameData, entry, 1, List.of(), List.of(CardType.CREATURE), null,
-                    false, false, null, false, false, 0, false,
+                    false, false, null, false, 0, false,
                     false, false, false, 0, null,
                     ChooseCreatureCardFromHandAndConjureDuplicateIntoHandEffect.afterChoice(), true);
         } finally {

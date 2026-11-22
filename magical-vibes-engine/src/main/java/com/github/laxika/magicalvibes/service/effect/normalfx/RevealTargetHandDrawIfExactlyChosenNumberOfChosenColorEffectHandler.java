@@ -35,7 +35,7 @@ public class RevealTargetHandDrawIfExactlyChosenNumberOfChosenColorEffectHandler
         if (source == null) {
             source = entry.getSourcePermanentSnapshot();
         }
-        if (source == null || source.getChosenColor() == null || source.getChosenNumber() <= 0) {
+        if (source == null || source.getChosenColor() == null || entry.getXValue() <= 0) {
             return;
         }
 
@@ -44,7 +44,7 @@ public class RevealTargetHandDrawIfExactlyChosenNumberOfChosenColorEffectHandler
         long matchingCards = hand.stream()
                 .filter(card -> gameQueryService.getEffectiveCardColors(gameData, card).contains(chosenColor))
                 .count();
-        if (matchingCards == source.getChosenNumber()) {
+        if (matchingCards == entry.getXValue()) {
             playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(), 1);
         }
     }

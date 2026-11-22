@@ -11,7 +11,9 @@ import java.util.Objects;
  * did ("exile those tokens", "return those cards to their owners' hands"): a delayed triggered ability that triggers
  * the next time its step begins (CR 603.7b). Its effects name those objects as a later step of the resolution would:
  * {@code Subjects.cardsThisWay(EXILE)}, {@code AmountThisWay.stillExiled()}, {@code Subjects.createdThisResolution()}.
- * An object that left its zone since is a new object and isn't affected (CR 603.7c, 400.7). An ability that does
+ * "Sacrifice it at the beginning of the next end step" after "put it onto the battlefield" is
+ * {@link #aboutPutOntoBattlefield}: "it" is the permanent the card became, the ability's triggering permanent when it
+ * is one. An object that left its zone since is a new object and isn't affected (CR 603.7c, 400.7). An ability that does
  * nothing but act on those objects is not created when there are none, as it could affect nothing; one that does more
  * ("return those cards to your hand, then draw a card") always is ({@code alsoIfNothingHappened}, CR 603.7a).
  *
@@ -36,9 +38,10 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
         Objects.requireNonNull(about, "about");
         Objects.requireNonNull(step, "step");
         effects = List.copyOf(effects);
-        if (about != StepKind.EXILE && about != StepKind.CREATE_TOKEN && about != StepKind.SEEK) {
-            throw new IllegalArgumentException(
-                    "A delayed ability is about exiled or sought cards or created permanents: " + about);
+        if (about != StepKind.EXILE && about != StepKind.CREATE_TOKEN && about != StepKind.SEEK
+                && about != StepKind.RETURN) {
+            throw new IllegalArgumentException("A delayed ability is about exiled or sought cards or permanents "
+                    + "created or put onto the battlefield: " + about);
         }
         if (player != null && player.declaresTarget()) {
             throw new IllegalArgumentException("The step that did it declares the target: " + player);
@@ -65,6 +68,12 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
     /** At {@code step}, {@code effects} about the cards the last seek put into a hand. */
     public static RegisterDelayedStepTriggerEffect aboutSought(StepTrigger step, CardEffect... effects) {
         return new RegisterDelayedStepTriggerEffect(StepKind.SEEK, step, List.of(effects), null, false, false, false);
+    }
+
+    /** At {@code step}, {@code effects} about the permanents the last put or return onto the battlefield made. */
+    public static RegisterDelayedStepTriggerEffect aboutPutOntoBattlefield(StepTrigger step, CardEffect... effects) {
+        return new RegisterDelayedStepTriggerEffect(StepKind.RETURN, step, List.of(effects), null, false, false,
+                false);
     }
 
     /** This ability, waiting for a turn after this one ("at the beginning of your next turn's end step"). */

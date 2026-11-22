@@ -34,11 +34,11 @@ class MissionBriefingTest extends BaseCardTest {
 
         resolveMissionBriefing(topCard, secondCard);
 
-        PendingInteraction.GraveyardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(0, 1);
-        harness.handleGraveyardCardChosen(player1, 1);
+        assertThat(choice.validCardIds()).containsExactly(blaze.getId(), secondBlaze.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(secondBlaze.getId()));
         harness.addMana(player1, ManaColor.RED, 6);
         harness.castFromGraveyardTargeting(player1, 2, player2.getId());
         harness.passBothPriorities();

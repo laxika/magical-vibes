@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.GraveyardTargetOperationState;
 import com.github.laxika.magicalvibes.model.condition.SourceWasCastWithEscape;
 import com.github.laxika.magicalvibes.model.effect.AsEntersGraveyardExileEffect;
 import com.github.laxika.magicalvibes.model.effect.AsEntersOpponentExileToGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileXCreatureCardsFromGraveyardOnEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToXCreatureCardsFromGraveyardOnEnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
@@ -18,9 +19,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
-import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNonlandPermanentOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOpponentPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePlayerOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.TwoPlayerChoiceOnEnterEffect;
@@ -49,6 +48,7 @@ import com.github.laxika.magicalvibes.model.effect.TributeEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.entryfx.UpgradeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.WerewhatSupport;
@@ -81,6 +81,7 @@ public class AsEntersInteractionService {
     @Lazy
     private WerewhatSupport werewhatSupport;
     private PermanentRemovalService permanentRemovalService;
+    private SubjectResolutionService subjectResolutionService;
 
     @Autowired
     public AsEntersInteractionService(GameQueryService gameQueryService,
@@ -109,6 +110,11 @@ public class AsEntersInteractionService {
                                       @Lazy EtbTriggerService etbTriggerService) {
         this(gameQueryService, playerInputService, amountEvaluationService, predicateEvaluationService,
                 null, permanentCounterSupport, etbTriggerService, null);
+    }
+
+    @Autowired
+    void setSubjectResolutionService(@Lazy SubjectResolutionService subjectResolutionService) {
+        this.subjectResolutionService = subjectResolutionService;
     }
 
     @Autowired
@@ -324,44 +330,28 @@ public class AsEntersInteractionService {
             }
         }
 
-        // "As enters, choose another creature you control" — replacement effect (CR 614.1c),
-        // not suppressed by Torpor Orb. Must happen before ETB triggers.
-        boolean needsCreatureChoice = card.getStaticEffects().stream()
-                .anyMatch(e -> e instanceof ChooseAnotherCreatureOnEnterEffect);
-        if (needsCreatureChoice) {
-            List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-            Permanent justEntered = bf.get(bf.size() - 1);
-            List<UUID> validIds = bf.stream()
-                    .filter(p -> p != justEntered && gameQueryService.isCreature(gameData, p))
-                    .map(Permanent::getId)
-                    .toList();
-            if (!validIds.isEmpty()) {
-                gameData.interaction.setPermanentChoiceContext(
-                        new PermanentChoiceContext.ChooseCreatureAsEnter(justEntered.getId(), controllerId, card, targetId, wasCastFromHand, etbMode, kicked));
-                playerInputService.beginPermanentChoice(gameData, controllerId, new ArrayList<>(validIds), "Choose another creature you control.");
-                return;
-            }
-            // No other creatures — bodyguard enters with no chosen creature
-        }
-
-        boolean needsOpponentPermanentChoice = card.getStaticEffects().stream()
-                .anyMatch(ChooseOpponentPermanentOnEnterEffect.class::isInstance);
-        if (needsOpponentPermanentChoice) {
+        // "As this enters, choose another creature you control / a permanent you don't control": a replacement
+        // effect (CR 614.1c), not suppressed by Torpor Orb, made before ETB triggers. With nothing to choose it
+        // enters with none chosen.
+        ChoosePermanentOnEnterEffect permanentChoice = card.getStaticEffects().stream()
+                .filter(ChoosePermanentOnEnterEffect.class::isInstance)
+                .map(ChoosePermanentOnEnterEffect.class::cast)
+                .findFirst().orElse(null);
+        if (permanentChoice != null) {
             Permanent justEntered = gameData.playerBattlefields.get(controllerId).getLast();
-            UUID choiceControllerId = controllerId;
-            List<UUID> validIds = gameData.playerBattlefields.entrySet().stream()
-                    .filter(entry -> !entry.getKey().equals(choiceControllerId))
-                    .flatMap(entry -> entry.getValue().stream())
+            List<UUID> validIds = subjectResolutionService
+                    .permanents(gameData, justEntered, controllerId, permanentChoice.candidates()).stream()
+                    .filter(permanent -> permanent != justEntered)
                     .map(Permanent::getId)
                     .toList();
             if (!validIds.isEmpty()) {
                 gameData.interaction.setPermanentChoiceContext(
-                        new PermanentChoiceContext.ChooseOpponentPermanentAsEnter(
+                        new PermanentChoiceContext.ChoosePermanentAsEnter(
                                 justEntered.getId(), controllerId, card, targetId, wasCastFromHand,
                                 etbMode, xValue, kicked, targetIds, repeatedAdditionalCosts,
                                 convokeCreatureIds));
-                playerInputService.beginPermanentChoice(gameData, controllerId,
-                        new ArrayList<>(validIds), "Choose a permanent you don't control.");
+                playerInputService.beginPermanentChoice(gameData, controllerId, new ArrayList<>(validIds),
+                        "Choose " + permanentChoice.label() + ".");
                 return;
             }
         }

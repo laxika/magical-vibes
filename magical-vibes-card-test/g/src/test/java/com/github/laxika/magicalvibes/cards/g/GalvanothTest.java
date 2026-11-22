@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
+import com.github.laxika.magicalvibes.cards.m.MeddlingMage;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
@@ -341,5 +343,24 @@ class GalvanothTest extends BaseCardTest {
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(wearTear.getId()));
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(wearTear);
+    }
+
+    @Test
+    @CardUsed({WearTear.class, AngelicChorus.class, FountainOfYouth.class, MeddlingMage.class})
+    @DisplayName("A split card cast without paying offers no half with a forbidden name (CR 709.3a)")
+    void splitCardOffersNoHalfWithForbiddenName() {
+        harness.addToBattlefield(player1, new Galvanoth());
+        harness.addToBattlefieldAndReturn(player2, new MeddlingMage()).setChosenName("Tear");
+        harness.addToBattlefield(player2, new AngelicChorus());
+        harness.addToBattlefield(player2, new FountainOfYouth());
+        gd.playerDecks.get(player1.getId()).addFirst(new WearTear());
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Wear — Destroy target artifact");
     }
 }

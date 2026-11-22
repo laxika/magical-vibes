@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ChooseAnotherCreatureOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveLinkedPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -17,7 +17,8 @@ import java.util.Set;
 public class TyrannicalPitlord extends Card {
 
     public TyrannicalPitlord() {
-        addStaticEffect(new ChooseAnotherCreatureOnEnterEffect());
+        addStaticEffect(new ChoosePermanentOnEnterEffect(
+                Subjects.otherCreaturesYouControl(), "another creature you control"));
         addStaticEffect(new StaticBoostEffect(
                 3, 3, Set.of(Keyword.FLYING), Subjects.otherCreatures(),
                 new PermanentIsChosenPermanentPredicate()));

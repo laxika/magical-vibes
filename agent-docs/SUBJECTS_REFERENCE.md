@@ -112,7 +112,8 @@ Readers: `CreateTokenCopyOfCardEffect.of(cards, options)`, `ChooseCardEffect` ("
 (`PerpetuallyGrantCardCharacteristicsEffect.to(cards)`, `PerpetuallyGrantKeywordsToTriggeringCardEffect.toCards(cards, ...)`,
 `PerpetuallyBecomeOnlyCardTypeEffect(cards, type)`), `PutCounterOnExiledCardsEffect(cards, counter)` ("with a memory counter on it"), `PutCardsIntoHandEffect(cards)` ("if you don't, put that card into your hand"), `ReturnAllCardsExiledWithSourceEffect.putOntoBattlefield(cards)` ("put that card onto the battlefield"), `ReturnCardFromGraveyardEffect.builder().returnAll(true).cards(...)`,
 `MayCastDiscardedCardWithoutPayingManaCostEffect(cards[, filter])` ("you may cast it without paying its mana cost": a card in exile whoever owns
-it, Transcendent Dragon; a graveyard card only from your own graveyard), `AllowPlayCardsFromExileEffect` ("you may
+it, Transcendent Dragon; a graveyard card only from your own graveyard), `AllowCastTargetCardFromGraveyardThisTurnEffect.of(cards, exile)` ("choose a card in your graveyard. You may cast
+it this turn"), `AllowPlayCardsFromExileEffect` ("you may
 play that card this turn / until the end of your next turn / for as long as it remains exiled"),
 `PutCardsOntoBattlefieldEffect(cards)` ("put those cards onto the battlefield", "return that card to the battlefield"),
 `PerpetuallyBoostCardEffect.toCards(cards, p, t)`, `PerpetuallyChangeCastCostEffect(cards, change)`,

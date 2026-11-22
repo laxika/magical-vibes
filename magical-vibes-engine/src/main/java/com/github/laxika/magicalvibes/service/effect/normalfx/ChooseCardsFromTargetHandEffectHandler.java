@@ -94,7 +94,7 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
                 } else if (e.revealHand()) {
                     playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, count,
                             e.excludedTypes(), e.includedTypes(), e.filter(), true, false, null,
-                            e.upTo(), false, e.declineFallbackDiscardCount());
+                            e.upTo(), e.declineFallbackDiscardCount());
                 } else {
                     playerInteractionSupport.resolveHandLookAndChoose(gameData, entry, count,
                             e.excludedTypes(), e.includedTypes(), e.filter(), true, false, null,
@@ -106,14 +106,14 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
                         ? entry.getSourcePermanentId() : null;
                 playerInteractionSupport.resolveHandRevealAndChooseWithChosenCardThen(gameData, entry, count,
                         e.excludedTypes(), e.includedTypes(), e.filter(), false, true, sourcePermanentId,
-                        e.upTo(), e.exileAllCopiesOfChosenNames(), e.declineFallbackDiscardCount(),
+                        e.upTo(), e.declineFallbackDiscardCount(),
                         e.imprintOnSource(), e.revealHand(), e.grantPlayPermission(),
                         e.returnAtNextEndStep(), e.exilePlayOpponentTax(),
                         null, null);
             }
             case KEEP_IN_HAND -> playerInteractionSupport.resolveHandRevealAndChooseWithChosenCardThen(
                     gameData, entry, count, e.excludedTypes(), e.includedTypes(), e.filter(),
-                    false, false, null, e.upTo(), false, 0, false, e.revealHand(),
+                    false, false, null, e.upTo(), 0, false, e.revealHand(),
                     false, false, 0, null, null, true);
             case TOP_OF_LIBRARY -> resolveToTopOfLibrary(gameData, entry, count, e);
             case SHUFFLE_INTO_LIBRARY ->
@@ -170,8 +170,8 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
                 casterId, targetPlayerId, validIndices, cardsToChoose, false, false, List.of(), null,
-                choicePrompt(effect, targetName, position), false, false, false, null, null, 0,
-                effect.filter(), false, false, false, false, false, false, 0, position));
+                choicePrompt(effect, targetName, position), false, false, false, 0,
+                effect.filter(), false, false, false, false, false, 0, position));
 
         log.info("Game {} - {} choosing {} card(s) from {}'s hand for library placement at position {}",
                 gameData.id, casterName, cardsToChoose, targetName, position);

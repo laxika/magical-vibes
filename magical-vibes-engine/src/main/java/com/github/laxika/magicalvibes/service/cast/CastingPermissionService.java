@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.cast;
 
+import com.github.laxika.magicalvibes.model.OracleData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantPlayChosenNameUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
@@ -197,7 +198,7 @@ public class CastingPermissionService {
         if (isPlayerPreventedFromCasting(gameData, playerId)) return false;
         if (isSpellTypeRestricted(gameData, playerId, card)) return false;
         Set<String> forbidden = getForbiddenCardNames(gameData, playerId);
-        if (forbidden.stream().anyMatch(card::hasName)) return false;
+        if (isCastForbiddenByName(card, forbidden)) return false;
         if (isNoncreatureSpellCastRestricted(gameData, playerId, card)) return false;
         // Aurelia's Fury etc.: per-turn "can't cast noncreature spells" restriction on a player.
         if (!card.hasType(CardType.CREATURE)
@@ -1000,7 +1001,7 @@ public class CastingPermissionService {
         }
         return gameData.floatingEffectsOfTypes(CantPlayChosenNameUntilNextTurnEffect.class).stream()
                 .map(fe -> (CantPlayChosenNameUntilNextTurnEffect) fe.effect())
-                .anyMatch(rule -> rule.landsToo() && rule.cardName().equals(card.getName()));
+                .anyMatch(rule -> rule.landsToo() && card.hasName(rule.cardName()));
     }
 
     private Set<String> getNontokenPermanentNames(GameData gameData) {
@@ -1056,7 +1057,44 @@ public class CastingPermissionService {
         for (CardType type : card.getAdditionalTypes()) {
             if (restrictedSpellTypes.contains(type)) return true;
         }
-        return forbiddenCardNames.stream().anyMatch(card::hasName);
+        return isCastForbiddenByName(card, forbiddenCardNames);
+    }
+
+    /**
+     * Whether the names {@link #getForbiddenCardNames} gives keep {@code card} from being cast. Of a split card that
+     * isn't yet cast as one of its halves only a half that can be cast from anywhere has to be allowed, as only the
+     * chosen half is evaluated (CR 709.3a): {@link #isSplitModeForbiddenByName} judges that half as it is chosen.
+     * A Room is judged by both its names.
+     */
+    public static boolean isCastForbiddenByName(Card card, Set<String> forbiddenCardNames) {
+        List<OracleData> halves = card.getSplitHalves();
+        if (!isWholeSplitCard(card) || card.getSubtypes().contains(CardSubtype.ROOM)) {
+            return forbiddenCardNames.stream().anyMatch(card::hasName);
+        }
+        // An aftermath half is cast only from a graveyard, where it is judged by itself (CR 702.127a).
+        return card.isAftermathSplitCard()
+                ? forbiddenCardNames.contains(halves.getFirst().name())
+                : halves.stream().allMatch(half -> forbiddenCardNames.contains(half.name()));
+    }
+
+    /**
+     * Whether the names forbidden to {@code playerId} keep the split card {@code card} from being cast by its mode
+     * {@code modeIndex}: a half by that half's name, the fused spell, which has both names (CR 709.4d), by either.
+     */
+    public boolean isSplitModeForbiddenByName(GameData gameData, UUID playerId, Card card, int modeIndex) {
+        if (!isWholeSplitCard(card)) {
+            return false;
+        }
+        List<OracleData> halves = card.getSplitHalves();
+        Set<String> forbidden = getForbiddenCardNames(gameData, playerId);
+        return modeIndex < halves.size()
+                ? forbidden.contains(halves.get(modeIndex).name())
+                : halves.stream().anyMatch(half -> forbidden.contains(half.name()));
+    }
+
+    /** A split card with both halves, not the runtime copy cast as one of them, which has that half's name alone. */
+    private static boolean isWholeSplitCard(Card card) {
+        return card.getSplitHalves().size() >= 2 && card.getName() != null && card.getName().contains(" // ");
     }
 
     private boolean isNoncreatureSpellCastRestrictedUntilNextTurn(GameData gameData, UUID playerId) {

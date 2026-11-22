@@ -3,29 +3,16 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 
 /**
- * Lets the effect controller put one matching card from a player's hand onto the battlefield.
- * The normal form targets the player and reveals their hand; the defending-player form reads the
- * defending player's hand from attack context.
+ * "You may put a creature card from [defending player's hand] onto the battlefield under your control tapped and
+ * attacking. Return that creature to its owner's hand at the beginning of the next end step" (Zara, Renegade
+ * Recruiter): reads the defending player's hand from the attack context; nothing is targeted.
  */
-public record ChooseCardFromTargetHandToBattlefieldEffect(
-        CardPredicate predicate, String label, boolean grantHaste, boolean sacrificeAtEndStep,
-        boolean defendingPlayerHand, boolean enterTappedAndAttacking, boolean returnToHandAtEndStep)
+public record ChooseCardFromTargetHandToBattlefieldEffect(CardPredicate predicate, String label)
         implements CardEffect {
-
-    public ChooseCardFromTargetHandToBattlefieldEffect(CardPredicate predicate, String label,
-                                                       boolean grantHaste, boolean sacrificeAtEndStep) {
-        this(predicate, label, grantHaste, sacrificeAtEndStep, false, false, false);
-    }
 
     /** Non-targeting attack trigger that uses the defending player's hand. */
     public static ChooseCardFromTargetHandToBattlefieldEffect forDefendingPlayerHand(
             CardPredicate predicate, String label) {
-        return new ChooseCardFromTargetHandToBattlefieldEffect(
-                predicate, label, false, false, true, true, true);
-    }
-
-    @Override
-    public TargetSpec targetSpec() {
-        return defendingPlayerHand ? TargetSpec.NONE : TargetSpec.benign(TargetPredicates.player());
+        return new ChooseCardFromTargetHandToBattlefieldEffect(predicate, label);
     }
 }

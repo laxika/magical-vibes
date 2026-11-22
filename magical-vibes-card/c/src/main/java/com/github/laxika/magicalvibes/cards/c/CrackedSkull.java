@@ -29,7 +29,7 @@ public class CrackedSkull extends Card {
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ChooseCardsFromTargetHandEffect(
                         new Fixed(1), List.of(CardType.LAND), List.of(), HandChoiceDestination.DISCARD,
-                        false, null, 0, true, false, false, false, false, false));
+                        false, null, 0, true, false, false, false, false));
 
         addTrigger(Triggers.enchantedCreatureDealtDamage(),
                 new DestroyTargetPermanentEffect(Subjects.triggering()));

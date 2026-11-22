@@ -284,6 +284,7 @@ These predicates need `FilterContext` with `gameData` and/or `sourceControllerId
 | `PermanentSharesCardTypeWithTriggeringPermanentPredicate` | `()` | permanents that share a card type with the triggering permanent: the one `triggeringPermanentId` names while it is on the battlefield, by its current types (Confusion in the Ranks' "shares a card type with it"), otherwise the snapshot as it last existed (Martyr's Bond) | `FilterContext.triggeringPermanentId` / `triggeringPermanentSnapshot` |
 | `PermanentSharesCardTypeWithTargetCardPredicate` | `()` | permanents that share a permanent card type with the selected graveyard card; used when a sacrifice filter depends on a card targeted by the same ability | `FilterContext.gameData` + `targetCardId` |
 | `PermanentIsTargetCardPredicate` | `()` | the permanent whose card is the card targeted by the same ability ("another" relative to a surviving target; Feast of Worms sacrifices another land) | `FilterContext.targetCardId`; `SacrificePermanentsEffectHandler` and the destroy-then handler set it from the then-entry's `targetCardIds` |
+| `PermanentPowerLessThanTargetPredicate` | `()` | "with lesser power" after "target creature": power less than the target permanent's as the effect resolves, else as it last was; only in a resolving effect's `controlledBy` set, which binds it (Kamiz) |
 
 ### Source-relative predicates
 
@@ -576,6 +577,8 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardHasNameChosenThisResolutionPredicate` | `()` | cards with the name an earlier `ChooseCardNameAtResolutionEffect` of the same resolution chose, either name of a split card (CR 709.4a); needs the `GameData` |
 | `CardHasTypeChosenThisResolutionPredicate` | `()` | cards of the creature type chosen earlier in the same resolution, changeling included; needs the `GameData` |
 | `CardHasStudyCounterPredicate` | `()` | an exiled card with a study counter; needs the `GameData` |
+| `CardHasVoidCounterPredicate` | `()` | an exiled card with a void counter; needs the `GameData` (Dauthi Voidwalker) |
+| `CardHasChosenSpellColorPredicate` | `()` | a card of the color a `ChooseColorAtResolutionEffect` of this resolution chose, as effects leave its colors; needs the `GameData`. Put `ClearChosenColorEffect` after the last reader (Addle) |
 | `CardKeywordPredicate` | `(Keyword)` or `(Keyword, TargetingRestrictionEffect)` | a card with the named keyword, including `MUTATE` for creature cards with a mutate ability; the optional restriction selects the corresponding restricted hexproof variant without matching unrestricted hexproof |
 | `CardHasCascadePredicate` | `()` | a card whose spell has a `CascadeEffect` in its `Triggers.youCastThisSpell()` ability; use for "cast a spell with cascade" triggers |
 | `CardHasAwakenPredicate` | `()` | a card with an Awaken ability word (`Awaken N—…`); Scryfall reports Awaken as a keyword, but the engine identifies it from the oracle text because it is not a rules keyword |

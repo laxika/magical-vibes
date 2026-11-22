@@ -1045,7 +1045,7 @@ class PlayerInputServiceTest {
             Card card = createCreature("Bear");
             gd.playerHands.get(PLAYER2_ID).add(card);
 
-            svc.beginMultiZoneExileChoice(gd, PLAYER1_ID, List.of(card), PLAYER2_ID, "Bear");
+            svc.beginMultiZoneExileChoice(gd, PLAYER1_ID, List.of(card), PLAYER2_ID, "Bear", null);
 
             assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiZoneExileChoice.class);
         }
@@ -1062,7 +1062,7 @@ class PlayerInputServiceTest {
             when(cardViewFactory.create(card1)).thenReturn(view1);
             when(cardViewFactory.create(card2)).thenReturn(view2);
 
-            svc.beginMultiZoneExileChoice(gd, PLAYER1_ID, List.of(card1, card2), PLAYER2_ID, "Bear");
+            svc.beginMultiZoneExileChoice(gd, PLAYER1_ID, List.of(card1, card2), PLAYER2_ID, "Bear", null);
 
             InteractionPromptMessage msg = projectedPrompt();
             assertThat(msg.maxCount()).isEqualTo(2);

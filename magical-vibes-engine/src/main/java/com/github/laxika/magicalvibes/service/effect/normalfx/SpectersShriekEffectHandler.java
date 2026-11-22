@@ -26,7 +26,7 @@ public class SpectersShriekEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         playerInteractionSupport.resolveHandRevealAndChoose(
                 gameData, entry, 1, List.of(CardType.LAND), List.of(), null,
-                false, true, null, true, false);
+                false, true, null, true);
 
         PendingInteraction.RevealedHandChoice choice =
                 gameData.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);

@@ -21,7 +21,7 @@ public class ThrullSurgeon extends Card {
                 false,
                 "{1}{B}",
                 List.of(new SacrificeSelfCost(), new ChooseCardsFromTargetHandEffect(new Fixed(1), List.of(), List.of(),
-                        HandChoiceDestination.DISCARD, false, null, 0, false, false, false, false)),
+                        HandChoiceDestination.DISCARD, false, null, 0, false, false, false)),
                 "{1}{B}, Sacrifice this creature: Look at target player's hand and choose a card from it. That player discards that card. Activate only as a sorcery.",
                 ActivationTimingRestriction.SORCERY_SPEED
         ));

@@ -14,6 +14,6 @@ public class Extortion extends Card {
     public Extortion() {
         addSpellEffect(new ChooseCardsFromTargetHandEffect(
                 new Fixed(2), List.of(), List.of(), HandChoiceDestination.DISCARD,
-                false, null, 0, true, false, false, false));
+                false, null, 0, true, false, false));
     }
 }

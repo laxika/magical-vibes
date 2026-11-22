@@ -249,8 +249,6 @@ public class InteractionPromptProjectionRegistry {
                 (gameData, interaction) -> projectHandChoice(interaction, true));
         register(PendingInteraction.PutCardFromHandIntoGraveyardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
-        register(PendingInteraction.PerpetualEnterExileHandCardChoice.class,
-                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualCreatureCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualStaticEffectCardChoice.class,

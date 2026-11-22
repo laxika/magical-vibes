@@ -77,7 +77,6 @@ import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeChoiceOnEnterEffect;
-import com.github.laxika.magicalvibes.model.filter.CardColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -123,7 +122,6 @@ import com.github.laxika.magicalvibes.service.trigger.pipeline.TapTriggers;
 import com.github.laxika.magicalvibes.service.trigger.VotingFinishedSupport;
 import com.github.laxika.magicalvibes.service.turn.TurnProgressionService;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -1076,10 +1074,6 @@ public class ChoiceHandlerService {
         }
         if (colorChoice.context() instanceof ChoiceContext.DiscardChosenColorChoice ctx) {
             handleDiscardChosenColorChoice(gameData, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.ChooseColorThenDiscardFromTargetHandChoice ctx) {
-            handleChooseColorThenDiscardFromTargetHandChoice(gameData, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.DestroyAllPermanentsOfChosenColorChoice ctx) {
@@ -4999,26 +4993,6 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleChooseColorThenDiscardFromTargetHandChoice(GameData gameData, String chosenValue,
-            ChoiceContext.ChooseColorThenDiscardFromTargetHandChoice ctx) {
-        CardColor color = CardColor.valueOf(chosenValue);
-        gameData.interaction.clearAwaitingInput();
-        gameData.discardCausedByOpponent = !ctx.targetPlayerId().equals(ctx.controllerId());
-
-        StackEntry entry = gameData.pendingEffectResolutionEntry;
-        if (entry == null) {
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        playerInteractionSupport.resolveHandRevealAndChoose(gameData, entry, 1, List.of(), List.of(),
-                new CardColorPredicate(color), true, false, null);
-
-        if (!gameData.interaction.isAwaitingInput()) {
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-        }
-    }
-
     private void handleDestroyAllPermanentsOfChosenColorChoice(GameData gameData, String chosenValue,
             ChoiceContext.DestroyAllPermanentsOfChosenColorChoice ctx) {
         CardColor color = CardColor.valueOf(chosenValue);
@@ -7293,7 +7267,7 @@ public class ChoiceHandlerService {
         }
 
         if (library != null) {
-            Collections.shuffle(library);
+            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
         }
         gameLogService.append(gameData, GameLog.text(targetName + " shuffles their library."));
         log.info("Game {} - {} guessed {} copies of \"{}\" in {}'s library; actual {}",
@@ -7567,18 +7541,6 @@ public class ChoiceHandlerService {
         gameLogService.append(gameData, GameLog.text(exileLog));
         log.info("Game {} - {} exiled {} card(s) named \"{}\" from {}'s zones",
                 gameData.id, controllerName, exiledCount, cardName, targetName);
-
-
-        if (ctx.drawForHandExiled()) {
-            for (int i = 0; i < handExiledCount; i++) {
-                drawService.resolveDrawCard(gameData, targetPlayerId);
-            }
-        }
-
-        if (ctx.tokenTemplate() != null && handExiledCount > 0) {
-            permanentControlSupport.applyCreateToken(gameData, targetPlayerId, ctx.tokenTemplate(),
-                    handExiledCount, ctx.sourceSetCode());
-        }
 
         if (ctx.followUpEffect() != null && gameData.pendingEffectResolutionEntry != null) {
             gameData.pendingEffectResolutionEntry.setEventValue(handExiledCount);

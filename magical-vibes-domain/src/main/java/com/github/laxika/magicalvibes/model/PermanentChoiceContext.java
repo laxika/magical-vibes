@@ -164,9 +164,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
-    record ChooseDwarfAndAttachAnyNumberOfControlledEquipment(String sourceCardName)
-            implements PermanentChoiceContext {}
-
     record AttachEquipmentToSamurai(List<UUID> equipmentPermanentIds)
             implements PermanentChoiceContext {
         public AttachEquipmentToSamurai {
@@ -286,7 +283,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ConjureDuplicateOfCombatDamageDealerChoice(UUID controllerId, Card sourceCard,
                                                        List<UUID> combatDamageDealerIds)
             implements PermanentChoiceContext {}
-    record ChoosePlayerThenReturnCreatureToHand(String sourceCardName) implements PermanentChoiceContext {}
     record ZndrsplatsJudgmentCreatureChoice(
             List<ZndrsplatsJudgmentSelection> remainingSelections,
             List<ZndrsplatsJudgmentSelection> chosenSelections,
@@ -2110,11 +2106,12 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record ChooseCreatureAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
                                  boolean wasCastFromHand, int etbMode, boolean kicked) implements PermanentChoiceContext {}
 
-    record ChooseOpponentPermanentAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
-                                           boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
-                                           List<UUID> targetIds, List<String> repeatedAdditionalCosts,
-                                           List<UUID> convokeCreatureIds) implements PermanentChoiceContext {
-        public ChooseOpponentPermanentAsEnter {
+    /** The choice of a {@code ChoosePermanentOnEnterEffect}, with the entry it resumes. */
+    record ChoosePermanentAsEnter(UUID enteringPermanentId, UUID controllerId, Card card, UUID targetId,
+                                  boolean wasCastFromHand, int etbMode, int xValue, boolean kicked,
+                                  List<UUID> targetIds, List<String> repeatedAdditionalCosts,
+                                  List<UUID> convokeCreatureIds) implements PermanentChoiceContext {
+        public ChoosePermanentAsEnter {
             targetIds = List.copyOf(targetIds);
             repeatedAdditionalCosts = List.copyOf(repeatedAdditionalCosts);
             convokeCreatureIds = List.copyOf(convokeCreatureIds);

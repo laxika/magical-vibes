@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
@@ -18,6 +19,7 @@ import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +38,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
     private final CreatureControlService creatureControlService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -65,7 +68,7 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
     }
 
     private void resolvePermanent(GameData gameData, StackEntry entry, GainControlOfTargetEffect e) {
-        List<UUID> targetIds = e.ofTriggeringPermanent() ? triggeringPermanent(entry)
+        List<UUID> targetIds = !isTargeted(e) ? named(gameData, entry, e)
                 : entry.getTargetIds().isEmpty()
                 ? (entry.getTargetId() != null ? List.of(entry.getTargetId()) : List.of())
                 : entry.getTargetIds();
@@ -89,8 +92,8 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
     }
 
     private void resolveTemporary(GameData gameData, StackEntry entry, GainControlOfTargetEffect e) {
-        List<UUID> targetIds = e.ofTriggeringPermanent() ? triggeringPermanent(entry) : entry.targetsForEffect(e);
-        if (targetIds.isEmpty() && entry.getTargetId() != null && !e.ofTriggeringPermanent()) {
+        List<UUID> targetIds = !isTargeted(e) ? named(gameData, entry, e) : entry.targetsForEffect(e);
+        if (targetIds.isEmpty() && entry.getTargetId() != null && isTargeted(e)) {
             targetIds = List.of(entry.getTargetId());
         }
 
@@ -142,8 +145,8 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
             return;
         }
 
-        List<UUID> targetIds = e.ofTriggeringPermanent() ? triggeringPermanent(entry) : entry.targetsForEffect(e);
-        if (targetIds.isEmpty() && entry.getTargetId() != null && !e.ofTriggeringPermanent()) {
+        List<UUID> targetIds = !isTargeted(e) ? named(gameData, entry, e) : entry.targetsForEffect(e);
+        if (targetIds.isEmpty() && entry.getTargetId() != null && isTargeted(e)) {
             targetIds = List.of(entry.getTargetId());
         }
         for (UUID targetId : targetIds) {
@@ -155,8 +158,14 @@ public class GainControlOfTargetEffectHandler implements NormalEffectHandlerBean
         }
     }
 
-    /** "That permanent": the entry's triggering permanent, for {@link GainControlOfTargetEffect#ofTriggeringPermanent()}. */
-    private static List<UUID> triggeringPermanent(StackEntry entry) {
-        return entry.getTriggeringPermanentId() == null ? List.of() : List.of(entry.getTriggeringPermanentId());
+    private static boolean isTargeted(GainControlOfTargetEffect e) {
+        return e.subject() instanceof PermanentSubject.Target;
+    }
+
+    /** "That permanent", "that creature": the permanents the effect's subject names, none of them targeted. */
+    private List<UUID> named(GameData gameData, StackEntry entry, GainControlOfTargetEffect e) {
+        return subjectResolutionService.permanents(gameData, entry, e, e.subject()).stream()
+                .map(Permanent::getId)
+                .toList();
     }
 }

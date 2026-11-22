@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromGraveyardAndGrantCastPermissionEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.AllowCastTargetCardFromGraveyardThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.SurveilEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -21,7 +23,9 @@ public class MissionBriefing extends Card {
 
     public MissionBriefing() {
         addSpellEffect(new SurveilEffect(2));
-        addSpellEffect(new ChooseCardFromGraveyardAndGrantCastPermissionEffect(
-                INSTANT_OR_SORCERY, GraveyardSearchScope.CONTROLLERS_GRAVEYARD, true));
+        addSpellEffect(ChooseCardEffect.oneOf(Subjects.cardsInYourGraveyard(INSTANT_OR_SORCERY),
+                "an instant or sorcery card in your graveyard"));
+        addSpellEffect(AllowCastTargetCardFromGraveyardThisTurnEffect.of(
+                Subjects.cardsThisWay(StepKind.CHOOSE), true));
     }
 }

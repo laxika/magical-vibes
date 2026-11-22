@@ -34,19 +34,13 @@ public class ChooseCardFromTargetHandToBattlefieldEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ChooseCardFromTargetHandToBattlefieldEffect) effect;
-        UUID targetPlayerId = e.defendingPlayerHand()
-                ? defendingPlayerId(gameData, entry.getAttackedTargetId())
-                : entry.getTargetId();
+        UUID targetPlayerId = defendingPlayerId(gameData, entry.getAttackedTargetId());
         if (targetPlayerId == null) {
             return;
         }
         List<Card> hand = gameData.playerHands.getOrDefault(targetPlayerId, List.of());
 
-        if (e.defendingPlayerHand()) {
-            cardRevealService.lookAtHand(gameData, entry.getControllerId(), targetPlayerId);
-        } else {
-            cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
-        }
+        cardRevealService.lookAtHand(gameData, entry.getControllerId(), targetPlayerId);
 
         UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
         List<Integer> validIndices = new ArrayList<>();
@@ -62,13 +56,9 @@ public class ChooseCardFromTargetHandToBattlefieldEffectHandler implements Norma
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.TargetedHandBattlefieldChoice(
                 entry.getControllerId(), targetPlayerId, validIndices,
-                e.defendingPlayerHand()
-                        ? "You may put a " + e.label()
-                        + " card from the defending player's hand onto the battlefield tapped and attacking."
-                        : "You may put a " + e.label() + " card from their hand onto the battlefield under your control.",
-                e.grantHaste(), e.sacrificeAtEndStep(), e.enterTappedAndAttacking(),
-                e.enterTappedAndAttacking(), e.returnToHandAtEndStep(),
-                e.defendingPlayerHand() ? entry.getAttackedTargetId() : null));
+                "You may put a " + e.label()
+                        + " card from the defending player's hand onto the battlefield tapped and attacking.",
+                true, true, true, entry.getAttackedTargetId()));
     }
 
     private UUID defendingPlayerId(GameData gameData, UUID attackedTargetId) {

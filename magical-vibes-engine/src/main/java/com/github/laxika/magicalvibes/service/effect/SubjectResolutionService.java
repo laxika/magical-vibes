@@ -37,6 +37,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceOrPairedPred
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTappedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtMostPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanTargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -558,6 +560,7 @@ public class SubjectResolutionService {
                         .toList();
                 yield targets.size() == 1 ? targets.getFirst() : new PermanentAnyOfPredicate(targets);
             }
+            case PermanentPowerLessThanTargetPredicate ignored -> lessThanTargetsPower(ctx);
             case PermanentAllOfPredicate allOf -> new PermanentAllOfPredicate(allOf.predicates().stream()
                     .map(part -> bindTarget(ctx, part))
                     .toList());
@@ -567,6 +570,19 @@ public class SubjectResolutionService {
             case PermanentNotPredicate not -> new PermanentNotPredicate(bindTarget(ctx, not.predicate()));
             default -> predicate;
         };
+    }
+
+    /** The target's power as it is, else as it last was (CR 608.2h); with no target, no permanent has less. */
+    private PermanentPredicate lessThanTargetsPower(Context ctx) {
+        for (UUID targetId : ids(ctx, Subjects.target())) {
+            Permanent target = gameQueryService.findPermanentById(ctx.gameData(), targetId);
+            Integer power = target != null ? gameQueryService.getEffectivePower(ctx.gameData(), target)
+                    : ctx.entry().getLastKnownPermanentPowers().get(targetId);
+            if (power != null) {
+                return new PermanentPowerAtMostPredicate(power - 1);
+            }
+        }
+        return new PermanentAnyOfPredicate(List.of());
     }
 
     /** The permanents {@code subject} names for a static ability of {@code source}. */
@@ -1220,12 +1236,14 @@ public class SubjectResolutionService {
     }
 
     /**
-     * Whether {@code predicate} has a {@link PermanentIsTargetCardPredicate} leaf ("each other creature that player
-     * controls"), which a resolving effect's set reads as the entry's target permanent.
+     * Whether {@code predicate} has a leaf that a resolving effect's set binds to the entry's target permanent: a
+     * {@link PermanentIsTargetCardPredicate} ("each other creature that player controls") or a
+     * {@link PermanentPowerLessThanTargetPredicate} ("with lesser power").
      */
     private static boolean namesTargetCard(PermanentPredicate predicate) {
         return switch (predicate) {
             case PermanentIsTargetCardPredicate ignored -> true;
+            case PermanentPowerLessThanTargetPredicate ignored -> true;
             case PermanentAllOfPredicate allOf -> allOf.predicates().stream()
                     .anyMatch(SubjectResolutionService::namesTargetCard);
             case PermanentAnyOfPredicate anyOf -> anyOf.predicates().stream()

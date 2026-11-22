@@ -29,7 +29,7 @@ public class DeepCavernBat extends Card {
                 new ChooseCardsFromTargetHandEffect(
                         new Fixed(1), List.of(), List.of(), HandChoiceDestination.EXILE, true,
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
-                        0, false, false, false, false, false, false),
+                        0, false, false, false, false, false),
                 "You may exile a nonland card from that hand."
         ));
     }

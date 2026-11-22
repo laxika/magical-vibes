@@ -199,6 +199,7 @@ import com.github.laxika.magicalvibes.service.battlefield.ETBTokenTargetService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.cast.CastingCostService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.duration.DurationClock;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
@@ -2363,7 +2364,8 @@ public class AbilityActivationService {
         if (ability.isSuspendsSourceFromHand()) {
             // CR 702.62a: suspend requires that the player could begin to cast the card, so a name
             // prohibition on casting it also prevents suspending it.
-            if (castingPermissionService.getForbiddenCardNames(gameData, playerId).contains(card.getName())
+            if (CastingPermissionService.isCastForbiddenByName(
+                    card, castingPermissionService.getForbiddenCardNames(gameData, playerId))
                     || castingPermissionService.isPlayerPreventedFromCasting(gameData, playerId)) {
                 throw new IllegalStateException("This card cannot be suspended at this time");
             }

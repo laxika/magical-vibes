@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -45,6 +46,7 @@ class GainControlOfTargetEffectHandlerTest {
     @Mock private GameQueryService gameQueryService;
     @Mock private GameLogService gameLogService;
     @Mock private CreatureControlService creatureControlService;
+    @Mock private SubjectResolutionService subjectResolutionService;
     private GameData gd;
     private UUID player1Id;
     private UUID player2Id;
@@ -63,7 +65,8 @@ class GainControlOfTargetEffectHandlerTest {
         gd.playerIdToName.put(player2Id, "Player2");
         gd.playerBattlefields.put(player1Id, Collections.synchronizedList(new ArrayList<>()));
         gd.playerBattlefields.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
-        handler = new GainControlOfTargetEffectHandler(gameQueryService, gameLogService, creatureControlService);
+        handler = new GainControlOfTargetEffectHandler(gameQueryService, gameLogService, creatureControlService,
+                subjectResolutionService);
     }
 
     // ===== Helper methods =====

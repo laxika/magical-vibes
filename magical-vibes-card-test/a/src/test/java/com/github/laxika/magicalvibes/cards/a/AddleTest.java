@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.cards.w.WorldlyCounsel;
 import com.github.laxika.magicalvibes.cards.u.Undermine;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -46,9 +48,9 @@ class AddleTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, color);
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class).validIndices())
-                .containsExactly(0);
-        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .containsExactly(handCard(player2, 0));
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 0)));
 
         harness.assertInGraveyard(player2, "Undermine");
         harness.assertInHand(player2, "Forest");
@@ -64,16 +66,16 @@ class AddleTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, "BLUE");
 
-        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of(handCard(player2, 0))))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handleCardChosen(player1, 1))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 1))))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(2);
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
 
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 0)));
 
         harness.assertInGraveyard(player2, "Opt");
         harness.assertInHand(player2, "Nomadic Elf");
@@ -103,12 +105,12 @@ class AddleTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, "BLUE");
 
-        PendingInteraction.RevealedHandChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(0, 1);
+        assertThat(choice.validCardIds()).containsExactly(handCard(player2, 0), handCard(player2, 1));
 
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 0)));
 
         harness.assertInGraveyard(player2, "Worldly Counsel");
         assertThat(gd.playerHands.get(player2.getId())).extracting(c -> c.getName())
@@ -128,7 +130,7 @@ class AddleTest extends BaseCardTest {
         assertThat(gameLogContains("reveals their hand")).isTrue();
         assertThat(gameLogContains("Worldly Counsel")).isTrue();
 
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 0)));
     }
 
     @Test
@@ -141,12 +143,12 @@ class AddleTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
         harness.handleListChoice(player1, "GREEN");
 
-        PendingInteraction.RevealedHandChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(1);
+        assertThat(choice.validCardIds()).containsExactly(handCard(player2, 1));
 
-        harness.handleCardChosen(player1, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 1)));
 
         harness.assertInGraveyard(player2, "Nomadic Elf");
         assertThat(gd.playerHands.get(player2.getId())).extracting(c -> c.getName())
@@ -161,7 +163,7 @@ class AddleTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player1.getId());
         harness.handleListChoice(player1, "BLUE");
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player1, 0)));
 
         harness.assertInGraveyard(player1, "Worldly Counsel");
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -181,5 +183,10 @@ class AddleTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).extracting(c -> c.getName())
                 .containsExactly("Worldly Counsel", "Nomadic Elf", "Forest");
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
+
+    /** The id of the card at {@code index} of {@code player}'s hand. */
+    private UUID handCard(Player player, int index) {
+        return gd.playerHands.get(player.getId()).get(index).getId();
     }
 }

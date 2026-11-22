@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.filter;
 
+import com.github.laxika.magicalvibes.model.filter.CardHasChosenSpellColorPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasNameChosenThisResolutionPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardHasVoidCounterPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AdventureCast;
@@ -149,6 +151,7 @@ import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasChosenParityPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasTypeChosenThisResolutionPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanTargetPredicate;
 import com.github.laxika.magicalvibes.model.trigger.SpellTrigger;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -697,6 +700,11 @@ public class PredicateEvaluationService {
                     gameQueryService.cardHasSubtype(card, p.subtype(), gameData, cardOwnerId);
             case CardHasStudyCounterPredicate ignored ->
                     gameData != null && gameData.exiledCardsWithStudyCounters.contains(card.getId());
+            case CardHasVoidCounterPredicate ignored ->
+                    gameData != null && gameData.exiledCardsWithVoidCounters.contains(card.getId());
+            case CardHasChosenSpellColorPredicate ignored ->
+                    gameData != null && gameData.chosenSpellColor != null
+                            && gameQueryService.getEffectiveCardColors(gameData, card).contains(gameData.chosenSpellColor);
             case CardHasTypeChosenThisResolutionPredicate ignored -> {
                 StackEntry resolving = resolving(gameData);
                 CardSubtype chosen = resolving == null ? null : resolving.getChosenCreatureType();
@@ -2685,6 +2693,7 @@ public class PredicateEvaluationService {
                     || permanent.getCard().getId().equals(sourceCardId));
             case PermanentIsTargetCardPredicate ignored -> filterContext.targetCardId() != null
                     && permanent.getOriginalCard().getId().equals(filterContext.targetCardId());
+            case PermanentPowerLessThanTargetPredicate ignored -> false;
             case PermanentIsSpecificPermanentPredicate specific ->
                     specific.permanentId() != null && specific.permanentId().equals(permanent.getId());
             case PermanentControlledBySourceControllerPredicate ignored -> {

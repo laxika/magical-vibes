@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.AttachAnyNumberOfControlledEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
@@ -152,6 +153,22 @@ class MultiPermanentChoiceAiStrategyTest {
                 new PermanentIsCreaturePredicate(), Subjects.thisWay(StepKind.CHOOSE)));
 
         assertChosen(List.of(own.getId()));
+    }
+
+    @Test
+    @DisplayName("A choice of what Equipment is then attached to takes the AI's own strongest creature")
+    void attachesToItsOwnStrongest() throws Exception {
+        Permanent weak = creature("Weak", 1);
+        Permanent strong = creature("Strong", 4);
+        gameData.playerBattlefields.get(aiPlayerId).addAll(List.of(weak, strong));
+        when(gameQueryService.getEffectivePower(gameData, weak)).thenReturn(1);
+        when(gameQueryService.getEffectivePower(gameData, strong)).thenReturn(4);
+
+        ChoosePermanentsEffect choose = ChoosePermanentsEffect.upTo(1, Subjects.creaturesYouControl(), "up to one");
+        answerChoice(choose, List.of(weak, strong), 1,
+                new AttachAnyNumberOfControlledEquipmentToTargetCreatureEffect(Subjects.thisWay(StepKind.CHOOSE)));
+
+        assertChosen(List.of(strong.getId()));
     }
 
     private void answerChoice(ChoosePermanentsEffect choose, List<Permanent> offered, int maximum, CardEffect next)

@@ -81,8 +81,8 @@ public class DraftTwiceSpellbookChoiceInteractionHandler
                 player.getId(), player.getId(), validIndices, 1,
                 false, false, List.of(), null,
                 "Choose one of those cards to put onto the battlefield tapped.",
-                false, false, false, null, null, 0, null,
-                false, false, false, false,
+                false, false, false, 0, null,
+                false, false, false,
                 false, false, 0, false,
                 null, null, new PutChosenCardFromHandOntoBattlefieldEffect(true), 0).withKeepInHand());
     }

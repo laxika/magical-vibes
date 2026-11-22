@@ -82,32 +82,6 @@ public final class HandCardChoiceInteractionHandlers {
         }
     }
 
-    /** Pull of the Mist Moon: choose a hand card to receive its perpetual ETB ability. */
-    @Component
-    public static class PerpetualEnterExileHandCardChoiceInteractionHandler
-            extends Base<PendingInteraction.PerpetualEnterExileHandCardChoice> {
-
-        private final CardChoiceHandlerService cardChoiceHandlerService;
-
-        public PerpetualEnterExileHandCardChoiceInteractionHandler(
-                CardChoiceHandlerService cardChoiceHandlerService) {
-            this.cardChoiceHandlerService = cardChoiceHandlerService;
-        }
-
-        @Override
-        public Class<PendingInteraction.PerpetualEnterExileHandCardChoice> handledType() {
-            return PendingInteraction.PerpetualEnterExileHandCardChoice.class;
-        }
-
-        @Override
-        public void handleAnswer(GameData gameData, Player player,
-                                 PendingInteraction.PerpetualEnterExileHandCardChoice interaction,
-                                 InteractionAnswer answer) {
-            cardChoiceHandlerService.handlePerpetualEnterExileHandCardChosen(
-                    gameData, player, cardIndex(answer));
-        }
-    }
-
     @Component
     public static class WordOfCommandCardChoiceInteractionHandler
             implements InteractionHandler<PendingInteraction.WordOfCommandCardChoice> {

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.cards.t.ThievingMagpie;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -42,18 +43,18 @@ class DistendedMindbenderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities(); // resolve cast trigger → hand choice
 
-        PendingInteraction.RevealedHandChoice first =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        PendingInteraction.MultiGraveyardChoice first =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(first).isNotNull();
-        assertThat(first.validIndices()).containsExactly(0); // only Bears for MV≤3 nonland
-        harness.handleCardChosen(player1, 0);
+        assertThat(first.validCardIds()).containsExactly(handCard(player2, 0)); // only Bears for MV≤3 nonland
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 0)));
 
-        PendingInteraction.RevealedHandChoice second =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        PendingInteraction.MultiGraveyardChoice second =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(second).isNotNull();
-        // Hand after removing Bears: Forest (0), Air Elemental (1)
-        assertThat(second.validIndices()).containsExactly(1);
-        harness.handleCardChosen(player1, 1);
+        // Nothing has left the hand: both are discarded together once both are chosen
+        assertThat(second.validCardIds()).containsExactly(handCard(player2, 2));
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 2)));
 
         harness.passBothPriorities(); // resolve creature spell
 
@@ -77,11 +78,10 @@ class DistendedMindbenderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        PendingInteraction.RevealedHandChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
-        assertThat(choice.validIndices()).containsExactly(0); // Shock only; no MV≥4 follow-up
-        assertThat(choice.followUpFilter()).isNull();
-        harness.handleCardChosen(player1, 0);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(handCard(player2, 0)); // Shock only; no MV≥4 follow-up
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 0)));
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player2, "Shock");
@@ -102,12 +102,12 @@ class DistendedMindbenderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        PendingInteraction.RevealedHandChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
-        assertThat(choice.validIndices()).containsExactly(1); // Air Elemental only
-        assertThat(choice.followUpFilter()).isNull();
-        harness.handleCardChosen(player1, 1);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.validCardIds()).containsExactly(handCard(player2, 1)); // Air Elemental only
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 1)));
 
+        assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player2, "Air Elemental");
         assertThat(gd.playerHands.get(player2.getId()))
                 .extracting(c -> c.getName())
@@ -129,7 +129,7 @@ class DistendedMindbenderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        harness.handleCardChosen(player1, 0); // discard Shock
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 0))); // discard Shock
         harness.passBothPriorities();
 
         harness.assertOnBattlefield(player1, "Distended Mindbender");
@@ -160,16 +160,16 @@ class DistendedMindbenderTest extends BaseCardTest {
         harness.handlePermanentChosen(player1, player2.getId());
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleCardChosen(player1, 1))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 1))))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handleCardChosen(player1, 2))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 2))))
                 .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handleCardChosen(player1, -1))
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of()))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 0)));
         harness.assertNotInGraveyard(player2, "Civic Wayfinder");
         harness.assertNotInGraveyard(player2, "Thieving Magpie");
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(handCard(player2, 1)));
 
         harness.assertInGraveyard(player2, "Civic Wayfinder");
         harness.assertInGraveyard(player2, "Thieving Magpie");
@@ -269,5 +269,10 @@ class DistendedMindbenderTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Distended Mindbender");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    /** The id of the card at {@code index} of {@code player}'s hand. */
+    private UUID handCard(Player player, int index) {
+        return gd.playerHands.get(player.getId()).get(index).getId();
     }
 }

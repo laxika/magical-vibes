@@ -5,12 +5,16 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
@@ -87,7 +91,7 @@ class MultiGraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInt
                 && ctx.gameData().graveyardTargetOperation.card.getMultiTargetConstraint()
                 == MultiTargetConstraint.DIFFERENT_MANA_VALUES;
         if (maxOnePerCardType.isEmpty() && !differentManaValues) {
-            return applyMaximumTotalManaValue(validIds, interaction);
+            return applyMaximumTotalManaValue(mostValuableFirst(validIds, interaction, ctx), interaction);
         }
 
         Map<CardType, Integer> selectedCounts = new EnumMap<>(CardType.class);
@@ -112,6 +116,35 @@ class MultiGraveyardChoiceAiStrategy implements AiInteractionStrategy<PendingInt
             }
         }
         return applyMaximumTotalManaValue(chosen, interaction);
+    }
+
+    /**
+     * As its own effect says "choose a card", the AI takes the most valuable (highest mana value) of another
+     * player's revealed hand or of its own graveyard; any other cards keep the order they are offered in.
+     */
+    private List<UUID> mostValuableFirst(List<UUID> validIds, PendingInteraction.MultiGraveyardChoice interaction,
+                                         AiInteractionContext ctx) {
+        GameData gameData = ctx.gameData();
+        StackEntry resolving = gameData.pendingEffectResolutionEntry;
+        if (!gameData.graveyardTargetOperation.chooseCardResume || resolving == null
+                || !ctx.aiPlayerId().equals(resolving.getControllerId())) {
+            return validIds;
+        }
+        Set<UUID> wanted = new HashSet<>();
+        gameData.playerHands.forEach((playerId, hand) -> {
+            if (!playerId.equals(ctx.aiPlayerId())) {
+                hand.forEach(card -> wanted.add(card.getId()));
+            }
+        });
+        gameData.playerGraveyards.getOrDefault(ctx.aiPlayerId(), List.of()).forEach(card -> wanted.add(card.getId()));
+        if (!wanted.containsAll(validIds)) {
+            return validIds;
+        }
+        Map<UUID, Integer> manaValues = new HashMap<>();
+        interaction.cards().forEach(card -> manaValues.put(card.getId(), card.getManaValue()));
+        return validIds.stream()
+                .sorted(Comparator.comparingInt((UUID id) -> manaValues.getOrDefault(id, 0)).reversed())
+                .toList();
     }
 
     private List<UUID> chooseCardsPerGraveyard(

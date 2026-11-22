@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.f.FireIce;
 import com.github.laxika.magicalvibes.cards.q.Quicken;
 import com.github.laxika.magicalvibes.cards.s.SkarrgTheRagePits;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import java.util.Map;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -220,5 +222,24 @@ class ConjurersBanTest extends BaseCardTest {
         card.setName(name);
         card.setType(com.github.laxika.magicalvibes.model.CardType.SORCERY);
         return card;
+    }
+
+    @Test
+    @CardUsed(FireIce.class)
+    @DisplayName("Choosing one half's name leaves the other half of a split card castable (CR 709.3a, 709.4a)")
+    void chosenHalfLeavesOtherHalfCastable() {
+        harness.castFromHand(player1, new ConjurersBan(), "{W}{B}");
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Ice");
+
+        harness.setHand(player1, List.of(new FireIce()));
+        harness.addMana(player1, ManaColor.RED, 2);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        gs.playCard(gd, player1, 0, 0, null, Map.of(player2.getId(), 2), List.of(player2.getId()), List.of());
+        harness.passBothPriorities();
+
+        harness.assertLife(player2, 18);
     }
 }

@@ -1197,6 +1197,12 @@ public class SpellCastingService {
                 List<ChooseOneEffect.ChooseOneOption> chosenModes = chosenModeIndices.stream()
                         .map(idx -> coe.options().get(idx))
                         .toList();
+                // Only the chosen half is evaluated to see if it can be cast (CR 709.3a).
+                if (gameData != null && controllerId != null && chosenModeIndices.size() == 1
+                        && castingPermissionService.isSplitModeForbiddenByName(
+                        gameData, controllerId, card, chosenModeIndices.getFirst())) {
+                    throw new IllegalStateException("Card is not playable");
+                }
                 Card splitCharacteristics = selectedSplitModeCharacteristics(card, effectiveXValue);
                 if (splitCharacteristics != card) {
                     card.rememberSplitWholeCard();
@@ -12558,7 +12564,8 @@ public class SpellCastingService {
         }
         if (card.hasType(CardType.LAND)
                 ? castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)
-                : castingPermissionService.getForbiddenCardNames(gameData, playerId).stream().anyMatch(card::hasName)) {
+                : CastingPermissionService.isCastForbiddenByName(
+                        card, castingPermissionService.getForbiddenCardNames(gameData, playerId))) {
             throw new IllegalStateException("Card is not playable");
         }
         boolean directExilePlayPermission = castingPermissionService.hasExilePlayPermission(
@@ -13796,7 +13803,8 @@ public class SpellCastingService {
             return;
         }
 
-        if (castingPermissionService.getForbiddenCardNames(gameData, playerId).stream().anyMatch(card::hasName)) {
+        if (CastingPermissionService.isCastForbiddenByName(
+                card, castingPermissionService.getForbiddenCardNames(gameData, playerId))) {
             throw new IllegalStateException("Card is not playable");
         }
 

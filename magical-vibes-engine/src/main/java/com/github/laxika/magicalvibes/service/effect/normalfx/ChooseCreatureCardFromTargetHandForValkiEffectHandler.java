@@ -50,7 +50,7 @@ public class ChooseCreatureCardFromTargetHandForValkiEffectHandler implements No
         try {
             playerInteractionSupport.resolveHandRevealAndChoose(
                     gameData, entry, 1, List.of(), List.of(CardType.CREATURE), null,
-                    false, true, sourcePermanentId, false, false);
+                    false, true, sourcePermanentId, false);
         } finally {
             entry.restoreTargetIdAfterEffectResolution(previousTargetId);
         }

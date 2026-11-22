@@ -78,7 +78,7 @@ class SpecializedInteractionProjectionTest {
         gameData.playerDecks.put(opponentId, new ArrayList<>(List.of(inLibrary)));
 
         InteractionPromptMessage search = prompt(new PendingInteraction.MultiZoneExileChoice(
-                controllerId, List.of(match.getId()), 1, opponentId, controllerId, "Match", false, null, null, null,
+                controllerId, List.of(match.getId()), 1, opponentId, controllerId, "Match", null,
                 null, false,
                 new PendingInteraction.MultiZoneExileChoice.SearchedZones(Set.of(Zone.HAND), 0), false, true));
 

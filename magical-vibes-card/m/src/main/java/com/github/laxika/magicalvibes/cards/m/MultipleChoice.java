@@ -4,19 +4,23 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.AllConditions;
 import com.github.laxika.magicalvibes.model.condition.AnyOf;
 import com.github.laxika.magicalvibes.model.condition.Condition;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
-import com.github.laxika.magicalvibes.model.effect.ChoosePlayerThenReturnCreatureToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnPermanentControlledByPlayerToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import java.util.List;
 import java.util.Set;
 
@@ -28,7 +32,11 @@ public class MultipleChoice extends Card {
                 exactXOrAtLeastFour(1), SequenceEffect.of(new ScryEffect(1), new DrawCardEffect(1))));
         addSpellEffect(new ConditionalEffect(
                 exactXOrAtLeastFour(2), new MayEffect(
-                        new ChoosePlayerThenReturnCreatureToHandEffect(),
+                        SequenceEffect.of(
+                                new ChoosePlayerEffect(Subjects.eachPlayer(), "a player"),
+                                ReturnPermanentControlledByPlayerToHandEffect.byPlayer(
+                                        Subjects.playersThisWay(StepKind.CHOOSE),
+                                        new PermanentIsCreaturePredicate(), "creature")),
                         "Choose a player to return a creature?")));
         addSpellEffect(new ConditionalEffect(
                 exactXOrAtLeastFour(3), new CreateTokenEffect(

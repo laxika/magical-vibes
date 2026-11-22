@@ -28,7 +28,7 @@ public class BindingNegotiationEffectHandler implements NormalEffectHandlerBean 
         gameData.discardCausedByOpponent = true;
         playerInteractionSupport.resolveHandRevealAndChoose(
                 gameData, entry, 1, List.of(CardType.LAND), List.of(), null,
-                true, false, null, true, false, 0);
+                true, false, null, true, 0);
 
         PendingInteraction.RevealedHandChoice choice =
                 gameData.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);

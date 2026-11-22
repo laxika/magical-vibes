@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -187,6 +188,26 @@ class FireIceTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castModalInstant(player1, 0, 1, List.of(kavu.getId())))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @CardUsed({FireIce.class, MeddlingMage.class})
+    @DisplayName("Naming Ice leaves Fire castable: only the half being cast is evaluated (CR 709.3a)")
+    void meddlingMageNamingIceLeavesFireCastable() {
+        Permanent mage = harness.addToBattlefieldAndReturn(player2, new MeddlingMage());
+        mage.setChosenName("Ice");
+        harness.forceActivePlayer(player1);
+        harness.setHand(player1, List.of(new FireIce()));
+        addMana(ManaColor.RED);
+
+        assertThat(harness.getGameActionAvailabilityService().getPlayableCardIndices(gd, player1.getId()))
+                .containsExactly(0);
+
+        gd.playerManaPools.get(player1.getId()).clear();
+        int lifeBefore = gd.getLife(player2.getId());
+        castFire(Map.of(player2.getId(), 2), List.of(player2.getId()));
+
+        assertThat(gd.getLife(player2.getId())).isEqualTo(lifeBefore - 2);
     }
 
     private void castFire(Map<java.util.UUID, Integer> damageAssignments, List<java.util.UUID> targets) {
