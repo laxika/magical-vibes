@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -80,12 +80,12 @@ public class OddricLunarMarquis extends Card {
                         new GrantKeywordEffect(keyword, Subjects.creaturesYouControl()))),
                 Stream.<CardEffect>of(
                         conditionalSharedEffect(Keyword.INGEST,
-                                new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
+                                new GrantEffectToTargetUntilEndOfTurnEffect(
                                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                                        ExileTopCardOfOwnLibraryEffect.of(Subjects.triggeringPlayer())))),
+                                        ExileTopCardOfOwnLibraryEffect.of(Subjects.triggeringPlayer())), Subjects.creaturesYouControl())),
                         new ConditionalEffect(
                                 sharesNonbasicLandwalk(),
-                                new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(StaticAbility.of(NONBASIC_LANDWALK))),
+                                new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(NONBASIC_LANDWALK), Subjects.creaturesYouControl())),
                         new ConditionalEffect(
                                 sharesManaAbility(),
                                 new GrantActivatedAbilityEffect(

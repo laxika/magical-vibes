@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.x;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DefendingPlayerCantCastSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 @CardRegistration(set = "SCG", collectorNumber = "135")
@@ -10,6 +11,6 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class XantidSwarm extends Card {
 
     public XantidSwarm() {
-        addTrigger(Triggers.attacks(), new DefendingPlayerCantCastSpellsThisTurnEffect());
+        addTrigger(Triggers.attacks(), new OpponentsCantCastSpellsThisTurnEffect(Subjects.defendingPlayer()));
     }
 }

@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ public class GrantEffectToTargetUntilEndOfCombatEffectHandler implements NormalE
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,6 +36,13 @@ public class GrantEffectToTargetUntilEndOfCombatEffectHandler implements NormalE
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var grant = (GrantEffectToTargetUntilEndOfCombatEffect) effect;
+
+        if (!grant.subject().declaresTarget()) {
+            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect, grant.subject())) {
+                grantTo(gameData, entry, grant, permanent);
+            }
+            return;
+        }
 
         if (entry.getTargetIds() != null && !entry.getTargetIds().isEmpty()) {
             for (UUID targetId : entry.getTargetIds()) {

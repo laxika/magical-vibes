@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatesTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,7 +21,7 @@ public class AkroanHorse extends Card {
 
     public AkroanHorse() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOpponentGainsControlOfSourceEffect());
-        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new EachOpponentCreatesTokenEffect(
-                new CreateTokenEffect("Soldier", 1, 1, CardColor.WHITE, List.of(CardSubtype.SOLDIER), Set.of(), Set.of())));
+        addTrigger(Triggers.upkeep(ActivePlayer.YOU), new EachPlayerCreatesTokenEffect(
+                new CreateTokenEffect("Soldier", 1, 1, CardColor.WHITE, List.of(CardSubtype.SOLDIER), Set.of(), Set.of()), Subjects.eachOpponent()));
     }
 }

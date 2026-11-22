@@ -3,13 +3,15 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBeSacrificedEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GoadCreaturesUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourcePermanentUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -26,10 +28,10 @@ public class SlicerHiredMuscle extends Card {
 
         addTrigger(Triggers.upkeep(ActivePlayer.OPPONENT), new MayEffect(
                 SequenceEffect.of(
-                        new TargetPlayerGainsControlOfSourcePermanentUntilEndOfTurnEffect(),
+                        TargetPlayerGainsControlOfSourceCreatureEffect.triggeringPlayer(Duration.UNTIL_END_OF_TURN),
                         new UntapPermanentsEffect(Subjects.source()),
                         new GoadCreaturesUntilNextTurnEffect(new PermanentIsSourcePermanentPredicate()),
-                        new GrantStaticEffectToSourceUntilEndOfTurnEffect(new CantBeSacrificedEffect())),
+                        new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(new CantBeSacrificedEffect()), Subjects.source())),
                 "Have that player gain control of Slicer until end of turn?",
                 new TransformSelfEffect()));
     }

@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
@@ -34,8 +34,8 @@ public class NimbleTrapfinder extends Card {
                 new GrantEffectEffect(new CantBeBlockedEffect(), Subjects.source())));
         addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new FullParty()),
-                new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
+                new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                        new DrawCardEffect(1))));
+                        new DrawCardEffect(1)), Subjects.creaturesYouControl()));
     }
 }

@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.FlashbackCast;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -24,9 +24,9 @@ public class Despair extends Card {
         // Until end of turn, creatures you control gain menace and
         // "Whenever this creature deals combat damage to a player, that player discards a card."
         addSpellEffect(new GrantKeywordEffect(Keyword.MENACE, Subjects.otherCreaturesYouControl()));
-        addSpellEffect(new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
+        addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                new DiscardEffect(1, Subjects.targetPlayer()))));
+                new DiscardEffect(1, Subjects.targetPlayer())), Subjects.creaturesYouControl()));
         // Aftermath cost equals this half's mana cost; exile after leaving the stack.
         addCastingOption(new FlashbackCast("{1}{B}"));
     }

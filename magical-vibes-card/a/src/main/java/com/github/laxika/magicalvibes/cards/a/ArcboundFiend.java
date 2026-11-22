@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.MoveCounterFromTargetCreatureToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -21,7 +21,7 @@ public class ArcboundFiend extends Card {
 
         target(TargetFilters.creature()).addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 new MayEffect(
-                        new MoveCounterFromTargetCreatureToSourceEffect(CounterType.PLUS_ONE_PLUS_ONE),
+                        MoveCounterFromSourceToTargetCreatureEffect.fromTargetOntoSource(CounterType.PLUS_ONE_PLUS_ONE),
                         "Move a +1/+1 counter from target creature onto this creature?"));
 
         addTrigger(Triggers.dies(ObjectRelation.THIS),

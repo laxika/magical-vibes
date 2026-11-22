@@ -1654,6 +1654,8 @@ verbatim in `GrantProtectionChoiceUntilEndOfTurnEffectHandler.resolveRecipientId
 **Two deltas to preserve**: `skipIfAlreadyPresent` defaults `true` on the survivor but the absorbed
 three have no such check (migrated call sites must pass `false`); and `targetSpec()` is `CREATURE`
 on the until-EOT variant vs `PERMANENT` on the base. Update `TargetPolarityClassifier`.
+**19b status**: partly done (effect-cleanup run 5m): the source and own-creatures records are
+`GrantEffectToTargetUntilEndOfTurnEffect(ability, subject)`; folding that record into this target is left.
 
 ---
 

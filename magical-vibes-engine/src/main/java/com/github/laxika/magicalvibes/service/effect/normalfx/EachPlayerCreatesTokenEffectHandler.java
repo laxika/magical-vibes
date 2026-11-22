@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,6 +22,7 @@ public class EachPlayerCreatesTokenEffectHandler implements NormalEffectHandlerB
     private final PermanentControlSupport permanentControlSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -42,7 +44,7 @@ public class EachPlayerCreatesTokenEffectHandler implements NormalEffectHandlerB
         }
         AmountContext base = AmountContext.forStackEntry(entry, source);
 
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, e.players())) {
             // Re-evaluate the token count relative to each creating player so CONTROLLER-scoped
             // counts read that player's own board (Waiting in the Weeds: untapped Forests they control).
             AmountContext playerContext = base.withControllerId(playerId);

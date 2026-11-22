@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.ControllerCantLoseLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -242,7 +242,7 @@ class TreeOfRedemptionTest extends BaseCardTest {
         Permanent tree = addReadyTree(player1);
         harness.setLife(player1, 5);
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player1.getId(),
-                new OpponentsCantGainLifeThisTurnEffect(), player1.getId(), Duration.UNTIL_END_OF_TURN));
+                new PlayersCantGainLifeThisTurnEffect(), player1.getId(), Duration.UNTIL_END_OF_TURN));
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();

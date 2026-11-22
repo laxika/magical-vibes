@@ -5,11 +5,12 @@ import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaCastingCost;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToOwnCreaturesUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.EnumSet;
@@ -30,8 +31,8 @@ public class EldritchImmunity extends Card {
                 EnumSet.allOf(CardColor.class));
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
-                new GrantStaticEffectToTargetUntilEndOfTurnEffect(protection),
-                new GrantStaticEffectToOwnCreaturesUntilEndOfTurnEffect(protection)));
+                new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(protection)),
+                new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(protection), Subjects.creaturesYouControl())));
         target(TargetFilters.creatureYouControl());
     }
 }

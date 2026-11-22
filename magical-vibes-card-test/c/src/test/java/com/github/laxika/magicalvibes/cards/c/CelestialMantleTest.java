@@ -141,4 +141,23 @@ class CelestialMantleTest extends BaseCardTest {
         mantle.setAttachedTo(creature.getId());
         return mantle;
     }
+
+    @Test
+    @DisplayName("Doubles the life of the controller of the creature that dealt the damage, even after the Aura moved")
+    void doublesLifeOfDamagingCreaturesControllerAfterAuraMoves() {
+        harness.setLife(player1, 14);
+        harness.setLife(player2, 20);
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent mantle = attachMantle(player1, creature);
+        creature.setAttacking(true);
+        harness.forceStep(TurnStep.COMBAT_DAMAGE);
+        harness.resolveCombatDamage();
+        assertThat(gd.stack).hasSize(1);
+        mantle.setAttachedTo(addCreatureReady(player2, new GrizzlyBears()).getId());
+
+        resolveAllTriggers();
+
+        assertThat(gd.playerLifeTotals.get(player1.getId())).isEqualTo(28);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(15);
+    }
 }

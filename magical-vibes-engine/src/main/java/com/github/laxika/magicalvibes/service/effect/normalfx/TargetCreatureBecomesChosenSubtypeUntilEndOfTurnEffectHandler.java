@@ -51,7 +51,7 @@ public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler imple
             int affectedCount = 0;
             for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect,
                     chosenEffect.subject())) {
-                setCreatureTypeOverride(gameData, entry, permanent, chosenSubtype);
+                addCreatureType(gameData, entry, chosenEffect, permanent, chosenSubtype);
                 affectedCount++;
             }
             gameLogService.append(gameData, GameLog.builder()
@@ -62,23 +62,24 @@ public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler imple
             return;
         }
 
-        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, Subjects.target());
+        Permanent target = subjectResolutionService.permanent(gameData, entry, effect, chosenEffect.subject());
         if (target == null) {
             return;
         }
 
-        setCreatureTypeOverride(gameData, entry, target, chosenSubtype);
+        addCreatureType(gameData, entry, chosenEffect, target, chosenSubtype);
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())
                 .text(" becomes a " + chosenSubtype.getDisplayName() + " until end of turn.")
                 .build());
     }
 
-    private void setCreatureTypeOverride(GameData gameData, StackEntry entry, Permanent permanent,
-                                         CardSubtype chosenSubtype) {
+    private void addCreatureType(GameData gameData, StackEntry entry,
+                                 TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect effect, Permanent permanent,
+                                 CardSubtype chosenSubtype) {
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
-                entry.getControllerId(), new GrantSubtypeEffect(chosenSubtype, Subjects.target(), true),
+                entry.getControllerId(), new GrantSubtypeEffect(chosenSubtype, Subjects.target(), !effect.retainOtherTypes()),
                 permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
     }
 }

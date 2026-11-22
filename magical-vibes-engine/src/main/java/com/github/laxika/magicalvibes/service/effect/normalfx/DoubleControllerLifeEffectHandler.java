@@ -8,12 +8,20 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DoubleControllerLifeEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.MaroGoneNutsSupport;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+/**
+ * Doubles a player's life total.
+ *
+ * <p>Marked {@link AsksDeathReplacementsFirst}: the new life total is its first change, so a Lich's Duel Mastery
+ * the life loss of a doubled negative total would sacrifice instead (CR 701.10d) is asked about (CR 616.1) before
+ * the life total changes.
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -21,6 +29,7 @@ public class DoubleControllerLifeEffectHandler implements NormalEffectHandlerBea
 
     private final LifeSupport lifeSupport;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -29,7 +38,8 @@ public class DoubleControllerLifeEffectHandler implements NormalEffectHandlerBea
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID playerId = entry.getControllerId();
+        UUID playerId = subjectResolutionService.player(gameData, entry, effect,
+                ((DoubleControllerLifeEffect) effect).player());
         if (playerId == null) return;
 
         int currentLife = gameData.getLife(playerId);

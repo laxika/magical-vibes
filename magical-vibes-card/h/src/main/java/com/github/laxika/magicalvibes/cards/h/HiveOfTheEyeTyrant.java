@@ -14,8 +14,9 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -37,8 +38,8 @@ public class HiveOfTheEyeTyrant extends Card {
                 "{3}{B}",
                 List.of(new AnimatePermanentsEffect(
                         3, 3, List.of(CardSubtype.BEHOLDER), Set.of(Keyword.MENACE), CardColor.BLACK),
-                        new GrantEffectToSourceUntilEndOfTurnEffect(new TriggeredAbility(Triggers.attacks(),
-                                new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD)))),
+                        new GrantEffectToTargetUntilEndOfTurnEffect(new TriggeredAbility(Triggers.attacks(),
+                                new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD)), Subjects.source())),
                 "{3}{B}: Until end of turn, this land becomes a 3/3 black Beholder creature with menace and "
                         + "\"Whenever this creature attacks, exile target card from defending player's graveyard.\" "
                         + "It's still a land."

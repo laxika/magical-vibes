@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AwardManaUntilEndOfCombatEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -17,8 +17,8 @@ public class SozinsComet extends Card {
 
     public SozinsComet() {
         addSpellEffect(new GrantKeywordEffect(Keyword.FIREBENDING, Subjects.otherCreaturesYouControl()));
-        addSpellEffect(new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
-                new TriggeredAbility(Triggers.attacks(), new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 5))));
+        addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
+                new TriggeredAbility(Triggers.attacks(), new AwardManaUntilEndOfCombatEffect(ManaColor.RED, 5)), Subjects.creaturesYouControl()));
         addCastingOption(new ForetellCast("{2}{R}"));
     }
 }

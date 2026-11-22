@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatesTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -18,7 +18,7 @@ public class BenevolentOffering extends Card {
     public BenevolentOffering() {
         CreateTokenEffect spirits = CreateTokenEffect.whiteSpirit(3);
         addSpellEffect(spirits);
-        addSpellEffect(new EachOpponentCreatesTokenEffect(spirits));
+        addSpellEffect(new EachPlayerCreatesTokenEffect(spirits, Subjects.eachOpponent()));
 
         addSpellEffect(new GainLifeEffect(new Scaled(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER), 2)));

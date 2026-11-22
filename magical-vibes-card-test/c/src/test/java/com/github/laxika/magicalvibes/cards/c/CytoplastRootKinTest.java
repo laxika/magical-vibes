@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.b.Blightbeetle;
 import com.github.laxika.magicalvibes.cards.m.MistralCharger;
 import com.github.laxika.magicalvibes.cards.s.Solemnity;
 import com.github.laxika.magicalvibes.cards.s.SimicAscendancy;
@@ -15,7 +16,7 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CytoplastRootKin.class, MistralCharger.class, Solemnity.class, SimicAscendancy.class})
+@CardUsed({CytoplastRootKin.class, MistralCharger.class, Solemnity.class, SimicAscendancy.class, Blightbeetle.class})
 class CytoplastRootKinTest extends BaseCardTest {
 
     @Test
@@ -220,5 +221,25 @@ class CytoplastRootKinTest extends BaseCardTest {
         harness.castFromHand(player1, new CytoplastRootKin(), "{2}{G}{G}");
         resolveAllTriggers();
         return findPermanent(player1, "Cytoplast Root-Kin");
+    }
+
+    @Test
+    @DisplayName("No counter leaves the target when Root-Kin can't have +1/+1 counters put on it")
+    void activatedAbilityKeepsTargetCounterWhenRootKinCantHavePlusOneCounters() {
+        Permanent rootKin = castRootKin();
+        Permanent charger = addCreatureReady(player1, new MistralCharger());
+        charger.setCounterCount(CounterType.PLUS_ONE_PLUS_ONE, 1);
+        harness.addToBattlefield(player2, new Blightbeetle());
+
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.activateAbility(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(rootKin),
+                null,
+                charger.getId());
+        resolveAllTriggers();
+
+        // A counter that can't be put on isn't moved (CR 122.5).
+        assertThat(rootKin.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(4);
+        assertThat(charger.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 }

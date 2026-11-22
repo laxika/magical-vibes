@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.rules.TurnEvent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -110,11 +110,11 @@ class FlamesOfTheBloodHandTest extends BaseCardTest {
     @DisplayName("The life gain lock wears off at end of turn")
     void lockClearedAtEndOfTurn() {
         gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2.getId(),
-                new OpponentsCantGainLifeThisTurnEffect(), player2.getId(), Duration.UNTIL_END_OF_TURN));
+                new PlayersCantGainLifeThisTurnEffect(), player2.getId(), Duration.UNTIL_END_OF_TURN));
 
         gd.rulesEvents.occur(new TurnEvent.Cleanup(gd.activePlayerId));
 
-        assertThat(gd.hasFloatingEffectOnPlayer(player2.getId(), OpponentsCantGainLifeThisTurnEffect.class)).isFalse();
+        assertThat(gd.hasFloatingEffectOnPlayer(player2.getId(), PlayersCantGainLifeThisTurnEffect.class)).isFalse();
         assertThat(gqs.canPlayerGainLife(gd, player2.getId())).isTrue();
     }
 

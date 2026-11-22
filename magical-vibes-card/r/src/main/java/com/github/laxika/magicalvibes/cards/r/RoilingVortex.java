@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SpellManaSpentAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -29,7 +29,7 @@ public class RoilingVortex extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new OpponentsCantGainLifeThisTurnEffect()),
+                List.of(new PlayersCantGainLifeThisTurnEffect(Subjects.eachOpponent())),
                 "{R}: Your opponents can't gain life this turn."
         ));
     }

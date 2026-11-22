@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.w.WitchbaneOrb;
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -12,7 +14,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SlicerHiredMuscle.class, SlicerHighSpeedAntagonist.class})
+@CardUsed({SlicerHiredMuscle.class, SlicerHighSpeedAntagonist.class, WitchbaneOrb.class})
 class SlicerHiredMuscleTest extends BaseCardTest {
 
     @Test
@@ -135,5 +137,18 @@ class SlicerHiredMuscleTest extends BaseCardTest {
 
     private void advanceToOpponentUpkeep() {
         advanceToUpkeep(player2);
+    }
+
+    @Test
+    @DisplayName("The opponent isn't targeted, so one with hexproof can still gain control of Slicer")
+    void opponentWithHexproofCanStillGainControlOfSlicer() {
+        Permanent slicer = harness.addToBattlefieldAndReturn(player1, new SlicerHiredMuscle());
+        harness.addToBattlefield(player2, new WitchbaneOrb());
+
+        advanceToOpponentUpkeep();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gqs.findPermanentController(gd, slicer.getId())).isEqualTo(player2.getId());
     }
 }

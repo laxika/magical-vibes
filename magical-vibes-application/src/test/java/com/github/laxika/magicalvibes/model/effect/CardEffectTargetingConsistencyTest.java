@@ -90,14 +90,6 @@ class CardEffectTargetingConsistencyTest {
             // Piggyback: rides on the counterspell's existing spell target (Dream Fracture) — reads
             // the targeted spell from entry.getTargetId(); never contributes a chosen player target.
             "TargetSpellControllerDrawsCardEffect",
-            // Piggyback: rides on the ability's permanent target chosen for the sibling counter effect
-            // (Gwafa Hazid, Profiteer) — reads the targeted permanent from entry.getTargetId(); never
-            // contributes a chosen player target.
-            "TargetPermanentControllerDrawsCardEffect",
-            // Piggyback: rides on the permanent target chosen for the sibling destroy effect
-            // (Starke of Rath) — reads that permanent's controller from entry.getTargetId() to hand
-            // them the source; never contributes a target of its own.
-            "TargetPermanentControllerGainsControlOfSourceEffect",
             // Pre-resolved: Triggers.upkeep(ActivePlayer.ANY) carries Emberwilde Djinn's active player on the
             // stack entry, so this effect never asks the shared pipeline to choose a player.
             "TargetPlayerMayPayManaOrLifeEffect",

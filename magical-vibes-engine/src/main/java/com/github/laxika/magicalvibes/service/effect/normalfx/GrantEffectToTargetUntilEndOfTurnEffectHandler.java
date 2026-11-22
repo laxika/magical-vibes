@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,7 @@ public class GrantEffectToTargetUntilEndOfTurnEffectHandler implements NormalEff
 
     private final GameQueryService gameQueryService;
     private final GameLogService gameLogService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,6 +37,13 @@ public class GrantEffectToTargetUntilEndOfTurnEffectHandler implements NormalEff
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (GrantEffectToTargetUntilEndOfTurnEffect) effect;
+
+        if (!e.subject().declaresTarget()) {
+            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect, e.subject())) {
+                grantTo(gameData, entry, e, permanent);
+            }
+            return;
+        }
 
         List<UUID> boundTargets = entry.targetsForBoundEffectGroup(e);
         if (boundTargets != null) {

@@ -6,13 +6,17 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * One-shot effect: the target, every creature on the battlefield, or every creature controlled by
- * the source's controller becomes the creature type chosen at resolution until end of turn,
- * replacing all other creature types.
+ * One-shot effect: the permanents {@code subject} names (target creature, the source, the permanent the source Aura
+ * enchants, or a set found as the effect resolves) become the creature type chosen at resolution until end of turn.
+ *
+ * @param subject          who becomes the chosen type
+ * @param excludedSubtypes creature types that can't be chosen (Wall for the target and all-creatures forms by default)
+ * @param retainOtherTypes whether the type is added to their other creature types rather than replacing them
  */
 public record TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(
         PermanentSubject subject,
-        Set<CardSubtype> excludedSubtypes
+        Set<CardSubtype> excludedSubtypes,
+        boolean retainOtherTypes
 ) implements CardEffect {
 
     public TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect() {
@@ -25,12 +29,20 @@ public record TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(
 
     public TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(PermanentSubject subject,
                                                                    Set<CardSubtype> excludedSubtypes) {
-        this.subject = Objects.requireNonNull(subject, "subject");
-        this.excludedSubtypes = Set.copyOf(Objects.requireNonNull(excludedSubtypes, "excludedSubtypes"));
+        this(subject, excludedSubtypes, false);
+    }
+
+    public TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect {
+        Objects.requireNonNull(subject, "subject");
+        excludedSubtypes = Set.copyOf(Objects.requireNonNull(excludedSubtypes, "excludedSubtypes"));
+        if (!subject.equals(Subjects.target()) && !subject.equals(Subjects.source())
+                && !subject.equals(Subjects.attached()) && (!subject.isSet() || subject.declaresTarget())) {
+            throw new IllegalArgumentException("Unsupported type-change subject: " + subject);
+        }
     }
 
     @Override
     public TargetSpec targetSpec() {
-        return subject.isSet() ? TargetSpec.NONE : TargetSpec.benign(TargetPredicates.creature());
+        return subject.declaresTarget() ? TargetSpec.benign(TargetPredicates.creature()) : TargetSpec.NONE;
     }
 }

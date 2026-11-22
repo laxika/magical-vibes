@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.ControllerExperienceCounters;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExperienceCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -45,11 +45,11 @@ public class AzlaskTheSwellingScourge extends Card {
                         new BoostAllOwnCreaturesEffect(experienceCounters, experienceCounters),
                         new GrantKeywordEffect(Keyword.INDESTRUCTIBLE, Subjects.creaturesYouControl(),
                                 scionsAndSpawns),
-                        new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
+                        new GrantEffectToTargetUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.attacks(),
                                 new SacrificePermanentsEffect(
                                         1, new PermanentTruePredicate(), Subjects.defendingPlayer())),
-                                scionsAndSpawns)),
+                                Subjects.narrowed(Subjects.creaturesYouControl(), scionsAndSpawns))),
                 "{W}{U}{B}{R}{G}: Creatures you control get +X/+X until end of turn, where X is the number "
                         + "of experience counters you have. Scions and Spawns you control gain indestructible "
                         + "and annihilator 1 until end of turn."

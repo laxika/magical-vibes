@@ -4,7 +4,9 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.effect.RedirectNextDamageFromChosenSourceToTargetCreatureEffect;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,6 +20,7 @@ public class RedirectNextDamageFromChosenSourceToTargetCreatureEffectHandler imp
 
     private final PreventionSupport preventionSupport;
     private final PlayerInputService playerInputService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -27,8 +30,10 @@ public class RedirectNextDamageFromChosenSourceToTargetCreatureEffectHandler imp
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         UUID controllerId = entry.getControllerId();
-        UUID redirectTargetId = entry.getTargetId();
-        if (controllerId == null || redirectTargetId == null) return;
+        PermanentSubject subject = ((RedirectNextDamageFromChosenSourceToTargetCreatureEffect) effect).subject();
+        List<UUID> redirectIds = subjectResolutionService.permanentIds(gameData, entry, effect, subject);
+        if (controllerId == null || redirectIds.isEmpty()) return;
+        UUID redirectTargetId = redirectIds.getFirst();
 
         List<UUID> validIds = preventionSupport.collectAllDamageSourceIds(gameData);
         if (validIds.isEmpty()) {
@@ -40,6 +45,7 @@ public class RedirectNextDamageFromChosenSourceToTargetCreatureEffectHandler imp
                 new PermanentChoiceContext.RedirectPlayerDamageSourceChoice(controllerId, redirectTargetId));
         playerInputService.beginPermanentChoice(gameData, controllerId, validIds,
                 "Choose a source. The next time it would deal damage to you this turn, "
-                        + "that damage is dealt to the target creature instead.");
+                        + "that damage is dealt to "
+                        + (subject.declaresTarget() ? "the target" : "this") + " creature instead.");
     }
 }

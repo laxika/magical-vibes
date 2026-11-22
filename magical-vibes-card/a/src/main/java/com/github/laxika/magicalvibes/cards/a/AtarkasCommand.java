@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -25,7 +25,7 @@ public class AtarkasCommand extends Card {
         addSpellEffect(new ChooseOneEffect(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Your opponents can't gain life this turn",
-                        new OpponentsCantGainLifeThisTurnEffect()),
+                        new PlayersCantGainLifeThisTurnEffect(Subjects.eachOpponent())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Atarka's Command deals 3 damage to each opponent",
                         new DealDamageToPlayersEffect(3, Subjects.eachOpponent())),

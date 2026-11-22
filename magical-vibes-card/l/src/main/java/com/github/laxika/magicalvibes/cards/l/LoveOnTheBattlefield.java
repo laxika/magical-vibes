@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.ExactlyAttackers;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,9 +25,9 @@ public class LoveOnTheBattlefield extends Card {
                 TriggerOptions.DEFAULT.withEventCondition(new ExactlyAttackers(2)),
                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.triggeringAttackers()),
                 new DrawCardEffect(1),
-                new GrantEffectToOwnCreaturesUntilEndOfCombatEffect(
+                new GrantEffectToTargetUntilEndOfCombatEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
                         new PutCountersOnSourceEffect(1, 1, 1)),
-                        new PermanentIsAttackingPredicate()));
+                        Subjects.narrowed(Subjects.creaturesYouControl(), new PermanentIsAttackingPredicate())));
     }
 }

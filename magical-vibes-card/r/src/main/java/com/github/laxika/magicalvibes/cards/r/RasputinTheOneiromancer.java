@@ -14,11 +14,12 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatesTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 import com.github.laxika.magicalvibes.model.effect.RemoveOneOrMoreCountersFromSourceCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -34,7 +35,7 @@ public class RasputinTheOneiromancer extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new PutCountersOnSelfEffect(
                 CounterType.DREAM, new Sum(new PlayersInGame(), new Fixed(-1))),
-                new EachOpponentCreatesTokenEffect(goblinToken()));
+                new EachPlayerCreatesTokenEffect(goblinToken(), Subjects.eachOpponent()));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

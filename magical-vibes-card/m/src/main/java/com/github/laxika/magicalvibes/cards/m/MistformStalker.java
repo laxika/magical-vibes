@@ -6,9 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenSubtypeUntilEndOfTurnEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect;
+import java.util.Set;
 import java.util.List;
 
 @CardRegistration(set = "ONS", collectorNumber = "98")
@@ -18,7 +19,7 @@ public class MistformStalker extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new SourceBecomesChosenSubtypeUntilEndOfTurnEffect()),
+                List.of(new TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(Subjects.source(), Set.of())),
                 "{1}: This creature becomes the creature type of your choice until end of turn."
         ));
         addActivatedAbility(new ActivatedAbility(

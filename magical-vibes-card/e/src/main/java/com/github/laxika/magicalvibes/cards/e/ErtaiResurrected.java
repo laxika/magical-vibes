@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -43,7 +44,7 @@ public class ErtaiResurrected extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy another target creature or planeswalker. Its controller draws a card",
                         List.of(new DestroyTargetPermanentEffect(anotherCreatureOrPlaneswalker),
-                                new TargetPermanentControllerDrawsCardEffect()),
+                                new DrawCardEffect(1, Subjects.controllerOf(Subjects.target()))),
                         new PermanentPredicateTargetFilter(
                                 anotherCreatureOrPlaneswalker,
                                 "Target must be another creature or planeswalker."))

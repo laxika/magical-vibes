@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
@@ -25,12 +26,12 @@ public class StormTheCitadel extends Card {
 
     public StormTheCitadel() {
         addSpellEffect(new BoostAllOwnCreaturesEffect(2, 2));
-        addSpellEffect(new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
+        addSpellEffect(new GrantEffectToTargetUntilEndOfTurnEffect(
                 new TriggeredAbility(Triggers.dealsCombatDamageToPlayerOrPlaneswalker(),
                 new DestroyTargetPermanentEffect(new PermanentAllOfPredicate(List.of(
                         new PermanentAnyOfPredicate(List.of(
                                 new PermanentIsArtifactPredicate(),
                                 new PermanentIsEnchantmentPredicate())),
-                        new PermanentControlledByDefendingPlayerPredicate()))))));
+                        new PermanentControlledByDefendingPlayerPredicate())))), Subjects.creaturesYouControl()));
     }
 }

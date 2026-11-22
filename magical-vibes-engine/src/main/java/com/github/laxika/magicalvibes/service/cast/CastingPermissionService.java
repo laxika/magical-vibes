@@ -7,7 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUnti
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOpponentsCantCastUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NamedSpellsAndLandsCantBePlayedUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.DefendingPlayerCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerLibraryTopPermissionForTargetPlayerUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeUntilNextTurnEffect;
@@ -18,7 +17,6 @@ import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTu
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastNoncreatureSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellTypesUntilEndOfYourNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPlayCardsFromHandUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandAndOwnerCantCastSameNameUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardGrantFreePlayUntilEndOfTurnEffect;
@@ -302,7 +300,7 @@ public class CastingPermissionService {
      */
     public boolean isPlayerPreventedFromCasting(GameData gameData, UUID playerId) {
         if (gameData.hasFloatingEffectOnPlayer(playerId,
-                TargetSpellControllerCantCastSpellsThisTurnEffect.class, SenTripletsUpkeepEffect.class, PlayersCantCastSpellsThisTurnEffect.class, OpponentsCantCastSpellsThisTurnEffect.class, DefendingPlayerCantCastSpellsThisTurnEffect.class)) return true;
+                TargetSpellControllerCantCastSpellsThisTurnEffect.class, SenTripletsUpkeepEffect.class, OpponentsCantCastSpellsThisTurnEffect.class)) return true;
         synchronized (gameData.floatingEffects) {
             if (gameData.floatingEffects.stream().anyMatch(floating ->
                     playerId.equals(floating.affectedPlayerId())

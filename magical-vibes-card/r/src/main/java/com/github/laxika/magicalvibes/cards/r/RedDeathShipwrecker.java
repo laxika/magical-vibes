@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GoadTargetCreatureUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public class RedDeathShipwrecker extends Card {
                 null,
                 List.of(
                         new GoadTargetCreatureUntilNextTurnEffect(),
-                        new TargetPermanentControllerDrawsCardEffect(),
+                        new DrawCardEffect(1, Subjects.controllerOf(Subjects.target())),
                         new AwardManaEffect(ManaColor.RED)),
                 "{T}: Goad target creature an opponent controls. That player draws a card. You add {R}.",
                 TargetFilters.creatureAnOpponentControls()));

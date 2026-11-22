@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnSourceCardFromGraveyardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -31,7 +30,7 @@ public class BailOut extends Card {
         addSpellEffect(new ConditionalReplacementEffect(
                 new Overloaded(),
                 new GrantEffectToTargetUntilEndOfTurnEffect(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), returnAndDamage)),
-                new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), returnAndDamage))));
+                new GrantEffectToTargetUntilEndOfTurnEffect(new TriggeredAbility(Triggers.dies(ObjectRelation.THIS), returnAndDamage), Subjects.creaturesYouControl())));
         target(TargetFilters.creatureYouControl());
     }
 }

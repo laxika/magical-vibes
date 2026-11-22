@@ -1268,3 +1268,82 @@ ExileTopCardOfEachPlayersLibraryWithCollectionCounterEffect,unique,9,"run 4: col
 ExileTopCardsAndMayCastOnePerCardTypeEffect,unique,9,"run 4: one land onto the battlefield and at most one spell per card type (Aminatou's Augury)"
 ExileTopCardOfEachOpponentLibraryAndAllowOneMayPlayThisTurnEffect,unique,9,"run 4: one shared permission for one card among them (Fire Lord Ozai)"
 ExileTopCardOfEachPlayersLibraryAndAllowOneMayPlayForLifeEffect,unique,9,"run 4: one permission among them, paying life equal to mana value (Nashi, Moon Sage's Scion)"
+GrantEffectToTargetUntilEndOfTurnEffect,survivor,5m,run 5m continued: gained a PermanentSubject (source or a set locked at resolution); static grants are StaticAbility.of(effect)
+GrantEffectToOwnCreaturesUntilEndOfTurnEffect,absorbed,5m,"GrantEffectToTargetUntilEndOfTurnEffect(ability, creaturesYouControl() [narrowed by the filter])"
+GrantEffectToSourceUntilEndOfTurnEffect,absorbed,5m,"GrantEffectToTargetUntilEndOfTurnEffect(ability, source())"
+GrantStaticEffectToTargetUntilEndOfTurnEffect,absorbed,5m,GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(effect)): the same floating GrantEffectEffect
+GrantStaticEffectToOwnCreaturesUntilEndOfTurnEffect,absorbed,5m,"GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(effect), creaturesYouControl())"
+GrantStaticEffectToSourceUntilEndOfTurnEffect,absorbed,5m,"GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(effect), source())"
+GrantStaticEffectToAllCreaturesUntilEndOfTurnEffect,absorbed,5m,"GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(effect), narrowed(allCreatures(), filter)): the set is locked (CR 611.2c; The Cheetah Planet)"
+GrantStaticEffectToOpponentCreaturesUntilEndOfTurnEffect,unique,5m,"applies its payload itself to each creature rather than granting an ability (""can't have hexproof or shroud"", CR 613.1f): a grant would be removed with the creature's abilities (Arcane Lighthouse)"
+GrantEffectToTargetEffect,survivor,5m,"run 5m continued: absorbs the indefinite source grant as (ability, PERMANENT, false, source())"
+GrantEffectToSourceEffect,absorbed,5m,"GrantEffectToTargetEffect(ability, Duration.PERMANENT, false, source())"
+GrantEffectToTargetUntilEndOfCombatEffect,survivor,5m,run 5m continued: gained a set subject
+GrantEffectToOwnCreaturesUntilEndOfCombatEffect,absorbed,5m,"GrantEffectToTargetUntilEndOfCombatEffect(ability, narrowed(creaturesYouControl(), filter))"
+DealDamageToTargetPlayerOrPlaneswalkerEffect,blocked-other,5m,"high-use sibling (156 cards) of DealDamageToPlayersEffect / DealDamageToAnyTargetEffect: differs in what may be targeted, not only in subject; heads merge in step 10"
+DealDamageToTargetCreatureOrPlaneswalkerEffect,blocked-other,5m,high-use sibling (111 cards) of DealDamageToTargetCreatureEffect with the exile-instead and excess-damage riders; heads merge in step 10
+TargetPlayerGainsControlOfSourceCreatureEffect,survivor,5m,"run 5m continued: targetsPlayer became a PlayerSubject and the permanent a PermanentSubject (source, attached); the thenEffect split still waits for a GAIN_CONTROL step kind (step 8 run 29)"
+TargetPermanentControllerGainsControlOfSourceEffect,absorbed,5m,TargetPlayerGainsControlOfSourceCreatureEffect(controllerOf(target()))
+ControllerGainsControlOfSourceCreatureEffect,absorbed,5m,TargetPlayerGainsControlOfSourceCreatureEffect(you())
+TargetPlayerGainsControlOfEnchantedPermanentEffect,absorbed,5m,"TargetPlayerGainsControlOfSourceCreatureEffect(targetPlayerDeclaredElsewhere(), duration, attached())"
+TargetPlayerGainsControlOfSourcePermanentUntilEndOfTurnEffect,absorbed,5m,"TargetPlayerGainsControlOfSourceCreatureEffect.triggeringPlayer(UNTIL_END_OF_TURN) (Slicer: ""that player"" is not a target)"
+TargetPlayerGainsControlOfEnchantedPermanentUntilEndOfTurnEffect,absorbed,5m,"no card used it; TargetPlayerGainsControlOfSourceCreatureEffect(targetPlayer(), UNTIL_END_OF_TURN, attached())"
+OpponentGainsControlOfSourceCreatureEffect,blocked-other,5m,"""an opponent"" is a choice at resolution (CR 608.2d) with no subject; the handler takes the first opponent by seat (right for two players) and DestructionSupport calls it as a forced-cost fallback"
+DrawCardEffect,survivor,5m,run 5m continued: absorbs the target permanent's controller draw as controllerOf(target())
+TargetPermanentControllerDrawsCardEffect,absorbed,5m,"DrawCardEffect(amount, controllerOf(target())); same AI scoring"
+EachPlayerDrawsCardEffect,blocked-other,5m,"high-use (52 cards): evaluates the amount per drawing player where DrawCardEffect evaluates once, and the AI would score DrawCardEffect(eachPlayer()) as a plain own draw; step 10"
+EachOtherPlayerDrawsCardEffect,blocked-other,5m,evaluates the amount per drawing player and fires the gift-given event of a promised gift; DrawCardEffect does neither
+BoostAllCreaturesEffect,blocked-other,5m,"high-use boost head (195 cards); step 10 (step 8 closing summary, item 4)"
+EachPlayerCreatesTokenEffect,survivor,5m,"run 5m continued: gained a PlayerSubject (default eachPlayer), iterated in APNAP order (CR 613.7m)"
+EachOpponentCreatesTokenEffect,absorbed,5m,"EachPlayerCreatesTokenEffect(token, eachOpponent())"
+TargetOpponentCreatesTokenEffect,blocked-other,5m,declares no target and derives the opponent (two players): the target or promised opponent must reach the entry before it can be a subject; also fires the gift-given event
+TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect,survivor,5m,"run 5m continued: source() and attached() subjects and retainOtherTypes; kept though one of the absorbed had more cards, since it already carried the subject"
+SourceBecomesChosenSubtypeUntilEndOfTurnEffect,absorbed,5m,"TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(source(), Set.of()[, retainOtherTypes])"
+EnchantedCreatureBecomesChosenSubtypeUntilEndOfTurnEffect,absorbed,5m,"TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(attached(), Set.of())"
+OpponentsCantCastSpellsThisTurnEffect,survivor,5m,run 5m continued: gained a PlayerSubject (default eachOpponent)
+DefendingPlayerCantCastSpellsThisTurnEffect,absorbed,5m,OpponentsCantCastSpellsThisTurnEffect(defendingPlayer())
+PlayersCantCastSpellsThisTurnEffect,absorbed,5m,OpponentsCantCastSpellsThisTurnEffect(eachPlayer()): still one effect on every player
+PlayersCantGainLifeThisTurnEffect,survivor,5m,run 5m continued: gained a PlayerSubject (default eachPlayer: still one effect on every player)
+OpponentsCantGainLifeThisTurnEffect,absorbed,5m,PlayersCantGainLifeThisTurnEffect(eachOpponent())
+TargetPlayerCantGainLifeThisTurnEffect,unique,5m,"""gains no life instead"" is a replacement LifeSupport reads, not ""can't gain life"" (CR 614.1a; Flames of the Blood Hand)"
+EachPlayerChoosesCardFromGraveyardToBattlefieldEffect,blocked-other,5m,"the each-graveyard batch (PendingGraveyardReturnBatch) has no exile-if-it-leaves rider for the target-player sibling; differs in riders, not only in whose graveyard"
+TargetPlayerChoosesCardFromGraveyardToBattlefieldEffect,blocked-other,5m,enters tapped and exile-if-it-leaves through its own immediate choice; the each-graveyard batch of the sibling has no such rider
+DefendingPlayerChoosesCardFromGraveyardToBattlefieldEffect,unique,5m,"the defending player chooses, from the controller's graveyard, with a resume flag of GraveyardTargetOperation (Drana, the Last Bloodchief)"
+TargetCreatureMustAttackDamagedPlayerUntilNextTurnEffect,unique,5m,requires attacking the player dealt damage until the end of your next turn and is its own floating payload (Silver Surfer)
+TargetCreatureMustAttackPlayerUntilNextTurnEffect,unique,5m,"grants ""must attack a player"" (no named defender) until your next turn (Nahiri, the Unforgiving)"
+CreaturesMustAttackTargetPlayerUntilNextTurnEffect,blocked-other,5m,no card: the floating requirement payload two handlers make and AttackLegalityService reads
+ControllerSpellsCantBeCounteredEffect,step-9,5m,"absorb-ready into itself with a CardPredicate: ControllerSpellsCantBeCounteredEffect is the one to keep for ""you control""; its two siblings' readers differ in the face-down and lost-abilities checks, so settle those first"
+ControllerCreatureSpellsCantBeCounteredEffect,step-9,5m,"absorb into ControllerSpellsCantBeCounteredEffect(cardTypes CREATURE, CardPowerAtLeastPredicate); its reader lacks the face-down check the survivor's has (needs a test)"
+CreatureSpellsCantBeCounteredEffect,step-9,5m,absorb into SpellsCantBeCounteredEffect(CardTypePredicate CREATURE); that reader must first use hasLostPrintedAbilities as this one's does (needs a test)
+BecomeCopyOfTargetCreatureEffect,blocked-other,5m,"the optional copy runs through BecomeCopyOfTargetCreatureChoiceHandler (keeps its trigger, may keep color); the two siblings are mandatory with their own retention: a copy verb needs the ""except"" profile first (step 10)"
+BecomeCopyOfTargetLandEffect,unique,5m,"mandatory; keeps the activated ability once, not twice on a copy that has it (Thespian's Stage)"
+BecomeCopyOfDyingCreatureEffect,unique,5m,copies a last-known card and keeps the death trigger found through MayPayManaEffect (Cemetery Puca)
+BecomeCopyOfTargetCreatureUntilEndOfTurnEffect,blocked-other,5m,the until-end-of-turn copy head: only the source becomes the copy; the target-to-target sibling needs a subject for the copier and removed supertypes (step 10 copy verb)
+BecomeCopyOfTargetPermanentUntilEndOfTurnEffect,blocked-other,5m,two targets (copier and copied) and removed supertypes; the head has neither a copier subject nor that rider (step 10 copy verb)
+BecomeCopyOfTargetArtifactUntilEndOfTurnEffect,unique,5m,its second ability copies with no duration and keeps itself (CR 611.2a; Mizzium Transreliquat)
+ChooseOpponentOnEnterEffect,blocked-other,5m,"four entry paths read it (auto-choice of a sole opponent, the chooser it records, the put-onto-battlefield support, cleanup hand size); ChoosePlayerOnEnterEffect is read by one"
+ChoosePlayerOnEnterEffect,blocked-other,5m,"read by AsEntersInteractionService only, with a two-player count the opponent sibling lacks; a candidate subject needs the opponent readers unified first"
+ChooseCreatureOnEnterEffect,unique,5m,"chooses a creature, not a player, for an entering Aura through AuraCopyService (Metamorphic Alteration)"
+ControlledCreaturesDealPowerDamageToTargetEffect,blocked-other,5m,"recipient axis mixes permanents and players (no subject names both): damage entries, protection checks and target spec differ per sibling"
+ControlledCreaturesDealPowerDamageToEachOpponentEffect,blocked-other,5m,"player recipients through DealDamageToPlayersEffectHandler per source; the siblings' recipients are permanents or mixed, which no subject type names"
+ControlledCreaturesDealPowerDamageToTargetPlayerOrPlaneswalkerEffect,blocked-other,5m,a mixed player-or-planeswalker recipient; no subject type names both
+CopyThisSpellForTargetControllerEffect,survivor,5m,"run 5m continued: also the target player's copy (Chain of Smog, Chain of Plasma)"
+CopyThisSpellForTargetPlayerEffect,absorbed,5m,CopyThisSpellForTargetControllerEffect
+CopyThisSpellForControllerEffect,unique,5m,the copy carries no copy step of its own and is offered new targets only with a target (Sevinne's Reclamation)
+DoubleControllerLifeEffect,survivor,5m,run 5m continued: gained a one-player PlayerSubject (default you)
+DoubleTargetPlayerLifeEffect,absorbed,5m,DoubleControllerLifeEffect(targetPlayer())
+DoubleEnchantedCreatureControllerLifeEffect,absorbed,5m,DoubleControllerLifeEffect(controllerOf(triggering())) (Celestial Mantle's ruling)
+DoubleDamageFromCreaturesEffect,survivor,5m,run 5m continued: gained a PermanentSubject naming the damage sources
+DoubleDamageFromSelfEffect,absorbed,5m,DoubleDamageFromCreaturesEffect(source())
+DoubleDamageFromEquippedCreatureEffect,absorbed,5m,DoubleDamageFromCreaturesEffect(attachedCreature())
+MoveCounterFromSourceToTargetCreatureEffect,survivor,5m,"run 5m continued: from / to subjects (source, target) and an any-permanent target"
+MoveCounterFromTargetCreatureToSourceEffect,absorbed,5m,MoveCounterFromSourceToTargetCreatureEffect.fromTargetOntoSource(type)
+MoveCountersFromSourceToTargetPermanentEffect,absorbed,5m,"MoveCounterFromSourceToTargetCreatureEffect.ontoTargetPermanent(type, amount)"
+MoveCounterFromTargetCreatureToTargetCreatureEffect,blocked-other,5m,the target-to-target head (10 cards): positional declared targets with one / all / any-number prompts; merge with the source-to-target record in step 10
+MoveCountersFromSourceToTargetCreatureEffect,blocked-other,5m,"""any number"" is a prompt completed by the shared amount-choice path, which the amount-based survivor has not; step 10"
+MoveCountersFromAllCreaturesToSourceEffect,unique,5m,"all of one kind from every creature, put on as one placement (Spike Cannibal)"
+RedirectNextDamageFromChosenSourceToTargetCreatureEffect,survivor,5m,run 5m continued: gained a PermanentSubject (target or source)
+RedirectNextDamageFromChosenSourceToSelfCreatureEffect,absorbed,5m,RedirectNextDamageFromChosenSourceToTargetCreatureEffect(source())
+RedirectNextDamageFromChosenSourceToSelfEffect,unique,5m,"redirects the source's damage to anything, not only to you, with its own shield and source list (Opal-Eye, Konda's Yojimbo)"
+ExileTargetCreaturesUntilSourceLeavesEffect,unique,5m,"mixed battlefield-and-graveyard target pool, X-scaled, optional at resolution, may return to hand (Angel of Serenity)"
+SacrificeOwnCreaturesAtEndStepEffect,blocked-other,5m,captures a set into one DelayedPermanentActions trigger; its siblings schedule one TemporaryGlobalTriggeredAbility each (5j): one scheduling path first

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToEnteringCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.MoveCounterFromTargetCreatureToSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.MoveCounterFromSourceToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -46,7 +46,7 @@ public class CytoplastRootKin extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
-                List.of(new MoveCounterFromTargetCreatureToSourceEffect(CounterType.PLUS_ONE_PLUS_ONE)),
+                List.of(MoveCounterFromSourceToTargetCreatureEffect.fromTargetOntoSource(CounterType.PLUS_ONE_PLUS_ONE)),
                 "{2}: Move a +1/+1 counter from target creature you control onto this creature.",
                 TargetFilters.creatureYouControl()));
     }

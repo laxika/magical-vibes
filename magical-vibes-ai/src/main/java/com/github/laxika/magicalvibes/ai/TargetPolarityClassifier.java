@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.ai;
 
+import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
 import com.github.laxika.magicalvibes.model.Ability;
 import com.github.laxika.magicalvibes.model.AbilityEffects;
@@ -30,7 +32,6 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSour
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.KeywordGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -198,8 +199,14 @@ public class TargetPolarityClassifier {
         if (effect instanceof GrantStaticEffectToTargetEffect grant) {
             return classify(gameData, grant.staticEffect(), aiPlayerId);
         }
-        if (effect instanceof GrantStaticEffectToTargetUntilEndOfTurnEffect grant) {
-            return classify(gameData, grant.staticEffect(), aiPlayerId);
+        if (effect instanceof GrantEffectToTargetUntilEndOfTurnEffect grant) {
+            if (!grant.subject().declaresTarget()) {
+                return null;
+            }
+            // A granted static ability is as good or bad as what it says ("can't attack unless its controller pays").
+            TargetPolarity granted = grant.grantedAbility() instanceof StaticAbility
+                    ? classify(gameData, grant.grantedEffect(), aiPlayerId) : null;
+            return granted != null ? granted : TargetPolarity.BENEFICIAL;
         }
         if (effect instanceof PerpetuallyGrantStaticEffectToTargetCreatureEffect grant) {
             return classify(gameData, grant.staticEffect(), aiPlayerId);
@@ -670,7 +677,6 @@ public class TargetPolarityClassifier {
             entry("GrantProtectionChoiceToTargetAndSharingCreaturesUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantAdditionalBlockToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantChosenKeywordEffect", TargetPolarity.BENEFICIAL),
-            entry("GrantEffectToTargetUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("GrantEffectToTargetEffect", TargetPolarity.BENEFICIAL),
             entry("GrantProtectionChoiceUntilEndOfTurnEffect", TargetPolarity.BENEFICIAL),
             entry("ProtectionFromColorsEffect", TargetPolarity.BENEFICIAL),

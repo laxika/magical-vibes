@@ -9,7 +9,8 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 /**
  * "Move a [type] counter from this permanent onto target creature" (e.g. Afiya Grove), and the
  * "move X counters" form (e.g. Tester of the Tangential, whose
- * reflexive ability reads the X paid).
+ * reflexive ability reads the X paid). The other direction, "move a counter from target creature onto this
+ * creature" (Cytoplast Root-Kin), is {@link #fromTargetOntoSource}.
  *
  * <p>Moving is a removal plus a placement: if the source permanent is gone or has no counter of the
  * type left, nothing is removed and nothing is placed. When the source has fewer counters than
@@ -18,10 +19,42 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
  * @param counterType the kind of counter moved
  * @param amount      the number of counters to move, evaluated as the effect resolves
  * @param anotherTarget whether the target is "another target creature", never the source itself
+ * @param from          whose counters move: {@link Subjects#source()} or the target
+ * @param to            where they are put: the target or {@link Subjects#source()}, whichever {@code from} is not
+ * @param anyPermanent  whether the target is any permanent rather than a creature (the ability's filter narrows it)
  */
 public record MoveCounterFromSourceToTargetCreatureEffect(CounterType counterType, DynamicAmount amount,
-                                                          boolean anotherTarget)
+                                                          boolean anotherTarget, PermanentSubject from,
+                                                          PermanentSubject to, boolean anyPermanent)
         implements CardEffect {
+
+    public MoveCounterFromSourceToTargetCreatureEffect {
+        if (!(from.equals(Subjects.source()) && to.equals(Subjects.target()))
+                && !(from.equals(Subjects.target()) && to.equals(Subjects.source()))) {
+            throw new IllegalArgumentException("Counters move between the source and the target: " + from + ", " + to);
+        }
+        if (anotherTarget && anyPermanent) {
+            throw new IllegalArgumentException("\"Another target\" is a creature here");
+        }
+    }
+
+    public MoveCounterFromSourceToTargetCreatureEffect(CounterType counterType, DynamicAmount amount,
+                                                       boolean anotherTarget) {
+        this(counterType, amount, anotherTarget, Subjects.source(), Subjects.target(), false);
+    }
+
+    /** "Move a [type] counter from target creature onto this creature" (Arcbound Fiend). */
+    public static MoveCounterFromSourceToTargetCreatureEffect fromTargetOntoSource(CounterType counterType) {
+        return new MoveCounterFromSourceToTargetCreatureEffect(counterType, new Fixed(1), false,
+                Subjects.target(), Subjects.source(), false);
+    }
+
+    /** "Move [amount] counters from this permanent onto target [permanent]" (Blaster, Morale Booster). */
+    public static MoveCounterFromSourceToTargetCreatureEffect ontoTargetPermanent(CounterType counterType,
+                                                                                 DynamicAmount amount) {
+        return new MoveCounterFromSourceToTargetCreatureEffect(counterType, amount, false,
+                Subjects.source(), Subjects.target(), true);
+    }
 
     public MoveCounterFromSourceToTargetCreatureEffect(CounterType counterType, DynamicAmount amount) {
         this(counterType, amount, false);
@@ -43,9 +76,10 @@ public record MoveCounterFromSourceToTargetCreatureEffect(CounterType counterTyp
 
     @Override
     public TargetSpec targetSpec() {
-        return anotherTarget
-                ? TargetSpec.benign(TargetPredicates.creature(),
-                        new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()))
-                : TargetSpec.benign(TargetPredicates.creature());
+        if (anotherTarget) {
+            return TargetSpec.benign(TargetPredicates.creature(),
+                    new PermanentNotPredicate(new PermanentIsSourcePermanentPredicate()));
+        }
+        return TargetSpec.benign(anyPermanent ? TargetPredicates.permanent() : TargetPredicates.creature());
     }
 }

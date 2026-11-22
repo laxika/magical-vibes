@@ -2,11 +2,11 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerGainsControlOfSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -35,7 +35,7 @@ public class ActOfAuthority extends Card {
                                 "Exile target artifact or enchantment?"))
                 .addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                         new MayEffect(SequenceEffect.of(
-                                new TargetPermanentControllerGainsControlOfSourceEffect(Duration.PERMANENT),
+                                new TargetPlayerGainsControlOfSourceCreatureEffect(Subjects.controllerOf(Subjects.target())),
                                 new ExileTargetPermanentEffect()
                         ), "Exile target artifact or enchantment?"));
     }

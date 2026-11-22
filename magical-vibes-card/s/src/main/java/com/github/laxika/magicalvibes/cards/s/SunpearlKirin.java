@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.TargetPermanentMatches;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -33,6 +34,6 @@ public class SunpearlKirin extends Card {
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), ReturnToHandEffect.target(),
                         new ConditionalEffect(
                         new TargetPermanentMatches(new PermanentIsTokenPredicate()),
-                        new TargetPermanentControllerDrawsCardEffect()));
+                        new DrawCardEffect(1, Subjects.controllerOf(Subjects.target()))));
     }
 }

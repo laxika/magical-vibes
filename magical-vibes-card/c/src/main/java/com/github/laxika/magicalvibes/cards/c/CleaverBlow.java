@@ -10,7 +10,6 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -55,7 +54,7 @@ public class CleaverBlow extends Card {
             effects.add(new DestroyTargetPermanentEffect(targetPredicate));
             effects.add(new DrawCardEffect());
             if ((mask & EACH_CONTROLLER) == 0) {
-                effects.add(new TargetPermanentControllerDrawsCardEffect());
+                effects.add(new DrawCardEffect(1, Subjects.controllerOf(Subjects.target())));
             }
             if ((mask & LOSE_LIFE) == 0) {
                 effects.add(new LoseLifeEffect(2, Subjects.you()));

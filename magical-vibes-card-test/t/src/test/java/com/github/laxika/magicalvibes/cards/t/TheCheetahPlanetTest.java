@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.c.Cat;
 import com.github.laxika.magicalvibes.cards.f.FugitiveWizard;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -97,5 +98,21 @@ class TheCheetahPlanetTest extends BaseCardTest {
         assertThat(choice.validIds()).contains(target.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("A Cat that enters after chaos ensued doesn't gain provoke")
+    void catEnteringAfterChaosDoesNotGainProvoke() {
+        addCreatureReady(player2, new FugitiveWizard());
+
+        harness.inMutationScope(() -> planar.chaos(gd));
+        harness.passBothPriorities();
+        // The set of Cats that gain provoke is locked as the ability resolves (CR 611.2c).
+        addCreatureReady(player1, new Cat());
+
+        declareAttackers(player1, List.of(0));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
     }
 }

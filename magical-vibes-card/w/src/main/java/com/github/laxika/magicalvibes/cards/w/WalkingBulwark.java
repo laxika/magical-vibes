@@ -5,10 +5,11 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageWithToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CanAttackAsThoughNoDefenderEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
@@ -28,8 +29,8 @@ public class WalkingBulwark extends Card {
                 List.of(
                         new GrantKeywordEffect(Keyword.HASTE, Subjects.target()),
                         new CanAttackAsThoughNoDefenderEffect(true),
-                        new GrantStaticEffectToTargetUntilEndOfTurnEffect(
-                                new AssignCombatDamageWithToughnessEffect(Subjects.source(), true))
+                        new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(
+                                new AssignCombatDamageWithToughnessEffect(Subjects.source(), true)))
                 ),
                 "{2}: Until end of turn, target creature with defender gains haste, can attack as though it didn't have defender, and assigns combat damage equal to its toughness rather than its power. Activate only as a sorcery.",
                 new PermanentPredicateTargetFilter(

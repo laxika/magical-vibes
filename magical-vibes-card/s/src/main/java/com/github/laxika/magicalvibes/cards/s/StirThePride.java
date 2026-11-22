@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -25,9 +26,9 @@ public class StirThePride extends Card {
                         new BoostAllOwnCreaturesEffect(2, 2)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Until end of turn, creatures you control gain \"Whenever this creature deals damage, you gain that much life.\"",
-                        new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
+                        new GrantEffectToTargetUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.dealsDamage(),
-                                new GainLifeEffect(new EventValue()))))
+                                new GainLifeEffect(new EventValue())), Subjects.creaturesYouControl()))
         )));
     }
 }

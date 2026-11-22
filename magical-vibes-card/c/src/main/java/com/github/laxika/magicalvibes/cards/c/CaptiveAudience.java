@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardHandEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatesTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.SetLifeTotalEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,6 +29,6 @@ public class CaptiveAudience extends Card {
                         new DiscardHandEffect()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Each opponent creates five 2/2 black Zombie creature tokens",
-                        new EachOpponentCreatesTokenEffect(CreateTokenEffect.blackZombie(5))))));
+                        new EachPlayerCreatesTokenEffect(CreateTokenEffect.blackZombie(5), Subjects.eachOpponent())))));
     }
 }

@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesCantAttackOrBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPermanentControllerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -29,7 +30,7 @@ public class GwafaHazidProfiteer extends Card {
                 "{W}{U}",
                 List.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.BRIBERY, 1),
-                        new TargetPermanentControllerDrawsCardEffect()),
+                        new DrawCardEffect(1, Subjects.controllerOf(Subjects.target()))),
                 "{W}{U}, {T}: Put a bribery counter on target creature you don't control. Its controller draws a card.",
                 new PermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

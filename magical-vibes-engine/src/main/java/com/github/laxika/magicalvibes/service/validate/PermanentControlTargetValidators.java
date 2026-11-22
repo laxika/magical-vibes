@@ -8,8 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPerm
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentWithSameControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetOnTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfEnchantedPermanentUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourcePermanentUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.TargetValidationContext;
@@ -76,17 +74,11 @@ public class PermanentControlTargetValidators {
     }
 
     @ValidatesTarget(TargetPlayerGainsControlOfSourceCreatureEffect.class)
-    public void validateTargetPlayerGainsControlOfSourceCreature(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
-    }
-
-    @ValidatesTarget(TargetPlayerGainsControlOfSourcePermanentUntilEndOfTurnEffect.class)
-    public void validateTargetPlayerGainsControlOfSourcePermanentUntilEndOfTurn(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
-    }
-
-    @ValidatesTarget(TargetPlayerGainsControlOfEnchantedPermanentUntilEndOfTurnEffect.class)
-    public void validateTargetPlayerGainsControlOfEnchantedPermanentUntilEndOfTurn(TargetValidationContext ctx) {
-        tvs.requireTargetPlayer(ctx);
+    public void validateTargetPlayerGainsControlOfSourceCreature(TargetValidationContext ctx,
+            TargetPlayerGainsControlOfSourceCreatureEffect effect) {
+        // A player named without targeting ("that permanent's controller") shares the ability's permanent target.
+        if (effect.player().declaresTarget()) {
+            tvs.requireTargetPlayer(ctx);
+        }
     }
 }

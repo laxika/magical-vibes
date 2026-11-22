@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -25,9 +25,9 @@ public class VorpalSword extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}{B}{B}{B}",
-                List.of(new GrantEffectToSourceUntilEndOfTurnEffect(
+                List.of(new GrantEffectToTargetUntilEndOfTurnEffect(
                         new TriggeredAbility(Triggers.dealsCombatDamageToPlayer(),
-                        new TargetPlayerLosesGameEffect(null)))),
+                        new TargetPlayerLosesGameEffect(null)), Subjects.source())),
                 "Until end of turn, this Equipment gains \"Whenever equipped creature deals combat damage to a player, that player loses the game.\""));
 
         addActivatedAbility(new EquipActivatedAbility("{B}{B}"));

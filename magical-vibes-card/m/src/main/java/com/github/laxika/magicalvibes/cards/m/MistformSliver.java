@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.SourceBecomesChosenSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import java.util.Set;
 
 import java.util.List;
 
@@ -18,7 +19,7 @@ public class MistformSliver extends Card {
         ActivatedAbility becomeCreatureType = new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new SourceBecomesChosenSubtypeUntilEndOfTurnEffect(true)),
+                List.of(new TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(Subjects.source(), Set.of(), true)),
                 "{1}: This permanent becomes the creature type of your choice in addition to its other types until end of turn."
         );
         addStaticEffect(new GrantActivatedAbilityEffect(

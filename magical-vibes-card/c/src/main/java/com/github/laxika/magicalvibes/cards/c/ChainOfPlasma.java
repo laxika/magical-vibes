@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForTargetControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardThenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -18,7 +18,7 @@ public class ChainOfPlasma extends Card {
                 new DiscardCardThenEffect(
                         null,
                         new MayEffect(
-                                new CopyThisSpellForTargetPlayerEffect(),
+                                new CopyThisSpellForTargetControllerEffect(),
                                 "Copy Chain of Plasma?",
                                 null,
                                 MayChoicePlayer.TARGET_PLAYER_OR_PERMANENT_CONTROLLER

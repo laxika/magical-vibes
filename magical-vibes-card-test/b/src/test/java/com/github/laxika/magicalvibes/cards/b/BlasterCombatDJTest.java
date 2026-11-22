@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.h.HardenedScales;
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.c.CommonBond;
 import com.github.laxika.magicalvibes.cards.d.DoomBlade;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
@@ -24,7 +26,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BlasterCombatDJ.class, BlasterMoraleBooster.class, Battlegrowth.class, CommonBond.class,
         DoomBlade.class, FountainOfYouth.class, Ornithopter.class, Shatter.class, SmugglersCopter.class,
-        ZabazTheGlimmerwasp.class})
+        ZabazTheGlimmerwasp.class, HardenedScales.class})
 class BlasterCombatDJTest extends BaseCardTest {
 
     @Test
@@ -275,5 +277,20 @@ class BlasterCombatDJTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         return findPermanent(player1, "Blaster, Morale Booster");
+    }
+
+    @Test
+    @DisplayName("Moving a counter removes one from Blaster even when more than one is put on the artifact")
+    void movedCounterIsRemovedOnceWhenPlacementIsIncreased() {
+        Permanent blaster = castConvertedBlaster();
+        harness.addToBattlefield(player1, new HardenedScales());
+        Permanent recipient = harness.addToBattlefieldAndReturn(player1, new Ornithopter());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, 1, recipient.getId());
+        harness.passBothPriorities();
+
+        assertThat(recipient.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+        assertThat(blaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 }

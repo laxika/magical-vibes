@@ -13,7 +13,8 @@ import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.EntersTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -36,9 +37,9 @@ public class DenOfTheBugbear extends Card {
                 "{3}{R}",
                 List.of(new AnimatePermanentsEffect(
                         3, 2, List.of(CardSubtype.GOBLIN), Set.of(), CardColor.RED),
-                        new GrantEffectToSourceUntilEndOfTurnEffect(new TriggeredAbility(Triggers.attacks(),
+                        new GrantEffectToTargetUntilEndOfTurnEffect(new TriggeredAbility(Triggers.attacks(),
                                 new CreateTokenEffect(1, "Goblin", 1, 1, CardColor.RED,
-                                        List.of(CardSubtype.GOBLIN), true)))),
+                                        List.of(CardSubtype.GOBLIN), true)), Subjects.source())),
                 "{3}{R}: Until end of turn, this land becomes a 3/2 red Goblin creature with \"Whenever this creature attacks, create a 1/1 red Goblin creature token that's tapped and attacking.\" It's still a land."
         ));
     }

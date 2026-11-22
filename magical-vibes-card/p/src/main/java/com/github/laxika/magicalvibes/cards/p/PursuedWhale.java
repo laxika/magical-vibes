@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatesTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -26,14 +26,14 @@ import java.util.Set;
 public class PursuedWhale extends Card {
 
     public PursuedWhale() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new EachOpponentCreatesTokenEffect(new CreateTokenEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new EachPlayerCreatesTokenEffect(new CreateTokenEffect(
                 CardType.CREATURE, 1, "Pirate", 1, 1, CardColor.RED, null,
                 List.of(CardSubtype.PIRATE), Set.of(), Set.of(), false, false,
                 List.of(
                         StaticAbility.of(SequenceEffect.of(
                         new CantBlockEffect(),
                         new MustAttackEffect(Subjects.creaturesYouControl())))),
-                List.of(), false, false, false, 0, Set.of())));
+                List.of(), false, false, false, 0, Set.of()), Subjects.eachOpponent()));
         addStaticEffect(new IncreaseOpponentCostForTargetingControlledPermanentEffect(
                 new PermanentIsSourcePermanentPredicate(), 3, false));
     }

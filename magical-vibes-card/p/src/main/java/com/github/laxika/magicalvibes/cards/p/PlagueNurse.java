@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.StaticAbility;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.ToxicEffect;
@@ -30,8 +30,8 @@ public class PlagueNurse extends Card {
                 List.of(
                         new GrantKeywordEffect(Keyword.TOXIC, Subjects.otherCreaturesYouControl(),
                                 new PermanentHasKeywordPredicate(Keyword.TOXIC)),
-                        new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(StaticAbility.of(new ToxicEffect(1)),
-                                toxicOtherCreature)),
+                        new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(new ToxicEffect(1)),
+                                Subjects.narrowed(Subjects.creaturesYouControl(), toxicOtherCreature))),
                 "{2}{G}: Each other creature you control with toxic gains toxic 1 until end of turn. Activate only once each turn.",
                 1));
     }

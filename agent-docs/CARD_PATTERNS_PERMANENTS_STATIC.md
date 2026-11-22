@@ -330,7 +330,7 @@ All paths relative to `cards/`.
 | Double damage to one chosen player and their permanents | `s/SawhornNemesis.java` | STATIC ChoosePlayerOnEnterEffect + STATIC DoubleDamageToChosenPlayerAndTheirPermanentsEffect — doubles damage from any source to the remembered player or permanents they control |
 | Double damage (creatures you control) | `g/GratuitousViolence.java` | STATIC DoubleDamageFromCreaturesEffect |
 | Double damage (countered creatures you control) | `u/UncivilUnrest.java` | STATIC DoubleDamageFromCreaturesWithCountersEffect(PLUS_ONE_PLUS_ONE) |
-| Double damage (this permanent) | `w/WolverineBestThereIs.java` | STATIC DoubleDamageFromSelfEffect — doubles all damage dealt by the source permanent, including combat and noncombat damage |
+| Double damage (this permanent) | `w/WolverineBestThereIs.java` | STATIC DoubleDamageFromCreaturesEffect(Subjects.source()) — doubles all damage dealt by the source permanent, including combat and noncombat damage |
 | Double damage (creatures you control with counters) | `r/RaphaelTheMuscle.java` | STATIC DoubleDamageFromCreaturesEffect(PermanentHasCountersPredicate(ANY)) |
 | Double damage (controller's all sources) | `a/AngrathsMarauders.java` | STATIC DoubleControllerDamageEffect(null, true) — doubles all damage from sources you control (combat, spells, abilities) |
 | Double damage (controller's spells by color) | `f/FireServant.java` | STATIC DoubleControllerDamageEffect(AllOf[TypeIn(INSTANT,SORCERY), ColorIn(RED)], false) — doubles only red instant/sorcery damage |

@@ -4,10 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.condition.ControlledCommanderAsCast;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromColorsEffect;
 
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,8 +30,8 @@ public class AkromasWill extends Card {
                 new ChooseOneEffect.ChooseOneOption("Creatures you control gain lifelink, indestructible, and protection from each color until end of turn.",
                         List.of(
                                 new GrantKeywordEffect(Set.of(Keyword.LIFELINK, Keyword.INDESTRUCTIBLE), Subjects.otherCreaturesYouControl()),
-                                new GrantStaticEffectToOwnCreaturesUntilEndOfTurnEffect(
-                                        new ProtectionFromColorsEffect(EnumSet.allOf(CardColor.class)))))
+                                new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(
+                                        new ProtectionFromColorsEffect(EnumSet.allOf(CardColor.class))), Subjects.creaturesYouControl())))
         ), new ControlledCommanderAsCast()));
     }
 }

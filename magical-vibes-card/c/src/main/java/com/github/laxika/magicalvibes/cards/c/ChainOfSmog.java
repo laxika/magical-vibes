@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyThisSpellForTargetControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -21,7 +21,7 @@ public class ChainOfSmog extends Card {
         ))
                 .addSpellEffect(new DiscardEffect(2, Subjects.targetPlayer()))
                 .addSpellEffect(new MayEffect(
-                        new CopyThisSpellForTargetPlayerEffect(),
+                        new CopyThisSpellForTargetControllerEffect(),
                         "Copy Chain of Smog?",
                         null,
                         MayChoicePlayer.TARGET_PLAYER_OR_PERMANENT_CONTROLLER

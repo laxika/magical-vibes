@@ -5,6 +5,9 @@ package com.github.laxika.magicalvibes.model.effect;
  * the controller of the permanent that spell targets, and lets that player choose a new target
  * for the copy.
  *
+ * <p>Also "that player or that permanent's controller may discard a card; if the player does, they may copy this
+ * spell" and "that player may copy this spell" (Chain of Plasma, Chain of Smog).
+ *
  * <p>The "chain" half of Chain Stasis and Chain Lightning — the targeted permanent's controller
  * or player may pay, then copy this spell. Wrap it in a {@link MayPayManaEffect} with the matching
  * target-based payer so the payment prompt goes to the same player. Because the copy carries the

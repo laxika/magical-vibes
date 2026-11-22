@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.ForcedCostOrElseEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToSourceUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsFromGraveyardOnBottomOfLibraryCost;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -31,7 +32,7 @@ public class Gurzigost extends Card {
                 List.of(
                         new DiscardCardTypeCost(null, null),
                         new MayEffect(
-                                new GrantEffectToSourceUntilEndOfTurnEffect(StaticAbility.of(new AssignCombatDamageAsThoughUnblockedEffect())),
+                                new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(new AssignCombatDamageAsThoughUnblockedEffect()), Subjects.source()),
                                 "Have Gurzigost assign its combat damage as though it weren't blocked?")),
                 "{G}{G}, Discard a card: You may have Gurzigost assign its combat damage this turn as "
                         + "though it weren't blocked."

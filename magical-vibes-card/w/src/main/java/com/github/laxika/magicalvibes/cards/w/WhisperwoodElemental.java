@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ManifestTopCardEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantEffectToOwnCreaturesUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsFaceDownPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -30,12 +31,12 @@ public class WhisperwoodElemental extends Card {
                 null,
                 List.of(
                         new SacrificeSelfCost(),
-                        new GrantEffectToOwnCreaturesUntilEndOfTurnEffect(
+                        new GrantEffectToTargetUntilEndOfTurnEffect(
                                 new TriggeredAbility(Triggers.dies(ObjectRelation.THIS),
                                 new ManifestTopCardEffect()),
-                                new PermanentAllOfPredicate(List.of(
+                                Subjects.narrowed(Subjects.creaturesYouControl(), new PermanentAllOfPredicate(List.of(
                                         new PermanentNotPredicate(new PermanentIsFaceDownPredicate()),
-                                        new PermanentNotPredicate(new PermanentIsTokenPredicate()))))),
+                                        new PermanentNotPredicate(new PermanentIsTokenPredicate())))))),
                 "Sacrifice this creature: Until end of turn, face-up nontoken creatures you control gain "
                         + "\"When this creature dies, manifest the top card of your library.\""
         ));

@@ -149,6 +149,21 @@ class ElephantMandrillTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, elephantMandrill)).isEqualTo(3);
     }
 
+    @Test
+    @DisplayName("The active player's Food gets the earlier timestamp")
+    void tokensAreCreatedInApnapOrder() {
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        harness.castFromHand(player2, new ElephantMandrill(), "{2}{G}");
+        resolveAllTriggers();
+
+        // Simultaneously created tokens get their timestamps in APNAP order (CR 613.7m).
+        assertThat(findPermanent(player2, "Food").getTimestamp())
+                .isLessThan(findPermanent(player1, "Food").getTimestamp());
+    }
+
     private void castElephantMandrill() {
         harness.setHand(player1, List.of(new ElephantMandrill()));
         harness.addMana(player1, ManaColor.GREEN, 1);

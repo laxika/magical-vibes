@@ -17,7 +17,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 2 | Delete the effects nothing uses | done |
 | 3 | Subject types and the one resolver | done |
 | 4 | Player verbs take a `PlayerSubject` (repeatable) | done |
-| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done) |
+| 5 | Permanent verbs take a `PermanentSubject` (repeatable) | open (5a–5l done, 5d finished by 6.2e; 5m partly done twice: 94 sibling pairs left) |
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
@@ -418,7 +418,7 @@ only in subject, replace the verb's scope enum if it has one.
 | 5j | Sacrifice a named permanent | none | `Sacrifice{Self,EnchantedCreature,TargetCreature}Effect` | done (3 folded into `SacrificeSelfEffect`; the delayed and Animate Dead records kept) |
 | 5k | Flicker, phase out, remove from combat | `FlickerScope`, `PhaseOutSubject`, `PhaseOutScope` | `Remove{Target,Self,Source}FromCombatEffect` | done (3 enums gone; 4 records folded into `RemoveTargetFromCombatEffect` and `PhaseOutEffect`) |
 | 5l | Attach and token copies | none | `Attach*EquipmentTo*` (5), `CreateTokenCopyOf*` (4), `CreateTokenAttachedTo*` (4) | done (9 folded into three survivors; `Copied` enum gone; the defending-player token and `CreateTokenCopyOfSourceEffect` kept) |
-| 5m | Whatever `--siblings` still lists | `PermanentReference` | — | partly done (14 folded into 11 survivors; `PermanentReference` and `Subjects.of` gone; 135 sibling groups still have unaudited classes) |
+| 5m | Whatever `--siblings` still lists | `PermanentReference` | — | partly done (14 folded into 11 survivors; `PermanentReference` and `Subjects.of` gone; continued 2026-11-22: 28 folded, every group of three or more done; 94 pairs still have unaudited classes) |
 
 Notes for every run:
 
@@ -6290,6 +6290,83 @@ compile.
 - Then the rest of the 165 one-card tail records: the "instead of dying" replacement records, the token-copy exiles
   (`ExileTargetPermanentAndCreateTokenCopy*ForEachOtherPlayer*`), the target-hand face-down exiles with a delayed return, the graveyard
   exiles with counters (memory, discovery, brain, croak).
+
+### Step 5, run 5m, continued (2026-11-22, partly done)
+
+Re-measured: 122 sibling groups held 247 unaudited classes. Every group of three or more is done, and the three Grant / GainControl
+pairs that share a survivor with one of them (`GrantEffectTo*`, `GrantEffectTo*UntilEndOfCombat`, `*GainsControlOf*UntilEndOfTurn`).
+94 groups / 174 classes are left, all pairs. Ratchet 4,652 / 3,879 → 4,624 / 3,853 records / handlers (28 records, 26 handlers deleted).
+84 card files rewritten (a deleted scratch script; every changed line read back by eye).
+
+| Audited | Absorbed | Survivor | Blocked-other | Unique | `step-9` | Left |
+|---|---|---|---|---|---|---|
+| 79 ledger rows (73 classes without one before, 6 re-ledgered) | 28 | 14 | 21 | 13 | 3 | 94 pairs, 174 classes |
+
+**Folds** (survivor ← absorbed).
+
+- `GrantEffectToTargetUntilEndOfTurnEffect(ability, …, PermanentSubject subject)` ← the own-creatures and source grants and the four
+  `GrantStaticEffectTo{Target,Source,OwnCreatures,AllCreatures}UntilEndOfTurnEffect`: `StaticAbility.of(effect)` makes the same floating
+  `GrantEffectEffect`. Step 8 run 29 had ledgered three of those `unique` as "not fused"; as subject siblings they fold.
+- `GrantEffectToTargetEffect(ability, PERMANENT, false, source())` ← `GrantEffectToSourceEffect`; `GrantEffectToTargetUntilEndOfCombatEffect(ability,
+  set)` ← the own-creatures record (its granted ability now also names the granter, which Love on the Battlefield's doesn't read).
+- `TargetPlayerGainsControlOfSourceCreatureEffect(PlayerSubject player, then, duration, PermanentSubject permanent)` ← the target permanent's
+  controller, the activating player, the attached permanent and the two until-end-of-turn records. The non-targeting form stays
+  `targetPlayerDeclaredElsewhere()` (the player a trigger bakes into the entry's target), as the old flag read it. Its validator asks for a
+  player target only when the subject declares one (Starke of Rath's target is a permanent).
+- `TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect` ← source, enchanted (`retainOtherTypes` for Mistform Sliver). The source record had
+  more cards (9 to 6); the target record already carried the subject, so it is the one kept.
+- `OpponentsCantCastSpellsThisTurnEffect(players)` ← defending player, every player; `PlayersCantGainLifeThisTurnEffect(players)` ← opponents.
+  `eachPlayer()` is still one floating effect on every player (affected player null), as the tests and the readers know it.
+- `DoubleControllerLifeEffect(player)`, `DoubleDamageFromCreaturesEffect(filter, sources)`, `EachPlayerCreatesTokenEffect(token, record, players)`,
+  `RedirectNextDamageFromChosenSourceToTargetCreatureEffect(subject)`, `MoveCounterFromSourceToTargetCreatureEffect(…, from, to, anyPermanent)`,
+  `CopyThisSpellForTargetControllerEffect` (← the target player's copy) and `DrawCardEffect(n, controllerOf(target()))` ← their siblings.
+
+**Behaviour changes**, each with a test that fails on the old handler unless noted.
+
+1. The Cheetah Planet: "all Cats gain provoke until end of turn" locks the Cats as it resolves (CR 611.2c); Cats that arrived later gained it.
+   `TheCheetahPlanetTest.catEnteringAfterChaosDoesNotGainProvoke`.
+2. Celestial Mantle doubles the life of the controller of the creature that dealt the damage, whatever the Aura enchants as it resolves (ruling
+   2009-10-01). `CelestialMantleTest.doublesLifeOfDamagingCreaturesControllerAfterAuraMoves`.
+3. Blaster, Morale Booster removes what it moves, not what was put on after Hardened Scales (CR 122.5; it lost two counters to move one).
+   `BlasterCombatDJTest.movedCounterIsRemovedOnceWhenPlacementIsIncreased`.
+4. Cytoplast Root-Kin and Arcbound Fiend remove no counter they can't put on themselves (CR 122.5; Blightbeetle).
+   `CytoplastRootKinTest.activatedAbilityKeepsTargetCounterWhenRootKinCantHavePlusOneCounters`.
+5. "Each player creates" makes the tokens in APNAP order, so their timestamps follow CR 613.7m (it was seat order).
+   `ElephantMandrillTest.tokensAreCreatedInApnapOrder`.
+6. Slicer, Hired Muscle declares no player target ("that player", Oracle). The old record's declared target was never rechecked, so
+   `SlicerHiredMuscleTest.opponentWithHexproofCanStillGainControlOfSlicer` passes on both and pins it.
+7. Log lines are the survivors'.
+
+**AI parity.** A static grant to a target classifies as its payload does, else BENEFICIAL (the absorbed record gave none for a payload without
+a polarity; the survivor's earlier static grants keep BENEFICIAL unless the payload says otherwise); a non-target grant classifies none, as
+before. The controller draw is still scored as the absorbed record was. `TargetPolarityGuardTest` passes.
+
+**Seen, not changed.**
+
+- "Can't be blocked / can't be sacrificed this turn" (Kappa Cannoneer, Lockjaw, Slicer) and Full Steam Ahead's blocking limit are modelled as
+  granted abilities, which a "loses all abilities" removes; they are rules of the game (CR 611.2c). Converted as they were.
+- `TargetOpponentCreatesTokenEffect` derives "target opponent" and `OpponentGainsControlOfSourceCreatureEffect` picks the opponent by seat: both
+  are right with two players only.
+- `MayCopyHandlerService.handleBecomeCopyChoice` logs "'s copy target is no longer on the battlefield." when the copy succeeds.
+
+**Tests edited**: the five behaviour tests and the Slicer pin above added; `TreeOfRedemptionTest`, `TreeOfPerditionTest` and
+`FlamesOfTheBloodHandTest` build the survivor instead of the deleted opponents record; `CardEffectTargetingConsistencyTest` lost two deleted
+names; `BaseCardTest.silencedPlayers` names the survivor.
+
+**Tests run**: 336 classes (464 suites, 3,943 cases by the JUnit XML file names, forced rerun of the final tree), all pass: every card test of the 13 other survivors, 16 of
+`DrawCardEffect`'s, every card test naming a rewritten card, the targeting, legality, casting-permission, layer and registry tests of the
+application and the AI's polarity, selector and copy tests, the ratchets. All test sources compile.
+
+**For the next run** (5m, the pairs).
+
+- Start with those that look like plain folds: `*BecomesSubtypeUntilEndOfTurn`, `*CantCastNoncreatureSpellsThisTurn`, `*CantGainLifeRestOfGame`,
+  `*CantLoseLifeThisTurn`, `*BecomesMonarch`, `Redirect*DamageTo*ThisTurn`, `GrantTargetingRestrictionTo*UntilEndOfTurn`, `GrantSubtypeTo*`,
+  `MoveAllCountersFrom*To*`, `PerpetuallyBoost*`, `Turn*FaceDown`, `Goad*ControlsUntilNextTurn` (none of these read yet except
+  `MoveAllCountersFromSourceToTargetCreatureEffect`, which is another "all counters" amount, not a subject).
+- The static pairs (`*CantCastSpells…`, `PreventAllDamageTo*`, `DoubleDamageTo*`, `Ignore*Hexproof`, `Set*MaximumHandSize`) are read by one
+  query each: fold through `staticSubjectNames` and check the face-down and lost-abilities guards of both readers first (they differ in
+  `*SpellsCantBeCountered`, hence its three `step-9` rows).
+- The cost pairs (`Sacrifice*Cost`, `Exile*Cost`, `Return*ToHandCost`, `PutCounterOn*Cost`) are payments, probably heads for step 10.
 
 ## Prompt
 

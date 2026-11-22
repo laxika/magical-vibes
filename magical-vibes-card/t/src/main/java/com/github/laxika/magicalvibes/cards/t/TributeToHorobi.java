@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentCreatesTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfAndReturnTransformedEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,8 +23,8 @@ public class TributeToHorobi extends Card {
         CreateTokenEffect ratToken = new CreateTokenEffect(
                 "Rat", 1, 1, CardColor.BLACK,
                 List.of(CardSubtype.RAT, CardSubtype.ROGUE), Set.of(), Set.of());
-        addTrigger(Triggers.chapter(1), new EachOpponentCreatesTokenEffect(ratToken));
-        addTrigger(Triggers.chapter(2), new EachOpponentCreatesTokenEffect(ratToken));
+        addTrigger(Triggers.chapter(1), new EachPlayerCreatesTokenEffect(ratToken, Subjects.eachOpponent()));
+        addTrigger(Triggers.chapter(2), new EachPlayerCreatesTokenEffect(ratToken, Subjects.eachOpponent()));
         addTrigger(Triggers.chapter(3), new ExileSelfAndReturnTransformedEffect(true));
     }
 

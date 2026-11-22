@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.StaticAbility;
 import com.github.laxika.magicalvibes.model.effect.AssignCombatDamageAsThoughUnblockedEffect;
-import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToOwnCreaturesUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -44,8 +46,8 @@ public class GarrukSavageHerald extends Card {
         // combat damage as though it weren't blocked."
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new GrantStaticEffectToOwnCreaturesUntilEndOfTurnEffect(
-                        new AssignCombatDamageAsThoughUnblockedEffect())),
+                List.of(new GrantEffectToTargetUntilEndOfTurnEffect(StaticAbility.of(
+                        new AssignCombatDamageAsThoughUnblockedEffect()), Subjects.creaturesYouControl())),
                 "−7: Until end of turn, creatures you control gain \"You may have this creature assign its combat damage as though it weren't blocked.\""
         ));
     }

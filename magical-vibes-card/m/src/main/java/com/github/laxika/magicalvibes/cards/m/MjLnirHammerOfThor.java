@@ -9,8 +9,9 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromEquippedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.DoubleDamageFromCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MassDamageEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -40,7 +41,7 @@ public class MjLnirHammerOfThor extends Card {
     public MjLnirHammerOfThor() {
         target(TargetFilters.creature(), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS), new DealDamageToTargetCreatureEffect(4));
-        addStaticEffect(new DoubleDamageFromEquippedCreatureEffect());
+        addStaticEffect(new DoubleDamageFromCreaturesEffect(Subjects.attachedCreature()));
         addActivatedAbility(new EquipActivatedAbility("{1}", WORTHY_CREATURE,
                 "Target must be a worthy creature"));
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(

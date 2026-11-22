@@ -49,9 +49,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerCreaturesCantB
 import com.github.laxika.magicalvibes.model.effect.LandManaProducesFixedColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LandsOfSubtypeProduceFixedManaColorUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LifeTotalCantChangeUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.MayPayLifeForColorlessManaUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.NonbasicLandsProduceFixedManaColorUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantGainLifeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PayBlackManaWithLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MaxSpeedFreeFirstUnearthEffect;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -2249,8 +2247,7 @@ public class GameQueryService {
     public boolean canPlayerGainLife(GameData gameData, UUID playerId) {
         if (!canPlayerLifeChange(gameData, playerId)) return false;
         if (gameData.hasFloatingEffectOnPlayer(playerId, PlayersCantGainLifeRestOfGameEffect.class,
-                TargetPlayerCantGainLifeRestOfGameEffect.class, OpponentsCantGainLifeThisTurnEffect.class,
-                PlayersCantGainLifeThisTurnEffect.class)) return false;
+                TargetPlayerCantGainLifeRestOfGameEffect.class, PlayersCantGainLifeThisTurnEffect.class)) return false;
         if (gameData.anyPermanentMatches(permanent -> !permanent.isFaceDown()
                 && !hasLostAllAbilities(gameData, permanent)
                 && permanent.getCard().getStaticEffects().stream()

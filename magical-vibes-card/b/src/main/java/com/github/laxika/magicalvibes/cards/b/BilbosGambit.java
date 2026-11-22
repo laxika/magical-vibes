@@ -6,8 +6,9 @@ import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
 
 @CardRegistration(set = "HOB", collectorNumber = "5")
@@ -19,6 +20,6 @@ public class BilbosGambit extends Card {
                 TargetOpponentCreatesTokenEffect.gift(CreateTokenEffect.ofTreasureToken(1))));
         addSpellEffect(new ReturnTargetSpellToHandEffect());
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
-                new PlayersCantCastSpellsThisTurnEffect()));
+                new OpponentsCantCastSpellsThisTurnEffect(Subjects.eachPlayer())));
     }
 }
