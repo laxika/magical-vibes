@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellIfNameFoundElsewhereEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import java.util.List;
@@ -43,9 +44,11 @@ public class CounterSpellIfNameFoundElsewhereEffectHandler implements NormalEffe
         if (targetEntry == null) return;
 
         String spellName = targetEntry.getCard().getName();
-        if (!nameFoundElsewhere(gameData, spellName)) {
+        // A face-down spell has no name (CR 708.2), so no card has the same one.
+        if (targetEntry.isCastFaceDown() || !nameFoundElsewhere(gameData, spellName)) {
+            String shownName = FaceDownVisibility.nameShownTo(gameData, targetEntry, null);
             gameLogService.append(gameData, GameLog.text(
-                    entry.getCard().getName() + " does not counter " + spellName
+                    entry.getCard().getName() + " does not counter " + shownName
                             + " — no card with that name in a graveyard or on the battlefield."));
             return;
         }

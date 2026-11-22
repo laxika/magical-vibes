@@ -17,6 +17,7 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.RandomChoiceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
@@ -203,7 +204,7 @@ public class StackedModalTriggerService {
                 entry.setTargetZone(Zone.STACK);
             }
             String targetName = target != null ? target.getCard().getName()
-                    : targetSpell != null ? targetSpell.getCard().getName()
+                    : targetSpell != null ? FaceDownVisibility.nameShownTo(gameData, targetSpell, null)
                     : gameData.playerIdToName.get(targetId);
             gameLogService.append(gameData, GameLog.cardThen(ctx.sourceCard(),
                     "'s ability targets " + targetName + "."));

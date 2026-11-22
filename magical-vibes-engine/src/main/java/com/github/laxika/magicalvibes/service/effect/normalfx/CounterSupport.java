@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.MayPlayExiledCardWithoutPayin
 import com.github.laxika.magicalvibes.model.effect.ReplaceControlledCounterWithExileAndPlayEffect;
 import com.github.laxika.magicalvibes.model.event.GameEventAudience;
 import com.github.laxika.magicalvibes.model.event.VisualCueType;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
@@ -170,7 +171,7 @@ public class CounterSupport {
 
         if (isAbility) {
             gameLogService.append(gameData,
-                    GameLog.text(target.getDescription() + " is countered."));
+                    GameLog.text(FaceDownVisibility.descriptionShownTo(gameData, target, null) + " is countered."));
         } else {
             gameLogService.append(gameData,
                     GameLog.cardThen(target.getCard(), " is countered."));
@@ -207,7 +208,7 @@ public class CounterSupport {
 
         if (isAbility) {
             gameLogService.append(gameData,
-                    GameLog.text(target.getDescription() + " is countered."));
+                    GameLog.text(FaceDownVisibility.descriptionShownTo(gameData, target, null) + " is countered."));
         } else {
             gameLogService.append(gameData,
                     GameLog.cardThen(target.getCard(), " is countered and returned to its owner's hand."));

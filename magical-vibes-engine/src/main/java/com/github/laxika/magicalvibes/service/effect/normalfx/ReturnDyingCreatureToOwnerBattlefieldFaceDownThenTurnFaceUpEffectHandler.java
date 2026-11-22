@@ -64,7 +64,7 @@ public class ReturnDyingCreatureToOwnerBattlefieldFaceDownThenTurnFaceUpEffectHa
         permanent.setEnteredFromGraveyardOwnerId(ownerId);
         battlefieldEntryService.putPermanentOntoBattlefield(gameData, ownerId, permanent, enterTappedTypes);
 
-        gameLogService.append(gameData, GameLog.textCardText(
+        gameLogService.appendRevealing(gameData, GameLog.textCardText(
                 gameData.playerIdToName.get(ownerId) + " returns ", cardToReturn,
                 " to the battlefield face down under its owner's control."));
 

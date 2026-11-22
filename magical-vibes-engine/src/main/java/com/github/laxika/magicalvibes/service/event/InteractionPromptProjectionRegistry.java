@@ -28,6 +28,7 @@ import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.CombatDamageTargetView;
 import com.github.laxika.magicalvibes.networking.model.InteractionShape;
 import com.github.laxika.magicalvibes.networking.service.CardViewFactory;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import java.util.ArrayList;
@@ -1099,7 +1100,8 @@ public class InteractionPromptProjectionRegistry {
                 .filter(entry -> entry.getTargetableId().equals(interaction.targetSpellId()))
                 .findFirst()
                 .orElse(null);
-        String targetName = target != null ? target.getCard().getName() : "the spell";
+        String targetName = target != null
+                ? FaceDownVisibility.nameShownTo(gameData, target, interaction.decidingPlayerId()) : "the spell";
         String highBidderName =
                 gameData.playerIdToName.getOrDefault(interaction.highBidderId(), "the high bidder");
         String prompt = "Bid life to counter " + targetName + " (current high bid: "

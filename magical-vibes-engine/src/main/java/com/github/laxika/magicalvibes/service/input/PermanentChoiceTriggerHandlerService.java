@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.OptionalTargetEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.TriggeredAbilityQueueService;
 import com.github.laxika.magicalvibes.service.battlefield.CreatureControlService;
@@ -643,7 +644,7 @@ public class PermanentChoiceTriggerHandlerService {
         if (targetPermanent == null) {
             for (StackEntry se : gameData.stack) {
                 if (se.getTargetableId().equals(cardId)) {
-                    targetName = se.getCard().getName();
+                    targetName = FaceDownVisibility.nameShownTo(gameData, se, null);
                     break;
                 }
             }
@@ -911,7 +912,7 @@ public class PermanentChoiceTriggerHandlerService {
         if (playerName != null) return playerName;
 
         for (StackEntry se : gameData.stack) {
-            if (se.getTargetableId().equals(targetId)) return se.getDescription();
+            if (se.getTargetableId().equals(targetId)) return FaceDownVisibility.descriptionShownTo(gameData, se, null);
         }
 
         for (UUID pid : gameData.orderedPlayerIds) {

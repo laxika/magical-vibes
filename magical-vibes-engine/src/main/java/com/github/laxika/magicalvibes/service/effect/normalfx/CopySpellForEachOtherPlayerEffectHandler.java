@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerCastSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import java.util.ArrayList;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPlayerEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -53,7 +54,8 @@ public class CopySpellForEachOtherPlayerEffectHandler implements NormalEffectHan
             for (UUID playerId : gameData.orderedPlayerIds) {
                 if (!playerId.equals(castingPlayerId)) {
                     choices.add(MayEffect.forPlayer(new CopyControllerCastSpellEffect(spellSnapshot, playerId),
-                            "Copy " + spellCard.getName() + "?", playerId));
+                            "Copy " + FaceDownVisibility.nameShownTo(gameData, spellSnapshot, playerId) + "?",
+                            playerId));
                 }
             }
             entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, choices);
@@ -68,13 +70,13 @@ public class CopySpellForEachOtherPlayerEffectHandler implements NormalEffectHan
                         entry.getCard(),
                         playerId,
                         List.of(new CopyControllerCastSpellEffect(spellSnapshot, playerId)),
-                        "Copy " + spellCard.getName() + "?"
+                        "Copy " + FaceDownVisibility.nameShownTo(gameData, spellSnapshot, playerId) + "?"
                 );
                 gameData.pendingMayAbilities.add(mayCopy);
                 continue;
             }
 
-            Card copyCard = copySupport.createCopyCard(spellCard);
+            Card copyCard = copySupport.createCopyCard(spellSnapshot);
             StackEntry copyEntry = copySupport.createCopyStackEntry(spellSnapshot, copyCard, playerId, spellSnapshot.getTargetId());
 
             PendingMayAbility retargetAbility = copyEntry.getTargetId() != null

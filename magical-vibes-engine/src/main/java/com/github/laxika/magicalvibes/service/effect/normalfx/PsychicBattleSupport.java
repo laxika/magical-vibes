@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.PsychicBattleRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
@@ -125,7 +126,7 @@ public class PsychicBattleSupport {
                         sourceCard,
                         controllerId,
                         List.of(new PsychicBattleRetargetEffect(spellCardId, index)),
-                        "Change the target of " + entry.getCard().getName() + "?"
+                        "Change the target of " + FaceDownVisibility.nameShownTo(gameData, entry, controllerId) + "?"
                 );
             }
         }
@@ -178,7 +179,7 @@ public class PsychicBattleSupport {
         playerInputService.beginAnyTargetChoice(gameData, controllerId,
                 validTargets.stream().filter(id -> !gameData.playerIds.contains(id)).toList(),
                 validTargets.stream().filter(gameData.playerIds::contains).toList(),
-                "Choose a new target for " + entry.getCard().getName() + ".");
+                "Choose a new target for " + FaceDownVisibility.nameShownTo(gameData, entry, controllerId) + ".");
     }
 
     /**
@@ -205,7 +206,8 @@ public class PsychicBattleSupport {
             playerInputService.beginAnyTargetChoice(gameData, chooserId,
                     choices.stream().filter(id -> !gameData.playerIds.contains(id)).toList(),
                     choices.stream().filter(gameData.playerIds::contains).toList(),
-                    "Choose the new target for target " + (index + 1) + " of " + entry.getCard().getName()
+                    "Choose the new target for target " + (index + 1) + " of "
+                            + FaceDownVisibility.nameShownTo(gameData, entry, chooserId)
                             + " (choose the current target to leave it unchanged).");
             return true;
         }

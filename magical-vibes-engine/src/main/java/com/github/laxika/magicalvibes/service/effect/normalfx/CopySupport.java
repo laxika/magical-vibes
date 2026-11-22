@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.rules.SpellEvent;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DeferredSpellCopy;
@@ -18,7 +19,9 @@ import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTargetAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.EpicEffect;
 import com.github.laxika.magicalvibes.model.effect.PsychicBattleRetargetEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.TargetTriggers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -426,6 +429,29 @@ public class CopySupport {
 
     public Card createCopyCard(Card original) {
         return createCopyCard(original, false);
+    }
+
+    /**
+     * A new card with the copiable values of {@code spell}. Those of a face-down spell are only the characteristics
+     * listed for it (CR 707.2, 708.2), so the copy is a nameless 2/2, with ward {2} for disguise (CR 702.168a).
+     */
+    public Card createCopyCard(StackEntry spell) {
+        if (!spell.isCastFaceDown()) {
+            return createCopyCard(spell.getCard());
+        }
+        Card copy = createCopyCard(CastingPermissionService.faceDownSpellCharacteristics(spell.getCard()));
+        copy.setKeywords(spell.isCastWithDisguise() ? EnumSet.of(Keyword.WARD) : EnumSet.noneOf(Keyword.class));
+        if (spell.isCastWithDisguise()) {
+            copy.addTrigger(Triggers.becomesTargetOfOpponentSpellOrAbility(), new CounterUnlessPaysEffect(2));
+        }
+        return copy;
+    }
+
+    /** {@link #createCopyCard(StackEntry)} as a token. */
+    public Card createTokenCopyCard(StackEntry spell) {
+        Card copy = createCopyCard(spell);
+        copy.setToken(true);
+        return copy;
     }
 
     public Card createTokenCopyCard(Card original) {

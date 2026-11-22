@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForStackEntryEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PsychicBattleSupport;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -61,6 +62,7 @@ public class ChooseNewTargetsForStackEntryEffectHandler implements MayEffectHand
                 gameData,
                 ability.controllerId(),
                 validTargets,
-                "Choose a new target for " + targetEntry.getDescription() + ".");
+                "Choose a new target for "
+                        + FaceDownVisibility.descriptionShownTo(gameData, targetEntry, player.getId()) + ".");
     }
 }

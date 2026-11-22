@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForAnyNumberOfOtherSpellsAndAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseNewTargetsForStackEntryEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -46,7 +47,8 @@ public class ChooseNewTargetsForAnyNumberOfOtherSpellsAndAbilitiesEffectHandler
                             entry.getControllerId(),
                             List.of(new ChooseNewTargetsForStackEntryEffect(
                                     targetEntry.getTargetableId(), targetIndex)),
-                            "Choose new targets for " + targetEntry.getDescription() + "?"));
+                            "Choose new targets for "
+                                    + FaceDownVisibility.descriptionShownTo(gameData, targetEntry, entry.getControllerId()) + "?"));
                 }
             }
         }

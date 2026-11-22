@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellForEachOtherPermanentOrPlayerEffect;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.target.ValidTargetService;
 import lombok.RequiredArgsConstructor;
@@ -97,7 +98,8 @@ public class CopySpellForEachOtherPermanentOrPlayerEffectHandler implements Norm
             if (spellCard != null) {
                 gameLogService.append(gameData, GameLog.textCardText("A copy of ", spellCard, " is created."));
             } else {
-                gameLogService.append(gameData, GameLog.text("A copy of " + targetEntry.getDescription() + " is created."));
+                gameLogService.append(gameData, GameLog.text("A copy of "
+                    + FaceDownVisibility.descriptionShownTo(gameData, targetEntry, null) + " is created."));
             }
         }
     }

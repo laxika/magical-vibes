@@ -31,7 +31,8 @@ public class CounterUnlessOtherPlayerPaysManaCostOnSpellCastEffectHandler implem
                 .filter(stackEntry -> stackEntry.getTargetableId().equals(entry.getTriggeringCardId()))
                 .findFirst()
                 .orElse(entry.getTriggeringSpellSnapshot());
-        if (spell == null || spell.getCard().getManaCost() == null) {
+        // A face-down spell has no mana cost (CR 708.2), which can't be paid (CR 118.6).
+        if (spell == null || spell.isCastFaceDown() || spell.getCard().getManaCost() == null) {
             return;
         }
         String manaCost = spell.getCard().getManaCost().replace("{X}", "{" + spell.getXValue() + "}");

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service;
 
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedEffect;
 
 import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
@@ -179,13 +180,14 @@ public class GameViewProjectionFactory {
 
             List<Integer> playableOpponentHandIndices = getPlayableOpponentHandIndices(gameData, playerId);
 
+            Map<UUID, CardView> permanentReveals = collectFaceDownPermanentReveals(gameData, playerId);
             messages.put(playerId, new GameStateMessage(
                     MessageType.GAME_STATE, gameData.status, gameData.activePlayerId, gameData.turnNumber,
                     gameData.currentStep, priorityPlayerId,
                     applyFaceDownPermanentReveals(
                             applyFaceDownReveals(battlefields, faceDownReveals, playerId),
-                            collectFaceDownPermanentReveals(gameData, playerId)),
-                    stack, graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters,
+                            permanentReveals),
+                    getStackViewsFor(gameData, stack, playerId, permanentReveals.keySet()), graveyards, deckSizes, handSizes, lifeTotals, poisonCounters, energyCounters,
                     radCounters,
                     hand, opponentHand, mulliganCount, manaPool, autoStopSteps, playableCardIndices,
                     playableForetellIndices,
@@ -223,12 +225,44 @@ public class GameViewProjectionFactory {
         return actionAvailabilityService.getPlayableIndicesFromHandOf(gameData, playerId, handOwnerId);
     }
 
+    /** The stack as everybody may see it, with no face-down card's identity (CR 708.2, 708.4). */
     List<StackEntryView> getStackViews(GameData gameData) {
         return gameData.stack.stream().map(entry -> {
             List<CardSubtype> granted = gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(
                     gameData, entry.getControllerId());
-            return stackEntryViewFactory.create(entry, granted);
+            if (FaceDownVisibility.maySeeOnStack(gameData, entry, null)) {
+                return stackEntryViewFactory.create(entry, granted);
+            }
+            return entry.isCastFaceDown()
+                    ? stackEntryViewFactory.createFaceDownSpell(entry, granted)
+                    : stackEntryViewFactory.createFaceDownAbility(entry,
+                            FaceDownVisibility.faceDownSource(gameData, entry),
+                            FaceDownVisibility.descriptionShownTo(gameData, entry, null));
         }).toList();
+    }
+
+    /**
+     * {@code publicViews} with the face-down cards {@code viewerId} may look at shown to them (CR 708.5).
+     *
+     * @param revealedPermanentIds the face-down permanents an effect lets the viewer look at
+     */
+    List<StackEntryView> getStackViewsFor(GameData gameData, List<StackEntryView> publicViews, UUID viewerId,
+                                          Set<UUID> revealedPermanentIds) {
+        List<StackEntryView> views = new ArrayList<>(publicViews);
+        for (int i = 0; i < views.size(); i++) {
+            StackEntry entry = gameData.stack.get(i);
+            if (FaceDownVisibility.maySeeOnStack(gameData, entry, null)) {
+                continue;
+            }
+            Permanent source = FaceDownVisibility.faceDownSource(gameData, entry);
+            if (FaceDownVisibility.maySeeOnStack(gameData, entry, viewerId)
+                    || source != null && revealedPermanentIds.contains(source.getId())) {
+                views.set(i, stackEntryViewFactory.create(entry,
+                        gameQueryService.computeGrantedSubtypesForOwnedCreatureCard(
+                                gameData, entry.getControllerId())));
+            }
+        }
+        return List.copyOf(views);
     }
 
     List<List<PermanentView>> getBattlefields(GameData data) {
@@ -1299,7 +1333,8 @@ public class GameViewProjectionFactory {
                 getPoisonCounters(data),
                 getEnergyCounters(data),
                 getRadCounters(data),
-                getStackViews(data),
+                getStackViewsFor(data, getStackViews(data), playerId, playerId == null
+                        ? Set.of() : collectFaceDownPermanentReveals(data, playerId).keySet()),
                 getGraveyardViews(data, playerId),
                 getSpeeds(data),
                 data.dayNight,

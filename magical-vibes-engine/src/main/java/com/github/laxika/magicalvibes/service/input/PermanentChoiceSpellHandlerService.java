@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.TargetGroup;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileCastTargetSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChandraTorchExileCastSupport;
@@ -149,7 +150,8 @@ public class PermanentChoiceSpellHandlerService {
                                 retarget.spellCardId(), replacements.size(), List.copyOf(replacements),
                                 retarget.chooserId()));
                         playerInputService.beginPermanentChoice(gameData, retarget.chooserId(), candidates,
-                                "Choose the next new target for " + targetSpell.getCard().getName() + ".");
+                                "Choose the next new target for " + FaceDownVisibility.nameShownTo(
+                                        gameData, targetSpell, retarget.chooserId()) + ".");
                         return;
                     }
                     inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -180,8 +182,8 @@ public class PermanentChoiceSpellHandlerService {
                 }
             }
             String spellName = targetSpell.isCopy()
-                    ? "Copy of " + targetSpell.getCard().getName()
-                    : targetSpell.getCard().getName();
+                    ? "Copy of " + FaceDownVisibility.nameShownTo(gameData, targetSpell, null)
+                    : FaceDownVisibility.nameShownTo(gameData, targetSpell, null);
             String targetName = getTargetDisplayName(gameData, permanentId);
             String logMsg = spellName + " now targets " + targetName + ".";
             gameLogService.append(gameData, GameLog.text(logMsg));
@@ -215,7 +217,7 @@ public class PermanentChoiceSpellHandlerService {
 
         psychicBattleSupport.replaceTarget(targetSpell, retarget.targetIndex(), permanentId);
         gameLogService.append(gameData, GameLog.text(
-                targetSpell.getCard().getName() + " now targets " + getTargetDisplayName(gameData, permanentId) + "."));
+                FaceDownVisibility.nameShownTo(gameData, targetSpell, null) + " now targets " + getTargetDisplayName(gameData, permanentId) + "."));
 
         boolean nextChoiceQueued = psychicBattleSupport.queueNextChoice(
                 gameData, retarget.sourceCard(), retarget.controllerId(),
@@ -1107,7 +1109,7 @@ public class PermanentChoiceSpellHandlerService {
         if (playerName != null) return playerName;
 
         for (StackEntry se : gameData.stack) {
-            if (se.getTargetableId().equals(targetId)) return se.getDescription();
+            if (se.getTargetableId().equals(targetId)) return FaceDownVisibility.descriptionShownTo(gameData, se, null);
         }
 
         for (UUID pid : gameData.orderedPlayerIds) {

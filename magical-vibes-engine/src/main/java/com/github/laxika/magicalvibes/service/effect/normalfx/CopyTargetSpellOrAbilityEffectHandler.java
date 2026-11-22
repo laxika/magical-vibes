@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.filter.StackEntryIsSingleTargetPredi
 import com.github.laxika.magicalvibes.model.filter.StackEntryIsCopyPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +53,8 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
             return;
         }
         if (CopySupport.isAbilityThatCantBeCopied(targetEntry)) {
-            gameLogService.append(gameData, GameLog.text(targetEntry.getDescription() + " can't be copied."));
+            gameLogService.append(gameData, GameLog.text(
+                    FaceDownVisibility.descriptionShownTo(gameData, targetEntry, null) + " can't be copied."));
             return;
         }
         if (targetEntry.getCard() != null && targetEntry.getCard().isCantBeCopied()) {
@@ -60,7 +62,7 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
             return;
         }
 
-        Card copyCard = targetEntry.getCard() == null ? null : copySupport.createCopyCard(targetEntry.getCard());
+        Card copyCard = targetEntry.getCard() == null ? null : copySupport.createCopyCard(targetEntry);
         StackEntry copyEntry = copySupport.createCopyStackEntry(
                 targetEntry, copyCard, entry.getControllerId(), targetEntry.getTargetId());
         copyEntry.setTargetFilter(targetEntry.getTargetFilter());
@@ -88,7 +90,8 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
             copySupport.addCopyToStack(gameData, copyEntry, retargetAbility);
         }
 
-        gameLogService.append(gameData, GameLog.text("A copy of " + targetEntry.getDescription() + " is created."));
+        gameLogService.append(gameData, GameLog.text("A copy of "
+                + FaceDownVisibility.descriptionShownTo(gameData, targetEntry, null) + " is created."));
     }
 
     private StackEntry findTargetEntry(GameData gameData, UUID targetCardId, StackEntryPredicate predicate) {
@@ -146,7 +149,7 @@ public class CopyTargetSpellOrAbilityEffectHandler implements NormalEffectHandle
 
         return new PendingMayAbility(
                 entry.getCard(), entry.getControllerId(), List.of(retargetEffect),
-                "Choose a new target for the copy of " + targetEntry.getDescription() + "?",
+                "Choose a new target for the copy of " + FaceDownVisibility.descriptionShownTo(gameData, targetEntry, entry.getControllerId()) + "?",
                 copyEntry.getTargetableId());
     }
 }

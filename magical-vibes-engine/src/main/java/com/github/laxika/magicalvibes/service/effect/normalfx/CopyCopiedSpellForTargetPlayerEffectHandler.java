@@ -44,7 +44,7 @@ public class CopyCopiedSpellForTargetPlayerEffectHandler implements NormalEffect
             return;
         }
 
-        Card copyCard = copySupport.createCopyCard(spellCard);
+        Card copyCard = copySupport.createCopyCard(spellSnapshot);
         StackEntry copyEntry = copySupport.createCopyStackEntry(
                 spellSnapshot, copyCard, targetPlayerId, spellSnapshot.getTargetId());
         PendingMayAbility retargetAbility = null;

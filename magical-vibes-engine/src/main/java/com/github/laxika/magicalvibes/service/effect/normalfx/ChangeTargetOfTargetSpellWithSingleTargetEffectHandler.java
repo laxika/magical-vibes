@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChangeTargetOfTargetSpellWithSingleTargetEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
@@ -106,7 +107,7 @@ public class ChangeTargetOfTargetSpellWithSingleTargetEffectHandler implements N
                 gameData,
                 controllerId,
                 validNewTargets,
-                "Choose a new target for " + targetSpell.getCard().getName() + "."
+                "Choose a new target for " + FaceDownVisibility.nameShownTo(gameData, targetSpell, controllerId) + "."
         );
     }
 

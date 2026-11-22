@@ -214,6 +214,11 @@ public class SubjectResolutionService {
         Set<String> names = new LinkedHashSet<>();
         if (subject instanceof PermanentSubject.TargetSpell) {
             UUID spellId = entry.getTargetId();
+            if (gameData.stack.stream().anyMatch(onStack -> onStack.isCastFaceDown()
+                    && onStack.getTargetableId().equals(spellId))) {
+                // A face-down spell still on the stack has no name (CR 708.2).
+                return names;
+            }
             Card spell = gameData.stack.stream()
                     .filter(onStack -> spellId != null && spellId.equals(onStack.getTargetableId()))
                     .map(StackEntry::getCard)

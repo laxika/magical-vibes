@@ -431,15 +431,17 @@ public class StackResolutionService {
         perm.setControlledDragonAsCast(entry.isControlledDragonAsCast());
         perm.setGiftPromised(entry.isGiftPromised());
         perm.setDelvedCards(entry.getDelvedCards());
+        // What the permanent shows as the source of what it gained as a spell; a face-down one had no name (CR 708.2).
+        String spellName = entry.isCastFaceDown() ? StackEntry.FACE_DOWN_SPELL : card.getName();
         // Keywords the spell grants the permanent as it enters (Choreographed Sparks' hasty copy).
         if (!entry.getGrantedKeywordsOnEntry().isEmpty()) {
-            gameData.addEffectOnPermanent(card.getName(), null, entry.getControllerId(),
+            gameData.addEffectOnPermanent(spellName, null, entry.getControllerId(),
                     new GrantKeywordEffect(Set.copyOf(entry.getGrantedKeywordsOnEntry()), Subjects.target()),
                     perm.getId(), Duration.UNTIL_END_OF_TURN);
         }
         // Keywords granted until the controller's next turn while the spell was on the stack (Jade Orb's hexproof).
         if (!entry.getUntilNextTurnKeywordsOnEntry().isEmpty()) {
-            gameData.addEffectOnPermanent(card.getName(), null, entry.getControllerId(),
+            gameData.addEffectOnPermanent(spellName, null, entry.getControllerId(),
                     new GrantKeywordEffect(Set.copyOf(entry.getUntilNextTurnKeywordsOnEntry()), Subjects.target(),
                             Duration.UNTIL_YOUR_NEXT_TURN),
                     perm.getId(), Duration.UNTIL_YOUR_NEXT_TURN);
@@ -449,9 +451,9 @@ public class StackResolutionService {
         // Devour granted while the spell was on the stack (Jund).
         perm.setGrantedDevour(entry.getGrantedDevour());
         // Abilities the spell grants the permanent as it enters (CR 611.2a): until end of turn, or indefinitely.
-        entry.getGrantedAbilitiesOnEntry().forEach(ability -> gameData.grantAbilityToPermanent(card.getName(), null,
+        entry.getGrantedAbilitiesOnEntry().forEach(ability -> gameData.grantAbilityToPermanent(spellName, null,
                 entry.getControllerId(), ability, perm.getId(), Duration.UNTIL_END_OF_TURN));
-        entry.getPersistentAbilitiesOnEntry().forEach(ability -> gameData.grantAbilityToPermanent(card.getName(), null,
+        entry.getPersistentAbilitiesOnEntry().forEach(ability -> gameData.grantAbilityToPermanent(spellName, null,
                 entry.getControllerId(), ability, perm.getId(), Duration.PERMANENT));
         // Mirage flash clause: cast at a time a sorcery couldn't have been cast, so its controller
         // sacrifices the permanent it becomes at the beginning of the next cleanup step.
@@ -525,7 +527,8 @@ public class StackResolutionService {
         keepWithNonOwnerController(gameData, controllerId, permanent, entry);
         if (entry.isSuspendHasteOnEntry()) {
             gameData.addFloatingEffect(new com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect(
-                    UUID.randomUUID(), entry.getCard().getName(), permanent.getId(), controllerId,
+                    UUID.randomUUID(), entry.isCastFaceDown() ? StackEntry.FACE_DOWN_SPELL : entry.getCard().getName(),
+                    permanent.getId(), controllerId,
                     new com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect(
                             Keyword.HASTE, com.github.laxika.magicalvibes.model.effect.Subjects.target(),
                             Duration.UNTIL_CONTROL_LOST),
@@ -1447,10 +1450,12 @@ public class StackResolutionService {
 
         if (targetFizzled) {
             ActionEvents.completeDungeonRoomIfReady(gameData, entry);
-            gameLogService.append(gameData, GameLog.builder()
-                    .card(entry.getCard())
-                    .text(" fizzles (illegal target).")
-                    .build());
+            gameLogService.append(gameData, hidesSource(gameData, entry)
+                    ? GameLog.text("An ability of a face-down card fizzles (illegal target).")
+                    : GameLog.builder()
+                            .card(entry.getCard())
+                            .text(" fizzles (illegal target).")
+                            .build());
             log.info("Game {} - {} fizzles, target {} is illegal",
                     gameData.id, entry.getDescription(), entry.getTargetId());
 
@@ -1474,7 +1479,9 @@ public class StackResolutionService {
             }
         } else {
             emitSpellResolved(gameData, entry);
-            gameLogService.append(gameData, GameLog.resolves(entry.getCard(), entry.getDescription()));
+            gameLogService.append(gameData, hidesSource(gameData, entry)
+                    ? GameLog.text("An ability of a face-down card resolves.")
+                    : GameLog.resolves(entry.getCard(), entry.getDescription()));
             log.info("Game {} - {} resolves", gameData.id, entry.getDescription());
 
             countAbilityResolution(gameData, entry);
@@ -1530,6 +1537,16 @@ public class StackResolutionService {
             gameData.clearSpellCastDesertManaSpent(entry.getCard().getId());
             gameData.clearSpellCastManaSpentOnX(entry.getCard().getId());
         }
+    }
+
+    /**
+     * Whether {@code entry}, an ability, has a face-down source (CR 708.2). A copy of one has a card of its own, so
+     * the log can't tell that by the card.
+     */
+    private static boolean hidesSource(GameData gameData, StackEntry entry) {
+        return (entry.getEntryType() == StackEntryType.ACTIVATED_ABILITY
+                || entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY)
+                && !FaceDownVisibility.maySeeOnStack(gameData, entry, null);
     }
 
     public void completeDeferredAuraResolution(GameData gameData, StackEntry entry) {

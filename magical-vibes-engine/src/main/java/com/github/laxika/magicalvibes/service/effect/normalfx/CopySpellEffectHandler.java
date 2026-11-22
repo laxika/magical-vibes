@@ -85,7 +85,7 @@ public class CopySpellEffectHandler implements NormalEffectHandlerBean {
 
     private void createCopy(GameData gameData, StackEntry entry, CopySpellEffect copyEffect,
                             StackEntry targetEntry, UUID copyControllerId) {
-        Card copyCard = copySupport.createCopyCard(targetEntry.getCard());
+        Card copyCard = copySupport.createCopyCard(targetEntry);
         if (copyEffect.removeLegendary()) {
             var supertypes = EnumSet.noneOf(CardSupertype.class);
             supertypes.addAll(copyCard.getSupertypes());

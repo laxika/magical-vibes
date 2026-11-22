@@ -26,6 +26,9 @@ import lombok.Setter;
 @Getter
 public class StackEntry {
 
+    /** What a face-down spell, which has no name (CR 708.2), is called wherever a name would be shown. */
+    public static final String FACE_DOWN_SPELL = "a face-down spell";
+
     @Setter private SubgameResult subgameResult;
 
     private StackEntryType entryType;
@@ -328,7 +331,7 @@ public class StackEntry {
      */
     @Setter private boolean castTransformed;
     /** Whether a creature spell resolves as a face-down 2/2 from a morph cast. */
-    @Setter private boolean castFaceDown;
+    private boolean castFaceDown;
     /** Whether the face-down casting alternative was disguise and supplies ward. */
     @Setter private boolean castWithDisguise;
     /** Whether this face-down creature turns face up when it would deal or receive damage or become tapped. */
@@ -2330,6 +2333,17 @@ public class StackEntry {
             aftermathHalfFromGraveyard = castWithFlashback;
         }
         return aftermathHalf;
+    }
+
+    /**
+     * Marks this spell as cast face down. Its description, which logs, prompts and target labels quote to every
+     * player, then no longer names the card (CR 708.2, 708.4).
+     */
+    public void setCastFaceDown(boolean castFaceDown) {
+        this.castFaceDown = castFaceDown;
+        if (castFaceDown) {
+            this.description = FACE_DOWN_SPELL;
+        }
     }
 
     /** Whether this stack object has the given printed or cast-time-granted keyword. */

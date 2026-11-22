@@ -41,6 +41,8 @@ import com.github.laxika.magicalvibes.model.effect.SacrificeCreatureCost;
 import com.github.laxika.magicalvibes.networking.model.ActivatedAbilityView;
 import com.github.laxika.magicalvibes.networking.model.CardView;
 import com.github.laxika.magicalvibes.networking.model.ModalOptionView;
+import java.util.EnumSet;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -143,6 +145,35 @@ public class CardViewFactory {
         CardView built = build(card);
         frozenCardViews.put(card, built);
         return built;
+    }
+
+    /**
+     * The view of a face-down spell or permanent with only the characteristics listed for it (CR 708.2) and nothing
+     * of the card. It is built from nothing, so that a component added to {@link CardView} stays hidden.
+     */
+    public CardView createFaceDown(UUID id, Set<CardType> cardTypes, List<CardSubtype> subtypes,
+                                   int power, int toughness, Set<Keyword> keywords) {
+        Set<CardType> additionalTypes = EnumSet.copyOf(cardTypes.isEmpty() ? Set.of(CardType.CREATURE) : cardTypes);
+        CardType primaryType = additionalTypes.contains(CardType.CREATURE)
+                ? CardType.CREATURE : additionalTypes.iterator().next();
+        additionalTypes.remove(primaryType);
+        return CardView.builder()
+                .id(id)
+                .type(primaryType)
+                .additionalTypes(additionalTypes)
+                .supertypes(Set.of())
+                .subtypes(subtypes)
+                .power(power)
+                .toughness(toughness)
+                .keywords(keywords)
+                .colors(List.of())
+                .colorIdentity(List.of())
+                .activatedAbilities(List.of())
+                .graveyardActivatedAbilities(List.of())
+                .handActivatedAbilities(List.of())
+                .exileActivatedAbilities(List.of())
+                .additionalCreatureTypeChoices(List.of())
+                .build();
     }
 
     private CardView build(Card card) {

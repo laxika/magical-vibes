@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTargetAbilityEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.Set;
@@ -75,7 +76,8 @@ public class CopyTargetAbilityEffectHandler implements NormalEffectHandlerBean {
 
             copySupport.addCopyToStack(gameData, copyEntry);
 
-            gameLogService.append(gameData, GameLog.text("A copy of " + targetEntry.getDescription() + " is created."));
+            gameLogService.append(gameData, GameLog.text("A copy of "
+                + FaceDownVisibility.descriptionShownTo(gameData, targetEntry, null) + " is created."));
             log.info("Game {} - copy of {}'s ability created", gameData.id, targetEntry.getDescription());
 
             if (!targetEntry.isNonTargeting() && psychicBattleSupport.targetIds(copyEntry).size() > 1) {
@@ -92,7 +94,7 @@ public class CopyTargetAbilityEffectHandler implements NormalEffectHandlerBean {
                         copyControllerId,
                         List.of(new CopyAbilityRetargetEffect()),
                         "Choose a new target for the copy of "
-                                + targetEntry.getDescription() + "'s ability?",
+                                + FaceDownVisibility.descriptionShownTo(gameData, targetEntry, entry.getControllerId()) + "'s ability?",
                         copyEntry.getTargetableId());
                 gameData.pendingMayAbilities.addFirst(retargetAbility);
             }

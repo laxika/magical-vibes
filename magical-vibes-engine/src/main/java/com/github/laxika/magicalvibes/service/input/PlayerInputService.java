@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -39,7 +40,6 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
-import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
@@ -2817,7 +2817,7 @@ public class PlayerInputService {
     }
 
     /**
-     * The names of the face-up cards in the public zones, of what the stack shows ({@link #showsNameOnStack}) and
+     * The names of the face-up cards in the public zones, of what the stack shows ({@link FaceDownVisibility#showsNameOnStack}) and
      * of {@code viewerId}'s own hand and library.
      */
     private Set<String> collectCardNamesKnownTo(GameData gameData, UUID viewerId, Predicate<Card> candidate) {
@@ -2839,27 +2839,9 @@ public class PlayerInputService {
         gameData.playerHands.getOrDefault(viewerId, List.of()).forEach(offer);
         gameData.playerDecks.getOrDefault(viewerId, List.of()).forEach(offer);
         gameData.stack.stream()
-                .filter(entry -> showsNameOnStack(gameData, entry))
+                .filter(entry -> FaceDownVisibility.showsNameOnStack(gameData, entry))
                 .forEach(entry -> offer.accept(entry.getCard()));
         return names;
-    }
-
-    /**
-     * Whether the stack shows the name of {@code entry}'s card: not a spell cast face down (CR 708.4), nor the source
-     * of an ability that is or last was face down on the battlefield (CR 708.2) or lies face down in exile (CR 406.3).
-     */
-    private boolean showsNameOnStack(GameData gameData, StackEntry entry) {
-        Card card = entry.getCard();
-        if (card == null || entry.isCastFaceDown() || gameData.isExiledFaceDown(card.getId())
-                || VisualCueService.Source.of(gameData, entry).name() == null) {
-            return false;
-        }
-        // An ability may name its source by the card alone, without the permanent.
-        return gameData.playerBattlefields.values().stream()
-                .flatMap(List::stream)
-                .noneMatch(permanent -> permanent.isFaceDown()
-                        && (card.getId().equals(permanent.getCard().getId())
-                        || card.getId().equals(permanent.getOriginalCard().getId())));
     }
 
     /** The names offered for "a card name other than a basic land card name". */

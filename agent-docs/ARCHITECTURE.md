@@ -13,7 +13,7 @@ Javadoc of the owner class.
 
 | Changing | Read |
 |---|---|
-| Casting paths, costs, stack object identity, spell copies, what a stack entry retains | [architecture/casting-stack.md](architecture/casting-stack.md) |
+| Casting paths, costs, stack object identity, face-down cards in views, logs and prompts, spell copies, what a stack entry retains | [architecture/casting-stack.md](architecture/casting-stack.md) |
 | A new effect or handler, prompts, parked resolutions, the resolution scratchpad | [architecture/resolution.md](architecture/resolution.md) |
 | Replacement and prevention, damage, death replacements, losing the game, token creation | [architecture/replacement-damage.md](architecture/replacement-damage.md) |
 | How permanents enter the battlefield | [architecture/entry.md](architecture/entry.md) |

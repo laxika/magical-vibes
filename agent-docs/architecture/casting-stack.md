@@ -1,6 +1,6 @@
 # Casting and the stack
 
-Casting paths, costs, stack object identity, spell copies, what a stack entry retains.
+Casting paths, costs, stack object identity and visibility, spell copies, what a stack entry retains.
 
 ## Casting paths
 
@@ -57,6 +57,11 @@ Why: no spell sits on the stack with an unpaid cost.
 A spell is its card id; each ability has its own `getTargetableId()`. Duplicate a real trigger with `copyForNewStackObject()`.
 Owner: `StackEntry`.
 Why: two abilities of one source are separately targetable.
+
+### A face-down card's identity never leaves for other players (CR 708.2, 708.5)
+A spell's `getCard()` stays the real card: text built from a stack entry for a player asks `FaceDownVisibility` (`nameShownTo`, `descriptionShownTo`, `publicName`), and a copy is made by `CopySupport.createCopyCard(StackEntry)`.
+Owner: `FaceDownVisibility`; applied by `GameViewProjectionFactory` (stack views) and `GameLogService.append` (card segments; `appendRevealing` for a reveal).
+Why: the card's name, or its printing alone, tells an opponent what was cast face down.
 
 ### Spell copies choose targets before entering the stack (CR 707.10c)
 A copy with a retarget prompt waits in `GameData.stagedSpellCopies`; copy and becomes-the-target triggers fire only when it is committed with its final targets. Ability copies are not staged.

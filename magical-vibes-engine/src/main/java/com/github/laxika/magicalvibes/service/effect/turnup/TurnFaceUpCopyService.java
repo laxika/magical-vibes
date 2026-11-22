@@ -67,7 +67,7 @@ public class TurnFaceUpCopyService {
 
         Card physicalCard = permanent.getOriginalCard();
         if (physicalCard.hasType(CardType.INSTANT) || physicalCard.hasType(CardType.SORCERY)) {
-            gameLogService.append(gameData, GameLog.textCardText(
+            gameLogService.appendRevealing(gameData, GameLog.textCardText(
                     gameData.playerIdToName.get(controllerId) + " reveals ", physicalCard,
                     " and leaves it face down."));
             return;

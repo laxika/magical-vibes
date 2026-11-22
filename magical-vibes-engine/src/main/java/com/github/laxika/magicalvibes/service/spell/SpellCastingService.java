@@ -3159,8 +3159,9 @@ public class SpellCastingService {
             ManaPool pool = gameData.playerManaPools.get(playerId);
             ManaCost increaseCost = new ManaCost("{0}");
             if (!increaseCost.canPayWithAdditionalGenericCost(pool, 0, costIncrease)) {
-                gameLogService.append(gameData, GameLog.cardThen(card,
-                        " can't be cast face down: its cost increase can't be paid."));
+                // The card stays hidden in the hand (CR 400.2).
+                gameLogService.append(gameData, GameLog.text("A card in " + player.getUsername()
+                        + "'s hand can't be cast face down: its cost increase can't be paid."));
                 return;
             }
             increaseCost.payWithAdditionalGenericCost(pool, 0, costIncrease);
@@ -5958,7 +5959,9 @@ public class SpellCastingService {
                     additionalCosts.chosenCreatureOrWarpedCardCost() == null ? null
                             : additionalSpellCostService.validateChosenCreatureOrWarpedCard(
                                     gameData, player, card, costSelection.chosenObjectId());
-            validateImposedSacrificeTax(gameData, player, card, imposedSacrificePermanentIds);
+            // CR 708.4: a cost counted from the spell's mana symbols sees only the face-down spell, which has none.
+            Card imposedTaxCard = castingFaceDown ? CastingPermissionService.faceDownSpellCharacteristics(card) : card;
+            validateImposedSacrificeTax(gameData, player, imposedTaxCard, imposedSacrificePermanentIds);
             if (kicked && kickerEffect != null && kickerEffect.hasLifeCost()) {
                 additionalSpellCostService.validatePayLifeCost(gameData, player, card, kickerEffect.lifeCost());
             }
@@ -6160,7 +6163,7 @@ public class SpellCastingService {
                     hasCreatureSpellAdditionalCountersCost);
             BeheldCardPayment beholdPayment = payBeholdCost(
                     gameData, player, card, additionalCosts.beholdCost(), costSelection);
-            payImposedSacrificeTax(gameData, player, card, imposedSacrificePermanentIds);
+            payImposedSacrificeTax(gameData, player, imposedTaxCard, imposedSacrificePermanentIds);
             payTargetingLifeCost(gameData, player, card, targetingLifeTax);
             if (convergeSnapshot != null) {
                 ManaPool pool = gameData.playerManaPools.get(playerId);
@@ -18228,8 +18231,11 @@ public class SpellCastingService {
             }
         }
         int manaSpent = before - pool.getTotalAllMana();
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " pays " + manaCostOpt.get().manaCost() + " for ", card, "."));
+        String payment = player.getUsername() + " pays " + manaCostOpt.get().manaCost() + " for ";
+        // CR 708.4: a morph card cast for this cost is face down already, though not on the stack yet.
+        gameLogService.append(gameData, card.getMorphCost() != null
+                ? GameLog.text(payment + StackEntry.FACE_DOWN_SPELL + ".")
+                : GameLog.textCardText(payment, card, "."));
         return manaSpent;
     }
 
@@ -18553,6 +18559,9 @@ public class SpellCastingService {
             faceDown.setPower(2);
             faceDown.setToughness(2);
             castCharacteristics = card.createRuntimeCopyWithFace(faceDown);
+            // The printing would name the card wherever these characteristics are shown (CR 708.5).
+            castCharacteristics.setSetCode(null);
+            castCharacteristics.setCollectorNumber(null);
             castCharacteristics.freeze();
         } else if (castEntry != null && card.getBackFaceCard() != null
                 && (castEntry.isCastWithAdventure() || castEntry.isCastWithOmen()

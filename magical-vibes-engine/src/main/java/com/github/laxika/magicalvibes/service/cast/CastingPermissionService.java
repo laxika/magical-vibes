@@ -2534,7 +2534,11 @@ public class CastingPermissionService {
         if (card.hasKeyword(Keyword.DISGUISE)) {
             face.setKeywords(Set.of(Keyword.WARD));
         }
-        return card.createRuntimeCopyWithFace(face);
+        Card characteristics = card.createRuntimeCopyWithFace(face);
+        // The printing would name the card wherever these characteristics are shown (CR 708.5).
+        characteristics.setSetCode(null);
+        characteristics.setCollectorNumber(null);
+        return characteristics;
     }
 
     /**

@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTargetActivatedOrTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeredAbilityRetargetEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,7 +72,8 @@ public class CopyTargetActivatedOrTriggeredAbilityEffectHandler implements Norma
 
         copySupport.addCopyToStack(gameData, copyEntry);
 
-        gameLogService.append(gameData, GameLog.text("A copy of " + targetEntry.getDescription() + " is created."));
+        gameLogService.append(gameData, GameLog.text("A copy of "
+                + FaceDownVisibility.descriptionShownTo(gameData, targetEntry, null) + " is created."));
         log.info("Game {} - copy of {}'s ability created", gameData.id, targetEntry.getDescription());
 
         if (!targetEntry.isNonTargeting() && psychicBattleSupport.targetIds(copyEntry).size() > 1) {
@@ -87,7 +89,7 @@ public class CopyTargetActivatedOrTriggeredAbilityEffectHandler implements Norma
                     entry.getCard(),
                     copyControllerId,
                     List.of(new CopyTriggeredAbilityRetargetEffect()),
-                    "Choose a new target for the copy of " + targetEntry.getDescription() + "'s ability?",
+                    "Choose a new target for the copy of " + FaceDownVisibility.descriptionShownTo(gameData, targetEntry, entry.getControllerId()) + "'s ability?",
                     copyEntry.getTargetableId()
             );
             gameData.pendingMayAbilities.addFirst(retargetAbility);

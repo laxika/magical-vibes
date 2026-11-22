@@ -91,7 +91,7 @@ public class CopyControllerCastSpellEffectHandler implements NormalEffectHandler
      */
     private void createCopy(GameData gameData, StackEntry entry, CopyControllerCastSpellEffect e,
                             StackEntry spellSnapshot, UUID castingPlayerId, Card spellCard, boolean singleCopy) {
-        Card copyCard = copySupport.createCopyCard(spellCard);
+        Card copyCard = copySupport.createCopyCard(spellSnapshot);
         boolean permanentSpell = isPermanentSpell(spellSnapshot.getEntryType());
         if (e.tokenCopy() || (e.permanentSpellToken() && permanentSpell)) {
             copyCard.setToken(true);

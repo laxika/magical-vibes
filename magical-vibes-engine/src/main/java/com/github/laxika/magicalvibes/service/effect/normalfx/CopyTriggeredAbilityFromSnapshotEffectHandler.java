@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeredAbilityFromSnapshotEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeredAbilityRetargetEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +66,8 @@ public class CopyTriggeredAbilityFromSnapshotEffectHandler implements NormalEffe
                     entry.getControllerId(),
                     List.of(new CopyTriggeredAbilityRetargetEffect()),
                     "Choose a new target for the copy of "
-                            + snapshot.getCard().getName() + "'s triggered ability?",
+                            + FaceDownVisibility.nameShownTo(gameData, snapshot, entry.getControllerId())
+                            + "'s triggered ability?",
                     copyCard.getId()));
         } else if (!snapshot.isNonTargeting() && !copyEntry.getDeclaredTargetIds().isEmpty()) {
             psychicBattleSupport.queueNextChoice(gameData, entry.getCard(), entry.getControllerId(),

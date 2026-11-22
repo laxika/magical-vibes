@@ -181,60 +181,8 @@ public class PermanentViewFactory {
     }
 
     private CardView createFaceDownCardView(Permanent permanent) {
-        Set<CardType> cardTypes = EnumSet.copyOf(permanent.getFaceDownCardTypes().isEmpty()
-                ? Set.of(CardType.CREATURE) : permanent.getFaceDownCardTypes());
-        CardType primaryType = cardTypes.contains(CardType.CREATURE)
-                ? CardType.CREATURE : cardTypes.iterator().next();
-        cardTypes.remove(primaryType);
-        return cardViewFactory.create(permanent.getCard()).toBuilder()
-                .name(null)
-                .type(primaryType)
-                .additionalTypes(cardTypes)
-                .supertypes(Set.of())
-                .subtypes(List.of())
-                .cardText(null)
-                .manaCost(null)
-                .power(permanent.getFaceDownPower())
-                .toughness(permanent.getFaceDownToughness())
-                .keywords(Set.of())
-                .setCode(null)
-                .collectorNumber(null)
-                .color(null)
-                .colors(List.of())
-                .colorIdentity(List.of())
-                .needsTarget(false)
-                .needsSpellTarget(false)
-                .activatedAbilities(List.of())
-                .loyalty(null)
-                .hasConvoke(false)
-                .hasPhyrexianMana(false)
-                .phyrexianManaCount(0)
-                .token(false)
-                .watermark(null)
-                .hasAlternateCastingCost(false)
-                .alternateCostLifePayment(0)
-                .alternateCostSacrificeCount(0)
-                .alternateCostTapCount(0)
-                .alternateCostReturnCount(0)
-                .alternateCostManaCost(null)
-                .alternateCostExileHandCount(0)
-                .alternateCostExileHandLabel(null)
-                .alternateCostRevealsHandCard(false)
-                .graveyardActivatedAbilities(List.of())
-                .handActivatedAbilities(List.of())
-                .exileActivatedAbilities(List.of())
-                .transformable(false)
-                .kickerCost(null)
-                .kickerRequiresTap(false)
-                .kickerRequiresReturn(false)
-                .buybackCost(null)
-                .modalChoicesRequired(0)
-                .modalChoicesMax(0)
-                .modalOptional(false)
-                .modalModesMayRepeat(false)
-                .modalOptions(null)
-                .prepareSpell(null)
-                .build();
+        return cardViewFactory.createFaceDown(permanent.getCard().getId(), permanent.getFaceDownCardTypes(),
+                List.of(), permanent.getFaceDownPower(), permanent.getFaceDownToughness(), Set.of());
     }
 
     private CardView hideRemovedSubtypes(CardView cardView, Set<CardSubtype> removedSubtypes) {

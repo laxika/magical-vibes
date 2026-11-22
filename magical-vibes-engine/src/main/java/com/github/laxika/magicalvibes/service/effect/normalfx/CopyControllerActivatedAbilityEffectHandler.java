@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyActivatedAbilityRetargetEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyControllerActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
@@ -72,7 +73,8 @@ public class CopyControllerActivatedAbilityEffectHandler implements NormalEffect
                     entry.getCard(),
                     copyControllerId,
                     List.of(retargetEffect),
-                    "Choose a new target for the copy of " + snapshot.getCard().getName() + "'s ability?",
+                    "Choose a new target for the copy of "
+                            + FaceDownVisibility.nameShownTo(gameData, snapshot, copyControllerId) + "'s ability?",
                     copyEntry.getTargetableId()
             );
             gameData.pendingMayAbilities.addFirst(retargetAbility);

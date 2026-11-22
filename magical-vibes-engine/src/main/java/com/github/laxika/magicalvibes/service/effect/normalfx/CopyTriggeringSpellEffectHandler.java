@@ -85,8 +85,8 @@ public class CopyTriggeringSpellEffectHandler implements NormalEffectHandlerBean
         }
 
         var copyCard = triggeringSpellEffect.tokenCopy()
-                ? copySupport.createTokenCopyCard(spellCard)
-                : copySupport.createCopyCard(spellCard);
+                ? copySupport.createTokenCopyCard(spell)
+                : copySupport.createCopyCard(spell);
         StackEntry copyEntry = copySupport.createCopyStackEntry(
                 spell, copyCard, entry.getControllerId(), spell.getTargetId());
         if (copyEntry.getTargetId() != null) {

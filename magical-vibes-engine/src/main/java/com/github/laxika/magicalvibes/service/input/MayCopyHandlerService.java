@@ -27,6 +27,7 @@ import com.github.laxika.magicalvibes.model.effect.CopyPermanentOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.networking.message.ValidTargetsResponse;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.CloneService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -455,7 +456,8 @@ public class MayCopyHandlerService {
 
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(copyCardId));
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
-                "Choose a new target for the copy of " + copyEntry.getCard().getName() + "'s ability.");
+                "Choose a new target for the copy of "
+                        + FaceDownVisibility.nameShownTo(gameData, copyEntry, ability.controllerId()) + "'s ability.");
     }
 
     /**
@@ -536,7 +538,8 @@ public class MayCopyHandlerService {
 
         gameData.interaction.setPermanentChoiceContext(new PermanentChoiceContext.SpellRetarget(copyCardId));
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
-                "Choose a new target for the copy of " + copyEntry.getCard().getName()
+                "Choose a new target for the copy of "
+                        + FaceDownVisibility.nameShownTo(gameData, copyEntry, ability.controllerId())
                         + "'s " + abilityType + ".");
     }
 
@@ -551,7 +554,8 @@ public class MayCopyHandlerService {
             }
         }
 
-        String spellName = targetSpellEntry != null ? targetSpellEntry.getCard().getName() : "spell";
+        String spellName = targetSpellEntry != null
+                ? FaceDownVisibility.nameShownTo(gameData, targetSpellEntry, null) : "spell";
 
         if (!accepted) {
             String logEntry = player.getUsername() + " declines to change targets for " + spellName + ".";
@@ -702,7 +706,8 @@ public class MayCopyHandlerService {
                         mustChangeAllTargets && targetIndex != null ? List.of() : null,
                         ability.controllerId()));
         playerInputService.beginPermanentChoice(gameData, ability.controllerId(), validTargets,
-                "Choose a new target for " + spellCard.getName() + ".");
+                "Choose a new target for "
+                        + FaceDownVisibility.nameShownTo(gameData, targetSpellEntry, ability.controllerId()) + ".");
     }
 
     public void handleBecomeCopyChoice(GameData gameData, Player player, boolean accepted, PendingMayAbility ability) {

@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.input;
 
 import com.github.laxika.magicalvibes.model.LastKnownCardStats;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ReturnStepSupport;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
@@ -1921,7 +1922,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         UUID controllerId = preventSource.controllerId();
         String playerName = gameData.playerIdToName.get(controllerId);
-        String sourceName = chosenSource.getName();
+        String sourceName = FaceDownVisibility.publicName(gameData, chosenSource);
 
         if (preventSource.controllerOnly()) {
             gameData.addShield("", null, controllerId, controllerId,
@@ -2078,7 +2079,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         gameData.addWaitingDamageSource(permanentId, chosenSource);
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        String sourceName = chosenSource.getName();
+        String sourceName = FaceDownVisibility.publicName(gameData, chosenSource);
         String rider;
         if (ctx.drawCards() && ctx.damageSourceControllerCard() != null) {
             rider = " and " + ctx.damageSourceControllerCard().getName()
@@ -2119,7 +2120,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                         ctx.controllerId(), permanentId));
 
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
-        gameLogService.append(gameData, GameLog.text("The next time " + chosenSource.getName()
+        gameLogService.append(gameData, GameLog.text("The next time " + FaceDownVisibility.publicName(gameData, chosenSource)
                 + " is unblocked and would deal combat damage to " + playerName
                 + " this turn, all but 1 of that damage is prevented."));
         log.info("Game {} - {} chose {} for Forcefield's combat-damage shield", gameData.id,
@@ -2159,7 +2160,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 new PlayerSourceNextDamageShield(controllerId, permanentId, true, true, true, false));
 
         String playerName = gameData.playerIdToName.get(controllerId);
-        String sourceName = chosenSource.getName();
+        String sourceName = FaceDownVisibility.publicName(gameData, chosenSource);
         gameLogService.append(gameData, GameLog.text("The next time " + sourceName + " would deal damage to "
                 + playerName + " and/or creatures they control this turn, it is prevented."));
         log.info("Game {} - {} chose {} as Shadowbane next-damage prevention source", gameData.id, playerName, sourceName);
@@ -2190,7 +2191,8 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         String playerName = gameData.playerIdToName.get(controllerId);
         String sourceName = chosenPermanent != null
-                ? chosenPermanent.getCard().getName() : chosenSpell.getCard().getName();
+                ? FaceDownVisibility.publicName(gameData, chosenPermanent.getCard())
+                : FaceDownVisibility.publicName(gameData, chosenSpell.getCard());
         String logEntry = "The next time " + sourceName + " would deal damage to " + playerName
                 + " this turn, that much damage is also dealt to " + sourceName + "'s controller.";
         gameLogService.append(gameData, GameLog.text(logEntry));
@@ -2218,8 +2220,8 @@ public class PermanentChoiceBattlefieldHandlerService {
                         permanentId, ctx.destinationPermanentId()));
 
         Permanent destination = gameQueryService.findPermanentById(gameData, ctx.destinationPermanentId());
-        String sourceName = chosenPermanent != null ? chosenPermanent.getCard().getName()
-                : chosenSpell != null ? chosenSpell.getCard().getName() : chosenAbility.getCard().getName();
+        String sourceName = FaceDownVisibility.publicName(gameData, chosenPermanent != null ? chosenPermanent.getCard()
+                : chosenSpell != null ? chosenSpell.getCard() : chosenAbility.getCard());
         String destinationName = destination != null ? destination.getCard().getName() : "it";
         gameLogService.append(gameData, GameLog.text("The next time " + sourceName + " would deal damage this turn, "
                 + "that damage is dealt to " + destinationName + " instead."));
@@ -2238,7 +2240,7 @@ public class PermanentChoiceBattlefieldHandlerService {
 
         gameData.addShield(new ReflectDamageToSourceControllerShield(permanentId));
 
-        String sourceName = chosenSource.getName();
+        String sourceName = FaceDownVisibility.publicName(gameData, chosenSource);
         gameLogService.append(gameData, GameLog.text("The next time " + sourceName + " would deal damage this turn, "
                 + "that damage is dealt to " + sourceName + "'s controller instead."));
         log.info("Game {} - {} chose {} as Reflect Damage source", gameData.id,
@@ -2281,7 +2283,7 @@ public class PermanentChoiceBattlefieldHandlerService {
                 : new com.github.laxika.magicalvibes.model.SourceNextDamageToAnyTargetShield(permanentId))
                 .withRequiredSourceFilter(ctx.requiredSourceFilter()));
 
-        String sourceName = chosenSource.getName();
+        String sourceName = FaceDownVisibility.publicName(gameData, chosenSource);
         String logEntry = ctx.damageRedSourceController()
                 ? "The next time " + sourceName + " would deal damage to any target this turn, it is prevented."
                         + " If it is red, Honorable Passage deals that much damage to its controller."
@@ -2401,7 +2403,7 @@ public class PermanentChoiceBattlefieldHandlerService {
         CoinFlipService.CoinFlipResult result = coinFlipService.flip(gameData, ctx.controllerId());
         boolean wonFlip = result.heads();
         String playerName = gameData.playerIdToName.get(ctx.controllerId());
-        String sourceName = chosenSource.getName();
+        String sourceName = FaceDownVisibility.publicName(gameData, chosenSource);
         gameLogService.append(gameData, GameLog.text(wonFlip
                 ? playerName + " wins the coin flip for Desperate Gambit"
                         + coinFlipService.replacementDetails(result) + "."
