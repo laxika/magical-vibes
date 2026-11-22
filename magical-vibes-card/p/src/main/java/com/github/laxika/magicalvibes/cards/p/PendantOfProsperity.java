@@ -5,11 +5,15 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOpponentGainsControlOfSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCardToBattlefieldForOwnerEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -22,6 +26,7 @@ public class PendantOfProsperity extends Card {
     public PendantOfProsperity() {
         addStaticEffect(new ChooseOpponentGainsControlOfSourceEffect());
 
+        PlayerSubject owner = Subjects.ownerOf(Subjects.source());
         CardTypePredicate land = new CardTypePredicate(CardType.LAND);
         addActivatedAbility(new ActivatedAbility(
                 true,
@@ -33,7 +38,11 @@ public class PendantOfProsperity extends Card {
                                 "Put a land card from your hand onto the battlefield?"),
                         new DrawCardEffect(1, Subjects.ownerOf(Subjects.source())),
                         new MayEffect(
-                                new PutCardToBattlefieldForOwnerEffect(land, "land", false),
+                                SequenceEffect.of(
+                                        ChooseCardEffect.upTo(Subjects.cardsInHands(owner, land), 1,
+                                                        "a land card from your hand to put onto the battlefield")
+                                                .by(owner),
+                                        new PutCardsOntoBattlefieldEffect(Subjects.cardsThisWay(StepKind.CHOOSE))),
                                 "Put a land card from your hand onto the battlefield?",
                                 null,
                                 MayChoicePlayer.SOURCE_OWNER)

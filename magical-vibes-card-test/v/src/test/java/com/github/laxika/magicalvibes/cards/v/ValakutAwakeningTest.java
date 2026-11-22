@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.v;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.a.AkoumHellhound;
 import com.github.laxika.magicalvibes.cards.g.GrotagBugCatcher;
 import com.github.laxika.magicalvibes.cards.i.InordinateRage;
@@ -33,8 +34,8 @@ class ValakutAwakeningTest extends BaseCardTest {
 
         harness.castModalInstant(player1, 0, 0, List.of());
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 2);
         harness.handleMultipleCardsChosen(player1, List.of(bottomOne.getId(), bottomTwo.getId()));
+        orderOnBottom(player1, List.of(bottomOne, bottomTwo));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(keep, libraryOne, libraryTwo, libraryThree);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryFour, bottomOne, bottomTwo);
@@ -51,7 +52,7 @@ class ValakutAwakeningTest extends BaseCardTest {
 
         harness.castModalInstant(player1, 0, 0, List.of());
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(keep, draw);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -98,8 +99,8 @@ class ValakutAwakeningTest extends BaseCardTest {
 
         harness.castModalInstant(player1, 0, 0, List.of());
         harness.passBothPriorities();
-        harness.handleXValueChosen(player1, 2);
         harness.handleMultipleCardsChosen(player1, List.of(second.getId(), first.getId()));
+        orderOnBottom(player1, List.of(second, first));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(top, second, first);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -118,8 +119,37 @@ class ValakutAwakeningTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("What goes from the hand to the bottom of the library is named to nobody")
+    void bottomedCardsAreNamedToNobody() {
+        AkoumHellhound bottom = new AkoumHellhound();
+        harness.setHand(player1, List.of(new ValakutAwakening(), bottom));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new InordinateRage(), new InordinateRage()));
+        addMana();
+
+        harness.castModalInstant(player1, 0, 0, List.of());
+        harness.clearMessages();
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(bottom.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bottom);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gameLogContains("Akoum Hellhound")).isFalse();
+        assertThat(harness.getConn2().getMessagesContaining("Akoum Hellhound")).isEmpty();
+    }
+
     private void addMana() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+    }
+
+    private void orderOnBottom(com.github.laxika.magicalvibes.model.Player player,
+                               List<com.github.laxika.magicalvibes.model.Card> order) {
+        var reorder = gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player,
+                new com.github.laxika.magicalvibes.service.interaction.InteractionAnswer.CardOrder(
+                        order.stream().map(reorder.cards()::indexOf).toList()));
     }
 }

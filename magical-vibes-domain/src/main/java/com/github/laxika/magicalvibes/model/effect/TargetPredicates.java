@@ -102,6 +102,12 @@ public final class TargetPredicates {
         return new TargetPredicate.ExiledCards(predicate);
     }
 
+    /** A card in the ante zone (CR 407.2). */
+    public static TargetPredicate anteCard() {
+        return new TargetPredicate.ExiledCards(ANY_CARD, false,
+                com.github.laxika.magicalvibes.model.filter.PlayerRelation.ANY, true);
+    }
+
     /** A card in exile matching {@code predicate} that was exiled with the source permanent. */
     public static TargetPredicate exiledCardsExiledWithSource(CardPredicate predicate) {
         return new TargetPredicate.ExiledCards(predicate, true);

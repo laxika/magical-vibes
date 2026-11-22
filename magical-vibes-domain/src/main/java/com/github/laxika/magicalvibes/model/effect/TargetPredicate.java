@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -120,9 +121,20 @@ public sealed interface TargetPredicate permits TargetPredicate.Leaf, TargetPred
 
     /**
      * A card in exile matching {@code inner}. When {@code exiledWithSource} is true the card must also have
-     * been exiled with the source permanent of the ability or effect choosing it.
+     * been exiled with the source permanent of the ability or effect choosing it; {@code owner} says whose card it is
+     * ("target card you don't own in exile"). A card in the ante zone, kept among the exile entries, is a card in
+     * exile only to a target that is {@code inAnte} ("target card in the ante", CR 407.2).
      */
-    record ExiledCards(CardPredicate inner, boolean exiledWithSource) implements Leaf {
+    record ExiledCards(CardPredicate inner, boolean exiledWithSource, PlayerRelation owner, boolean inAnte)
+            implements Leaf {
+
+        public ExiledCards(CardPredicate inner, boolean exiledWithSource, PlayerRelation owner) {
+            this(inner, exiledWithSource, owner, false);
+        }
+
+        public ExiledCards(CardPredicate inner, boolean exiledWithSource) {
+            this(inner, exiledWithSource, PlayerRelation.ANY);
+        }
 
         public ExiledCards(CardPredicate inner) {
             this(inner, false);
@@ -130,6 +142,7 @@ public sealed interface TargetPredicate permits TargetPredicate.Leaf, TargetPred
 
         public ExiledCards {
             Objects.requireNonNull(inner, "inner (use CardTruePredicate for any card)");
+            Objects.requireNonNull(owner, "owner");
         }
 
         @Override

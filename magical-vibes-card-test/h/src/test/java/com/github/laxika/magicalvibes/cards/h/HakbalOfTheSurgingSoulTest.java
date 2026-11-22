@@ -56,8 +56,8 @@ class HakbalOfTheSurgingSoulTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNotNull();
-        harness.handleCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == land && !permanent.isTapped());

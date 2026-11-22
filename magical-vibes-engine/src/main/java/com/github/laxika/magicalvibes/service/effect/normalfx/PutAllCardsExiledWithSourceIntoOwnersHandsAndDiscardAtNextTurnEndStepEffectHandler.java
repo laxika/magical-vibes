@@ -59,8 +59,11 @@ public class PutAllCardsExiledWithSourceIntoOwnersHandsAndDiscardAtNextTurnEndSt
                 continue;
             }
             gameData.addCardToHand(controllerId, card);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    gameData.playerIdToName.get(controllerId) + " puts ", card,
+            // A card exiled face down goes to a hidden zone without being seen (CR 406.3).
+            gameLogService.append(gameData, exiled.faceDown()
+                    ? GameLog.text(gameData.playerIdToName.get(controllerId)
+                    + " puts a face-down card from exile into their hand.")
+                    : GameLog.textCardText(gameData.playerIdToName.get(controllerId) + " puts ", card,
                     " from exile into their hand."));
         }
 

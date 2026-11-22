@@ -1,9 +1,14 @@
 package com.github.laxika.magicalvibes.cards.t;
 
-import com.github.laxika.magicalvibes.model.effect.ExileTargetNonlandPermanentAndCardWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect;
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetNonlandPermanentAndCardWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,6 +21,8 @@ public class TheSpotLivingPortal extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
                 new ExileTargetNonlandPermanentAndCardWithSourceEffect());
         addTrigger(Triggers.dies(ObjectRelation.THIS),
-                new PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect());
+                PutCardsIntoLibraryEffect.onBottom(Subjects.sourceCard()),
+                new ConditionalEffect(new HappenedThisWay(StepKind.PUT_INTO_LIBRARY),
+                        new PutCardsIntoHandEffect(Subjects.exiledWithSource())));
     }
 }

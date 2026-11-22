@@ -5,6 +5,6 @@ public record ExchangeTargetAnteCardWithTopOfLibraryEffect() implements CardEffe
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.exileCard());
+        return TargetSpec.benign(TargetPredicates.anteCard());
     }
 }

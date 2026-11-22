@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.c.ChromaticLantern;
 import com.github.laxika.magicalvibes.cards.c.CutDown;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
@@ -128,6 +129,21 @@ class JhoiraAgelessInnovatorTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Hero's Heirloom");
         harness.assertInHand(player1, "Golden Argosy");
         harness.assertNotOnBattlefield(player1, "Golden Argosy");
+    }
+
+    @Test
+    @DisplayName("Reads the ingenuity counters Jhoira last had once she left (CR 608.2h)")
+    void readsTheCountersJhoiraLastHad() {
+        Permanent jhoira = addJhoira();
+        jhoira.setCounterCount(CounterType.INGENUITY, 4);
+        harness.setHand(player1, List.of(new GoldenArgosy()));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, jhoira));
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+
+        harness.assertOnBattlefield(player1, "Golden Argosy");
     }
 
     private Permanent addJhoira() {

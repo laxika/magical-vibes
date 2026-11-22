@@ -752,6 +752,11 @@ public class GameData {
     /** Latest graveyard-entry identity for each card, used by effects that require continuous graveyard presence. */
     public final Map<UUID, Long> graveyardEntryVersions = new ConcurrentHashMap<>();
     public final Map<UUID, Long> exileEntryVersions = new ConcurrentHashMap<>();
+    /**
+     * By permanent id, the graveyard stay each Aura got as a state-based action put it there for not being legally
+     * attached (CR 704.5m): the only later stay "return this card" finds after the enchanted permanent left (CR 400.7f).
+     */
+    public final Map<UUID, Long> unattachedAuraGraveyardStays = new ConcurrentHashMap<>();
     /** Number of times each card has entered a hand through {@link #addCardToHand}. A card that returns to hand is a new object (CR 400.7), so a delayed effect that refers to an earlier hand entry checks this version. */
     public final Map<UUID, Long> handEntryVersions = new ConcurrentHashMap<>();
     private long graveyardEntryVersion;
@@ -3797,15 +3802,40 @@ public class GameData {
                 .filter(entry -> card.getId().equals(entry.getTriggeringCardId())
                         && entry.getTriggeringCardGraveyardEntryVersion() == -1L)
                 .forEach(entry -> entry.setTriggeringCardGraveyardEntryVersion(version));
+        return version;
+    }
+
+    /** Records that a state-based action put {@code aura} into its owner's graveyard, where it is now (CR 704.5m). */
+    public synchronized void markUnattachedAuraPutIntoGraveyard(Permanent aura) {
+        long version = graveyardEntryVersion(aura.getOriginalCard().getId());
+        unattachedAuraGraveyardStays.put(aura.getId(), version);
         java.util.stream.Stream.of(stack, pendingManaAbilityTriggers, suspendedZoneTriggers)
                 .flatMap(java.util.Collection::stream)
-                .filter(entry -> entry.isAwaitingSourceGraveyardEntry() && entry.getCard() != null
-                        && card.getId().equals(entry.getCard().getId()))
+                .filter(entry -> entry.isAwaitingSourceGraveyardEntry() && aura.getId().equals(awaitedAuraId(entry)))
                 .forEach(entry -> {
                     entry.setSourceGraveyardEntryVersion(version);
                     entry.setAwaitingSourceGraveyardEntry(false);
                 });
-        return version;
+    }
+
+    private static UUID awaitedAuraId(StackEntry entry) {
+        return entry.getSourcePermanentSnapshot() != null
+                ? entry.getSourcePermanentSnapshot().getId() : entry.getSourcePermanentId();
+    }
+
+    /**
+     * As an ability that triggered on the enchanted permanent leaving resolves, if it wasn't on the stack as the
+     * state-based action moved the Aura (its targets were being chosen): "this card" is the Aura in the stay that
+     * action gave it, and nothing if none did (CR 400.7f).
+     */
+    public void bindAwaitedGraveyardEntry(StackEntry entry) {
+        if (!entry.isAwaitingSourceGraveyardEntry()) {
+            return;
+        }
+        UUID auraId = awaitedAuraId(entry);
+        entry.setSourceGraveyardEntryVersion(auraId == null ? StackEntry.NO_GRAVEYARD_STAY
+                : unattachedAuraGraveyardStays.getOrDefault(auraId, StackEntry.NO_GRAVEYARD_STAY));
+        entry.setAwaitingSourceGraveyardEntry(false);
     }
 
     /**
@@ -10019,6 +10049,7 @@ public class GameData {
         copy.graveyardEntryVersion = this.graveyardEntryVersion;
         copy.graveyardEntryVersions.putAll(this.graveyardEntryVersions);
         copy.exileEntryVersions.putAll(this.exileEntryVersions);
+        copy.unattachedAuraGraveyardStays.putAll(this.unattachedAuraGraveyardStays);
         copy.handEntryVersions.putAll(this.handEntryVersions);
         copy.combatDamageFirstStrikeStepComplete = this.combatDamageFirstStrikeStepComplete;
         copy.combatDamageFirstestStrikeStepComplete = this.combatDamageFirstestStrikeStepComplete;

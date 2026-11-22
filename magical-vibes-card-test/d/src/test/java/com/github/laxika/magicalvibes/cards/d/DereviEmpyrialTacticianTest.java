@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.model.Card;
@@ -180,6 +181,24 @@ class DereviEmpyrialTacticianTest extends BaseCardTest {
         harness.assertLife(player1, 18);
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Derevi put onto the battlefield from the command zone is a commander there (CR 903.3)")
+    void isACommanderOnTheBattlefield() {
+        Card derevi = derevi();
+        gd.format = DeckFormat.COMMANDER;
+        gd.makeCommander(player1.getId(), derevi);
+        gd.playerCommandZones.put(player1.getId(), new ArrayList<>(List.of(derevi)));
+        addDereviMana();
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        gs.activateCommandZoneAbility(gd, player1, derevi.getId(), 0);
+        harness.passBothPriorities();
+
+        assertThat(findPermanent(player1, "Derevi, Empyrial Tactician").isCommander()).isTrue();
     }
 
     private Card derevi() {

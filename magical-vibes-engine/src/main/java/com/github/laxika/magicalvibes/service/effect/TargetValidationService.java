@@ -129,6 +129,29 @@ public class TargetValidationService {
      * a property of the board, not of the candidate. So is the CR 702.16b protection check, which
      * rides on the orthogonal {@link TargetSpec#harmful()} axis.</p>
      */
+    /** The permanent the choosing ability's source is or last was: as the context names it, else by its card. */
+    private static UUID sourcePermanentId(TargetValidationContext ctx) {
+        if (ctx.sourcePermanentId() != null) {
+            return ctx.sourcePermanentId();
+        }
+        if (ctx.sourcePermanentSnapshot() != null) {
+            return ctx.sourcePermanentSnapshot().getId();
+        }
+        Card source = ctx.sourceCard();
+        if (source == null) {
+            return null;
+        }
+        for (UUID playerId : ctx.gameData().orderedPlayerIds) {
+            for (Permanent permanent : ctx.gameData().playerBattlefields.getOrDefault(playerId, java.util.List.of())) {
+                if (permanent.getCard().getId().equals(source.getId())
+                        || permanent.getOriginalCard().getId().equals(source.getId())) {
+                    return permanent.getId();
+                }
+            }
+        }
+        return null;
+    }
+
     private void validateSpec(TargetValidationContext ctx, TargetSpec spec, CardEffect effect) {
         TargetPredicate predicate = spec.targetPredicate();
 
@@ -159,15 +182,26 @@ public class TargetValidationService {
             }
             TargetPredicate.ExiledCards restriction = (TargetPredicate.ExiledCards)
                     predicate.leaf(TargetPredicate.Kind.EXILED_CARD).orElseThrow();
-            if (restriction.exiledWithSource()
-                    && !Objects.equals(exiled.sourcePermanentId(), ctx.sourcePermanentId())) {
-                throw new IllegalStateException("Target card is not exiled with this permanent");
+            if (!restriction.inAnte() && ctx.gameData().antedCardIds.contains(ctx.targetId())) {
+                throw new IllegalStateException("Target card not found in exile");
+            }
+            if (restriction.exiledWithSource()) {
+                UUID sourceId = sourcePermanentId(ctx);
+                if (sourceId == null || !sourceId.equals(exiled.sourcePermanentId())) {
+                    throw new IllegalStateException("Target card is not exiled with this permanent");
+                }
+            }
+            boolean ownCard = Objects.equals(exiled.ownerId(), ctx.sourceControllerId());
+            if (restriction.owner() == com.github.laxika.magicalvibes.model.filter.PlayerRelation.SELF && !ownCard
+                    || restriction.owner() == com.github.laxika.magicalvibes.model.filter.PlayerRelation.OPPONENT && ownCard) {
+                throw new IllegalStateException("Target card doesn't have the required owner");
             }
             UUID sourceCardId = ctx.sourceCard() == null ? null : ctx.sourceCard().getId();
             if (!predicateEvaluationService.matchesCardPredicate(
                     exiled.card(), restriction.inner(), sourceCardId, ctx.gameData(), exiled.ownerId(),
                     ctx.sourcePermanentId(), ctx.sourcePowerAtTrigger(), ctx.xValue(), ctx.sourcePermanentSnapshot())) {
-                throw new IllegalStateException("Target card does not match the required predicate");
+                throw new IllegalStateException("Target card does not match the required predicate ("
+                        + CardPredicateUtils.describeFilter(restriction.inner()) + ")");
             }
             return;
         }

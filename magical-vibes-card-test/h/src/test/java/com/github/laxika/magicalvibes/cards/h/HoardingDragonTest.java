@@ -120,7 +120,7 @@ class HoardingDragonTest extends BaseCardTest {
         Spellbook spellbook = new Spellbook();
         Permanent dragon = findPermanent(player1, "Hoarding Dragon");
         gd.setImprintedCard(dragon.getCard(), spellbook);
-        gd.addToExile(player1.getId(), spellbook);
+        gd.addToExile(player1.getId(), spellbook, dragon.getId());
 
         // Kill Hoarding Dragon with Doom Blade
         UUID dragonId = harness.getPermanentId(player1, "Hoarding Dragon");
@@ -159,7 +159,7 @@ class HoardingDragonTest extends BaseCardTest {
         Spellbook spellbook = new Spellbook();
         Permanent dragon = findPermanent(player1, "Hoarding Dragon");
         gd.setImprintedCard(dragon.getCard(), spellbook);
-        gd.addToExile(player1.getId(), spellbook);
+        gd.addToExile(player1.getId(), spellbook, dragon.getId());
 
         // Kill Hoarding Dragon with Doom Blade
         UUID dragonId = harness.getPermanentId(player1, "Hoarding Dragon");
@@ -282,6 +282,30 @@ class HoardingDragonTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Hoarding Dragon");
         harness.assertNotInHand(player1, "Spellbook");
         assertThat(gd.findExiledCard(artifact.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("Doesn't return the hoarded card once it left exile and was exiled again (CR 400.7)")
+    void doesNotReturnAHoardExiledAgain() {
+        harness.addToBattlefield(player1, new HoardingDragon());
+        Spellbook spellbook = new Spellbook();
+        Permanent dragon = findPermanent(player1, "Hoarding Dragon");
+        gd.setImprintedCard(dragon.getCard(), spellbook);
+        gd.addToExile(player1.getId(), spellbook, dragon.getId());
+        gd.removeFromExile(spellbook.getId());
+        gd.addToExile(player1.getId(), spellbook);
+
+        harness.setHand(player2, List.of(new DoomBlade()));
+        harness.addMana(player2, ManaColor.BLACK, 2);
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.castAndResolveInstant(player2, 0, dragon.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.findExiledCard(spellbook.getId())).isNotNull();
+        harness.assertNotInHand(player1, "Spellbook");
     }
 
     private void setupDeck(List<Card> cards) {

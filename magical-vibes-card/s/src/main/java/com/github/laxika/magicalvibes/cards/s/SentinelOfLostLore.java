@@ -7,9 +7,11 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
-import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileOnBottomOfOwnersLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardHasAdventurePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -22,9 +24,8 @@ public class SentinelOfLostLore extends Card {
     public SentinelOfLostLore() {
         ReturnTargetCardFromExileToHandEffect returnToHand =
                 new ReturnTargetCardFromExileToHandEffect(new CardHasAdventurePredicate(), true);
-        PutTargetCardFromExileOnBottomOfOwnersLibraryEffect putOnBottom =
-                new PutTargetCardFromExileOnBottomOfOwnersLibraryEffect(
-                        new CardHasAdventurePredicate(), true);
+        PutCardsIntoLibraryEffect putOnBottom = PutCardsIntoLibraryEffect.onBottom(
+                Subjects.targetExiledCard(new CardHasAdventurePredicate(), PlayerRelation.OPPONENT));
         ExileGraveyardCardsEffect exileGraveyard =
                 new ExileGraveyardCardsEffect(GraveyardExileScope.TARGET_PLAYER_ENTIRE);
 

@@ -207,6 +207,23 @@ class GrinningTotemTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The cleanup doesn't move a card that left exile and was exiled again (CR 603.7c)")
+    void cleanupDoesNotFollowACardExiledAgain() {
+        Card swamp = new Swamp();
+        harness.setLibrary(player2, List.of(swamp));
+
+        activateGrinningTotem();
+        harness.handleCardChosen(player1, 0);
+        gd.removeFromExile(swamp.getId());
+        gd.addToExile(player2.getId(), swamp);
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(swamp);
+        harness.assertNotInGraveyard(player2, "Swamp");
+    }
+
+    @Test
     @DisplayName("Pays {2} and sacrifices itself to activate")
     void paysActivationCostAndSacrificesSelf() {
         addReadyGrinningTotem();

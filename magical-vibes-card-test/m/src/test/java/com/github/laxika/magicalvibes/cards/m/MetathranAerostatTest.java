@@ -27,7 +27,7 @@ class MetathranAerostatTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, null);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 1);
+        chooseOfferedCards(player1, 0);
 
         harness.assertOnBattlefield(player1, "Blurred Mongoose");
         harness.assertInHand(player1, "Metathran Aerostat");
@@ -60,7 +60,7 @@ class MetathranAerostatTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 2, null);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, -1);
+        chooseOfferedCards(player1);
 
         harness.assertOnBattlefield(player1, "Metathran Aerostat");
         harness.assertInHand(player1, "Blurred Mongoose");
@@ -92,14 +92,14 @@ class MetathranAerostatTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null);
         harness.activateAbility(player1, 0, 2, null);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 1);
+        chooseOfferedCards(player1, 0);
 
         harness.assertOnBattlefield(player1, "Blurred Mongoose");
         harness.assertNotOnBattlefield(player1, "Metathran Aerostat");
         harness.assertInHand(player1, "Metathran Aerostat");
 
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         harness.assertOnBattlefield(player1, "Alabaster Leech");
         harness.assertOnBattlefield(player1, "Blurred Mongoose");

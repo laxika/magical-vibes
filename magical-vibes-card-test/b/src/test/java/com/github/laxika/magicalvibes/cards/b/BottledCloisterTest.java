@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -11,7 +12,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BottledCloister.class, BorosRecruit.class})
+@CardUsed({BottledCloister.class, BorosRecruit.class, Forest.class})
 class BottledCloisterTest extends BaseCardTest {
 
     @Test
@@ -141,4 +142,20 @@ class BottledCloisterTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(opponentCard);
         assertThat(gd.getCardsExiledByPermanent(cloister.getId())).isEmpty();
     }
+    @Test
+    @DisplayName("Doesn't name a card exiled face down as it goes back to the hand (CR 406.3)")
+    void doesNotNameACardReturnedFromFaceDownExile() {
+        harness.addToBattlefield(player1, new BottledCloister());
+        harness.setHand(player1, List.of(new BorosRecruit()));
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        advanceToUpkeep(player2);
+        harness.passBothPriorities();
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gameLogContains("Boros Recruit")).isFalse();
+    }
+
 }

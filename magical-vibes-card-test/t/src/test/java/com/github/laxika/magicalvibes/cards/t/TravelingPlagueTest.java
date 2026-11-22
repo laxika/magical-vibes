@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.a.Apocalypse;
 import com.github.laxika.magicalvibes.cards.a.AvenFlock;
+import com.github.laxika.magicalvibes.cards.p.PlanarCleansing;
 import com.github.laxika.magicalvibes.cards.e.Execute;
 import com.github.laxika.magicalvibes.cards.m.MossfireEgg;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -19,7 +22,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TravelingPlague.class, AvenFlock.class, Execute.class, MossfireEgg.class})
+@CardUsed({TravelingPlague.class, AvenFlock.class, Execute.class, MossfireEgg.class, Apocalypse.class,
+        PlanarCleansing.class})
 class TravelingPlagueTest extends BaseCardTest {
 
     @Test
@@ -153,6 +157,89 @@ class TravelingPlagueTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castEnchantment(player1, 0, artifact.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("An Aura exiled as its host left isn't returned from a graveyard it reaches later")
+    void doesNotReturnAnAuraExiledWithItsHostAndPutIntoAGraveyardLater() {
+        Permanent host = addCreatureReady(player2, new AvenFlock());
+        castTravelingPlagueOn(player1, host);
+        Card aura = findPermanent(player1, "Traveling Plague").getOriginalCard();
+        castSorceryForMana(new Apocalypse(), ManaColor.RED);
+        assertThat(gd.findExiledCard(aura.getId())).isNotNull();
+
+        gd.removeFromExile(aura.getId());
+        putIntoGraveyard(aura);
+        Permanent otherCreature = addCreatureReady(player2, new AvenFlock());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Traveling Plague");
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(otherCreature);
+    }
+
+    @Test
+    @DisplayName("An Aura destroyed with its host is returned")
+    void returnsAnAuraDestroyedWithItsHost() {
+        Permanent host = addCreatureReady(player2, new AvenFlock());
+        castTravelingPlagueOn(player1, host);
+        castSorceryForMana(new PlanarCleansing(), ManaColor.WHITE);
+
+        Permanent otherCreature = addCreatureReady(player2, new AvenFlock());
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player2, "Traveling Plague").getAttachedTo()).isEqualTo(otherCreature.getId());
+    }
+
+    @Test
+    @DisplayName("An Aura destroyed with its host isn't returned after it left the graveyard and came back")
+    void doesNotReturnAnAuraDestroyedWithItsHostThatCameBack() {
+        Permanent host = addCreatureReady(player2, new AvenFlock());
+        castTravelingPlagueOn(player1, host);
+        Card aura = findPermanent(player1, "Traveling Plague").getOriginalCard();
+        castSorceryForMana(new PlanarCleansing(), ManaColor.WHITE);
+
+        gd.playerGraveyards.get(player1.getId()).remove(aura);
+        gd.markGraveyardExit(aura.getId());
+        putIntoGraveyard(aura);
+        Permanent otherCreature = addCreatureReady(player2, new AvenFlock());
+        resolveAllTriggers();
+
+        harness.assertInGraveyard(player1, "Traveling Plague");
+        assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(otherCreature);
+    }
+
+    @Test
+    @DisplayName("An Aura the state-based check puts into the graveyard after a replacement question is returned")
+    void returnsAnAuraPutThereByTheStateBasedBatch() {
+        Permanent host = addCreatureReady(player2, new AvenFlock());
+        Permanent otherCreature = addCreatureReady(player2, new AvenFlock());
+        castTravelingPlagueOn(player1, host);
+        Permanent plague = findPermanent(player1, "Traveling Plague");
+        com.github.laxika.magicalvibes.testutil.TestCards.mutableCard(plague).addStaticEffect(
+                new com.github.laxika.magicalvibes.model.effect.PutOnTopOfLibraryInsteadOfDyingEffect(true));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, host));
+        harness.runStateBasedActions();
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        harness.handleMayAbilityChosen(player1, false);
+        resolveAllTriggers();
+
+        assertThat(findPermanent(player2, "Traveling Plague").getAttachedTo()).isEqualTo(otherCreature.getId());
+    }
+
+    private void castSorceryForMana(Card sorcery, ManaColor color) {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(sorcery));
+        harness.addMana(player1, color, 6);
+        harness.castAndResolveSorcery(player1, 0, 0);
+    }
+
+    private void putIntoGraveyard(Card card) {
+        gd.playerGraveyards.get(player1.getId()).add(card);
+        gd.markGraveyardEntry(card);
     }
 
     private void castTravelingPlagueOn(Player caster, Permanent target) {

@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetPlayerGraveyardOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellOrPermanentToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -314,7 +314,8 @@ class ETBTokenTargetServiceTest {
         card.target(new PlayerPredicateTargetFilter(new PlayerRelationPredicate(PlayerRelation.ANY),
                         "Target must be a player"), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new PutTargetPlayerGraveyardOnBottomOfLibraryEffect());
+                        PutCardsIntoLibraryEffect.onBottomInRandomOrder(
+                                Subjects.cardsInGraveyards(Subjects.targetPlayer(), null)));
         return card;
     }
 

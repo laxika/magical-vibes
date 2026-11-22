@@ -56,10 +56,11 @@ class OviyaAutomechArtisanTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        PendingInteraction.HandCardChoice choice =
-                harness.getGameData().interaction.activeInteraction(PendingInteraction.HandCardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                harness.getGameData().interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(1, 2);
+        assertThat(choice.validCardIds()).containsExactly(
+                gd.playerHands.get(player1.getId()).get(1).getId(), gd.playerHands.get(player1.getId()).get(2).getId());
     }
 
     @Test
@@ -71,7 +72,7 @@ class OviyaAutomechArtisanTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         Permanent vehicle = findPermanent(player1, "Shadowed Caravel");
         assertThat(vehicle.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
@@ -86,7 +87,7 @@ class OviyaAutomechArtisanTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         Permanent creature = findPermanent(player1, "Grizzly Bears");
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
@@ -160,7 +161,7 @@ class OviyaAutomechArtisanTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         Permanent creature = findPermanent(player1, "Nesting Bot");
         assertThat(creature.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);

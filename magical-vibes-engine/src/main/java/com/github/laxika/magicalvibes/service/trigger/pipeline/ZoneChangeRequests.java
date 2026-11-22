@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.SaturatingMath;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -215,6 +216,20 @@ public class ZoneChangeRequests {
     }
 
     /**
+     * CR 400.7f for an Aura that left as the permanent it enchanted left: the stay it has in the graveyard it was put
+     * into at the same time, none that can be found if it went elsewhere. {@code -1} for one still on the battlefield,
+     * which only the state-based action (CR 704.5m) can still give one.
+     */
+    private long stayOfAuraThatLeftWithItsHost(GameData gameData, Permanent aura) {
+        if (gameQueryService.findPermanentById(gameData, aura.getId()) != null) {
+            return -1;
+        }
+        UUID cardId = aura.getOriginalCard().getId();
+        return gameQueryService.findCardInGraveyardById(gameData, cardId) != null
+                ? gameData.graveyardEntryVersion(cardId) : StackEntry.NO_GRAVEYARD_STAY;
+    }
+
+    /**
      * The player a zone-change ability's trigger {@code trigger} names as "that player", its non-targeting target
      * (CR 115.10a): the opponent or enchanted player who controlled the object that moved ("whenever a creature an
      * opponent controls dies", "a creature enchanted player controls enters"), the opponent whose card it was ("a card
@@ -306,6 +321,7 @@ public class ZoneChangeRequests {
         }
         int batchPower = totalPower;
         UUID cardOwnerId = event.ownerId() != null ? event.ownerId() : gameData.ownerOf(event.card());
+        long auraStay = enchantedLeft && source != null ? stayOfAuraThatLeftWithItsHost(gameData, source) : -1;
         return entry -> {
             entry.setNonTargeting(true);
             if (snapshot != null) {
@@ -348,7 +364,11 @@ public class ZoneChangeRequests {
                 }
                 if (enchantedLeft) {
                     // "Return this Aura": also after "when enchanted creature leaves the battlefield" (CR 400.7f).
-                    entry.setAwaitingSourceGraveyardEntry(true);
+                    if (auraStay >= 0) {
+                        entry.setSourceGraveyardEntryVersion(auraStay);
+                    } else {
+                        entry.setAwaitingSourceGraveyardEntry(true);
+                    }
                 }
             } else if (event.enteredBattlefield() && lastKnown != null) {
                 entry.setTriggeringCardSnapshot(event.card());

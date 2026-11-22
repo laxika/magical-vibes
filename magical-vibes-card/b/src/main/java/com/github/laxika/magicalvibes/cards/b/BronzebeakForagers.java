@@ -7,7 +7,9 @@ import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetCardExiledWithSourceIntoOwnersGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutExiledCardsIntoOwnersGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -28,7 +30,8 @@ public class BronzebeakForagers extends Card {
                 false,
                 "{X}{W}",
                 List.of(
-                        new PutTargetCardExiledWithSourceIntoOwnersGraveyardEffect(null, true),
+                        new PutExiledCardsIntoOwnersGraveyardEffect(
+                                Subjects.targetCardExiledWithSource(new CardManaValueEqualsXPredicate())),
                         new GainLifeEffect(new XValue())),
                 "{X}{W}: Put target card with mana value X exiled with this creature into its owner's graveyard. You gain X life."
         ));

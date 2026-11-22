@@ -60,12 +60,12 @@ class OriginOfTheAvengersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        PendingInteraction.HandCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(2);
+        assertThat(choice.validCardIds()).containsExactly(gd.playerHands.get(player1.getId()).get(2).getId());
 
-        harness.handleCardChosen(player1, 2);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == eligibleHero);
@@ -133,9 +133,9 @@ class OriginOfTheAvengersTest extends BaseCardTest {
         triggerChapter();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class)).isNotNull();
 
-        harness.handleCardChosen(player1, -1);
+        chooseOfferedCards(player1);
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(hero, drawn);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -155,7 +155,7 @@ class OriginOfTheAvengersTest extends BaseCardTest {
         triggerChapter();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryCard);
@@ -216,11 +216,11 @@ class OriginOfTheAvengersTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
 
-        PendingInteraction.HandCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(1);
-        harness.handleCardChosen(player1, 1);
+        assertThat(choice.validCardIds()).containsExactly(gd.playerHands.get(player1.getId()).get(1).getId());
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == hero);

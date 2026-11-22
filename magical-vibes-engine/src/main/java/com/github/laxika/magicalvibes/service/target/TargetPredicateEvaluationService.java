@@ -83,7 +83,8 @@ public class TargetPredicateEvaluationService {
         requireGameData(context);
         return leaf(predicate, TargetPredicate.Kind.EXILED_CARD, TargetPredicate.ExiledCards.class)
                 .map(exiled -> predicateEvaluationService.matchesCardPredicate(
-                        card, exiled.inner(), context.sourceCardId()))
+                        card, exiled.inner(), context.sourceCardId(), context.gameData(), null,
+                        context.sourcePermanentId(), null, context.xValue(), context.sourcePermanentSnapshot()))
                 .orElse(false);
     }
 

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.k;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.Murder;
@@ -115,4 +116,18 @@ class KardumPatronOfFlamesTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player1.getId())).doesNotContain(sought);
     }
+    @Test
+    @DisplayName("Doesn't name a card exiled face down as it goes to the hand (CR 406.3)")
+    void doesNotNameACardPutIntoTheHandFromFaceDownExile() {
+        Permanent kardum = addCreatureReady(player1, new KardumPatronOfFlames());
+        Card hidden = new LlanowarElves();
+        harness.inMutationScope(() -> gd.addToExile(player1.getId(), hidden, kardum.getId(), true));
+
+        harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToGraveyard(gd, kardum));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(hidden);
+        assertThat(gameLogContains("Llanowar Elves")).isFalse();
+    }
+
 }

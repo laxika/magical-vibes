@@ -318,6 +318,9 @@ public class BattlefieldEntryBatchSupport {
                 permanent.setAttachedTo(candidate.attachmentId());
                 if (candidate.tapped()) permanent.tap();
                 if (candidate.origin() == Zone.EXILE) permanent.setEnteredFromExile(true);
+                if (candidate.origin() == Zone.COMMAND && gameData.isCommander(candidate.card().getId())) {
+                    permanent.setCommander(true);
+                }
                 permanent.setProtectorPlayerId(candidate.protectorPlayerId());
                 if (candidate.origin() == Zone.GRAVEYARD) {
                     permanent.setEnteredFromGraveyardOwnerId(candidate.zoneOwnerId());
@@ -434,6 +437,7 @@ public class BattlefieldEntryBatchSupport {
         List<Card> zone = switch (candidate.origin()) {
             case GRAVEYARD -> gameData.playerGraveyards.get(candidate.zoneOwnerId());
             case LIBRARY -> gameData.playerDecks.get(candidate.zoneOwnerId());
+            case COMMAND -> gameData.playerCommandZones.get(candidate.zoneOwnerId());
             default -> gameData.playerHands.get(candidate.zoneOwnerId());
         };
         boolean removed = candidate.origin() == Zone.EXILE

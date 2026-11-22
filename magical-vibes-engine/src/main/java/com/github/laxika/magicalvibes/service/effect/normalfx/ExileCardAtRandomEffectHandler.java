@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LastKnownCardStats;
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StepKind;
@@ -83,7 +84,10 @@ public class ExileCardAtRandomEffectHandler implements NormalEffectHandlerBean {
                     continue;
                 }
                 exileService.exileCard(gameData, playerId, exiled);
-                entry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(exiled.getId()), List.of(playerId))
+                entry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(exiled.getId()), List.of(playerId),
+                                // "It": the card in this exile stay (CR 400.7).
+                                List.of(gameData.boundToStay(
+                                        new MovedCard(exiled.getId(), exiled.getId(), Zone.EXILE, playerId))))
                         .withLastKnownCards(known));
                 gameLogService.append(gameData, GameLog.builder()
                         .text(playerName + " exiles ").card(exiled)

@@ -83,7 +83,6 @@ public class InteractionPromptProjectionRegistry {
                 this::projectSpellbookDraftToExileChoice);
         register(PendingInteraction.RevealedMatchingHandCardChoice.class,
                 this::projectRevealedMatchingHandCardChoice);
-        register(PendingInteraction.CommanderChoice.class, this::projectCommanderChoice);
         register(PendingInteraction.CommanderBattlefieldChoice.class,
                 this::projectCommanderBattlefieldChoice);
         register(PendingInteraction.StingingStudyCommanderChoice.class,
@@ -209,7 +208,6 @@ public class InteractionPromptProjectionRegistry {
                 this::projectReturnAurasFromGraveyardChoice);
         register(PendingInteraction.MultiPermanentChoice.class, this::projectMultiPermanentChoice);
         register(PendingInteraction.MultiGraveyardChoice.class, this::projectMultiGraveyardChoice);
-        register(PendingInteraction.ExiledCardChoice.class, this::projectExiledCardChoice);
         register(PendingInteraction.ActivatedExiledCardOpponentChoice.class,
                 this::projectActivatedExiledCardOpponentChoice);
         register(PendingInteraction.ActivatedExiledCardChoice.class,
@@ -480,13 +478,6 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.RevealedMatchingHandCardChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 interaction.validCardIds(), cardViews(interaction.cards()), 1, interaction.prompt());
-    }
-
-    private InteractionPromptMessage projectCommanderChoice(
-            GameData gameData, PendingInteraction.CommanderChoice interaction) {
-        return InteractionPromptMessage.multiCardPick(
-                interaction.validCardIds(), cardViews(interaction.commanders()), 1,
-                "Choose one of your commanders to put into your hand.");
     }
 
     private InteractionPromptMessage projectCommanderBattlefieldChoice(
@@ -1379,19 +1370,6 @@ public class InteractionPromptProjectionRegistry {
                 interaction.prompt());
     }
 
-    private InteractionPromptMessage projectExiledCardChoice(
-            GameData gameData, PendingInteraction.ExiledCardChoice interaction) {
-        return InteractionPromptMessage.multiCardPick(
-                new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
-                1,
-                interaction.followUpEntry() != null
-                        ? "Choose a card exiled with " + interaction.cardName()
-                                + " to put into its owner's graveyard."
-                        : "Choose an exiled card named \"" + interaction.cardName()
-                                + "\" to return to the battlefield.");
-    }
-
     private InteractionPromptMessage projectActivatedExiledCardOpponentChoice(
             GameData gameData, PendingInteraction.ActivatedExiledCardOpponentChoice interaction) {
         return InteractionPromptMessage.multiPermanentPick(
@@ -1851,7 +1829,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                exiledCardViewsFor(gameData, interaction.playerId(), interaction.validCardIds()),
                 1,
                 "You may put a card an opponent owns from exile into that player's graveyard.");
     }
@@ -1860,7 +1838,7 @@ public class InteractionPromptProjectionRegistry {
             GameData gameData, PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice interaction) {
         return InteractionPromptMessage.multiCardPick(
                 new ArrayList<>(interaction.validCardIds()),
-                exiledCardViews(gameData, interaction.validCardIds()),
+                exiledCardViewsFor(gameData, interaction.playerId(), interaction.validCardIds()),
                 2,
                 "You may put two cards your opponents own from exile into their owners' graveyards.");
     }
@@ -2053,6 +2031,20 @@ public class InteractionPromptProjectionRegistry {
             ExiledCardEntry entry = gameData.findExiledCard(cardId);
             if (entry != null) {
                 views.add(cardViewFactory.create(entry.card()));
+            }
+        }
+        return views;
+    }
+
+    /** The exiled cards as {@code viewerId} may see them: a face-down one nameless (CR 406.3). */
+    private List<CardView> exiledCardViewsFor(GameData gameData, UUID viewerId, List<UUID> cardIds) {
+        List<CardView> views = new ArrayList<>();
+        for (UUID cardId : cardIds) {
+            ExiledCardEntry entry = gameData.findExiledCard(cardId);
+            if (entry != null) {
+                views.add(!entry.faceDown() || gameData.mayLookAtExiledCard(cardId, viewerId)
+                        ? cardViewFactory.create(entry.card())
+                        : CardView.builder().id(cardId).name("Face-down card").build());
             }
         }
         return views;

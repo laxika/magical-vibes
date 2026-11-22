@@ -21,7 +21,12 @@ import java.util.Objects;
  * choice after another, a card chosen once no longer offered where one has to be chosen (choosing it again where none
  * has to be is choosing none).
  *
- * <p>The player choosing sees the cards offered, so {@code cards} names only cards that player may look at.
+ * <p>"Its controller may put a creature card from their hand ..." names who chooses ({@link #by}); "choose a creature
+ * card at random", "a random instant card" is nobody's choice ({@link #atRandom}): nothing is asked or shown.
+ *
+ * <p>The player choosing sees the cards offered, so {@code cards} names only cards that player may look at. Of a hand
+ * ({@code Subjects.cardsInHands}) only their own cards are offered, the prompt is theirs alone and no line names the
+ * card (CR 402.3); a library's are only chosen at random.
  *
  * @param cards       among which cards
  * @param label       what the prompt calls them ("an instant or sorcery card exiled this way")
@@ -31,9 +36,10 @@ import java.util.Objects;
  * @param count       how many are chosen, as many as there are if fewer
  * @param upTo        whether fewer, or none, may be chosen
  * @param each        the qualities one card is chosen for each of, in this order; empty for none
+ * @param chooser     who chooses; {@code null} for nobody, where the cards are chosen at random
  */
 public record ChooseCardEffect(CardSubject cards, String label, boolean alwaysAsked, DynamicAmount count,
-                               boolean upTo, List<Each> each) implements CardEffect {
+                               boolean upTo, List<Each> each, PlayerSubject chooser) implements CardEffect {
 
     /** One of the qualities a card is chosen for: "a creature card", "a land card". */
     public record Each(CardPredicate filter, String label) {
@@ -49,9 +55,40 @@ public record ChooseCardEffect(CardSubject cards, String label, boolean alwaysAs
         Objects.requireNonNull(label, "label");
         Objects.requireNonNull(count, "count");
         each = List.copyOf(each);
-        if (cards.declaresTarget()) {
-            throw new IllegalArgumentException("A resolution-time choice targets nothing: " + cards);
+        if (cards instanceof CardSubject.TargetCard || cards instanceof CardSubject.TargetExiledCard) {
+            throw new IllegalArgumentException("A resolution-time choice targets no card: " + cards);
         }
+        if (chooser != null && chooser.declaresTarget()) {
+            throw new IllegalArgumentException("Who chooses is no target of this step: " + chooser);
+        }
+        if (cards instanceof CardSubject.InLibrary && chooser != null) {
+            throw new IllegalArgumentException("Nobody is shown a library to choose from (CR 400.2): " + cards);
+        }
+        if (chooser == null && !each.isEmpty()) {
+            throw new IllegalArgumentException("One card for each quality is a player's choice");
+        }
+    }
+
+    /** The controller's choice. */
+    public ChooseCardEffect(CardSubject cards, String label, boolean alwaysAsked, DynamicAmount count,
+                            boolean upTo, List<Each> each) {
+        this(cards, label, alwaysAsked, count, upTo, each, Subjects.you());
+    }
+
+    /** "Choose a creature card at random from target opponent's graveyard", "a random instant card". */
+    public static ChooseCardEffect atRandom(CardSubject cards, String label) {
+        return new ChooseCardEffect(cards, label, false, new Fixed(1), false, List.of(), null);
+    }
+
+    /** "Its controller may put ... from their hand": this choice made by the player {@code player} names. */
+    public ChooseCardEffect by(PlayerSubject player) {
+        return new ChooseCardEffect(cards, label, alwaysAsked, count, upTo, each, player);
+    }
+
+    /** The player whose cards are chosen among, where that is a target. */
+    @Override
+    public TargetSpec targetSpec() {
+        return cards.targetSpec();
     }
 
     /** "Choose [label]": announced also when only one card qualifies. */

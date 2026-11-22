@@ -53,7 +53,6 @@ public final class AiInteractionStrategies {
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.RevealedMatchingHandCardChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.HeistCardChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.AminatousAuguryChoice.class, 0));
-        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.CommanderChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.CommanderBattlefieldChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ActivatedExiledCardChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.HitCounterExiledCardChoice.class, 1));
@@ -126,7 +125,6 @@ public final class AiInteractionStrategies {
         register(new ReturnAurasFromGraveyardChoiceAiStrategy());
         register(new MultiPermanentChoiceAiStrategy());
         register(new MultiGraveyardChoiceAiStrategy());
-        register(new ExiledCardChoiceAiStrategy());
         register(new ColorChoiceAiStrategy());
         register(new RevealedHandChoiceAiStrategy());
         register(new SpectersShriekChoiceAiStrategy());

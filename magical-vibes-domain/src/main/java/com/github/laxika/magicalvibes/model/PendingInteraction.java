@@ -52,7 +52,7 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.PlanarCardChoice, PendingInteraction.PlanarDieChoice,
         PendingInteraction.SpellbookDraftChoice,
         PendingInteraction.SpellbookDraftToExileChoice,
-        PendingInteraction.RevealedMatchingHandCardChoice, PendingInteraction.CommanderChoice,
+        PendingInteraction.RevealedMatchingHandCardChoice,
         PendingInteraction.CommanderBattlefieldChoice,
         PendingInteraction.StingingStudyCommanderChoice,
         PendingInteraction.SpatialMergingCardOrder, PendingInteraction.PlanarDeckPlaneswalkCardOrder,
@@ -111,7 +111,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ExileNonlandCardFromTargetHandOrGraveyardChoice,
         PendingInteraction.MagesContestBidChoice,
         PendingInteraction.PainsRewardBidChoice,
-        PendingInteraction.ExiledCardChoice,
         PendingInteraction.ActivatedExiledCardOpponentChoice,
         PendingInteraction.ActivatedExiledCardChoice,
         PendingInteraction.HitCounterExiledCardChoice,
@@ -777,29 +776,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         public java.util.List<UUID> validCardIds() {
             return cards.stream().map(Card::getId).toList();
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds(), 1, 1);
-        }
-    }
-
-    /** Chooses one commander to move from the command zone to its controller's hand. */
-    record CommanderChoice(UUID playerId, java.util.List<Card> commanders)
-            implements PendingInteraction {
-
-        public CommanderChoice {
-            commanders = java.util.List.copyOf(commanders);
-        }
-
-        public java.util.List<UUID> validCardIds() {
-            return commanders.stream().map(Card::getId).toList();
         }
 
         @Override
@@ -2813,31 +2789,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds(), minCount, maxCount);
-        }
-    }
-
-    /** Chooses one matching face-up card from exile to return to the battlefield. */
-    record ExiledCardChoice(UUID playerId, java.util.List<UUID> validCardIds, String cardName,
-                            StackEntry followUpEntry, com.github.laxika.magicalvibes.model.effect.CardEffect followUpEffect)
-            implements PendingInteraction {
-
-        public ExiledCardChoice(UUID playerId, java.util.List<UUID> validCardIds, String cardName) {
-            this(playerId, validCardIds, cardName, null, null);
-        }
-
-        public ExiledCardChoice {
-            validCardIds = java.util.List.copyOf(validCardIds);
-            followUpEntry = followUpEntry == null ? null : new StackEntry(followUpEntry);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 1, 1);
         }
     }
 

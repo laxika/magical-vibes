@@ -4,10 +4,16 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CrewCost;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesOwnPermanentsToExileUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetCardExiledWithSourceIntoOwnersGraveyardThenInvestigateEffect;
+import com.github.laxika.magicalvibes.model.effect.PutExiledCardsIntoOwnersGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -16,6 +22,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
 import java.util.List;
 
 @CardRegistration(set = "MKC", collectorNumber = "28")
@@ -36,7 +43,10 @@ public class ForebodingSteamboat extends Card {
         // Whenever this Vehicle attacks, put a card exiled with it into its owner's graveyard. If you do, investigate.
         // The card is chosen on resolution (not targeted).
         addTrigger(Triggers.attacks(),
-                new PutTargetCardExiledWithSourceIntoOwnersGraveyardThenInvestigateEffect(null, true));
+                ChooseCardEffect.oneOf(Subjects.exiledWithSource(),
+                        "a card exiled with this Vehicle to put into its owner's graveyard"),
+                new PutExiledCardsIntoOwnersGraveyardEffect(Subjects.cardsThisWay(StepKind.CHOOSE)),
+                new ConditionalEffect(new HappenedThisWay(StepKind.CHOOSE), CreateTokenEffect.ofClueToken(1)));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

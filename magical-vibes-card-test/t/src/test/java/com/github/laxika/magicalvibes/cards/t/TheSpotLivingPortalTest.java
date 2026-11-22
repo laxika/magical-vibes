@@ -151,6 +151,23 @@ class TheSpotLivingPortalTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Doesn't put itself away or return the exiled cards once it left the graveyard and came back")
+    void doesNothingAfterLeavingTheGraveyardAndComingBack() {
+        Permanent battlefieldTarget = harness.addToBattlefieldAndReturn(player2, new FountainOfYouth());
+        TheSpotLivingPortal spot = castSpot();
+        harness.handleMultipleCardsChosen(player1, List.of(battlefieldTarget.getCard().getId()));
+        harness.passBothPriorities();
+
+        Permanent spotPermanent = findPermanentByCardId(spot.getId());
+        harness.getPermanentRemovalService().removePermanentToGraveyard(gd, spotPermanent);
+        gd.markGraveyardExit(spot.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerGraveyards.get(player1.getId())).extracting(Card::getId).contains(spot.getId());
+        assertThat(gd.findExiledCard(battlefieldTarget.getCard().getId())).isNotNull();
+    }
+
     private TheSpotLivingPortal castSpot() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

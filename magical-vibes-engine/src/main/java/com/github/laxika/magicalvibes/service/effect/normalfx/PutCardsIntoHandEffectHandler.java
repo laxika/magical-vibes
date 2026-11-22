@@ -20,7 +20,8 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Resolves {@link PutCardsIntoHandEffect}: each card its subject names in exile goes to its owner's hand (CR 400.3).
+ * Resolves {@link PutCardsIntoHandEffect}: each card its subject names in a public zone or revealed in a library goes
+ * to its owner's hand (CR 400.3).
  * It never prompts.
  */
 @Slf4j
@@ -46,6 +47,16 @@ public class PutCardsIntoHandEffectHandler implements NormalEffectHandlerBean {
         returnFromGraveyards(gameData, named);
         for (SubjectResolutionService.LocatedCard located : named) {
             Card card = located.card();
+            if (located.zone() == Zone.COMMAND) {
+                List<Card> commandZone = gameData.playerCommandZones.get(located.ownerId());
+                if (commandZone != null && commandZone.remove(card)) {
+                    gameData.addCardToHand(located.ownerId(), card);
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            gameData.playerIdToName.get(located.ownerId()) + " puts ", card,
+                            " into their hand from the command zone."));
+                }
+                continue;
+            }
             if (located.zone() == Zone.LIBRARY) {
                 List<Card> library = gameData.playerDecks.get(located.ownerId());
                 if (library != null && library.remove(card)) {

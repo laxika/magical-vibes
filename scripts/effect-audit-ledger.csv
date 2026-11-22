@@ -2082,3 +2082,118 @@ ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect,split,9,"run 11: the 
 ExileTriggeringCreatureUntilSourceLeavesAndReturnOthersEffect,blocked-other,9,"run 11: the return-others step exists (exiledWithSource(), except()); left: ExileTargetPermanentEffect(triggering()) can't link what it exiles to the source, one card (Mirror of Life Trapping)"
 CopyCardsExiledWithSourceAndMayCastCopiesEffect,blocked-other,9,"run 11: the subject exists (exiledWithSource()); left: the copy step CopyImprintedCardAndMayCastCopyEffect has no paid cast (normal, {1}, {3}) and a head of five cards needs it"
 PutAnyNumberOfOwnedLandCardsFromExileOntoBattlefieldEffect,split,9,"run 11: ChooseCardEffect.upTo(exiledCards(target player, land)) + PutCardsOntoBattlefieldEffect(cardsThisWay(CHOOSE)); Oblivion Sower"
+DamageSourceControllerExilesRandomHandCardEffect,split,9,run 12: ExileCardAtRandomEffect.fromHand + a land gated may-put + the cast-now step over cardsThisWay(EXILE); Rona
+MillEachPlayerAndPutEvenManaValueCreatureOntoBattlefieldEffect,split,9,"run 12: MillEffect(eachPlayer) + ChooseCardEffect.announced(cardsThisWay(MILL, filter)) + the put step; Gyruda"
+MillEachPlayerAndPutMilledCardOntoBattlefieldEffect,split,9,run 12: as its even-mana-value sibling; Your Mistake Is My Triumph
+PutExiledCardOntoBattlefieldUnderControllerEffect,absorbed,9,"run 12: PutCardsOntoBattlefieldEffect over cardsThisWay, with its three makers split"
+PutUnplayedExiledCardsIntoOwnersGraveyardEffect,absorbed,9,"run 12: PutExiledCardsIntoOwnersGraveyardEffect(cardsThisWay(EXILE)) over DelayedExiledCardReturns.exiled, which binds the stay (CR 603.7c); Grinning Totem"
+PutTargetCardExiledWithSourceIntoOwnersGraveyardEffect,absorbed,9,"run 12: PutExiledCardsIntoOwnersGraveyardEffect(targetCardExiledWithSource(filter)); Gelatinous Cube, Bronzebeak Foragers"
+PutTargetCardExiledWithSourceIntoOwnersHandEffect,absorbed,9,run 12: PutCardsIntoHandEffect(targetCardExiledWithSource()); Nyla
+PutTargetCardExiledWithSourceIntoOwnersGraveyardAndCreateTokenEffect,split,9,run 12: ChooseCardEffect(exiledWithSource()) + the graveyard step + two gated tokens; Currency Converter
+PutTargetCardExiledWithSourceIntoOwnersGraveyardThenInvestigateEffect,split,9,run 12: ChooseCardEffect(exiledWithSource()) + the graveyard step + a gated Clue; Foreboding Steamboat
+PutTargetCardFromExileIntoOwnersGraveyardEffect,absorbed,9,run 12: PutExiledCardsIntoOwnersGraveyardEffect(targetExiledCard()); Pull from Eternity
+PutTargetCardFromExileOnBottomOfOwnersLibraryEffect,absorbed,9,"run 12: PutCardsIntoLibraryEffect.onBottom(targetExiledCard(filter, OPPONENT)); Sentinel of Lost Lore"
+PutTargetExiledCardOnBottomOfOwnersLibraryEffect,absorbed,9,run 12: PutCardsIntoLibraryEffect.onBottom(targetExiledCard(filter)); Blade of the Swarm
+PutImprintedCardIntoOwnersHandEffect,absorbed,9,run 12: PutCardsIntoHandEffect(exiledWithSource()): every imprint path links the entry; Hoarding Dragon
+PutSelfOnBottomOfOwnersLibraryAndReturnExiledCardsEffect,split,9,run 12: PutCardsIntoLibraryEffect.onBottom(sourceCard()) + PUT_INTO_LIBRARY gated hand step; The Spot
+PutCommanderFromCommandZoneIntoHandEffect,split,9,run 12: ChooseCardEffect(cardsInYourCommandZone(commander)) + the hand step; Road of Return
+PutCommanderIntoHandEffect,split,9,"run 12: ChooseCardEffect(cardsInYourCommandZone(commander)) + the hand step; Netherborn Altar, Command Beacon"
+PutAllCommandersIntoHandEffect,split,9,run 12: two hand steps over the command zone and the graveyard; Campfire
+PutSourceFromCommandZoneOntoBattlefieldEffect,absorbed,9,run 12: PutCardsOntoBattlefieldEffect(cardsInYourCommandZone(self)); Derevi
+PutTopCardOfGraveyardOnBottomOfLibraryEffect,absorbed,9,run 12: PutCardsIntoLibraryEffect.onBottom(topOfGraveyard(you)); Soldevi Digger
+PutTopCreatureFromTargetGraveyardOnLibraryTopEffect,absorbed,9,"run 12: PutCardsIntoLibraryEffect.onTop(topOfGraveyard(target player, creature)); Guiding Spirit"
+PutCardsFromControllerGraveyardOnTopOfLibraryEffect,split,9,"run 12: ChooseCardEffect(graveyard, five) + PutCardsIntoLibraryEffect.onTop; Stillness in Motion"
+PutTargetPlayerGraveyardOnBottomOfLibraryEffect,absorbed,9,run 12: PutCardsIntoLibraryEffect.onBottomInRandomOrder(cardsInGraveyards(target player)); Endurance
+MillControllerAndMayPutMilledCreatureOrLandOnTopOfLibraryEffect,split,9,"run 12: MillEffect + ChooseCardEffect.upTo(cardsThisWay(MILL, filter)) + PutCardsIntoLibraryEffect.onTop; Lluwen"
+PutMilledCreatureOrLandOnTopOfLibraryEffect,absorbed,9,run 12: the marker payload and may handler of the split mill
+PutGraveyardCardOnBottomThenExileTopCardsMayPlayThisTurnEffect,split,9,run 12: ChooseCardEffect + PutCardsIntoLibraryEffect + PUT_INTO_LIBRARY gated ExileTopCardMayPlayThisTurnEffect; Ardent Dustspeaker
+PutRandomCreatureFromTargetOpponentGraveyardOntoBattlefieldEffect,split,9,run 12: ChooseCardEffect.atRandom(target player's graveyard) + the put step; Tariel
+PutRandomCardFromLibraryIntoGraveyardEffect,split,9,run 12: ChooseCardEffect.atRandom(cardsInYourLibrary(filter)) + the graveyard step; Geist of Regret
+MayPutCardFromHandOnBottomOfLibraryThenDrawEffect,split,9,run 12: ChooseCardEffect.upTo(hand) + PutCardsIntoLibraryEffect + PUT_INTO_LIBRARY gated draw; three cards
+PutHandOnBottomOfLibraryAndDrawEffect,split,9,run 12: PutCardsIntoLibraryEffect(cardsInHands) + DrawCardEffect(AmountThisWay(PUT_INTO_LIBRARY)); four cards
+PutAnyNumberCardsFromHandOnBottomOfLibraryThenDrawThatManyPlusOneEffect,split,9,"run 12: ChooseCardEffect.upTo(hand) + PutCardsIntoLibraryEffect + draw that many plus one; Valakut Awakening, Into the Fire"
+PutCreatureFromHandWithManaValueEqualToSourceCountersEffect,absorbed,9,run 12: PutCardToBattlefieldEffect with CardManaValueEqualsSourceCountersPredicate; Aether Vial
+PutArtifactFromHandWithManaValueAtMostSourceCountersEffect,absorbed,9,"run 12: PutCardToBattlefieldEffect with CardManaValueAtMostSourceCountersPredicate (now last known, CR 608.2h); Jhoira"
+PutCreatureFromHandWithManaValueLessThanTriggeringPermanentEffect,absorbed,9,run 12: PutCardToBattlefieldEffect.tappedAndAttacking().boundedBy(triggering mana value - 1); Arni
+PutCreatureFromHandWithManaValueXEffect,absorbed,9,run 12: PutCardToBattlefieldEffect with CardManaValueEqualsXPredicate; Mercadian Lift
+PutCreatureFromHandWithManaValueXThenReturnSourceToHandEffect,split,9,run 12: ChooseCardEffect(hand) + the put step + returned() gated bounce; Metathran Aerostat
+PutCardFromHandToBattlefieldWithArtifactCountersEffect,split,9,run 12: ChooseCardEffect(hand) + the put step + gated counters on what entered; Oviya
+PutCardToBattlefieldForOwnerEffect,split,9,run 12: ChooseCardEffect(hand).by(owner of the source) + the put step; Pendant of Prosperity
+PutCardToBattlefieldForTargetSpellControllerEffect,split,9,run 12: ChooseCardEffect(hand).by(controller of the target spell) + the put step; Fold into Aether
+PutAllLandsFromHandAndDiscardEffect,split,9,run 12: RevealOwnHandEffect + the put step over cardsInYourHand(land) + DiscardHandEffect; Manabond
+PutCardToBattlefieldOrElseEffect,split,9,"run 12: ChooseCardEffect(hand) + the put step + not returned() gated else; Hakbal, Origin of the Avengers"
+PutPlusOnePlusOneCountersOnTargetForEachDyingSourceCounterEffect,absorbed,9,run 12: PutCounterOnTargetPermanentEffect with CountersOnTriggeringPermanent(); Yuna
+PutCardsOnBottomOfLibraryEffect,absorbed,9,run 12: renamed PutCardsIntoLibraryEffect with a position and a random order (a run 11 record with one card)
+PutCardsIntoLibraryEffect,survivor,9,"run 12: the named graveyard, exile or hand cards on top or on the bottom, in their owner's or a random order; records PUT_INTO_LIBRARY"
+ChooseCardEffect,survivor,9,"run 12: a chooser other than the controller (own hand only, unnamed) and a choice at random"
+PutCardsIntoHandEffect,survivor,9,run 12: takes a target subject and moves a card from the command zone
+PutExiledCardsIntoOwnersGraveyardEffect,survivor,9,run 12: takes a target subject
+PutCardsOntoBattlefieldEffect,survivor,9,run 12: moves a card from a hand or the command zone; a commander stays one
+PutCardToBattlefieldEffect,survivor,9,run 12: took four put-from-hand records by predicate and bound
+PutCardToBattlefieldThenEffect,blocked-other,9,"run 12: the hand subject and the put step's RETURN exist; left: eight cards whose then-effects read the chosen card's id through the carrier entry, and attacking entry, which the put step lacks"
+ShuffleCardsFromHandIntoLibraryThenEffect,blocked-other,9,run 12: the hand choice exists (ChooseCardEffect); left: no shuffle-into-library step over a CardSubject; two cards
+ExileUntilCardPredicateMayPlayWhileSourceControlledEffect,blocked-other,9,run 12: the random bottom step exists (PutCardsIntoLibraryEffect); left: AllowPlayCardsFromExileEffect has no while-the-source-remains binding; one card (The Day of the Doctor)
+ExileTriggeringCreatureUntilSourceLeavesAndReturnOthersEffect,blocked-other,9,"run 12: run 11's stay premise was false (the link ends as the card leaves exile, tested); left: ExileTargetPermanentEffect(triggering()) can't link what it exiles to the source, one card"
+PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect,step-9,9,"run 12: absorb-ready: ReturnCardFromGraveyardEffect.builder() opponent graveyard, grantHaste, exileAtYourNextEndStep / exileAtEndStep (Gruesome Encore says the next end step), exileIfLeavesBattlefield; move the AI and target readers with it"
+PutCardsFromGraveyardOnBottomOfLibraryCost,blocked-other,9,run 12: a payment: activation and forced-cost paths of its own; cost merges are step 10's
+PutCardFromGraveyardOnBottomOfLibraryCost,blocked-other,9,run 12: a payment: the forced-cost path of its own beside the counted cost; cost merges are step 10's
+PutCardsFromSingleGraveyardOnBottomOfLibraryCost,blocked-other,9,run 12: an engine-built payment (cumulative upkeep from one graveyard); cost merges are step 10's
+PutSelfOnBottomOfOwnersLibraryCost,blocked-other,9,run 12: a payment consuming the source; cost merges are step 10's
+PutCountersOnControlledCreatureOrPayManaCost,survivor,9,run 12: the blight-or-pay additional cost of two cards
+PutChosenCardFromHandOntoBattlefieldEffect,blocked-other,9,run 12: payload of the spellbook and conjure follow-ups: their chosen object is no step result a CardSubject reads; two cards
+PutImprintedCreatureOntoBattlefieldEffect,survivor,9,"run 12: turns the exiled cards face up, then puts the creature cards; two cards; reads the linked entries only (CR 400.7)"
+PutOnTopOfLibraryInsteadOfDyingEffect,survivor,9,"run 12: the dying replacement onto the top, mandatory or optional; two cards"
+PutOnBottomOfLibraryInsteadOfDyingEffect,unique,9,run 12: the same replacement onto the bottom: a position only this card would set (guard rail)
+PutTargetSpellOrPermanentOnTopOrBottomOfLibraryEffect,survivor,9,run 12: a spell or permanent with its owner's top-or-bottom choice; two cards
+PutTargetSpellOrPermanentIntoLibraryNFromTopEffect,survivor,9,"run 12: the spell-or-permanent placement at a position, also the other two records' top placement"
+PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffect,unique,9,run 12: a target in any of three zones with its owner's choice: a zone only this card would set
+PutAllPermanentsOnBottomOfLibraryEffect,survivor,9,"run 12: one batch to library bottoms, each owner ordering; two cards"
+PutSameCountersOnSourceEffect,survivor,9,run 12: the counter event's kind and number on the source; two cards
+PutTimeCountersOnImprintedCardEffect,survivor,9,run 12: binds the card its activation cost exiled; two cards
+PutTimeCountersOnSuspendedCardEffect,survivor,9,run 12: time counters on this suspended card; two cards
+PutCardsOnBottomOfLibraryInsteadOfGraveyardOrExileThisTurnEffect,unique,9,run 12: a floating replacement of where cards go this turn (Yawgmoth's Testament)
+PutPhylacteryCounterOnTargetPermanentEffect,unique,9,run 12: an as-enters replacement choosing an artifact to mark (Phylactery Lich)
+PutFaceUpExiledCardOwnedByTargetIntoGraveyardEffect,blocked-other,9,"run 12: also Binding Negotiation's decline payload, which needs a face-up qualifier on exiledCards(); two makers"
+PutHeldSpellbookCardsOntoBattlefieldEffect,unique,9,"run 12: the held spellbook cards of The Hourglass Coven, in no zone a subject names"
+PutTargetCreatureOnTopOrOptionalBottomOfLibraryEffect,unique,9,run 12: an optional other position only if the creature is red (Ether Well)
+PutTargetExiledCardOwnedByDamagedPlayerOnBottomOfOwnersLibraryAndGainLifeEffect,blocked-other,9,"run 12: targetExiledCard exists; left: an owner that is the damaged player, bound as the target is chosen; one card (Time Reaper)"
+PutTargetOnBottomThenRevealUntilSharedCardTypeToBattlefieldRestOnBottomRandomEffect,blocked-other,9,run 12: no card filter bound to the moved permanent's last-known types; one card (Reality Scramble)
+PutTargetOnBottomThenRevealUntilTypeToBattlefieldRestToBottomEffect,blocked-other,9,run 12: the reveal-until step puts the rest in a random order only; this player orders them; one card (Proteus Staff)
+PutTimeCountersOnTargetExiledCardWithSuspendEffect,blocked-other,9,run 12: targetExiledCard exists; left: a put-into-exile-from-your-graveyard-this-turn qualifier; one card (Soovril)
+PutAllCardsExiledWithSourceIntoOwnersHandsAndDiscardAtNextTurnEndStepEffect,blocked-other,9,run 12: no discard over a CardSubject for a delayed ability about cards put into a hand; one card (Kardum)
+PutAttackingCreaturesOnTopOrBottomOfLibraryEffect,unique,9,run 12: each owner chooses top or bottom for each attacker (Aetherspouts)
+PutAuraFromHandOntoSelfWithinXManaValueOrExileEffect,unique,9,"run 12: an Aura able to enchant the returned self, else that exiles itself (Evershrike)"
+PutAwakeningCountersOnTargetLandsEffect,blocked-other,9,"run 12: chooses its targets as it resolves where the text targets (CR 603.3d): a fix first, with its choice context; one card (Liege of the Tangle)"
+PutCommanderFromCommandZoneOntoBattlefieldEffect,blocked-other,9,run 12: the command-zone subject exists; left: a delayed ability about what the put step put and a return-to-command-zone effect; one card (Hellkite Courser)
+PutControlledCreatureOnTopOfLibraryEffect,unique,9,run 12: a creature chosen as it resolves put on top of the library (Nulltread Gargantuan)
+PutCreatureFromHandOntoBattlefieldWithCountersIfManaCostHasXEffect,unique,9,run 12: enters with counters only if the chosen card has X in its cost (The First Tyrannic War)
+PutCreatureFromHandSharingChosenCostPermanentsEffect,unique,9,"run 12: a filter against both permanents tapped for the cost, as last known (Cryptic Gateway)"
+PutCreatureFromHandThenSacrificeUnlessPayReducedEffect,unique,9,run 12: sacrifice unless its own mana cost reduced by two is paid (Flash)
+PutKeywordCountersOnControlledCreaturesThenPutPlusOneCountersOnSourceEffect,unique,9,"run 12: a choice for each graveyard keyword, then counters for each placed (Kathril)"
+PutLeavingCreatureCountersOnSourceEffect,unique,9,run 12: every kind of the leaving creature's counters at once (The Ozolith)
+PutLesserManaValueCreatureFromHandOrCommandZoneAndReturnAuraEffect,blocked-other,9,run 12: one choice over two zones and a delayed return attached to what the put step put; one card (Next of Kin)
+PutMatchingPermanentsOnTopOfOwnersLibrariesEffect,unique,9,"run 12: each owner orders in APNAP order, then one put onto the tops (Harmonic Convergence)"
+PutMinusOneCounterOnSourceAtEndOfCombatEffect,blocked-other,9,"run 12: an end-of-combat delayed ability about the source: waits for the delayed-mechanism unification noted in 5a, a redesign outside this plan"
+PutSelfOnTopOfLibraryAtEndOfCombatEffect,blocked-other,9,"run 12: an end-of-combat DelayedPermanentAction: waits for the delayed-mechanism unification noted in 5a, a redesign outside this plan"
+PutOpponentOwnedExiledCardIntoGraveyardAndGainLifeEffect,blocked-other,9,run 12: the head offers face-down cards one by one where this chooses a pile: that rule moves to the head first; one card (Ruin Processor)
+PutOrRemoveCounterIfBlockedSinceLastUpkeepEffect,unique,9,run 12: reads and resets its blocked-since-upkeep mark (Wiitigo)
+PutPermanentCardsOfTypesFromHandEffect,unique,9,run 12: one optional put for each permanent type opponents control (Only I Know What Awaits)
+PutRandomCounterOnSourceEffect,unique,9,run 12: a random kind among those not on it (Crystalline Giant)
+PutRandomCreatureFromRandomGraveyardOntoBattlefieldAndDealManaValueDamageEffect,unique,9,"run 12: a random graveyard among those with a creature, then a random card of it (Call from the Grave)"
+PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffect,unique,9,"run 12: perpetual base power, toughness and ward on a random library card bounded by X (Better Offer)"
+PutResolvingSpellIntoCommandZoneEffect,unique,9,run 12: the resolving spell's own disposition (Essence of Ajani)
+PutSacrificedPermanentCountersAndAttachEquipmentEffect,unique,9,run 12: the sacrificed source's counters and one of its Equipment (Zack Fair)
+PutSlimeCounterAndCreateOozeTokenEffect,unique,9,run 12: the token's power and toughness are bound to this permanent (Gutter Grime)
+PutTargetCardsFromGraveyardOnBottomOfLibraryEffect,blocked-other,9,"run 12: targetCard names one target, this has up to four; one card (Bow of Nylea)"
+PutTargetCreatureCardFromControllerGraveyardUnderTargetPlayerEffect,unique,9,run 12: two targets: a player who gets a hasty goaded creature exiled later (The Beamtown Bullies)
+PutTargetCreatureCardFromGraveyardOnTopAndDealPowerDamageEffect,blocked-other,9,run 12: PutCardsIntoLibraryEffect takes a targetCard; left: no amount of the moved card's power as it was in the graveyard; one card (Dead Reckoning)
+PutTargetPlayerHandOnLibraryThenSearchThatManyToHandEffect,blocked-other,9,run 12: SearchLibraryEffect has no exact count from a step for another player's library and hand; one card (Jester's Mask)
+PutTopCardsOfDamagedPlayerLibraryFaceDownAsCybermenEffect,unique,9,run 12: top library cards face down unseen under another player (Cybership)
+PutTriggeringSpellOnBottomThenRevealEffect,unique,9,"run 12: the triggering spell off the stack, a copy counting as done, then reveal and cast (Neera)"
+PutTwoOpponentOwnedExiledCardsIntoGraveyardEffect,unique,9,"run 12: two cards or none, face-down ones too (Ulamog's Nullifier)"
+PutTwoOpponentOwnedExiledCardsIntoGraveyardOnEnterWithCountersEffect,unique,9,run 12: an as-enters replacement over the same choice (Ulamog's Despoiler)
+PutCageCounterOnExiledCardWithSourceEffect,blocked-other,9,run 12: engine payload of the cage-counter exile: that choice records no EXILE for PutCounterOnExiledCardsEffect
+PutChosenCardFromHandIntoGraveyardEffect,blocked-other,9,run 12: engine payload of the fused seek-three handler (its family's split); the graveyard step moves no hand card; one maker
+PutDiscardedCardOnTopOfLibraryThenBattlefieldEffect,blocked-other,9,run 12: engine payload of a fused exile-discard-return handler; its discard is no step of the entry
+PutTopCardOfTargetLibraryOnBottomEffect,blocked-other,9,"run 12: engine may payload of the look-at-top handler, which records no card for a step to name"
+PutVoyageCounterOnExiledCardEffect,unique,9,"run 12: the voyage counter's own game state, built by the enter-trigger service"

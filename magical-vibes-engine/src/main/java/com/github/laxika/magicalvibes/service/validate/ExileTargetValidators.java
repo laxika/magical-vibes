@@ -7,8 +7,6 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromGraveyard
 import com.github.laxika.magicalvibes.model.effect.ExchangeTargetAnteCardWithTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AdjustChosenCounterOnTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.AdjustTimeCountersOnTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileIntoOwnersGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetCardFromExileOnBottomOfOwnersLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetExiledCardOwnedByDamagedPlayerOnBottomOfOwnersLibraryAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardFromExileToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
@@ -191,37 +189,6 @@ public class ExileTargetValidators {
                 && !ctx.gameData().exiledCardsWithNonSuspendTimeCounters.contains(ctx.targetId());
         if (exiled == null || exiled.faceDown() || !(suspendedSpell || suspendedByCounters)) {
             throw new IllegalStateException("Target card must be suspended");
-        }
-    }
-
-    @ValidatesTarget(PutTargetCardFromExileIntoOwnersGraveyardEffect.class)
-    public void validatePutTargetCardFromExileIntoOwnersGraveyard(
-            TargetValidationContext ctx, PutTargetCardFromExileIntoOwnersGraveyardEffect effect) {
-        if (ctx.targetZone() != Zone.EXILE) {
-            throw new IllegalStateException("Effect requires an exile target");
-        }
-        if (ctx.targetId() == null) {
-            throw new IllegalStateException("Effect requires a target card");
-        }
-        ExiledCardEntry exiled = ctx.gameData().findExiledCard(ctx.targetId());
-        if (exiled == null || exiled.faceDown() || ctx.gameData().antedCardIds.contains(ctx.targetId())) {
-            throw new IllegalStateException("Target card must be face up in exile");
-        }
-    }
-
-    @ValidatesTarget(PutTargetCardFromExileOnBottomOfOwnersLibraryEffect.class)
-    public void validatePutTargetCardFromExileOnBottomOfOwnersLibrary(
-            TargetValidationContext ctx, PutTargetCardFromExileOnBottomOfOwnersLibraryEffect effect) {
-        validateFaceUpExileCard(ctx);
-        ExiledCardEntry exiled = ctx.gameData().findExiledCard(ctx.targetId());
-        if (effect.notOwnedOnly() && ctx.sourceControllerId() != null
-                && ctx.sourceControllerId().equals(exiled.ownerId())) {
-            throw new IllegalStateException("Target card must not be owned by the ability controller");
-        }
-        if (effect.filter() != null && !predicateEvaluationService.matchesCardPredicate(
-                exiled.card(), effect.filter(), null)) {
-            String label = CardPredicateUtils.describeFilter(effect.filter());
-            throw new IllegalStateException("Target card must be a " + label);
         }
     }
 

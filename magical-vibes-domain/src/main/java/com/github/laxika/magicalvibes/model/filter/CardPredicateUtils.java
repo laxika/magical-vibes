@@ -132,6 +132,9 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasExactlyNColorsPredicate p) {
             return "card that's exactly " + p.colorCount() + " colors";
         }
+        if (predicate instanceof CardManaValueEqualsXPredicate) {
+            return "card with mana value X";
+        }
         if (predicate instanceof CardManaValueAtMostSourcePowerPredicate) {
             return "card with mana value at most this creature's power";
         }

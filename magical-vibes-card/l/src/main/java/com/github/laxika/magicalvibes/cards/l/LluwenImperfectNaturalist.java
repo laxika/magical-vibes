@@ -6,11 +6,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
-import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPutMilledCreatureOrLandOnTopOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +29,13 @@ public class LluwenImperfectNaturalist extends Card {
 
     public LluwenImperfectNaturalist() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new MillControllerAndMayPutMilledCreatureOrLandOnTopOfLibraryEffect(4));
+                new MillEffect(4, Subjects.you()),
+                ChooseCardEffect.upTo(
+                        Subjects.cardsThisWay(StepKind.MILL, new CardAnyOfPredicate(List.of(
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardTypePredicate(CardType.LAND)))),
+                        1, "a creature or land card milled this way to put on top of your library"),
+                PutCardsIntoLibraryEffect.onTop(Subjects.cardsThisWay(StepKind.CHOOSE)));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

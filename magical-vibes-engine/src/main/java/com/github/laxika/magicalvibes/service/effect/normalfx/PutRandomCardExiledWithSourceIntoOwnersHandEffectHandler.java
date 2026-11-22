@@ -56,8 +56,10 @@ public class PutRandomCardExiledWithSourceIntoOwnersHandEffectHandler implements
 
         UUID ownerId = chosen.ownerId();
         gameData.addCardToHand(ownerId, chosen.card());
-        gameLogService.append(gameData, GameLog.textCardText(
-                gameData.playerIdToName.get(ownerId) + " puts ", chosen.card(),
+        // A card exiled face down goes to a hidden zone without being seen (CR 406.3).
+        gameLogService.append(gameData, chosen.faceDown()
+                ? GameLog.text(gameData.playerIdToName.get(ownerId) + " puts a face-down card from exile into their hand.")
+                : GameLog.textCardText(gameData.playerIdToName.get(ownerId) + " puts ", chosen.card(),
                 " from exile into their hand."));
         log.info("Game {} - {} returns {} at random from exile to its owner's hand via {}",
                 gameData.id, gameData.playerIdToName.get(ownerId), chosen.card().getName(),

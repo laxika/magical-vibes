@@ -2,10 +2,14 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.EntwineManaCost;
-import com.github.laxika.magicalvibes.model.effect.PutCommanderFromCommandZoneIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
 
 import java.util.List;
@@ -21,7 +25,9 @@ public class RoadOfReturn extends Card {
                         ReturnTargetCardsFromGraveyardToHandEffect.exactlyOne(new CardIsPermanentPredicate())),
                 new ChooseOneEffect.ChooseOneOption(
                         "Put your commander into your hand from the command zone",
-                        new PutCommanderFromCommandZoneIntoHandEffect())
+                        List.of(ChooseCardEffect.oneOf(Subjects.cardsInYourCommandZone(new CardIsCommanderPredicate()),
+                                "a commander to put into your hand"),
+                        new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.CHOOSE))))
         ), false, 1, 2, true));
     }
 }

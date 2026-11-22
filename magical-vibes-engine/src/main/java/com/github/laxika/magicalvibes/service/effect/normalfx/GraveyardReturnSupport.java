@@ -3132,24 +3132,6 @@ public class GraveyardReturnSupport {
      */
 
     /**
-     * Resolves a {@link PutImprintedCreatureOntoBattlefieldEffect} by revealing the card imprinted
-     * on the source and, if it is a creature card, putting it onto the battlefield under the
-     * controller's control. Non-creature cards remain in exile.
-     *
-     * @param gameData the current game state
-     * @param entry    the stack entry being resolved (card must have an imprinted card)
-     */
-
-    /**
-     * Resolves a {@link PutImprintedCardIntoOwnersHandEffect} by putting the card imprinted
-     * on the source into its owner's hand. The owner is determined by which player's exile zone
-     * contains the card. Used by cards like Hoarding Dragon.
-     *
-     * @param gameData the current game state
-     * @param entry    the stack entry being resolved (card must have an imprinted card)
-     */
-
-    /**
      * Resolves a {@link ReturnDyingCreatureToBattlefieldEffect} by returning a
      * creature that just died back to the battlefield and attaching the source equipment to it.
      * Used by equipment with triggered abilities like Nim Deathmantle. Fizzles if the dying

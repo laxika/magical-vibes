@@ -130,7 +130,7 @@ class CloneShellTest extends BaseCardTest {
         // Manually imprint a creature card
         GrizzlyBears bears = new GrizzlyBears();
         gd.setImprintedCard(cloneShell.getCard(), bears);
-        gd.addToExile(player1.getId(), bears);
+        gd.addToExile(player1.getId(), bears, cloneShell.getId());
 
         // Kill Clone Shell with Shock (2 damage to a 2/2)
         UUID cloneShellId = harness.getPermanentId(player1, "Clone Shell");
@@ -165,7 +165,7 @@ class CloneShellTest extends BaseCardTest {
         // Manually imprint a non-creature card
         Spellbook spellbook = new Spellbook();
         gd.setImprintedCard(cloneShell.getCard(), spellbook);
-        gd.addToExile(player1.getId(), spellbook);
+        gd.addToExile(player1.getId(), spellbook, cloneShell.getId());
 
         int battlefieldSizeBefore = gd.playerBattlefields.get(player1.getId()).size();
 
@@ -311,6 +311,28 @@ class CloneShellTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Llanowar Elves");
         assertThat(gd.findExiledCard(bears.getId())).isNull();
         assertThat(gd.findExiledCard(elves.getId())).isNull();
+    }
+
+    @Test
+    @DisplayName("Doesn't put the imprinted card onto the battlefield once it was exiled again (CR 400.7)")
+    void doesNotPutACardExiledAgainOntoTheBattlefield() {
+        harness.addToBattlefield(player1, new CloneShell());
+        GameData gd = harness.getGameData();
+        Permanent cloneShell = findPermanent(player1, "Clone Shell");
+        GrizzlyBears bears = new GrizzlyBears();
+        gd.setImprintedCard(cloneShell.getCard(), bears);
+        gd.addToExile(player1.getId(), bears, cloneShell.getId());
+        gd.removeFromExile(bears.getId());
+        gd.addToExile(player1.getId(), bears);
+
+        harness.setHand(player2, List.of(new Shock()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.forceActivePlayer(player2);
+        harness.castAndResolveInstant(player2, 0, cloneShell.getId());
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Grizzly Bears");
+        assertThat(gd.findExiledCard(bears.getId())).isNotNull();
     }
 
     private void castShellWithLibrary(List<Card> cards) {

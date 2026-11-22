@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.filter;
 
+import com.github.laxika.magicalvibes.model.filter.CardIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
@@ -852,6 +853,8 @@ public class PredicateEvaluationService {
                     card.getTriggerEffects(Triggers.youCastThisSpell()).stream().anyMatch(CascadeEffect.class::isInstance)
                             || gameData != null && cardOwnerId != null
                             && hasDelayedCascadeFor(gameData, card, cardOwnerId);
+            case CardIsCommanderPredicate ignored ->
+                    gameData != null && gameData.isCommander(card.getId());
             case CardIsSelfPredicate ignored ->
                     sourceCardId != null && card.getId().equals(sourceCardId);
             case CardColorPredicate p ->
@@ -1049,6 +1052,10 @@ public class PredicateEvaluationService {
                 Permanent sourcePermanent = sourcePermanentId == null
                         ? findPermanentByOriginalCardId(gameData, sourceCardId)
                         : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+                if (sourcePermanent == null) {
+                    // "The number of ingenuity counters on Jhoira" once it left: as it last existed (CR 608.2h).
+                    sourcePermanent = sourcePermanentSnapshot;
+                }
                 yield sourcePermanent != null
                         && card.getManaValue() <= sourcePermanent.getCounterCount(p.counterType());
             }

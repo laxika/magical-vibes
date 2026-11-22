@@ -2,7 +2,11 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PutHandOnBottomOfLibraryAndDrawEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +21,7 @@ public class TeferisPuzzleBox extends Card {
     public TeferisPuzzleBox() {
         // At the beginning of each player's draw step, that player puts the cards in their hand on
         // the bottom of their library in any order, then draws that many cards.
-        addTrigger(Triggers.drawStep(ActivePlayer.ANY), new PutHandOnBottomOfLibraryAndDrawEffect());
+        addTrigger(Triggers.drawStep(ActivePlayer.ANY), PutCardsIntoLibraryEffect.onBottom(Subjects.cardsInHands(Subjects.activePlayer(), null)),
+                new DrawCardEffect(new AmountThisWay(StepKind.PUT_INTO_LIBRARY), Subjects.activePlayer()));
     }
 }

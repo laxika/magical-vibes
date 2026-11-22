@@ -170,6 +170,7 @@ public class AuraAttachmentService {
                         gameLogService.append(gameData, GameLog.cardThen(p.getCard(), " is put into the graveyard (" + reason + ")."));
                         log.info("Game {} - {} removed (orphaned aura)", gameData.id, p.getCard().getName());
                         if (wentToGraveyard) {
+                            gameData.markUnattachedAuraPutIntoGraveyard(p);
                             removals.add(new OrphanedAuraRemoval(p.getCard(), playerId, p));
                         }
                     }
@@ -427,6 +428,7 @@ public class AuraAttachmentService {
                         gameLogService.append(gameData, GameLog.builder().card(p.getCard()).text(" is put into the graveyard (" + reason + ").").build());
                         log.info("Game {} - {} removed (illegally attached: {})", gameData.id, p.getCard().getName(), reason);
                         if (wentToGraveyard) {
+                            gameData.markUnattachedAuraPutIntoGraveyard(p);
                             removals.add(new OrphanedAuraRemoval(p.getCard(), playerId, p));
                         }
                     }

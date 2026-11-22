@@ -159,6 +159,14 @@ public class SubjectResolutionService {
                 yield locatedCards(gameData, entry, effect, except.cards()).stream()
                         .filter(card -> !excluded.contains(card.card().getId())).toList();
             }
+            case CardSubject.TargetExiledCard target -> targetExiledCard(gameData, entry, effect, target);
+            case CardSubject.TopOfGraveyard top -> topOfGraveyard(gameData, entry, effect, top);
+            case CardSubject.InHand in -> inZone(gameData, entry, effect, in.owners(), in.filter(), Zone.HAND,
+                    gameData.playerHands);
+            case CardSubject.InLibrary in -> inZone(gameData, entry, effect, in.owners(), in.filter(), Zone.LIBRARY,
+                    gameData.playerDecks);
+            case CardSubject.InCommandZone in -> inZone(gameData, entry, effect, in.owners(), in.filter(), Zone.COMMAND,
+                    gameData.playerCommandZones);
             case CardSubject.InYourGraveyard yours -> locatedCards(gameData, entry, effect, yours.cards()).stream()
                     .filter(located -> located.zone() == Zone.GRAVEYARD
                             && entry.getControllerId().equals(located.ownerId()))
@@ -228,8 +236,8 @@ public class SubjectResolutionService {
         return names;
     }
 
-    /** A card a {@link CardSubject} names, in the zone it is in ({@link Zone#GRAVEYARD}, {@link Zone#EXILE}, or
-     * {@link Zone#HAND} for a sought card or one chosen from a revealed hand). */
+    /** A card a {@link CardSubject} names, in the zone it is in ({@link Zone#GRAVEYARD}, {@link Zone#EXILE},
+     * {@link Zone#COMMAND}, or a hand or library for a subject of one, a sought, revealed or chosen card). */
     public record LocatedCard(Card card, Zone zone, UUID ownerId) {
     }
 
@@ -340,6 +348,72 @@ public class SubjectResolutionService {
         return named;
     }
 
+    /** {@link CardSubject.InHand}, {@link CardSubject.InLibrary}, {@link CardSubject.InCommandZone}. */
+    private List<LocatedCard> inZone(GameData gameData, StackEntry entry, CardEffect effect, PlayerSubject owners,
+                                     CardPredicate filter, Zone zone, Map<UUID, List<Card>> zones) {
+        List<LocatedCard> named = new ArrayList<>();
+        for (UUID ownerId : players(gameData, entry, effect, owners)) {
+            for (Card card : List.copyOf(zones.getOrDefault(ownerId, List.of()))) {
+                if (!card.isToken() && cardMatches(gameData, entry, card, ownerId, filter)) {
+                    named.add(new LocatedCard(card, zone, ownerId));
+                }
+            }
+        }
+        return named;
+    }
+
+    /** {@link CardSubject.TopOfGraveyard}: the last card of each graveyard that is a card (CR 108.2b). */
+    private List<LocatedCard> topOfGraveyard(GameData gameData, StackEntry entry, CardEffect effect,
+                                             CardSubject.TopOfGraveyard top) {
+        List<LocatedCard> named = new ArrayList<>();
+        for (UUID ownerId : players(gameData, entry, effect, top.owners())) {
+            List<Card> graveyard = List.copyOf(gameData.playerGraveyards.getOrDefault(ownerId, List.of()));
+            for (Card card : graveyard.reversed()) {
+                if (card.isToken()) {
+                    continue;
+                }
+                if (cardMatches(gameData, entry, card, ownerId, top.filter())) {
+                    named.add(new LocatedCard(card, Zone.GRAVEYARD, ownerId));
+                }
+                break;
+            }
+        }
+        return named;
+    }
+
+    /**
+     * {@link CardSubject.TargetExiledCard}: the effect's targeted card while it is face up in exile, with the link and
+     * the owner it was targeted for and matching the filter as it did then (CR 608.2b).
+     */
+    private List<LocatedCard> targetExiledCard(GameData gameData, StackEntry entry, CardEffect effect,
+                                               CardSubject.TargetExiledCard target) {
+        UUID cardId = entry.targetsForEffect(effect).stream()
+                .filter(id -> gameData.findExiledCard(id) != null).findFirst().orElse(entry.getTargetId());
+        ExiledCardEntry exiled = cardId == null ? null : gameData.findExiledCard(cardId);
+        if (exiled == null || exiled.faceDown() || gameData.antedCardIds.contains(cardId)) {
+            return List.of();
+        }
+        if (target.exiledWithSource() && !linkedSourceId(entry).equals(exiled.sourcePermanentId())) {
+            return List.of();
+        }
+        boolean ownCard = entry.getControllerId().equals(exiled.ownerId());
+        if (target.owner() == com.github.laxika.magicalvibes.model.filter.PlayerRelation.SELF && !ownCard
+                || target.owner() == com.github.laxika.magicalvibes.model.filter.PlayerRelation.OPPONENT && ownCard) {
+            return List.of();
+        }
+        return cardMatches(gameData, entry, exiled.card(), exiled.ownerId(), target.filter())
+                ? List.of(new LocatedCard(exiled.card(), Zone.EXILE, exiled.ownerId())) : List.of();
+    }
+
+    /** The permanent the source is or last was, as the entry or its snapshot has it, else the source card. */
+    private static UUID linkedSourceId(StackEntry entry) {
+        if (entry.getSourcePermanentId() != null) {
+            return entry.getSourcePermanentId();
+        }
+        return entry.getSourcePermanentSnapshot() != null
+                ? entry.getSourcePermanentSnapshot().getId() : entry.getCard().getId();
+    }
+
     /** {@link CardSubject.InExile}. */
     private List<LocatedCard> inExile(GameData gameData, StackEntry entry, CardEffect effect, CardSubject.InExile in) {
         List<UUID> owners = in.owners() == null ? null : players(gameData, entry, effect, in.owners());
@@ -357,11 +431,7 @@ public class SubjectResolutionService {
      */
     private List<LocatedCard> exiledWithSource(GameData gameData, StackEntry entry, CardEffect effect,
                                                CardSubject.ExiledWithSource with) {
-        UUID linked = entry.getSourcePermanentId();
-        if (linked == null && entry.getSourcePermanentSnapshot() != null) {
-            linked = entry.getSourcePermanentSnapshot().getId();
-        }
-        UUID sourceId = linked != null ? linked : entry.getCard().getId();
+        UUID sourceId = linkedSourceId(entry);
         List<UUID> owners = with.owners() == null ? null : players(gameData, entry, effect, with.owners());
         List<ExiledCardEntry> inZone;
         synchronized (gameData.exiledCards) {
@@ -432,8 +502,9 @@ public class SubjectResolutionService {
             ExiledCardEntry exiled = gameData.findExiledCard(cardId);
             return exiled == null ? null : new LocatedCard(exiled.card(), Zone.EXILE, exiled.ownerId());
         }
-        if (zone == Zone.HAND || zone == Zone.LIBRARY) {
-            Map<UUID, List<Card>> zones = zone == Zone.HAND ? gameData.playerHands : gameData.playerDecks;
+        if (zone == Zone.HAND || zone == Zone.LIBRARY || zone == Zone.COMMAND) {
+            Map<UUID, List<Card>> zones = zone == Zone.HAND ? gameData.playerHands
+                    : zone == Zone.LIBRARY ? gameData.playerDecks : gameData.playerCommandZones;
             for (UUID playerId : gameData.orderedPlayerIds) {
                 for (Card card : zones.getOrDefault(playerId, List.of())) {
                     if (card.getId().equals(cardId)) {

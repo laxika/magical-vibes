@@ -80,7 +80,8 @@ control" includes the source, "other creatures you control" does not; a one-shot
 
 ## CardSubject
 
-Cards outside the battlefield. The resolver names each card as it is now, in the public zone it is expected to be in: a
+Cards outside the battlefield. The resolver names each card as it is now, in the zone it is expected to be in (a public
+zone, but for the two hand and library factories, which name hidden cards): a
 card a step of the same resolution moved to a public zone is found there (CR 400.7j), and a card that has left that
 zone since is a new object (CR 400.7) and is not named. The exceptions are a sought card (digital only), which is
 followed into the hand the seek put it in, a card returned to a hand, followed there for a
@@ -98,6 +99,11 @@ its zone and the player whose zone it is). No variant is static.
 | `cardsInYourGraveyard(filter)`, `cardsInGraveyards(players, filter)` | "a creature card from your graveyard", chosen or acted on without a target: those cards as they are now, no token | no |
 | `exiledCards([players,] filter)` | "an exiled card named ...", "a card you own in exile with a study counter on it": the exiled cards those players own; `filter` sees a face-down one without characteristics (CR 406.3a) | no |
 | `exiledWithSource([players])` | "the cards [you own] exiled with this", "the exiled card" of a linked ability (CR 607.2a): linked to the source as it is or last was, still in exile, face down or not | no |
+| `targetExiledCard(filter[, owner])`, `targetCardExiledWithSource(filter)` | "target face-up exiled card", "target card you don't own in exile", "target creature card with mana value X exiled with this": the effect's target, still face up in exile and matching (CR 608.2b); never a card in the ante zone | yes |
+| `topOfGraveyard(players, filter)` | "the top card of your graveyard"; "if the top card of target player's graveyard is a creature card, put that card ...": named only if it matches | if the players are a target |
+| `cardsInYourHand(filter)`, `cardsInHands(players, filter)` | "a creature card from your hand", "the cards in their hand": hidden (CR 400.2). `ChooseCardEffect` offers a chooser only their own hand (`by(player)`) and logs no name; the library step logs a number | if the players are a target |
+| `cardsInYourLibrary(filter)` | "a random instant card from your library": hidden, so only for `ChooseCardEffect.atRandom` | no |
+| `cardsInYourCommandZone(filter)` | "your commander from the command zone" (`CardIsCommanderPredicate`), "this card from the command zone" (`CardIsSelfPredicate`) | no |
 | `except(cards, excluded)` | "the rest", "each other card exiled with it" | no |
 
 Readers: `CreateTokenCopyOfCardEffect.of(cards, options)`, `ChooseCardEffect` ("choose one of them"), `BecomeCopyOfSubjectEffect.of(cards)` ("becomes a copy of that card"), `ExileCardsWithSameNameEffect.anyNumber/all/every(cards, ...)` ("the same name as that card"),

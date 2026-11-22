@@ -332,6 +332,49 @@ public final class Subjects {
         return new CardSubject.InYourGraveyard(cards);
     }
 
+    /** "Target face-up exiled card", "target exiled card with warp": a card in exile the effect targets. */
+    public static CardSubject targetExiledCard(CardPredicate filter) {
+        return new CardSubject.TargetExiledCard(filter, false,
+                com.github.laxika.magicalvibes.model.filter.PlayerRelation.ANY);
+    }
+
+    /** "Target card you don't own in exile": a target card in exile of the owner {@code owner} names. */
+    public static CardSubject targetExiledCard(CardPredicate filter,
+                                               com.github.laxika.magicalvibes.model.filter.PlayerRelation owner) {
+        return new CardSubject.TargetExiledCard(filter, false, owner);
+    }
+
+    /** "Target [filter] card exiled with this creature". */
+    public static CardSubject targetCardExiledWithSource(CardPredicate filter) {
+        return new CardSubject.TargetExiledCard(filter, true,
+                com.github.laxika.magicalvibes.model.filter.PlayerRelation.ANY);
+    }
+
+    /** "The top card of [owners'] graveyard", if it matches {@code filter}. */
+    public static CardSubject topOfGraveyard(PlayerSubject owners, CardPredicate filter) {
+        return new CardSubject.TopOfGraveyard(owners, filter);
+    }
+
+    /** "A [filter] card from your hand". */
+    public static CardSubject cardsInYourHand(CardPredicate filter) {
+        return new CardSubject.InHand(you(), filter);
+    }
+
+    /** The cards matching {@code filter} in the hands of the players {@code owners} names. */
+    public static CardSubject cardsInHands(PlayerSubject owners, CardPredicate filter) {
+        return new CardSubject.InHand(owners, filter);
+    }
+
+    /** The cards matching {@code filter} in the controller's library: only for a choice at random. */
+    public static CardSubject cardsInYourLibrary(CardPredicate filter) {
+        return new CardSubject.InLibrary(you(), filter);
+    }
+
+    /** "From the command zone": the cards matching {@code filter} in the controller's command zone. */
+    public static CardSubject cardsInYourCommandZone(CardPredicate filter) {
+        return new CardSubject.InCommandZone(you(), filter);
+    }
+
     /**
      * "Target [filter] card in your graveyard / in a graveyard": the effect's card target in a graveyard of
      * {@code scope}; the effect reading it declares the target.

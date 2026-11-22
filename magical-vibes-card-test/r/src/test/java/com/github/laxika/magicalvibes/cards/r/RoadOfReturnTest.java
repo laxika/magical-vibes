@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.a.AinokSurvivalist;
 import com.github.laxika.magicalvibes.cards.j.JungleHollow;
 import com.github.laxika.magicalvibes.model.Card;
@@ -36,11 +37,13 @@ class RoadOfReturnTest extends BaseCardTest {
     @Test
     void commanderModePutsCommanderIntoHand() {
         Card commander = new RayamiFirstOfTheFallen();
-        gd.playerCommandZones.get(player1.getId()).add(commander);
+        putCommanderIntoCommandZone(commander);
         prepareCard(2);
 
         harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{1}, List.of(), null);
         harness.passBothPriorities();
+        // A commander put into a hand may go back to the command zone instead (CR 903.9b).
+        harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.playerHands.get(player1.getId())).contains(commander);
         assertThat(gd.playerCommandZones.get(player1.getId())).doesNotContain(commander);
@@ -51,13 +54,15 @@ class RoadOfReturnTest extends BaseCardTest {
         Card permanent = new AinokSurvivalist();
         Card commander = new RayamiFirstOfTheFallen();
         harness.setGraveyard(player1, List.of(permanent));
-        gd.playerCommandZones.get(player1.getId()).add(commander);
+        putCommanderIntoCommandZone(commander);
         prepareCard(2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{0, 1}, List.of(), null);
         harness.handleMultipleCardsChosen(player1, List.of(permanent.getId()));
         harness.passBothPriorities();
+        // A commander put into a hand may go back to the command zone instead (CR 903.9b).
+        harness.handleMayAbilityChosen(player1, false);
 
         harness.assertInHand(player1, "Ainok Survivalist");
         assertThat(gd.playerHands.get(player1.getId())).contains(commander);
@@ -126,7 +131,7 @@ class RoadOfReturnTest extends BaseCardTest {
         Card permanent = new AinokSurvivalist();
         Card commander = new RayamiFirstOfTheFallen();
         harness.setGraveyard(player1, List.of(permanent));
-        gd.playerCommandZones.get(player1.getId()).add(commander);
+        putCommanderIntoCommandZone(commander);
         prepareCard(2);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
@@ -173,6 +178,25 @@ class RoadOfReturnTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(land);
         assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(land);
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(opponentsPermanent);
+    }
+
+    @Test
+    @DisplayName("The commander mode moves only a commander from the command zone")
+    void commanderModeLeavesACardThatIsNoCommander() {
+        Card other = new AinokSurvivalist();
+        gd.playerCommandZones.get(player1.getId()).add(other);
+        prepareCard(2);
+
+        harness.castModalSorceryWithModes(player1, 0, 1, 2, new int[]{1}, List.of(), null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerCommandZones.get(player1.getId())).containsExactly(other);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(other);
+    }
+
+    private void putCommanderIntoCommandZone(Card commander) {
+        gd.makeCommander(player1.getId(), commander);
+        gd.playerCommandZones.get(player1.getId()).add(commander);
     }
 
     private void prepareCard(int greenMana) {

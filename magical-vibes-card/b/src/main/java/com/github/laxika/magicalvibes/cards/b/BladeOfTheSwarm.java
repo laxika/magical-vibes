@@ -5,8 +5,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetExiledCardOnBottomOfOwnersLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -24,7 +25,7 @@ public class BladeOfTheSwarm extends Card {
                                 new PutCountersOnSourceEffect(1, 1, 2)),
                         new ChooseOneEffect.ChooseOneOption(
                                 "Put target exiled card with warp on the bottom of its owner's library.",
-                                new PutTargetExiledCardOnBottomOfOwnersLibraryEffect(
-                                        new CardKeywordPredicate(Keyword.WARP)))))));
+                                PutCardsIntoLibraryEffect.onBottom(
+                                        Subjects.targetExiledCard(new CardKeywordPredicate(Keyword.WARP))))))));
     }
 }

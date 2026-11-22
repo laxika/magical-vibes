@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -85,6 +86,19 @@ class BladeOfTheSwarmTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(warpCard);
         assertThat(findPermanent(player1, "Blade of the Swarm")
                 .getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("A card in the ante zone is no card in exile to target (CR 407.2)")
+    void cannotTargetAnAntedCard() {
+        Card anted = new StarfieldVocalist();
+        harness.setExile(player2, List.of(anted));
+        gd.antedCardIds.add(anted.getId());
+
+        castBladeOfTheSwarm();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .containsExactly("Put two +1/+1 counters on this creature.");
     }
 
     private void castBladeOfTheSwarm() {

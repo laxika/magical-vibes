@@ -54,6 +54,7 @@ public sealed interface CardPredicate permits
         CardIsMulticoloredPredicate,
         CardIsPermanentPredicate,
         CardIsTokenPredicate,
+        CardIsCommanderPredicate,
         CardIsSelfPredicate,
         CardHasAwakenPredicate,
         CardKeywordPredicate,

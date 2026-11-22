@@ -54,7 +54,7 @@ import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutImprintedCardIntoOwnersHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetForEachDyingSourceCounterEffect;
@@ -443,7 +443,7 @@ class TriggeredAbilityStackServiceTest {
         Card card = createCreature("Hoarding Dragon", 4, 4);
         Card exiled = createEquipment("Hoarded Equipment");
         gd.setImprintedCard(card, exiled);
-        var effect = new MayEffect(new PutImprintedCardIntoOwnersHandEffect(), "Put the exiled card into its owner's hand?");
+        var effect = new MayEffect(new PutCardsIntoHandEffect(Subjects.exiledWithSource()), "Put the exiled card into its owner's hand?");
 
         trigger(dies(card, PLAYER1_ID, new Permanent(card)), effect);
         gd.setImprintedCard(card, createEquipment("Later Equipment"));

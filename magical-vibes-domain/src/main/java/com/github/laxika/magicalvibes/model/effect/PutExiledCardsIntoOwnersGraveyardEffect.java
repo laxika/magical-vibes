@@ -12,8 +12,18 @@ public record PutExiledCardsIntoOwnersGraveyardEffect(CardSubject cards) impleme
 
     public PutExiledCardsIntoOwnersGraveyardEffect {
         Objects.requireNonNull(cards, "cards");
-        if (cards.declaresTarget()) {
-            throw new IllegalArgumentException("The step names the cards an earlier step moved: " + cards);
+        if (cards.inHiddenZone()) {
+            throw new IllegalArgumentException("The step names cards in exile or chosen in a library: " + cards);
         }
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return cards.targetSpec();
+    }
+
+    @Override
+    public boolean targetsAllExiledCardsInAbility() {
+        return cards instanceof CardSubject.TargetExiledCard target && !target.exiledWithSource();
     }
 }

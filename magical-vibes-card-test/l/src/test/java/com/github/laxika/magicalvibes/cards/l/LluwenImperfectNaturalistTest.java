@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.l;
 
+import com.github.laxika.magicalvibes.cards.r.RestInPeace;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GiantGrowth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
@@ -20,7 +21,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({LluwenImperfectNaturalist.class, Forest.class, Mountain.class, GrizzlyBears.class, GiantGrowth.class})
+@CardUsed({LluwenImperfectNaturalist.class, Forest.class, Mountain.class, GrizzlyBears.class, GiantGrowth.class, RestInPeace.class})
 class LluwenImperfectNaturalistTest extends BaseCardTest {
 
     @Test
@@ -42,9 +43,9 @@ class LluwenImperfectNaturalistTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(4);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
 
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(creature);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(3);
@@ -65,7 +66,9 @@ class LluwenImperfectNaturalistTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class).validCardIds())
+                .doesNotContain(instant.getId());
+        harness.handleMultipleCardsChosen(player1, List.of(land.getId()));
 
         assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(land);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(instant);
@@ -97,8 +100,7 @@ class LluwenImperfectNaturalistTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(land, creature, new GiantGrowth(), new GiantGrowth(), remaining));
         castLluwenAndResolveTrigger();
 
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, false);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(remaining);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(land, creature).hasSize(4);
@@ -114,8 +116,7 @@ class LluwenImperfectNaturalistTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(first, chosen, third, new Forest(), remaining));
         castLluwenAndResolveTrigger();
 
-        harness.handleMayAbilityChosen(player1, false);
-        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
 
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(chosen, remaining);
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(first, third).hasSize(3);
@@ -206,6 +207,20 @@ class LluwenImperfectNaturalistTest extends BaseCardTest {
                 .isInstanceOf(IllegalStateException.class);
         assertThat(lluwen.isTapped()).isFalse();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("A milled card exiled instead can be put on top (CR 701.17c)")
+    void milledCardExiledInsteadCanBePutOnTop() {
+        harness.addToBattlefield(player2, new RestInPeace());
+        GrizzlyBears creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(creature, new GiantGrowth(), new GiantGrowth(), new GiantGrowth()));
+        castLluwenAndResolveTrigger();
+
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(creature);
+        assertThat(gd.findExiledCard(creature.getId())).isNull();
     }
 
     private void castLluwenAndResolveTrigger() {

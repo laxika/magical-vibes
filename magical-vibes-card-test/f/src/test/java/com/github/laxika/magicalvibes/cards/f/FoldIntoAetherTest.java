@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.f;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.b.BlindCreeper;
 import com.github.laxika.magicalvibes.cards.c.CarnageTyrant;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -36,7 +37,7 @@ class FoldIntoAetherTest extends BaseCardTest {
 
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         harness.assertInGraveyard(player1, "Blind Creeper");
         harness.assertOnBattlefield(player1, "Blind Creeper");
@@ -142,7 +143,7 @@ class FoldIntoAetherTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerGraveyards.get(player1.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player1.getId()))
@@ -170,4 +171,26 @@ class FoldIntoAetherTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.stack).isEmpty();
     }
+    @Test
+    @DisplayName("The spell's controller alone is shown the creature cards of their hand")
+    void onlyTheSpellsControllerIsShownTheirHand() {
+        BlindCreeper target = new BlindCreeper();
+        BlindCreeper creature = new BlindCreeper();
+        harness.setHand(player1, List.of(target, creature));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.setHand(player2, List.of(new FoldIntoAether(), new BlindCreeper()));
+        harness.addMana(player2, ManaColor.BLUE, 4);
+        harness.castCreature(player1, 0);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, target.getId());
+        harness.clearMessages();
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.validCardIds()).containsExactly(creature.getId());
+        assertThat(harness.getConn2().getMessagesContaining(creature.getId().toString())).isEmpty();
+    }
+
 }

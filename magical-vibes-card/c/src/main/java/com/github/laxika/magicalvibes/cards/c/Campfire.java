@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileSelfCost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PutAllCommandersIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardIsCommanderPredicate;
 
 import java.util.List;
 
@@ -25,7 +27,10 @@ public class Campfire extends Card {
                 "{2}",
                 List.of(
                         new ExileSelfCost(),
-                        new PutAllCommandersIntoHandEffect(),
+                        new PutCardsIntoHandEffect(
+                                Subjects.cardsInYourCommandZone(new CardIsCommanderPredicate())),
+                        new PutCardsIntoHandEffect(
+                                Subjects.cardsInYourGraveyard(new CardIsCommanderPredicate())),
                         new ShuffleGraveyardIntoLibraryEffect(false)
                 ),
                 "{2}, {T}, Exile Campfire: Put all commanders you own from the command zone and from your graveyard into your hand. Then shuffle your graveyard into your library."

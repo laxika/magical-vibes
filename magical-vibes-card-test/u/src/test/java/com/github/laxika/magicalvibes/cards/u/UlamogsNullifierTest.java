@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.u;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.b.BroodhunterWurm;
 import com.github.laxika.magicalvibes.cards.c.ClutchOfCurrents;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -99,6 +100,23 @@ class UlamogsNullifierTest extends BaseCardTest {
         harness.assertOnBattlefield(player1, "Ulamog's Nullifier");
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(first, second);
+    }
+
+    @Test
+    @DisplayName("The prompt doesn't show cards exiled face down to a player who may not look at them (CR 406.3)")
+    void promptHidesFaceDownCards() {
+        BroodhunterWurm wurm = new BroodhunterWurm();
+        harness.inMutationScope(() -> {
+            gd.addToExile(player2.getId(), new ClutchOfCurrents(), null, true);
+            gd.addToExile(player2.getId(), new ClutchOfCurrents(), null, true);
+        });
+        harness.clearMessages();
+
+        castNullifierInResponseTo(wurm);
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.TwoOpponentOwnedExiledCardsToGraveyardChoice.class);
+        assertThat(harness.getConn1().getMessagesContaining("Clutch of Currents")).isEmpty();
     }
 
     private void castNullifierInResponseTo(BroodhunterWurm wurm) {

@@ -51,7 +51,10 @@ package com.github.laxika.magicalvibes.model;
  *       nothing, the players who shuffled some, and how many were each player's
  *       ({@link StepOutcome#amountByPlayer()});</li>
  *   <li>{@link #PAY_MANA}: the total mana paid ({@code EachPlayerPaysAnyManaEffect}), nothing, the players who paid
- *       some, and how much each paid ({@link StepOutcome#amountByPlayer()}).</li>
+ *       some, and how much each paid ({@link StepOutcome#amountByPlayer()});</li>
+ *   <li>{@link #PUT_INTO_LIBRARY}: the number of cards put into libraries on top or on the bottom
+ *       ({@code PutCardsIntoLibraryEffect}), those cards, their owners: a hidden zone, so no card subject names them
+ *       there.</li>
  * </ul>
  *
  * <p>A later step may read a step only if that step finishes before the next one starts (CR 608.2c): its handler never
@@ -106,5 +109,6 @@ public enum StepKind {
     CHOOSE,
     REVEAL,
     PAY_MANA,
-    SHUFFLE_INTO_LIBRARY
+    SHUFFLE_INTO_LIBRARY,
+    PUT_INTO_LIBRARY
 }

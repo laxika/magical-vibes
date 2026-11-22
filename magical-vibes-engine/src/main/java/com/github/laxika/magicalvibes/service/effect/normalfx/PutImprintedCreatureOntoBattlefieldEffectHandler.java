@@ -42,13 +42,6 @@ public class PutImprintedCreatureOntoBattlefieldEffectHandler implements NormalE
                 .filter(exiled -> entry.getSourcePermanentId() != null
                         && entry.getSourcePermanentId().equals(exiled.sourcePermanentId()))
                 .toList();
-        Card legacyImprinted = gameData.getImprintedCard(entry.getCard());
-        if (linkedCards.isEmpty() && legacyImprinted != null) {
-            ExiledCardEntry legacyEntry = gameData.findExiledCard(legacyImprinted.getId());
-            if (legacyEntry != null && legacyEntry.sourcePermanentId() == null) {
-                linkedCards = List.of(legacyEntry);
-            }
-        }
 
         if (linkedCards.isEmpty()) {
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), "'s imprint ability resolves but no card was imprinted."));

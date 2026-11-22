@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 11: Exile, Each and Return closed; next Put, 96 rare records, then Reveal) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 12: Exile, Each, Return and Put closed, Put with one absorb-ready `step-9` row; next Reveal, 120 rare records) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -617,6 +617,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 9 | The Yangchen fix, run 8's shared blockers with the waiting records and ledgered rows, the rest of Each's rare tail | done, Each closed (101 rows: 26 absorbed, 18 split, 1 dead, 17 survivors, 33 blocked-player-loop, 4 blocked-other, 2 unique; 76 card files changed; `StepKind.REVEAL`, `PAY_MANA`, `SHUFFLE_INTO_LIBRARY`, `EachPlayerSearchesLibraryEffect`, `EachPlayerPaysAnyManaEffect`, `PutCardsOntoBattlefieldEffect`, `villainousChoiceFacedBy`) |
 | 10 | Run 9's two search defects, the Return family's shared blockers with the waiting rows, then its rare tail | done but 17 rare Return records (95 rows: 20 absorbed, 14 split, 3 dead, 8 survivors, 14 blocked-other, 36 unique; 53 card files changed; `ReturnChosenPermanentsToHandEffect`, `cardsThisWay(RETURN)`, `triggeringCards()` / `sourceCard()` / `inYourGraveyard`, `PutCardsOntoBattlefieldEffect` with controller, face down and entering effects; Krenko's Buzzcrusher on the search queue) |
 | 11 | Run 10's two defects, the Return family's five shared blockers with the waiting rows and the Aura hosts; Put started | done for Return, Put barely started (44 rows: 13 absorbed, 20 split, 5 survivors, 2 blocked-other, 4 unique; 58 card files changed; `ChooseCardEffect` up to N / one of each, `exiledWithSource()` / `exiledCards` / `except`, the creature-type step, `attachedTo`, CR 400.4a on the returns) |
+| 12 | Run 11's two defects, the Put records' shared blockers (exiled-card target, command zone, hand, graveyard top, random) with their ledgered rows, then Put's rare tail | done, Put closed (115 rows: 19 absorbed, 23 split, 15 survivors, 28 blocked-other, 29 unique, 1 `step-9`; 49 card files changed; five `CardSubject` variants, a chooser and a random choice on `ChooseCardEffect`, `PutCardsIntoLibraryEffect` with `StepKind.PUT_INTO_LIBRARY`; four prompts and log lines no longer show face-down cards) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -7239,6 +7240,107 @@ without a test class (Roost of Drakes, Support Skyforge).
   `PutExiledCardOntoBattlefieldUnderControllerEffect` for its three makers.
 - Narrowed, still ledgered or unaudited: about 25 chosen-type records can take `ChooseCreatureTypeAtResolutionEffect` in their families'
   runs; `CopyCardsExiledWithSourceAndMayCastCopiesEffect` and Mirror of Life Trapping's row name what is left for them.
+
+### Step 9, run 12 (2026-11-22, Put closed)
+
+The two defects run 11 saw, the shared blockers it named for Put with the records and ledger rows waiting for them, then the family's
+rare records. Ratchet 4,384 / 3,620 → 4,343 / 3,579 records / handlers (42 records deleted, 1 added, the renamed library step among
+both). 49 card files changed by scratch scripts. Oracle text checked with `get_card` for all 49 (a back face under its front face);
+rulings with `get_rulings` for 22 of the cards and those whose handler left a doubt. CR 101.2, 108.2b, 400.2, 400.7, 400.7f, 400.7j, 401.4,
+402.3, 406.3, 406.3a, 407.2, 603.3d, 603.7c, 608.2b, 608.2d, 608.2h, 701.17c, 704.3, 704.5m, 903.3 and 903.9b checked with `get_rule`
+(2026-11-22).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | `step-9` | Left unaudited |
+|---|---|---|---|---|---|---|---|---|
+| Put | 106 rows (the 96 rare records, ledgered rows, survivors) | 19 | 18 | 14 | 25 other: each note names what is left; costs wait for step 10, two end-of-combat records for 5a's delayed-mechanism unification | 29 | 1 | no rare record; 26 records of three or more cards |
+| Other families (the waiting rows) | 9 rows | 0 | 5 (Mill 3, Damage 1, MayPut 1) | 1 | 3 other (notes narrowed) | 0 | 0 | Reveal 120, not started. All families: 2,420 rare records without a row |
+
+- **Target in exile.** `targetExiledCard(filter[, owner])` and `targetCardExiledWithSource(filter)`; the put steps declare the target of
+  their subject (`CardSubject.targetSpec()`). The exile leaf of `TargetPredicate` carries the owner and the ante zone, so four
+  validators and the Pull from Eternity check are gone.
+- **The linked card.** `exiledWithSource()` needed no imprint fallback: every production imprint path links the exile entry. Clone
+  Shell's fallback to an unlinked imprinted card is deleted (it was the CR 400.7 hole).
+- **Hidden and command zones.** `cardsInYourHand` / `cardsInHands`, `cardsInYourLibrary` (random choice only), `cardsInYourCommandZone`
+  with `CardIsCommanderPredicate`, `topOfGraveyard`. `ChooseCardEffect` takes a chooser (`by`) and a random choice (`atRandom`).
+- **The library step.** `PutCardsOnBottomOfLibraryEffect` is `PutCardsIntoLibraryEffect` now (top, bottom, random order; from a hand
+  too), recording the new `StepKind.PUT_INTO_LIBRARY`. With it the three ledgered hand-to-library rows went (9 cards).
+- **By parameters.** Four put-from-hand records are `PutCardToBattlefieldEffect` with a predicate or bound; Yuna's counters are
+  `PutCounterOnTargetPermanentEffect`.
+
+**Behaviour changes.**
+
+1. "Return this card" of an Aura's ability on the enchanted permanent leaving finds the Aura only in the stay it got at the same time
+   or by the state-based action (CR 400.7f), not in a graveyard it reaches later. `TravelingPlagueTest`: the exiled and the
+   came-back case failed before the fix; the same-time and the state-based batch case guard what must still be found.
+2. Rona doesn't put a land that was exiled again as the offer stood (CR 400.7; `ExileCardAtRandomEffect` binds the stay).
+   `RonaHeraldOfInvasionTest.doesNotPutALandExiledAgain` (failed before). Run 11's note on Mirror of Life Trapping was wrong: the link
+   ends as the card leaves exile. `MirrorOfLifeTrappingTest.doesNotReturnACardExiledAgain` passes on HEAD.
+3. Face-down exiled cards aren't shown or named: the prompts of Ruin Processor's and Ulamog's Nullifier's choices (and of the five cards
+   on the first's head), the log of the two return-all-exiled-with-source hand records and of the random one (CR 406.3).
+   `RuinProcessorTest`, `UlamogsNullifierTest`, `BottledCloisterTest`, `KardumPatronOfFlamesTest` (all four failed before).
+4. The Spot does nothing once it left the graveyard and came back; Hoarding Dragon and Clone Shell don't take a card exiled again;
+   Grinning Totem's cleanup doesn't follow one (CR 400.7, 603.7c). A test in each card's class.
+5. A card in the ante zone is no target "in exile" of any effect but the ante exchange (CR 407.2).
+   `BladeOfTheSwarmTest.cannotTargetAnAntedCard`.
+6. Road of Return moves only a commander (Oracle "your commander", CR 903.3; its ruling).
+   `RoadOfReturnTest.commanderModeLeavesACardThatIsNoCommander`. Derevi put from the command zone is a commander on the battlefield.
+   `DereviEmpyrialTacticianTest.isACommanderOnTheBattlefield`.
+7. Jhoira, and Arcade Gannon through the same predicate, read the source's counters as last known once it left (CR 608.2h).
+   `JhoiraAgelessInnovatorTest.readsTheCountersJhoiraLastHad`.
+8. Lluwen's offer is one choice (Oracle "a ... card") and finds a milled card exiled instead (CR 701.17c).
+   `LluwenImperfectNaturalistTest.milledCardExiledInsteadCanBePutOnTop`.
+9. Valakut Awakening and Into the Fire choose the cards at once, without a number first, and then order them (CR 608.2d, 401.4).
+10. What the put step now moves enters through the entry batch (as-enters and Aura choices; a card that can't enter stays, CR 101.2):
+    Gyruda, Your Mistake Is My Triumph, Rona's land, Derevi, Tariel, Manabond and the split hand puts.
+11. Log lines and prompt classes are the steps'.
+
+**What a player sees.** The hand choice is a prompt to the hand's owner alone and offers only their cards; its log line and the library
+step's name no card of a hand, and the random library pick shows and names only the card that reaches the graveyard
+(`PendantOfProsperityTest`, `FoldIntoAetherTest`, `ValakutAwakeningTest`, `GeistOfRegretTest` read both players' messages or the log).
+The other Put handlers' log lines into or out of a hidden zone were read: beyond item 3 none names a hidden card.
+
+**Seen, not changed.**
+
+- The other prompts built on the projection's `exiledCardViews` (about 17) show a face-down exiled card's face to the chooser; not
+  checked which of them can offer one (CR 406.3).
+- Liege of the Tangle chooses its target lands as the ability resolves (CR 603.3d).
+- Gruesome Encore exiles at your next end step where its text says the next end step (the absorb-ready row fixes it).
+- The opponent-owned processor head and Ulamog's Nullifier offer face-down cards one by one where Ruin Processor chooses piles.
+- An Aura attached elsewhere before the state-based check and put into the graveyard later for being unattached is found by the first
+  host's ability: CR 400.7f's second sentence read by its words.
+- `PutCardToBattlefieldThenEffect` judges a predicate without X or the source's last-known state when its entry has no snapshot.
+- Dead now and left: `MultiGraveyardChoice.reorderToLibraryTop` with its handler branch, `beginCardChoiceWithArtifactCounters` and
+  `beginCardChoiceThenReturnSourceToHand` with their contexts.
+
+**Tests edited.** The new cases above. Renamed prompts and answers, same assertions: `FoldIntoAetherTest`, `PendantOfProsperityTest`,
+`OriginOfTheAvengersTest`, `OviyaAutomechArtisanTest`, `HakbalOfTheSurgingSoulTest`, `MetathranAerostatTest` (the hand choice by card id),
+`CurrencyConverterTest`, `CommandBeaconTest` (the choice step), `LluwenImperfectNaturalistTest` (item 8), `ValakutAwakeningTest` and
+`IntoTheFireTest` (item 9). `HoardingDragonTest` and `CloneShellTest` link the card they set up as exiled with the source, as every
+production path does (CR 400.7). `RoadOfReturnTest` designates the commander it moves and answers CR 903.9b's choice. The two service
+tests build the replacement records. Deleted with its handler:
+`PutTargetPlayerGraveyardOnBottomOfLibraryEffectHandlerTest` (Endurance's tests cover it).
+
+**Tests run.** The final tree in one Gradle run, one `--tests` list per task, counted from that run's XML by file name: 982 classes
+(1,210 suites, 9,746 cases, none skipped), all pass: every changed card's tests and the fronts constructing one, the card tests of the cards
+using the changed steps, subjects, validators and exile target specs, every enchanted-permanent trigger card, samples of the put,
+put-from-hand, counter and graveyard-return heads, the application's architecture tests with `EffectCountRatchetTest`, the application
+and AI tests naming a changed class. The application, AI, engine and all 26 letters' card-test sources compile
+on the final tree. Not run: the full suites, the AI fuzz and stress tests, the
+frontend (the hand choice uses the graveyard multi-pick prompt; not looked at). Not verified: more than two players; that the new cases
+other than the seven named as failing before fail on HEAD; a face-down card on the random hand return; the 24 picked classes without a
+test of that name.
+
+**For the next run (run 13: Reveal, 120 rare records).**
+
+- The library step refuses a card already in a library: accepting cards still revealed there (REVEAL) would give the family's
+  "the rest on the bottom" halves a step; Proteus Staff and Reality Scramble name what else they need.
+- The hand subject, `by` and `atRandom` are there for the random reveals from a hand and the reveal-and-choose records; a step that
+  shows a hand has to say who sees it.
+- `PutCreatureFromOpponentGraveyardOntoBattlefieldWithExileEffect` is absorb-ready (`step-9`, the note names the builder calls and
+  readers).
+- Five Mill rows ledgered `blocked-step-model` in 4f (`MillControllerAndPutMilled…` and siblings) can split on MILL, `ChooseCardEffect`
+  and the put step as Gyruda did; `ShuffleCardsFromHandIntoLibraryThenEffect` waits for a shuffle step over a card subject,
+  `PutCardToBattlefieldThenEffect` (8 cards) for attacking entry on the put step.
 
 ## Prompt
 

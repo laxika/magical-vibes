@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.PutTopCardOfGraveyardOnBottomOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -16,7 +17,7 @@ public class SoldeviDigger extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}",
-                List.of(new PutTopCardOfGraveyardOnBottomOfLibraryEffect()),
+                List.of(PutCardsIntoLibraryEffect.onBottom(Subjects.topOfGraveyard(Subjects.you(), null))),
                 "{2}: Put the top card of your graveyard on the bottom of your library."));
     }
 }

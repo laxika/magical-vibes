@@ -1,0 +1,121 @@
+package com.github.laxika.magicalvibes.service.effect.normalfx;
+
+import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LibraryBottomReorderRequest;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoLibraryEffect;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService.LocatedCard;
+import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
+import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
+import com.github.laxika.magicalvibes.service.GameLogService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
+
+/**
+ * Moves the named cards at once and records {@link StepKind#PUT_INTO_LIBRARY}, then each owner orders the ones put
+ * into their library. Only a lone card that everybody saw is named in the log (CR 400.2, 401.4, 406.3).
+ */
+@Component
+@RequiredArgsConstructor
+public class PutCardsIntoLibraryEffectHandler implements NormalEffectHandlerBean {
+
+    private final SubjectResolutionService subjectResolutionService;
+    private final GraveyardService graveyardService;
+    private final PermanentRemovalService permanentRemovalService;
+    private final InteractionHandlerRegistry interactionHandlerRegistry;
+    private final GameLogService gameLogService;
+
+    @Override
+    public Class<? extends CardEffect> handledEffect() {
+        return PutCardsIntoLibraryEffect.class;
+    }
+
+    @Override
+    public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var put = (PutCardsIntoLibraryEffect) effect;
+        List<LocatedCard> named = subjectResolutionService.locatedCards(gameData, entry, put, put.cards());
+        entry.recordStep(StepKind.PUT_INTO_LIBRARY, StepOutcome.NONE);
+        Map<UUID, List<Card>> byOwner = new LinkedHashMap<>();
+        Map<UUID, Boolean> publiclyKnown = new LinkedHashMap<>();
+        List<UUID> movedIds = new ArrayList<>();
+        graveyardService.beginGraveyardLeaveBatch(gameData);
+        try {
+            for (LocatedCard located : named) {
+                Card card = located.card();
+                boolean seen = located.zone() == Zone.GRAVEYARD
+                        || located.zone() == Zone.EXILE && !gameData.isExiledFaceDown(card.getId());
+                if (located.zone() == Zone.GRAVEYARD) {
+                    permanentRemovalService.removeCardFromGraveyardById(gameData, card.getId());
+                } else if (located.zone() == Zone.EXILE) {
+                    if (!gameData.removeFromExile(card.getId())) {
+                        continue;
+                    }
+                } else if (located.zone() != Zone.HAND || !gameData.playerHands.get(located.ownerId())
+                        .removeIf(held -> held.getId().equals(card.getId()))) {
+                    continue;
+                }
+                byOwner.computeIfAbsent(located.ownerId(), ignored -> new ArrayList<>()).add(card);
+                publiclyKnown.merge(located.ownerId(), seen, Boolean::logicalAnd);
+                movedIds.add(card.getId());
+            }
+        } finally {
+            graveyardService.endGraveyardLeaveBatch(gameData);
+        }
+        if (!movedIds.isEmpty()) {
+            entry.recordStep(StepKind.PUT_INTO_LIBRARY,
+                    StepOutcome.ofObjects(movedIds, List.copyOf(byOwner.keySet())));
+        }
+        String position = put.onTop() ? " on top of" : " on the bottom of";
+        boolean asked = false;
+        for (Map.Entry<UUID, List<Card>> group : byOwner.entrySet()) {
+            UUID ownerId = group.getKey();
+            List<Card> cards = group.getValue();
+            String ownerName = gameData.playerIdToName.get(ownerId);
+            if (cards.size() == 1 && publiclyKnown.get(ownerId)) {
+                gameLogService.append(gameData, GameLog.textCardText(ownerName + " puts ", cards.getFirst(),
+                        position + " their library."));
+            } else {
+                gameLogService.append(gameData, GameLog.text(ownerName + " puts " + cards.size() + " card(s)"
+                        + position + " their library" + (put.randomOrder() ? " in a random order." : ".")));
+            }
+            if (cards.size() == 1 || put.randomOrder()) {
+                Collections.shuffle(cards, ThreadLocalRandom.current());
+                List<Card> library = gameData.playerDecks.get(ownerId);
+                library.addAll(put.onTop() ? 0 : library.size(), cards);
+                continue;
+            }
+            String prompt = put.onTop()
+                    ? "Put these cards on top of your library in any order (first chosen will be on top)."
+                    : "Put these cards on the bottom of your library in any order (first chosen will be closest to "
+                    + "the top).";
+            var reorder = new PendingInteraction.LibraryReorder(
+                    ownerId, new ArrayList<>(cards), !put.onTop(), ownerId, prompt);
+            if (!asked) {
+                asked = true;
+                interactionHandlerRegistry.begin(gameData, reorder);
+            } else if (put.onTop()) {
+                gameData.queueInteraction(reorder);
+            } else {
+                gameData.pendingLibraryBottomReorders.addLast(
+                        new LibraryBottomReorderRequest(ownerId, new ArrayList<>(cards)));
+            }
+        }
+    }
+}

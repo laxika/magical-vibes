@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -109,6 +110,23 @@ class MirrorOfLifeTrappingTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .noneMatch(permanent -> permanent.getCard() == opposingCard);
     }
+
+    @Test
+    @DisplayName("Doesn't return a card that left exile and was exiled again by something else")
+    void doesNotReturnACardExiledAgain() {
+        castMirror();
+        Card firstCard = new GrizzlyBears();
+        castCreature(firstCard);
+        gd.removeFromExile(firstCard.getId());
+        gd.addToExile(player1.getId(), firstCard);
+
+        castCreature(new GrizzlyBears());
+
+        assertThat(gd.findExiledCard(firstCard.getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == firstCard);
+    }
+
     private Permanent castMirror() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

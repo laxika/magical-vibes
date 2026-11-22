@@ -52,8 +52,8 @@ class IntoTheFireTest extends BaseCardTest {
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, 1);
-        harness.handleXValueChosen(player1, 2);
         harness.handleMultipleCardsChosen(player1, List.of(bottomOne.getId(), bottomTwo.getId()));
+        orderOnBottom(player1, List.of(bottomOne, bottomTwo));
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(4).contains(keep);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryFour, bottomOne, bottomTwo);
@@ -68,7 +68,7 @@ class IntoTheFireTest extends BaseCardTest {
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, 1);
-        harness.handleXValueChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(keep, draw);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
@@ -103,8 +103,8 @@ class IntoTheFireTest extends BaseCardTest {
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, 1);
-        harness.handleXValueChosen(player1, 2);
         harness.handleMultipleCardsChosen(player1, List.of(bottomTwo.getId(), bottomOne.getId()));
+        orderOnBottom(player1, List.of(bottomTwo, bottomOne));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(libraryOne, libraryTwo, libraryThree);
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(libraryFour, bottomTwo, bottomOne);
@@ -132,5 +132,14 @@ class IntoTheFireTest extends BaseCardTest {
     private void addMana() {
         harness.addMana(player1, ManaColor.RED, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+    }
+
+    private void orderOnBottom(com.github.laxika.magicalvibes.model.Player player,
+                               List<com.github.laxika.magicalvibes.model.Card> order) {
+        var reorder = gd.interaction.activeInteraction(
+                com.github.laxika.magicalvibes.model.PendingInteraction.LibraryReorder.class);
+        gs.handleInteractionAnswer(gd, player,
+                new com.github.laxika.magicalvibes.service.interaction.InteractionAnswer.CardOrder(
+                        order.stream().map(reorder.cards()::indexOf).toList()));
     }
 }

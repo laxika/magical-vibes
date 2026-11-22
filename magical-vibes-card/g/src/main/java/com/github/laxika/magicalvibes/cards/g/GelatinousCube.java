@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.PutTargetCardExiledWithSourceIntoOwnersGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.PutExiledCardsIntoOwnersGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardManaValueEqualsXPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -17,6 +20,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
 import java.util.List;
 
 @CardRegistration(set = "AFR", collectorNumber = "105")
@@ -37,8 +41,10 @@ public class GelatinousCube extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{X}{B}",
-                List.of(new PutTargetCardExiledWithSourceIntoOwnersGraveyardEffect(
-                        new CardTypePredicate(CardType.CREATURE), true)),
+                List.of(new PutExiledCardsIntoOwnersGraveyardEffect(Subjects.targetCardExiledWithSource(
+                        new CardAllOfPredicate(List.of(
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardManaValueEqualsXPredicate()))))),
                 "{X}{B}: Put target creature card with mana value X exiled with Gelatinous Cube into its owner's graveyard."
         ));
     }

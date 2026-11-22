@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.c.CoralhelmGuide;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -113,6 +114,20 @@ class RuinProcessorTest extends BaseCardTest {
         harness.assertLife(player1, 25);
         harness.passBothPriorities();
         harness.assertOnBattlefield(player1, "Ruin Processor");
+    }
+
+    @Test
+    @DisplayName("The prompt doesn't show a card exiled face down to a player who may not look at it (CR 406.3)")
+    void promptHidesAFaceDownCard() {
+        CoralhelmGuide hidden = new CoralhelmGuide();
+        harness.inMutationScope(() -> gd.addToExile(player2.getId(), hidden, null, true));
+        harness.clearMessages();
+
+        castRuinProcessor();
+
+        assertThat(gd.interaction.activeInteraction())
+                .isInstanceOf(PendingInteraction.OpponentOwnedExiledCardToGraveyardChoice.class);
+        assertThat(harness.getConn1().getMessagesContaining("Coralhelm Guide")).isEmpty();
     }
 
     private void castRuinProcessor() {

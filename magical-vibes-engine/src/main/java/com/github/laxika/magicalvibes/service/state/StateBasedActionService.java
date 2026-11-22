@@ -596,6 +596,10 @@ public class StateBasedActionService {
                 anyLeft = true;
                 DeathReason reason = deathReasons.get(permanent.getId());
                 logDeath(gameData, permanent.getCard(), reason);
+                if (reason == DeathReason.ILLEGAL_AURA
+                        && gameQueryService.findCardInGraveyardById(gameData, permanent.getOriginalCard().getId()) != null) {
+                    gameData.markUnattachedAuraPutIntoGraveyard(permanent);
+                }
                 if (reason == DeathReason.FINAL_CHAPTER && result.lastKnownControllerId() != null) {
                     // CR 704.5s: the Saga's controller sacrifices it.
                     ActionEvents.sacrificed(gameData, result.lastKnownControllerId(), permanent.getCard());

@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.SourceCardInCommandZone;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PutSourceFromCommandZoneOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapOrUntapTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.filter.CardIsSelfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -31,7 +33,8 @@ public class DereviEmpyrialTactician extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}{G}{W}{U}",
-                List.of(new PutSourceFromCommandZoneOntoBattlefieldEffect()),
+                List.of(new PutCardsOntoBattlefieldEffect(Subjects.cardsInYourCommandZone(new CardIsSelfPredicate()))
+                        .underControlOf(Subjects.you())),
                 "{1}{G}{W}{U}: Put Derevi onto the battlefield from the command zone."
         ).withActivationCondition(
                 new SourceCardInCommandZone(),

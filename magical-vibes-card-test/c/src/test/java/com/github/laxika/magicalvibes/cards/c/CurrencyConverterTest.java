@@ -86,7 +86,7 @@ class CurrencyConverterTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(com.github.laxika.magicalvibes.model.PendingInteraction.ExiledCardChoice.class);
+                .isInstanceOf(com.github.laxika.magicalvibes.model.PendingInteraction.MultiGraveyardChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
 
         assertThat(gd.findExiledCard(forest.getId())).isNotNull();
@@ -179,7 +179,7 @@ class CurrencyConverterTest extends BaseCardTest {
         harness.activateAbility(player1,
                 gd.playerBattlefields.get(player1.getId()).indexOf(converter), 1, null, null);
         harness.passBothPriorities();
-        if (gd.interaction.activeInteraction() instanceof com.github.laxika.magicalvibes.model.PendingInteraction.ExiledCardChoice) {
+        if (gd.interaction.activeInteraction() instanceof com.github.laxika.magicalvibes.model.PendingInteraction.MultiGraveyardChoice) {
             harness.handleMultipleCardsChosen(player1, List.of(cardId));
         }
     }

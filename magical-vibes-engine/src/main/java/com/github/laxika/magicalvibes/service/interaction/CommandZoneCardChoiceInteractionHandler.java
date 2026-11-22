@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CreateTokenCopyOfCommanderEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.PutCommanderIntoHandEffectHandler;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -18,7 +17,6 @@ import java.util.UUID;
 public class CommandZoneCardChoiceInteractionHandler
         implements InteractionHandler<PendingInteraction.CommandZoneCardChoice> {
 
-    private final PutCommanderIntoHandEffectHandler effectHandler;
     private final CreateTokenCopyOfCommanderEffectHandler tokenCopyHandler;
     private final InputCompletionService inputCompletionService;
 
@@ -47,12 +45,8 @@ public class CommandZoneCardChoiceInteractionHandler
         }
 
         gameData.interaction.clearAwaitingInput();
-        if (interaction.tokenCopySourceCard() != null) {
-            tokenCopyHandler.completeChoice(gameData, interaction.playerId(), chosen.getFirst(),
-                    interaction.tokenCopySourceCard());
-        } else {
-            effectHandler.completeChoice(gameData, interaction.playerId(), chosen.getFirst());
-        }
+        tokenCopyHandler.completeChoice(gameData, interaction.playerId(), chosen.getFirst(),
+                interaction.tokenCopySourceCard());
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 }

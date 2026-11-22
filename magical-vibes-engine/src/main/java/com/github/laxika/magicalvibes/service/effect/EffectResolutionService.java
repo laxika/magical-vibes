@@ -144,6 +144,7 @@ public class EffectResolutionService {
         UUID previousTriggeredAbilityControllerId = gameData.currentlyResolvingTriggeredAbilityControllerId;
         StackEntry previousResolvingEntry = gameData.resolvingEntry;
         gameData.resolvingEntry = entry;
+        gameData.bindAwaitedGraveyardEntry(entry);
         if (entry.getEntryType() == StackEntryType.TRIGGERED_ABILITY) {
             gameData.currentlyResolvingTriggeredAbilityControllerId = entry.getControllerId();
         }

@@ -3,6 +3,8 @@ package com.github.laxika.magicalvibes.model.effect;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 
 import java.util.Objects;
 
@@ -10,20 +12,34 @@ import java.util.Objects;
  * Which cards outside the battlefield an effect acts on, the third subject type beside {@link PermanentSubject} and
  * {@link PlayerSubject}: "the exiled card", "each card put into a graveyard this way", "target creature card in your
  * graveyard". Built through {@link Subjects}; resolved only by the engine's {@code SubjectResolutionService}, which
- * names each card as it is now, in the public zone it is expected to be in, and nothing for a card that has left that
- * zone (a card that moves is a new object, CR 400.7).
+ * names each card as it is now, in the zone it is expected to be in, and nothing for a card that has left that
+ * zone (a card that moves is a new object, CR 400.7). Two variants name cards in a hidden zone, {@link InHand} and
+ * {@link InLibrary} ({@link #inHiddenZone()}): they say nothing about who may see those cards.
  *
- * <p>Only a {@link TargetCard} declares a target ({@link #declaresTarget()}). Every variant reads a stack entry, so a
+ * <p>{@link TargetCard} and {@link TargetExiledCard} declare a card target, and a variant of a target player's cards
+ * that player ({@link #declaresTarget()}, {@link #targetSpec()}). Every variant reads a stack entry, so a
  * static ability can't use one.
  *
  * <p>The variants and the wording each stands for are listed in {@code agent-docs/SUBJECTS_REFERENCE.md}.
  */
 public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubject.TargetCard,
         CardSubject.TriggeringCards, CardSubject.SourceCard, CardSubject.InYourGraveyard,
-        CardSubject.InGraveyards, CardSubject.InExile, CardSubject.ExiledWithSource, CardSubject.Except {
+        CardSubject.InGraveyards, CardSubject.InExile, CardSubject.ExiledWithSource, CardSubject.Except,
+        CardSubject.TargetExiledCard, CardSubject.TopOfGraveyard, CardSubject.InHand, CardSubject.InLibrary,
+        CardSubject.InCommandZone {
 
-    /** Whether this subject is the effect's own card target, chosen as the spell or ability is put on the stack. */
+    /** Whether this subject declares a target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
+        return false;
+    }
+
+    /** The target an effect whose cards this subject names declares. */
+    default TargetSpec targetSpec() {
+        return declaresTarget() ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
+    }
+
+    /** Whether this subject can name cards in a hand or library that no step revealed (CR 400.2). */
+    default boolean inHiddenZone() {
         return false;
     }
 
@@ -114,9 +130,11 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
 
         public InGraveyards {
             Objects.requireNonNull(owners, "owners");
-            if (owners.declaresTarget()) {
-                throw new IllegalArgumentException("The effect reading the cards declares a player target: " + owners);
-            }
+        }
+
+        @Override
+        public boolean declaresTarget() {
+            return owners.declaresTarget();
         }
     }
 
@@ -130,10 +148,9 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
      */
     record InExile(PlayerSubject owners, CardPredicate filter) implements CardSubject {
 
-        public InExile {
-            if (owners != null && owners.declaresTarget()) {
-                throw new IllegalArgumentException("The effect reading the cards declares a player target: " + owners);
-            }
+        @Override
+        public boolean declaresTarget() {
+            return owners != null && owners.declaresTarget();
         }
     }
 
@@ -169,6 +186,11 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
                 throw new IllegalArgumentException("Neither part of \"the rest\" is a target");
             }
         }
+
+        @Override
+        public boolean inHiddenZone() {
+            return cards.inHiddenZone();
+        }
     }
 
     /**
@@ -184,6 +206,127 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
         @Override
         public boolean declaresTarget() {
             return true;
+        }
+
+        @Override
+        public TargetSpec targetSpec() {
+            return TargetSpec.benign(filter == null ? TargetPredicates.graveyardCard(scope)
+                    : TargetPredicates.graveyardCards(filter, scope));
+        }
+    }
+
+    /**
+     * "Target [filter] card exiled with this creature", "target face-up exiled card", "target card you don't own in
+     * exile": the card the effect targets in exile, while it is still there, face up, and still matches (CR 608.2b). A
+     * face-down card is never one (CR 406.3a).
+     *
+     * @param filter           which cards; {@code null} for every card
+     * @param exiledWithSource whether it has to be exiled with the source, as the permanent it is or last was
+     * @param owner            whose card it has to be
+     */
+    record TargetExiledCard(CardPredicate filter, boolean exiledWithSource, PlayerRelation owner)
+            implements CardSubject {
+
+        public TargetExiledCard {
+            Objects.requireNonNull(owner, "owner");
+        }
+
+        @Override
+        public boolean declaresTarget() {
+            return true;
+        }
+
+        @Override
+        public TargetSpec targetSpec() {
+            return TargetSpec.benign(new TargetPredicate.ExiledCards(
+                    filter == null ? new CardTruePredicate() : filter, exiledWithSource, owner));
+        }
+    }
+
+    /**
+     * "The top card of your graveyard", "if the top card of target player's graveyard is a creature card, that card":
+     * the last card put into each named player's graveyard, if it matches {@code filter}.
+     *
+     * @param owners whose graveyards
+     * @param filter what that card has to be; {@code null} for any card
+     */
+    record TopOfGraveyard(PlayerSubject owners, CardPredicate filter) implements CardSubject {
+
+        public TopOfGraveyard {
+            Objects.requireNonNull(owners, "owners");
+        }
+
+        @Override
+        public boolean declaresTarget() {
+            return owners.declaresTarget();
+        }
+    }
+
+    /**
+     * "A creature card from your hand", "all land cards from it", "the cards in their hand": the cards matching
+     * {@code filter} in the hands of the players {@code owners} names. A hand is hidden (CR 400.2): a player choosing
+     * among them is shown only their own (CR 402.3), and a step that moves them to a hidden zone doesn't name them.
+     *
+     * @param owners whose hands
+     * @param filter which cards; {@code null} for every card
+     */
+    record InHand(PlayerSubject owners, CardPredicate filter) implements CardSubject {
+
+        public InHand {
+            Objects.requireNonNull(owners, "owners");
+        }
+
+        @Override
+        public boolean declaresTarget() {
+            return owners.declaresTarget();
+        }
+
+        @Override
+        public boolean inHiddenZone() {
+            return true;
+        }
+    }
+
+    /**
+     * "A random instant card from your library": the cards matching {@code filter} in the libraries of the players
+     * {@code owners} names. A library is hidden (CR 400.2): only a choice at random is made among them.
+     *
+     * @param owners whose libraries
+     * @param filter which cards; {@code null} for every card
+     */
+    record InLibrary(PlayerSubject owners, CardPredicate filter) implements CardSubject {
+
+        public InLibrary {
+            Objects.requireNonNull(owners, "owners");
+        }
+
+        @Override
+        public boolean declaresTarget() {
+            return owners.declaresTarget();
+        }
+
+        @Override
+        public boolean inHiddenZone() {
+            return true;
+        }
+    }
+
+    /**
+     * "Your commander from the command zone", "this card from the command zone": the cards matching {@code filter} in
+     * the command zones of the players {@code owners} names.
+     *
+     * @param owners whose command zones
+     * @param filter which cards; {@code null} for every card
+     */
+    record InCommandZone(PlayerSubject owners, CardPredicate filter) implements CardSubject {
+
+        public InCommandZone {
+            Objects.requireNonNull(owners, "owners");
+        }
+
+        @Override
+        public boolean declaresTarget() {
+            return owners.declaresTarget();
         }
     }
 }

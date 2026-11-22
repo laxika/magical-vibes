@@ -56,8 +56,12 @@ public class PutAllCardsExiledWithSourceIntoOwnersHandsEffectHandler implements 
             returnedCount++;
             UUID ownerId = exiled.ownerId();
             gameData.addCardToHand(ownerId, exiled.card());
-            gameLogService.append(gameData, GameLog.textCardText(
-                    gameData.playerIdToName.get(ownerId) + " puts ", exiled.card(), " from exile into their hand."));
+            // A card exiled face down goes to a hidden zone without being seen (CR 406.3).
+            gameLogService.append(gameData, exiled.faceDown()
+                    ? GameLog.text(gameData.playerIdToName.get(ownerId)
+                    + " puts a face-down card from exile into their hand.")
+                    : GameLog.textCardText(gameData.playerIdToName.get(ownerId) + " puts ", exiled.card(),
+                    " from exile into their hand."));
             log.info("Game {} - {} returns {} from exile to its owner's hand via {}",
                     gameData.id, gameData.playerIdToName.get(ownerId), exiled.card().getName(), entry.getCard().getName());
         }

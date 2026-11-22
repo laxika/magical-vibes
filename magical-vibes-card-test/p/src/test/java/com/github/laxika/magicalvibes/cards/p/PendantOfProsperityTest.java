@@ -53,7 +53,7 @@ class PendantOfProsperityTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         harness.assertOnBattlefield(player1, "Forest");
         harness.assertOnBattlefield(player2, "Forest");
@@ -121,7 +121,7 @@ class PendantOfProsperityTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, true);
         harness.handleCardChosen(player2, 0);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         harness.assertOnBattlefield(player1, "Forest");
         harness.assertOnBattlefield(player2, "Forest");
@@ -177,7 +177,7 @@ class PendantOfProsperityTest extends BaseCardTest {
         harness.handleCardChosen(player1, 0);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondLand);
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
+        chooseOfferedCards(player1, 0);
 
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .filteredOn(p -> p.getCard() instanceof Forest).hasSize(2);
@@ -185,4 +185,35 @@ class PendantOfProsperityTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player2, "Forest");
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
     }
+    @Test
+    @DisplayName("Only the owner is shown the cards of their hand to choose from, and the choice names none")
+    void onlyTheOwnerIsShownTheirHand() {
+        PendantOfProsperity pendant = new PendantOfProsperity();
+        pendant.setOwnerId(player1.getId());
+        harness.addToBattlefield(player2, pendant);
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new SolRing()));
+        harness.setLibrary(player2, List.of(new SolRing()));
+        harness.addMana(player2, ManaColor.COLORLESS, 2);
+
+        harness.activateAbility(player2, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player2, false);
+        harness.clearMessages();
+        harness.handleMayAbilityChosen(player1, true);
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.cards()).extracting(Card::getName).containsExactly("Forest");
+        assertThat(harness.getConn1().getMessagesContaining("Forest")).isNotEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("Forest")).isEmpty();
+        assertThat(gameLogContains("Forest")).isFalse();
+
+        chooseOfferedCards(player1);
+
+        assertThat(gameLogContains("Forest")).isFalse();
+        assertThat(harness.getConn2().getMessagesContaining("Forest")).isEmpty();
+    }
+
 }

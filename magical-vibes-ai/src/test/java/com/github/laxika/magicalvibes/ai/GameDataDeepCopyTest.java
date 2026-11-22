@@ -1070,4 +1070,17 @@ class GameDataDeepCopyTest {
         assertThat(copied.record()).isNotSameAs(record);
         assertThat(record.getXValue()).isZero();
     }
+
+    @Test
+    @DisplayName("Deep copy keeps the stays of Auras put into graveyards for not being attached")
+    void deepCopyKeepsUnattachedAuraStaysIndependently() {
+        java.util.UUID aura = java.util.UUID.randomUUID();
+        gd.unattachedAuraGraveyardStays.put(aura, 4L);
+
+        GameData copy = gd.simulationCopy();
+        copy.unattachedAuraGraveyardStays.put(java.util.UUID.randomUUID(), 5L);
+
+        assertThat(copy.unattachedAuraGraveyardStays).containsEntry(aura, 4L);
+        assertThat(gd.unattachedAuraGraveyardStays).containsOnlyKeys(aura);
+    }
 }

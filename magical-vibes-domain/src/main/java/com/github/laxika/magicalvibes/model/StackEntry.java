@@ -814,6 +814,8 @@ public class StackEntry {
      * object (CR 400.7). Read through {@link #sourceCardGraveyardEntryVersion()}.
      */
     @Setter private long sourceGraveyardEntryVersion = -1;
+    /** The {@link #sourceGraveyardEntryVersion} of a "this card" that is in no graveyard the ability can find. */
+    public static final long NO_GRAVEYARD_STAY = Long.MAX_VALUE;
     /**
      * The permanent the trigger event was about, as it last existed on the battlefield (CR 603.10a, CR 608.2h): the
      * creature that died, the permanent that left or was sacrificed. Effects read "its counters", "its name", "its
@@ -918,8 +920,9 @@ public class StackEntry {
     @Setter private CounterType eventCounterType;
     /**
      * Whether this ability of an Aura triggered as the permanent it was attached to left, before the Aura itself is put
-     * into its owner's graveyard as a state-based action (CR 704.5m): the Aura's next graveyard stay is the one "return
-     * this card" means, and {@code GameData.markGraveyardEntry} records it as {@link #sourceGraveyardEntryVersion}.
+     * into its owner's graveyard as a state-based action (CR 704.5m): the stay that action gives it is the one "return
+     * this card" means, and no other (CR 400.7f). {@code GameData.markUnattachedAuraPutIntoGraveyard} records it as
+     * {@link #sourceGraveyardEntryVersion}, else {@code GameData.bindAwaitedGraveyardEntry} as the ability resolves.
      */
     @Setter private boolean awaitingSourceGraveyardEntry;
     /**

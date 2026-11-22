@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -325,6 +326,26 @@ class RonaHeraldOfInvasionTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(attacker);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.findExiledCard(forest.getId())).isNotNull();
+    }
+
+    @Test
+    @DisplayName("A land that left exile and was exiled again as the offer stood isn't put onto the battlefield")
+    void doesNotPutALandExiledAgain() {
+        Permanent rona = transformRona();
+        Forest forest = new Forest();
+        harness.setHand(player2, List.of(new Shock(), forest));
+        harness.addMana(player2, ManaColor.RED, 1);
+        prepareMainPhase(player2);
+
+        harness.castAndResolveInstant(player2, 0, rona.getId());
+        harness.passBothPriorities();
+        gd.removeFromExile(forest.getId());
+        gd.addToExile(player2.getId(), forest);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.findExiledCard(forest.getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .noneMatch(permanent -> permanent.getCard() == forest);
     }
 
     private Permanent addReadyRona() {

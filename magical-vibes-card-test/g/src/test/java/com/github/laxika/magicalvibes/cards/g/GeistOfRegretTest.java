@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.g;
 
+import org.junit.jupiter.api.DisplayName;
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.s.Shock;
@@ -205,4 +206,22 @@ class GeistOfRegretTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(remainingCard);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(glimpse);
     }
+    @Test
+    @DisplayName("The random picks show nobody the rest of the library")
+    void randomPicksShowNothingElseOfTheLibrary() {
+        harness.setHand(player1, List.of());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player1, List.of(new Forest(), new Shock(), new CounselOfTheSoratami()));
+        harness.clearMessages();
+
+        harness.enterBattlefieldAndReturn(player1, new GeistOfRegret());
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("Shock")).isTrue();
+        assertThat(gameLogContains("Forest")).isFalse();
+        assertThat(harness.getConn1().getMessagesContaining("\"Forest\"")).isEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("\"Forest\"")).isEmpty();
+        assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
 }
