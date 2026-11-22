@@ -325,6 +325,43 @@ Don't commit until I say so.
 
 ---
 
+## 79. A card's id survives zone changes, so an opponent can recognize a card cast face down
+
+**Status:** open · **Found:** 2026-11-22, face-down stack leak fix (`b6fa735b07`), by reading the code
+
+**Failing tests:**
+- None yet. Add one: an opponent is sent a card face up (revealed from a hand, or returned from the battlefield to a hand),
+  it's then cast face down, and no id in what that opponent is sent afterwards matches an id sent with the card's name.
+  `FaceDownStackIdentityTest.differentMorphsLookTheSame` leaves the ids out of its comparison today.
+
+**What the rules require.** CR 708.5: a player can't look at face-down spells or permanents another player controls.
+CR 400.7: an object that changes zones becomes a new object with no relation to its previous existence, and CR 701.20d
+says the same of revealed library cards that are reordered. CR 708.6 still needs face-down objects to be told apart
+while they stay where they are. The engine keeps one `Card.getId()` for the card's whole game and sends it to every
+player: `StackEntryViewFactory.createFaceDownSpell` uses `getTargetableId()` (the card's id, for a spell) and
+`PermanentViewFactory` passes `permanent.getCard().getId()` to `CardViewFactory.createFaceDown`. The masked views hide
+the name, but a client that remembers the id from when the card was public or revealed knows which card it is.
+
+**Why it's large.** It needs opaque ids across the protocol: the engine keys zones, targets, tracking maps and prompts by
+the card's id, the networking views, the game log's card segments and the prompts send it, and the client sends it back
+in answers and uses it to follow cards. An id that changes as a card becomes hidden has to be translated in both
+directions, per game, and survive reconnects, and any path that still sends the engine's id reopens the leak.
+
+**Prompt to start it:**
+
+```
+Do missing-features-to-do.md entry 79: stop clients from linking a hidden or face-down card to an earlier sighting by
+its id. First read agent-docs/ARCHITECTURE.md, agent-docs/architecture/casting-stack.md (the face-down section),
+FaceDownVisibility and FaceDownStackIdentityTest, and verify CR 400.7, 701.20d, 708.5, 708.6 and 708.9 with get_rule.
+Then inventory every card id that leaves the server (views, log segments, prompts, events, reconnect) and every id the
+client sends back, including hands, libraries and cards exiled face down, and propose a design: prefer opaque ids at
+the protocol boundary that change when a card becomes hidden and stay stable while it stays put, over changing
+Card.getId() in the engine. Show me the design and wait for my approval before implementing it, since it changes the
+protocol and the frontend. Then start with a failing test. Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 
