@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 
 /**
  * Resolves {@link EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect}: every player, in
@@ -25,6 +26,7 @@ public class EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffectHandler i
 
     private final BasicLandSearchQueueSupport basicLandSearchQueueSupport;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -35,12 +37,16 @@ public class EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffectHandler i
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect search =
                 (EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect) effect;
-        int evaluatedCount = amountEvaluationService.evaluate(gameData, search.count(),
-                AmountContext.forStackEntry(entry, null));
-        int count = Math.max(evaluatedCount, 0);
-
-        List<LibrarySearchFollowUp.BasicLandsPick> picks = basicLandSearchQueueSupport.apnapOrder(gameData).stream()
-                .map(playerId -> new LibrarySearchFollowUp.BasicLandsPick(playerId, count, search.enterTapped()))
+        AmountContext context = AmountContext.forStackEntry(entry, null);
+        List<UUID> searchers = subjectResolutionService.players(gameData, entry, effect, search.players());
+        if (searchers.isEmpty()) {
+            return;
+        }
+        List<LibrarySearchFollowUp.BasicLandsPick> picks = searchers.stream()
+                .map(playerId -> new LibrarySearchFollowUp.BasicLandsPick(playerId,
+                        Math.max(0, amountEvaluationService.evaluate(gameData, search.count(),
+                                context.withControllerId(playerId))),
+                        search.enterTapped()))
                 .toList();
 
         LibrarySearchFollowUp followUp = LibrarySearchFollowUp.basicLandSearches(picks, List.of(), true);

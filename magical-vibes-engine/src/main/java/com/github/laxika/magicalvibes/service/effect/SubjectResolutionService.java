@@ -148,6 +148,7 @@ public class SubjectResolutionService {
                             thisWay.filter(), entry.getCard().getId(), gameData, located.ownerId()))
                     .toList();
             case CardSubject.TargetCard target -> targetCard(gameData, entry, target);
+            case CardSubject.TriggeringCards triggering -> triggeringCards(gameData, entry, triggering);
         };
     }
 
@@ -214,7 +215,7 @@ public class SubjectResolutionService {
     }
 
     /** A card a {@link CardSubject} names, in the zone it is in ({@link Zone#GRAVEYARD}, {@link Zone#EXILE}, or
-     * {@link Zone#HAND} for a sought card). */
+     * {@link Zone#HAND} for a sought card or one chosen from a revealed hand). */
     public record LocatedCard(Card card, Zone zone, UUID ownerId) {
     }
 
@@ -236,7 +237,7 @@ public class SubjectResolutionService {
         for (UUID objectId : outcome.objectIds()) {
             List<MovedCard> cards = moved.getOrDefault(objectId, kind == StepKind.EXILE
                     ? List.of(new MovedCard(objectId, objectId, Zone.EXILE, null)) : List.of());
-            if (cards.isEmpty() && kind == StepKind.DISCARD) {
+            if (cards.isEmpty() && (kind == StepKind.DISCARD || kind == StepKind.MILL)) {
                 LocatedCard discarded = locate(gameData, objectId, Zone.GRAVEYARD);
                 if (discarded == null) {
                     discarded = locate(gameData, objectId, Zone.EXILE);
@@ -257,6 +258,28 @@ public class SubjectResolutionService {
             }
         }
         return located;
+    }
+
+    /** {@link CardSubject.TriggeringCards}: the event's cards in the graveyard stay it put them in (CR 400.7). */
+    private List<LocatedCard> triggeringCards(GameData gameData, StackEntry entry,
+                                              CardSubject.TriggeringCards triggering) {
+        List<UUID> ids = entry.triggeringCardIds();
+        if (ids.isEmpty() && entry.getTriggeringCardId() != null) {
+            ids = List.of(entry.getTriggeringCardId());
+        }
+        List<LocatedCard> named = new ArrayList<>();
+        for (UUID id : new LinkedHashSet<>(ids)) {
+            long stay = gameData.graveyardEntryVersion(id);
+            if (entry.getEventCardGraveyardEntryVersions().getOrDefault(id, stay) != stay) {
+                continue;
+            }
+            LocatedCard card = locate(gameData, id, Zone.GRAVEYARD);
+            if (card != null && (triggering.filter() == null || predicateEvaluationService.matchesCardPredicate(
+                    card.card(), triggering.filter(), entry.getCard().getId(), gameData, card.ownerId()))) {
+                named.add(card);
+            }
+        }
+        return named;
     }
 
     /**

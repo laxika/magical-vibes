@@ -37,7 +37,6 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneOfEachCardTypeFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceEffect;
 import com.github.laxika.magicalvibes.model.effect.BattlefieldAndGraveyardCardChoosingEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfCardUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IndependentlyTargetedGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnUpToOneOfEachFilterFromGraveyardToHandEffect;
@@ -1394,36 +1393,6 @@ public class GraveyardChoiceHandlerService {
                         }
                     },
                     " returns ", " from graveyard.");
-            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            return;
-        }
-
-        if (gameData.graveyardTargetOperation.resolutionTimeExileThenMayBecomeCopyResume) {
-            gameData.graveyardTargetOperation.resolutionTimeExileThenMayBecomeCopyResume = false;
-            gameData.interaction.clearAwaitingInput();
-            StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-            if (!cardIds.isEmpty() && pendingEntry != null) {
-                UUID cardId = cardIds.getFirst();
-                Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-                if (card != null && graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card)
-                        && card.hasType(CardType.CREATURE)) {
-                    gameData.pendingMayAbilities.add(new PendingMayAbility(
-                            pendingEntry.getCard(), pendingEntry.getControllerId(),
-                            List.of(BecomeCopyOfCardUntilEndOfTurnEffect.ofQuestionCard()),
-                            "Have " + pendingEntry.getCard().getName() + " become a copy of "
-                                    + card.getName() + " until end of turn?",
-                            card.getId(), null, pendingEntry.getSourcePermanentId()));
-                }
-            }
-            inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            return;
-        }
-
-        if (gameData.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsResume) {
-            gameData.interaction.clearAwaitingInput();
-            gameData.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsResume = false;
-            gameData.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsChoiceMade = true;
-            gameData.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsChosenCardId = cardIds.getFirst();
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
             return;
         }

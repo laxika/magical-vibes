@@ -174,4 +174,28 @@ class ConspiracyTheoristTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(discarded);
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawn);
     }
+
+    @Test
+    @DisplayName("The exiled card can be cast only during the turn it was exiled")
+    void castPermissionEndsWithTheTurn() {
+        Permanent source = addCreatureReady(player1, new ConspiracyTheorist());
+        Card discarded = new Shock();
+        harness.setHand(player1, List.of(discarded));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleCardChosen(player1, 0);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        assertThat(gd.getCardsExiledByPermanent(source.getId())).containsExactly(discarded);
+        assertThat(gd.exilePlayPermissionHolder(discarded.getId())).isEqualTo(player1.getId());
+
+        harness.passUntil(player2, TurnStep.PRECOMBAT_MAIN);
+
+        assertThat(gd.exilePlayPermissionHolder(discarded.getId())).isNull();
+    }
 }

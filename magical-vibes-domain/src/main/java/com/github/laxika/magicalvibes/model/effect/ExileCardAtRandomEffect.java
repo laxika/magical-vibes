@@ -17,12 +17,17 @@ import java.util.Objects;
  * <p>The filter may compare with the triggering event's value ("a random card with mana value equal to the damage
  * dealt": {@code CardManaValueEqualsEventValuePredicate}).
  *
+ * <p>{@code count} is "exile three cards at random": each player exiles that many different cards, or as many as
+ * match (CR 609.3), as one step (Capricious Hellraiser).
+ *
+ * @param count  how many cards each player exiles
  * @param zone   where the card is exiled from: {@link Zone#GRAVEYARD} or {@link Zone#LIBRARY}
  * @param player whose zone: {@code you()}, or a player read without a target ({@code triggeringPlayer()} for "that
  *               player's library")
  * @param filter which cards may be picked; {@code null} for any card
  */
-public record ExileCardAtRandomEffect(Zone zone, PlayerSubject player, CardPredicate filter) implements CardEffect {
+public record ExileCardAtRandomEffect(Zone zone, PlayerSubject player, CardPredicate filter, int count)
+        implements CardEffect {
 
     public ExileCardAtRandomEffect {
         Objects.requireNonNull(zone, "zone");
@@ -31,9 +36,22 @@ public record ExileCardAtRandomEffect(Zone zone, PlayerSubject player, CardPredi
             throw new IllegalArgumentException("A random card is exiled from a graveyard, a library or a hand, not "
                     + zone);
         }
+        if (count < 1) {
+            throw new IllegalArgumentException("At least one card is exiled: " + count);
+        }
         if (player.declaresTarget()) {
             throw new IllegalArgumentException("The random exile names its player without a target: " + player);
         }
+    }
+
+    /** One card. */
+    public ExileCardAtRandomEffect(Zone zone, PlayerSubject player, CardPredicate filter) {
+        this(zone, player, filter, 1);
+    }
+
+    /** This exile of {@code cards} cards at random. */
+    public ExileCardAtRandomEffect cards(int cards) {
+        return new ExileCardAtRandomEffect(zone, player, filter, cards);
     }
 
     /** "Exile a [filter] card at random from [player]'s graveyard"; {@code filter} {@code null} for any card. */

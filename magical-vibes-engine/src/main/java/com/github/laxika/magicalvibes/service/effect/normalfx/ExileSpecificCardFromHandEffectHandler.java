@@ -1,9 +1,9 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpecificCardFromHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -12,10 +12,8 @@ import com.github.laxika.magicalvibes.service.exile.ExileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
-import java.util.UUID;
 
-/** Resolves a delayed exile of a specific card only while it remains in hand. */
+/** Exiles the named cards that are still in a hand. */
 @Component
 @RequiredArgsConstructor
 public class ExileSpecificCardFromHandEffectHandler implements NormalEffectHandlerBean {
@@ -31,20 +29,17 @@ public class ExileSpecificCardFromHandEffectHandler implements NormalEffectHandl
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID controllerId = entry.getControllerId();
-        List<Card> hand = gameData.playerHands.get(controllerId);
-        if (hand == null) {
-            return;
-        }
-
         var exile = (ExileSpecificCardFromHandEffect) effect;
-        for (Card named : subjectResolutionService.cards(gameData, entry, exile, exile.cards())) {
-            if (!hand.removeIf(held -> held.getId().equals(named.getId()))) {
+        for (SubjectResolutionService.LocatedCard named
+                : subjectResolutionService.locatedCards(gameData, entry, exile, exile.cards())) {
+            if (named.zone() != Zone.HAND
+                    || !gameData.playerHands.get(named.ownerId()).removeIf(
+                            held -> held.getId().equals(named.card().getId()))) {
                 continue;
             }
-            exileService.exileCard(gameData, controllerId, named);
-            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                    "'s delayed trigger exiles " + named.getName() + " from hand."));
+            exileService.exileCard(gameData, named.ownerId(), named.card());
+            gameLogService.append(gameData, GameLog.cardThen(named.card(),
+                    " is exiled from " + gameData.playerIdToName.get(named.ownerId()) + "'s hand."));
         }
     }
 }

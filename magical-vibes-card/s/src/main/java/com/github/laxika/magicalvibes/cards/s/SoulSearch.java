@@ -6,7 +6,10 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
@@ -26,12 +29,13 @@ public class SoulSearch extends Card {
                 Set.of(CardColor.WHITE, CardColor.BLACK), List.of(CardSubtype.SPIRIT),
                 Set.of(Keyword.FLYING), Set.of());
         ChooseCardsFromTargetHandEffect choose = new ChooseCardsFromTargetHandEffect(
-                1, List.of(CardType.LAND), HandChoiceDestination.EXILE)
-                .withChosenCardThen(new CardMaxManaValuePredicate(1), spirit);
+                1, List.of(CardType.LAND), HandChoiceDestination.EXILE);
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"))
-                .addSpellEffect(choose);
+                .addSpellEffect(choose)
+                .addSpellEffect(new ConditionalEffect(
+                        HappenedThisWay.toACard(StepKind.EXILE, new CardMaxManaValuePredicate(1)), spirit));
     }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.a.AvenAugur;
 import com.github.laxika.magicalvibes.cards.a.AugurOfSkulls;
 import com.github.laxika.magicalvibes.cards.d.DryadArbor;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -27,11 +28,11 @@ class ShimianSpecterTest extends BaseCardTest {
 
         resolveCombatAndTrigger();
 
-        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        PendingInteraction.RevealedHandChoice choice = gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.choosingPlayerId()).isEqualTo(player1.getId());
         // Lands are excluded and only cards actually in the revealed hand are choosable.
-        assertThat(choice.options()).containsExactlyInAnyOrder("Augur of Skulls", "Street Wraith");
+        assertThat(choosableNames(choice)).containsExactlyInAnyOrder("Augur of Skulls", "Street Wraith");
     }
 
     @Test
@@ -43,7 +44,7 @@ class ShimianSpecterTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new AugurOfSkulls()));
 
         resolveCombatAndTrigger();
-        harness.handleListChoice(player1, "Augur of Skulls");
+        chooseFromRevealedHand("Augur of Skulls");
         // CR 701.23b: hidden-zone copies are found by choice, so the controller picks every remaining copy.
         var remainingCopies = gd.interaction.activeInteraction(PendingInteraction.MultiZoneExileChoice.class);
         assertThat(remainingCopies).isNotNull();
@@ -69,7 +70,7 @@ class ShimianSpecterTest extends BaseCardTest {
         int lifeAfterCombat;
         resolveCombatAndTrigger();
         lifeAfterCombat = gd.playerLifeTotals.get(player2.getId());
-        harness.handleListChoice(player1, "Augur of Skulls");
+        chooseFromRevealedHand("Augur of Skulls");
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeAfterCombat);
     }
@@ -82,7 +83,7 @@ class ShimianSpecterTest extends BaseCardTest {
 
         resolveCombatAndTrigger();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class)).isNull();
         harness.assertInHand(player2, "Dryad Arbor");
     }
 
@@ -94,7 +95,7 @@ class ShimianSpecterTest extends BaseCardTest {
 
         resolveCombatAndTrigger();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class)).isNull();
     }
 
     @Test
@@ -105,7 +106,7 @@ class ShimianSpecterTest extends BaseCardTest {
 
         resolveCombatAndTrigger();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class)).isNotNull();
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class)).isNotNull();
         assertThat(gd.gameLog).anyMatch(entry -> entry.plainText().contains("reveals their hand")
                 && entry.plainText().contains("Augur of Skulls")
                 && entry.plainText().contains("Dryad Arbor"));
@@ -132,7 +133,7 @@ class ShimianSpecterTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new AugurOfSkulls(), new StreetWraith()));
 
         resolveCombatAndTrigger();
-        harness.handleListChoice(player1, "Augur of Skulls");
+        chooseFromRevealedHand("Augur of Skulls");
 
         assertThat(gd.interaction.isAwaitingInput()).isTrue();
     }
@@ -174,5 +175,20 @@ class ShimianSpecterTest extends BaseCardTest {
     private void resolveCombatAndTrigger() {
         resolveCombat();
         resolveAllTriggers();
+    }
+
+    /** Answers the revealed-hand choice with the first choosable card of that name. */
+    private void chooseFromRevealedHand(String name) {
+        var choice = gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        assertThat(choice).isNotNull();
+        List<Card> hand = gd.playerHands.get(choice.targetPlayerId());
+        harness.handleCardChosen(player1, choice.validIndices().stream()
+                .filter(index -> hand.get(index).getName().equals(name))
+                .findFirst().orElseThrow());
+    }
+
+    private List<String> choosableNames(PendingInteraction.RevealedHandChoice choice) {
+        List<Card> hand = gd.playerHands.get(choice.targetPlayerId());
+        return choice.validIndices().stream().map(index -> hand.get(index).getName()).distinct().toList();
     }
 }

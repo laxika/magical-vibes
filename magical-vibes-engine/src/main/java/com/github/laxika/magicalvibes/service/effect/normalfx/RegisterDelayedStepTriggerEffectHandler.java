@@ -90,7 +90,7 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
                 outcome.movedCards().stream().map(gameData::boundToStay).toList());
     }
 
-    private static StepOutcome exiled(GameData gameData, StepOutcome outcome) {
+    static StepOutcome exiled(GameData gameData, StepOutcome outcome) {
         List<MovedCard> cards = new ArrayList<>();
         for (UUID objectId : outcome.objectIds()) {
             List<MovedCard> moved = outcome.movedCards().stream()

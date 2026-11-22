@@ -1765,3 +1765,80 @@ EachPlayerGainsControlOfOwnedPermanentsMatchingEffect,survivor,9,run 7: absorbed
 EachOtherCreatureBecomesCopyOfTargetCreatureUntilEndOfTurnEffect,absorbed,9,"run 7: EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUntilEndOfTurnEffect(creature, creature[, removeLegendary])"
 EachOtherPermanentMatchingPredicateBecomesCopyOfTargetPermanentUntilEndOfTurnEffect,survivor,9,run 7: absorbed the creature record unchanged
 ExileSelfAndBecomeForetoldEffect,blocked-other,9,"run 7: BecomeForetoldEffect exists now; folding it would take three parameters only this card sets (a face-down permanent exile, the owner as the foretelling player, the card's own foretell cost); one card (The Foretold Soldier)"
+ExileAllPermanentsAndDrawPerControllerEffect,split,9,run 8: ExileAllPermanentsEffect + EachPlayerDrawsCardEffect(AmountThisWay(EXILE).controlledByYou()); Martyr's Cry
+ExileAllCreaturesAndCreateTokenWithCountersEqualToTotalPowerEffect,split,9,run 8: ExileAllPermanentsEffect + CreateTokenThenPutCountersEffect over eachPlayer() with exiledPower().controlledByYou(); Oversimplify
+ExileAllCreaturesAndCreateTokensEqualToTotalPowerEffect,split,9,run 8: ExileAllPermanentsEffect + EachPlayerCreatesTokenEffect(exiledPower().controlledByYou()); Grand Ossuary
+ExileAllPermanentsAndSearchBasicLandPerControllerEffect,split,9,run 8: ExileAllPermanentsEffect + EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect.mandatoryTapped over playersThisWay(EXILE); Winds of Abandon
+ExileAllPermanentsEffect,survivor,9,"run 8: records EXILE: each permanent as it last existed with its controller, and the cards they became"
+CreateTokenThenPutCountersEffect,survivor,9,"run 8: honours its template's token controller: each such player creates, and the amount is that player's"
+EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect,survivor,9,run 8: players subject and a count evaluated per searcher
+ExileTopCardsOfDamagedPlayerLibraryAndPutCreatureOntoBattlefieldEffect,split,9,run 8: top-card exile + ChooseCardEffect + putOntoBattlefield(cardsThisWay(CHOOSE)); Lord of the Void
+ExileTopCardsChooseSpellAndCastCopiesEffect,split,9,"run 8: top-card exile + ChooseCardEffect + three copy steps over cardsThisWay(CHOOSE); Chandra, Pyromaster"
+ExileRandomCardsFromGraveyardAndChooseCopyEffect,split,9,run 8: ExileCardAtRandomEffect.cards(3) + ChooseCardEffect + the copy step; Capricious Hellraiser
+ExileOneOfDiscardedCardsFromGraveyardEffect,split,9,run 8: ChooseCardEffect(triggeringCards(nonland)) + the graveyard exile + this-turn permission; Conspiracy Theorist
+ChooseCardEffect,survivor,9,run 8: new step record: one of the cards a CardSubject names is chosen and recorded as CHOOSE
+ChoosePlayerAtRandomEffect,survivor,9,"run 8: new step record: a player at random, recorded as CHOOSE (playersThisWay); the random-opponent records can take it"
+ExileCardAtRandomEffect,survivor,9,run 8: a count: several different cards as one step
+ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect,split,9,run 8: ExileGraveyardCardsEffect + BecomeCopyOfSubjectEffect.keepingThisAbility(); Dimir Doppelganger
+ExileCardFromAnyGraveyardThenMayBecomeCopyEffect,split,9,"run 8: ExileUpToOneCardFromGraveyardEffect + may BecomeCopyOfSubjectEffect until end of turn; Lazav, Familiar Stranger"
+ExileTargetPermanentAndBecomeCopyUntilEndOfTurnEffect,split,9,run 8: exile + BecomeCopyOfSubjectEffect.of(target()) as it last existed + the delayed return about the exile; Identity Thief
+MillEachPlayerThenMayExileMilledCreatureAndBecomeCopyEffect,split,9,run 8: mill + ChooseCardEffect(cardsThisWay(MILL)) + exile + BecomeCopyOfSubjectEffect; Shadow Kin
+BecomeCopyOfSubjectEffect,survivor,9,run 8: new step record: the source becomes a copy of a CardSubject's card or a PermanentSubject's permanent as it is or last was
+ExileTriggeringCreatureUntilSourceLeavesEffect,split,9,run 8: exile triggering() + RegisterDelayedEventTriggerEffect.whenSourceLeaves; Portcullis (its by-class branch in PermanentRemovalService is gone)
+ExileTargetCreaturesUntilSourceLeavesWithCounterEffect,split,9,"run 8: ExileTargetPermanentUntilSourceLeavesEffect + whenExiledCardReturns; Lagrella, the Magpie"
+ExileTopCardOfRandomOpponentLibraryAndGrantPlayPermissionUntilEndOfTurnEffect,split,9,run 8: random-player choice + top-card exile + permission + whenYouCastExiledCard; The Ruinous Powers
+RegisterDelayedEventTriggerEffect,survivor,9,run 8: new step record: a delayed trigger on an event about what the exile step exiled
+ExileTargetPermanentUntilSourceLeavesEffect,survivor,9,run 8: records EXILE
+RevealHandChooseCardFromItAndExileAllCopiesEffect,split,9,"run 8: ChooseCardsFromTargetHandEffect (records CHOOSE, or EXILE for Pick the Brain) + ExileCardsWithSameNameEffect; Lobotomy, Shimian Specter, Pick the Brain"
+ExileSameNameCardsFromHandAndLibraryThenSeekEffect,split,9,run 8: ExileCardFromHandEffect.upToOne + ExileCardsWithSameNameEffect + the seek; Unexpected Conversion
+ExileChosenCardFromTargetHandEffect,absorbed,9,run 8: ExileSpecificCardFromHandEffect(cardsThisWay(CHOOSE)); Dreams of Steel and Oil
+ExileSpecificCardFromHandEffect,survivor,9,"run 8: exiles from the hand the named card is in, not only the controller's"
+ExileCardFromHandEffect,survivor,9,"run 8: an optional form (""you may exile a card from your hand. If you do"")"
+ExileCardsWithSameNameEffect,survivor,9,"run 8: a named card in the searched hand is exiled unasked for ""all"", and the library search is offered when no card was chosen"
+ChooseCardsFromTargetHandEffect,survivor,9,"run 8: records EXILE or CHOOSE as its choice is answered; the chosen-card rider components are gone (Soul Search, Juggernaut Peddler, Thought Partition are steps); left: the decline rider and the same-name flag (Reap Intellect), each one card"
+RevealMatchingCardsFromTargetHandAndKeepEffect,survivor,9,"run 8: records CHOOSE or EXILE; its rider component is gone (Boareskyr Tollkeeper, Cackling Observer are steps)"
+EachPlayerLosesFractionOfLifeRoundedDownEffect,absorbed,9,"run 8: LoseLifeEffect(Divided(ControllerLifeTotal, 2), eachPlayer()); Pox Plague"
+EachPlayerLosesLifePerPermanentControlledEffect,absorbed,9,"run 8: LoseLifeEffect(PermanentCount, eachPlayer()): the handler evaluates per player since Deadly Tempest; Stern Judge"
+EachPlayerLosesLifeAndPutCountersOnSourceEqualToLifeLostEffect,split,9,"run 8: LoseLifeEffect(1, eachPlayer()) + counters AmountThisWay(LOSE_LIFE); Blood Tyrant"
+EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect,split,9,run 8: DrawCardEffect + GainLifeEffect over opponentsOf(controllerOf(triggering())); Bounty Board
+EachPlayerOtherThanTargetCreatesTokenEffect,absorbed,9,"run 8: EachPlayerCreatesTokenEffect(token, except(eachPlayer(), the target player)); Death by Dragons"
+EachTargetPlayerCreatesTokensEffect,absorbed,9,"run 8: EachPlayerCreatesTokenEffect(token, the target players); Lair of the Ashen Idol"
+EachPlayerChoosesCreatureDestroyRestEffect,absorbed,9,"run 8: EachPlayerChoosesPermanentsThenDestroyRestEffect(1, creature); Divine Reckoning"
+EachPlayerChoosesPermanentsThenDestroyRestEffect,survivor,9,run 8: absorbed the creature record unchanged; its own choose-then-destroy loop
+EachPlayerPaysAnyManaThenSearchesBasicLandsEffect,dead,9,run 8: no card: Collective Voyage only imported it and uses the SearchesFor sibling
+EachPlayerLosesUnspentManaEffect,unique,9,run 8: Worldpurge's loss of unspent mana: no other effect empties players' mana pools
+EachOpponentLosesAllCountersEffect,unique,9,"run 8: Final Act: every kind of counter a player has, each from its own store"
+EachOpponentDealtCombatDamageByNamedCreatureThisGameLosesLifeEffect,unique,9,"run 8: Gollum: who is affected is a whole-game history by creature name, read by this card only"
+EachEnchantmentDealsDamageToControllerThenEachAuraToEnchantedCreatureEffect,unique,9,"run 8: Aura Barbs: two waves of damage, each enchantment its own source, the second set found after the first"
+EachControlledLandOfChosenNonbasicTypeBecomesCopyOfTargetCreatureUntilEndOfTurnEffect,unique,9,"run 8: March from Velis Vel: a land type chosen at resolution, then a hasty copy on each land of it"
+EachOpponentDrawsThenControllerDrawsEffect,blocked-step-model,9,"run 8: the draw step records before a replaced draw's question is answered, and this counts who drew across those pauses by rerunning itself (Cut a Deal)"
+EachTargetPlayerDrawsCardsEqualToAttachedCountEffect,blocked-other,9,"run 8: no amount counts the permanents attached to the triggering player (only DealDamageToPlayersEffect reads that count, by its own component); one card (Curse of Surveillance)"
+EachPlayerExilesTopCardMayPlayUntilNextEndStepEffect,blocked-other,9,"run 8: the permission is each owner's and ends at the controller's next end step: AllowPlayCardsFromExileEffect ends a duration on its holder's clock; two cards (Rocco, Memory Vessel)"
+EachPlayerExilesTopCardsMayPlayUntilNextTurnEffect,blocked-other,9,run 8: as Rocco's: each owner plays until the controller's next turn; two cards (Memory Vessel)
+EachPlayerFlipsCoinAndTailsSacrificesCreatureEffect,blocked-player-loop,9,"run 8: each tails player chooses, then all sacrifice together (Goblin Assassin)"
+EachOpponentRevealsHandAndExilesCreatureCardEffect,blocked-player-loop,9,run 8: inserts one revealed-hand choice per opponent (Valki)
+EachPlayerExilesCardFromGraveyardThenEffect,blocked-player-loop,9,"run 8: each player chooses in its own rerun loop, all exiled together, then one reflexive ability counts the nonlands (Augusta)"
+EachPlayerChoosesLandsThenSacrificeRestEffect,blocked-player-loop,9,"run 8: each player keeps six lands, then all sacrifice the rest together (Planetary Annihilation)"
+EachPlayerChoosesLandsThenDestroyRestEffect,blocked-player-loop,9,"run 8: each player keeps lands, then every other permanent is destroyed together (Urza's Sylex)"
+EachPlayerChoosesPermanentsThenPhaseOutRestEffect,blocked-player-loop,9,"run 8: each player from the controller on keeps permanents, then the rest phase out together (Disciple of Caelus Nin)"
+EachPlayerChoosesLandAndPutCounterEffect,blocked-player-loop,9,"run 8: a choice for each player in APNAP order, then all the counters (Turf War)"
+EachPlayerChoosesNonlandPermanentAndPutCounterEffect,blocked-player-loop,9,"run 8: each player chooses among all nonland permanents, then all the counters (Eye of Doom)"
+EachPlayerKeepsCardsShufflesRestIntoLibraryEffect,blocked-player-loop,9,run 8: each player keeps cards through KeepCardsInHandSupport's queue (Worldpurge)
+EachPlayerMayPutLandsFromHandToBattlefieldEffect,blocked-player-loop,9,"run 8: each player chooses lands through PutLandsFromHandSupport's queue, which enter together (The Great Aurora)"
+EachPlayerRevealsAnyNumberOfCardsFromHandThenCreatesTokensEffect,blocked-player-loop,9,"run 8: each player reveals any number in turn, then tokens for each count (Kamahl's Summons)"
+EachOpponentChoosesCreatureCardFromTheirGraveyardToBattlefieldEffect,blocked-player-loop,9,"run 8: the graveyard-return queue: each opponent chooses, then one batch enters (Dredge the Mire)"
+EachOpponentChoosesCreatureCardFromControllerGraveyardToBattlefieldEffect,blocked-player-loop,9,run 8: each opponent in turn chooses from the controller's graveyard into one held batch (Rejoin the Fight)
+EachOtherPlayerMayReturnCardsFromGraveyardToBattlefieldEffect,blocked-player-loop,9,run 8: one optional choice per other player on the graveyard-return queue (Enslaved Horror)
+EachPlayerReturnsCreatureToHandEffect,blocked-player-loop,9,"run 8: each player chooses, then all return as one event (Curfew)"
+EachPlayerMayReturnCardFromGraveyardToHandEffect,blocked-player-loop,9,"run 8: one may per player, each with its own choice (Minamo)"
+EachPlayerExilesPermanentsOrCardsFromHandEffect,blocked-player-loop,9,"run 8: each player picks among their permanents and hand, then all exiled (Nicol Bolas, Dragon-God; Descent into Madness)"
+EachPlayerChoosesOpponentPermanentToDestroyEffect,blocked-player-loop,9,"run 8: each player chooses, then one destroy batch (Sadistic Shell Game, Druid of Purification)"
+EachPlayerChoosesOpponentPermanentToExileEffect,blocked-player-loop,9,"run 8: each player chooses up to one, then all exiled (The Legend of Yangchen)"
+EachPlayerChoosesCreatureToDestroyEffect,blocked-player-loop,9,"run 8: each player chooses any creature, then one destroy batch (The Horus Heresy)"
+EachOpponentChoosesPermanentToDestroyEffect,blocked-player-loop,9,"run 8: the controller chooses one for each opponent in turn, then one destroy batch (Ultimate Magic: Meteor)"
+EachOpponentChoosesGreatestPowerCreatureToDestroyEffect,blocked-player-loop,9,"run 8: the controller breaks each opponent's tie in turn, then one destroy batch (Highcliff Felidar)"
+EachOpponentChoosesGreatestManaValueCreatureToReturnToHandEffect,blocked-player-loop,9,"run 8: each opponent breaks their tie, then one bounce batch (Summon: Valefor)"
+EachOpponentChoosesCreatureToTapAndGoadEffect,blocked-player-loop,9,"run 8: each opponent chooses, then each is tapped and goaded (Fell Beast's Shriek)"
+EachOpponentChoosesCreatureToExileWithSourceEffect,blocked-player-loop,9,run 8: each opponent chooses in turn in its own continuation (Sothera)
+EachPlayerChoosesOwnPermanentsToExileUntilSourceLeavesEffect,blocked-player-loop,9,"run 8: each player chooses, then all exiled until the source leaves (Foreboding Steamboat)"
+EachPlayerPaysAnyLifeForTokensEffect,blocked-player-loop,9,"run 8: rounds of payments repeat until nobody pays, then each gets tokens (Plague of Vermin)"

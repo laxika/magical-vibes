@@ -3,9 +3,13 @@ package com.github.laxika.magicalvibes.service.interaction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.service.CardRevealService;
@@ -109,8 +113,15 @@ public class RevealedMatchingHandCardChoiceInteractionHandler
                             + gameData.playerIdToName.get(interaction.targetPlayerId()) + "'s hand."));
         }
 
-        pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
-                List.of(interaction.thenEffect()));
+        UUID ownerId = interaction.targetPlayerId();
+        pendingEntry.recordStep(interaction.keepInHand() ? StepKind.CHOOSE : StepKind.EXILE, interaction.keepInHand()
+                ? StepOutcome.ofObjects(List.of(chosen.getId()), List.of(ownerId), List.of(gameData.boundToStay(
+                        new MovedCard(chosen.getId(), chosen.getId(), Zone.HAND, ownerId))))
+                : StepOutcome.ofObjects(List.of(chosen.getId()), List.of(ownerId)).withFromHand(1));
+        if (interaction.thenEffect() != null) {
+            pendingEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
+                    List.of(interaction.thenEffect()));
+        }
         effectResolutionService.resolveEffectsFrom(gameData, pendingEntry,
                 gameData.pendingEffectResolutionIndex);
         if (!gameData.interaction.isAwaitingInput()) {

@@ -32,6 +32,10 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #TRANSFORM}: 1 when the source transformed (or converted), else 0; that permanent, its controller;</li>
  *   <li>{@link #SEEK}: the number of cards sought into a hand ({@code SeekCardsToHandEffect}), those cards, the
  *       player; a sought card is followed into the hand it went to, as seek's cards are (digital only);</li>
+ *   <li>{@link #CHOOSE}: the number of cards chosen without moving them ({@code ChooseCardEffect}, a revealed-hand
+ *       choice that keeps the card in the hand), those cards, their owners, each one's {@link StepOutcome#movedCards()}
+ *       entry naming the zone and stay it was chosen in; or of a player chosen at random
+ *       ({@code ChoosePlayerAtRandomEffect}), that player;</li>
  *   <li>{@link #PUT_INTO_GRAVEYARD}: the number of exiled cards put into a graveyard ({@code
  *       PutExiledCardsIntoOwnersGraveyardEffect}; a card a replacement sent elsewhere is not counted), those cards,
  *       their owners.</li>
@@ -39,7 +43,8 @@ package com.github.laxika.magicalvibes.model;
  *
  * <p>A later step may read a step only if that step finishes before the next one starts (CR 608.2c): its handler never
  * prompts, pauses by resolving itself again before it changes anything, or pauses at the end of its step with its
- * result recorded by then. The recording handlers: draw, gain and lose life, exile a permanent, exile the source's or
+ * result recorded by then. The recording handlers: draw, gain and lose life, exile a permanent (also until the source leaves) or each matching permanent
+ * ({@code ExileAllPermanentsEffect}), exile the source's or
  * the triggering card or target cards from a graveyard ({@code ExileGraveyardCardsEffect} except where its player
  * chooses at a prompt), exile the top card of a library, a hand or a spell ({@code ExileTargetPlayerHandEffect},
  * {@code ExileTargetSpellEffect}), seek cards to a hand, put exiled cards into a graveyard, destroy, copy, create a token, manifest, mill and exile the
@@ -52,7 +57,9 @@ package com.github.laxika.magicalvibes.model;
  * permanent), put counters (a replacement order answered later adds the rest; on each matching permanent,
  * {@code PutCounterOnEachMatchingPermanentEffect}, never prompting) and counter a spell; the chosen-permanent exile ({@code ExileChosenPermanentsEffect}: its
  * choices add to the result as they are answered), the chosen hand-card exile ({@code ExileCardFromHandEffect}), the
- * same-name exile ({@code ExileCardsWithSameNameEffect}) and the pay-X token step ({@code PayXManaCreateXTokensEffect}); deal damage, return a card from a graveyard, remove counters and return to hand only on the paths that
+ * same-name exile ({@code ExileCardsWithSameNameEffect}), the card and random-player choices
+ * ({@code ChooseCardEffect}, {@code ChoosePlayerAtRandomEffect}), the revealed-hand choice's exile and keep
+ * ({@code ChooseCardsFromTargetHandEffect}) and the pay-X token step ({@code PayXManaCreateXTokensEffect}); deal damage, return a card from a graveyard, remove counters and return to hand only on the paths that
  * don't prompt mid-step. A handler that pauses mid-step by rerunning itself after changes, or by a continuation of its
  * own, is never an earlier step. A damage, discard or sacrifice step records {@link StepOutcome#NONE} as it begins and the
  * engine adds to it as the damage is dealt, the cards discarded and the permanents sacrificed.</p>
@@ -76,5 +83,6 @@ public enum StepKind {
     MANIFEST,
     TRANSFORM,
     PUT_INTO_GRAVEYARD,
-    SEEK
+    SEEK,
+    CHOOSE
 }

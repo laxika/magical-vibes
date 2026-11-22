@@ -12,7 +12,6 @@ public class GraveyardTargetOperationState {
     public int independentTargetGroupIndex = -1;
     public final java.util.List<UUID> independentTargetCardIds = new java.util.ArrayList<>();
     public final java.util.List<Integer> independentTargetGroupSizes = new java.util.ArrayList<>();
-    public boolean resolutionTimeExileThenMayBecomeCopyResume;
     public boolean resolutionTimeKayaSpiritsJusticeResume;
     /** Whether a resolution-time collect-evidence choice is awaiting completion. */
     public boolean resolutionTimeCollectEvidenceResume;
@@ -145,11 +144,6 @@ public class GraveyardTargetOperationState {
     /** Resolution-time mandatory exile of one card from each player's graveyard. */
     public EachPlayerExilesCardFromGraveyardContext eachPlayerExilesCardFromGraveyard;
     public boolean resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume;
-    public boolean resolutionTimeExileOneOfDiscardedCardsResume;
-    public boolean resolutionTimeExileOneOfDiscardedCardsChoiceMade;
-    public List<UUID> resolutionTimeExileOneOfDiscardedCardsCandidateIds = List.of();
-    public UUID resolutionTimeExileOneOfDiscardedCardsChosenCardId;
-    public UUID resolutionTimeExileOneOfDiscardedCardsSourcePermanentId;
     public boolean resolutionTimePutOnBottomThenExileTopCardsResume;
     public boolean resolutionTimePutOnBottomThenExileTopCardsChoiceMade;
     public UUID resolutionTimePutOnBottomThenExileTopCardsChosenCardId;

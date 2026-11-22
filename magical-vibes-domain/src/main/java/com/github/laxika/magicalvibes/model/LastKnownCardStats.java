@@ -17,12 +17,15 @@ import java.util.UUID;
  * @param manaValue its mana value there
  * @param name      an exiled permanent's name as it last existed on the battlefield, {@code null} for one with no name
  *                  (face down, CR 708.2) and for a card, which keeps its name
+ * @param controllerId an exiled permanent's controller as it last existed on the battlefield ("creatures they
+ *                  controlled that were exiled this way"); {@code null} for a card
  */
-public record LastKnownCardStats(UUID cardId, Integer power, Integer toughness, int manaValue, String name) {
+public record LastKnownCardStats(UUID cardId, Integer power, Integer toughness, int manaValue, String name,
+                                 UUID controllerId) {
 
     /** A card, whose name is read from the card. */
     public LastKnownCardStats(UUID cardId, Integer power, Integer toughness, int manaValue) {
-        this(cardId, power, toughness, manaValue, null);
+        this(cardId, power, toughness, manaValue, null, null);
     }
 
     public LastKnownCardStats {

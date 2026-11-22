@@ -13,12 +13,25 @@ import java.util.Objects;
  * @param player   who chooses from their own hand
  * @param filter   which cards may be chosen; {@code null} for any
  * @param faceDown "exile it face down"
+ * @param optional "you may exile a card from your hand": the player may choose none, and then nothing is exiled
  */
-public record ExileCardFromHandEffect(PlayerSubject player, CardPredicate filter, boolean faceDown)
+public record ExileCardFromHandEffect(PlayerSubject player, CardPredicate filter, boolean faceDown, boolean optional)
         implements CardEffect {
 
     public ExileCardFromHandEffect {
         Objects.requireNonNull(player, "player");
+        if (optional && faceDown) {
+            throw new IllegalArgumentException("The optional choice exiles face up");
+        }
+    }
+
+    public ExileCardFromHandEffect(PlayerSubject player, CardPredicate filter, boolean faceDown) {
+        this(player, filter, faceDown, false);
+    }
+
+    /** "You may exile a [filter] card from your hand. If you do, ..." */
+    public static ExileCardFromHandEffect upToOne(CardPredicate filter) {
+        return new ExileCardFromHandEffect(Subjects.you(), filter, false, true);
     }
 
     /** "Exile a card from your hand." */
@@ -33,7 +46,7 @@ public record ExileCardFromHandEffect(PlayerSubject player, CardPredicate filter
 
     /** This exile "face down". */
     public ExileCardFromHandEffect exiledFaceDown() {
-        return new ExileCardFromHandEffect(player, filter, true);
+        return new ExileCardFromHandEffect(player, filter, true, optional);
     }
 
     @Override

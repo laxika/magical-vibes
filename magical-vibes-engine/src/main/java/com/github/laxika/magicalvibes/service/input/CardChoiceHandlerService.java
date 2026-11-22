@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.PendingBoostSourceByDiscardedManaValue;
 import com.github.laxika.magicalvibes.model.PendingConnive;
 import com.github.laxika.magicalvibes.model.PendingGainLifeOnDiscardType;
@@ -2219,6 +2220,13 @@ public class CardChoiceHandlerService {
                 && gameQueryService.findPermanentById(gameData, revealedHandChoice.sourcePermanentId()) == null;
         if (keepInHand || exileDurationAlreadyEnded) {
             gameData.playerHands.get(targetPlayerId).addAll(chosenCards);
+            if (keepInHand && gameData.pendingEffectResolutionEntry != null) {
+                // "The chosen card" of a later step, in the revealed hand it was chosen from.
+                gameData.pendingEffectResolutionEntry.recordStep(StepKind.CHOOSE, StepOutcome.ofObjects(
+                        chosenCards.stream().map(Card::getId).toList(), List.of(targetPlayerId),
+                        chosenCards.stream().map(card -> gameData.boundToStay(
+                                new MovedCard(card.getId(), card.getId(), Zone.HAND, targetPlayerId))).toList()));
+            }
             gameLogService.append(gameData,
                     appendCards(GameLog.builder().text(player.getUsername() + " keeps "), chosenCards)
                             .text(" in " + targetName + "'s hand.").build());
@@ -2340,6 +2348,11 @@ public class CardChoiceHandlerService {
                 }
             }
 
+            if (gameData.pendingEffectResolutionEntry != null) {
+                gameData.pendingEffectResolutionEntry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(
+                        chosenCards.stream().map(Card::getId).toList(), List.of(targetPlayerId))
+                        .withFromHand(chosenCards.size()));
+            }
             String cardNames = String.join(", ", chosenCards.stream().map(Card::getName).toList());
             gameLogService.append(gameData,
                     appendCards(GameLog.builder().text(player.getUsername() + " exiles "), chosenCards)
@@ -2399,6 +2412,9 @@ public class CardChoiceHandlerService {
             log.info("Game {} - {} puts {} {}", gameData.id, player.getUsername(), cardNames, placement);
         }
 
+        if (exileDurationAlreadyEnded && gameData.pendingEffectResolutionEntry != null) {
+            gameData.pendingEffectResolutionEntry.recordStep(StepKind.EXILE, StepOutcome.NONE);
+        }
         CardEffect chosenCardThenEffect = revealedHandChoice.chosenCardThenEffect();
         if ((chosenCardThenEffect != null || keepInHand)
                 && gameData.pendingEffectResolutionEntry != null && !chosenCards.isEmpty()) {

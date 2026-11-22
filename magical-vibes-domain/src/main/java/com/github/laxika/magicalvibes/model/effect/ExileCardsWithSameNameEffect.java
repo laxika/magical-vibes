@@ -13,7 +13,10 @@ import java.util.List;
  *
  * <p>What is named is either permanents, each as it is or as the exile step before this one last saw it (CR 608.2h;
  * {@link Subjects#targetSpell()} is the spell as it is or was countered), or cards ({@code cardsThisWay(EXILE)},
- * {@code targetCard(...)}: the effect then declares that target).
+ * {@code targetCard(...)}: the effect then declares that target). "All cards with the same name as the chosen card"
+ * exiles a named card that is in the hand searched whatever else is found (Lobotomy's ruling). When no card is named
+ * and a player's hand and library are searched, the searcher still gets the search, for nothing (CR 701.23a; Lobotomy's and
+ * Pick the Brain's rulings).
  *
  * @param permanents whose names are searched for; {@code null} when {@code cards} names them
  * @param cards      whose names are searched for; {@code null} when {@code permanents} names them

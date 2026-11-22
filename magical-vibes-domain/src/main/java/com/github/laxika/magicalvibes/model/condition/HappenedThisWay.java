@@ -29,7 +29,8 @@ import java.util.Objects;
  * discarded this way" ({@link #toACard}): one of the cards an {@link StepKind#EXILE} step exiled from a graveyard, a
  * library or a hand, or a {@link StepKind#DISCARD} step discarded, matches it, judged as the card is now wherever it
  * went (a card keeps its characteristics in a graveyard or exile; CR 608.2h); a permanent an exile step exiled as the
- * card it became in exile ("if the exiled card is a God card", Deicide).
+ * card it became in exile ("if the exiled card is a God card", Deicide). A milled or chosen card is judged the same
+ * way ("if a creature card was milled this way").
  *
  * @param kind       the kind of step read
  * @param minimum    the least amount the step must have recorded; at least 1
@@ -50,9 +51,10 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
         if (filter != null && cardFilter != null) {
             throw new IllegalArgumentException("A step result is filtered as permanents or as cards, not both");
         }
-        if (cardFilter != null && kind != StepKind.EXILE && kind != StepKind.DISCARD) {
+        if (cardFilter != null && kind != StepKind.EXILE && kind != StepKind.DISCARD && kind != StepKind.MILL
+                && kind != StepKind.CHOOSE) {
             throw new IllegalArgumentException(
-                    "Only an exile or discard step's cards are judged by a card filter: " + kind);
+                    "Only an exile, discard, mill or choose step's cards are judged by a card filter: " + kind);
         }
     }
 
@@ -178,6 +180,7 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
             case TRANSFORM -> "transformed";
             case PUT_INTO_GRAVEYARD -> "put into a graveyard";
             case SEEK -> "sought";
+            case CHOOSE -> "chosen";
         };
     }
 }

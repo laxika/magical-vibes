@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BringerOfTheBlueDawn;
 import com.github.laxika.magicalvibes.cards.c.Clone;
 import com.github.laxika.magicalvibes.cards.c.CommandTower;
 import com.github.laxika.magicalvibes.cards.h.HordewingSkaab;
@@ -8,13 +9,14 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShadowKin.class, CommandTower.class, HordewingSkaab.class, Clone.class})
+@CardUsed({ShadowKin.class, CommandTower.class, HordewingSkaab.class, Clone.class, BringerOfTheBlueDawn.class})
 class ShadowKinTest extends BaseCardTest {
 
     @Test
@@ -31,8 +33,8 @@ class ShadowKinTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
 
         harness.handleMayAbilityChosen(player1, true);
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.GraveyardChoice.class);
-        harness.handleGraveyardCardChosen(player1, 0);
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        harness.handleMultipleCardsChosen(player1, List.of(milledCreature.getId()));
         harness.passBothPriorities();
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(milledCreature);
@@ -86,7 +88,7 @@ class ShadowKinTest extends BaseCardTest {
 
         resolveUpkeepTrigger();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
 
         assertThat(gd.stack).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(creature);
@@ -107,7 +109,7 @@ class ShadowKinTest extends BaseCardTest {
 
         resolveUpkeepTrigger();
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleGraveyardCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.passBothPriorities();
         assertThat(clone.getCard().getName()).isEqualTo("Hordewing Skaab");
 
@@ -166,5 +168,45 @@ class ShadowKinTest extends BaseCardTest {
         gd.turnNumber = 2;
         advanceToUpkeep(player1);
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("A later copy keeps this ability only, not the upkeep ability of the creature copied before")
+    void laterCopyKeepsOnlyThisAbility() {
+        Permanent shadowKin = harness.addToBattlefieldAndReturn(player1, new ShadowKin());
+        Card bringer = new BringerOfTheBlueDawn();
+        harness.setLibrary(player1, List.of(bringer, new CommandTower(), new CommandTower(), new CommandTower()));
+        harness.setLibrary(player2, List.of(new CommandTower(), new CommandTower(), new CommandTower()));
+        resolveUpkeepTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMultipleCardsChosen(player1, List.of(bringer.getId()));
+        assertThat(shadowKin.getCard().getName()).isEqualTo("Bringer of the Blue Dawn");
+
+        Card skaab = new HordewingSkaab();
+        harness.setLibrary(player1, List.of(skaab, new CommandTower(), new CommandTower(), new CommandTower(),
+                new CommandTower(), new CommandTower()));
+        harness.setLibrary(player2, List.of(new CommandTower(), new CommandTower(), new CommandTower()));
+        harness.clearPriorityPassed();
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        while (gd.interaction.isAwaitingInput() || !gd.stack.isEmpty()) {
+            if (gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class) != null) {
+                harness.handleMultipleCardsChosen(player1, List.of(skaab.getId()));
+            } else if (gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class) != null) {
+                // Only the exile is accepted.
+                harness.handleMayAbilityChosen(player1,
+                        gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)
+                                .description().contains("Exile"));
+            } else {
+                harness.passBothPriorities();
+            }
+        }
+
+        assertThat(shadowKin.getCard().getName()).isEqualTo("Hordewing Skaab");
+        harness.setLibrary(player1, List.of(new CommandTower(), new CommandTower(), new CommandTower()));
+        harness.setLibrary(player2, List.of(new CommandTower(), new CommandTower(), new CommandTower()));
+        advanceToUpkeep(player1);
+
+        assertThat(gd.stack).hasSize(1);
     }
 }

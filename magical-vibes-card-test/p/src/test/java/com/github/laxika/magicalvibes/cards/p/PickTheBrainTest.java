@@ -67,8 +67,8 @@ class PickTheBrainTest extends BaseCardTest {
 
         castPickTheBrain();
 
-        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
-        harness.handleListChoice(player1, "Reduce to Ashes");
+        assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.RevealedHandChoice.class);
+        chooseFromRevealedHand("Reduce to Ashes");
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiZoneExileChoice.class);
         harness.handleMultipleCardsChosen(player1, List.of(graveyardCopy.getId()));
 
@@ -108,7 +108,7 @@ class PickTheBrainTest extends BaseCardTest {
                 .anyMatch(message -> message.contains("Reduce to Ashes") && message.contains("Forest"));
         assertThat(harness.getConn2().getMessagesContaining("REVEAL_HAND"))
                 .anyMatch(message -> message.contains("Reduce to Ashes") && message.contains("Forest"));
-        harness.handleListChoice(player1, "Reduce to Ashes");
+        chooseFromRevealedHand("Reduce to Ashes");
     }
 
     @Test
@@ -140,7 +140,7 @@ class PickTheBrainTest extends BaseCardTest {
         harness.setHand(player2, List.of(chosen, remaining));
 
         castPickTheBrain();
-        harness.handleListChoice(player1, "Reduce to Ashes");
+        chooseFromRevealedHand("Reduce to Ashes");
         harness.handleMultipleCardsChosen(player1, List.of());
 
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(chosen);
@@ -160,7 +160,7 @@ class PickTheBrainTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(libraryCopy, new Forest()));
 
         castPickTheBrain();
-        harness.handleListChoice(player1, "Reduce to Ashes");
+        chooseFromRevealedHand("Reduce to Ashes");
         harness.handleMultipleCardsChosen(player1,
                 List.of(handCopy.getId(), graveyardCopy.getId(), libraryCopy.getId()));
 
@@ -180,7 +180,7 @@ class PickTheBrainTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest()));
 
         castPickTheBrain();
-        harness.handleListChoice(player1, "Reduce to Ashes");
+        chooseFromRevealedHand("Reduce to Ashes");
 
         harness.passBothPriorities();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);
@@ -228,5 +228,33 @@ class PickTheBrainTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 3);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
+    }
+
+    /** Answers the revealed-hand choice with the first choosable card of that name. */
+    private void chooseFromRevealedHand(String name) {
+        var choice = gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        assertThat(choice).isNotNull();
+        List<Card> hand = gd.playerHands.get(choice.targetPlayerId());
+        harness.handleCardChosen(player1, choice.validIndices().stream()
+                .filter(index -> hand.get(index).getName().equals(name))
+                .findFirst().orElseThrow());
+    }
+
+    @Test
+    @DisplayName("With delirium, a copy in the graveyard may be left there")
+    void deliriumMayLeaveTheGraveyardCopy() {
+        enableDelirium();
+        ReduceToAshes chosen = new ReduceToAshes();
+        ReduceToAshes graveyardCopy = new ReduceToAshes();
+        harness.setHand(player2, List.of(chosen));
+        harness.setGraveyard(player2, List.of(graveyardCopy));
+        harness.setLibrary(player2, List.of(new Forest()));
+
+        castPickTheBrain();
+        chooseFromRevealedHand("Reduce to Ashes");
+        harness.handleMultipleCardsChosen(player1, List.of());
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(chosen);
+        assertThat(gd.playerGraveyards.get(player2.getId())).contains(graveyardCopy);
     }
 }

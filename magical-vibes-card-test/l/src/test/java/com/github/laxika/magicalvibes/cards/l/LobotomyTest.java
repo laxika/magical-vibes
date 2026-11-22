@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.m.MindlockOrb;
 import com.github.laxika.magicalvibes.cards.p.PsychicSurgery;
 import com.github.laxika.magicalvibes.cards.s.StalkingStones;
 import com.github.laxika.magicalvibes.cards.t.TrainedArmodon;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({Lobotomy.class, Forest.class, PsychicSurgery.class, StalkingStones.class, TrainedArmodon.class})
+@CardUsed({Lobotomy.class, Forest.class, PsychicSurgery.class, StalkingStones.class, TrainedArmodon.class, MindlockOrb.class})
 class LobotomyTest extends BaseCardTest {
 
     @Test
@@ -24,10 +25,10 @@ class LobotomyTest extends BaseCardTest {
     void basicLandsAreNotChoosable() {
         castLobotomyAt(List.of(new TrainedArmodon(), new Lobotomy(), new Forest(), new StalkingStones()));
 
-        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        PendingInteraction.RevealedHandChoice choice = gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.playerId()).isEqualTo(player1.getId());
-        assertThat(choice.options())
+        assertThat(choice.choosingPlayerId()).isEqualTo(player1.getId());
+        assertThat(choosableNames(choice))
                 .containsExactlyInAnyOrder("Trained Armodon", "Lobotomy", "Stalking Stones");
     }
 
@@ -40,7 +41,7 @@ class LobotomyTest extends BaseCardTest {
         castLobotomyAt(List.of(new TrainedArmodon(), otherHandCopy, new Lobotomy()));
         harness.setLibrary(player2, List.of(libraryCopy));
 
-        harness.handleListChoice(player1, "Trained Armodon");
+        chooseFromRevealedHand("Trained Armodon");
         harness.handleMultipleCardsChosen(player1, List.of(otherHandCopy.getId(), libraryCopy.getId()));
 
         long exiled = gd.getPlayerExiledCards(player2.getId()).stream()
@@ -58,7 +59,7 @@ class LobotomyTest extends BaseCardTest {
     void nonbasicLandCanBeChosen() {
         castLobotomyAt(List.of(new StalkingStones(), new TrainedArmodon()));
 
-        harness.handleListChoice(player1, "Stalking Stones");
+        chooseFromRevealedHand("Stalking Stones");
 
         harness.assertNotInHand(player2, "Stalking Stones");
         assertThat(gd.getPlayerExiledCards(player2.getId()))
@@ -71,7 +72,7 @@ class LobotomyTest extends BaseCardTest {
         addCreatureReady(player2, new TrainedArmodon());
         castLobotomyAt(List.of(new TrainedArmodon()));
 
-        harness.handleListChoice(player1, "Trained Armodon");
+        chooseFromRevealedHand("Trained Armodon");
 
         harness.assertOnBattlefield(player2, "Trained Armodon");
     }
@@ -107,7 +108,7 @@ class LobotomyTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new Forest(), new StalkingStones()));
         castLobotomyAt(List.of(new TrainedArmodon()));
 
-        harness.handleListChoice(player1, "Trained Armodon");
+        chooseFromRevealedHand("Trained Armodon");
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class))
@@ -137,9 +138,9 @@ class LobotomyTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player1.getId());
 
-        PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        PendingInteraction.RevealedHandChoice choice = gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.options()).containsExactly("Trained Armodon");
+        assertThat(choosableNames(choice)).containsExactly("Trained Armodon");
     }
 
     @Test
@@ -172,7 +173,7 @@ class LobotomyTest extends BaseCardTest {
         harness.setLibrary(player2, List.of(new TrainedArmodon(), new Forest()));
         castLobotomyAt(List.of(new TrainedArmodon()));
 
-        harness.handleListChoice(player1, "Trained Armodon");
+        chooseFromRevealedHand("Trained Armodon");
 
         assertThat(gd.interaction.activeInteraction()).isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of());
@@ -192,5 +193,52 @@ class LobotomyTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 2);
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
+    }
+
+    /** Answers the revealed-hand choice with the first choosable card of that name. */
+    private void chooseFromRevealedHand(String name) {
+        var choice = gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
+        assertThat(choice).isNotNull();
+        List<Card> hand = gd.playerHands.get(choice.targetPlayerId());
+        harness.handleCardChosen(player1, choice.validIndices().stream()
+                .filter(index -> hand.get(index).getName().equals(name))
+                .findFirst().orElseThrow());
+    }
+
+    private List<String> choosableNames(PendingInteraction.RevealedHandChoice choice) {
+        List<Card> hand = gd.playerHands.get(choice.targetPlayerId());
+        return choice.validIndices().stream().map(index -> hand.get(index).getName()).distinct().toList();
+    }
+
+    @Test
+    @DisplayName("Only the searcher is shown the searched library")
+    void onlyTheSearcherIsShownTheSearchedLibrary() {
+        harness.setLibrary(player2, List.of(new TrainedArmodon(), new StalkingStones()));
+        castLobotomyAt(List.of(new TrainedArmodon(), new Forest()));
+        harness.getConn1().clearMessages();
+        harness.getConn2().clearMessages();
+
+        chooseFromRevealedHand("Trained Armodon");
+
+        assertThat(harness.getConn1().getMessagesContaining("MULTI_CARD_PICK")).isNotEmpty()
+                .allSatisfy(prompt -> assertThat(prompt).contains("Stalking Stones", "Forest"));
+        assertThat(harness.getConn2().getMessagesContaining("Stalking Stones")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A library that can't be searched is neither shown nor offered")
+    void doesNotShowALibraryThatCantBeSearched() {
+        harness.addToBattlefield(player2, new MindlockOrb());
+        TrainedArmodon libraryCopy = new TrainedArmodon();
+        harness.setGraveyard(player2, List.of(new TrainedArmodon()));
+        harness.setLibrary(player2, List.of(libraryCopy, new StalkingStones()));
+        castLobotomyAt(List.of(new TrainedArmodon(), new Forest()));
+        harness.getConn1().clearMessages();
+
+        chooseFromRevealedHand("Trained Armodon");
+
+        assertThat(harness.getConn1().getMessagesContaining("MULTI_CARD_PICK")).isNotEmpty()
+                .allSatisfy(prompt -> assertThat(prompt)
+                        .doesNotContain(libraryCopy.getId().toString(), "Stalking Stones"));
     }
 }

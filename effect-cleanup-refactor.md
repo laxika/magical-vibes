@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 7 done: Exile closed, no rare record unaudited, four ledgered causes left for run 8 to build; Each started, 113 rare records left) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 8 done: Exile closed and its last shared causes built; Each partly done, 69 rare records left, their shared blockers named in run 8) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -171,6 +171,7 @@ card it moved to a public zone, CR 400.7j). Variants:
 |---|---|
 | `cardsThisWay(StepKind)` | the cards the most recent step of that kind of the same resolution moved: `EXILE` the exiled cards in exile; `DESTROY` / `SACRIFICE` the card each removed permanent became in the zone it went to (`StepOutcome.movedCards`, recorded by the departure results and the destroy / exile handlers); `DISCARD` the discarded cards in the graveyard, or in exile where a replacement put them; `COUNTER_SPELL` (run 27) the countered spell's card in its graveyard or exile; `cardsThisWay(kind, filter)` (step 9 run 3) only those matching the filter as they are now |
 | `targetCard(filter, scope)` | the effect's graveyard card target, declared by the effect reading it (added in run 23 for Feldon of the Third Path's copy without exiling) |
+| `triggeringCards(filter)` (step 9 run 8) | the trigger event's cards still in the graveyard stay it put them in; `cardsThisWay` also reads `MILL` and `CHOOSE` (a chosen card, in a revealed hand too) |
 
 Readers: `CreateTokenCopyOfCardEffect.of(cards, options)` (the token-copy step), `ReturnCardFromGraveyardEffect.returnAll(true).cards(...)`
 (the return step), `MayCastDiscardedCardWithoutPayingManaCostEffect(cards[, filter])` (the "cast it now for free" step),
@@ -612,6 +613,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 5 | Exile: run 4's God-Pharaoh's Gift row and Agatha's `step-9` row, a graveyard-owner subject on the choose-a-card exile, a counter step on exiled cards, a card-filtered exile count, then the one-card tail | done (92 audited: 3 absorbed, 20 split, 2 dead, 2 survivors (one new step record), 55 blocked-other, 10 unique; 27 card files rewritten; `ExileUpToOneCardFromGraveyardEffect.from`, `PutCounterOnExiledCardsEffect`, `AmountThisWay.exiledCards`; six resume flag groups deleted; Fishing Gear's empty library fixed by Oracle text) |
 | 6 | Exile: run 5's shared blockers (exile target spell, a delayed trigger bound to a step result, the face-down hand exile) with their ledgered rows, then the rare tail | done (93 audited: 9 absorbed, 27 split, 1 dead, 7 survivors (five new step records), 8 blocked-other, 2 blocked-step-model, 39 unique; 39 card files rewritten; `RegisterDelayedStepTriggerEffect`, `ExileTargetSpellEffect`, `ExileChosenPermanentsEffect`, `ExileTargetPlayerHandEffect.exiledFaceDown`, `StepKind.PUT_INTO_GRAVEYARD`; 15 rare records left on five shared blockers) |
 | 7 | Exile: the five shared blockers with their ledgered rows, the family's rare tail closed; Each started | done for Exile, Each open (51 audited: 8 absorbed, 21 split, 12 survivors, 5 blocked-other, 2 blocked-step-model, 3 unique; 50 card files changed; `ExileCardsWithSameNameEffect`, `ExileCardFromHandEffect`, `ExileFaceDownPileEffect`, `revealedBy` on the reveal-until step, `StepKind.SEEK`; four ledgered Exile causes and 113 rare Each records left) |
+| 8 | The five shared blockers run 7 named with their ledgered rows; Each's rare tail, continued | done for the blockers, Each open (77 audited: 6 absorbed, 19 split, 1 dead, 15 survivors, 27 blocked-player-loop, 1 blocked-step-model, 3 blocked-other, 5 unique; 34 card files changed; `StepKind.CHOOSE`, `ChooseCardEffect`, `ChoosePlayerAtRandomEffect`, `BecomeCopyOfSubjectEffect`, `RegisterDelayedEventTriggerEffect`, EXILE recorded by the exile wipe and the revealed-hand choice; 69 rare Each records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -6736,6 +6738,113 @@ and stress tests.
 - Then the 113 rare Each records. Read "Not in this plan" first: an each-player choose-then-act loop stays `blocked-player-loop`, but a
   record without a prompt is a subject fold (`each(...)`, `matching(players, filter)`, `playersThisWay`), and a prompt per player may
   be the `revealedBy` / `byPlayers` shape the survivors now have.
+
+### Step 9, run 8 (2026-11-22, Each partly done)
+
+The five shared blockers run 7 named, with the ledger rows that waited for them, then as much of the Each family as one careful run took.
+Ratchet 4,513 / 3,752 → 4,491 / 3,729 records / handlers (26 records and 27 handlers deleted, 4 and 4 added). 34 card files changed by
+scratch scripts (Collective Voyage only lost an unused import). Oracle text checked with `get_card` for all 34; rulings with `get_rulings`
+where the handler or the text left a doubt. CR 101.4, 400.7, 400.7j, 603.7a to 603.7c, 603.10a, 608.2c, 608.2d, 608.2h, 609.3, 610.3b,
+701.17c, 701.23a, 701.23b, 707.2 and 708.2a checked with `get_rule` (2026-11-22).
+
+| Family | Audited | Absorbed | Split | Survivor | Dead | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|---|
+| Each | 46 rows (44 of the 113 rare records, one ledgered row a survivor now expresses, one survivor) | 5 | 2 | 2 | 1 | 31: 27 player loop (each read: choose in turn, then act), 1 step model, 3 other (causes of one or two cards) | 5 | 69 rare records: 30 read and waiting for shared blockers (below), 39 not read |
+| The blockers' rows (Exile, Reveal, Mill and their survivors) | 31 rows | 1 | 17 | 13 (four new records) | 0 | 0 | 0 | Exile: no rare record. All families: 2,687 rare records without a row |
+
+- **A choice is a step.** New `StepKind.CHOOSE` and `ChooseCardEffect` (one of the cards a `CardSubject` names; a lone card is asked
+  about only where the card says "choose"). `cardsThisWay(CHOOSE)` names it in the zone and stay it was chosen in, `cardsThisWay(MILL)`
+  the milled cards (CR 701.17c), `triggeringCards(filter)` the event's. `ChoosePlayerAtRandomEffect` records a random pick, which
+  `playersThisWay(CHOOSE)` reads: a step, as a random pick is no subject.
+- **The card chosen from a revealed hand.** `ChooseCardsFromTargetHandEffect` and `RevealMatchingCardsFromTargetHandAndKeepEffect` record
+  EXILE, or CHOOSE for a card kept, as they are answered. Their chosen-card rider components are gone (five cards are steps now), the
+  decline rider stays. `ExileCardsWithSameNameEffect` takes the chosen card: for "all" that card is exiled unasked (Lobotomy's ruling),
+  and with none chosen the search is still offered (Pick the Brain's ruling).
+- **Per-player results of an exile step.** `ExileAllPermanentsEffect` and `ExileTargetPermanentUntilSourceLeavesEffect` record EXILE;
+  `LastKnownCardStats.controllerId` makes `AmountThisWay(EXILE, ...).controlledByYou()` each player's own. `EachPlayerDrawsCardEffect`
+  hands its amount the resolving entry, `CreateTokenThenPutCountersEffect` honours its template's token controller, the basic-land
+  search queue's record takes players and a count per searcher.
+- **Become a copy.** New `BecomeCopyOfSubjectEffect` over a card or a permanent as it is or last was; `keepingThisAbility()` keeps
+  exactly the abilities that effect is part of, without the by-class scan and the trigger parameter.
+- **A delayed trigger on an event.** New `RegisterDelayedEventTriggerEffect`, the event sibling of run 6's step trigger.
+  `EventAbilitySupport.DelayedRecord` gives every delayed ability made after a step that step's results, whatever its trigger event.
+  Portcullis's by-class branch in `PermanentRemovalService` is gone.
+
+**Behaviour changes.**
+
+1. Conspiracy Theorist's card can be cast only that turn (Oracle: "you may cast it this turn"; the permission lasted while it was
+   exiled). `ConspiracyTheoristTest.castPermissionEndsWithTheTurn`.
+2. Pick the Brain may leave the copies in the graveyard (Oracle: "any number"; they were forced).
+   `PickTheBrainTest.deliriumMayLeaveTheGraveyardCopy`.
+3. Lobotomy, Shimian Specter, Pick the Brain and Unexpected Conversion search as the same-name step does: the searcher, and nobody
+   else, is shown the zones searched, and a library that can't be searched is neither shown nor offered (CR 701.23a, 609.3).
+   `LobotomyTest.onlyTheSearcherIsShownTheSearchedLibrary`, `.doesNotShowALibraryThatCantBeSearched`. Unexpected Conversion's own-hand
+   choice shows that hand to nobody (`UnexpectedConversionTest.handChoiceIsPrivate`).
+4. Shadow Kin keeps only this ability, not every upkeep ability of what it copied before (Oracle: "except it has this ability").
+   `ShadowKinTest.laterCopyKeepsOnlyThisAbility`.
+5. Portcullis's return is made as it exiles: it doesn't return a card that left exile and was exiled again (CR 603.7c, 400.7), and
+   doesn't depend on Portcullis's abilities as it leaves (its ruling).
+   `PortcullisTest.doesNotReturnACardThatWasExiledAgain`.
+6. Martyr's Cry's creatures leave as one event (CR 603.10a), and it, Winds of Abandon, Oversimplify and Grand Ossuary count only what
+   was exiled (Oracle: "exiled this way"): the survivor's rules. No new test: the cards' tests cover the common path.
+7. Oversimplify's counters are put on the token by the player who created it, after it is created (Oracle: "creates ... and puts"),
+   in APNAP order. `OversimplifyTest.eachPlayerPutsTheirOwnCountersForInnkeepersTalent` covers who puts them.
+8. Deicide offers the library search also when no card names what is searched (a token God; CR 701.23a). No test for that shape.
+9. Bounty Board: every player draws, then every player gains, in one order of two steps (it alternated per player).
+10. AI only: Divine Reckoning is a board wipe to it, as its survivor; Death by Dragons and Lair of the Ashen Idol aren't scored as its
+    own tokens; Lobotomy's and Shimian Specter's target spec is the hand choice's; the copy choice of Chandra and Capricious Hellraiser
+    uses the generic card-choice answer.
+11. Log lines and prompt classes are the steps'.
+
+**Seen, not changed.**
+
+- The Legend of Yangchen's chapter I offers each player the permanents of that player's opponents; its text says "permanents your
+  opponents control", the Saga controller's, so the opponent can now pick the controller's own (Oracle;
+  `EachPlayerChoosesOpponentPermanentToExileEffect`; its destroy sibling has `opponentsOfSourceController`).
+- Summon: Valefor compares the cards' mana values, not the permanents' (a face-down creature's is 0, CR 708.2a).
+- Descent into Madness, The Legend of Yangchen and Sothera exile the chosen permanents one at a time (CR 603.10a; Sothera also before
+  the next opponent chooses, CR 101.4).
+- Conspiracy Theorist's trigger has no nonland filter, so it triggers and asks for a discard of only lands (Oracle: "one or more
+  nonland cards").
+- The Ruinous Powers' "mana of any color" is the engine's any-type permission, which also pays {C}.
+- Haunting Echoes with nothing exiled doesn't offer the library look CR 701.23a allows; Reap Intellect's same-name path still offers a
+  library that can't be searched (run 7's note).
+- The Horus Heresy's prompt says "a creature you control" over every creature.
+
+**Tests edited.** The new cases above and `DeathByDragonsTest.illegalTargetMeansNoDragons`. Renamed prompts, same assertions:
+`ChandraPyromasterTest`, `CapriciousHellraiserTest` and `LordOfTheVoidTest` name `MultiGraveyardChoice`; `ShadowKinTest` names it and
+answers by card id; `LobotomyTest`, `ShimianSpecterTest` and `PickTheBrainTest` answer the revealed-hand choice by the card where they
+answered a list of names. `CardImmutabilityArchTest` names the new copy handler for the deleted one. One assertion was replaced:
+`ResolutionScratchpadAmountTest.diedOfAnotherKindIsRefused` expected `AmountThisWay(EXILE).controlledByYou()` to be refused, the guard
+this run's per-player exile results lift. It now checks the refusals that remain (a draw's, died after an exile, still exiled by
+controller), and `exiledYoursCountsOnlyTheAmountControllersPermanents` tests what is allowed.
+
+**Tests run** (one Gradle run, forced rerun of the final tree, one `--tests` list per task, counted from the XML of that run by class
+name): 912 classes (1,359 suites, 12,625 cases, 29 skipped by `TriggerRouteRecordTest`'s assumptions), all pass: the changed cards' tests
+and the card tests constructing one, every card test of the new steps and of the survivors with changed semantics
+(`ChooseCardsFromTargetHandEffect`, the exile-until-the-source-leaves and exile-all records, the each-player draw and token records, the
+same-name and hand-exile steps, the delayed step trigger, the random exile), samples of `ExileTargetPermanentEffect`,
+`ExileGraveyardCardsEffect`, `LoseLifeEffect`, `MillEffect` and `DiscardEffect`; the application's ratchets and architecture tests and
+the tests naming a changed class; the AI polarity, selector, evaluator, strategy and deep-copy tests. The application, AI, engine
+testFixtures and all 26 letters' card-test sources compile. Not run: the full suites, the AI fuzz and stress tests, the frontend.
+
+**For the next run (Each, run 9: 69 rare records).**
+
+- 30 were read and left without a row, as each waits for something three or more share; build these first:
+  - a REVEAL step of each player's top cards (the seven `EachPlayerReveals...` top-card records);
+  - players, a filter and a destination on the per-player library-search queue (Old-Growth Dryads, Turtle Tracks, Hired Giant, Boldwyr
+    Heavyweights, Scholarship Sponsor, Enigma Ridges, the Weird Harvest record; ledgered From the Ashes);
+  - a "starting with you, each player may pay any amount of mana" step recording the total (the five join-forces records);
+  - a "controls a matching permanent / the most creatures" `PlayerPredicate` and a `PlayerSubject` on lose-the-game and investigate
+    (Bonder's Ornament, Nicol Bolas, Angel of Destiny, No Witnesses);
+  - a `PlayerSubject` on the shuffle-into-library steps, recording per player (Survive's record, Archival Whorl, The Great Aurora);
+  - and the parameters shared with classes of other families: a total-mana-value stop on the exile-until step (Tasha's Hideous
+    Laughter, Dream Harvest), a copier subject (Mirrorform; step 10's copy verb), a set subject on must-block (Predatory Rampage).
+- Then the 39 not read yet (villainous choices, "may ... or lose life", the keep-and-sacrifice and chosen-type loops).
+- Unblocked or narrowed by this run, still ledgered: the three choose-a-card-in-hand perpetual records (CHOOSE exists; they need an
+  own-hand subject for `ChooseCardEffect`, which must stay private), the random-opponent records (`ChoosePlayerAtRandomEffect`), Reap
+  Intellect's same-name flag (both its steps exist), the opponents forms of "loses life for each ... they control" (87, 89, 90 in the
+  ledger: `LoseLifeEffect` evaluates per player for each player only).
 
 ## Prompt
 

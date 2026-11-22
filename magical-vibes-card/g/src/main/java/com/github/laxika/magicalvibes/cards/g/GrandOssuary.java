@@ -6,12 +6,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DistributeCountersAmongCreaturesOnDeathEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesAndCreateTokensEqualToTotalPowerEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlaneswalkEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -30,9 +33,11 @@ public class GrandOssuary extends Card {
                 DistributeCountersAmongCreaturesOnDeathEffect.amongTargetCreaturesItsControllerControls(
                         CounterType.PLUS_ONE_PLUS_ONE, new TriggeringPermanentPower()));
         addTrigger(Triggers.chaosEnsues(), SequenceEffect.of(
-                new ExileAllCreaturesAndCreateTokensEqualToTotalPowerEffect(
+                new ExileAllPermanentsEffect(new PermanentIsCreaturePredicate()),
+                new EachPlayerCreatesTokenEffect(
                         new CreateTokenEffect("Saproling", 1, 1, CardColor.GREEN,
-                                List.of(CardSubtype.SAPROLING), Set.of(), Set.of())),
+                                List.of(CardSubtype.SAPROLING), Set.of(), Set.of())
+                                .withAmount(AmountThisWay.exiledPower().controlledByYou())),
                 new PlaneswalkEffect()));
     }
 }

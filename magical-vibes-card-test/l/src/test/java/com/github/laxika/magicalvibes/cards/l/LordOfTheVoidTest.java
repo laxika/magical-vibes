@@ -54,7 +54,7 @@ class LordOfTheVoidTest extends BaseCardTest {
 
         resolveCombat();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNotNull();
         harness.handleMultipleCardsChosen(player1, List.of(secondCreature.getId()));
 

@@ -7,8 +7,11 @@ import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
+import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -67,6 +70,11 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
         }
         int count = amountEvaluationService.evaluate(gameData, e.count(), AmountContext.forStackEntry(entry, source));
 
+        if (e.destination() == HandChoiceDestination.EXILE) {
+            entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
+        } else if (e.destination() == HandChoiceDestination.KEEP_IN_HAND) {
+            entry.recordStep(StepKind.CHOOSE, StepOutcome.NONE);
+        }
         // An X of 0 chooses no cards, but an instruction to look at the hand still happens.
         if (count <= 0) {
             if (e.revealHand()) {
@@ -101,12 +109,12 @@ public class ChooseCardsFromTargetHandEffectHandler implements NormalEffectHandl
                         e.upTo(), e.exileAllCopiesOfChosenNames(), e.declineFallbackDiscardCount(),
                         e.imprintOnSource(), e.revealHand(), e.grantPlayPermission(),
                         e.returnAtNextEndStep(), e.exilePlayOpponentTax(),
-                        e.chosenCardCondition(), e.chosenCardThenEffect());
+                        null, null);
             }
             case KEEP_IN_HAND -> playerInteractionSupport.resolveHandRevealAndChooseWithChosenCardThen(
                     gameData, entry, count, e.excludedTypes(), e.includedTypes(), e.filter(),
                     false, false, null, e.upTo(), false, 0, false, e.revealHand(),
-                    false, false, 0, e.chosenCardCondition(), e.chosenCardThenEffect(), true);
+                    false, false, 0, null, null, true);
             case TOP_OF_LIBRARY -> resolveToTopOfLibrary(gameData, entry, count, e);
             case SHUFFLE_INTO_LIBRARY ->
                     playerInteractionSupport.resolveHandRevealAndChooseToShuffleIntoLibrary(gameData, entry, count);

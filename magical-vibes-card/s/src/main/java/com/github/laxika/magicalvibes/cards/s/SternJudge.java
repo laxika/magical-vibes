@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerPermanentControlledEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.List;
@@ -16,9 +19,9 @@ public class SternJudge extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new EachPlayerLosesLifePerPermanentControlledEffect(
-                        1,
-                        new PermanentHasSubtypePredicate(CardSubtype.SWAMP))),
+                List.of(new LoseLifeEffect(
+                        new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.SWAMP), CountScope.CONTROLLER),
+                        Subjects.eachPlayer())),
                 "{T}: Each player loses 1 life for each Swamp they control."
         ));
     }

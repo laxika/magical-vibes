@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerOtherThanTargetCreatesTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -22,9 +23,9 @@ public class DeathByDragons extends Card {
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player"
-        )).addSpellEffect(new EachPlayerOtherThanTargetCreatesTokenEffect(
+        )).addSpellEffect(new EachPlayerCreatesTokenEffect(
                 new CreateTokenEffect("Dragon", 5, 5, CardColor.RED,
-                        List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of())
-        ));
+                        List.of(CardSubtype.DRAGON), Set.of(Keyword.FLYING), Set.of()),
+                Subjects.except(Subjects.eachPlayer(), Subjects.targetPlayerDeclaredElsewhere())));
     }
 }

@@ -126,7 +126,7 @@ class ChandraPyromasterTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
         assertThat(gd.getPlayerExiledCards(player1.getId())).hasSize(10);
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.ExiledSpellCopyChoice.class);
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
     }
 
     @Test

@@ -4,7 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesWithCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEventTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
@@ -28,7 +32,11 @@ public class LagrellaTheMagpie extends Card {
         ));
         target(new PermanentPredicateTargetFilter(targetFilter, "Target must be another creature"), 0, 99)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new ExileTargetCreaturesUntilSourceLeavesWithCounterEffect(
-                                CounterType.PLUS_ONE_PLUS_ONE, 2));
+                        SequenceEffect.of(
+                                new ExileTargetPermanentUntilSourceLeavesEffect(
+                                        false, new PermanentIsCreaturePredicate()),
+                                RegisterDelayedEventTriggerEffect.whenExiledCardReturns(
+                                        new PutCounterOnTargetPermanentEffect(
+                                                Subjects.triggering(), CounterType.PLUS_ONE_PLUS_ONE, 2))));
     }
 }

@@ -5,6 +5,8 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealMatchingCardsFromTargetHandAndKeepEffect;
 import com.github.laxika.magicalvibes.service.CardRevealService;
@@ -36,6 +38,8 @@ public class RevealMatchingCardsFromTargetHandAndKeepEffectHandler
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        entry.recordStep(((RevealMatchingCardsFromTargetHandAndKeepEffect) effect).keepInHand()
+                ? StepKind.CHOOSE : StepKind.EXILE, StepOutcome.NONE);
         var revealEffect = (RevealMatchingCardsFromTargetHandAndKeepEffect) effect;
         UUID targetPlayerId = entry.getTargetId();
         List<Card> hand = gameData.playerHands.getOrDefault(targetPlayerId, List.of());
@@ -69,7 +73,7 @@ public class RevealMatchingCardsFromTargetHandAndKeepEffectHandler
 
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedMatchingHandCardChoice(
                 entry.getControllerId(), targetPlayerId, matchingCards,
-                revealEffect.chosenCardThenEffect(), "Choose one of the revealed cards.",
+                null, "Choose one of the revealed cards.",
                 revealEffect.keepInHand()));
     }
 

@@ -67,8 +67,8 @@ Owner: `EffectResolutionService`, the recording handlers.
 Why: a later step would run before the earlier one finished, or read half its result.
 
 ### A delayed ability about a step reads that step (CR 603.7c)
-"Return those cards at the next end step" after a step is `RegisterDelayedStepTriggerEffect`: its entry carries the step's outcome (`DelayedReferents.stepResults`), each card bound to its stay (`MovedCard.entryVersion`).
-Owner: `RegisterDelayedStepTriggerEffectHandler`, `StackEntry.readStepResults`, `SubjectResolutionService`.
+"Return those cards at the next end step" / "when this leaves" after a step is `RegisterDelayedStepTriggerEffect` / `RegisterDelayedEventTriggerEffect`: its entry carries the step's outcome (`DelayedReferents.stepResults`), each card bound to its stay (`MovedCard.entryVersion`).
+Owner: the two registering handlers, `EventAbilitySupport.DelayedRecord`, `StackEntry.readStepResults`, `SubjectResolutionService`.
 Why: a bespoke exile-and-register handler forgot the stay and returned a card that had left and come back (CR 400.7).
 
 ### A removal step asks before anything leaves (CR 616.1)

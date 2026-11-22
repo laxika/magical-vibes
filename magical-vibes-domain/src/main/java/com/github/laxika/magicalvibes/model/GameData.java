@@ -10766,8 +10766,6 @@ public class GameData {
         copy.graveyardTargetOperation.resolutionTimeCollectEvidenceResume =
                 this.graveyardTargetOperation.resolutionTimeCollectEvidenceResume;
         copy.graveyardTargetOperation.resolutionTimeExileOwnGraveyardResume = this.graveyardTargetOperation.resolutionTimeExileOwnGraveyardResume;
-        copy.graveyardTargetOperation.resolutionTimeExileThenMayBecomeCopyResume =
-                this.graveyardTargetOperation.resolutionTimeExileThenMayBecomeCopyResume;
         copy.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume =
                 this.graveyardTargetOperation.resolutionTimeReturnCardsToBattlefieldResume;
         copy.graveyardTargetOperation.resolutionTimeBargainedReturnChoiceResume =
@@ -10795,16 +10793,6 @@ public class GameData {
                         ? null : new ArrayList<>(this.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesChosenCardIds);
         copy.graveyardTargetOperation.resolutionTimeDragonApproachResume =
                 this.graveyardTargetOperation.resolutionTimeDragonApproachResume;
-        copy.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsResume =
-                this.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsResume;
-        copy.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsChoiceMade =
-                this.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsChoiceMade;
-        copy.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsCandidateIds =
-                new ArrayList<>(this.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsCandidateIds);
-        copy.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsChosenCardId =
-                this.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsChosenCardId;
-        copy.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsSourcePermanentId =
-                this.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsSourcePermanentId;
         copy.graveyardTargetOperation.resolutionTimePutOnBottomThenExileTopCardsResume =
                 this.graveyardTargetOperation.resolutionTimePutOnBottomThenExileTopCardsResume;
         copy.graveyardTargetOperation.resolutionTimePutOnBottomThenExileTopCardsChoiceMade =

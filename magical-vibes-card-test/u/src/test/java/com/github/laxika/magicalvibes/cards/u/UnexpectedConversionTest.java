@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -165,5 +166,20 @@ class UnexpectedConversionTest extends BaseCardTest {
     private void addMana() {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 2);
+    }
+
+    @Test
+    @DisplayName("The choice from your hand shows that hand to no other player")
+    void handChoiceIsPrivate() {
+        harness.setHand(player1, List.of(new UnexpectedConversion(), new Shock(), new LightningBolt()));
+        harness.setLibrary(player1, List.of(new Forest(), new Island()));
+        addMana();
+        harness.getConn2().clearMessages();
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.interaction.isAwaitingInput()).isTrue();
+        assertThat(harness.getConn2().getMessagesContaining("Lightning Bolt")).isEmpty();
+        assertThat(harness.getConn2().getMessagesContaining("Shock")).isEmpty();
     }
 }

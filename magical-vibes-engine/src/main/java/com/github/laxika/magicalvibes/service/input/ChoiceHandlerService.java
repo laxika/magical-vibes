@@ -8083,33 +8083,6 @@ public class ChoiceHandlerService {
             damageSupport.dealDamageToPlayer(gameData, damageEntry, targetPlayerId, damage);
         }
 
-        if (ctx.chooseAnyNumber()) {
-            Card chosenCard = hand == null ? null : hand.stream()
-                    .filter(card -> card.getName().equals(cardName))
-                    .findFirst()
-                    .orElse(null);
-            if (chosenCard != null) {
-                hand.remove(chosenCard);
-                gameData.addToExile(targetPlayerId, chosenCard);
-                gameLogService.append(gameData,
-                        GameLog.text(controllerName + " exiles " + chosenCard.getName()
-                                + " from " + targetName + "'s hand."));
-            }
-
-            List<Card> matchingCards = collectMatchingCards(gameData, targetPlayerId, cardName);
-            if (!matchingCards.isEmpty()) {
-                playerInputService.beginMultiZoneExileChoice(
-                        gameData, controllerId, matchingCards, targetPlayerId, cardName, false, (UUID) null, true);
-                inputCompletionService.publishStateAfterInput(gameData);
-                return;
-            }
-
-            LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
-            gameLogService.append(gameData, GameLog.text(targetName + " shuffles their library."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
         // CR 701.23b: graveyard copies are found mandatorily, while the controller may choose any number
         // of the hand and library copies to find. Without hidden-zone copies, nothing is left to choose.
         boolean hiddenZoneCopies = (hand != null && hand.stream().anyMatch(c -> c.getName().equals(cardName)))

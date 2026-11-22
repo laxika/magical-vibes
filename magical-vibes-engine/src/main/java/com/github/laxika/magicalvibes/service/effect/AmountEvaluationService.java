@@ -1153,7 +1153,9 @@ public class AmountEvaluationService {
             return results.outcome(thisWay.kind()).amount();
         }
         if (thisWay.kind() == StepKind.EXILE) {
-            int total = exiledStat(gameData, entry, results.outcome(StepKind.EXILE), thisWay.stat());
+            StepOutcome exiled = results.outcome(StepKind.EXILE);
+            int total = exiledStat(gameData, entry, exiled, thisWay.stat(),
+                    thisWay.yours() ? controlledBy(exiled, ctx.controllerId()) : exiled.objectIds());
             return thisWay.negativeKept() ? total : Math.max(0, total);
         }
         boolean sacrifice = thisWay.kind() == StepKind.SACRIFICE;
@@ -1231,9 +1233,13 @@ public class AmountEvaluationService {
      * zone it was exiled from (CR 608.2h): a permanent as the entry recorded it as it left the battlefield, a card from
      * a graveyard as the step recorded it there, a card exiled from a hidden zone as it is now in exile.
      */
-    private int exiledStat(GameData gameData, StackEntry entry, StepOutcome exiled, AmountThisWay.Stat stat) {
+    private int exiledStat(GameData gameData, StackEntry entry, StepOutcome exiled, AmountThisWay.Stat stat,
+                           List<UUID> counted) {
+        if (stat == AmountThisWay.Stat.AMOUNT) {
+            return counted.size();
+        }
         int total = 0;
-        for (UUID id : exiled.objectIds()) {
+        for (UUID id : counted) {
             Integer value;
             LastKnownCardStats recorded = exiled.lastKnownCard(id).or(() -> exiled.lastKnownPermanent(id))
                     .orElse(null);
@@ -1264,6 +1270,15 @@ public class AmountEvaluationService {
             total = SaturatingMath.add(total, value == null ? 0 : value);
         }
         return total;
+    }
+
+    /** The permanents an exile step exiled that {@code playerId} controlled as they left (CR 608.2h). */
+    private static List<UUID> controlledBy(StepOutcome exiled, UUID playerId) {
+        return exiled.objectIds().stream()
+                .filter(id -> exiled.lastKnownPermanent(id)
+                        .filter(known -> known.controllerId() != null && known.controllerId().equals(playerId))
+                        .isPresent())
+                .toList();
     }
 
     /** The chosen number of the first permanent created earlier in the resolving entry; 0 if none. */

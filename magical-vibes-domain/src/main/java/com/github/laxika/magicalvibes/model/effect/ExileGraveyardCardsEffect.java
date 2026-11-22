@@ -243,6 +243,12 @@ public record ExileGraveyardCardsEffect(
                 false, false, false, false, false, cards);
     }
 
+    /** {@link #cards(CardSubject)}, the cards tracked with the source permanent. */
+    public static ExileGraveyardCardsEffect cardsWithSource(CardSubject cards) {
+        return new ExileGraveyardCardsEffect(0, GraveyardExileScope.CARDS, null, false, true, false, null, false,
+                false, false, false, false, false, cards);
+    }
+
     /** "Exile target [filter] card from an opponent's graveyard". */
     public static ExileGraveyardCardsEffect oneTargetFromOpponentGraveyard(CardPredicate filter) {
         return new ExileGraveyardCardsEffect(1, GraveyardExileScope.TARGET_CARDS_OPPONENT_GRAVEYARD,

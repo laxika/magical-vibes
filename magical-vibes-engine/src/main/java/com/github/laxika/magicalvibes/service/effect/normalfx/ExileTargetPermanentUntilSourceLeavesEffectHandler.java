@@ -3,8 +3,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LastKnownCardStats;
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.action.PendingExileReturn;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -13,6 +17,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -37,6 +42,7 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (ExileTargetPermanentUntilSourceLeavesEffect) effect;
+        entry.recordStep(StepKind.EXILE, StepOutcome.NONE);
         List<Permanent> named = subjectResolutionService.permanents(gameData, entry, effect, e.permanents());
         if (named.isEmpty()) {
             return;
@@ -79,6 +85,12 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
             entry.getLastKnownPermanentPowers().put(target.getId(),
                     gameQueryService.getEffectivePower(gameData, target));
             List<Card> leavingCards = List.copyOf(target.cardsLeavingBattlefield());
+            List<Card> cardsExiled = ExileTargetPermanentEffectHandler.leavingCards(target);
+            LastKnownCardStats lastKnown = new LastKnownCardStats(target.getId(),
+                    gameQueryService.getEffectivePower(gameData, target),
+                    gameQueryService.getEffectiveToughness(gameData, target),
+                    gameQueryService.getPermanentManaValue(target),
+                    gameQueryService.getEffectiveName(gameData, target), targetControllerId);
             if (!permanentRemovalService.removePermanentToExile(gameData, target)) {
                 continue;
             }
@@ -109,6 +121,11 @@ public class ExileTargetPermanentUntilSourceLeavesEffectHandler implements Norma
                     }
                 }
             }
+            List<MovedCard> moved = new ArrayList<>();
+            ExileTargetPermanentEffectHandler.addMovedCards(gameData, target.getId(), cardsExiled, moved);
+            entry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(target.getId()),
+                    targetControllerId == null ? List.of() : List.of(targetControllerId), moved)
+                    .withLastKnownPermanents(List.of(lastKnown)));
         }
 
         permanentRemovalService.removeOrphanedAuras(gameData);

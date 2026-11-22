@@ -4,8 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallySetChosenCardCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -21,12 +24,13 @@ public class ThoughtPartition extends Card {
         ChooseCardsFromTargetHandEffect choose = new ChooseCardsFromTargetHandEffect(
                 new Fixed(1), List.of(CardType.LAND), List.of(), HandChoiceDestination.KEEP_IN_HAND,
                 false, null, 0, true, false, false, true, false, false, 0
-        ).withRevealMatchingOnly().withChosenCardThen(null,
-                new PerpetuallySetChosenCardCharacteristicsEffect(CardColor.WHITE, "{5}"));
+        ).withRevealMatchingOnly();
 
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
-        )).addSpellEffect(choose);
+        )).addSpellEffect(choose)
+                .addSpellEffect(new ConditionalEffect(new HappenedThisWay(StepKind.CHOOSE),
+                        new PerpetuallySetChosenCardCharacteristicsEffect(CardColor.WHITE, "{5}")));
     }
 }

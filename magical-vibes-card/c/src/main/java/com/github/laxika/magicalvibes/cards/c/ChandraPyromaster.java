@@ -3,11 +3,20 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.MultiTargetConstraint;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetAndUpToCreaturesThatPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayPlayThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardsChooseSpellAndCastCopiesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.AnyTargetPredicateTargetFilter;
+import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -56,7 +65,16 @@ public class ChandraPyromaster extends Card {
         // this way and copy it three times. You may cast the copies without paying their mana costs.
         addActivatedAbility(new ActivatedAbility(
                 -7,
-                List.of(new ExileTopCardsChooseSpellAndCastCopiesEffect(10, 3)),
+                List.of(SequenceEffect.of(
+                        new ExileTopCardOfOwnLibraryEffect(false, Subjects.you(), new Fixed(10)),
+                        ChooseCardEffect.announced(
+                                Subjects.cardsThisWay(StepKind.EXILE, new CardAnyOfPredicate(List.of(
+                                        new CardTypePredicate(CardType.INSTANT),
+                                        new CardTypePredicate(CardType.SORCERY)))),
+                                "an instant or sorcery card exiled this way to copy three times"),
+                        CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.CHOOSE)),
+                        CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.CHOOSE)),
+                        CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.CHOOSE)))),
                 "−7: Exile the top ten cards of your library. Choose an instant or sorcery card exiled this way and copy it three times. You may cast the copies without paying their mana costs."
         ));
     }

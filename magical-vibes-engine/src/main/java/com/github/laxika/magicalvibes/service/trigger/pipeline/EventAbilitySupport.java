@@ -410,6 +410,10 @@ class EventAbilitySupport {
         public void stamp(StackEntry entry) {
             entry.setMadeByResolution(true);
             record.stamp(entry);
+            if (!delayed.referents().stepResults().outcomes().isEmpty()) {
+                // One made after a step reads that step, whatever its trigger event is (CR 603.7c).
+                entry.readStepResults(delayed.referents().stepResults());
+            }
             if (delayed.linkedExiledCardId() != null) {
                 entry.setLinkedExiledCardId(delayed.linkedExiledCardId());
             }

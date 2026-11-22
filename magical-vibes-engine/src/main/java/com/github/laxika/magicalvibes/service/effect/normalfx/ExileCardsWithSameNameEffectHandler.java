@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.PendingInteraction.MultiZoneExileChoice.SearchedZones;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -58,8 +59,12 @@ public class ExileCardsWithSameNameEffectHandler implements NormalEffectHandlerB
         // Both are read before the step records anything: "that card" may be the exile step's before this one.
         Set<String> names = new LinkedHashSet<>();
         List<UUID> searched = new ArrayList<>();
+        List<LocatedCard> namedInHand = new ArrayList<>();
         if (e.cards() != null) {
             for (LocatedCard named : subjectResolutionService.locatedCards(gameData, entry, e, e.cards())) {
+                if (named.zone() == Zone.HAND) {
+                    namedInHand.add(named);
+                }
                 names.addAll(named.card().getNames());
                 if (e.searched() == null && !searched.contains(named.ownerId())) {
                     searched.add(named.ownerId());
@@ -80,6 +85,9 @@ public class ExileCardsWithSameNameEffectHandler implements NormalEffectHandlerB
         }
         // "Search its controller's", "search its owner's": one player's zones.
         if (!searched.isEmpty()) {
+            if (e.find() == Find.ALL && e.zones().contains(Zone.HAND)) {
+                exileNamedInHand(gameData, entry, namedInHand, searched.getFirst(), sourceId);
+            }
             search(gameData, entry, e, names, searched.getFirst(), sourceId);
         }
     }
@@ -141,6 +149,21 @@ public class ExileCardsWithSameNameEffectHandler implements NormalEffectHandlerB
             }
             offered.addAll(matching(cards, names));
         }
+        if (names.isEmpty() && e.cards() != null && searchedZones.contains(Zone.LIBRARY)
+                && searchedZones.contains(Zone.HAND)) {
+            // "Search that player's graveyard, hand, and library" with no card chosen: there is nothing to find, but
+            // the library may still be searched (CR 701.23a).
+            librarySearchSupport.sendLibrarySearchToPlayer(gameData, searcherId,
+                    LibrarySearchParams.builder(searcherId, List.<Card>of())
+                            .targetPlayerId(playerId)
+                            .canFailToFind(true)
+                            .shuffleAfterSelection(true)
+                            .build(),
+                    "You may search the library; no card was named, so there is nothing to find.", true,
+                    gameData.playerIdToName.get(searcherId) + " may search "
+                            + gameData.playerIdToName.get(playerId) + "'s library.");
+            return;
+        }
         if (!offered.isEmpty()) {
             playerInputService.beginSameNameExileChoice(gameData, searcherId, offered, playerId,
                     String.join(", ", names), sourceId, new SearchedZones(searchedZones, libraryTopCards), shuffles,
@@ -151,6 +174,27 @@ public class ExileCardsWithSameNameEffectHandler implements NormalEffectHandlerB
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             gameLogService.append(gameData, GameLog.text(
                     gameData.playerIdToName.get(playerId) + " shuffles their library."));
+        }
+    }
+
+    /** "The chosen card plus all others": the named card itself, which is known to be there, needs no finding. */
+    private void exileNamedInHand(GameData gameData, StackEntry entry, List<LocatedCard> named, UUID playerId,
+                                  UUID sourceId) {
+        for (LocatedCard located : named) {
+            Card card = located.card();
+            if (!playerId.equals(located.ownerId())
+                    || !gameData.playerHands.get(playerId).removeIf(held -> held.getId().equals(card.getId()))) {
+                continue;
+            }
+            if (sourceId == null) {
+                exileService.exileCard(gameData, playerId, card);
+            } else {
+                exileService.exileCard(gameData, playerId, card, sourceId);
+            }
+            entry.addToStep(StepKind.EXILE,
+                    StepOutcome.ofObjects(List.of(card.getId()), List.of(playerId)).withFromHand(1));
+            gameLogService.append(gameData, GameLog.cardThen(card,
+                    " is exiled from " + gameData.playerIdToName.get(playerId) + "'s hand."));
         }
     }
 

@@ -167,7 +167,8 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
         return new LastKnownCardStats(permanent.getId(), gameQueryService.getEffectivePower(gameData, permanent),
                 gameQueryService.getEffectiveToughness(gameData, permanent),
                 gameQueryService.getPermanentManaValue(permanent),
-                gameQueryService.getEffectiveName(gameData, permanent));
+                gameQueryService.getEffectiveName(gameData, permanent),
+                gameQueryService.findPermanentController(gameData, permanent.getId()));
     }
 
     private void exileNamed(GameData gameData, StackEntry entry, ExileTargetPermanentEffect exile,
@@ -208,7 +209,7 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
     }
 
     /** The permanent's own card, then the other cards that leave the battlefield with it. */
-    private static List<Card> leavingCards(Permanent permanent) {
+    static List<Card> leavingCards(Permanent permanent) {
         List<Card> cards = new java.util.ArrayList<>();
         if (permanent.getOriginalCard() != null) {
             cards.add(permanent.getOriginalCard());
@@ -225,7 +226,7 @@ public class ExileTargetPermanentEffectHandler implements NormalEffectHandlerBea
      * The cards an exiled permanent became in exile, for "the exiled card" (CR 400.7j): each of a merged permanent's
      * (CR 731.3c); none for a token.
      */
-    private static void addMovedCards(GameData gameData, UUID permanentId, List<Card> cards, List<MovedCard> moved) {
+    static void addMovedCards(GameData gameData, UUID permanentId, List<Card> cards, List<MovedCard> moved) {
         for (Card card : cards) {
             if (card.isToken()) {
                 continue;

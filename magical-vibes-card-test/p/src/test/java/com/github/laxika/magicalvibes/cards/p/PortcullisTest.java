@@ -265,6 +265,30 @@ class PortcullisTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
     }
 
+    @Test
+    @DisplayName("Doesn't return a card that left exile and was exiled again")
+    void doesNotReturnACardThatWasExiledAgain() {
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+        castPortcullis();
+        castLlanowarElves();
+        harness.passBothPriorities();
+        var exiled = gd.getPlayerExiledCards(player1.getId()).getFirst();
+        gd.removeFromExile(exiled.getId());
+        gd.addToExile(player1.getId(), exiled);
+
+        UUID portcullisId = harness.getPermanentId(player1, "Portcullis");
+        harness.setHand(player2, List.of(new Naturalize()));
+        harness.addMana(player2, ManaColor.GREEN, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 1);
+        harness.passPriority(player1);
+        harness.castAndResolveInstant(player2, 0, portcullisId);
+        harness.passBothPriorities();
+
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
+        assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactly(exiled);
+    }
+
     private void castPortcullis() {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);

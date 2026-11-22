@@ -2803,53 +2803,6 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a number for \"{}\"", gameData.id, playerName, ctx.chosenName());
     }
 
-    /**
-     * Shimian Specter / Lobotomy / Pick the Brain: {@code targetPlayerId} reveals their hand and
-     * the controller chooses a card in it accepted by {@code choosable}. The pick reuses the
-     * Thought Hemorrhage answer flow with {@code damagePerCard = 0}. The normal mode exiles every
-     * copy of the chosen name; {@code chooseAnyNumber} exiles the chosen card first and offers any
-     * number of the remaining copies from the target's hand, graveyard, and library. Unlike name
-     * choice effects, the options come from the revealed hand only, so no interaction begins when
-     * the hand holds no legal card.
-     */
-    public void beginRevealHandChooseCardFromItAndExileAllCopiesChoice(GameData gameData, UUID choosingPlayerId,
-                                                                       UUID targetPlayerId, Predicate<Card> choosable,
-                                                                       String choosableLabel, Card sourceCard) {
-        beginRevealHandChooseCardFromItAndExileAllCopiesChoice(gameData, choosingPlayerId, targetPlayerId,
-                choosable, choosableLabel, sourceCard, false);
-    }
-
-    public void beginRevealHandChooseCardFromItAndExileAllCopiesChoice(GameData gameData, UUID choosingPlayerId,
-                                                                       UUID targetPlayerId, Predicate<Card> choosable,
-                                                                       String choosableLabel, Card sourceCard,
-                                                                       boolean chooseAnyNumber) {
-        List<Card> hand = gameData.playerHands.get(targetPlayerId);
-        List<String> cardNames = hand == null ? List.of() : hand.stream()
-                .filter(choosable)
-                .map(Card::getName)
-                .distinct()
-                .sorted()
-                .toList();
-
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
-        if (cardNames.isEmpty()) {
-            log.info("Game {} - {}'s revealed hand holds no choosable card; nothing is exiled", gameData.id, targetName);
-            return;
-        }
-
-        ChoiceContext.RevealHandDamageAndExileByNameChoice choiceContext =
-                new ChoiceContext.RevealHandDamageAndExileByNameChoice(targetPlayerId, choosingPlayerId, List.of(), 0,
-                        sourceCard, chooseAnyNumber);
-
-        String prompt = "Choose a " + choosableLabel + " from " + targetName + "'s revealed hand.";
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                choosingPlayerId, null, null, choiceContext, cardNames, prompt));
-
-        String playerName = gameData.playerIdToName.get(choosingPlayerId);
-        log.info("Game {} - Awaiting {} to choose a card from {}'s revealed hand (exile all copies)",
-                gameData.id, playerName, targetName);
-    }
-
     public void beginSphinxAmbassadorCardNameChoice(GameData gameData, UUID namingPlayerId, UUID controllerId) {
         ChoiceContext.SphinxAmbassadorNameChoice choiceContext = new ChoiceContext.SphinxAmbassadorNameChoice(namingPlayerId, controllerId);
 

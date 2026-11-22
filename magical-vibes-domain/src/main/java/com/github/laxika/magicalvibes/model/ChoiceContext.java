@@ -1508,19 +1508,11 @@ public sealed interface ChoiceContext {
     /**
      * The controller chose a card name; {@code targetPlayerId} reveals their hand, the source deals
      * {@code damagePerCard} damage per revealed copy, then every copy in their hand/graveyard/library
-     * is exiled and they shuffle (Thought Hemorrhage). When {@code chooseAnyNumber} is true, the
-     * selected card is exiled first and the controller chooses any number of the remaining copies
-     * (Pick the Brain). {@code sourceCard} attributes the damage.
+     * is exiled and they shuffle (Thought Hemorrhage). {@code sourceCard} attributes the damage.
      */
     record RevealHandDamageAndExileByNameChoice(UUID targetPlayerId, UUID controllerId,
                                                 List<CardType> excludedTypes, int damagePerCard,
-                                                Card sourceCard, boolean chooseAnyNumber) implements ChoiceContext {
-        public RevealHandDamageAndExileByNameChoice(UUID targetPlayerId, UUID controllerId,
-                                                     List<CardType> excludedTypes, int damagePerCard,
-                                                     Card sourceCard) {
-            this(targetPlayerId, controllerId, excludedTypes, damagePerCard, sourceCard, false);
-        }
-    }
+                                                Card sourceCard) implements ChoiceContext {}
 
     /** Assembly Hall: choose the name of a creature card currently in your hand to reveal. */
     record AssemblyHallCreatureCardChoice(UUID controllerId) implements ChoiceContext {}

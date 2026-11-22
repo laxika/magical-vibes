@@ -3956,7 +3956,7 @@ public class ConditionEvaluationService {
      * Liquimetal Coating, snow from Rimefeather Owl), since its layer state is gone; a snapshot taken without them as
      * it is.
      */
-    static Permanent lastKnownPermanent(GameData gameData, UUID permanentId) {
+    public static Permanent lastKnownPermanent(GameData gameData, UUID permanentId) {
         Permanent departed = gameData.departedPermanentSnapshots.values().stream()
                 .filter(snapshot -> permanentId.equals(snapshot.getId()))
                 .findFirst().orElse(null);

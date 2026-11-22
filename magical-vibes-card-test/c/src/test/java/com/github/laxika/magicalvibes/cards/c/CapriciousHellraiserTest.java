@@ -43,8 +43,8 @@ class CapriciousHellraiserTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        PendingInteraction.ExiledSpellCopyChoice choice = gd.interaction.activeInteraction(
-                PendingInteraction.ExiledSpellCopyChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice = gd.interaction.activeInteraction(
+                PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice.validCardIds()).containsExactly(inquiry.getId());
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player1.getId())).containsExactlyInAnyOrder(inquiry, longlegs, forest);

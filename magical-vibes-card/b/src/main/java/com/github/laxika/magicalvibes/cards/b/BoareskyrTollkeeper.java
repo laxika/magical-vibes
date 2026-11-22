@@ -3,8 +3,12 @@ package com.github.laxika.magicalvibes.cards.b;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyEnterTappedChosenCardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealMatchingCardsFromTargetHandAndKeepEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -23,10 +27,11 @@ public class BoareskyrTollkeeper extends Card {
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                 "Target must be an opponent"
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new RevealMatchingCardsFromTargetHandAndKeepEffect(
-                        new CardAnyOfPredicate(List.of(
+                SequenceEffect.of(
+                        new RevealMatchingCardsFromTargetHandAndKeepEffect(new CardAnyOfPredicate(List.of(
                                 new CardTypePredicate(CardType.CREATURE),
-                                new CardTypePredicate(CardType.LAND))),
-                        new PerpetuallyEnterTappedChosenCardEffect()));
+                                new CardTypePredicate(CardType.LAND)))),
+                        new ConditionalEffect(new HappenedThisWay(StepKind.CHOOSE),
+                                new PerpetuallyEnterTappedChosenCardEffect())));
     }
 }

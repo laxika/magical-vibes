@@ -67,6 +67,12 @@ public record ReturnAllCardsExiledWithSourceEffect(boolean underControllerContro
                 false, false, false, false, Objects.requireNonNull(cards, "cards"));
     }
 
+    /** "Return [those cards] to the battlefield under their owners' control": each card {@code cards} names in exile. */
+    public static ReturnAllCardsExiledWithSourceEffect returnToBattlefield(CardSubject cards) {
+        return new ReturnAllCardsExiledWithSourceEffect(false, null, false, Set.of(), null, null, null, null,
+                false, false, false, false, Objects.requireNonNull(cards, "cards"));
+    }
+
     public ReturnAllCardsExiledWithSourceEffect() {
         this(false, null, false, Set.of(), null, null, null, null, false, false, false, false, null);
     }

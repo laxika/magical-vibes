@@ -37,7 +37,9 @@ import java.util.Objects;
  * life equal to the number of creatures they controlled that were destroyed this way", Deadly Tempest; "for each
  * creature destroyed this way, its controller creates a token"). Such a destroy step also records the last-known
  * power, toughness and mana value of what it destroyed ("the total mana value of permanents destroyed this way",
- * Convert to Slime).
+ * Convert to Slime). An exile step records each exiled permanent's last controller, so {@code yours} also reads one:
+ * "the total power of creatures they controlled that were exiled this way" (Oversimplify), "for each creature exiled
+ * this way, its controller draws a card" (Martyr's Cry).
  *
  * <p>{@code includesUnremoved} ({@link #includingUnremoved()}) widens a count over a destroy step that records its
  * departures to every permanent its instruction applied to, those that weren't destroyed (indestructible, regenerated,
@@ -86,9 +88,14 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
             throw new IllegalArgumentException(
                     "Only a sacrifice, destroy or exile step records last-known " + stat + ": " + kind);
         }
-        if ((stat == Stat.DIED || filter != null || yours) && !removal) {
+        if ((stat == Stat.DIED || filter != null) && !removal) {
             throw new IllegalArgumentException(
-                    "Only a sacrifice or destroy step records whether and whose what it removed died: " + kind);
+                    "Only a sacrifice or destroy step records what it removed and whether it died: " + kind);
+        }
+        if (yours && !removal && (kind != StepKind.EXILE || cardFilter != null
+                || stat == Stat.STILL_EXILED || stat == Stat.FROM_HAND)) {
+            throw new IllegalArgumentException(
+                    "Only a removal step records whose what it removed was: " + kind + " " + stat);
         }
         if (includesUnremoved && (kind != StepKind.DESTROY || stat == Stat.DIED)) {
             throw new IllegalArgumentException(
@@ -147,7 +154,7 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
     }
 
     /**
-     * "The number of creatures you controlled that were destroyed this way": this amount over only the removed
+     * "The number of creatures you controlled that were destroyed [exiled] this way": this amount over only the removed
      * permanents the amount's controller controlled.
      */
     public AmountThisWay controlledByYou() {

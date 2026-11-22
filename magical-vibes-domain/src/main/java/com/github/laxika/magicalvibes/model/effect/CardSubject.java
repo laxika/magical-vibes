@@ -18,7 +18,8 @@ import java.util.Objects;
  *
  * <p>The variants and the wording each stands for are listed in {@code agent-docs/SUBJECTS_REFERENCE.md}.
  */
-public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubject.TargetCard {
+public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubject.TargetCard,
+        CardSubject.TriggeringCards {
 
     /** Whether this subject is the effect's own card target, chosen as the spell or ability is put on the stack. */
     default boolean declaresTarget() {
@@ -31,7 +32,10 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
      * zone they went to (a token, which ceases to exist, becomes none); for {@link StepKind#DISCARD} the discarded
      * cards, in the graveyard or the public zone a replacement put them in instead; for {@link StepKind#COUNTER_SPELL}
      * the card the countered spell became in its graveyard or in exile (a copy, an ability or a card put into a hidden
-     * zone becomes none); for {@link StepKind#SEEK} the sought cards, in the hand they were put into (digital only).
+     * zone becomes none); for {@link StepKind#SEEK} the sought cards, in the hand they were put into (digital only);
+     * for {@link StepKind#MILL} the milled cards, in the graveyard or in exile where a replacement put them
+     * (CR 701.17c); for {@link StepKind#CHOOSE} the chosen cards, in the zone they were chosen in (also a revealed
+     * hand), while they are still the objects that were chosen.
      * The rest of the effect can find a card it moved to a public zone (CR 400.7j); a card that has
      * left that zone since is a new object and is not named.
      *
@@ -50,12 +54,22 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
         public CardsThisWay {
             Objects.requireNonNull(kind, "kind");
             switch (kind) {
-                case EXILE, DESTROY, SACRIFICE, DISCARD, COUNTER_SPELL, SEEK -> {
+                case EXILE, DESTROY, SACRIFICE, DISCARD, COUNTER_SPELL, SEEK, MILL, CHOOSE -> {
                 }
                 default -> throw new IllegalArgumentException("A " + kind + " step leaves no card for a card "
                         + "subject to name");
             }
         }
+    }
+
+    /**
+     * "One of them" in "whenever you discard one or more nonland cards, you may exile one of them from your
+     * graveyard": the cards the trigger event was about that match {@code filter} and are still in the graveyard stay
+     * the event put them in (CR 400.7).
+     *
+     * @param filter which of the event's cards are named; {@code null} for all of them
+     */
+    record TriggeringCards(CardPredicate filter) implements CardSubject {
     }
 
     /**

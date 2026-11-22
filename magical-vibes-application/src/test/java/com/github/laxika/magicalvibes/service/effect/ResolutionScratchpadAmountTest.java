@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DepartureResult;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.LastKnownCardStats;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.StepOutcome;
@@ -132,8 +133,35 @@ class ResolutionScratchpadAmountTest {
     void diedOfAnotherKindIsRefused() {
         assertThatThrownBy(() -> AmountThisWay.died(StepKind.DRAW))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> new AmountThisWay(StepKind.EXILE).controlledByYou())
+        assertThatThrownBy(() -> new AmountThisWay(StepKind.DRAW).controlledByYou())
                 .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AmountThisWay.died(StepKind.EXILE))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> AmountThisWay.stillExiled().controlledByYou())
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    @DisplayName("An exile step's count and power read only what the amount's controller controlled as it left")
+    void exiledYoursCountsOnlyTheAmountControllersPermanents() {
+        UUID opponentId = UUID.randomUUID();
+        UUID own = UUID.randomUUID();
+        UUID first = UUID.randomUUID();
+        UUID second = UUID.randomUUID();
+        UUID notAPermanent = UUID.randomUUID();
+        entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(own, first, second, notAPermanent),
+                List.of(controllerId, opponentId)).withLastKnownPermanents(List.of(
+                new LastKnownCardStats(own, 5, 5, 3, "Own", controllerId),
+                new LastKnownCardStats(first, 2, 2, 2, "First", opponentId),
+                new LastKnownCardStats(second, 4, 4, 4, "Second", opponentId))));
+        AmountThisWay count = new AmountThisWay(StepKind.EXILE).controlledByYou();
+        AmountThisWay power = AmountThisWay.exiledPower().controlledByYou();
+        AmountContext opponents = AmountContext.forStackEntry(entry, null).withControllerId(opponentId);
+
+        assertThat(evaluate(count)).isEqualTo(1);
+        assertThat(evaluate(power)).isEqualTo(5);
+        assertThat(amountEvaluationService.evaluate(gd, count, opponents)).isEqualTo(2);
+        assertThat(amountEvaluationService.evaluate(gd, power, opponents)).isEqualTo(6);
     }
 
     @Test

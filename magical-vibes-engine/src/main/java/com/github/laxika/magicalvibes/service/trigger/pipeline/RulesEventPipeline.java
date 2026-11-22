@@ -378,9 +378,6 @@ public class RulesEventPipeline {
             if (!referents.permanentIds().isEmpty()) {
                 entry.setDeclaredTargetIds(referents.permanentIds());
             }
-            if (!referents.stepResults().outcomes().isEmpty()) {
-                entry.readStepResults(referents.stepResults());
-            }
             if (!referents.cardIds().isEmpty()) {
                 entry.setTargetCardIds(new ArrayList<>(referents.cardIds()));
                 if (referents.cardIds().size() == 1) {

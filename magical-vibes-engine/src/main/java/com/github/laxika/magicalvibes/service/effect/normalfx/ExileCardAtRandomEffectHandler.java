@@ -21,6 +21,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -70,22 +72,25 @@ public class ExileCardAtRandomEffectHandler implements NormalEffectHandlerBean {
                         ? "card" : "matching card") + " in their " + zoneName + " to exile."));
                 continue;
             }
-            Card exiled = candidates.get(ThreadLocalRandom.current().nextInt(candidates.size()));
-            List<LastKnownCardStats> known = List.of();
-            if (fromGraveyard) {
-                known = gameQueryService.asInGraveyard(gameData, List.of(exiled));
-                permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, exiled.getId());
-            } else if (!zone.removeIf(card -> card.getId().equals(exiled.getId()))) {
-                continue;
+            List<Card> picked = new ArrayList<>(candidates);
+            Collections.shuffle(picked, ThreadLocalRandom.current());
+            for (Card exiled : picked.subList(0, Math.min(random.count(), picked.size()))) {
+                List<LastKnownCardStats> known = List.of();
+                if (fromGraveyard) {
+                    known = gameQueryService.asInGraveyard(gameData, List.of(exiled));
+                    permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, exiled.getId());
+                } else if (!zone.removeIf(card -> card.getId().equals(exiled.getId()))) {
+                    continue;
+                }
+                exileService.exileCard(gameData, playerId, exiled);
+                entry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(exiled.getId()), List.of(playerId))
+                        .withLastKnownCards(known));
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(playerName + " exiles ").card(exiled)
+                        .text(" at random from their " + zoneName + ".").build());
+                log.info("Game {} - {} exiles {} at random from their {}", gameData.id, playerName, exiled.getName(),
+                        zoneName);
             }
-            exileService.exileCard(gameData, playerId, exiled);
-            entry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(exiled.getId()), List.of(playerId))
-                    .withLastKnownCards(known));
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(playerName + " exiles ").card(exiled)
-                    .text(" at random from their " + zoneName + ".").build());
-            log.info("Game {} - {} exiles {} at random from their {}", gameData.id, playerName, exiled.getName(),
-                    zoneName);
         }
     }
 }

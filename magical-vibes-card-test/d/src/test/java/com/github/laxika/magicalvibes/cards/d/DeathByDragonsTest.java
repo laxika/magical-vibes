@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.d;
 
+import com.github.laxika.magicalvibes.cards.t.TrueBeliever;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed(DeathByDragons.class)
+@CardUsed({DeathByDragons.class, TrueBeliever.class})
 class DeathByDragonsTest extends BaseCardTest {
 
     @Test
@@ -67,5 +68,19 @@ class DeathByDragonsTest extends BaseCardTest {
         assertThat(findPermanents(player2, "Dragon")).isEmpty();
         harness.assertInHand(player1, "Death by Dragons");
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("No player creates a Dragon when the target player has become illegal")
+    void illegalTargetMeansNoDragons() {
+        harness.setHand(player1, List.of(new DeathByDragons()));
+        harness.addMana(player1, ManaColor.RED, 6);
+        harness.castSorcery(player1, 0, player2.getId());
+        harness.addToBattlefield(player2, new TrueBeliever());
+
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Dragon")).isEmpty();
+        assertThat(findPermanents(player2, "Dragon")).isEmpty();
     }
 }

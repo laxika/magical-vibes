@@ -6,8 +6,13 @@ import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -18,6 +23,9 @@ import java.util.List;
 @CardRegistration(set = "OTC", collectorNumber = "37")
 @CardRegistration(set = "OTC", collectorNumber = "73")
 public class BountyBoard extends Card {
+
+    private static final PlayerSubject ITS_CONTROLLERS_OPPONENTS =
+            Subjects.opponentsOf(Subjects.controllerOf(Subjects.triggering()));
 
     public BountyBoard() {
         addActivatedAbility(ManaAbilities.tapForAnyColor());
@@ -34,6 +42,8 @@ public class BountyBoard extends Card {
         ));
 
         addTrigger(Triggers.creatureDies(new PermanentHasCountersPredicate(CounterType.BOUNTY), ObjectRelation.ANY),
-                new EachOpponentOfDyingCreatureControllerDrawsAndGainsLifeEffect(2));
+                SequenceEffect.of(
+                        new DrawCardEffect(1, ITS_CONTROLLERS_OPPONENTS),
+                        new GainLifeEffect(new Fixed(2), ITS_CONTROLLERS_OPPONENTS)));
     }
 }

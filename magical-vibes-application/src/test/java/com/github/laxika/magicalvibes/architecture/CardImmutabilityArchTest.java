@@ -113,7 +113,7 @@ class CardImmutabilityArchTest {
             "ExileTargetCreatureCardThenConjureSkeletonDuplicateEffectHandler", // decorates a fresh conjured duplicate
             "PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffectHandler", // alters a fresh runtime copy
             "ReduceCastCostForFirstMatchingSpellEachTurnEffectHandler", // assembles fresh face-down characteristics for cost evaluation
-            "ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffectHandler", // retains abilities on a fresh copy
+            "BecomeCopyOfSubjectEffectHandler", // retains abilities on a fresh copy
             "LayerSystemService", // assembles a fresh runtime copy for copy effects
             "Permanent", // marks a fresh runtime copy as a token before freezing it (copied permanent spell)
             "GameActionAvailabilityService", // stamps owner on the fresh MDFC back-face copy for graveyard land play

@@ -2,8 +2,9 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileChosenCardFromTargetHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileSpecificCardFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -29,6 +30,6 @@ public class DreamsOfSteelAndOil extends Card {
                         1, List.of(), artifactOrCreature, HandChoiceDestination.KEEP_IN_HAND));
         addSpellEffect(ExileUpToOneCardFromGraveyardEffect.oneMatching(artifactOrCreature)
                 .from(Subjects.targetPlayer()));
-        addSpellEffect(new ExileChosenCardFromTargetHandEffect());
+        addSpellEffect(new ExileSpecificCardFromHandEffect(Subjects.cardsThisWay(StepKind.CHOOSE)));
     }
 }

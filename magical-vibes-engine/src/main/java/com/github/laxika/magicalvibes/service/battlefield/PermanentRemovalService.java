@@ -3428,22 +3428,6 @@ public class PermanentRemovalService {
                 pendingReturns = remaining.isEmpty() ? null : remaining;
             }
         }
-        if (pendingReturns != null
-                && removedPermanent.getCard().getTriggeredAbilities().stream()
-                .flatMap(ability -> ability.effects().stream())
-                .map(com.github.laxika.magicalvibes.model.EffectRegistration::effect)
-                .anyMatch(com.github.laxika.magicalvibes.model.effect.ExileTriggeringCreatureUntilSourceLeavesEffect.class::isInstance)) {
-            // Portcullis: each exile created its own delayed "return that card when this leaves the
-            // battlefield" ability, so every exiled card returns through its own triggered ability.
-            for (PendingExileReturn delayed : pendingReturns) {
-                triggeredAbilityStackService.putDelayed(gameData, TriggeredAbilityStackService.madeAbility(
-                        removedPermanent.getCard(), controllerId,
-                        removedPermanent.getCard().getName() + "'s delayed return ability",
-                        List.of(new ResolvePendingExileReturnEffect(delayed,
-                                gameData.exileEntryVersions.getOrDefault(delayed.card().getId(), 0L)))));
-            }
-            pendingReturns = null;
-        }
         // A leaves-the-battlefield ability triggers even when the enter-the-battlefield exile never happened
         // (CR 603.6c); Fiend Hunter's and Detention Sphere's return abilities are such abilities.
         boolean hasLeavesTriggerExile = removedPermanent.getCard().getOwnEntryEffects()

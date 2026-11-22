@@ -3,9 +3,12 @@ package com.github.laxika.magicalvibes.cards.j;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardIntoTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -22,10 +25,11 @@ public class JuggernautPeddler extends Card {
                 new PlayerRelationPredicate(PlayerRelation.ANY),
                 "Target must be a player."
         )).addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.EXILE)
-                        .withRevealMatchingOnly()
-                        .withUpTo(true)
-                        .withChosenCardThen(null,
-                                new ConjureCardIntoTargetPlayerHandEffect(new Juggernaut())));
+                SequenceEffect.of(
+                        new ChooseCardsFromTargetHandEffect(1, List.of(CardType.LAND), HandChoiceDestination.EXILE)
+                                .withRevealMatchingOnly()
+                                .withUpTo(true),
+                        new ConditionalEffect(HappenedThisWay.exiled(),
+                                new ConjureCardIntoTargetPlayerHandEffect(new Juggernaut()))));
     }
 }

@@ -3,8 +3,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.LastKnownCardStats;
+import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.Zone;
@@ -21,7 +25,9 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +67,20 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
             }
         });
 
+        // The step's result, each permanent as it was before any of them left (CR 608.2h).
+        Map<UUID, LastKnownCardStats> lastKnown = new HashMap<>();
+        for (Permanent perm : toExile) {
+            lastKnown.put(perm.getId(), new LastKnownCardStats(perm.getId(),
+                    gameQueryService.getEffectivePower(gameData, perm),
+                    gameQueryService.getEffectiveToughness(gameData, perm),
+                    gameQueryService.getPermanentManaValue(perm),
+                    gameQueryService.getEffectiveName(gameData, perm),
+                    gameQueryService.findPermanentController(gameData, perm.getId())));
+        }
+        List<UUID> exiled = new ArrayList<>();
+        List<UUID> exiledControllers = new ArrayList<>();
+        List<MovedCard> moved = new ArrayList<>();
+        List<LastKnownCardStats> known = new ArrayList<>();
         UUID sourcePermanentId = e.trackWithSource()
                 ? entry.getSourcePermanentId() != null
                         ? entry.getSourcePermanentId()
@@ -72,11 +92,21 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
             gameData.runAsSingleCardExileBatch(() -> permanentRemovalService.performSimultaneousRemovals(gameData, toExile, () -> {
             for (Permanent perm : toExile) {
                 List<Card> leavingCards = new ArrayList<>(perm.cardsLeavingBattlefield());
+                List<Card> cardsExiled = ExileTargetPermanentEffectHandler.leavingCards(perm);
                 boolean removed;
                 if (sourcePermanentId != null) {
                     removed = permanentRemovalService.removePermanentToExile(gameData, perm, sourcePermanentId);
                 } else {
                     removed = permanentRemovalService.removePermanentToExile(gameData, perm);
+                }
+                if (removed) {
+                    LastKnownCardStats asItWas = lastKnown.get(perm.getId());
+                    exiled.add(perm.getId());
+                    known.add(asItWas);
+                    if (asItWas.controllerId() != null) {
+                        exiledControllers.add(asItWas.controllerId());
+                    }
+                    ExileTargetPermanentEffectHandler.addMovedCards(gameData, perm.getId(), cardsExiled, moved);
                 }
                 for (Card exiledCard : leavingCards) {
                     UUID exiledCardId = exiledCard.getId();
@@ -112,6 +142,8 @@ public class ExileAllPermanentsEffectHandler implements NormalEffectHandlerBean 
         }
 
         entry.setEventValue(toExile.size());
+        entry.recordStep(StepKind.EXILE,
+                StepOutcome.ofObjects(exiled, exiledControllers, moved).withLastKnownPermanents(known));
 
         if (e.returnOneAtEachUpkeep() && e.trackWithSource() && !toExile.isEmpty()) {
             registerUpkeepReturn(gameData, entry, sourcePermanentId);

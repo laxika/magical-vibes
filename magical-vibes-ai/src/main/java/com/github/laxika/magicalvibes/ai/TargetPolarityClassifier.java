@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipUntilLoseOrStopEffect;
 import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfTargetPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTargetCreaturesUntilSourceLeavesWithCounterEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToTargetEffect;
@@ -271,8 +270,7 @@ public class TargetPolarityClassifier {
                     : TargetPolarity.BENEFICIAL;
         }
 
-        if (effect instanceof ExileTargetCreaturesUntilSourceLeavesWithCounterEffect
-                || effect instanceof ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect
+        if (effect instanceof ExileTargetPermanentUntilSourceLeavesAndReturnOthersEffect
                 || effect instanceof PutTargetSpellOrPermanentOrGraveyardCardOnTopOrBottomOfLibraryEffect) {
             return TargetPolarity.HARMFUL_REMOVAL;
         }

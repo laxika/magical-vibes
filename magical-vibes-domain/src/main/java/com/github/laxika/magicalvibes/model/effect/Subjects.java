@@ -275,6 +275,14 @@ public final class Subjects {
     }
 
     /**
+     * "One of them": the cards the trigger event was about that match {@code filter}, each still in the graveyard stay
+     * the event put it in.
+     */
+    public static CardSubject triggeringCards(CardPredicate filter) {
+        return new CardSubject.TriggeringCards(filter);
+    }
+
+    /**
      * "Target [filter] card in your graveyard / in a graveyard": the effect's card target in a graveyard of
      * {@code scope}; the effect reading it declares the target.
      */

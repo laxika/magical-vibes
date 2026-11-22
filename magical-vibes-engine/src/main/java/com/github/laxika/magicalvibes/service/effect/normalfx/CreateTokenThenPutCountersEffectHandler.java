@@ -11,8 +11,11 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 
 /** Creates the token and puts the counters on the tokens created by that same resolution. */
 @Component
@@ -23,6 +26,7 @@ public class CreateTokenThenPutCountersEffectHandler implements NormalEffectHand
     private final PermanentCounterSupport permanentCounterSupport;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,19 +40,28 @@ public class CreateTokenThenPutCountersEffectHandler implements NormalEffectHand
                 ? entry.getSourcePermanentSnapshot()
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
         AmountContext context = AmountContext.forStackEntry(entry, source);
-        int counterAmount = amountEvaluationService.evaluate(gameData, e.amount(), context);
-        List<UUID> createdIds = permanentControlSupport.applyCreateToken(
-                gameData, entry.getControllerId(), e.tokenTemplate(), entry.getCard().getSetCode());
-        entry.getCreatedPermanentIds().addAll(createdIds);
-        if (counterAmount <= 0) {
-            return;
+        // Every amount is read before any token is made (CR 608.2h).
+        Map<UUID, Integer> counterAmounts = new LinkedHashMap<>();
+        for (UUID playerId : subjectResolutionService.players(gameData, entry, effect,
+                e.tokenTemplate().controller())) {
+            counterAmounts.put(playerId,
+                    amountEvaluationService.evaluate(gameData, e.amount(), context.withControllerId(playerId)));
         }
-        for (UUID createdId : createdIds) {
-            Permanent token = gameQueryService.findPermanentById(gameData, createdId);
-            if (token != null && !gameQueryService.cantHaveCounters(gameData, token)) {
-                permanentCounterSupport.placeCounterOnPermanent(
-                        gameData, entry, token, e.counterType(), counterAmount);
+        counterAmounts.forEach((playerId, counterAmount) -> {
+            List<UUID> createdIds = permanentControlSupport.applyCreateToken(
+                    gameData, playerId, e.tokenTemplate(), entry.getCard().getSetCode());
+            entry.getCreatedPermanentIds().addAll(createdIds);
+            if (counterAmount <= 0) {
+                return;
             }
-        }
+            for (UUID createdId : createdIds) {
+                Permanent token = gameQueryService.findPermanentById(gameData, createdId);
+                if (token != null && !gameQueryService.cantHaveCounters(gameData, token)) {
+                    // The player who creates the token is the one who puts the counters on it.
+                    permanentCounterSupport.placeCounterOnPermanentForPlayer(
+                            gameData, entry, token, e.counterType(), counterAmount, playerId);
+                }
+            }
+        });
     }
 }
