@@ -30,8 +30,8 @@ class WhirlpoolRiderTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
-        assertThat(gameLogContains(player1.getUsername() + " shuffles 2 cards from hand into their library.")).isTrue();
-        assertThat(gameLogContains(player1.getUsername() + " draws 2 cards.")).isTrue();
+        assertThat(gameLogContains(player1.getUsername() + " shuffles their hand (2 cards) into their library")).isTrue();
+        assertThat(gameLogContains(player1.getUsername() + " draws a card")).isTrue();
         assertThat(gameLogContains(player2.getUsername() + " shuffles")).isFalse();
     }
 
@@ -48,7 +48,7 @@ class WhirlpoolRiderTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(1);
-        assertThat(gameLogContains(player1.getUsername() + " has no cards in hand to shuffle.")).isTrue();
+        assertThat(gameLogContains(player1.getUsername() + " shuffles their hand (0 cards) into their library")).isTrue();
     }
 
     @Test
@@ -82,6 +82,6 @@ class WhirlpoolRiderTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
-        assertThat(gameLogContains(player1.getUsername() + " draws 2 cards.")).isTrue();
+        assertThat(gameLogContains(player1.getUsername() + " draws a card")).isTrue();
     }
 }

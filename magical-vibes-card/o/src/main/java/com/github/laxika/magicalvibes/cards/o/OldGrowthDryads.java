@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerSearchesLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -12,7 +15,7 @@ public class OldGrowthDryads extends Card {
     public OldGrowthDryads() {
         // When this creature enters, each opponent may search their library for a basic land card,
         // put it onto the battlefield tapped, then shuffle.
-        addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect());
+        addTrigger(Triggers.enters(ObjectRelation.THIS), EachPlayerSearchesLibraryEffect.maySearch(
+                Subjects.eachOpponent(), CardPredicateUtils.basicLand(), LibrarySearchDestination.BATTLEFIELD_TAPPED));
     }
 }

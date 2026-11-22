@@ -36,15 +36,23 @@ public class PutExiledCardsIntoOwnersGraveyardEffectHandler implements NormalEff
         var cards = subjectResolutionService.locatedCards(gameData, entry, put, put.cards());
         entry.recordStep(StepKind.PUT_INTO_GRAVEYARD, StepOutcome.NONE);
         for (SubjectResolutionService.LocatedCard located : cards) {
-            if (located.zone() != Zone.EXILE || !gameData.removeFromExile(located.card().getId())) {
+            if (!removeFromItsZone(gameData, located)) {
                 continue;
             }
-            if (graveyardService.addCardToGraveyard(gameData, located.ownerId(), located.card(), Zone.EXILE)) {
+            if (graveyardService.addCardToGraveyard(gameData, located.ownerId(), located.card(), located.zone())) {
                 entry.addToStep(StepKind.PUT_INTO_GRAVEYARD,
                         StepOutcome.ofObjects(List.of(located.card().getId()), List.of(located.ownerId())));
             }
             gameLogService.append(gameData, GameLog.textCardText(entry.getDescription() + " puts ", located.card(),
                     " into its owner's graveyard."));
         }
+    }
+
+    private static boolean removeFromItsZone(GameData gameData, SubjectResolutionService.LocatedCard located) {
+        if (located.zone() == Zone.EXILE) {
+            return gameData.removeFromExile(located.card().getId());
+        }
+        return located.zone() == Zone.LIBRARY
+                && gameData.playerDecks.get(located.ownerId()).remove(located.card());
     }
 }

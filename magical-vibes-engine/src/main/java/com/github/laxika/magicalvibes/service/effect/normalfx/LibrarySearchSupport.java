@@ -23,9 +23,6 @@ import com.github.laxika.magicalvibes.model.effect.OppositionAgentEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesAtAllEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantSearchLibrariesEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentSearchesTopCardsInsteadEffect;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardHasAllCardNamesPredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
@@ -33,15 +30,12 @@ import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.IdentityHashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
@@ -135,196 +129,6 @@ public class LibrarySearchSupport {
                 return true;
             }
             // If search could not start (empty library, Leonin Arbiter, etc.), try the next player
-        }
-        return false;
-    }
-
-    /**
-     * Starts the next pending "each player may search for up to N cards to hand" search from the
-     * follow-up's remaining-searchers list; the advanced remainder rides the begun search. Each
-     * searcher may take up to {@code followUp.eachPlayerToHandCount()} cards to hand, then shuffles;
-     * when {@code followUp.eachPlayerToHandCreatureOnly()} the search is restricted to creature cards
-     * and the taken cards are revealed. Returns true if a search was initiated, false if no searcher
-     * remains (Leonin Arbiter players are skipped; a non-creature search with an empty library or no
-     * matching cards is skipped, while a creature-only search is always offered). Used by
-     * Weird Harvest (creature-only) and Noble Benefactor (any card).
-     */
-    public boolean startNextEachPlayerToHandSearch(GameData gameData, LibrarySearchFollowUp followUp) {
-        int count = followUp.eachPlayerToHandCount();
-        boolean creatureOnly = followUp.eachPlayerToHandCreatureOnly();
-        List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerToHandSearches());
-        while (!remaining.isEmpty()) {
-            UUID nextPlayerId = remaining.remove(0);
-            String playerName = gameData.playerIdToName.get(nextPlayerId);
-
-            if (isSearchPrevented(gameData, nextPlayerId, false)) {
-                continue;
-            }
-
-            List<Card> deck = gameData.playerDecks.get(nextPlayerId);
-            List<Card> library = deck == null ? List.of() : deck;
-            if (library.isEmpty() && !creatureOnly) {
-                // "May search": a player with nothing to find isn't made to search without choosing to.
-                continue;
-            }
-
-            List<Card> choices = creatureOnly
-                    ? library.stream().filter(card -> card.hasAllCardNames() || card.hasType(CardType.CREATURE)).toList()
-                    : library;
-            choices = restrictToTopCards(gameData, nextPlayerId, choices,
-                    opponentSearchTopCardsLimit(gameData, nextPlayerId));
-
-            // A creature-only "may search" is always offered, even with nothing to find, because searching
-            // is the player's choice (it triggers opponents' search abilities and shuffles the library).
-            // With a count of zero the player may search for no cards, so nothing can be picked.
-            if (creatureOnly && count == 0) {
-                choices = List.of();
-            }
-            if (choices.isEmpty() && !creatureOnly) {
-                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, nextPlayerId);
-                LibraryShuffleHelper.shuffleLibrary(gameData, nextPlayerId);
-                gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no creature cards. Library is shuffled."));
-                continue;
-            }
-
-            String prompt = creatureOnly
-                    ? "You may search your library for up to " + count + " creature card"
-                            + (count == 1 ? "" : "s") + " to reveal and put into your hand."
-                    : "You may search your library for up to " + count + " card"
-                            + (count == 1 ? "" : "s") + " to put into your hand.";
-            LibrarySearchParams params = LibrarySearchParams.builder(nextPlayerId, new ArrayList<>(choices))
-                    .reveals(creatureOnly)
-                    .canFailToFind(true)
-                    .remainingCount(count)
-                    .destination(LibrarySearchDestination.HAND)
-                    .filterPredicate(creatureOnly
-                            ? new CardAnyOfPredicate(List.of(
-                            new CardTypePredicate(CardType.CREATURE), new CardHasAllCardNamesPredicate()))
-                            : null)
-                    .followUp(followUp.withRemainingEachPlayerToHandSearches(remaining))
-                    .build();
-
-            sendLibrarySearchToPlayer(gameData, nextPlayerId, params, prompt, true);
-            return true;
-        }
-        revealDeferredEachPlayerToHandPicks(gameData);
-        return false;
-    }
-
-    /**
-     * Once every player has made their choices, the cards they picked are revealed and put into their
-     * hands at the same time (CR 101.4), in APNAP order for the log.
-     */
-    private void revealDeferredEachPlayerToHandPicks(GameData gameData) {
-        if (gameData.eachPlayerSearchDeferredToHand.isEmpty()) {
-            return;
-        }
-        List<UUID> order = new ArrayList<>();
-        order.add(gameData.activePlayerId);
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!playerId.equals(gameData.activePlayerId)) {
-                order.add(playerId);
-            }
-        }
-        Map<UUID, List<Card>> picks = new LinkedHashMap<>();
-        for (UUID playerId : order) {
-            List<Card> cards = gameData.eachPlayerSearchDeferredToHand.remove(playerId);
-            if (cards != null && !cards.isEmpty()) {
-                picks.put(playerId, cards);
-            }
-        }
-        gameData.eachPlayerSearchDeferredToHand.clear();
-        picks.forEach((playerId, cards) -> {
-            GameLog.Builder reveal = GameLog.builder().text(gameData.playerIdToName.get(playerId) + " reveals ");
-            for (int i = 0; i < cards.size(); i++) {
-                if (i > 0) {
-                    reveal.text(", ");
-                }
-                reveal.card(cards.get(i));
-            }
-            gameLogService.append(gameData, reveal.text(" and puts "
-                    + (cards.size() == 1 ? "it" : "them") + " into their hand.").build());
-        });
-        picks.forEach((playerId, cards) -> cards.forEach(card -> {
-            gameData.addCardToHand(playerId, card);
-        }));
-    }
-
-    /**
-     * Starts the next pending "each opponent may search for a creature card to battlefield" search
-     * from the follow-up's remaining-searchers list; the advanced remainder rides the begun search.
-     * Each searcher may search their library for a creature card, put it onto the battlefield, then
-     * shuffle. Returns true if a search was initiated, false if no searcher remains (empty library /
-     * no creatures / Leonin Arbiter players are skipped). Used by Boldwyr Heavyweights.
-     */
-    public boolean startNextEachPlayerCreatureToBattlefieldSearch(GameData gameData, LibrarySearchFollowUp followUp) {
-        List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerCreatureToBattlefieldSearches());
-        while (!remaining.isEmpty()) {
-            UUID nextPlayerId = remaining.remove(0);
-            boolean started = performLibrarySearch(
-                    gameData,
-                    nextPlayerId,
-                    card -> card.hasType(CardType.CREATURE),
-                    "creature cards",
-                    "You may search your library for a creature card and put it onto the battlefield.",
-                    false,
-                    true,
-                    LibrarySearchDestination.BATTLEFIELD,
-                    followUp.withRemainingEachPlayerCreatureToBattlefieldSearches(remaining)
-            );
-            if (started) {
-                return true;
-            }
-            // If search could not start (empty library, no creatures, Leonin Arbiter, etc.), try the next player
-        }
-        return false;
-    }
-
-    /**
-     * Starts the next pending "each opponent may search for a land card to battlefield" search
-     * from the follow-up's remaining-searchers list. Each searcher may take one land card, which
-     * enters untapped, then shuffles.
-     */
-    public boolean startNextEachPlayerLandToBattlefieldSearch(GameData gameData,
-                                                               LibrarySearchFollowUp followUp) {
-        List<UUID> remaining = new ArrayList<>(followUp.remainingEachPlayerLandToBattlefieldSearches());
-        while (!remaining.isEmpty()) {
-            UUID nextPlayerId = remaining.remove(0);
-            LibrarySearchFollowUp nextFollowUp = followUp.withRemainingEachPlayerLandToBattlefieldSearches(remaining);
-            String prompt = "You may search your library for a land card and put it onto the battlefield.";
-            List<Card> deck = gameData.playerDecks.get(nextPlayerId);
-            boolean started;
-            if (deck != null && !deck.isEmpty() && !isSearchPrevented(gameData, nextPlayerId)
-                    && opponentSearchTopCardsLimit(gameData, nextPlayerId) == Integer.MAX_VALUE) {
-                // The search is optional even when the library holds no land card: the player may
-                // decline, in which case they never searched and do not shuffle.
-                sendLibrarySearchToPlayer(gameData, nextPlayerId,
-                        LibrarySearchParams.builder(nextPlayerId,
-                                        deck.stream().filter(card -> card.hasType(CardType.LAND)).toList())
-                                .canFailToFind(true)
-                                .prompt(prompt)
-                                .destination(LibrarySearchDestination.BATTLEFIELD)
-                                .followUp(nextFollowUp)
-                                .declineSkipsShuffle(true)
-                                .build(),
-                        prompt, true);
-                started = true;
-            } else {
-                started = performLibrarySearch(
-                        gameData,
-                        nextPlayerId,
-                        card -> card.hasType(CardType.LAND),
-                        "land cards",
-                        prompt,
-                        false,
-                        true,
-                        LibrarySearchDestination.BATTLEFIELD,
-                        nextFollowUp
-                );
-            }
-            if (started) {
-                return true;
-            }
         }
         return false;
     }
@@ -1100,7 +904,6 @@ public class LibrarySearchSupport {
                 && !gameData.suppressNextLibrarySearchTriggers
                 && (params.targetPlayerId() == null || params.targetPlayerId().equals(params.playerId()))
                 && params.followUp().basicLandSearchQueue() == null
-                && params.followUp().eachPlayerToHandCount() == 0
                 && !params.declineSkipsShuffle()) {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, params.playerId());
         }

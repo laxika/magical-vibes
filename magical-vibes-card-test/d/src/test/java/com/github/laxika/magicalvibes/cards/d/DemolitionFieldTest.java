@@ -7,9 +7,11 @@ import com.github.laxika.magicalvibes.cards.p.Plains;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
@@ -20,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -159,5 +162,22 @@ class DemolitionFieldTest extends BaseCardTest {
 
     private void setupLibrary(Player player) {
         harness.setLibrary(player, List.of(new Plains(), new Island(), new Mountain()));
+    }
+
+    @Test
+    @DisplayName("An indestructible land's controller still may search")
+    void controllerOfALandThatWasNotDestroyedStillSearches() {
+        harness.addToBattlefield(player1, new DemolitionField());
+        Permanent land = harness.addToBattlefieldAndReturn(player2, new DemolitionField());
+        PermanentGrants.keywordUntilEndOfTurn(gd, land, Keyword.INDESTRUCTIBLE);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        setupLibrary(player2);
+
+        harness.activateAbility(player1, 0, 1, null, land.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().playerId())
+                .isEqualTo(player2.getId());
+        harness.assertOnBattlefield(player2, "Demolition Field");
     }
 }

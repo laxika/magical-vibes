@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
+import com.github.laxika.magicalvibes.model.SaturatingMath;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
@@ -52,12 +53,19 @@ public class ExileCardsFromTopUntilEffectHandler implements NormalEffectHandlerB
             }
             Card hit = null;
             int exiledCount = 0;
+            int exiledManaValue = 0;
             while (!library.isEmpty()) {
                 Card top = library.removeFirst();
                 gameData.rulesEvents.separately(() -> exileService.exileCard(gameData, playerId, top));
                 entry.addToStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(top.getId()), List.of(playerId)));
                 exiledCount++;
-                if (predicateEvaluationService.matchesCardPredicate(top, until.until(), entry.getCard().getId(),
+                if (until.until() == null) {
+                    exiledManaValue = SaturatingMath.add(exiledManaValue, top.getManaValue());
+                    if (exiledManaValue >= until.totalManaValue()) {
+                        hit = top;
+                        break;
+                    }
+                } else if (predicateEvaluationService.matchesCardPredicate(top, until.until(), entry.getCard().getId(),
                         gameData, playerId)) {
                     hit = top;
                     break;

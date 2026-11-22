@@ -1,8 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
@@ -10,18 +9,19 @@ import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardHasAllCardNamesPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardPredicate;
-import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
-import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
+import com.github.laxika.magicalvibes.model.filter.CardTruePredicate;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryBatchSupport;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -29,27 +29,23 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 /**
- * Drives an each-player basic-land search: first the APNAP queue of per-player "you may search your
- * library for up to X basic land cards and put them onto the battlefield" picks, then any forced
- * land sacrifices held on the same {@link LibrarySearchFollowUp.BasicLandSearchQueue}. The queue is
- * advanced from the effect handler and re-entered by the library-search input handler after every
- * pick resolves. Used by Natural Balance (searches then sacrifices) and Veteran Explorer (searches
- * only).
+ * Drives an each-player library search: first the APNAP queue of per-player "you may search your library for up to X
+ * [basic land] cards and put them onto the battlefield or into your hand" picks (the queue's filter says which cards),
+ * then any forced land sacrifices held on the same {@link LibrarySearchFollowUp.BasicLandSearchQueue}. The queue is
+ * advanced from the effect handler and re-entered by the library-search input handler after every pick resolves. Used
+ * by {@code EachPlayerSearchesLibraryEffect} and by Natural Balance (searches then sacrifices).
  */
 @Component
 @RequiredArgsConstructor
 public class BasicLandSearchQueueSupport {
-
-    private static final CardPredicate BASIC_LAND = new CardAllOfPredicate(List.of(
-            new CardTypePredicate(CardType.LAND), new CardSupertypePredicate(CardSupertype.BASIC)));
-    private static final CardPredicate BASIC_LAND_SEARCH = new CardAnyOfPredicate(List.of(
-            BASIC_LAND, new CardHasAllCardNamesPredicate()));
 
     private final LibrarySearchSupport librarySearchSupport;
     private final DestructionSupport destructionSupport;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
     private final BattlefieldEntryService battlefieldEntryService;
+    private final BattlefieldEntryBatchSupport battlefieldEntryBatchSupport;
+    private final PredicateEvaluationService predicateEvaluationService;
 
     /** Active player first, then every other player in seating order (CR 101.4 APNAP). */
     public List<UUID> apnapOrder(GameData gameData) {
@@ -81,15 +77,15 @@ public class BasicLandSearchQueueSupport {
         while (!remaining.isEmpty()) {
             LibrarySearchFollowUp.BasicLandsPick pick = remaining.removeFirst();
             LibrarySearchFollowUp.BasicLandSearchQueue nextQueue = queue.withRemainingPicks(remaining);
-            boolean searchAllowed = !librarySearchSupport.isSearchPrevented(gameData, pick.playerId());
+            // "May search" that can't be done isn't chosen (CR 608.2d), so only a search that was instructed still
+            // shuffles the library of a player who can't search.
+            boolean searchAllowed = !librarySearchSupport.isSearchPrevented(
+                    gameData, pick.playerId(), !markSearchedOnPick(queue));
             if (searchAllowed && !markSearchedOnPick(queue)) {
                 nextQueue = nextQueue.withSearchedPlayer(pick.playerId());
             }
-            if (startSearch(gameData, pick, followUp.withBasicLandSearchQueue(nextQueue))) {
+            if (searchAllowed && startSearch(gameData, pick, followUp.withBasicLandSearchQueue(nextQueue))) {
                 return true;
-            }
-            if (searchAllowed) {
-                nextQueue = nextQueue.withSearchedPlayer(pick.playerId());
             }
             queue = nextQueue;
         }
@@ -108,71 +104,96 @@ public class BasicLandSearchQueueSupport {
         return queue.optionalSearch() && queue.shuffleAfterQueue();
     }
 
+    /** Moves what the whole queue found at once (CR 608.2e): into the searchers' hands, or onto the battlefield. */
     private void placeSelectedLands(GameData gameData, LibrarySearchFollowUp.BasicLandSearchQueue queue) {
         if (queue.selectedLands().isEmpty()) return;
-        List<Map.Entry<UUID, Permanent>> prepared = new ArrayList<>();
+        if (queue.destinationToHand()) {
+            putSelectedCardsIntoHands(gameData, queue);
+            return;
+        }
+        List<BattlefieldEntryCard> entering = new ArrayList<>();
         for (LibrarySearchFollowUp.DeferredBasicLand selected : queue.selectedLands()) {
-            if (gameQueryService.isCardBlockedFromEnteringFromZone(gameData, selected.card(), Zone.LIBRARY)) {
-                continue;
-            }
+            UUID controllerId = battlefieldEntryService.resolveEnteringController(
+                    gameData, selected.battlefieldControllerId(), new Permanent(selected.card()));
+            entering.add(new BattlefieldEntryCard(controllerId, selected.libraryOwnerId(), selected.card(),
+                    Zone.LIBRARY, null).withTapped(selected.enterTapped()));
+        }
+        battlefieldEntryBatchSupport.begin(gameData, entering);
+    }
+
+    /** A search for cards with a stated quality reveals what it found; a search for any card shows nothing. */
+    private void putSelectedCardsIntoHands(GameData gameData, LibrarySearchFollowUp.BasicLandSearchQueue queue) {
+        Map<UUID, List<Card>> found = new LinkedHashMap<>();
+        for (LibrarySearchFollowUp.DeferredBasicLand selected : queue.selectedLands()) {
             List<Card> library = gameData.playerDecks.get(selected.libraryOwnerId());
-            if (library == null || !library.remove(selected.card())) {
-                continue;
-            }
-            Permanent permanent = new Permanent(selected.card(), Zone.LIBRARY);
-            if (selected.enterTapped()) permanent.tap();
-            prepared.add(Map.entry(selected.battlefieldControllerId(), permanent));
-        }
-        var enterTappedTypes = battlefieldEntryService.snapshotEnterTappedTypes(gameData);
-        List<Permanent> entering = prepared.stream().map(Map.Entry::getValue).toList();
-        for (Map.Entry<UUID, Permanent> selected : prepared) {
-            battlefieldEntryService.putPermanentOntoBattlefield(gameData, selected.getKey(), selected.getValue(),
-                    enterTappedTypes, entering);
-            gameLogService.append(gameData, GameLog.entersBattlefieldUnder(selected.getValue().getCard(),
-                    gameData.playerIdToName.get(selected.getKey())));
-        }
-        for (Map.Entry<UUID, Permanent> selected : prepared) {
-            UUID actualControllerId = gameQueryService.findPermanentController(gameData, selected.getValue().getId());
-            if (actualControllerId != null) {
-                battlefieldEntryService.handleCreatureEnteredBattlefield(gameData, actualControllerId,
-                        selected.getValue().getCard(), null, false);
+            if (library != null && library.remove(selected.card())) {
+                found.computeIfAbsent(selected.libraryOwnerId(), ignored -> new ArrayList<>()).add(selected.card());
             }
         }
+        found.forEach((playerId, cards) -> {
+            String playerName = gameData.playerIdToName.get(playerId);
+            if (reveals(queue)) {
+                GameLog.Builder reveal = GameLog.builder().text(playerName + " reveals ");
+                for (int i = 0; i < cards.size(); i++) {
+                    if (i > 0) {
+                        reveal.text(", ");
+                    }
+                    reveal.card(cards.get(i));
+                }
+                gameLogService.append(gameData, reveal.text(" and puts "
+                        + (cards.size() == 1 ? "it" : "them") + " into their hand.").build());
+            } else {
+                gameLogService.append(gameData, GameLog.text(playerName + " puts " + cards.size() + " card"
+                        + (cards.size() == 1 ? "" : "s") + " into their hand."));
+            }
+            cards.forEach(card -> gameData.addCardToHand(playerId, card));
+        });
+    }
+
+    private static boolean reveals(LibrarySearchFollowUp.BasicLandSearchQueue queue) {
+        return queue.destinationToHand() && !(queue.filter() instanceof CardTruePredicate);
     }
 
     private boolean startSearch(GameData gameData, LibrarySearchFollowUp.BasicLandsPick pick,
             LibrarySearchFollowUp followUp) {
         UUID playerId = pick.playerId();
-        if (librarySearchSupport.isSearchPrevented(gameData, playerId)) {
-            return false;
-        }
-
-        boolean shuffleAfterQueue = followUp.basicLandSearchQueue().shuffleAfterQueue();
+        LibrarySearchFollowUp.BasicLandSearchQueue queue = followUp.basicLandSearchQueue();
+        boolean shuffleAfterQueue = queue.shuffleAfterQueue();
+        boolean choosesWhetherToSearch = markSearchedOnPick(queue);
         String playerName = gameData.playerIdToName.get(playerId);
+        String described = CardPredicateUtils.describeFilter(queue.filter());
         List<Card> deck = gameData.playerDecks.get(playerId);
-        boolean offersOptionalSearchOnEmptyLibrary = deck != null && deck.isEmpty()
-                && markSearchedOnPick(followUp.basicLandSearchQueue())
-                && LibrarySearchTriggerHelper.anyPermanentReactsToLibrarySearches(gameData);
-        if ((deck == null || deck.isEmpty()) && !offersOptionalSearchOnEmptyLibrary) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
-            if (!shuffleAfterQueue && deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
-            gameLogService.append(gameData,
-                    GameLog.text(playerName + " searches their library but it is empty."
-                            + (shuffleAfterQueue ? "" : " Library is shuffled.")));
-            return false;
+        if (deck == null || deck.isEmpty()) {
+            if (choosesWhetherToSearch) {
+                // Nobody is made to search without choosing to: the choice is offered where searches are watched, and
+                // for a search that reveals what it finds (Weird Harvest).
+                if (deck == null || !reveals(queue)
+                        && !LibrarySearchTriggerHelper.anyPermanentReactsToLibrarySearches(gameData)) {
+                    return false;
+                }
+            } else {
+                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
+                if (!shuffleAfterQueue && deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+                gameLogService.append(gameData,
+                        GameLog.text(playerName + " searches their library but it is empty."
+                                + (shuffleAfterQueue ? "" : " Library is shuffled.")));
+                return false;
+            }
         }
 
-        List<Card> basicLands = deck == null ? List.of() : deck.stream()
-                .filter(card -> card.hasAllCardNames()
-                        || (card.hasType(CardType.LAND)
-                        && gameQueryService.cardHasSupertype(card, CardSupertype.BASIC, gameData, playerId)))
+        // Aven Mindcensor: only the top cards are searched, so only they can be found. A player who may search is
+        // asked whatever those cards and the ones below them hold: whether a prompt comes, and what is logged, tells
+        // nothing of a library not searched yet (CR 701.23a).
+        int searchable = Math.min(deck.size(), librarySearchSupport.opponentSearchTopCardsLimit(gameData, playerId));
+        List<Card> matching = deck.subList(0, searchable).stream()
+                .filter(card -> card.hasAllCardNames() || predicateEvaluationService.matchesCardPredicate(
+                        card, queue.filter(), null, gameData, playerId))
                 .toList();
-        boolean choosesWhetherToSearch = markSearchedOnPick(followUp.basicLandSearchQueue());
-        if (basicLands.isEmpty() && !choosesWhetherToSearch) {
+        if (matching.isEmpty() && !choosesWhetherToSearch) {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
             if (!shuffleAfterQueue) LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             gameLogService.append(gameData, GameLog.text(
-                    playerName + " searches their library but finds no basic land cards."
+                    playerName + " searches their library but finds no " + described + "s."
                             + (shuffleAfterQueue ? "" : " Library is shuffled.")));
             return false;
         }
@@ -182,34 +203,36 @@ public class BasicLandSearchQueueSupport {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
             if (!shuffleAfterQueue) LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
             gameLogService.append(gameData, GameLog.text(
-                    playerName + " searches their library for up to zero basic land cards."
+                    playerName + " searches their library for up to zero " + described + "s."
                             + (shuffleAfterQueue ? "" : " Library is shuffled.")));
             return false;
         }
         boolean enterTapped = pick.enterTapped();
-        boolean destinationToHand = followUp.basicLandSearchQueue().destinationToHand();
+        boolean destinationToHand = queue.destinationToHand();
+        boolean reveals = reveals(queue);
         String destinationText = destinationToHand
                 ? " into your hand"
                 : enterTapped ? " onto the battlefield tapped" : " onto the battlefield";
-        if (!followUp.basicLandSearchQueue().optionalSearch()) {
+        if (!queue.optionalSearch()) {
             LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
         }
-        String prompt = (followUp.basicLandSearchQueue().optionalSearch() ? "You may search" : "Search")
-                + " your library for up to " + count + " basic land card"
+        String prompt = (queue.optionalSearch() ? "You may search" : "Search")
+                + " your library for up to " + count + " " + described
                 + (count == 1 ? "" : "s")
-                + (destinationToHand ? " to reveal and put them" : " and put them")
+                + (reveals ? " to reveal and put them" : " and put them")
                 + destinationText + " (" + count + " remaining).";
 
-        LibrarySearchParams searchParams = LibrarySearchParams.builder(playerId, count <= 0 ? new ArrayList<>() : new ArrayList<>(basicLands))
+        LibrarySearchParams searchParams = LibrarySearchParams.builder(playerId, count <= 0 ? new ArrayList<>() : new ArrayList<>(matching))
                         .remainingCount(count)
                         .canFailToFind(true)
-                        .reveals(destinationToHand)
+                        .reveals(reveals)
                         .destination(destinationToHand
                                 ? LibrarySearchDestination.HAND
                                 : enterTapped
                                 ? LibrarySearchDestination.BATTLEFIELD_TAPPED
                                 : LibrarySearchDestination.BATTLEFIELD)
-                        .filterPredicate(BASIC_LAND_SEARCH)
+                        .filterPredicate(new CardAnyOfPredicate(List.of(
+                                queue.filter(), new CardHasAllCardNamesPredicate())))
                         .shuffleAfterSelection(!shuffleAfterQueue)
                         .followUp(followUp)
                         .build();

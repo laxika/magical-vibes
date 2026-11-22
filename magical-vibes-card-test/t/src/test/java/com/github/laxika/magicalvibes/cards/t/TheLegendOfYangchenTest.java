@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AvatarYangchen;
+import com.github.laxika.magicalvibes.cards.d.DourPortMage;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.l.LilianaVess;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
@@ -10,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({TheLegendOfYangchen.class, AvatarYangchen.class, RuneclawBear.class, LilianaVess.class,
-        LightningBolt.class})
+        LightningBolt.class, HillGiant.class, DourPortMage.class})
 class TheLegendOfYangchenTest extends BaseCardTest {
 
     @Test
@@ -97,21 +100,45 @@ class TheLegendOfYangchenTest extends BaseCardTest {
     }
 
     @Test
-    void chapterIAllowsOpponentToExileTheSagaAfterBothPlayersChoose() {
-        Permanent target = harness.addToBattlefieldAndReturn(player2, new LilianaVess());
-        target.setCounterCount(CounterType.LOYALTY, target.getCard().getLoyalty());
+    @DisplayName("Chapter I's opponent chooses from the permanents the Saga controller's opponents control")
+    void chapterIOpponentChoosesFromAmongThePermanentsTheSagaControllersOpponentsControl() {
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent controllers = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         Permanent saga = addSaga(0);
 
         advanceToNextChapter();
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(target.getId()));
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
 
-        assertThat(gd.findExiledCard(target.getOriginalCard().getId())).isNull();
-        harness.handleMultiplePermanentsChosen(player2, List.of(saga.getId()));
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        assertThat(gd.findExiledCard(first.getOriginalCard().getId())).isNull();
+        harness.handleMultiplePermanentsChosen(player2, List.of(second.getId()));
+
+        assertThat(gd.findExiledCard(first.getOriginalCard().getId())).isNotNull();
+        assertThat(gd.findExiledCard(second.getOriginalCard().getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(saga, controllers);
+    }
+
+    @Test
+    @DisplayName("Chapter I exiles the chosen permanents simultaneously once all players have chosen")
+    void chapterIExilesTheChosenPermanentsAsOneEvent() {
+        harness.addToBattlefieldAndReturn(player2, new DourPortMage());
+        Permanent first = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        Permanent second = harness.addToBattlefieldAndReturn(player2, new HillGiant());
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of(new LightningBolt(), new LightningBolt(), new LightningBolt()));
+        addSaga(0);
+
+        advanceToNextChapter();
         harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
+        harness.handleMultiplePermanentsChosen(player2, List.of(second.getId()));
+        resolveAllTriggers();
 
-        assertThat(gd.findExiledCard(target.getOriginalCard().getId())).isNotNull();
-        assertThat(gd.findExiledCard(saga.getOriginalCard().getId())).isNotNull();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
     }
 
     @Test

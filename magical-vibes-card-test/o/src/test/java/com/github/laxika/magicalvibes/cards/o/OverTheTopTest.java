@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.c.CradleClearcutter;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MightstonesAnimation;
 import com.github.laxika.magicalvibes.cards.r.RodOfRuin;
@@ -17,7 +18,8 @@ import org.junit.jupiter.api.Test;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({OverTheTop.class, Forest.class, GrizzlyBears.class, RodOfRuin.class, Shock.class,
-        CradleClearcutter.class, MightstonesAnimation.class, TomakulHonorGuard.class})
+        CradleClearcutter.class, MightstonesAnimation.class, TomakulHonorGuard.class,
+        GrafdiggersCage.class})
 class OverTheTopTest extends BaseCardTest {
 
     @Test
@@ -146,5 +148,23 @@ class OverTheTopTest extends BaseCardTest {
                 .extracting(permanent -> permanent.getCard()).contains(player1Land);
         assertThat(gd.playerBattlefields.get(player2.getId()))
                 .extracting(permanent -> permanent.getCard()).contains(player2Land, player2Creature);
+    }
+
+    @Test
+    @DisplayName("A revealed permanent card that can't enter stays where it is, unshuffled")
+    void blockedPermanentCardStaysOnTop() {
+        harness.addToBattlefield(player1, new GrafdiggersCage());
+        GrizzlyBears bears = new GrizzlyBears();
+        Forest below = new Forest();
+        Shock bottom = new Shock();
+        harness.setLibrary(player1, List.of(bears, below, bottom));
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new OverTheTop()));
+        harness.addMana(player1, ManaColor.RED, 7);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(bears, below, bottom);
+        assertThat(gd.playerGraveyards.get(player1.getId())).doesNotContain(bears);
     }
 }

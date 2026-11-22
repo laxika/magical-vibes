@@ -3,10 +3,16 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.XValue;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardsFromTargetHandEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ShuffleLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -25,7 +31,12 @@ public class ReapIntellect extends Card {
         // when no card is chosen.
         addSpellEffect(new ChooseCardsFromTargetHandEffect(
                 new XValue(), List.of(), List.of(), HandChoiceDestination.EXILE, false,
-                new CardNotPredicate(new CardTypePredicate(CardType.LAND)), true, true));
+                new CardNotPredicate(new CardTypePredicate(CardType.LAND)), true, false));
+        // "If you don't exile any cards from the player's hand, you don't search that player's library" (its ruling).
+        addSpellEffect(new ConditionalEffect(HappenedThisWay.exiled(),
+                ExileCardsWithSameNameEffect.anyNumber(Subjects.cardsThisWay(StepKind.EXILE))
+                        .searching(Subjects.targetPlayerDeclaredElsewhere(),
+                                Zone.GRAVEYARD, Zone.HAND, Zone.LIBRARY)));
         addSpellEffect(new ShuffleLibraryEffect(true));
         target(new PlayerPredicateTargetFilter(
                 new PlayerRelationPredicate(PlayerRelation.OPPONENT), "Target must be an opponent"));

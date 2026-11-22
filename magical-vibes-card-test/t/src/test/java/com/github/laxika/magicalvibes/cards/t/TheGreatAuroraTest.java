@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.d.DourPortMage;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.h.HitchclawRecluse;
 import com.github.laxika.magicalvibes.cards.i.InfernalScarring;
@@ -20,7 +21,8 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({TheGreatAurora.class, Forest.class, HitchclawRecluse.class, InfernalScarring.class, NotionThief.class})
+@CardUsed({TheGreatAurora.class, Forest.class, HitchclawRecluse.class, InfernalScarring.class, NotionThief.class,
+        DourPortMage.class})
 class TheGreatAuroraTest extends BaseCardTest {
 
     private static List<Card> forests(int count) {
@@ -228,5 +230,28 @@ class TheGreatAuroraTest extends BaseCardTest {
 
     private List<UUID> handCardIds(com.github.laxika.magicalvibes.model.Player player) {
         return gd.playerHands.get(player.getId()).stream().map(Card::getId).toList();
+    }
+
+    @Test
+    @DisplayName("Every player's permanents are shuffled away as one event")
+    void everyPlayersPermanentsLeaveAsOneEvent() {
+        harness.addToBattlefield(player2, new DourPortMage());
+        harness.addToBattlefield(player2, new HitchclawRecluse());
+        Permanent borrowed = harness.addToBattlefieldAndReturn(player2, new HitchclawRecluse());
+        gd.stolenCreatures.put(borrowed.getId(), player1.getId());
+        List<Card> spells = new ArrayList<>();
+        for (int i = 0; i < 8; i++) {
+            spells.add(new HitchclawRecluse());
+        }
+        harness.setLibrary(player1, spells);
+        harness.setLibrary(player2, spells.stream().map(card -> (Card) new HitchclawRecluse()).toList());
+        harness.setHand(player1, List.of(new TheGreatAurora()));
+        harness.setHand(player2, List.of());
+
+        castAurora();
+        resolveAllTriggers();
+
+        // Two owned permanents, and one "one or more leave" trigger.
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
     }
 }

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentFacesMissyVillainousChoiceEffect;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -73,10 +72,10 @@ class MissyTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         assertThat(choice.options()).containsExactly(
-                EachOpponentFacesMissyVillainousChoiceEffect.DAMAGE_OPTION,
-                EachOpponentFacesMissyVillainousChoiceEffect.DRAW_OPTION);
+                Missy.DAMAGE_OPTION,
+                Missy.DRAW_OPTION);
 
-        harness.handleListChoice(player2, EachOpponentFacesMissyVillainousChoiceEffect.DAMAGE_OPTION);
+        harness.handleListChoice(player2, Missy.DAMAGE_OPTION);
         harness.assertLife(player2, 19);
         assertThat(gd.playerHands.get(player1.getId()))
                 .noneMatch(card -> card.getId().equals(libraryBears.getId()));
@@ -88,7 +87,7 @@ class MissyTest extends BaseCardTest {
         harness.setLibrary(player1, List.of(new AdricMathematicalGenius()));
 
         resolveEndStep();
-        harness.handleListChoice(player2, EachOpponentFacesMissyVillainousChoiceEffect.DRAW_OPTION);
+        harness.handleListChoice(player2, Missy.DRAW_OPTION);
 
         harness.assertInHand(player1, "Adric, Mathematical Genius");
     }
@@ -168,7 +167,7 @@ class MissyTest extends BaseCardTest {
         harness.addToBattlefield(player1, new Missy());
         harness.setLibrary(player1, List.of(new Ponder()));
         resolveEndStep();
-        harness.handleListChoice(player2, EachOpponentFacesMissyVillainousChoiceEffect.DAMAGE_OPTION);
+        harness.handleListChoice(player2, Missy.DAMAGE_OPTION);
 
         harness.assertLife(player2, 20);
         harness.assertNotInHand(player1, "Ponder");
@@ -182,7 +181,7 @@ class MissyTest extends BaseCardTest {
         cyberman.setFaceDown(2, 2, Set.of(CardType.ARTIFACT, CardType.CREATURE), Set.of(CardSubtype.CYBERMAN));
         cyberman.tap();
         resolveEndStep();
-        harness.handleListChoice(player2, EachOpponentFacesMissyVillainousChoiceEffect.DAMAGE_OPTION);
+        harness.handleListChoice(player2, Missy.DAMAGE_OPTION);
 
         harness.assertLife(player2, 18);
     }
@@ -195,7 +194,7 @@ class MissyTest extends BaseCardTest {
         gd.planechase.controllerId = player1.getId();
         gd.planechase.faceUp.add(new PlanarObject(new TheDoctorsTomb(), 1));
         resolveEndStep();
-        harness.handleListChoice(player2, EachOpponentFacesMissyVillainousChoiceEffect.DRAW_OPTION);
+        harness.handleListChoice(player2, Missy.DRAW_OPTION);
 
         harness.assertInHand(player1, "Ponder");
         assertThat(gd.stack).anySatisfy(entry -> {

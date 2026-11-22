@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEqualToLifeLostThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -14,6 +16,7 @@ public class ArchfiendOfDespair extends Card {
 
     public ArchfiendOfDespair() {
         addStaticEffect(new PlayersCantGainLifeEffect(Subjects.eachOpponent()));
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new EachOpponentLosesLifeEqualToLifeLostThisTurn());
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), LoseLifeEffect.eachTheirOwn(
+                new LifeLostThisTurn(CountScope.CONTROLLER), Subjects.eachOpponent()));
     }
 }

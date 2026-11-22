@@ -3,8 +3,9 @@ package com.github.laxika.magicalvibes.model.effect;
 import java.util.Objects;
 
 /**
- * "Put that card into your hand": each card {@link #cards()} names that is in exile is put into its owner's hand
- * (CR 400.3). It follows a step that exiled the cards and, usually, a step that may have moved them on, read as
+ * "Put that card into your hand": each card {@link #cards()} names that is in exile, or revealed in a library
+ * ("then puts it into their hand": {@code Subjects.cardsThisWay(StepKind.REVEAL)}, Duskmantle Seer), is put into its
+ * owner's hand (CR 400.3). It follows a step that exiled the cards and, usually, a step that may have moved them on, read as
  * {@code Subjects.cardsThisWay(StepKind.EXILE, filter)}: "you may cast it without paying its mana cost … If you don't,
  * put that card into your hand" after {@link MayCastDiscardedCardWithoutPayingManaCostEffect} (Breaching Dragonstorm,
  * Bre of Clan Stoutarm, Solstice Revelations: a cast card has left exile, so it is not named, CR 400.7), or the

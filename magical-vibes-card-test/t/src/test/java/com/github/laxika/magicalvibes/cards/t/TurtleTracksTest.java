@@ -160,4 +160,19 @@ class TurtleTracksTest extends BaseCardTest {
     private PendingInteraction.LibrarySearch activeSearch() {
         return gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
     }
+
+    @Test
+    @DisplayName("A targeted player who declines hasn't searched, so doesn't shuffle")
+    void decliningIsNotSearching() {
+        harness.addToBattlefield(player1, new PsychogenicProbe());
+        harness.setLife(player2, 20);
+        harness.setLibrary(player2, List.of(new Island()));
+        castTurtleTracks(List.of(player2.getId()));
+
+        harness.handleCardChosen(player2, -1);
+        resolveAllTriggers();
+
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player2.getId());
+        harness.assertLife(player2, 20);
+    }
 }

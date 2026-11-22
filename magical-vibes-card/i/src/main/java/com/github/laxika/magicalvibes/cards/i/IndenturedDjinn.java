@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerMayDrawUpToNCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDrawUpToNGainLifePerCardBelowEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 public class IndenturedDjinn extends Card {
 
     public IndenturedDjinn() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new EachOtherPlayerMayDrawUpToNCardsEffect(3));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), EachPlayerMayDrawUpToNGainLifePerCardBelowEffect.drawUpToInTurnOrder(
+                3, Subjects.eachOpponent()));
     }
 }

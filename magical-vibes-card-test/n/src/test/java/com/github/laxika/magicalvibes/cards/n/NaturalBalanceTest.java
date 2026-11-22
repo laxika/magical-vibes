@@ -255,6 +255,9 @@ class NaturalBalanceTest extends BaseCardTest {
                 new FeralShadow(), new FeralShadow(), new FeralShadow(), new FeralShadow(), new Forest()));
 
         castNaturalBalance();
+        // "May search their library": the choice is offered although nothing can be found.
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class).params().cards()).isEmpty();
+        harness.handleCardChosen(player1, -1);
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.pendingEffectResolutionEntry).isNull();

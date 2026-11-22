@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentFacesSycoraxCommanderVillainousChoiceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -25,11 +24,11 @@ class SycoraxCommanderTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice.playerId()).isEqualTo(player2.getId());
         assertThat(choice.options()).containsExactly(
-                EachOpponentFacesSycoraxCommanderVillainousChoiceEffect.DISCARD_OPTION,
-                EachOpponentFacesSycoraxCommanderVillainousChoiceEffect.DAMAGE_OPTION);
+                SycoraxCommander.DISCARD_OPTION,
+                SycoraxCommander.DAMAGE_OPTION);
 
         harness.handleListChoice(player2,
-                EachOpponentFacesSycoraxCommanderVillainousChoiceEffect.DAMAGE_OPTION);
+                SycoraxCommander.DAMAGE_OPTION);
 
         harness.assertLife(player2, 17);
         assertThat(gd.playerHands.get(player2.getId())).containsExactlyElementsOf(hand);
@@ -43,7 +42,7 @@ class SycoraxCommanderTest extends BaseCardTest {
         castCommander(discarded);
 
         harness.handleListChoice(player2,
-                EachOpponentFacesSycoraxCommanderVillainousChoiceEffect.DISCARD_OPTION);
+                SycoraxCommander.DISCARD_OPTION);
 
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactlyElementsOf(discarded);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(drawn.get(0), drawn.get(1));
@@ -56,7 +55,7 @@ class SycoraxCommanderTest extends BaseCardTest {
         castCommander(List.of());
 
         harness.handleListChoice(player2,
-                EachOpponentFacesSycoraxCommanderVillainousChoiceEffect.DISCARD_OPTION);
+                SycoraxCommander.DISCARD_OPTION);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
@@ -70,7 +69,7 @@ class SycoraxCommanderTest extends BaseCardTest {
         castCommander(List.of());
 
         harness.handleListChoice(player2,
-                EachOpponentFacesSycoraxCommanderVillainousChoiceEffect.DAMAGE_OPTION);
+                SycoraxCommander.DAMAGE_OPTION);
 
         harness.assertLife(player2, 20);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
@@ -85,7 +84,7 @@ class SycoraxCommanderTest extends BaseCardTest {
         castCommander(List.of(discarded));
 
         harness.handleListChoice(player2,
-                EachOpponentFacesSycoraxCommanderVillainousChoiceEffect.DISCARD_OPTION);
+                SycoraxCommander.DISCARD_OPTION);
 
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(discarded);
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
@@ -108,7 +107,7 @@ class SycoraxCommanderTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Sycorax Commander");
         harness.passBothPriorities();
         harness.handleListChoice(player2,
-                EachOpponentFacesSycoraxCommanderVillainousChoiceEffect.DAMAGE_OPTION);
+                SycoraxCommander.DAMAGE_OPTION);
 
         harness.assertLife(player2, 18);
         assertThat(gd.playerHands.get(player2.getId())).containsExactlyElementsOf(remainingHand);

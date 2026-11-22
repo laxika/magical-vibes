@@ -235,7 +235,8 @@ public record ExileGraveyardCardsEffect(
 
     /**
      * "Exile it from your graveyard" over the cards {@code cards} names that are in a graveyard as this step applies
-     * (Leonardo da Vinci's discarded artifact card: {@code Subjects.cardsThisWay(StepKind.DISCARD)}); the exiled cards
+     * (Leonardo da Vinci's discarded artifact card: {@code Subjects.cardsThisWay(StepKind.DISCARD)}), or revealed in a
+     * library ("exiles the rest", Clear the Land: {@code Subjects.cardsThisWay(StepKind.REVEAL, filter)}); the exiled cards
      * are this step's EXILE result. Nothing is targeted.
      */
     public static ExileGraveyardCardsEffect cards(CardSubject cards) {

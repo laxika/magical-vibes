@@ -9,7 +9,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -99,6 +101,51 @@ public class ZoneToLibraryService {
             library.removeIf(Card::isToken);
          }
          return moved;
+    }
+
+    /**
+     * Moves the cards of {@code playerId}'s graveyard into their library, firing the departure notification; a token
+     * there ceases to exist instead (CR 111.7).
+     *
+     * @return how many cards the graveyard contributed
+     */
+    public int moveGraveyardIntoLibrary(GameData gameData, UUID playerId) {
+        List<Card> library = gameData.playerDecks.get(playerId);
+        if (library == null) {
+            return 0;
+        }
+        List<Card> moving = graveyardService.takeGraveyardCardsForZoneChange(gameData, playerId);
+        library.addAll(moving);
+        return moving.size();
+    }
+
+    /**
+     * Moves the permanents each of {@code ownerIds} owns into their libraries as one event (CR 608.2e), tokens dropped
+     * from the libraries afterwards as {@link #moveOwnedPermanentsIntoLibrary} does. Shuffling is the caller's job.
+     *
+     * @return how many permanents of each owner left the battlefield
+     */
+    public Map<UUID, Integer> moveOwnedPermanentsIntoLibraries(GameData gameData, List<UUID> ownerIds) {
+        List<Permanent> leaving = new ArrayList<>();
+        Map<UUID, UUID> owners = new HashMap<>();
+        gameData.forEachPermanent((controllerId, perm) -> {
+            UUID ownerId = gameData.stolenCreatures.getOrDefault(perm.getId(), controllerId);
+            if (ownerIds.contains(ownerId)) {
+                leaving.add(perm);
+                owners.put(perm.getId(), ownerId);
+            }
+        });
+        Map<UUID, Integer> moved = new HashMap<>();
+        for (Permanent perm : permanentRemovalService.removeAllToLibraryBottom(gameData, leaving)) {
+            moved.merge(owners.get(perm.getId()), 1, Integer::sum);
+        }
+        for (UUID ownerId : ownerIds) {
+            List<Card> library = gameData.playerDecks.get(ownerId);
+            if (library != null) {
+                library.removeIf(Card::isToken);
+            }
+        }
+        return moved;
     }
 
     private static int drainInto(List<Card> zone, List<Card> library) {

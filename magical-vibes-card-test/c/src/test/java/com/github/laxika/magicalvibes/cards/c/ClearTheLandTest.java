@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.c;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GerrardsIrregulars;
 import com.github.laxika.magicalvibes.cards.h.HickoryWoodlot;
+import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.Mountain;
 import com.github.laxika.magicalvibes.cards.p.Plains;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.cards.r.RishadanPort;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +31,8 @@ import static org.assertj.core.api.Assertions.assertThat;
         Plains.class,
         RishadanPort.class,
         Swamp.class
-})
+,
+        HillGiant.class})
 class ClearTheLandTest extends BaseCardTest {
 
     @Test
@@ -169,5 +172,20 @@ class ClearTheLandTest extends BaseCardTest {
         assertThat(gd.exiledCards).isEmpty();
         harness.assertInGraveyard(player1, "Clear the Land");
         assertThat(gd.status).isEqualTo(com.github.laxika.magicalvibes.model.GameStatus.RUNNING);
+    }
+
+    @Test
+    @DisplayName("Only the revealed cards are named to the players")
+    void cardsBelowTheRevealedFiveAreNotShown() {
+        harness.setLibrary(player1, List.of(new Forest(), new Forest(), new Forest(), new Forest(), new Forest(),
+                new HillGiant()));
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new ClearTheLand()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains("Hill Giant"));
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }
 }

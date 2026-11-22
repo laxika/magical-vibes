@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerChoosesOpponentPerm
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import java.util.ArrayList;
@@ -18,13 +19,17 @@ import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/** Resolves sequential up-to-one choices for permanents controlled by each player's opponents. */
+/**
+ * Resolves sequential up-to-one choices from among the permanents the ability controller's opponents control; all
+ * chosen permanents are exiled at once after the last choice.
+ */
 @Component
 @RequiredArgsConstructor
 public class EachPlayerChoosesOpponentPermanentToExileEffectHandler implements NormalEffectHandlerBean {
 
     private final ExileSupport exileSupport;
     private final GameQueryService gameQueryService;
+    private final PermanentRemovalService permanentRemovalService;
     private final PlayerInputService playerInputService;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -61,8 +66,7 @@ public class EachPlayerChoosesOpponentPermanentToExileEffectHandler implements N
         List<UUID> nextRemainingPlayerIds = remainingPlayerIds.size() > 1
                 ? List.copyOf(remainingPlayerIds.subList(1, remainingPlayerIds.size()))
                 : List.of();
-        List<UUID> candidates = opponentPermanentIds(gameData, choosingPlayerId, filter,
-                sourceCardId, sourceControllerId);
+        List<UUID> candidates = opponentPermanentIds(gameData, filter, sourceCardId, sourceControllerId);
         if (candidates.isEmpty()) {
             beginNextChoice(gameData, nextRemainingPlayerIds, chosenIds, filter, sourceCardId,
                     sourceControllerId, sourceName);
@@ -72,18 +76,18 @@ public class EachPlayerChoosesOpponentPermanentToExileEffectHandler implements N
         playerInputService.beginMultiPermanentChoice(gameData, choosingPlayerId, candidates, 1,
                 new MultiPermanentChoiceContext.EachPlayerChoosesOpponentPermanentToExile(
                         nextRemainingPlayerIds, chosenIds, filter, sourceCardId, sourceControllerId, sourceName),
-                sourceName + " — Choose up to one permanent an opponent controls to exile.");
+                sourceName + " — Choose up to one permanent to exile from among those "
+                        + gameData.playerIdToName.get(sourceControllerId) + "'s opponents control.");
     }
 
-    private List<UUID> opponentPermanentIds(GameData gameData, UUID choosingPlayerId,
-                                             PermanentPredicate filter, UUID sourceCardId,
-                                             UUID sourceControllerId) {
+    private List<UUID> opponentPermanentIds(GameData gameData, PermanentPredicate filter, UUID sourceCardId,
+                                            UUID sourceControllerId) {
         FilterContext filterContext = FilterContext.of(gameData)
                 .withSourceCardId(sourceCardId)
                 .withSourceControllerId(sourceControllerId);
         List<UUID> candidateIds = new ArrayList<>();
         for (UUID controllerId : gameData.orderedPlayerIds) {
-            if (controllerId.equals(choosingPlayerId)) {
+            if (controllerId.equals(sourceControllerId)) {
                 continue;
             }
             List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
@@ -100,11 +104,21 @@ public class EachPlayerChoosesOpponentPermanentToExileEffectHandler implements N
     }
 
     private void exileChosen(GameData gameData, List<UUID> chosenIds, String sourceName) {
+        List<Permanent> toExile = new ArrayList<>();
         for (UUID permanentId : new LinkedHashSet<>(chosenIds)) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentId);
             if (permanent != null) {
-                exileSupport.exilePermanentAndLog(gameData, permanent, sourceName);
+                toExile.add(permanent);
             }
+        }
+        permanentRemovalService.beginPermanentLeaveBatch(gameData);
+        try {
+            gameData.runAsSingleCardExileBatch(() -> permanentRemovalService.performSimultaneousRemovals(
+                    gameData, toExile,
+                    () -> toExile.forEach(permanent ->
+                            exileSupport.exilePermanentAndLog(gameData, permanent, sourceName))));
+        } finally {
+            permanentRemovalService.endPermanentLeaveBatch(gameData);
         }
     }
 

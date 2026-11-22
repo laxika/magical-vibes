@@ -263,7 +263,6 @@ public class LibraryChoiceHandlerService {
         boolean restToExile = librarySearch.restToExile();
         boolean shuffleAfterSelection = librarySearch.shuffleAfterSelection();
         LibrarySearchFollowUp followUp = librarySearch.followUp();
-        boolean deferReveal = followUp.eachPlayerToHandCount() > 0 && reveals;
         // Mandatory "each player searches ... puts it onto the battlefield" (Field of Ruin): the lands
         // enter together once everyone has chosen. Optional chains keep per-player entry.
         boolean deferEachPlayerBattlefield = isPlainBattlefieldDestination(librarySearch)
@@ -329,24 +328,12 @@ public class LibraryChoiceHandlerService {
             throw new IllegalStateException("Invalid card index: " + cardIndex);
         }
 
-        // Each player's optional search begins with their first pick. Declining before
-        // finding any cards does not search or shuffle that player's library.
-        if (followUp.eachPlayerToHandCount() > 0
-                && remainingCount == followUp.eachPlayerToHandCount()) {
-            if (cardIndex == -1) {
-                shuffleAfterSelection = false;
-            } else {
-                LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
-            }
-        }
-
         if (cardIndex == -1 && librarySearch.declineSkipsShuffle()) {
             shuffleAfterSelection = false;
         }
         // An optional search that may be declined begins with the first pick (CR 701.23a), so it is
         // the first pick that fires "whenever a player searches their library" triggers.
         if (cardIndex >= 0 && librarySearch.declineSkipsShuffle()
-                && followUp.eachPlayerToHandCount() == 0
                 && followUp.basicLandSearchQueue() == null
                 && accumulatedCards.isEmpty()
                 && (targetPlayerId == null || targetPlayerId.equals(playerId))) {
@@ -377,18 +364,9 @@ public class LibraryChoiceHandlerService {
             }
         }
 
-        if (cardIndex >= 0
-                && followUp.basicLandSearchQueue() != null
-                && followUp.basicLandSearchQueue().optionalSearch()
-                && (com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport
-                        .markSearchedOnPick(followUp.basicLandSearchQueue())
-                        ? !followUp.basicLandSearchQueue().searchedPlayerIds().contains(librarySearch.playerId())
-                        : accumulatedCards.isEmpty())) {
-            LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
-            if (com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport.markSearchedOnPick(followUp.basicLandSearchQueue())) {
-                followUp = followUp.withBasicLandSearchQueue(
-                        followUp.basicLandSearchQueue().withSearchedPlayer(librarySearch.playerId()));
-            }
+        if (cardIndex >= 0) {
+            activeSearch = markSearchChosen(gameData, activeSearch);
+            followUp = activeSearch.params().followUp();
         }
 
         gameData.interaction.clearAwaitingInput();
@@ -1163,9 +1141,6 @@ public class LibraryChoiceHandlerService {
             }
             if (startPendingEachPlayerBasicLandSearch(gameData, followUp.clearBasicLandToHand(),
                     librarySearch.declineSkipsShuffle())) return;
-            if (librarySearchSupport.startNextEachPlayerToHandSearch(gameData, followUp)) return;
-            if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
-            if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
             if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
             if (startNextToHandPick(gameData, playerId, followUp, librarySearch.shuffleAfterSelection())) return;
@@ -1900,9 +1875,6 @@ public class LibraryChoiceHandlerService {
             } else if (isHeldOutForBattlefieldDecision(gameData, followUp, chosenCard, playerId)) {
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " holds ", chosenCard, " for the battlefield decision."));
-            } else if (deferReveal) {
-                gameData.eachPlayerSearchDeferredToHand
-                        .computeIfAbsent(handOwnerId, ignored -> new ArrayList<>()).add(chosenCard);
             } else {
                 addCardFromLibraryToHand(gameData, handOwnerId, chosenCard, deckOwnerId, sourceZone == deck);
             }
@@ -2029,7 +2001,7 @@ public class LibraryChoiceHandlerService {
             }
 
             if (newSearchCards.isEmpty()) {
-                if (reveals && !deferReveal) {
+                if (reveals) {
                     gameLogService.append(gameData, GameLog.textCardText(
                             player.getUsername() + " reveals ", chosenCard, "."));
                 }
@@ -2064,12 +2036,11 @@ public class LibraryChoiceHandlerService {
                 }
                 // The multi-pick ran dry, but any queued follow-up work still has to happen.
                 if (basicLandSearchQueueSupport.advance(gameData, followUp)) return;
-                if (librarySearchSupport.startNextEachPlayerToHandSearch(gameData, followUp)) return;
                 finishSearchAndResume(gameData);
                 return;
             }
 
-            if (reveals && !deferReveal) {
+            if (reveals) {
                 gameLogService.append(gameData, GameLog.textCardText(
                         player.getUsername() + " reveals ", chosenCard, "."));
             }
@@ -2217,9 +2188,7 @@ public class LibraryChoiceHandlerService {
                         ? player.getUsername() + " puts a card " + destinationText + ". Library is shuffled."
                         : player.getUsername() + " puts a card " + destinationText + ".");
             }
-            if (!deferReveal) {
-                gameLogService.append(gameData, logEntry);
-            }
+            gameLogService.append(gameData, logEntry);
             log.info("Game {} - {} searches library and puts {} {}",
                     gameData.id, player.getUsername(), chosenCard.getName(), destinationText);
         }
@@ -2243,9 +2212,6 @@ public class LibraryChoiceHandlerService {
         if (startPendingBasicLandToHandSearch(gameData, playerId, followUp, searchCards)) return;
         if (startPendingCardToGraveyardSearch(gameData, playerId, followUp)) return;
         if (startPendingEachPlayerBasicLandSearch(gameData, followUp, librarySearch.declineSkipsShuffle())) return;
-        if (librarySearchSupport.startNextEachPlayerToHandSearch(gameData, followUp)) return;
-        if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
-        if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
         if (startNextToHandPick(gameData, playerId, followUp, librarySearch.shuffleAfterSelection())) return;
@@ -2264,9 +2230,30 @@ public class LibraryChoiceHandlerService {
         // Basic-land queues have their own end-of-queue shuffle; the generic descriptor helper
         // treats an absent empty descriptor queue as an exhausted queue and would shuffle here.
         return !alreadyShuffled && followUp.basicLandSearchQueue() == null
-                && followUp.eachPlayerToHandCount() == 0
                 && !followUp.remainingToHandPicks().isEmpty()
                 && librarySearchSupport.startNextToHandPick(gameData, playerId, followUp);
+    }
+
+    /**
+     * The searcher of a "may search" in a search queue has chosen to search, by taking a card or by acting while
+     * searching: the search is recorded once and the queue knows them as a searcher, who shuffles with the others
+     * (also when Opposition Agent exiles what is found).
+     */
+    private PendingInteraction.LibrarySearch markSearchChosen(GameData gameData,
+                                                              PendingInteraction.LibrarySearch search) {
+        LibrarySearchParams params = search.params();
+        LibrarySearchFollowUp.BasicLandSearchQueue queue = params.followUp().basicLandSearchQueue();
+        if (queue == null
+                || !com.github.laxika.magicalvibes.service.effect.normalfx.BasicLandSearchQueueSupport
+                        .markSearchedOnPick(queue)
+                || queue.searchedPlayerIds().contains(params.playerId())) {
+            return search;
+        }
+        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, params.playerId());
+        return new PendingInteraction.LibrarySearch(
+                params.withFollowUp(params.followUp().withBasicLandSearchQueue(
+                        queue.withSearchedPlayer(params.playerId()))),
+                search.messagePrompt(), search.messageCanFailToFind());
     }
 
     private void handleOppositionAgentChoice(GameData gameData, Player player,
@@ -2315,9 +2302,6 @@ public class LibraryChoiceHandlerService {
         if (startPendingBasicLandToHandSearch(gameData, playerId, followUp, librarySearch.cards())) return;
         if (startPendingCardToGraveyardSearch(gameData, playerId, followUp)) return;
         if (startPendingEachPlayerBasicLandSearch(gameData, followUp, librarySearch.declineSkipsShuffle())) return;
-        if (librarySearchSupport.startNextEachPlayerToHandSearch(gameData, followUp)) return;
-        if (librarySearchSupport.startNextEachPlayerCreatureToBattlefieldSearch(gameData, followUp)) return;
-        if (librarySearchSupport.startNextEachPlayerLandToBattlefieldSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextTargetPlayerTopSearch(gameData, followUp)) return;
         if (librarySearchSupport.startNextSameNamePick(gameData, playerId, followUp)) return;
         if (startNextToHandPick(gameData, playerId, followUp, librarySearch.shuffleAfterSelection())) return;
@@ -2419,7 +2403,9 @@ public class LibraryChoiceHandlerService {
                 int count = params.remainingCount() - 1;
                 beginLibrarySearch(gameData, new PendingInteraction.LibrarySearch(
                         params.withCards(new ArrayList<>(remaining)).withRemainingCount(count).withFollowUp(followUp),
-                        "Choose up to " + count + " more basic land cards.", true));
+                        "Choose up to " + count + " more "
+                                + com.github.laxika.magicalvibes.model.filter.CardPredicateUtils.describeFilter(queue.filter())
+                                + (count == 1 ? "." : "s."), true));
                 return;
             }
         }
@@ -2580,6 +2566,8 @@ public class LibraryChoiceHandlerService {
 
     private void continueLibrarySearchAfterLibraryAction(GameData gameData, Player player,
                                                          PendingInteraction.LibrarySearch activeSearch, Card card) {
+        // A card cast, or an ability activated, while searching: that player has chosen to search.
+        activeSearch = markSearchChosen(gameData, activeSearch);
         LibrarySearchParams librarySearch = activeSearch.params();
 
         List<Card> remainingCards = librarySearch.cards().stream()
@@ -2592,6 +2580,7 @@ public class LibraryChoiceHandlerService {
                 LibraryShuffleHelper.shuffleLibrary(gameData, deckOwnerId);
             }
             insertNoCardFollowUp(gameData, librarySearch.followUp());
+            if (basicLandSearchQueueSupport.advance(gameData, librarySearch.followUp())) return;
             finishSearchAndResume(gameData);
             return;
         }

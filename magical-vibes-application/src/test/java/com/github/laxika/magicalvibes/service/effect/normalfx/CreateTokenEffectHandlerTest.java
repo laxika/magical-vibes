@@ -64,8 +64,8 @@ class CreateTokenEffectHandlerTest {
         gd.playerIds.add(playerId);
         gd.playerBattlefields.put(playerId, Collections.synchronizedList(new ArrayList<>()));
         // "You": the resolving entry's controller, as the resolver answers it.
-        org.mockito.Mockito.lenient().when(subjectResolutionService.player(any(), any(), any(), any()))
-                .thenAnswer(invocation -> ((StackEntry) invocation.getArgument(1)).getControllerId());
+        org.mockito.Mockito.lenient().when(subjectResolutionService.players(any(), any(), any(), any()))
+                .thenAnswer(invocation -> java.util.List.of(((StackEntry) invocation.getArgument(1)).getControllerId()));
         handler = new CreateTokenEffectHandler(
                 permanentControlSupport, gameQueryService, amountEvaluationService, tokenCopyHandler,
                 chosenCreatureTokenCopyHandler, esixTokenReplacementSupport, null, subjectResolutionService);

@@ -1,5 +1,8 @@
 package com.github.laxika.magicalvibes.model.effect;
 
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+
 /**
  * "Each player may draw up to {@code maxDraw} cards. For each card less than {@code maxDraw} a player
  * draws this way, that player gains {@code lifePerCardBelow} life."
@@ -16,23 +19,44 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param maxDraw          the maximum number of cards each player may draw
  * @param lifePerCardBelow    life gained per card fewer than {@code maxDraw} drawn
  * @param drawAfterEachChoice whether each player draws immediately after choosing, before the next choice
+ * @param players             who may draw ("each other player may draw up to three cards", Indentured Djinn); never a
+ *                            target
  */
 public record EachPlayerMayDrawUpToNGainLifePerCardBelowEffect(int maxDraw, int lifePerCardBelow,
-                                                                boolean drawAfterEachChoice)
-        implements CardEffect {
+                                                                boolean drawAfterEachChoice, PlayerSubject players)
+        implements CardDrawingEffect {
 
     public EachPlayerMayDrawUpToNGainLifePerCardBelowEffect {
         if (drawAfterEachChoice && lifePerCardBelow != 0) {
             throw new IllegalArgumentException("drawAfterEachChoice does not support life gain");
         }
+        if (players.declaresTarget()) {
+            throw new IllegalArgumentException("The players who may draw are not targeted: " + players);
+        }
+    }
+
+    @Override
+    public DynamicAmount drawnCardAmount() {
+        return new Fixed(maxDraw);
+    }
+
+    @Override
+    public PlayerSubject drawingPlayer() {
+        return players;
+    }
+
+    /** "[Players] may each draw up to {@code maxDraw} cards", each choosing and drawing in turn. */
+    public static EachPlayerMayDrawUpToNGainLifePerCardBelowEffect drawUpToInTurnOrder(int maxDraw,
+                                                                                       PlayerSubject players) {
+        return new EachPlayerMayDrawUpToNGainLifePerCardBelowEffect(maxDraw, 0, true, players);
     }
 
     public EachPlayerMayDrawUpToNGainLifePerCardBelowEffect(int maxDraw, int lifePerCardBelow) {
-        this(maxDraw, lifePerCardBelow, false);
+        this(maxDraw, lifePerCardBelow, false, Subjects.eachPlayer());
     }
 
     /** "Each player draws up to {@code maxDraw} cards", each choosing and drawing in turn order. */
     public static EachPlayerMayDrawUpToNGainLifePerCardBelowEffect drawUpToInTurnOrder(int maxDraw) {
-        return new EachPlayerMayDrawUpToNGainLifePerCardBelowEffect(maxDraw, 0, true);
+        return drawUpToInTurnOrder(maxDraw, Subjects.eachPlayer());
     }
 }

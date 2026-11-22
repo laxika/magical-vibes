@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentLosesLifeEqualToLifeLostThisTurn;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.LifeLostThisTurn;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +20,7 @@ public class WoundReflection extends Card {
     public WoundReflection() {
         // At the beginning of each end step, each opponent loses life equal to the life they lost
         // this turn. (Damage causes loss of life.)
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new EachOpponentLosesLifeEqualToLifeLostThisTurn());
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), LoseLifeEffect.eachTheirOwn(
+                new LifeLostThisTurn(CountScope.CONTROLLER), Subjects.eachOpponent()));
     }
 }

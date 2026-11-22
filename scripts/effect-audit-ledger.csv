@@ -1842,3 +1842,104 @@ EachOpponentChoosesCreatureToTapAndGoadEffect,blocked-player-loop,9,"run 8: each
 EachOpponentChoosesCreatureToExileWithSourceEffect,blocked-player-loop,9,run 8: each opponent chooses in turn in its own continuation (Sothera)
 EachPlayerChoosesOwnPermanentsToExileUntilSourceLeavesEffect,blocked-player-loop,9,"run 8: each player chooses, then all exiled until the source leaves (Foreboding Steamboat)"
 EachPlayerPaysAnyLifeForTokensEffect,blocked-player-loop,9,"run 8: rounds of payments repeat until nobody pays, then each gets tokens (Plague of Vermin)"
+EachPlayerRevealsTopCardAndCreatesTokenCopyEffect,split,9,"run 9: reveal step + token copies of cardsThisWay(REVEAL, creature) + return the spell when none; Haunting Imitation"
+EachPlayerRevealsTopCardAndSetsTriggeringSpellXValueEffect,split,9,run 9: reveal step + SetTriggeringSpellXValueEffect(revealedManaValue); Naya Soulbeast
+EachPlayerRevealsTopCardIfAllCreaturesToBattlefieldEffect,split,9,run 9: reveal step + PutCardsOntoBattlefieldEffect unless a noncreature was revealed; Game Preserve
+EachPlayerRevealsTopCardLosesLifeEqualToManaValueThenToHandEffect,split,9,run 9: reveal step + each their own loss + PutCardsIntoHandEffect; Duskmantle Seer
+EachPlayerRevealsTopCardMayGraveyardOrDrawEffect,split,9,"run 9: reveal step + a may over PutExiledCardsIntoOwnersGraveyardEffect, else each draws; Dakra Mystic"
+EachPlayerRevealsTopCardsLandsToBattlefieldTappedRestExiledEffect,split,9,run 9: reveal step + PutCardsOntoBattlefieldEffect tapped + ExileGraveyardCardsEffect.cards; Clear the Land
+EachPlayerRevealsTopCardsToBattlefieldRestToGraveyardEffect,split,9,run 9: reveal step (a count per player) + put onto the battlefield + put into graveyards; Over the Top
+RevealTopCardPutIntoHandAndChangeLifeEffect,split,9,run 9: was waiting for REVEAL (run 29): reveal + PutCardsIntoHandEffect + lose / gain revealedManaValue; 8 cards
+RevealTopCardPutIntoHandThenEachOpponentLosesLifeEffect,split,9,"run 9: was waiting for REVEAL (run 29): as the change-life record over each opponent; Yuriko, Sorin, Caustic Bronco"
+RevealTopCardOfLibraryEffect,survivor,9,"run 9: players and a count per player; records REVEAL, the cards still in their libraries (cardsThisWay(REVEAL), revealedManaValue)"
+PutCardsOntoBattlefieldEffect,survivor,9,run 9: new step record: the cards a card subject names enter together under their owners' control through BattlefieldEntryBatchSupport
+SetTriggeringSpellXValueEffect,survivor,9,run 9: new step record: the triggering spell's X is an amount; Naya Soulbeast
+PutCardsIntoHandEffect,survivor,9,run 9: also puts a card revealed in a library into its hand
+PutExiledCardsIntoOwnersGraveyardEffect,survivor,9,run 9: also puts a card revealed in a library into its graveyard
+ExileGraveyardCardsEffect,survivor,9,run 9: cards(...) also exiles a card revealed in a library
+EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect,absorbed,9,run 9: EachPlayerSearchesLibraryEffect; Old-Growth Dryads
+EachOpponentMaySearchLibraryForLandToBattlefieldEffect,absorbed,9,run 9: EachPlayerSearchesLibraryEffect; Hired Giant
+EachPlayerMaySearchLibraryForCardsToHandEffect,absorbed,9,"run 9: EachPlayerSearchesLibraryEffect; Weird Harvest, Noble Benefactor"
+EachPlayerMaySearchLibraryForBasicLandsToHandEffect,absorbed,9,run 9: EachPlayerSearchesLibraryEffect; Enigma Ridges
+EachPlayerMaySearchLibraryForBasicLandsToMatchMostLandsEffect,absorbed,9,run 9: EachPlayerSearchesLibraryEffect; Scholarship Sponsor
+EachTargetPlayerMaySearchLibraryForBasicLandToBattlefieldEffect,absorbed,9,run 9: EachPlayerSearchesLibraryEffect; Turtle Tracks
+EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect,absorbed,9,"run 9: EachPlayerSearchesLibraryEffect; New Frontiers, Veteran Explorer, Avatar of Growth, Winds of Abandon"
+DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect,split,9,"run 9: was waiting for an each-player search (run 16): DestroyTargetPermanentEffect + EachPlayerSearchesLibraryEffect; Field of Ruin, Demolition Field"
+EachPlayerSearchesLibraryEffect,survivor,9,"run 9: new record of the per-player search queue: players, filter, a count per searcher, destination, may"
+EachDestroyedPermanentControllerMaySearchBasicLandToBattlefieldEffect,blocked-player-loop,9,"run 9: one may-search for each land destroyed, each declined on its own; EachPlayerSearchesLibraryEffect gives a player one search for up to their count (From the Ashes)"
+EachOpponentMaySearchLibraryForCreatureToBattlefieldEffect,blocked-player-loop,9,"run 9: each opponent is asked before seeing the library and may search and find nothing, then the next; the search queue only knows a searcher by a card taken (CR 701.23a; Boldwyr Heavyweights)"
+EachPlayerPaysAnyManaForTokensEffect,split,9,"run 9: EachPlayerPaysAnyManaEffect + EachPlayerCreatesTokenEffect; Liege of the Hollows, Alliance of Arms"
+EachPlayerPaysAnyManaThenBoostSourceEffect,split,9,run 9: EachPlayerPaysAnyManaEffect + BoostSelfEffect; Mana-Charged Dragon
+EachPlayerPaysAnyManaThenDrawsEffect,split,9,run 9: EachPlayerPaysAnyManaEffect + EachPlayerDrawsCardEffect; Minds Aglow
+EachPlayerPaysAnyManaThenMillsEffect,split,9,run 9: EachPlayerPaysAnyManaEffect + MillEffect; Shared Trauma
+EachPlayerPaysAnyManaThenSearchesForBasicLandsEffect,split,9,run 9: EachPlayerPaysAnyManaEffect + EachPlayerSearchesLibraryEffect; Collective Voyage
+EachPlayerPaysAnyManaEffect,survivor,9,"run 9: new step record: the one any-amount payment loop, recording PAY_MANA with each player's part"
+EachPlayerControllingMatchingPermanentDrawsCardEffect,absorbed,9,"run 9: DrawCardEffect(1, matching(eachPlayer(), PlayerControlsPermanentPredicate)); Bonder's Ornament"
+EachPlayerWithMostCreaturesInvestigatesEffect,absorbed,9,"run 9: CreateTokenEffect.ofClueToken(1).forController(matching(..., PlayerControlsMostCreaturesPredicate)); No Witnesses"
+CreateTokenEffect,survivor,9,"run 9: a token controller naming several players: each creates, a replacement offer resumes at its player"
+EachOpponentWithoutLegendaryCreatureOrPlaneswalkerLosesGameEffect,absorbed,9,"run 9: ControllerLosesGameEffect(except(eachOpponent(), matching(...))); Nicol Bolas, Dragon-God"
+EachPlayerAttackedBySourceLosesGameEffect,absorbed,9,"run 9: ControllerLosesGameEffect(matching(eachPlayer(), PlayerAttackedBySourceThisTurnPredicate)); Angel of Destiny"
+ControllerLosesGameEffect,survivor,9,run 9: each player the subject names loses
+EachPlayerShufflesGraveyardIntoLibraryEffect,absorbed,9,"run 9: EachPlayerShufflesZonesIntoLibraryEffect.graveyards(); Mnemonic Nexus, Survive"
+EachOtherPlayerShufflesHandAndGraveyardIntoLibraryEffect,absorbed,9,run 9: EachPlayerShufflesZonesIntoLibraryEffect.handsAndGraveyardsOf(eachOpponent()); Archival Whorl
+EachPlayerShufflesHandAndPermanentsIntoLibraryAndDrawsEffect,split,9,run 9: handsAndOwnedPermanents() + EachPlayerDrawsCardEffect(shuffledAwayByYou()); The Great Aurora
+ShuffleHandIntoLibraryAndDrawEffect,split,9,run 9: was waiting for a shuffle step kind (run 29): handsOf(players) + a draw of shuffledAwayByYou(); 5 cards
+EachPlayerShufflesZonesIntoLibraryEffect,survivor,9,run 9: players and zones; records SHUFFLE_INTO_LIBRARY per player; owned permanents leave as one event
+EachOpponentExilesTopUntilTotalManaValueEffect,absorbed,9,run 9: ExileCardsFromTopUntilEffect.untilTotalManaValue; Tasha's Hideous Laughter
+EachOpponentExilesTopUntilTotalManaValueMayCastThisTurnEffect,split,9,run 9: untilTotalManaValue + AllowPlayCardsFromExileEffect; Dream Harvest
+ExileCardsFromTopUntilEffect,survivor,9,run 9: a total mana value is the other stop
+EachPlayerLosesLifePerCreatureControlledEffect,absorbed,9,"run 9: LoseLifeEffect of a PermanentCount per player; Stronghold Discipline, Netherborn Phalanx, Batwing Brume"
+EachOpponentLosesLifeEqualToCardsInTheirGraveyardEffect,absorbed,9,"run 9: LoseLifeEffect.eachTheirOwn(CardsInGraveyard); Origin of Black Widow, Angrath"
+EachOpponentLosesLifeEqualToLifeLostThisTurn,absorbed,9,"run 9: LoseLifeEffect.eachTheirOwn(LifeLostThisTurn); Wound Reflection, Archfiend of Despair, Warlock Class"
+EachOpponentWithEmptyHandLosesLifeEffect,absorbed,9,"run 9: LoseLifeEffect over matching(eachOpponent(), PlayerHasNoCardsInHandPredicate); Tinybones"
+LoseLifeEffect,survivor,9,run 9: amountPerPlayer (eachTheirOwn): each player's own amount for any players
+ChooseCardFromHandAndApplyPerpetualIncorporationEffect,absorbed,9,run 9: ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect.incorporating; four cards
+ChooseCardFromHandAndApplyPerpetualKeywordEffect,absorbed,9,run 9: ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect.gaining; three cards
+ChooseCardFromHandAndApplyPerpetualPowerToughnessAndIncorporationEffect,absorbed,9,run 9: ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect.incorporatingAndGetting; Guildpact Greenwalker
+ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect,survivor,9,"run 9: keywords, an incorporated cost and a cast trigger beside the power/toughness change: one private hand prompt already applied them all, so no card subject is needed; the cost reduction, damage and spell-ability siblings are one card each"
+ChooseCardsFromTargetHandEffect,survivor,9,run 9: Reap Intellect is steps now: exileAllCopiesOfChosenNames has no card left and can go with its continuation in the Choose run
+DealDamageToRandomOpponentEffect,blocked-other,9,"run 9: its untargeted half is ChoosePlayerAtRandomEffect + DealDamageToPlayersEffect now (Zaffai); left: Knight Rampager's target opponent chosen at random, which no player subject declares, so the record stays"
+TargetPlayerChoosesOneEffect,survivor,9,run 9: villainousChoiceFacedBy(players): one step per player in APNAP order (CR 701.55d)
+EachOpponentFacesMissyVillainousChoiceEffect,absorbed,9,run 9: TargetPlayerChoosesOneEffect.villainousChoiceFacedBy; Missy
+EachOpponentFacesSycoraxCommanderVillainousChoiceEffect,absorbed,9,run 9: TargetPlayerChoosesOneEffect.villainousChoiceFacedBy; Sycorax Commander
+EachOpponentFacesVillainousChoiceEffect,absorbed,9,run 9: TargetPlayerChoosesOneEffect.villainousChoiceFacedBy; Dr. Eggman
+EachOpponentWhoLostLifeFacesVillainousChoiceEffect,absorbed,9,run 9: TargetPlayerChoosesOneEffect.villainousChoiceFacedBy; Davros
+EachOtherPlayerMayDrawUpToNCardsEffect,absorbed,9,"run 9: EachPlayerMayDrawUpToNGainLifePerCardBelowEffect.drawUpToInTurnOrder(max, eachOpponent()); Shah of Naar Isle, Indentured Djinn"
+EachPlayerMayDrawUpToNGainLifePerCardBelowEffect,survivor,9,run 9: takes the players who may draw
+EachOpponentMayInvestigateOrLoseLifeThenControllerInvestigatesEffect,dead,9,run 9: Wernog only imported it: a second copy of EachOpponentMayInvestigateEffect
+EachOpponentCreatureBlocksThisTurnIfAbleEffect,unique,9,"run 9: the one must-block rule of a set that covers creatures arriving later (CR 611.2c); the record is itself the floating effect the blockers and the AI read (Predatory Rampage, Brutal Hordechief)"
+EachControlledPermanentBecomesCopyOfTargetNonAuraPermanentEffect,blocked-other,9,"run 9: a set of copiers: the copier subject of the copy verb, which step 10 decides with the human sign-off (Mirrorform)"
+EachPlayerChoosesPlanarModeEffect,unique,9,"run 9: per-player modes stored on a planar object, switched at later upkeeps (Two Streams Facility)"
+EachPlayerShufflesOwnedCreaturesIntoLibraryThenRevealsCreatureEffect,blocked-other,9,"run 9: the shuffle step takes no permanent filter and records no nontoken per player for ""each player who shuffled a nontoken creature this way""; one card (Collision of Realms)"
+EachOpponentMayDiscardOrSacrificePermanentEffect,blocked-player-loop,9,"run 9: one discard-or-sacrifice-or-damage offer per opponent through queued mays (Zoyowa, Osseous Sticktwister)"
+EachPlayerTakesDamageUnlessPaysEffect,blocked-player-loop,9,"run 9: one pay-or-damage offer per player through its may continuation, also driven by other handlers (Lim-Dul's Hex)"
+EachPlayerChoosesTokenEffect,blocked-player-loop,9,"run 9: each player chooses a token, then all are created (The Pit)"
+EachPlayerReturnsCardsFromGraveyardToHandEffect,blocked-player-loop,9,"run 9: the graveyard-return queue: each player chooses, then all return together (Ill-Gotten Gains)"
+EachOpponentChoosesCreatureCreateTokenCopyWithTotalPowerToughnessEffect,blocked-player-loop,9,"run 9: a choice per opponent, then one of the chosen is copied with their totals (Benthic Anomaly)"
+EachOpponentChoosesCreatureYouGainControlEffect,blocked-player-loop,9,"run 9: each opponent chooses, then control of all is gained (Riches)"
+EachOpponentChoosesGreatestPowerCreatureToExileThenDealsPowerDamageEffect,blocked-player-loop,9,"run 9: each opponent breaks their tie, then damage by what each exiled (Ol Rin's Searing Light)"
+EachOpponentChoosesMasterOfCeremoniesEffect,blocked-player-loop,9,"run 9: each opponent chooses, then the rewards are counted over the choices (Master of Ceremonies)"
+EachOpponentExilesNonlandNontokenPermanentAndRandomNonlandCardThenDealsManaValueDamageEffect,blocked-player-loop,9,run 9: each opponent chooses in turn in its own continuation (Gilded Ambusher)
+EachOpponentMayInvestigateEffect,blocked-player-loop,9,"run 9: one may per opponent, counted for the controller's investigations (Wernog)"
+EachOpponentMaySacrificeMatchingPermanentOrLoseLifeAndControllerDrawsEffect,blocked-player-loop,9,run 9: one sacrifice-or-lose-and-draw offer per opponent through queued mays (Braids)
+EachOpponentMaySacrificeNontokenCreatureOrLoseLifeEffect,blocked-player-loop,9,run 9: one sacrifice-or-lose-life offer per opponent through queued mays (Fandaniel)
+EachOpponentReturnsGreatestManaValueNonlandPermanentThenDiscardsEffect,blocked-player-loop,9,run 9: a tie choice and a discard per opponent in its rerun loop (Dispersal)
+EachPlayerChoosesColorThenExileOtherPermanentsEffect,blocked-player-loop,9,"run 9: each player chooses a color, then one exile by each controller's color (Selective Obliteration)"
+EachPlayerChoosesCreaturePutsVowCounterThenSacrificesRestEffect,blocked-player-loop,9,"run 9: each player keeps one, then the counters and one sacrifice batch (Promise of Loyalty)"
+EachPlayerChoosesCreatureToLeftThenCreatesMenaceCopyEffect,blocked-player-loop,9,"run 9: each player chooses from the player to their left, then the copies (Caught in a Parallel Universe)"
+EachPlayerChoosesDifferentOpponentPermanentThenDestroyRestEffect,blocked-player-loop,9,"run 9: each player keeps a different one, then the rest are destroyed (Fortunate Few)"
+EachPlayerChoosesLandOfEachBasicTypeThenReturnToHandEffect,blocked-player-loop,9,"run 9: a choice per type and player, then all return (Planar Overlay)"
+EachPlayerChoosesLandOfEachBasicTypeThenSacrificeRestEffect,blocked-player-loop,9,"run 9: a choice per type and player, then the rest are sacrificed (Global Ruin)"
+EachPlayerChoosesNonlandPermanentThenReturnRestEffect,blocked-player-loop,9,"run 9: each player keeps one, then the rest return (Consuming Tide)"
+EachPlayerChoosesOneCardOfEachColorThenDiscardsRestEffect,blocked-player-loop,9,"run 9: a choice per color and player from revealed hands, then the discards (Noxious Vapors)"
+EachPlayerChoosesOneOrTwoCreaturesCreatesTokenCopyEffect,blocked-player-loop,9,"run 9: each player chooses one or two, then each copies and counts (Human-Time Lord Meta-Crisis)"
+EachPlayerChoosesPartyThenSacrificesRestEffect,blocked-player-loop,9,"run 9: a party choice per role and player, then one sacrifice batch (Stick Together)"
+EachPlayerMayDiscardOneThenApplyEffectsEffect,blocked-player-loop,9,"run 9: each may discard, the discards deferred to one event (Mog, Moogle Warrior)"
+EachPlayerMayDiscardThenSearchBasicLandToHandEffect,blocked-player-loop,9,"run 9: each may discard, the discards deferred, then who did may search (Borderland Explorer)"
+EachPlayerMayDiscardUpToThenTakeDamageEffect,blocked-player-loop,9,"run 9: each chooses how many and which, discarded together, then damage (Mind Bomb)"
+EachPlayerMayDrawCardAndRestrictAttackingEffect,blocked-player-loop,9,"run 9: one may-draw per player, the rider on who drew (The Second Doctor)"
+EachPlayerMayDrawCardThenGainLifeEffect,blocked-player-loop,9,"run 9: one may-draw per player, then who drew gains (Kwain)"
+EachPlayerMayExileGraveyardCardsThenLoseLifeEffect,blocked-player-loop,9,"run 9: each chooses from their graveyard, all exiled together, then the losses (Grave Consequences)"
+EachPlayerReturnsCreaturesOfChosenTypeFromGraveyardEffect,blocked-player-loop,9,"run 9: each player chooses a type, then every chosen type returns (Patriarch's Bidding)"
+EachPlayerReturnsCreaturesOfChosenTypeFromGraveyardToHandEffect,blocked-player-loop,9,"run 9: each player chooses a type, then the graveyard-return queue (Grave Sifter)"
+RevealTopCardAndCounterTriggeringSpellIfMatchesEffect,blocked-other,9,"run 9: the REVEAL step exists now; left: CounterSpellEffect cannot name the triggering spell, and the match reads that spell as it last was (Counterbalance, Swindler's Scheme)"

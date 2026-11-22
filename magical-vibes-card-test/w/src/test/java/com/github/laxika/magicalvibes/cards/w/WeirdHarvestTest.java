@@ -93,7 +93,7 @@ class WeirdHarvestTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerHands.get(player2.getId())).allMatch(c -> c.hasType(CardType.CREATURE));
         assertThat(gameLogContains("reveals")).isTrue();
-        assertThat(gameLogContains("Library is shuffled.")).isTrue();
+        assertThat(gameLogContains("library is shuffled.")).isTrue();
     }
 
     @Test

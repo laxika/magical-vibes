@@ -211,5 +211,17 @@ class ReapIntellectTest extends BaseCardTest {
         harness.assertLife(player2, 18);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
-}
 
+    @Test
+    @DisplayName("With no card exiled from the hand nothing is searched")
+    void nothingExiledMeansNoSearch() {
+        harness.setHand(player2, List.of(new GrizzlyBears()));
+        harness.setLibrary(player2, List.of(new Forest(), new GrizzlyBears()));
+
+        castReapIntellect(1);
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player1.getId());
+    }
+}

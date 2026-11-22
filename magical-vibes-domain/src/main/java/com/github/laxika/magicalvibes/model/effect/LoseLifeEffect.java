@@ -23,6 +23,10 @@ import java.util.Objects;
  * {@link PlayerSubject.OpponentsOf}) to the players who control no permanent matching that predicate — "each opponent
  * who doesn't control an Elf loses 1 life" (Thornbow Archer). The other subjects ignore it.
  *
+ * <p>{@code amountPerPlayer} ({@link #eachTheirOwn}) is "each opponent loses 1 life for each creature they control",
+ * "each opponent loses life equal to the life they lost this turn": the amount is evaluated for each of the players,
+ * as the player the amount calls you. An "each player" amount always is (Deadly Tempest).
+ *
  * <p>Only {@link Subjects#targetPlayer()} declares a target (benign, any player).
  *
  * @param amount                  amount of life to lose
@@ -31,12 +35,30 @@ import java.util.Objects;
  * @param exemptIfControls        when non-null, players controlling a matching permanent are skipped
  * @param controllerGainsLifeLostCondition optional condition gating the controller's life gain
  * @param recordTargetLifeLost record the actual life lost as the resolution event value
+ * @param amountPerPlayer      each player's amount is evaluated with that player as the amount's controller
  */
 public record LoseLifeEffect(DynamicAmount amount, PlayerSubject player,
                              boolean controllerGainsLifeLost,
                              PermanentPredicate exemptIfControls,
                              Condition controllerGainsLifeLostCondition,
-                             boolean recordTargetLifeLost) implements CardEffect {
+                             boolean recordTargetLifeLost,
+                             boolean amountPerPlayer) implements CardEffect {
+
+    /** An amount of the effect's controller's. */
+    public LoseLifeEffect(DynamicAmount amount, PlayerSubject player, boolean controllerGainsLifeLost,
+                          PermanentPredicate exemptIfControls, Condition controllerGainsLifeLostCondition,
+                          boolean recordTargetLifeLost) {
+        this(amount, player, controllerGainsLifeLost, exemptIfControls, controllerGainsLifeLostCondition,
+                recordTargetLifeLost, false);
+    }
+
+    /**
+     * "Each opponent loses life equal to the number of cards in their graveyard": each of {@code players} loses their
+     * own {@code amount}, "you" in it being that player.
+     */
+    public static LoseLifeEffect eachTheirOwn(DynamicAmount amount, PlayerSubject players) {
+        return new LoseLifeEffect(amount, players, false, null, null, false, true);
+    }
 
     public LoseLifeEffect {
         Objects.requireNonNull(player, "player");

@@ -1703,8 +1703,6 @@ public class GameData {
             Collections.synchronizedList(new ArrayList<>());
     /** Draw count before the current Kwain-style optional draw instruction. */
     public Integer pendingEachPlayerMayDrawThenGainLifeInitialCount;
-    /** APNAP-ordered queue of players still to choose for "each other player may draw up to N" effects. */
-    public final List<UUID> pendingEachOtherPlayerDrawUpToQueue = Collections.synchronizedList(new ArrayList<>());
     /** The Ring emblem state for players who have been tempted by the Ring. */
     public final Map<UUID, RingState> ringStates = new ConcurrentHashMap<>();
     public final List<Emblem> emblems = Collections.synchronizedList(new ArrayList<>());
@@ -2653,13 +2651,6 @@ public class GameData {
 
     /** Counts colored mana symbols on the most recently milled card. */
     public final Map<ManaColor, Integer> lastMilledCardColorSymbols = new ConcurrentHashMap<>();
-
-    /**
-     * Cards that players picked during an "each player searches ... reveal ... put into hand" instruction
-     * (Weird Harvest), held out per player until every player has chosen: the choices are made in APNAP
-     * order but the cards are revealed and put into hands at the same time (CR 101.4).
-     */
-    public final Map<UUID, List<Card>> eachPlayerSearchDeferredToHand = new ConcurrentHashMap<>();
 
     /**
      * Basic lands that players picked during an "each player searches ... puts it onto the battlefield"
@@ -9904,7 +9895,6 @@ public class GameData {
         copy.eachPlayerPayMana.index = this.eachPlayerPayMana.index;
         copy.eachPlayerPayMana.manaPaid.putAll(this.eachPlayerPayMana.manaPaid);
         copy.eachPlayerPayMana.currentPlayerId = this.eachPlayerPayMana.currentPlayerId;
-        copy.eachPlayerPayMana.sourceSetCode = this.eachPlayerPayMana.sourceSetCode;
         copy.goblinGame.active = this.goblinGame.active;
         copy.goblinGame.order.addAll(this.goblinGame.order);
         copy.goblinGame.index = this.goblinGame.index;
@@ -9976,7 +9966,6 @@ public class GameData {
         copy.villainousChoice.choiceDescription = this.villainousChoice.choiceDescription;
         copy.villainousChoice.chosenMode = this.villainousChoice.chosenMode;
         copy.villainousChoice.waitingForDiscard = this.villainousChoice.waitingForDiscard;
-        copy.villainousChoice.waitingForDraw = this.villainousChoice.waitingForDraw;
         copy.villainousChoice.waitingForControllerMay = this.villainousChoice.waitingForControllerMay;
         copy.villainousChoice.waitingForCardChoice = this.villainousChoice.waitingForCardChoice;
         copy.plaguecrafter.active = this.plaguecrafter.active;
@@ -10060,7 +10049,6 @@ public class GameData {
         copy.pendingEachPlayerMayDrawThenGainLifeQueue.addAll(this.pendingEachPlayerMayDrawThenGainLifeQueue);
         copy.pendingEachPlayerMayDrawThenGainLifeDrawers.addAll(this.pendingEachPlayerMayDrawThenGainLifeDrawers);
         copy.pendingEachPlayerMayDrawThenGainLifeInitialCount = this.pendingEachPlayerMayDrawThenGainLifeInitialCount;
-        copy.pendingEachOtherPlayerDrawUpToQueue.addAll(this.pendingEachOtherPlayerDrawUpToQueue);
         copy.pendingRegenerationControlChanges.putAll(this.pendingRegenerationControlChanges);
         copy.unpreventableDamageInProgress = this.unpreventableDamageInProgress;
 
@@ -10343,8 +10331,6 @@ public class GameData {
         copy.greatestDiscardedCardManaValue = this.greatestDiscardedCardManaValue;
         copy.lastDiscardedCardTypes = Set.copyOf(this.lastDiscardedCardTypes);
         copy.lastMilledCardColorSymbols.putAll(this.lastMilledCardColorSymbols);
-        this.eachPlayerSearchDeferredToHand.forEach((playerId, cards) ->
-                copy.eachPlayerSearchDeferredToHand.put(playerId, new ArrayList<>(cards)));
         this.eachPlayerSearchDeferredToBattlefield.forEach((playerId, cards) ->
                 copy.eachPlayerSearchDeferredToBattlefield.put(playerId, new ArrayList<>(cards)));
         copy.pendingRevealedPowerCostCards.putAll(this.pendingRevealedPowerCostCards);

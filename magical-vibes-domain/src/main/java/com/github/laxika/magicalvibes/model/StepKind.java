@@ -38,7 +38,17 @@ package com.github.laxika.magicalvibes.model;
  *       ({@code ChoosePlayerAtRandomEffect}), that player;</li>
  *   <li>{@link #PUT_INTO_GRAVEYARD}: the number of exiled cards put into a graveyard ({@code
  *       PutExiledCardsIntoOwnersGraveyardEffect}; a card a replacement sent elsewhere is not counted), those cards,
- *       their owners.</li>
+ *       their owners;</li>
+ *   <li>{@link #REVEAL}: the number of cards revealed from the top of libraries
+ *       ({@code RevealTopCardOfLibraryEffect}), those cards, their players, each one's
+ *       {@link StepOutcome#movedCards()} entry naming its player's library, which revealing doesn't make it leave
+ *       (CR 701.20b);</li>
+ *   <li>{@link #SHUFFLE_INTO_LIBRARY}: the number of cards and permanents shuffled into libraries
+ *       ({@code EachPlayerShufflesZonesIntoLibraryEffect}; a token counts, though it ceases to exist there, CR 111.7),
+ *       nothing, the players who shuffled some, and how many were each player's
+ *       ({@link StepOutcome#amountByPlayer()});</li>
+ *   <li>{@link #PAY_MANA}: the total mana paid ({@code EachPlayerPaysAnyManaEffect}), nothing, the players who paid
+ *       some, and how much each paid ({@link StepOutcome#amountByPlayer()}).</li>
  * </ul>
  *
  * <p>A later step may read a step only if that step finishes before the next one starts (CR 608.2c): its handler never
@@ -59,7 +69,11 @@ package com.github.laxika.magicalvibes.model;
  * choices add to the result as they are answered), the chosen hand-card exile ({@code ExileCardFromHandEffect}), the
  * same-name exile ({@code ExileCardsWithSameNameEffect}), the card and random-player choices
  * ({@code ChooseCardEffect}, {@code ChoosePlayerAtRandomEffect}), the revealed-hand choice's exile and keep
- * ({@code ChooseCardsFromTargetHandEffect}) and the pay-X token step ({@code PayXManaCreateXTokensEffect}); deal damage, return a card from a graveyard, remove counters and return to hand only on the paths that
+ * ({@code ChooseCardsFromTargetHandEffect}), the pay-X token step ({@code PayXManaCreateXTokensEffect}), the reveal of
+ * the top cards of libraries ({@code RevealTopCardOfLibraryEffect}, never prompting) and the any-amount payment
+ * ({@code EachPlayerPaysAnyManaEffect}: it resolves again at its own index for each answer and records after the last),
+ * the shuffle of each player's zones into their library ({@code EachPlayerShufflesZonesIntoLibraryEffect}, never
+ * prompting); deal damage, return a card from a graveyard, remove counters and return to hand only on the paths that
  * don't prompt mid-step. A handler that pauses mid-step by rerunning itself after changes, or by a continuation of its
  * own, is never an earlier step. A damage, discard or sacrifice step records {@link StepOutcome#NONE} as it begins and the
  * engine adds to it as the damage is dealt, the cards discarded and the permanents sacrificed.</p>
@@ -84,5 +98,8 @@ public enum StepKind {
     TRANSFORM,
     PUT_INTO_GRAVEYARD,
     SEEK,
-    CHOOSE
+    CHOOSE,
+    REVEAL,
+    PAY_MANA,
+    SHUFFLE_INTO_LIBRARY
 }

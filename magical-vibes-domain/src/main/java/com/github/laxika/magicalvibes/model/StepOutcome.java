@@ -1,8 +1,10 @@
 package com.github.laxika.magicalvibes.model;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -25,10 +27,12 @@ import java.util.UUID;
  *                       empty for every other object and step
  * @param fromHand       how many of the cards an exile step exiled came from a hand ("for each card exiled from their
  *                       hand this way"); 0 for every other step
+ * @param amountByPlayer how much of the amount is each player's, for a payment or shuffle-into-library step ("the
+ *                       amount of mana they paid this way"); empty for every other step
  */
 public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds, List<MovedCard> movedCards,
                           List<LastKnownCardStats> lastKnownCards, List<LastKnownCardStats> lastKnownPermanents,
-                          int fromHand) {
+                          int fromHand, Map<UUID, Integer> amountByPlayer) {
 
     /** A step that did nothing. */
     public static final StepOutcome NONE = new StepOutcome(0, List.of(), List.of());
@@ -42,6 +46,14 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
         movedCards = movedCards == null ? List.of() : List.copyOf(movedCards);
         lastKnownCards = lastKnownCards == null ? List.of() : List.copyOf(lastKnownCards);
         lastKnownPermanents = lastKnownPermanents == null ? List.of() : List.copyOf(lastKnownPermanents);
+        amountByPlayer = amountByPlayer == null ? Map.of() : Map.copyOf(amountByPlayer);
+    }
+
+    /** An outcome with no amount of any one player's. */
+    public StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds, List<MovedCard> movedCards,
+                       List<LastKnownCardStats> lastKnownCards, List<LastKnownCardStats> lastKnownPermanents,
+                       int fromHand) {
+        this(amount, objectIds, playerIds, movedCards, lastKnownCards, lastKnownPermanents, fromHand, Map.of());
     }
 
     /** An outcome that exiled no card from a hand. */
@@ -81,19 +93,35 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
         return new StepOutcome(Math.max(0, amount), List.of(), playerIds);
     }
 
+    /** An outcome counted per player (what each paid, what each shuffled away): the total, and the players with any. */
+    public static StepOutcome ofAmounts(Map<UUID, Integer> amounts) {
+        int total = 0;
+        List<UUID> payers = new ArrayList<>();
+        for (Map.Entry<UUID, Integer> payment : amounts.entrySet()) {
+            if (payment.getValue() > 0) {
+                total = SaturatingMath.add(total, payment.getValue());
+                payers.add(payment.getKey());
+            }
+        }
+        return new StepOutcome(total, List.of(), payers, List.of(), List.of(), List.of(), 0, amounts);
+    }
+
     /** This outcome with {@code cards}, the cards it exiled from a graveyard as each last existed there. */
     public StepOutcome withLastKnownCards(List<LastKnownCardStats> cards) {
-        return new StepOutcome(amount, objectIds, playerIds, movedCards, cards, lastKnownPermanents, fromHand);
+        return new StepOutcome(amount, objectIds, playerIds, movedCards, cards, lastKnownPermanents, fromHand,
+                amountByPlayer);
     }
 
     /** This outcome with {@code permanents}, the permanents it exiled as each last existed on the battlefield. */
     public StepOutcome withLastKnownPermanents(List<LastKnownCardStats> permanents) {
-        return new StepOutcome(amount, objectIds, playerIds, movedCards, lastKnownCards, permanents, fromHand);
+        return new StepOutcome(amount, objectIds, playerIds, movedCards, lastKnownCards, permanents, fromHand,
+                amountByPlayer);
     }
 
     /** This outcome with {@code count} of its cards exiled from a hand. */
     public StepOutcome withFromHand(int count) {
-        return new StepOutcome(amount, objectIds, playerIds, movedCards, lastKnownCards, lastKnownPermanents, count);
+        return new StepOutcome(amount, objectIds, playerIds, movedCards, lastKnownCards, lastKnownPermanents, count,
+                amountByPlayer);
     }
 
     /** {@code permanentId} as it last existed on the battlefield this step exiled it from, if the step recorded it. */
@@ -126,7 +154,9 @@ public record StepOutcome(int amount, List<UUID> objectIds, List<UUID> playerIds
         known.addAll(more.lastKnownCards);
         List<LastKnownCardStats> knownPermanents = new ArrayList<>(lastKnownPermanents);
         knownPermanents.addAll(more.lastKnownPermanents);
+        Map<UUID, Integer> byPlayer = new HashMap<>(amountByPlayer);
+        more.amountByPlayer.forEach((playerId, part) -> byPlayer.merge(playerId, part, SaturatingMath::add));
         return new StepOutcome(SaturatingMath.add(amount, more.amount), objects, players, moved, known,
-                knownPermanents, SaturatingMath.add(fromHand, more.fromHand));
+                knownPermanents, SaturatingMath.add(fromHand, more.fromHand), byPlayer);
     }
 }

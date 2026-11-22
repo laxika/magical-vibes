@@ -3,18 +3,23 @@ package com.github.laxika.magicalvibes.cards.n;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.ControllerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentWithoutLegendaryCreatureOrPlaneswalkerLosesGameEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerExilesPermanentsOrCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLoyaltyAbilitiesOfOtherPlaneswalkersEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.filter.PlayerControlsPermanentPredicate;
 
 @CardRegistration(set = "WAR", collectorNumber = "207")
 @CardRegistration(set = "SLD", collectorNumber = "522")
@@ -49,7 +54,14 @@ public class NicolBolasDragonGod extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -8,
-                List.of(new EachOpponentWithoutLegendaryCreatureOrPlaneswalkerLosesGameEffect()),
+                List.of(new ControllerLosesGameEffect(Subjects.except(
+                        Subjects.eachOpponent(),
+                        Subjects.matching(Subjects.eachOpponent(), new PlayerControlsPermanentPredicate(
+                                new PermanentAnyOfPredicate(List.of(
+                                        new PermanentAllOfPredicate(List.of(
+                                                new PermanentHasSupertypePredicate(CardSupertype.LEGENDARY),
+                                                new PermanentIsCreaturePredicate())),
+                                        new PermanentIsPlaneswalkerPredicate()))))))),
                 "−8: Each opponent who doesn't control a legendary creature or planeswalker loses the game."
         ));
     }

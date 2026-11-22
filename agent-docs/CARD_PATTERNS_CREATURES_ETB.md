@@ -126,9 +126,9 @@ Reference: `a/AirElemental.java` — no constructor code needed.
 | ETB search | `c/CivicWayfinder.java` | MayEffect(SearchLibraryEffect(CardPredicateUtils.basicLand())) |
 | ETB search for a creature with a maximum mana value | `r/RangerCaptainOfEos.java` | MayEffect(SearchLibraryEffect(CardAllOfPredicate(CREATURE, CardMaxManaValuePredicate(1)))) |
 | ETB may search library and/or graveyard for a vanilla creature | `f/FangDruidSummoner.java` | MayEffect(SearchLibraryAndOrGraveyardForCardToHandEffect(CardAllOf(CREATURE, CardHasNoAbilitiesPredicate))) |
-| ETB opponent search (downside) | `o/OldGrowthDryads.java` | EachOpponentMaySearchLibraryForBasicLandToBattlefieldTappedEffect — each opponent may search for a basic land (tapped). No targeting. APNAP order |
+| ETB opponent search (downside) | `o/OldGrowthDryads.java` | EachPlayerSearchesLibraryEffect.maySearch(Subjects.eachOpponent(), CardPredicateUtils.basicLand(), BATTLEFIELD_TAPPED) — each opponent may search for a basic land (tapped). No targeting. APNAP order |
 | ETB opponent search (creature, downside) | `b/BoldwyrHeavyweights.java` | EachOpponentMaySearchLibraryForCreatureToBattlefieldEffect — each opponent may tutor a creature onto the battlefield (untapped). No targeting. APNAP order |
-| ETB opponent search (land, downside) | `h/HiredGiant.java` | EachOpponentMaySearchLibraryForLandToBattlefieldEffect — each opponent may search for a land (untapped). No targeting. APNAP order |
+| ETB opponent search (land, downside) | `h/HiredGiant.java` | EachPlayerSearchesLibraryEffect.maySearch(Subjects.eachOpponent(), CardTypePredicate(LAND), BATTLEFIELD) — each opponent may search for a land (untapped). No targeting. APNAP order |
 | ETB search (type + min MV) | `t/TreasureMage.java` | MayEffect(SearchLibraryEffect(CardAllOf(ARTIFACT, MinMV 6))) — artifact with MV 6+ |
 | ETB pay X, then search by subtype and MV | `t/TajNarSwordsmith.java` | PayXManaSearchLibraryEffect(CardSubtypePredicate(EQUIPMENT)) — the effect owns the optional resolution prompt, distinguishes declining from choosing X=0, pays X, and delegates the filtered battlefield search with MV ≤ X |
 | ETB search (by name, multi-pick) | `s/SquadronHawk.java` | MayEffect(SearchLibraryEffect(new Fixed(3), new CardNamedPredicate("Squadron Hawk"), LibrarySearchDestination.HAND)) — up to 3 copies by name to hand |

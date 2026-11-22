@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.AnOpponentDiscardedCardThisTurn;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentWithEmptyHandLosesLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PlayerHasNoCardsInHandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -26,7 +27,8 @@ public class TinybonesTrinketThief extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{4}{B}{B}",
-                List.of(new EachOpponentWithEmptyHandLosesLifeEffect(10)),
+                List.of(new LoseLifeEffect(10, Subjects.matching(
+                        Subjects.eachOpponent(), new PlayerHasNoCardsInHandPredicate()))),
                 "{4}{B}{B}: Each opponent with no cards in hand loses 10 life."));
     }
 }

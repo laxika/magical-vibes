@@ -35,7 +35,8 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
      * zone becomes none); for {@link StepKind#SEEK} the sought cards, in the hand they were put into (digital only);
      * for {@link StepKind#MILL} the milled cards, in the graveyard or in exile where a replacement put them
      * (CR 701.17c); for {@link StepKind#CHOOSE} the chosen cards, in the zone they were chosen in (also a revealed
-     * hand), while they are still the objects that were chosen.
+     * hand), while they are still the objects that were chosen; for {@link StepKind#REVEAL} the cards revealed from the
+     * top of libraries, while each is still in that library (CR 701.20b).
      * The rest of the effect can find a card it moved to a public zone (CR 400.7j); a card that has
      * left that zone since is a new object and is not named.
      *
@@ -54,7 +55,7 @@ public sealed interface CardSubject permits CardSubject.CardsThisWay, CardSubjec
         public CardsThisWay {
             Objects.requireNonNull(kind, "kind");
             switch (kind) {
-                case EXILE, DESTROY, SACRIFICE, DISCARD, COUNTER_SPELL, SEEK, MILL, CHOOSE -> {
+                case EXILE, DESTROY, SACRIFICE, DISCARD, COUNTER_SPELL, SEEK, MILL, CHOOSE, REVEAL -> {
                 }
                 default -> throw new IllegalArgumentException("A " + kind + " step leaves no card for a card "
                         + "subject to name");

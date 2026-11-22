@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 8 done: Exile closed and its last shared causes built; Each partly done, 69 rare records left, their shared blockers named in run 8) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 9 done: Exile and Each closed, with the reveal, per-player search, mana payment and shuffle steps built in run 9; next Return) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -614,6 +614,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 6 | Exile: run 5's shared blockers (exile target spell, a delayed trigger bound to a step result, the face-down hand exile) with their ledgered rows, then the rare tail | done (93 audited: 9 absorbed, 27 split, 1 dead, 7 survivors (five new step records), 8 blocked-other, 2 blocked-step-model, 39 unique; 39 card files rewritten; `RegisterDelayedStepTriggerEffect`, `ExileTargetSpellEffect`, `ExileChosenPermanentsEffect`, `ExileTargetPlayerHandEffect.exiledFaceDown`, `StepKind.PUT_INTO_GRAVEYARD`; 15 rare records left on five shared blockers) |
 | 7 | Exile: the five shared blockers with their ledgered rows, the family's rare tail closed; Each started | done for Exile, Each open (51 audited: 8 absorbed, 21 split, 12 survivors, 5 blocked-other, 2 blocked-step-model, 3 unique; 50 card files changed; `ExileCardsWithSameNameEffect`, `ExileCardFromHandEffect`, `ExileFaceDownPileEffect`, `revealedBy` on the reveal-until step, `StepKind.SEEK`; four ledgered Exile causes and 113 rare Each records left) |
 | 8 | The five shared blockers run 7 named with their ledgered rows; Each's rare tail, continued | done for the blockers, Each open (77 audited: 6 absorbed, 19 split, 1 dead, 15 survivors, 27 blocked-player-loop, 1 blocked-step-model, 3 blocked-other, 5 unique; 34 card files changed; `StepKind.CHOOSE`, `ChooseCardEffect`, `ChoosePlayerAtRandomEffect`, `BecomeCopyOfSubjectEffect`, `RegisterDelayedEventTriggerEffect`, EXILE recorded by the exile wipe and the revealed-hand choice; 69 rare Each records left) |
+| 9 | The Yangchen fix, run 8's shared blockers with the waiting records and ledgered rows, the rest of Each's rare tail | done, Each closed (101 rows: 26 absorbed, 18 split, 1 dead, 17 survivors, 33 blocked-player-loop, 4 blocked-other, 2 unique; 76 card files changed; `StepKind.REVEAL`, `PAY_MANA`, `SHUFFLE_INTO_LIBRARY`, `EachPlayerSearchesLibraryEffect`, `EachPlayerPaysAnyManaEffect`, `PutCardsOntoBattlefieldEffect`, `villainousChoiceFacedBy`) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -6845,6 +6846,132 @@ testFixtures and all 26 letters' card-test sources compile. Not run: the full su
   own-hand subject for `ChooseCardEffect`, which must stay private), the random-opponent records (`ChoosePlayerAtRandomEffect`), Reap
   Intellect's same-name flag (both its steps exist), the opponents forms of "loses life for each ... they control" (87, 89, 90 in the
   ledger: `LoseLifeEffect` evaluates per player for each player only).
+
+### Step 9, run 9 (2026-11-22, Each closed)
+
+The defect run 8 assigned here, the six shared blockers it named with the records and ledger rows waiting for them, the rows it
+listed as narrowed, then the rest of the Each family's rare records. Ratchet 4,491 / 3,729 → 4,450 / 3,686 records / handlers (45
+records and 47 handlers deleted, 4 and 4 added). 76 card files changed by scratch scripts (Wernog only lost an unused import). Oracle
+text checked with `get_card` for all 76; rulings with `get_rulings` where the handler or the text left a doubt. CR 101.4, 104.4a, 111.7,
+121.2c, 303.4f, 303.4g, 400.3, 603.10a, 605.3a, 608.2c, 608.2d, 608.2e, 611.2c, 701.20b, 701.23a, 701.23b, 701.24d, 701.55b and 701.55d
+checked with `get_rule` (2026-11-22).
+
+| Family | Audited | Absorbed | Split | Survivor | Dead | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|---|
+| Each | 79 rows (the 69 rare records, the head of the search queue, ledgered rows, four survivors) | 23 | 14 | 4 (two new records) | 1 | 35: 33 player loop (each read: choose in turn, then act, or one offer per player through its own continuation), 2 other (step 10's copy verb; one card) | 2 | no rare record; 6 records of three or more cards |
+| Other families (the rows waiting for the steps, and their survivors) | 22 rows | 3 | 4 | 13 (two new records) | 0 | 2 other | 0 | Exile none, Reveal 120, Choose 99, Destroy 40, Search 40, Set 27, Shuffle 18. All families: 2,617 rare records without a row |
+
+- **REVEAL.** `RevealTopCardOfLibraryEffect` takes players and a count per player and records REVEAL. `cardsThisWay(REVEAL)` names a
+  card while it is in that library (CR 701.20b); `PutCardsOntoBattlefieldEffect` (new, through the entry batch), the put-into-hand, the
+  put-into-graveyard and the exile-cards steps move it. `SetTriggeringSpellXValueEffect` is Naya Soulbeast's second half. The seven Each
+  records and the two ledgered reveal-to-hand records (10 cards) went.
+- **Per-player library search.** New `EachPlayerSearchesLibraryEffect` (players, filter, a count per searcher, destination, may) on the
+  existing queue: what was found moves together, then who searched shuffles. Seven records and Field of Ruin's went, with three bespoke
+  queues of `LibrarySearchFollowUp` and a `GameData` field. Boldwyr Heavyweights and From the Ashes keep theirs (see the ledger).
+- **Any amount of mana.** New `EachPlayerPaysAnyManaEffect`, recording PAY_MANA with each player's part; five copies of the loop went.
+- **Players.** `PlayerPredicate`s for controls a matching permanent, the most creatures, attacked by the source, no cards in hand and a
+  minimum of life lost; `ControllerLosesGameEffect` and a token's controller take several players.
+- **Shuffle into library.** `EachPlayerShufflesZonesIntoLibraryEffect` takes players and zones and records SHUFFLE_INTO_LIBRARY per
+  player; five records went, the Whirlpools' ledgered one among them.
+- **Shared parameters.** A total mana value stops the exile-until step; `LoseLifeEffect.eachTheirOwn` took the four ledgered loss records;
+  the hand choice that perpetually changes a card took three siblings (its one prompt was private and already applied all of it, so no
+  hand subject was needed); Reap Intellect is steps. `TargetPlayerChoosesOneEffect.villainousChoiceFacedBy` took the four each-opponent
+  villainous choices (CR 701.55d: one player's whole process at a time, so no choose-then-act loop).
+
+**Behaviour changes.**
+
+1. The Legend of Yangchen's chapter I offers every player the permanents the Saga controller's opponents control (Oracle: "your
+   opponents"), and the chosen are exiled as one event (its ruling).
+   `TheLegendOfYangchenTest.chapterIOpponentChoosesFromAmongThePermanentsTheSagaControllersOpponentsControl`,
+   `.chapterIExilesTheChosenPermanentsAsOneEvent`.
+2. Over the Top's card that can't enter stays on top, unshuffled (CR 701.20b; nothing says shuffle).
+   `OverTheTopTest.blockedPermanentCardStaysOnTop`. Clear the Land and the per-player search put cards onto the battlefield through the
+   entry batch, which asks copy and Aura choices and leaves a blocked card where it is (CR 303.4f, 303.4g).
+3. Under Aven Mindcensor a player who may search is asked whatever the searchable cards and those below them hold, and nothing is
+   logged of either (Oracle: "may search"; CR 701.23a; New Frontiers, Natural Balance, Hired Giant and the queue's other may-searches).
+   The next player then searches and what was found moves at the end; HEAD logged a miss and dropped both. (The run's first tree skipped
+   the choice and logged the miss; corrected in the orchestrator's review.)
+   `NewFrontiersTest.mindcensoredMaySearchDoesNotDependOnTheLibrary`, `.decliningUnderMindcensorNeitherShufflesNorSearches`,
+   `.restrictedSearchWithNoMatchContinuesToTheNextPlayer`, `.oppositionAgentIsOfferedTheEmptyMaySearch`,
+   `HiredGiantTest.mindcensoredOpponentStillChooses`.
+4. A "may search" by a player who can't search isn't chosen, so that library isn't shuffled (CR 608.2d).
+   `NewFrontiersTest.playerWhoCantSearchDoesNotShuffle`. A may-searcher with an empty library isn't recorded as having searched.
+5. Turtle Tracks' search is a may: who takes nothing hasn't searched (Oracle). `TurtleTracksTest.decliningIsNotSearching`.
+6. Enigma Ridges' search is not a may: who finds nothing has searched (Oracle). `EnigmaRidgesTest.failingToFindStillSearches`.
+7. Found cards move together also for Old-Growth Dryads, Hired Giant, Turtle Tracks, Enigma Ridges and Scholarship Sponsor (CR 608.2e).
+   Noble Benefactor's log doesn't name the card (Oracle: no reveal). `NobleBenefactorTest.searchForAnyCardRevealsNothing`.
+8. Demolition Field's two searches are two instructions, the first player's land entering first (CR 608.2c); the controller of a land
+   that wasn't destroyed still searches (its ruling). `DemolitionFieldTest.controllerOfALandThatWasNotDestroyedStillSearches`.
+9. The owned permanents of all players shuffled away leave as one event (CR 608.2e, 603.10a; The Great Aurora, Sway of the Stars).
+   `TheGreatAuroraTest.everyPlayersPermanentsLeaveAsOneEvent`. A token in a graveyard isn't shuffled in (CR 111.7).
+10. Draws, token creation and mills after a join-forces payment are in APNAP order (CR 121.2c, 101.4) and the mills are one event. No
+    new test: the cards' tests cover the amounts.
+11. Reap Intellect searches as the same-name step does (the searcher alone sees the zones searched, CR 701.23a) and, with nothing exiled
+    from the hand, doesn't search (its ruling). `ReapIntellectTest.nothingExiledMeansNoSearch`.
+12. A multi-player "loses the game" goes on past a player whose loss is replaced (Oracle: each loses). No test: it needs three players.
+13. AI only: Field of Ruin and Demolition Field are destroy spells with steps, Bonder's Ornament isn't scored as its own draw, the
+    up-to-N draw is a card-drawing effect for the players it names.
+14. Log lines and prompts are the steps'.
+15. Borderland Explorer's search is a may in the queue too: asked with nothing to find, and who takes no card neither shuffles nor has
+    searched (Oracle). `BorderlandExplorerTest.maySearchIsOfferedWithNothingToFind`.
+16. Casting from the library during a may-search is searching (Panglacial Wurm's ruling), and no longer ends the queue when it was the
+    last card offered; a searcher whose find Opposition Agent exiles shuffles with the others (Oracle: "each player who searched").
+    `NewFrontiersTest.castingWhileSearchingContinuesTheQueue`, `.searcherUnderOppositionAgentStillShuffles`.
+
+**Seen, not changed.**
+
+- The queue's may-searches (New Frontiers, Natural Balance, Hired Giant, Old-Growth Dryads, Veteran Explorer, Weird Harvest, Noble
+  Benefactor, Turtle Tracks, Demolition Field, Borderland Explorer, Wave of Vitriol, From the Ashes) have no separate "do you search?":
+  the searcher (under Opposition Agent, the Agent's player) is shown the matching searchable cards with the offer, and only taking one
+  or casting while searching counts as searching. So a player can't choose to search and find nothing (to shuffle, or under Aven
+  Mindcensor with nothing in the top four), and has seen those matches on declining (CR 701.23a, 701.23b). An empty library gets
+  the offer only where searches are watched or the find is revealed. Boldwyr Heavyweights asks first and was left out for that.
+- Krenko's Buzzcrusher's may-search (its own queue, `startNextEachPlayerBasicLandSearch`) is still forced under Aven Mindcensor: it
+  records a search, shuffles and logs "finds no" without asking (Oracle: "may search").
+- Borderland Explorer reveals each find before the next player searches (its ruling: revealed simultaneously).
+- Sunimret's reverse-miracle offer reads the bottom card also when only the top four may be searched.
+- Opposition Agent's player can take a card that is offered only to be cast (Panglacial Wurm) as the find, and the AI's search
+  strategy answers only for the searcher, not for the Agent's player.
+- A cast that empties a multi-card search's offer drops what that search had accumulated (`continueLibrarySearchAfterLibraryAction`).
+- Ol Rin's Searing Light and Gilded Ambusher exile each opponent's choice before the next chooses, Dispersal returns and discards one
+  opponent at a time, The Second Doctor and Kwain draw before the next player chooses (CR 101.4, 608.2e).
+- Winds of Abandon's player searches once for that many, where its text has one search for each creature.
+- The two-player win declaration of "loses the game" doesn't make a draw of simultaneous losses (CR 104.4a).
+- `ChooseCardsFromTargetHandEffect.exileAllCopiesOfChosenNames` and its continuation have no card left.
+- Sothera and Descent into Madness still exile one at a time (run 8's note), and Summon: Valefor and The Horus Heresy as noted there.
+
+**Tests edited.** In the review, `NewFrontiersTest.restrictedSearchWithNoMatchContinuesToTheNextPlayer` and
+`NaturalBalanceTest.restrictedSearchWithNoTopMatchCompletes` answer the prompt they asserted was skipped (Oracle: "may search"), their
+later assertions unchanged. The new cases above, and `ClearTheLandTest.cardsBelowTheRevealedFiveAreNotShown` (what a reveal shows).
+`TheLegendOfYangchenTest.chapterIAllowsOpponentToExileTheSagaAfterBothPlayersChoose` is replaced by the opponent-choice case: it asserted
+the defect. Log assertions follow the survivors' lines: `WeirdHarvestTest`, `HiredGiantTest`, the three Whirlpool tests. `MissyTest`,
+`SycoraxCommanderTest` and `TheValeyardTest` name the option labels on the cards. `RevealTopCardOfLibraryEffectHandlerTest` builds the
+handler with its two new collaborators and `CreateTokenEffectHandlerTest` stubs the resolver's list form. `TargetPolarityGuardTest` names
+the replacing destroy. Deleted with their classes: four handler tests (their cases are in the card tests);
+`DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffectHandlerTest`'s six support cases moved, unchanged, to
+`LibrarySearchSupportEachPlayerBasicLandTest`.
+
+**Tests run after the review's queue fix:** 129 classes (136 suites, 1,121 cases), all pass: every test class using Aven Mindcensor,
+the queue's cards, Panglacial Wurm, Opposition Agent, a sample of `SearchLibraryEffect` (80), the library-choice and copy tests and
+`EffectCountRatchetTest`. The larger run below was not repeated.
+
+**Tests run** (one Gradle run of the tree before that fix, its XML deleted first, one `--tests` list per task, counted from the XML by class name):
+944 classes (1,315 suites, 12,477 cases, 29 skipped by an assumption), all pass: the changed cards' tests and Struggle // Survive's, every
+card test of the new steps and of the changed survivors of few cards, samples of `CreateTokenEffect` (120), `LoseLifeEffect` (100),
+`SearchLibraryEffect` (90), `ExileGraveyardCardsEffect` (60), `MillEffect`, `DrawCardEffect` and `DestroyTargetPermanentEffect`; the
+application's architecture tests and the application and AI tests naming a changed class. The application, AI, engine testFixtures and all
+26 letters' card-test sources compile. Not run: the full suites, the AI fuzz and stress tests, the frontend. Not tested: anything that
+needs three players (the villainous choice's order, several losers).
+
+**For the next run (run 10, family Return: 97 rare records; then Put 97, Reveal 120).**
+
+- The REVEAL step and its four movers now express much of the Reveal family's top-card tail (`RevealTopCardDrawManaValueEffect`,
+  `RevealTopCardGainLifeEqualToManaValueEffect`, the matching-to-hand / else records); a Put run should read
+  `PutCardsOntoBattlefieldEffect` first.
+- Still blocked on REVEAL's other half: Kinship and the look-then-may-reveal records (the reveal follows a prompt), the reveal-until
+  records (their own loop, no recorded step), the counter-on-match record (the triggering spell as a counter subject).
+- The other villainous-choice records (Ensnared by the Mara, the Genesis, Great Intelligence and Master ones) can take
+  `TargetPlayerChoosesOneEffect` in their families' runs; removing the dead hand-choice flag belongs to Choose.
 
 ## Prompt
 

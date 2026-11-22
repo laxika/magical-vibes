@@ -1,6 +1,10 @@
 package com.github.laxika.magicalvibes.service.target;
 
 import com.github.laxika.magicalvibes.model.Ability;
+import com.github.laxika.magicalvibes.model.filter.PlayerAttackedBySourceThisTurnPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerControlsMostCreaturesPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerControlsPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerHasNoCardsInHandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -6266,8 +6270,8 @@ public class TargetLegalityService {
                     targetPlayerId != null
                             && gameData.getSpellsCastThisTurn(targetPlayerId).stream()
                             .anyMatch(card -> card.hasType(CardType.SORCERY));
-            case PlayerLostLifeThisTurnPredicate ignored ->
-                    gameData.lifeLostThisTurn.getOrDefault(targetPlayerId, 0) > 0;
+            case PlayerLostLifeThisTurnPredicate lostLife ->
+                    gameData.lifeLostThisTurn.getOrDefault(targetPlayerId, 0) >= lostLife.minimum();
             case PlayerHasPoisonCountersAtLeastPredicate poison ->
                     gameData.playerPoisonCounters.getOrDefault(targetPlayerId, 0) >= poison.minimum();
             case OpponentPreviouslyDamagedBySourcePredicate ignored ->
@@ -6287,6 +6291,22 @@ public class TargetLegalityService {
                     controllerId != null
                             && !controllerId.equals(targetPlayerId)
                             && gameQueryService.controlsMoreLandsThan(gameData, targetPlayerId, controllerId);
+            case PlayerHasNoCardsInHandPredicate ignored ->
+                    targetPlayerId != null
+                            && gameData.playerHands.getOrDefault(targetPlayerId, List.of()).isEmpty();
+            case PlayerControlsMostCreaturesPredicate ignored ->
+                    gameQueryService.controlsMostCreaturesOrTied(gameData, targetPlayerId);
+            case PlayerControlsPermanentPredicate controls ->
+                    targetPlayerId != null
+                            && gameData.playerBattlefields.getOrDefault(targetPlayerId, List.of()).stream()
+                            .anyMatch(permanent -> predicateEvaluationService.matchesPermanentPredicate(
+                                    permanent, controls.filter(), FilterContext.of(gameData)
+                                            .withSourceControllerId(controllerId)
+                                            .withSourcePermanentId(sourcePermanentId)));
+            case PlayerAttackedBySourceThisTurnPredicate ignored ->
+                    sourcePermanentId != null && targetPlayerId != null
+                            && gameData.playersAttackedThisTurn.getOrDefault(sourcePermanentId, Set.of())
+                            .contains(targetPlayerId);
             case PlayerControlsMostLandsPredicate ignored ->
                     targetPlayerId != null
                             && gameData.orderedPlayerIds.stream()

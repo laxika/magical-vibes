@@ -36,8 +36,8 @@ class WhirlpoolDrakeTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
         String playerOneName = gd.playerIdToName.get(player1.getId());
         String playerTwoName = gd.playerIdToName.get(player2.getId());
-        assertThat(gameLogContains(playerOneName + " shuffles 1 card from hand into their library.")).isTrue();
-        assertThat(gameLogContains(playerOneName + " draws 1 card.")).isTrue();
+        assertThat(gameLogContains(playerOneName + " shuffles their hand (1 card) into their library")).isTrue();
+        assertThat(gameLogContains(playerOneName + " draws a card")).isTrue();
         assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains(playerTwoName + " shuffles"));
         assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains(playerTwoName + " draws"));
     }
@@ -60,7 +60,7 @@ class WhirlpoolDrakeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
-        assertThat(gameLogContains("has no cards in hand to shuffle")).isTrue();
+        assertThat(gameLogContains("shuffles their hand (0 cards) into their library")).isTrue();
         String playerTwoName = gd.playerIdToName.get(player2.getId());
         assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains(playerTwoName + " shuffles"));
         assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains(playerTwoName + " draws"));
@@ -88,8 +88,8 @@ class WhirlpoolDrakeTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Whirlpool Drake");
         String playerOneName = gd.playerIdToName.get(player1.getId());
         String playerTwoName = gd.playerIdToName.get(player2.getId());
-        assertThat(gameLogContains(playerOneName + " shuffles 1 card from hand into their library.")).isTrue();
-        assertThat(gameLogContains(playerOneName + " draws 1 card.")).isTrue();
+        assertThat(gameLogContains(playerOneName + " shuffles their hand (1 card) into their library")).isTrue();
+        assertThat(gameLogContains(playerOneName + " draws a card")).isTrue();
         assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains(playerTwoName + " shuffles"));
         assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains(playerTwoName + " draws"));
     }
@@ -110,8 +110,8 @@ class WhirlpoolDrakeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
         String playerName = gd.playerIdToName.get(player1.getId());
-        assertThat(gameLogContains(playerName + " shuffles 2 cards from hand into their library.")).isTrue();
-        assertThat(gameLogContains(playerName + " draws 2 cards.")).isTrue();
+        assertThat(gameLogContains(playerName + " shuffles their hand (2 cards) into their library")).isTrue();
+        assertThat(gameLogContains(playerName + " draws a card")).isTrue();
     }
 
     @Test
@@ -133,8 +133,8 @@ class WhirlpoolDrakeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).containsExactlyInAnyOrder(first, second);
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         String playerName = gd.playerIdToName.get(player1.getId());
-        assertThat(gameLogContains(playerName + " shuffles 2 cards from hand into their library.")).isTrue();
-        assertThat(gameLogContains(playerName + " draws 2 cards.")).isTrue();
+        assertThat(gameLogContains(playerName + " shuffles their hand (2 cards) into their library")).isTrue();
+        assertThat(gameLogContains(playerName + " draws a card")).isTrue();
     }
 
     private List<Card> libraryWithThreeCards() {

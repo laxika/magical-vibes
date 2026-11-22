@@ -17,13 +17,13 @@ import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AttachOneOfControlledEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetEquipmentsToTargetCreatureThenEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetToSourcePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersFromTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.AttachTargetAuraToAnotherPermanentOfSameTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturesByPositionEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyCreaturesBlockedByTargetWallThenReturnFromGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.EnteringCreatureFightsTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentMayPlayWithOpponentTaxEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentUntilOpponentBecomesMonarchEffect;
@@ -169,7 +169,7 @@ class TargetPolarityGuardTest {
                 new ExileTargetPermanentMayPlayWithOpponentTaxEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
         assertThat(classifier.classify(gd,
-                new DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect(), aiPlayerId))
+                new DestroyTargetPermanentEffect(), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
         assertThat(classifier.classify(gd,
                 new ReturnTargetCardOnDeathThisTurnEffect(), aiPlayerId))

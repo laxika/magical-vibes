@@ -91,7 +91,7 @@ public class LoseLifeEffectHandler implements NormalEffectHandlerBean, AsksDeath
 
         // "Each player loses life equal to the number of creatures they controlled …" (Deadly Tempest): each player's
         // amount is evaluated with that player as the controller, as DealDamageToPlayersEffect does for eachPlayer().
-        boolean amountPerPlayer = subject instanceof PlayerSubject.Each each
+        boolean amountPerPlayer = e.amountPerPlayer() || subject instanceof PlayerSubject.Each each
                 && each.relation() == PlayerSubject.Relation.ALL;
         Map<UUID, Integer> losses = new LinkedHashMap<>();
         for (UUID playerId : players) {

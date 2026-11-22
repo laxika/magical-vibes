@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualPowerToughnessAndIncorporationEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
@@ -21,8 +21,8 @@ public class GuildpactGreenwalker extends Card {
 
     public GuildpactGreenwalker() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new ChooseCardFromHandAndApplyPerpetualPowerToughnessAndIncorporationEffect(
-                        new CardTypePredicate(CardType.CREATURE), 4, 4, "{1}{G}"),
+                ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect.incorporatingAndGetting(
+                        new CardTypePredicate(CardType.CREATURE), "{1}{G}", 4, 4),
                 "Choose a creature card in your hand to perpetually incorporate {1}{G} and get +4/+4?"));
 
         var multicoloredCreature = new PermanentIsMulticoloredPredicate();

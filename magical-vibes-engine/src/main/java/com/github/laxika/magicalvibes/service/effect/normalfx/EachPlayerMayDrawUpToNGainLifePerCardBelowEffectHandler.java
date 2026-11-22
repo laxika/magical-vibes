@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayDrawUpToNGainLifePerCardBelowEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,6 +39,7 @@ public class EachPlayerMayDrawUpToNGainLifePerCardBelowEffectHandler implements 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PlayerInteractionSupport playerInteractionSupport;
     private final LifeSupport lifeSupport;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -98,12 +100,10 @@ public class EachPlayerMayDrawUpToNGainLifePerCardBelowEffectHandler implements 
         // First entry: build the APNAP-ordered queue (active player first).
         gameData.pendingEachPlayerDrawUpToQueue.clear();
         gameData.pendingEachPlayerDrawUpToChoices.clear();
-        UUID activePlayerId = gameData.activePlayerId;
-        gameData.pendingEachPlayerDrawUpToQueue.add(activePlayerId);
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            if (!playerId.equals(activePlayerId)) {
-                gameData.pendingEachPlayerDrawUpToQueue.add(playerId);
-            }
+        gameData.pendingEachPlayerDrawUpToQueue.addAll(
+                subjectResolutionService.players(gameData, entry, effect, e.players()));
+        if (gameData.pendingEachPlayerDrawUpToQueue.isEmpty()) {
+            return;
         }
         promptNext(gameData, entry, e);
     }

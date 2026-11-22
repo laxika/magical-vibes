@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -185,5 +186,18 @@ class EnigmaRidgesTest extends BaseCardTest {
 
     private PendingInteraction.LibrarySearch activeSearch() {
         return gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+    }
+
+    @Test
+    @DisplayName("A player who must search still searches when they find nothing")
+    void failingToFindStillSearches() {
+        harness.addToBattlefield(player2, new Forest());
+        harness.setLibrary(player1, List.of(new Island()));
+
+        triggerPlaneswalkTo();
+        harness.handleCardChosen(player1, -1);
+
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 }

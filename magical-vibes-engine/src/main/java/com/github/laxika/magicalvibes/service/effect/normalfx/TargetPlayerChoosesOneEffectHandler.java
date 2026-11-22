@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.VillainousChoiceState;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesOneEffect;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,7 @@ public class TargetPlayerChoosesOneEffectHandler implements NormalEffectHandlerB
 
     private final PlayerInputService playerInputService;
     private final VillainousChoiceSupport villainousChoiceSupport;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -34,8 +36,23 @@ public class TargetPlayerChoosesOneEffectHandler implements NormalEffectHandlerB
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID chooserId = entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
         TargetPlayerChoosesOneEffect targetChoice = (TargetPlayerChoosesOneEffect) effect;
+        if (targetChoice.players() != null) {
+            // Who faces it is found once; each faces it as a step of their own (CR 701.55d).
+            List<CardEffect> turns = new ArrayList<>();
+            for (UUID playerId : subjectResolutionService.players(gameData, entry, effect, targetChoice.players())) {
+                turns.add(targetChoice.facedBy(playerId));
+            }
+            if (!turns.isEmpty()) {
+                entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, turns);
+            }
+            return;
+        }
+        UUID facingPlayerId = targetChoice.facingPlayerId();
+        if (facingPlayerId != null) {
+            entry.setTargetId(facingPlayerId);
+        }
+        UUID chooserId = entry.getTargetId() != null ? entry.getTargetId() : entry.getControllerId();
         if (targetChoice.villainousChoice()) {
             resolveVillainousChoice(gameData, entry, targetChoice, chooserId);
             return;

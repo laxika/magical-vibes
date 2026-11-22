@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -42,9 +44,23 @@ public class ChooseCardFromHandAndApplyPerpetualPowerToughnessEffectHandler
             return;
         }
 
+        List<String> changes = new ArrayList<>();
+        if (e.manaCost() != null) {
+            changes.add("incorporates " + e.manaCost());
+        }
+        if (e.power() != 0 || e.toughness() != 0) {
+            changes.add("gets +" + e.power() + "/+" + e.toughness());
+        }
+        for (Keyword keyword : e.keywords()) {
+            changes.add("gains " + keyword.name().toLowerCase().replace('_', ' '));
+        }
+        if (e.selfCastAbility() != null) {
+            changes.add("gains an ability that triggers when you cast it");
+        }
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.PerpetualPowerToughnessChoice(
                 entry.getControllerId(), validIndices,
-                "Choose a matching creature card in your hand. It perpetually gets +"
-                        + e.power() + "/+" + e.toughness() + ".", e.power(), e.toughness()));
+                "Choose a " + CardPredicateUtils.describeFilter(e.cardFilter()) + " in your hand. It perpetually "
+                        + String.join(" and ", changes) + ".",
+                e.power(), e.toughness(), e.keywords(), 0, 0, e.manaCost(), e.selfCastAbility()));
     }
 }

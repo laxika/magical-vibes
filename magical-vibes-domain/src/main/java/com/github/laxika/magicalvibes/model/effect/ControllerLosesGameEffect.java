@@ -5,7 +5,8 @@ import java.util.Objects;
 /**
  * "You lose the game" — {@code player} loses the game; the no-argument form is {@link Subjects#you()}, the
  * controller of the resolving ability. {@link Subjects#enchantedPlayer()} is "enchanted player loses the game"
- * (Sinner's Judgment).
+ * (Sinner's Judgment). Over several players each of them loses ("each player this creature attacked this turn loses
+ * the game": {@code matching(eachPlayer(), new PlayerAttackedBySourceThisTurnPredicate())}, Angel of Destiny).
  *
  * <p>Non-targeting. Unlike {@link TargetPlayerLosesGameEffect} (which targets or is bound to a specific player at
  * construction), this resolves against the subject's player as the effect resolves, so it can be used by

@@ -3,11 +3,19 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import com.github.laxika.magicalvibes.service.library.ZoneToLibraryService;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +36,7 @@ public class EachPlayerShufflesZonesIntoLibraryEffectHandler implements NormalEf
 
     private final GameLogService gameLogService;
     private final ZoneToLibraryService zoneToLibraryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,33 +45,41 @@ public class EachPlayerShufflesZonesIntoLibraryEffectHandler implements NormalEf
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
+        var shuffle = (EachPlayerShufflesZonesIntoLibraryEffect) effect;
         String cardName = entry.getCard().getName();
-        boolean includePermanents = ((EachPlayerShufflesZonesIntoLibraryEffect) effect).includeOwnedPermanents();
-
-        if (includePermanents) {
-            for (UUID playerId : gameData.orderedPlayerIds) {
-                int moved = zoneToLibraryService.moveOwnedPermanentsIntoLibrary(gameData, playerId);
-                if (moved > 0) {
+        List<UUID> players = subjectResolutionService.players(gameData, entry, effect, shuffle.players());
+        Map<UUID, Integer> shuffledAway = new LinkedHashMap<>();
+        if (shuffle.zones().contains(Zone.BATTLEFIELD)) {
+            Map<UUID, Integer> moved = zoneToLibraryService.moveOwnedPermanentsIntoLibraries(gameData, players);
+            for (UUID playerId : players) {
+                int count = moved.getOrDefault(playerId, 0);
+                if (count > 0) {
+                    shuffledAway.put(playerId, count);
                     gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(playerId)
-                            + " shuffles " + LibraryShuffleSupport.pluralPermanents(moved)
+                            + " shuffles " + LibraryShuffleSupport.pluralPermanents(count)
                             + " they own into their library (" + cardName + ")."));
                 }
             }
         }
-
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            String playerName = gameData.playerIdToName.get(playerId);
-
-            ZoneToLibraryService.MovedCounts moved =
-                    zoneToLibraryService.moveHandAndGraveyardIntoLibrary(gameData, playerId);
-
+        for (UUID playerId : players) {
+            List<String> zoneTexts = new ArrayList<>();
+            if (shuffle.zones().contains(Zone.HAND)) {
+                int hand = zoneToLibraryService.moveHandIntoLibrary(gameData, playerId);
+                shuffledAway.merge(playerId, hand, Integer::sum);
+                zoneTexts.add("hand (" + LibraryShuffleSupport.pluralCards(hand) + ")");
+            }
+            if (shuffle.zones().contains(Zone.GRAVEYARD)) {
+                int graveyard = zoneToLibraryService.moveGraveyardIntoLibrary(gameData, playerId);
+                shuffledAway.merge(playerId, graveyard, Integer::sum);
+                zoneTexts.add("graveyard (" + LibraryShuffleSupport.pluralCards(graveyard) + ")");
+            }
             LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
-
-            gameLogService.append(gameData, GameLog.text(playerName + " shuffles their hand (" + LibraryShuffleSupport.pluralCards(moved.hand())
-                            + ") and graveyard (" + LibraryShuffleSupport.pluralCards(moved.graveyard())
-                            + ") into their library (" + cardName + ")."));
-            log.info("Game {} - {} shuffles hand ({}) and graveyard ({}) into library ({})",
-                    gameData.id, playerName, moved.hand(), moved.graveyard(), cardName);
+            String playerName = gameData.playerIdToName.get(playerId);
+            gameLogService.append(gameData, GameLog.text(zoneTexts.isEmpty()
+                    ? playerName + "'s library is shuffled."
+                    : playerName + " shuffles their " + String.join(" and ", zoneTexts)
+                            + " into their library (" + cardName + ")."));
         }
+        entry.recordStep(StepKind.SHUFFLE_INTO_LIBRARY, StepOutcome.ofAmounts(shuffledAway));
     }
 }

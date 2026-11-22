@@ -222,7 +222,8 @@ public class SubjectResolutionService {
     /**
      * {@link CardSubject.CardsThisWay}: for each object the step recorded, the card it became in the zone the step put
      * it in ({@link StepOutcome#movedCards()}; every card of a merged permanent, CR 731.3c); an exiled card that kept
-     * its id is looked for in exile, a discarded card in its graveyard, else in exile where a replacement put it. Only
+     * its id is looked for in exile, a discarded card in its graveyard, else in exile where a replacement put it, a revealed card in the library it
+     * was revealed from. Only
      * a card still in that zone is named, and, for a delayed ability's step, in the stay it was bound to
      * ({@link MovedCard#entryVersion()}, CR 603.7c); the subject's filter, when it has one, is then judged on each card
      * as it is there.
@@ -315,11 +316,12 @@ public class SubjectResolutionService {
             ExiledCardEntry exiled = gameData.findExiledCard(cardId);
             return exiled == null ? null : new LocatedCard(exiled.card(), Zone.EXILE, exiled.ownerId());
         }
-        if (zone == Zone.HAND) {
+        if (zone == Zone.HAND || zone == Zone.LIBRARY) {
+            Map<UUID, List<Card>> zones = zone == Zone.HAND ? gameData.playerHands : gameData.playerDecks;
             for (UUID playerId : gameData.orderedPlayerIds) {
-                for (Card card : gameData.playerHands.getOrDefault(playerId, List.of())) {
+                for (Card card : zones.getOrDefault(playerId, List.of())) {
                     if (card.getId().equals(cardId)) {
-                        return new LocatedCard(card, Zone.HAND, playerId);
+                        return new LocatedCard(card, zone, playerId);
                     }
                 }
             }

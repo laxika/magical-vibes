@@ -174,4 +174,18 @@ class NobleBenefactorTest extends BaseCardTest {
 
         assertThat(activeSearch()).isNull();
     }
+
+    @Test
+    @DisplayName("A card taken by a search for any card isn't revealed")
+    void searchForAnyCardRevealsNothing() {
+        harness.setLibrary(player2, List.of(new MindStone()));
+        harness.setLibrary(player1, List.of());
+
+        killBenefactor();
+        assertThat(activeSearch().params().reveals()).isFalse();
+        harness.handleCardChosen(player2, 0);
+
+        harness.assertInHand(player2, "Mind Stone");
+        assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains("Mind Stone"));
+    }
 }

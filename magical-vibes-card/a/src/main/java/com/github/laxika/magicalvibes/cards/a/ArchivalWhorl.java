@@ -8,9 +8,10 @@ import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureCardToOpponentBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerDrawsCardEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOtherPlayerShufflesHandAndGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
 import com.github.laxika.magicalvibes.model.effect.ShuffleControllerHandAndGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "YBLB", collectorNumber = "5")
 public class ArchivalWhorl extends Card {
@@ -22,7 +23,7 @@ public class ArchivalWhorl extends Card {
         addSpellEffect(new ShuffleControllerHandAndGraveyardIntoLibraryEffect());
         addSpellEffect(new DrawCardEffect(7));
         addSpellEffect(new ConditionalEffect(new NotCondition(new GiftPromised()),
-                new EachOtherPlayerShufflesHandAndGraveyardIntoLibraryEffect()));
+                EachPlayerShufflesZonesIntoLibraryEffect.handsAndGraveyardsOf(Subjects.eachOpponent())));
         addSpellEffect(new ConditionalEffect(new NotCondition(new GiftPromised()),
                 new EachOtherPlayerDrawsCardEffect(7)));
     }

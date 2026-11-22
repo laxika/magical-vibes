@@ -7,10 +7,15 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.OpponentLostLifeThisTurn;
+import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentWhoLostLifeFacesVillainousChoiceEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerChoosesOneEffect;
+import com.github.laxika.magicalvibes.model.filter.PlayerLostLifeThisTurnPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -34,6 +39,11 @@ public class DavrosDalekCreator extends Card {
                 SequenceEffect.of(
                         new CreateTokenEffect("Dalek", 3, 3, CardColor.BLACK,
                                 List.of(CardSubtype.DALEK), Set.of(Keyword.MENACE), Set.of(CardType.ARTIFACT)),
-                        new EachOpponentWhoLostLifeFacesVillainousChoiceEffect(3))));
+                        TargetPlayerChoosesOneEffect.villainousChoiceFacedBy(
+                                Subjects.matching(Subjects.eachOpponent(), new PlayerLostLifeThisTurnPredicate(3)),
+                                List.of(
+                                        new ChooseOneEffect.ChooseOneOption("You draw a card", new DrawCardEffect(1)),
+                                        new ChooseOneEffect.ChooseOneOption("Discard a card", new DiscardEffect(
+                                                1, Subjects.targetPlayerDeclaredElsewhere())))))));
     }
 }

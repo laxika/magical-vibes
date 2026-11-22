@@ -26,8 +26,6 @@ public class EachPlayerPayManaState {
     public final Map<UUID, Integer> manaPaid = new LinkedHashMap<>();
     /** The player currently choosing how much mana to pay. */
     public UUID currentPlayerId;
-    /** Set code of the resolving source card, for token art preference. */
-    public String sourceSetCode;
 
     public void reset() {
         active = false;
@@ -35,6 +33,5 @@ public class EachPlayerPayManaState {
         index = 0;
         manaPaid.clear();
         currentPlayerId = null;
-        sourceSetCode = null;
     }
 }

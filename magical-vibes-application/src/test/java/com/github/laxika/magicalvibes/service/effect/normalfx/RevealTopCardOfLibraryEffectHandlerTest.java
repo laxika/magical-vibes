@@ -78,7 +78,11 @@ class RevealTopCardOfLibraryEffectHandlerTest {
 
         libraryRevealSupport = new LibraryRevealSupport(gameLogService,
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
+        var amountEvaluationService = mock(com.github.laxika.magicalvibes.service.effect.AmountEvaluationService.class);
+        lenient().when(amountEvaluationService.evaluate(any(),
+                eq(new com.github.laxika.magicalvibes.model.amount.Fixed(1)), any())).thenReturn(1);
         revealTopCardOfLibraryEffectHandler = new RevealTopCardOfLibraryEffectHandler(gameLogService, lifeSupport,
+                gameQueryService, amountEvaluationService,
                 new com.github.laxika.magicalvibes.service.effect.SubjectResolutionService(gameQueryService,
                         mock(com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService.class),
                         mock(com.github.laxika.magicalvibes.service.target.TargetLegalityService.class)));

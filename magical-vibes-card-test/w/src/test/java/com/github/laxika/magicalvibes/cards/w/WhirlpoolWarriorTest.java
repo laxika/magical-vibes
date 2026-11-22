@@ -33,8 +33,8 @@ class WhirlpoolWarriorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player2.getId())).hasSize(1);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
-        assertThat(gameLogContains(player1.getUsername() + " shuffles 2 cards from hand into their library.")).isTrue();
-        assertThat(gameLogContains(player1.getUsername() + " draws 2 cards.")).isTrue();
+        assertThat(gameLogContains(player1.getUsername() + " shuffles their hand (2 cards) into their library")).isTrue();
+        assertThat(gameLogContains(player1.getUsername() + " draws a card")).isTrue();
         assertThat(gameLogContains(player2.getUsername() + " shuffles")).isFalse();
         assertThat(gameLogContains(player2.getUsername() + " draws")).isFalse();
     }
@@ -58,10 +58,10 @@ class WhirlpoolWarriorTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(3);
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(warrior);
         harness.assertInGraveyard(player1, "Whirlpool Warrior");
-        assertThat(gameLogContains(player1.getUsername() + " shuffles 2 cards from hand into their library.")).isTrue();
-        assertThat(gameLogContains(player1.getUsername() + " draws 2 cards.")).isTrue();
-        assertThat(gameLogContains(player2.getUsername() + " shuffles 1 card from hand into their library.")).isTrue();
-        assertThat(gameLogContains(player2.getUsername() + " draws 1 card.")).isTrue();
+        assertThat(gameLogContains(player1.getUsername() + " shuffles their hand (2 cards) into their library")).isTrue();
+        assertThat(gameLogContains(player1.getUsername() + " draws a card")).isTrue();
+        assertThat(gameLogContains(player2.getUsername() + " shuffles their hand (1 card) into their library")).isTrue();
+        assertThat(gameLogContains(player2.getUsername() + " draws a card")).isTrue();
     }
 
     @Test
@@ -141,8 +141,8 @@ class WhirlpoolWarriorTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).hasSize(3);
         assertThat(gameLogContains(player2.getUsername()
-                + " shuffles 1 card from hand into their library.")).isTrue();
-        assertThat(gameLogContains(player2.getUsername() + " draws 1 card.")).isTrue();
+                + " shuffles their hand (1 card) into their library")).isTrue();
+        assertThat(gameLogContains(player2.getUsername() + " draws a card")).isTrue();
     }
     private List<Card> libraryWithThreeCards() {
         return List.of(new WhirlpoolWarrior(), new WhirlpoolWarrior(), new WhirlpoolWarrior());

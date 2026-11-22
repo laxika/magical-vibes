@@ -106,11 +106,17 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
                 .map(SubjectResolutionService.LocatedCard::card)
                 .toList());
         for (SubjectResolutionService.LocatedCard located : cards) {
-            if (located.zone() != Zone.GRAVEYARD) {
+            Card card = located.card();
+            boolean fromLibrary = located.zone() == Zone.LIBRARY;
+            if (fromLibrary) {
+                if (!gameData.playerDecks.get(located.ownerId()).remove(card)) {
+                    continue;
+                }
+            } else if (located.zone() == Zone.GRAVEYARD) {
+                permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, card.getId());
+            } else {
                 continue;
             }
-            Card card = located.card();
-            permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, card.getId());
             if (e.trackWithSource() && entry.getSourcePermanentId() != null) {
                 exileService.exileCard(gameData, located.ownerId(), card, entry.getSourcePermanentId());
             } else {
@@ -118,7 +124,8 @@ public class ExileGraveyardCardsEffectHandler implements NormalEffectHandlerBean
             }
             recordExiled(entry, List.of(card), located.ownerId(), known);
             gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " exiles ", card,
-                    " from " + gameData.playerIdToName.get(located.ownerId()) + "'s graveyard."));
+                    " from " + gameData.playerIdToName.get(located.ownerId())
+                            + (fromLibrary ? "'s library." : "'s graveyard.")));
         }
     }
 

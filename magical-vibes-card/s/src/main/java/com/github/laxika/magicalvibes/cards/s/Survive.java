@@ -2,7 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.FlashbackCast;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesGraveyardIntoLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 
 /**
  * Survive — back half of Struggle // Survive.
@@ -15,7 +15,7 @@ public class Survive extends Card {
 
     public Survive() {
         // Each player shuffles their graveyard into their library.
-        addSpellEffect(new EachPlayerShufflesGraveyardIntoLibraryEffect());
+        addSpellEffect(EachPlayerShufflesZonesIntoLibraryEffect.graveyards());
         // Aftermath cost equals this half's mana cost; exile after leaving the stack.
         addCastingOption(new FlashbackCast("{1}{G}"));
     }

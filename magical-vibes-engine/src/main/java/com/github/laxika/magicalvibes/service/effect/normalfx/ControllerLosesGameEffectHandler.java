@@ -35,23 +35,27 @@ public class ControllerLosesGameEffectHandler implements NormalEffectHandlerBean
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        UUID losingPlayerId = subjectResolutionService.player(gameData, entry, effect,
-                ((ControllerLosesGameEffect) effect).player());
-        if (losingPlayerId == null || !gameData.playerIds.contains(losingPlayerId)) {
-            return;
+        for (UUID losingPlayerId : subjectResolutionService.players(gameData, entry, effect,
+                ((ControllerLosesGameEffect) effect).player())) {
+            if (gameData.playerIds.contains(losingPlayerId) && lose(gameData, entry, losingPlayerId)) {
+                return;
+            }
         }
+    }
 
+    /** Whether the loss ended the game. */
+    private boolean lose(GameData gameData, StackEntry entry, UUID losingPlayerId) {
         LossOutcome outcome = gameOutcomeService.resolveLoss(gameData, losingPlayerId, LossReason.EFFECT);
         if (outcome == LossOutcome.PREVENTED) {
             String logEntry = gameData.playerIdToName.get(losingPlayerId) + " can't lose the game.";
             gameLogService.append(gameData, GameLog.text(logEntry));
             log.info("Game {} - {} can't lose the game (protected)", gameData.id,
                     gameData.playerIdToName.get(losingPlayerId));
-            return;
+            return false;
         }
         if (outcome == LossOutcome.REPLACED) {
             // A replacer (Lich's Mirror) already logged and reset the game — nobody wins.
-            return;
+            return false;
         }
 
         UUID winnerId = gameQueryService.getOpponentId(gameData, losingPlayerId);
@@ -61,5 +65,6 @@ public class ControllerLosesGameEffectHandler implements NormalEffectHandlerBean
         log.info("Game {} - {} loses the game from {}", gameData.id, loserName, entry.getCard().getName());
 
         gameOutcomeService.declareWinner(gameData, winnerId);
+        return true;
     }
 }

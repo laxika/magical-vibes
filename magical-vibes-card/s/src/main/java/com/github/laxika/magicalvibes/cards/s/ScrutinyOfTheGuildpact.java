@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualIncorporationEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
@@ -23,7 +23,7 @@ public class ScrutinyOfTheGuildpact extends Card {
 
     public ScrutinyOfTheGuildpact() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new ChooseCardFromHandAndApplyPerpetualIncorporationEffect(
+                ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect.incorporating(
                         new CardTypePredicate(CardType.CREATURE), "{W}", detectiveToken()),
                 "Choose a creature card in your hand to perpetually incorporate {W}?"));
         addStaticEffect(new StaticBoostEffect(1, 1, Subjects.otherCreaturesYouControl(),

@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.m;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaThenDrawsEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 @CardRegistration(set = "CMD", collectorNumber = "51")
 @CardRegistration(set = "CMM", collectorNumber = "105")
@@ -12,6 +15,8 @@ import com.github.laxika.magicalvibes.model.effect.EachPlayerPaysAnyManaThenDraw
 public class MindsAglow extends Card {
 
     public MindsAglow() {
-        addSpellEffect(new EachPlayerPaysAnyManaThenDrawsEffect());
+        addSpellEffect(SequenceEffect.of(
+                EachPlayerPaysAnyManaEffect.joinForces(),
+                new EachPlayerDrawsCardEffect(AmountThisWay.manaPaid())));
     }
 }

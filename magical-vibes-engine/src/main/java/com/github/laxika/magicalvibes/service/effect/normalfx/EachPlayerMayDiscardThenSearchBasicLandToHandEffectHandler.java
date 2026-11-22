@@ -64,8 +64,10 @@ public class EachPlayerMayDiscardThenSearchBasicLandToHandEffectHandler
             state.reset();
             gameData.rerunCurrentEffectAfterInteraction = false;
             if (!picks.isEmpty()) {
-                basicLandSearchQueueSupport.advance(
-                        gameData, LibrarySearchFollowUp.basicLandSearchesToHand(picks));
+                // "May search ..., then shuffle": who takes no card hasn't searched, so doesn't shuffle.
+                LibrarySearchFollowUp searches = LibrarySearchFollowUp.basicLandSearches(picks, List.of(), true);
+                basicLandSearchQueueSupport.advance(gameData,
+                        searches.withBasicLandSearchQueue(searches.basicLandSearchQueue().toHand()));
             }
         }
     }

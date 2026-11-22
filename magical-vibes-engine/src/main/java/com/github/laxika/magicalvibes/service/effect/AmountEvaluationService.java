@@ -323,6 +323,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -1152,6 +1153,13 @@ public class AmountEvaluationService {
                 && !thisWay.includesUnremoved()) {
             return results.outcome(thisWay.kind()).amount();
         }
+        if (thisWay.kind() == StepKind.PAY_MANA || thisWay.kind() == StepKind.SHUFFLE_INTO_LIBRARY) {
+            return ctx.controllerId() == null ? 0
+                    : results.outcome(thisWay.kind()).amountByPlayer().getOrDefault(ctx.controllerId(), 0);
+        }
+        if (thisWay.kind() == StepKind.REVEAL) {
+            return revealedStat(gameData, results.outcome(StepKind.REVEAL), thisWay, ctx.controllerId());
+        }
         if (thisWay.kind() == StepKind.EXILE) {
             StepOutcome exiled = results.outcome(StepKind.EXILE);
             int total = exiledStat(gameData, entry, exiled, thisWay.stat(),
@@ -1233,6 +1241,26 @@ public class AmountEvaluationService {
      * zone it was exiled from (CR 608.2h): a permanent as the entry recorded it as it left the battlefield, a card from
      * a graveyard as the step recorded it there, a card exiled from a hidden zone as it is now in exile.
      */
+    /**
+     * Over a reveal step: how many cards, or their total mana value as they are now; with {@code yours} only those
+     * revealed from {@code playerId}'s library.
+     */
+    private int revealedStat(GameData gameData, StepOutcome revealed, AmountThisWay thisWay, UUID playerId) {
+        int total = 0;
+        for (MovedCard shown : revealed.movedCards()) {
+            if (thisWay.yours() && !Objects.equals(shown.ownerId(), playerId)) {
+                continue;
+            }
+            if (thisWay.stat() == AmountThisWay.Stat.AMOUNT) {
+                total = SaturatingMath.add(total, 1);
+                continue;
+            }
+            Card card = gameQueryService.findCardById(gameData, shown.cardId());
+            total = SaturatingMath.add(total, card == null ? 0 : card.getManaValue());
+        }
+        return total;
+    }
+
     private int exiledStat(GameData gameData, StackEntry entry, StepOutcome exiled, AmountThisWay.Stat stat,
                            List<UUID> counted) {
         if (stat == AmountThisWay.Stat.AMOUNT) {

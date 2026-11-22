@@ -6,10 +6,14 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.SourceCardManaValue;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerLosesLifePerCreatureControlledEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,7 +25,9 @@ public class NetherbornPhalanx extends Card {
 
     public NetherbornPhalanx() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new EachPlayerLosesLifePerCreatureControlledEffect(1, false, true));
+                LoseLifeEffect.eachTheirOwn(
+                        new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER),
+                        Subjects.eachOpponent()));
 
         addActivatedAbility(AbilityZones.HAND, new ActivatedAbility(
                 false,

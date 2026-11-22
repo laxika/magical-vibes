@@ -14,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -39,6 +40,15 @@ public class PutCardsIntoHandEffectHandler implements NormalEffectHandlerBean {
         for (SubjectResolutionService.LocatedCard located
                 : subjectResolutionService.locatedCards(gameData, entry, put, put.cards())) {
             Card card = located.card();
+            if (located.zone() == Zone.LIBRARY) {
+                List<Card> library = gameData.playerDecks.get(located.ownerId());
+                if (library != null && library.remove(card)) {
+                    gameData.addCardToHand(located.ownerId(), card);
+                    gameLogService.append(gameData, GameLog.textCardText(
+                            gameData.playerIdToName.get(located.ownerId()) + " puts ", card, " into their hand."));
+                }
+                continue;
+            }
             if (located.zone() != Zone.EXILE) {
                 continue;
             }

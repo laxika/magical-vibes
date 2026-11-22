@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -18,7 +18,7 @@ public class KoboldWarcaller extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new ChooseCardFromHandAndApplyPerpetualKeywordEffect(
+                List.of(ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect.gaining(
                         new CardTypePredicate(CardType.CREATURE), Set.of(Keyword.HASTE))),
                 "{T}: Choose a creature card in your hand. It perpetually gains haste."
         ));

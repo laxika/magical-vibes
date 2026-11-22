@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerSearchesLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
@@ -43,9 +43,11 @@ public class WindsOfAbandon extends Card {
                                 .searchedBy(Subjects.controllerOf(Subjects.target())))),
                 SequenceEffect.of(
                         new ExileAllPermanentsEffect(opponentCreatures()),
-                        EachPlayerMaySearchLibraryForBasicLandsToBattlefieldEffect.mandatoryTapped(
+                        EachPlayerSearchesLibraryEffect.mustSearch(
+                                Subjects.playersThisWay(StepKind.EXILE),
+                                CardPredicateUtils.basicLand(),
                                 new AmountThisWay(StepKind.EXILE).controlledByYou(),
-                                Subjects.playersThisWay(StepKind.EXILE)))));
+                                LibrarySearchDestination.BATTLEFIELD_TAPPED))));
         target(TargetFilters.creatureAnOpponentControls());
     }
 

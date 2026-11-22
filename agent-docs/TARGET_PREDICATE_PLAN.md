@@ -536,7 +536,7 @@ Behaviour changes, both in the rules-correct direction and both pinned by a fail
 `CREATURE`, `PERMANENT` and `PLAYER_OR_PERMANENT` are unchanged.
 
 **Graceful Antelope is the first implemented card with a `LAND`-spec may-ability** (the four `LAND` producers are
-`DestroyTargetAndEachPlayerSearchesBasicLandToBattlefieldEffect`, `GrantBasicLandTypeToTargetEffect`,
+`SequenceEffect.of(DestroyTargetPermanentEffect(), EachPlayerSearchesLibraryEffect.mustSearch(Subjects.eachPlayer(), CardPredicateUtils.basicLand(), Fixed(1), BATTLEFIELD))`, `GrantBasicLandTypeToTargetEffect`,
 `TargetLandBecomesBasicLandTypeUntilSourceLeavesEffect`, `DestroyAttachmentsOnTargetCreatureEffect(…, LAND)`,
 and Graceful Antelope combines the land spec with a `MayEffect`). The existing
 `MayAbilityHandlerServiceTest` (`service/input/`) remains the service-level regression test; it

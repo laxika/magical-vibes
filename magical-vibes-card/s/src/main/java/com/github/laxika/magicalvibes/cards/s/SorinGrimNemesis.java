@@ -6,15 +6,21 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
 import com.github.laxika.magicalvibes.model.amount.HighestLifeTotalAmongPlayers;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealTopCardPutIntoHandThenEachOpponentLosesLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
 
 import java.util.List;
 import java.util.Set;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 @CardRegistration(set = "SOI", collectorNumber = "251")
 @CardRegistration(set = "SLD", collectorNumber = "400")
@@ -24,7 +30,10 @@ public class SorinGrimNemesis extends Card {
     public SorinGrimNemesis() {
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new RevealTopCardPutIntoHandThenEachOpponentLosesLifeEffect()),
+                List.of(SequenceEffect.of(
+                        new RevealTopCardOfLibraryEffect(Subjects.you()),
+                        new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.REVEAL)),
+                        new LoseLifeEffect(AmountThisWay.revealedManaValue(), Subjects.eachOpponent()))),
                 "+1: Reveal the top card of your library and put that card into your hand. Each opponent loses life equal to its mana value."
         ));
 

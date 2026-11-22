@@ -30,7 +30,8 @@ import java.util.Objects;
  * library or a hand, or a {@link StepKind#DISCARD} step discarded, matches it, judged as the card is now wherever it
  * went (a card keeps its characteristics in a graveyard or exile; CR 608.2h); a permanent an exile step exiled as the
  * card it became in exile ("if the exiled card is a God card", Deicide). A milled or chosen card is judged the same
- * way ("if a creature card was milled this way").
+ * way ("if a creature card was milled this way"), and so is a revealed card ("if no creature cards were revealed this
+ * way").
  *
  * @param kind       the kind of step read
  * @param minimum    the least amount the step must have recorded; at least 1
@@ -52,9 +53,9 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
             throw new IllegalArgumentException("A step result is filtered as permanents or as cards, not both");
         }
         if (cardFilter != null && kind != StepKind.EXILE && kind != StepKind.DISCARD && kind != StepKind.MILL
-                && kind != StepKind.CHOOSE) {
+                && kind != StepKind.CHOOSE && kind != StepKind.REVEAL) {
             throw new IllegalArgumentException(
-                    "Only an exile, discard, mill or choose step's cards are judged by a card filter: " + kind);
+                    "Only an exile, discard, mill, choose or reveal step's cards are judged by a card filter: " + kind);
         }
     }
 
@@ -181,6 +182,9 @@ public record HappenedThisWay(StepKind kind, int minimum, PermanentPredicate fil
             case PUT_INTO_GRAVEYARD -> "put into a graveyard";
             case SEEK -> "sought";
             case CHOOSE -> "chosen";
+            case REVEAL -> "revealed";
+            case PAY_MANA -> "paid";
+            case SHUFFLE_INTO_LIBRARY -> "shuffled into a library";
         };
     }
 }

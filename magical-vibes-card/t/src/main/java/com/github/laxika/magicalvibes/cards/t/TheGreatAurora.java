@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerMayPutLandsFromHandToBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesHandAndPermanentsIntoLibraryAndDrawsEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 
 /**
  * The Great Aurora: each player shuffles their hand and all permanents they own into their library,
@@ -16,7 +19,9 @@ import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
 public class TheGreatAurora extends Card {
 
     public TheGreatAurora() {
-        addSpellEffect(new EachPlayerShufflesHandAndPermanentsIntoLibraryAndDrawsEffect());
+        addSpellEffect(SequenceEffect.of(
+                EachPlayerShufflesZonesIntoLibraryEffect.handsAndOwnedPermanents(),
+                new EachPlayerDrawsCardEffect(AmountThisWay.shuffledAwayByYou())));
         addSpellEffect(new EachPlayerMayPutLandsFromHandToBattlefieldEffect());
         addSpellEffect(new ExileSpellEffect());
     }

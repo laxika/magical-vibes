@@ -72,9 +72,19 @@ public class CreateTokenEffectHandler implements NormalEffectHandlerBean {
         int createdBefore = entry.getCreatedPermanentIds().size();
         // "Its controller creates": the player the blueprint's token controller names, read again when a token-creation
         // replacement's answer resolves this effect once more.
-        UUID controllerId = subjectResolutionService.player(gameData, entry, e, e.controller());
-        if (controllerId != null) {
-            resolveForController(gameData, entry, e, controllerId);
+        List<UUID> creators = subjectResolutionService.players(gameData, entry, e, e.controller());
+        int first = 0;
+        // With several creators ("each player who controls the most creatures investigates") the answer resumes at the
+        // player the offer was made to, so those before them don't create again.
+        if (creators.size() > 1 && gameData.pendingTokenCreationReplacement != null) {
+            first = Math.max(0, creators.indexOf(gameQueryService.findPermanentController(
+                    gameData, gameData.pendingTokenCreationReplacement.replacementPermanentId())));
+        }
+        for (UUID creatorId : creators.subList(first, creators.size())) {
+            resolveForController(gameData, entry, e, creatorId);
+            if (gameData.pendingTokenCreationReplacement != null) {
+                break;
+            }
         }
         recordCreated(gameData, entry, createdBefore);
     }

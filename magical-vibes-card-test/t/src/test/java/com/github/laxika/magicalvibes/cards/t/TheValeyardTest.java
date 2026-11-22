@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.EachOpponentFacesSycoraxCommanderVillainousChoiceEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
@@ -84,8 +83,7 @@ class TheValeyardTest extends BaseCardTest {
 
     private void chooseSycoraxDamage() {
         harness.handleListChoice(player2,
-                com.github.laxika.magicalvibes.model.effect.EachOpponentFacesSycoraxCommanderVillainousChoiceEffect
-                        .DAMAGE_OPTION);
+                SycoraxCommander.DAMAGE_OPTION);
     }
 
     @Test
@@ -127,7 +125,7 @@ class TheValeyardTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
         harness.handleListChoice(player2,
-                EachOpponentFacesSycoraxCommanderVillainousChoiceEffect.DISCARD_OPTION);
+                SycoraxCommander.DISCARD_OPTION);
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(first, second);
         chooseSycoraxDamage();
 

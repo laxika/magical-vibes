@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyUpToOneTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -27,7 +27,7 @@ public class ArgivianWelcome extends Card {
         target(new PermanentPredicateTargetFilter(
                 largeCreature, "Target must be a creature with power 4 or greater"), 0, 1)
                 .addSpellEffect(new DestroyUpToOneTargetPermanentEffect(largeCreature));
-        addSpellEffect(new ChooseCardFromHandAndApplyPerpetualKeywordEffect(
+        addSpellEffect(ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect.gaining(
                 new CardNotPredicate(new CardTypePredicate(CardType.LAND)), Set.of(Keyword.FLASH)));
     }
 }

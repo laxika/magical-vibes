@@ -41,6 +41,11 @@ import java.util.Objects;
  * "the total power of creatures they controlled that were exiled this way" (Oversimplify), "for each creature exiled
  * this way, its controller draws a card" (Martyr's Cry).
  *
+ * <p>A reveal step keeps its cards where they are: {@link Stat#MANA_VALUE} over one is "the total mana value of all
+ * cards revealed this way", each card as it is now, and {@code yours} only those from the amount's controller's library
+ * ("each player ... loses life equal to that card's mana value", Duskmantle Seer). Over a payment step {@code yours} is
+ * what the amount's controller paid ("the amount of mana they paid this way", Liege of the Hollows).
+ *
  * <p>{@code includesUnremoved} ({@link #includingUnremoved()}) widens a count over a destroy step that records its
  * departures to every permanent its instruction applied to, those that weren't destroyed (indestructible, regenerated,
  * a shield counter) included: "for each of those permanents, its controller creates …" (Soul of Emancipation). A target
@@ -84,7 +89,7 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
         Objects.requireNonNull(stat, "stat");
         boolean removal = kind == StepKind.SACRIFICE || kind == StepKind.DESTROY;
         if ((stat == Stat.POWER || stat == Stat.TOUGHNESS || stat == Stat.MANA_VALUE)
-                && !removal && kind != StepKind.EXILE) {
+                && !removal && kind != StepKind.EXILE && !(kind == StepKind.REVEAL && stat == Stat.MANA_VALUE)) {
             throw new IllegalArgumentException(
                     "Only a sacrifice, destroy or exile step records last-known " + stat + ": " + kind);
         }
@@ -92,7 +97,9 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
             throw new IllegalArgumentException(
                     "Only a sacrifice or destroy step records what it removed and whether it died: " + kind);
         }
-        if (yours && !removal && (kind != StepKind.EXILE || cardFilter != null
+        boolean perPlayer = kind == StepKind.REVEAL || kind == StepKind.PAY_MANA
+                || kind == StepKind.SHUFFLE_INTO_LIBRARY;
+        if (yours && !removal && !perPlayer && (kind != StepKind.EXILE || cardFilter != null
                 || stat == Stat.STILL_EXILED || stat == Stat.FROM_HAND)) {
             throw new IllegalArgumentException(
                     "Only a removal step records whose what it removed was: " + kind + " " + stat);
@@ -214,6 +221,31 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
     /** "For each card exiled from their hand this way": the exile step's cards that came from a hand. */
     public static AmountThisWay exiledFromHand() {
         return new AmountThisWay(StepKind.EXILE, Stat.FROM_HAND);
+    }
+
+    /** "The total mana value of all cards revealed this way" after a reveal step. */
+    public static AmountThisWay revealedManaValue() {
+        return new AmountThisWay(StepKind.REVEAL, Stat.MANA_VALUE);
+    }
+
+    /** "That card's mana value" in "each player reveals the top card of their library": the player's own cards'. */
+    public static AmountThisWay manaValueRevealedByYou() {
+        return revealedManaValue().controlledByYou();
+    }
+
+    /** "The total amount of mana paid this way" after a payment step. */
+    public static AmountThisWay manaPaid() {
+        return new AmountThisWay(StepKind.PAY_MANA);
+    }
+
+    /** "The amount of mana they paid this way": what the amount's controller paid. */
+    public static AmountThisWay manaPaidByYou() {
+        return manaPaid().controlledByYou();
+    }
+
+    /** "Then draws that many cards" after a shuffle-into-library step: what the amount's controller shuffled away. */
+    public static AmountThisWay shuffledAwayByYou() {
+        return new AmountThisWay(StepKind.SHUFFLE_INTO_LIBRARY).controlledByYou();
     }
 
     /** "The exiled creature card's power" after an exile step. */

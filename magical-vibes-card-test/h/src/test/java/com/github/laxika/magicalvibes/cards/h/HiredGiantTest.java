@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.a.AvenMindcensor;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.p.PortInspector;
 import com.github.laxika.magicalvibes.cards.r.RishadanPort;
@@ -15,7 +16,8 @@ import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HiredGiant.class, Forest.class, RishadanPort.class, PortInspector.class})
+@CardUsed({HiredGiant.class, Forest.class, RishadanPort.class, PortInspector.class,
+        AvenMindcensor.class})
 class HiredGiantTest extends BaseCardTest {
 
     @Test
@@ -96,7 +98,7 @@ class HiredGiantTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).doesNotContain(land);
         assertThat(activeSearch()).isNull();
         assertThat(gd.gameLog.stream().map(entry -> entry.plainText()))
-                .anyMatch(log -> log.contains("Library is shuffled"));
+                .anyMatch(log -> log.contains("library is shuffled"));
     }
 
     private void castHiredGiant() {
@@ -121,4 +123,22 @@ class HiredGiantTest extends BaseCardTest {
         throw new IllegalStateException("No matching card in search options");
     }
 
+    @Test
+    @DisplayName("Under Aven Mindcensor the opponent is still offered the search, and nothing is logged of the library")
+    void mindcensoredOpponentStillChooses() {
+        harness.addToBattlefield(player1, new AvenMindcensor());
+        List<Card> library = List.of(new PortInspector(), new PortInspector(), new PortInspector(),
+                new PortInspector(), new Forest());
+        harness.setLibrary(player2, library);
+        castHiredGiant();
+        resolveEtb();
+
+        assertThat(activeSearch().params().playerId()).isEqualTo(player2.getId());
+        assertThat(activeSearch().params().cards()).isEmpty();
+        harness.handleCardChosen(player2, -1);
+
+        assertThat(gd.gameLog).noneMatch(entry -> entry.plainText().contains("finds no"));
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).doesNotContain(player2.getId());
+        assertThat(gd.playerDecks.get(player2.getId())).containsExactlyElementsOf(library);
+    }
 }

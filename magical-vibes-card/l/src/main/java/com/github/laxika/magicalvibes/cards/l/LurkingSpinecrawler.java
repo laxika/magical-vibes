@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.TriggeringSpellColorCount;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualIncorporationEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.EachOpponentSacrificesCreatureUnlessDiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -19,7 +19,7 @@ public class LurkingSpinecrawler extends Card {
 
     public LurkingSpinecrawler() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ChooseCardFromHandAndApplyPerpetualIncorporationEffect(
+                ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect.incorporating(
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
                         "{1}{B}",
                         new EachOpponentSacrificesCreatureUnlessDiscardEffect()));

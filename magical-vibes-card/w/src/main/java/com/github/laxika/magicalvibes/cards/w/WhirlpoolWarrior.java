@@ -3,8 +3,13 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerDrawsCardEffect;
+import com.github.laxika.magicalvibes.model.effect.EachPlayerShufflesZonesIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
-import com.github.laxika.magicalvibes.model.effect.ShuffleHandIntoLibraryAndDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -16,12 +21,16 @@ import java.util.List;
 public class WhirlpoolWarrior extends Card {
 
     public WhirlpoolWarrior() {
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new ShuffleHandIntoLibraryAndDrawEffect(false));
+        addTrigger(Triggers.enters(ObjectRelation.THIS), SequenceEffect.of(
+                EachPlayerShufflesZonesIntoLibraryEffect.handsOf(Subjects.you()),
+                new DrawCardEffect(AmountThisWay.shuffledAwayByYou())));
 
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{R}",
-                List.of(new SacrificeSelfCost(), new ShuffleHandIntoLibraryAndDrawEffect()),
+                List.of(new SacrificeSelfCost(), SequenceEffect.of(
+                        EachPlayerShufflesZonesIntoLibraryEffect.handsOf(Subjects.eachPlayer()),
+                        new EachPlayerDrawsCardEffect(AmountThisWay.shuffledAwayByYou()))),
                 "{R}, Sacrifice this creature: Each player shuffles the cards from their hand into their library, then draws that many cards."
         ));
     }

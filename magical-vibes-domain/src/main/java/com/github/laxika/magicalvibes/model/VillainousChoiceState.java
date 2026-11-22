@@ -21,7 +21,6 @@ public class VillainousChoiceState {
     public String choiceDescription;
     public String chosenMode;
     public boolean waitingForDiscard;
-    public boolean waitingForDraw;
     public boolean waitingForControllerMay;
     public boolean waitingForCardChoice;
 
@@ -38,7 +37,6 @@ public class VillainousChoiceState {
         choiceDescription = null;
         chosenMode = null;
         waitingForDiscard = false;
-        waitingForDraw = false;
         waitingForControllerMay = false;
         waitingForCardChoice = false;
     }
