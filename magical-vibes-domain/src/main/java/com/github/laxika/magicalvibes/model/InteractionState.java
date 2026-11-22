@@ -91,7 +91,8 @@ public class InteractionState {
             ChoiceContext.CardNameChoice copiedNameChoice = new ChoiceContext.CardNameChoice(
                     nameChoice.card(), nameChoice.controllerId(), nameChoice.excludedTypes(),
                     nameChoice.nonbasicLandOnly(), nameChoice.attachedTo(), nameChoice.requiredType(),
-                    nameChoice.landPlayZone(), new Permanent(nameChoice.preparedPermanent()));
+                    nameChoice.landPlayZone(), new Permanent(nameChoice.preparedPermanent()),
+                    nameChoice.revealedNamesOnly());
             copy.activeInteraction = new PendingInteraction.ColorChoice(choice.playerId(), choice.permanentId(),
                     choice.etbTargetId(), copiedNameChoice, choice.options(), choice.prompt(), choice.disabledOptions());
         }

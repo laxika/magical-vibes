@@ -17,9 +17,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -86,13 +84,7 @@ public class DrawCardEffectHandler implements NormalEffectHandlerBean {
 
     /** {@code playerId} draws {@code amount} cards; returns the cards this instruction drew. */
     private List<UUID> draw(GameData gameData, StackEntry entry, UUID playerId, int amount) {
-        Set<UUID> cardsInHandBeforeDraw = new HashSet<>();
-        gameData.playerHands.getOrDefault(playerId, List.of()).forEach(card -> cardsInHandBeforeDraw.add(card.getId()));
-        Set<UUID> cardsInLibraryBeforeDraw = new HashSet<>();
-        gameData.playerDecks.getOrDefault(playerId, List.of())
-                .forEach(card -> cardsInLibraryBeforeDraw.add(card.getId()));
-
-        int drawsBefore = gameData.cardsDrawnThisTurnIds.getOrDefault(playerId, List.of()).size();
+        DrawnThisWay snapshot = DrawnThisWay.before(gameData, playerId);
 
         if (entry.isCyclingAbility() && playerId.equals(entry.getControllerId())) {
             for (int i = 0; i < amount; i++) {
@@ -105,15 +97,7 @@ public class DrawCardEffectHandler implements NormalEffectHandlerBean {
             playerInteractionSupport.applyDrawCards(gameData, playerId, amount);
         }
 
-        // Only cards drawn out of the library count: a card a replacement returned (Words of Wind) or put into the
-        // hand from the library (Sages of the Anima) is a new hand card but was not drawn (CR 614.6).
-        List<UUID> drawnNow = gameData.cardsDrawnThisTurnIds.getOrDefault(playerId, List.of()).stream()
-                .skip(drawsBefore).toList();
-        List<Card> newlyDrawn = gameData.playerHands.getOrDefault(playerId, List.of()).stream()
-                .filter(card -> !cardsInHandBeforeDraw.contains(card.getId()))
-                .filter(card -> cardsInLibraryBeforeDraw.contains(card.getId()))
-                .filter(card -> drawnNow.contains(card.getId()))
-                .toList();
+        List<Card> newlyDrawn = snapshot.cards(gameData);
         // More cards than instructed means a draw was replaced by drawing extra cards (e.g. Alhammarret's
         // Archive); those cards were not drawn by this effect's instruction, so "that card" does not exist.
         if (newlyDrawn.size() > amount) {

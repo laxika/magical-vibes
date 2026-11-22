@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
@@ -30,7 +31,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -129,71 +129,35 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
 
         if (context instanceof ChoiceContext.CardNameChoice) {
             UUID opponentId = getOpponentId(gameData, aiPlayerId);
-            List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of());
+            List<Permanent> opponentField = gameData.playerBattlefields.getOrDefault(opponentId, List.of()).stream()
+                    .filter(permanent -> !permanent.isFaceDown()).toList();
             String chosenName = opponentField.stream()
                     .filter(p -> !p.getCard().getActivatedAbilities(Zone.BATTLEFIELD).isEmpty())
                     .map(p -> p.getCard().getName())
                     .filter(interaction.options()::contains)
                     .findFirst()
-                    .orElse(interaction.options().isEmpty()
-                            ? (opponentField.isEmpty() ? "Pithing Needle" : opponentField.getFirst().getCard().getName())
-                            : interaction.options().getFirst());
+                    .orElseGet(() -> knownName(ctx, interaction, opponentId));
             log.info("AI: Choosing card name \"{}\" in game {}", chosenName, gameId);
             answerWith(ctx, interaction, chosenName);
             return;
         }
 
-        if (context instanceof ChoiceContext.DualCardNameChoice) {
-            // Null Chamber: lock down something our own opponent is holding, falling back to any
-            // offered name (the option list already excludes basic land names).
-            UUID opponentId = getOpponentId(gameData, aiPlayerId);
-            Set<String> opponentNames = gameData.playerHands.getOrDefault(opponentId, List.of()).stream()
-                    .map(Card::getName)
-                    .collect(Collectors.toSet());
-            String chosenName = interaction.options().stream()
-                    .filter(opponentNames::contains)
-                    .findFirst()
-                    .orElse(interaction.options().getFirst());
-            log.info("AI: Choosing card name \"{}\" (two-player naming) in game {}", chosenName, gameId);
-            answerWith(ctx, interaction, chosenName);
-            return;
-        }
-
-        if (context instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice) {
-            // Comply: lock a name from the opponent's hand when possible.
-            UUID opponentId = getOpponentId(gameData, aiPlayerId);
-            Set<String> opponentNames = gameData.playerHands.getOrDefault(opponentId, List.of()).stream()
-                    .map(Card::getName)
-                    .collect(Collectors.toSet());
-            String chosenName = interaction.options().stream()
-                    .filter(opponentNames::contains)
-                    .findFirst()
-                    .orElse(interaction.options().isEmpty() ? "Shock" : interaction.options().getFirst());
-            log.info("AI: Choosing card name \"{}\" (opponents can't cast until next turn) in game {}",
-                    chosenName, gameId);
+        if (context instanceof ChoiceContext.DualCardNameChoice
+                || context instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice) {
+            // Null Chamber, Comply: lock down something seen of an opponent's.
+            String chosenName = knownName(ctx, interaction, getOpponentId(gameData, aiPlayerId));
+            log.info("AI: Choosing card name \"{}\" to lock down in game {}", chosenName, gameId);
             answerWith(ctx, interaction, chosenName);
             return;
         }
 
         if (context instanceof ChoiceContext.EachPlayerCardNameRevealChoice
                 || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice) {
-            // For the reveal-top-card game: guess the top card of our library
-            List<Card> aiDeck = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());
-            String chosenName = aiDeck.isEmpty() ? "Island" : aiDeck.getFirst().getName();
+            // For the reveal-top-card game: the name our library holds most of, its order being unknown to us.
+            String chosenName = mostHeldName(ctx, interaction.options(),
+                    gameData.playerDecks.getOrDefault(aiPlayerId, List.of()))
+                    .orElseGet(() -> choosableName(ctx, interaction).orElse("Island"));
             log.info("AI: Choosing card name \"{}\" for reveal in game {}", chosenName, gameId);
-            answerWith(ctx, interaction, chosenName);
-            return;
-        }
-
-        if (context instanceof ChoiceContext.NameCardMillGainLifeChoice
-                || context instanceof ChoiceContext.NameCardMillDrawChoice) {
-            // Guess the top card of the milled player's library for the name-match reward.
-            UUID targetId = context instanceof ChoiceContext.NameCardMillGainLifeChoice g
-                    ? g.targetPlayerId()
-                    : ((ChoiceContext.NameCardMillDrawChoice) context).targetPlayerId();
-            List<Card> targetDeck = gameData.playerDecks.getOrDefault(targetId, List.of());
-            String chosenName = targetDeck.isEmpty() ? "Island" : targetDeck.getFirst().getName();
-            log.info("AI: Choosing card name \"{}\" for name/mill match in game {}", chosenName, gameId);
             answerWith(ctx, interaction, chosenName);
             return;
         }
@@ -323,7 +287,8 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
                     .filter(c -> c.hasType(CardType.CREATURE))
                     .max(java.util.Comparator.comparingInt(Card::getManaValue))
                     .map(Card::getName)
-                    .orElse("Sphinx Ambassador");
+                    .filter(interaction.options()::contains)
+                    .orElseGet(() -> knownName(ctx, interaction, aiPlayerId));
             log.info("AI: Choosing card name \"{}\" for Sphinx Ambassador in game {}", chosenName, gameId);
             answerWith(ctx, interaction, chosenName);
             return;
@@ -401,13 +366,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
         }
 
         if (context instanceof ChoiceContext.ExileByNameChoice exile) {
-            UUID targetId = exile.targetPlayerId();
-            List<Card> targetHand = gameData.playerHands.getOrDefault(targetId, List.of());
-            String chosenName = targetHand.stream()
-                    .filter(c -> !exile.excludedTypes().contains(c.getType()))
-                    .map(Card::getName)
-                    .findFirst()
-                    .orElse("Lightning Bolt");
+            String chosenName = knownName(ctx, interaction, exile.targetPlayerId());
             log.info("AI: Choosing card name \"{}\" for exile in game {}", chosenName, gameId);
             answerWith(ctx, interaction, chosenName);
             return;
@@ -434,17 +393,8 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
         }
 
         if (context instanceof ChoiceContext.RevealHandDamageAndExileByNameChoice exile) {
-            // Thought Hemorrhage: name whatever card is most numerous in the target's hand to maximise
-            // both the damage and the number of copies exiled.
-            UUID targetId = exile.targetPlayerId();
-            List<Card> targetHand = gameData.playerHands.getOrDefault(targetId, List.of());
-            String chosenName = targetHand.stream()
-                    .filter(c -> !exile.excludedTypes().contains(c.getType()))
-                    .collect(java.util.stream.Collectors.groupingBy(Card::getName, java.util.stream.Collectors.counting()))
-                    .entrySet().stream()
-                    .max(Map.Entry.comparingByValue())
-                    .map(Map.Entry::getKey)
-                    .orElse("Lightning Bolt");
+            // Thought Hemorrhage: name the card seen most of the target's, its hand being hidden.
+            String chosenName = knownName(ctx, interaction, exile.targetPlayerId());
             log.info("AI: Choosing card name \"{}\" for reveal-damage-exile in game {}", chosenName, gameId);
             answerWith(ctx, interaction, chosenName);
             return;
@@ -719,7 +669,29 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
         pools.add(seenOfOthers);
         pools.add(seenOfOwn);
         pools.add(Stream.concat(hand.stream(), library.stream()).toList());
+        return firstKnownName(ctx, interaction, pools);
+    }
 
+    /**
+     * The offered, choosable name seen most of {@code aboutPlayerId}'s, otherwise of the AI's own cards. No other
+     * player's hand or library and no hidden face is read (CR 400.2, 406.3).
+     */
+    private static String knownName(AiInteractionContext ctx, PendingInteraction.ColorChoice interaction,
+                                    UUID aboutPlayerId) {
+        GameData gameData = ctx.gameData();
+        UUID aiPlayerId = ctx.aiPlayerId();
+        List<List<Card>> pools = new ArrayList<>();
+        if (aboutPlayerId != null) {
+            pools.add(publicCards(gameData, aboutPlayerId));
+        }
+        pools.add(publicCards(gameData, aiPlayerId));
+        pools.add(Stream.concat(gameData.playerHands.getOrDefault(aiPlayerId, List.of()).stream(),
+                gameData.playerDecks.getOrDefault(aiPlayerId, List.of()).stream()).toList());
+        return firstKnownName(ctx, interaction, pools);
+    }
+
+    private static String firstKnownName(AiInteractionContext ctx, PendingInteraction.ColorChoice interaction,
+                                         List<List<Card>> pools) {
         for (List<Card> pool : pools) {
             Optional<String> name = mostHeldName(ctx, interaction.options(), pool);
             if (name.isPresent()) {
@@ -766,6 +738,7 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
         return resolving != null && resolving.getEffectsToResolve().stream()
                 .anyMatch(effect -> effect instanceof RevealTopCardOfLibraryEffect top
                         && namesAi(resolving, top.player(), aiPlayerId)
+                        || effect instanceof MillEffect mill && namesAi(resolving, mill.player(), aiPlayerId)
                         || effect instanceof RevealCardsFromTopUntilEffect until
                         && namesAi(resolving, until.library(), aiPlayerId));
     }

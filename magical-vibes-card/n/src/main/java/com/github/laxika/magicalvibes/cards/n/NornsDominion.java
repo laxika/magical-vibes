@@ -29,7 +29,7 @@ public class NornsDominion extends Card {
         ));
 
         addTrigger(Triggers.planeswalkAwayFromThis(), SequenceEffect.of(
-                new DestroyAllPermanentsEffect(unmarkedNonland, false, EachPermanentScope.ALL_PLAYERS, null, false),
+                new DestroyAllPermanentsEffect(unmarkedNonland, false, EachPermanentScope.ALL_PLAYERS, null, null),
                 new RemoveAllCountersOfTypeFromAllPermanentsEffect(CounterType.FATE)));
 
         target(TargetFilters.permanent()).addTrigger(Triggers.chaosEnsues(),

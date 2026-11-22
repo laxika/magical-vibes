@@ -252,12 +252,8 @@ public class InteractionPromptProjectionRegistry {
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualCreatureCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
-        register(PendingInteraction.PerpetualTriggeredAbilityCardChoice.class,
-                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualStaticEffectCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, true));
-        register(PendingInteraction.PerpetualTriggeredAbilityCardsChoice.class,
-                this::projectPerpetualTriggeredAbilityCardsChoice);
         register(PendingInteraction.PerpetualTargetCardChoice.class,
                 this::projectPerpetualTargetCardChoice);
         register(PendingInteraction.PerpetualHandOrGraveyardCardChoice.class,
@@ -344,6 +340,11 @@ public class InteractionPromptProjectionRegistry {
         if (projected instanceof InteractionPromptMessage message
                 && message.shape() == InteractionShape.MULTI_CARD_PICK
                 && interaction.legalOptions() instanceof InteractionOptions.MultiCardPick pick) {
+            projected = message.withPickBounds(pick.minCount(), pick.maxCount());
+        } else if (projected instanceof InteractionPromptMessage message
+                && message.shape() == InteractionShape.MULTI_PERMANENT_PICK
+                && interaction.legalOptions() instanceof InteractionOptions.MultiPermanentPick pick
+                && pick.minCount() > 0) {
             projected = message.withPickBounds(pick.minCount(), pick.maxCount());
         }
         return Optional.ofNullable(projected);
@@ -1556,18 +1557,6 @@ public class InteractionPromptProjectionRegistry {
                 interaction.validIndices(), interaction.prompt(), declinable);
     }
 
-    private InteractionPromptMessage projectPerpetualTriggeredAbilityCardsChoice(
-            GameData gameData, PendingInteraction.PerpetualTriggeredAbilityCardsChoice interaction) {
-        List<Card> hand = gameData.playerHands.getOrDefault(interaction.playerId(), List.of());
-        List<CardView> cards = hand.stream()
-                .filter(card -> interaction.validCardIds().contains(card.getId()))
-                .map(cardViewFactory::create)
-                .toList();
-        return InteractionPromptMessage.multiCardPick(
-                interaction.validCardIds(), cards, 0,
-                Math.min(interaction.maxCount(), interaction.validCardIds().size()), interaction.prompt());
-    }
-
     private InteractionPromptMessage projectPerpetualTargetCardChoice(
             GameData gameData, PendingInteraction.PerpetualTargetCardChoice interaction) {
         return InteractionPromptMessage.cardIndexPick(
@@ -2057,17 +2046,7 @@ public class InteractionPromptProjectionRegistry {
     }
 
     private static boolean isCardNameChoice(ChoiceContext context) {
-        return context instanceof ChoiceContext.CardNameChoice
-                || context instanceof ChoiceContext.ChooseCardNameAtResolutionChoice
-                || context instanceof ChoiceContext.ExileByNameChoice
-                || context instanceof ChoiceContext.SphinxAmbassadorNameChoice
-                || context instanceof ChoiceContext.EachPlayerCardNameRevealChoice
-                || context instanceof ChoiceContext.NameCardMillGainLifeChoice
-                || context instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice
-                || context instanceof ChoiceContext.SpellsAndLandsCantBePlayedUntilNextTurnChoice
-                || context instanceof ChoiceContext.NameCardMillDrawChoice
-                || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice
-                || context instanceof ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice
+        return ChoiceHandlerService.isCardNameChoice(context)
                 || context instanceof ChoiceContext.AssemblyHallCreatureCardChoice
                 || context instanceof ChoiceContext.InfernalTutorCardChoice;
     }

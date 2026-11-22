@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.a;
 
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
@@ -10,12 +11,12 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseOpponentCreatureAndPerpetuallyBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEndStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -75,7 +76,10 @@ public class AloraRogueCompanion extends Card {
                     new ConditionalEffect(HappenedThisWay.returned(), CreateTokenEffect.whiteSoldier(1)));
             case BLUE -> SequenceEffect.of(
                     ReturnToHandEffect.target(),
-                    new ConditionalEffect(HappenedThisWay.returned(), new ChooseOpponentCreatureAndPerpetuallyBoostEffect(-1, 0)));
+                    new ConditionalEffect(HappenedThisWay.returned(), SequenceEffect.of(
+                            ChoosePermanentsEffect.exactly(1, Subjects.creaturesYourOpponentsControl(),
+                                    "a creature an opponent controls"),
+                            new PerpetuallyBoostTargetCreatureEffect(Subjects.thisWay(StepKind.CHOOSE), -1, 0))));
             case BLACK -> SequenceEffect.of(
                     ReturnToHandEffect.target(),
                     new ConditionalEffect(HappenedThisWay.returned(), new LoseLifeEffect(2, Subjects.eachOpponent())));

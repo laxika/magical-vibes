@@ -317,4 +317,21 @@ class HaphazardBombardmentTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities(); // advance POSTCOMBAT_MAIN → END_STEP, triggers fire
     }
+
+    @Test
+    @DisplayName("Fewer than four can't be chosen while four qualify, and the prompt carries that minimum")
+    void cantChooseFewerThanFour() {
+        List<Permanent> creatures = java.util.stream.IntStream.range(0, 5)
+                .mapToObj(i -> addCreature(player2, new BalothGorger())).toList();
+
+        castHaphazardBombardment(player1);
+
+        assertThat(((com.github.laxika.magicalvibes.model.InteractionOptions.MultiPermanentPick)
+                gd.interaction.activeInteraction().legalOptions()).minCount()).isEqualTo(4);
+        assertThat(harness.getConn1().getMessagesContaining("MULTI_PERMANENT_PICK")).last().asString()
+                .contains("\"minCount\":4");
+        org.assertj.core.api.Assertions.assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1,
+                        creatures.subList(0, 3).stream().map(Permanent::getId).toList()))
+                .isInstanceOf(IllegalStateException.class);
+    }
 }

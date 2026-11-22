@@ -2481,7 +2481,7 @@ public class PlayerInputService {
                                        Permanent preparedPermanent) {
         ChoiceContext.CardNameChoice choiceContext =
                 new ChoiceContext.CardNameChoice(card, playerId, excludedTypes, nonbasicLandOnly,
-                        attachedTo, requiredType, landPlayZone, preparedPermanent);
+                        attachedTo, requiredType, landPlayZone, preparedPermanent, restrictToOpponentHands);
 
         List<String> cardNames;
         String prompt;
@@ -2494,19 +2494,19 @@ public class PlayerInputService {
         } else if (card.getStaticEffects().stream()
                 .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect choice
                         && choice.excludeBasicLandNames())) {
-            cardNames = collectNonbasicCardNamesInGame(gameData);
+            cardNames = nonbasicCardNamesOfferedTo(gameData, playerId);
             prompt = "Choose a card name other than a basic land card name.";
         } else if (nonbasicLandOnly) {
-            cardNames = collectNonbasicLandCardNames(gameData);
+            cardNames = nonbasicLandCardNamesOfferedTo(gameData, playerId);
             prompt = "Choose a nonbasic land card name.";
         } else if (requiredType != null) {
-            cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes, requiredType);
+            cardNames = cardNamesOfferedTo(gameData, playerId, excludedTypes, requiredType);
             prompt = "Choose a " + requiredType.getDisplayName().toLowerCase() + " card name.";
         } else if (excludedTypes.isEmpty()) {
-            cardNames = collectAllCardNamesInGame(gameData);
+            cardNames = cardNamesOfferedTo(gameData, playerId);
             prompt = "Choose a card name.";
         } else {
-            cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes);
+            cardNames = cardNamesOfferedTo(gameData, playerId, excludedTypes, null);
             String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
             prompt = "Choose a non" + excludedLabel + " card name.";
         }
@@ -2524,31 +2524,17 @@ public class PlayerInputService {
                 nonbasicLandOnly, attachedTo, null);
     }
 
-    /**
-     * "Choose a card name" as an effect resolves: the names of every offered printing and of the cards the chooser
-     * can know, so the list says nothing about another player's hand or library or a hidden face (CR 400.2, 406.3).
-     */
+    /** "Choose a card name" as an effect resolves ({@link #cardNamesOfferedTo}). */
     public void beginCardNameAtResolutionChoice(GameData gameData, ChoiceContext.ChooseCardNameAtResolutionChoice context) {
         ChooseCardNameAtResolutionEffect choice = context.choice();
         List<String> cardNames;
         String prompt;
-        CatalogNames catalog = catalogNames();
         if (choice.notBasicLandName()) {
-            Set<String> names = new TreeSet<>(collectCardNamesKnownTo(gameData, context.controllerId(),
-                    card -> (!card.isToken() || card.isTokenCard())
-                            && !(card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))));
-            if (catalog != null) {
-                names.addAll(catalog.nonbasic());
-            }
-            cardNames = new ArrayList<>(names);
+            cardNames = nonbasicCardNamesOfferedTo(gameData, context.controllerId());
             prompt = "Choose a card name other than a basic land card name.";
         } else {
-            Set<String> names = new TreeSet<>(collectCardNamesKnownTo(gameData, context.controllerId(),
-                    card -> isNameCandidate(card, choice.excludedTypes(), choice.requiredType())));
-            if (catalog != null) {
-                names.addAll(catalog.matching(new CardNameFilter(choice.excludedTypes(), choice.requiredType())));
-            }
-            cardNames = new ArrayList<>(names);
+            cardNames = cardNamesOfferedTo(gameData, context.controllerId(), choice.excludedTypes(),
+                    choice.requiredType());
             String qualifier = choice.requiredType() != null
                     ? choice.requiredType().getDisplayName().toLowerCase() + " "
                     : choice.excludedTypes().isEmpty() ? "" : "non" + choice.excludedTypes().stream()
@@ -2564,7 +2550,7 @@ public class PlayerInputService {
         ChoiceContext.LiarsPendulumChoice choiceContext =
                 new ChoiceContext.LiarsPendulumChoice(controllerId, targetPlayerId, sourcePermanentId, sourceCard, null);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                controllerId, null, null, choiceContext, collectAllCardNamesInGame(gameData),
+                controllerId, null, null, choiceContext, cardNamesOfferedTo(gameData, controllerId),
                 "Choose a card name for Liar's Pendulum."));
     }
 
@@ -2619,7 +2605,7 @@ public class PlayerInputService {
      * opponent with the first name carried in the context.
      */
     public void beginDualCardNameChoice(GameData gameData, ChoiceContext.DualCardNameChoice ctx) {
-        List<String> cardNames = collectNonbasicCardNamesInGame(gameData);
+        List<String> cardNames = nonbasicCardNamesOfferedTo(gameData, ctx.choosingPlayerId());
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 ctx.choosingPlayerId(), null, null, ctx, cardNames,
                 "Choose a card name other than a basic land card name."));
@@ -2672,8 +2658,8 @@ public class PlayerInputService {
                 tokenTemplate, sourceSetCode, findAllCards);
 
         List<String> cardNames = excludeBasicLandNames
-                ? collectNonbasicCardNamesInGame(gameData)
-                : collectCardNamesInGameExcluding(gameData, excludedTypes, requiredType);
+                ? nonbasicCardNamesOfferedTo(gameData, choosingPlayerId)
+                : cardNamesOfferedTo(gameData, choosingPlayerId, excludedTypes, requiredType);
         String prompt;
         if (excludeBasicLandNames) {
             prompt = "Choose a card name other than a basic land card name.";
@@ -2697,7 +2683,7 @@ public class PlayerInputService {
         ChoiceContext.RevealHandDamageAndExileByNameChoice choiceContext =
                 new ChoiceContext.RevealHandDamageAndExileByNameChoice(targetPlayerId, choosingPlayerId, excludedTypes, damagePerCard, sourceCard);
 
-        List<String> cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes);
+        List<String> cardNames = cardNamesOfferedTo(gameData, choosingPlayerId, excludedTypes, null);
         String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
         String prompt = "Choose a non" + excludedLabel + " card name.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -2762,7 +2748,7 @@ public class PlayerInputService {
         ChoiceContext.RevealLibraryNameGuessChoice choiceContext =
                 new ChoiceContext.RevealLibraryNameGuessChoice(targetPlayerId, choosingPlayerId, excludedTypes, damage, sourceCard);
 
-        List<String> cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes);
+        List<String> cardNames = cardNamesOfferedTo(gameData, choosingPlayerId, excludedTypes, null);
         String excludedLabel = excludedTypes.stream().map(t -> t.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("");
         String prompt = "Choose a non" + excludedLabel + " card name.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
@@ -2795,7 +2781,7 @@ public class PlayerInputService {
     public void beginSphinxAmbassadorCardNameChoice(GameData gameData, UUID namingPlayerId, UUID controllerId) {
         ChoiceContext.SphinxAmbassadorNameChoice choiceContext = new ChoiceContext.SphinxAmbassadorNameChoice(namingPlayerId, controllerId);
 
-        List<String> cardNames = collectAllCardNamesInGame(gameData);
+        List<String> cardNames = cardNamesOfferedTo(gameData, namingPlayerId);
         String prompt = "Choose a card name.";
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 namingPlayerId, null, null, choiceContext, cardNames, prompt));
@@ -2804,32 +2790,30 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a card name (Sphinx Ambassador)", gameData.id, playerName);
     }
 
-    private List<String> collectCardNamesInGameExcluding(GameData gameData, List<CardType> excludedTypes) {
-        return collectCardNamesInGameExcluding(gameData, excludedTypes, null);
+    /** The names any "choose a card name" prompt with no quality offers {@code chooserId}. */
+    public List<String> cardNamesOfferedTo(GameData gameData, UUID chooserId) {
+        return cardNamesOfferedTo(gameData, chooserId, List.of(), null);
     }
 
     /**
-     * Whether {@code cardName} could have been offered by a "choose a card name that isn't a [type]" prompt,
-     * including names of cards that exist only in the card catalog rather than in the game.
+     * The names of a card without {@code excludedTypes} and with {@code requiredType}, if set, that a "choose a card
+     * name" prompt offers {@code chooserId}: those of every offered printing and of the cards the chooser can know,
+     * so the list says nothing about another player's hand or library or a hidden face (CR 400.2, 406.3).
      */
-    public boolean isOfferedCardNameExcludingTypes(GameData gameData, String cardName, List<CardType> excludedTypes) {
-        return !isNameExcludedByType(gameData, cardName, excludedTypes)
-                && collectCardNamesInGameExcluding(gameData, excludedTypes).contains(cardName);
-    }
-
-    public boolean isNameExcludedByType(GameData gameData, String cardName, List<CardType> excludedTypes) {
-        return !collectCardNamesInGame(gameData,
-                card -> card.getNames().contains(cardName) && hasExcludedType(card, excludedTypes)).isEmpty();
-    }
-
-    private List<String> collectCardNamesInGameExcluding(GameData gameData, List<CardType> excludedTypes, CardType requiredType) {
-        Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
+    public List<String> cardNamesOfferedTo(GameData gameData, UUID chooserId, List<CardType> excludedTypes,
+                                           CardType requiredType) {
+        Set<String> names = new TreeSet<>(collectCardNamesKnownTo(gameData, chooserId,
                 card -> isNameCandidate(card, excludedTypes, requiredType)));
         CatalogNames catalog = catalogNames();
         if (catalog != null) {
             names.addAll(catalog.matching(new CardNameFilter(List.copyOf(excludedTypes), requiredType)));
         }
         return new ArrayList<>(names);
+    }
+
+    public boolean isNameExcludedByType(GameData gameData, String cardName, List<CardType> excludedTypes) {
+        return !collectCardNamesInGame(gameData,
+                card -> card.getNames().contains(cardName) && hasExcludedType(card, excludedTypes)).isEmpty();
     }
 
     /**
@@ -2878,10 +2862,11 @@ public class PlayerInputService {
                         || card.getId().equals(permanent.getOriginalCard().getId())));
     }
 
-    /** Names of every card in the game that isn't a basic land card (Null Chamber). */
-    private List<String> collectNonbasicCardNamesInGame(GameData gameData) {
-        Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
-                card -> !(card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))));
+    /** The names offered for "a card name other than a basic land card name". */
+    private List<String> nonbasicCardNamesOfferedTo(GameData gameData, UUID chooserId) {
+        Set<String> names = new TreeSet<>(collectCardNamesKnownTo(gameData, chooserId,
+                card -> (!card.isToken() || card.isTokenCard())
+                        && !(card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))));
         CatalogNames catalog = catalogNames();
         if (catalog != null) {
             names.addAll(catalog.nonbasic());
@@ -2889,10 +2874,11 @@ public class PlayerInputService {
         return new ArrayList<>(names);
     }
 
-    /** Names of nonbasic land cards known to the game and implemented card catalog (Alpine Moon). */
-    private List<String> collectNonbasicLandCardNames(GameData gameData) {
-        Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
-                card -> card.hasType(CardType.LAND) && !card.getSupertypes().contains(CardSupertype.BASIC)));
+    /** The names offered for "a nonbasic land card name" (Alpine Moon). */
+    private List<String> nonbasicLandCardNamesOfferedTo(GameData gameData, UUID chooserId) {
+        Set<String> names = new TreeSet<>(collectCardNamesKnownTo(gameData, chooserId,
+                card -> (!card.isToken() || card.isTokenCard())
+                        && card.hasType(CardType.LAND) && !card.getSupertypes().contains(CardSupertype.BASIC)));
         CatalogNames catalog = catalogNames();
         if (catalog != null) {
             names.addAll(catalog.nonbasicLands());
@@ -2981,10 +2967,6 @@ public class PlayerInputService {
             }
         }
         return false;
-    }
-
-    private List<String> collectAllCardNamesInGame(GameData gameData) {
-        return collectCardNamesInGameExcluding(gameData, List.of());
     }
 
     public void beginMultiZoneExileChoice(GameData gameData, UUID choosingPlayerId, List<Card> matchingCards, UUID targetPlayerId, String cardName) {

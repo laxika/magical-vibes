@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ChoosePlaneswalkerTypeOnEnterEffect;
+import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantHexproofToChosenPlaneswalkerTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreserveOneLoyaltyCounterForChosenPlaneswalkerTypeEffect;
 
@@ -14,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PreserveOneLoyaltyCounterForC
 public class Deification extends Card {
 
     public Deification() {
-        addStaticEffect(new ChoosePlaneswalkerTypeOnEnterEffect());
+        addStaticEffect(new ChooseSubtypeOnEnterEffect(CardSubtype.planeswalkerTypes()));
         addStaticEffect(new GrantHexproofToChosenPlaneswalkerTypeEffect());
         addStaticEffect(new PreserveOneLoyaltyCounterForChosenPlaneswalkerTypeEffect());
     }

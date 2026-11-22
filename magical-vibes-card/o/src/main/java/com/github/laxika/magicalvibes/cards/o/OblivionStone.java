@@ -51,7 +51,7 @@ public class OblivionStone extends Card {
                                         false,
                                         EachPermanentScope.ALL_PLAYERS,
                                         null,
-                                        false),
+                                        null),
                                 new RemoveAllCountersOfTypeFromAllPermanentsEffect(CounterType.FATE)
                         )
                 ),

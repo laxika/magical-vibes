@@ -787,7 +787,7 @@ public class TargetPolarityClassifier {
             entry("PutTargetOnBottomThenRevealUntilSharedCardTypeToBattlefieldRestOnBottomRandomEffect",
                     TargetPolarity.NEUTRAL),
             // Fateful Handoff: the caster's own artifact or creature is handed away for cards.
-            entry("ChooseAnotherPlayerGainsControlOfTargetPermanentEffect", TargetPolarity.NEUTRAL),
+            entry("TargetPlayerGainsControlOfSourceCreatureEffect", TargetPolarity.NEUTRAL),
             // Fallaji Antiquarian: a duplicate of any artifact or creature, best aimed at the strongest one.
             entry("ConjureDuplicateOfTargetPermanentIntoGraveyardWithUnearthEffect", TargetPolarity.NEUTRAL),
             entry("GrantAllCreatureTypesToOwnCreaturesEffect", TargetPolarity.NEUTRAL),

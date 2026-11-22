@@ -647,12 +647,6 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
-    /** The controller chooses up to three matching Doctors before an optional creature exile. */
-    record ChooseUpToNMatchingCreaturesThenMayExileRest(
-            Card sourceCard, UUID controllerId, UUID sourcePermanentId)
-            implements MultiPermanentChoiceContext {
-    }
-
     /**
      * Forced destroy pick ("you/target player destroys N permanents you control"). The
      * {@code destroyingPlayerId} is the chooser; the chosen permanents are destroyed (regeneration
@@ -733,10 +727,6 @@ public sealed interface MultiPermanentChoiceContext {
             remainingPlayerIds = List.copyOf(remainingPlayerIds);
             chosenIds = List.copyOf(chosenIds);
         }
-    }
-
-    /** Put an aim counter on each chosen permanent, then resume effect resolution. */
-    record AimCounterPlacement() implements MultiPermanentChoiceContext {
     }
 
     /** Put {@code count} counters of {@code counterType} on the single chosen own permanent. */
@@ -843,27 +833,9 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
-    /**
-     * The controller chose up to one permanent during resolution; the answer is recorded as the
-     * resolving entry's chosen permanent for the effects after it.
-     */
-    record RecordChosenPermanent() implements MultiPermanentChoiceContext {
-    }
-
-    /** The controller chooses any number of creatures that must block this combat if able. */
-    record ChooseCreaturesToBlockThisTurnIfAble() implements MultiPermanentChoiceContext {
-    }
-
-    /** The controller chooses any number of creatures with different powers. */
-    record ChooseCreaturesWithDifferentPowersGrantDoubleStrike() implements MultiPermanentChoiceContext {
-    }
-
-    /** The controller chooses any number of creatures with different powers to boost and grant vigilance. */
-    record ChooseCreaturesWithDifferentPowersBoostAndGrantVigilance() implements MultiPermanentChoiceContext {
-    }
-
-    /** The controller chooses any number of creatures with different mana values to destroy. */
-    record ChooseCreaturesWithDifferentManaValuesDestroy() implements MultiPermanentChoiceContext {
+    /** The controller's choice of a {@code ChoosePermanentsEffect}: at least {@code minimum} of the offered. */
+    record ChoosePermanents(com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect effect, int minimum)
+            implements MultiPermanentChoiceContext {
     }
 
     /** The controller chooses equal numbers of creatures from two players for Cultural Exchange. */

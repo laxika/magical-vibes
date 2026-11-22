@@ -236,7 +236,7 @@ public class CardChoiceHandlerService {
         gameData.interaction.clearAwaitingInput();
         hand.set(cardIndex, modifiedCard);
         gameLogService.append(gameData,
-                GameLog.cardThen(modifiedCard, "perpetually gains offspring " + choice.offspringCost() + "."));
+                chosenHandCardLog(player, "perpetually gains offspring " + choice.offspringCost() + "."));
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
@@ -284,70 +284,6 @@ public class CardChoiceHandlerService {
         }
         copy.freeze();
         hand.set(cardIndex, copy);
-
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    /** Records a perpetual triggered ability on a chosen card in the controller's hand. */
-    public void handlePerpetualTriggeredAbilityCardChosen(GameData gameData, Player player, int cardIndex) {
-        PendingInteraction.PerpetualTriggeredAbilityCardChoice choice =
-                gameData.interaction.activeInteraction(PendingInteraction.PerpetualTriggeredAbilityCardChoice.class);
-        if (choice == null || !player.getId().equals(choice.playerId())) {
-            throw new IllegalStateException("Not your turn to choose");
-        }
-        if (!choice.validIndices().contains(cardIndex)) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
-        }
-
-        List<Card> hand = gameData.playerHands.get(player.getId());
-        if (hand == null || cardIndex < 0 || cardIndex >= hand.size()) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
-        }
-        Card selectedCard = hand.get(cardIndex);
-        if (!predicateEvaluationService.matchesCardPredicate(
-                selectedCard, choice.filter(), null, gameData, player.getId())) {
-            throw new IllegalStateException("That card no longer matches the choice");
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        choice.grantedAbilities().forEach(granted -> gameData.grantPerpetualAbility(selectedCard.getId(), granted));
-        gameLogService.append(gameData, GameLog.cardThen(
-                selectedCard, " perpetually gains the triggered ability."));
-
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    /** Records a perpetual triggered ability on each selected card in the controller's hand. */
-    public void handlePerpetualTriggeredAbilityCardsChosen(GameData gameData, Player player,
-                                                           List<UUID> cardIds) {
-        PendingInteraction.PerpetualTriggeredAbilityCardsChoice choice =
-                gameData.interaction.activeInteraction(PendingInteraction.PerpetualTriggeredAbilityCardsChoice.class);
-        if (choice == null || !player.getId().equals(choice.playerId())) {
-            throw new IllegalStateException("Not your turn to choose");
-        }
-        List<UUID> selectedIds = cardIds == null ? List.of() : cardIds;
-        if (selectedIds.size() > choice.maxCount()
-                || selectedIds.stream().distinct().count() != selectedIds.size()
-                || !choice.validCardIds().containsAll(selectedIds)) {
-            throw new IllegalStateException("Choose zero to " + choice.maxCount() + " valid cards");
-        }
-
-        List<Card> hand = gameData.playerHands.getOrDefault(player.getId(), List.of());
-        List<Card> selectedCards = hand.stream()
-                .filter(card -> selectedIds.contains(card.getId()))
-                .toList();
-        if (selectedCards.size() != selectedIds.size()
-                || selectedCards.stream().anyMatch(card -> !predicateEvaluationService.matchesCardPredicate(
-                        card, choice.filter(), null, gameData, player.getId()))) {
-            throw new IllegalStateException("A chosen card no longer matches the choice");
-        }
-
-        gameData.interaction.clearAwaitingInput();
-        for (Card selectedCard : selectedCards) {
-            choice.grantedAbilities().forEach(granted -> gameData.grantPerpetualAbility(selectedCard.getId(), granted));
-            gameLogService.append(gameData, GameLog.cardThen(
-                    selectedCard, " perpetually gains the triggered ability."));
-        }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
@@ -409,10 +345,15 @@ public class CardChoiceHandlerService {
             copy.freeze();
             hand.set(cardIndex, copy);
             gameLogService.append(gameData,
-                    GameLog.cardThen(copy, " perpetually gains its additional enters-with-shield ability."));
+                    chosenHandCardLog(player, "perpetually gains its additional enters-with-shield ability."));
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    /** A change to a card chosen in a hand names no card: a hand is a hidden zone (CR 400.2). */
+    private static com.github.laxika.magicalvibes.model.GameLogEntry chosenHandCardLog(Player player, String change) {
+        return GameLog.text("A card in " + player.getUsername() + "'s hand " + change);
     }
 
     private void resolveFallbackEffect(GameData gameData, CardEffect fallbackEffect) {
@@ -868,8 +809,7 @@ public class CardChoiceHandlerService {
                 .computeIfAbsent(selectedCard.getId(), ignored ->
                         java.util.Collections.synchronizedList(new ArrayList<>()))
                 .add(ChooseCardFromHandToPerpetuallyGrantEnterExileEffectHandler.grantedEnterEffect());
-        gameLogService.append(gameData, GameLog.cardThen(
-                selectedCard, " perpetually gains its exile ability."));
+        gameLogService.append(gameData, chosenHandCardLog(player, "perpetually gains its exile ability."));
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }

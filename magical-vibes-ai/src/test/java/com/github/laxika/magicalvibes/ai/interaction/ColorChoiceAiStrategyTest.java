@@ -406,6 +406,51 @@ class ColorChoiceAiStrategyTest {
         assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade("Grizzly Bears"));
     }
 
+    @Test
+    @DisplayName("An as-enters name is taken from what is seen of the opponent, not from a face-down permanent")
+    void nameAsEntersComesFromPublicZones() {
+        UUID opponentId = addOpponent();
+        hideSecretAndShowSeen(opponentId);
+
+        assertThat(nameAnswered(new ChoiceContext.CardNameChoice(null, aiPlayerId, List.of()))).isEqualTo("Seen");
+    }
+
+    @Test
+    @DisplayName("A name both players choose doesn't come from the opponent's hand")
+    void twoPlayerNamingComesFromPublicZones() {
+        UUID opponentId = addOpponent();
+        hideSecretAndShowSeen(opponentId);
+
+        assertThat(nameAnswered(new ChoiceContext.DualCardNameChoice(namedCard("Source"), aiPlayerId, aiPlayerId, null))).isEqualTo("Seen");
+    }
+
+    @Test
+    @DisplayName("A name opponents can't cast doesn't come from their hands")
+    void nameOpponentsCantCastComesFromPublicZones() {
+        UUID opponentId = addOpponent();
+        hideSecretAndShowSeen(opponentId);
+
+        assertThat(nameAnswered(new ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice(aiPlayerId, List.of()))).isEqualTo("Seen");
+    }
+
+    @Test
+    @DisplayName("A name to exile doesn't come from the searched hand")
+    void nameToExileComesFromPublicZones() {
+        UUID opponentId = addOpponent();
+        hideSecretAndShowSeen(opponentId);
+
+        assertThat(nameAnswered(new ChoiceContext.ExileByNameChoice(opponentId, aiPlayerId, List.of(), 4, false, null, null, false))).isEqualTo("Seen");
+    }
+
+    @Test
+    @DisplayName("A name for damage and exile doesn't come from the revealed-later hand")
+    void nameForDamageAndExileComesFromPublicZones() {
+        UUID opponentId = addOpponent();
+        hideSecretAndShowSeen(opponentId);
+
+        assertThat(nameAnswered(new ChoiceContext.RevealHandDamageAndExileByNameChoice(opponentId, aiPlayerId, List.of(), 3, namedCard("Source")))).isEqualTo("Seen");
+    }
+
     private UUID addOpponent() {
         UUID opponentId = UUID.randomUUID();
         gameData.orderedPlayerIds.add(aiPlayerId);
@@ -413,6 +458,27 @@ class ColorChoiceAiStrategyTest {
         gameData.playerIds.add(aiPlayerId);
         gameData.playerIds.add(opponentId);
         return opponentId;
+    }
+
+    private void hideSecretAndShowSeen(UUID opponentId) {
+        gameData.playerHands.put(opponentId, new ArrayList<>(List.of(namedCard("Secret"), namedCard("Secret"))));
+        gameData.playerDecks.put(opponentId, new ArrayList<>(List.of(namedCard("Secret"), namedCard("Secret"))));
+        Card hidden = namedCard("Secret");
+        hidden.addActivatedAbility(new ActivatedAbility(true, null, List.of(), "{T}: Nothing."));
+        Permanent faceDown = new Permanent(hidden);
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        gameData.playerBattlefields.put(opponentId, new ArrayList<>(List.of(faceDown)));
+        gameData.playerGraveyards.put(opponentId, new ArrayList<>(List.of(namedCard("Seen"))));
+    }
+
+    private String nameAnswered(ChoiceContext context) {
+        strategy.answer(new PendingInteraction.ColorChoice(aiPlayerId, null, null, context,
+                        List.of("Aardvark", "Secret", "Seen"), "Choose a card name."),
+                new AiInteractionContext(gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));
+
+        ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+        verify(gameActions).answerInteraction(captor.capture());
+        return ((InteractionAnswer.ListChoiceMade) captor.getValue()).choice();
     }
 
     private static Card namedCard(String name) {

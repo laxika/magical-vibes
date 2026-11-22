@@ -1380,7 +1380,15 @@ public sealed interface ChoiceContext {
 
     record CardNameChoice(Card card, UUID controllerId, List<CardType> excludedTypes,
                           boolean nonbasicLandOnly, UUID attachedTo, CardType requiredType,
-                          Zone landPlayZone, Permanent preparedPermanent) implements ChoiceContext {
+                          Zone landPlayZone, Permanent preparedPermanent,
+                          boolean revealedNamesOnly) implements ChoiceContext {
+        public CardNameChoice(Card card, UUID controllerId, List<CardType> excludedTypes,
+                              boolean nonbasicLandOnly, UUID attachedTo, CardType requiredType, Zone landPlayZone,
+                              Permanent preparedPermanent) {
+            this(card, controllerId, excludedTypes, nonbasicLandOnly, attachedTo, requiredType, landPlayZone,
+                    preparedPermanent, false);
+        }
+
         public CardNameChoice(Card card, UUID controllerId, List<CardType> excludedTypes,
                               boolean nonbasicLandOnly, UUID attachedTo, CardType requiredType, Zone landPlayZone) {
             this(card, controllerId, excludedTypes, nonbasicLandOnly, attachedTo, requiredType, landPlayZone, null);
@@ -1961,38 +1969,16 @@ public sealed interface ChoiceContext {
     }
 
     /**
-     * Lammastide Weave: the controller names a card, then the target player mills one card. If the
-     * milled card matches the chosen name, the controller gains life equal to its mana value.
-     */
-    record NameCardMillGainLifeChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
-
-    /**
-     * Foreshadow: the controller names a card, then the target player mills one card. If the milled
-     * card matches the chosen name, the controller draws a card.
-     */
-    record NameCardMillDrawChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
-
-    /**
      * Comply / Academic Probation: the controller names a card; until their next turn, their
      * opponents can't cast spells with that name. Resolving it makes a floating effect on each opponent that
      * ends at the start of the controller's next turn.
      */
     record OpponentsCantCastNamedSpellsUntilNextTurnChoice(UUID controllerId,
-                                                           boolean restrictToAllowedNames,
                                                            List<CardType> excludedTypes)
             implements ChoiceContext {
 
         public OpponentsCantCastNamedSpellsUntilNextTurnChoice {
             excludedTypes = List.copyOf(excludedTypes);
-        }
-
-        public OpponentsCantCastNamedSpellsUntilNextTurnChoice(UUID controllerId,
-                                                              boolean restrictToAllowedNames) {
-            this(controllerId, restrictToAllowedNames, List.of());
-        }
-
-        public OpponentsCantCastNamedSpellsUntilNextTurnChoice(UUID controllerId) {
-            this(controllerId, false);
         }
     }
 

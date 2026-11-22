@@ -87,7 +87,7 @@ class SelflessGlyphweaverTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 5);
         harness.castModalSorcery(player1, 0, 1, List.of());
         harness.passBothPriorities();
-        harness.handleMultiplePermanentsChosen(player1, List.of(chosenCreature.getId()));
+        harness.handlePermanentChosen(player1, chosenCreature.getId());
 
         assertThat(gd.playerBattlefields.get(player1.getId())).containsExactly(protectedCreature);
         assertThat(gd.playerBattlefields.get(player2.getId())).containsExactly(chosenCreature);
@@ -140,12 +140,13 @@ class SelflessGlyphweaverTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
-        assertThatThrownBy(() -> harness.handleMultiplePermanentsChosen(player1, List.of()))
-                .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("Exactly 1 permanents");
+                .isInstanceOf(PendingInteraction.PermanentChoice.class);
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
+                .containsExactlyInAnyOrder(ownCreature.getId(), opponentCreature.getId(), keptPlaneswalker.getId());
+        assertThatThrownBy(() -> harness.handlePermanentChosen(player1, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
 
-        harness.handleMultiplePermanentsChosen(player1, List.of(keptPlaneswalker.getId()));
+        harness.handlePermanentChosen(player1, keptPlaneswalker.getId());
 
         harness.assertNotOnBattlefield(player1, "Grizzly Bears");
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");

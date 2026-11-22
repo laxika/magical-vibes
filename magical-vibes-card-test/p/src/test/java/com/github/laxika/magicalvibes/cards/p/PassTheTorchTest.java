@@ -31,16 +31,32 @@ class PassTheTorchTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(18);
-        PendingInteraction.PerpetualTriggeredAbilityCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PerpetualTriggeredAbilityCardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(0);
+        var offered = gd.playerHands.get(player1.getId()).get(0).getId();
+        assertThat(choice.validCardIds()).containsExactly(offered);
 
-        harness.handleCardChosen(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(offered));
 
         var selected = gd.playerHands.get(player1.getId()).get(0);
         assertThat(gd.perpetualTriggerEffects(selected.getId(), Triggers.dealsCombatDamageToPlayer(), Zone.BATTLEFIELD)).isNotEmpty();
         assertThat(gd.perpetualTriggerEffects(selected.getId(), Triggers.dealsCombatDamageToPlayer(), Zone.BATTLEFIELD))
                 .anyMatch(CastTargetInstantOrSorceryFromGraveyardEffect.class::isInstance);
+    }
+
+    @Test
+    @DisplayName("The log doesn't name the card chosen from the hand")
+    void logDoesNotNameTheChosenHandCard() {
+        harness.setHand(player1, List.of(new PassTheTorch(), new GrizzlyBears()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.handleMultipleCardsChosen(player1, List.of(gd.playerHands.get(player1.getId()).get(0).getId()));
+
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Grizzly Bears"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().contains("perpetually gains"));
     }
 }

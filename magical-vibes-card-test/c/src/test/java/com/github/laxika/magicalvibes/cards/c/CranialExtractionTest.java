@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.f.FireIce;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.k.KodamasReach;
 import com.github.laxika.magicalvibes.cards.s.SakuraTribeElder;
@@ -17,7 +18,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CranialExtraction.class, SakuraTribeElder.class, KodamasReach.class, Island.class})
+@CardUsed({CranialExtraction.class, SakuraTribeElder.class, KodamasReach.class, Island.class, FireIce.class})
 class CranialExtractionTest extends BaseCardTest {
 
     @Test
@@ -185,5 +186,22 @@ class CranialExtractionTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.options()).contains("Sakura-Tribe Elder").doesNotContain("Island");
+    }
+
+    @Test
+    @DisplayName("A split card has each of its two names")
+    void splitCardHasEitherChosenName() {
+        Card fireIce = new FireIce();
+        harness.setGraveyard(player2, List.of(fireIce));
+        harness.setHand(player2, List.of());
+        harness.setLibrary(player2, List.of());
+        harness.setHand(player1, List.of(new CranialExtraction()));
+        harness.addMana(player1, ManaColor.BLACK, 4);
+
+        harness.castAndResolveSorcery(player1, 0, player2.getId());
+        harness.handleListChoice(player1, "Ice");
+        harness.handleMultipleCardsChosen(player1, List.of(fireIce.getId()));
+
+        assertThat(gd.getPlayerExiledCards(player2.getId())).contains(fireIce);
     }
 }

@@ -7,15 +7,17 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SuddenSalvation.class, GrizzlyBears.class, Plains.class, Shock.class})
+@CardUsed({SuddenSalvation.class, GrizzlyBears.class, Plains.class, Shock.class, SagesOfTheAnima.class})
 class SuddenSalvationTest extends BaseCardTest {
 
     @Test
@@ -92,5 +94,25 @@ class SuddenSalvationTest extends BaseCardTest {
                 .filter(permanent -> permanent.getCard().getId().equals(card.getId()))
                 .findFirst()
                 .orElseThrow();
+    }
+
+    @Test
+    @DisplayName("A card a replaced draw puts into the hand isn't recorded as drawn")
+    void cardPutIntoHandInsteadOfTheDrawIsNotDrawn() {
+        Card returned = new GrizzlyBears();
+        Card putIntoHand = new GrizzlyBears();
+        moveToGraveyard(player2, returned);
+        harness.addToBattlefield(player1, new SagesOfTheAnima());
+        harness.setHand(player1, List.of(new SuddenSalvation()));
+        harness.setLibrary(player1, List.of(putIntoHand));
+        harness.addMana(player1, ManaColor.WHITE, 4);
+        harness.castInstant(player1, 0);
+        harness.handleMultipleCardsChosen(player1, List.of(returned.getId()));
+        StackEntry spell = gd.stack.getLast();
+
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(putIntoHand);
+        assertThat(spell.getDrawnCardIdsThisResolution()).isEmpty();
     }
 }

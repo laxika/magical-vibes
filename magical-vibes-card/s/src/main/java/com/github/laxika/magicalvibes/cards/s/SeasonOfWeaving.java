@@ -2,12 +2,18 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseControlledArtifactOrCreatureTokenCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -40,7 +46,13 @@ public class SeasonOfWeaving extends Card {
             effects.add(new DrawCardEffect());
         }
         for (int i = 0; i < copies; i++) {
-            effects.add(new ChooseControlledArtifactOrCreatureTokenCopyEffect());
+            effects.add(ChoosePermanentsEffect.exactly(1,
+                    Subjects.controlledBy(Subjects.you(), new PermanentAnyOfPredicate(List.of(
+                            new PermanentIsArtifactPredicate(),
+                            new PermanentIsCreaturePredicate()))),
+                    "an artifact or creature you control to be copied"));
+            effects.add(new CreateTokenCopyOfTargetPermanentEffect()
+                    .withSubject(Subjects.thisWay(StepKind.CHOOSE)));
         }
         if (returns == 1) {
             effects.add(ReturnToHandEffect.allPermanentsMatching(new PermanentAllOfPredicate(List.of(

@@ -2,12 +2,16 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.g.GraniteWitness;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.SagesOfTheAnima;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -15,7 +19,7 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({CovetedFalcon.class, GraniteWitness.class, Island.class, Shock.class})
+@CardUsed({CovetedFalcon.class, GraniteWitness.class, Island.class, Shock.class, SagesOfTheAnima.class})
 class CovetedFalconTest extends BaseCardTest {
 
     @Test
@@ -177,5 +181,25 @@ class CovetedFalconTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.turnFaceUp(player1, gd.playerBattlefields.get(player1.getId()).indexOf(falcon));
+    }
+
+    @Test
+    @DisplayName("A card a replaced draw puts into the hand isn't recorded as drawn")
+    void cardPutIntoHandInsteadOfTheDrawIsNotDrawn() {
+        Permanent given = harness.addToBattlefieldAndReturn(player1, new GraniteWitness());
+        Permanent falcon = castFaceDown();
+        harness.addToBattlefield(player1, new SagesOfTheAnima());
+        Card putIntoHand = new GraniteWitness();
+        harness.setLibrary(player1, List.of(putIntoHand));
+
+        turnFaceUp(falcon);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, given.getId());
+        harness.handlePermanentChosen(player1, player1.getId());
+        StackEntry ability = gd.stack.getLast();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(putIntoHand);
+        assertThat(ability.getDrawnCardIdsThisResolution()).isEmpty();
     }
 }

@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToMatchingHandCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -20,10 +21,10 @@ public class RopeLineAttendant extends Card {
 
     public RopeLineAttendant() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new PerpetuallyGrantTriggeredAbilityToMatchingHandCardsEffect(
+                new PerpetuallyGrantAbilitiesEffect(
+                        Subjects.cardsInYourHand(new CardTypePredicate(CardType.CREATURE)),
                         List.of(new TriggeredAbility(Triggers.enters(ObjectRelation.THIS),
                                 new CreateTokenEffect("Citizen", 1, 1, CardColor.GREEN,
-                                        Set.of(CardColor.GREEN, CardColor.WHITE), List.of(CardSubtype.CITIZEN)))),
-                        new CardTypePredicate(CardType.CREATURE)));
+                                        Set.of(CardColor.GREEN, CardColor.WHITE), List.of(CardSubtype.CITIZEN))))));
     }
 }

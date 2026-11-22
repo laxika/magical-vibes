@@ -15,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({StruggleForProjectPurity.class, GrizzlyBears.class, Unsummon.class})
+@CardUsed({StruggleForProjectPurity.class, GrizzlyBears.class, Unsummon.class, SagesOfTheAnima.class})
 class StruggleForProjectPurityTest extends BaseCardTest {
 
     @Test
@@ -143,5 +143,22 @@ class StruggleForProjectPurityTest extends BaseCardTest {
         harness.castFromHand(player1, new StruggleForProjectPurity(), "{3}{U}");
         harness.passBothPriorities();
         harness.handleListChoice(player1, mode);
+    }
+
+    @Test
+    @DisplayName("Brotherhood draws nothing for a card a replaced draw put into an opponent's hand")
+    void brotherhoodCountsNoCardPutIntoHandInsteadOfTheDraw() {
+        Card putIntoHand = new GrizzlyBears();
+        Card controllerCard = new GrizzlyBears();
+        harness.addToBattlefield(player2, new SagesOfTheAnima());
+        harness.setLibrary(player1, List.of(controllerCard));
+        harness.setLibrary(player2, List.of(putIntoHand));
+        castCard("Brotherhood");
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player2.getId())).contains(putIntoHand);
+        assertThat(gd.playerHands.get(player1.getId())).doesNotContain(controllerCard);
     }
 }

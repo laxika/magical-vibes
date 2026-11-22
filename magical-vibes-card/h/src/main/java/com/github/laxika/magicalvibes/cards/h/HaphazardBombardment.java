@@ -3,9 +3,12 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ChooseOpponentPermanentsAndPutCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
@@ -25,9 +28,11 @@ public class HaphazardBombardment extends Card {
         // "When this enchantment enters, choose four nonenchantment permanents you don't
         // control and put an aim counter on each of them."
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ChooseOpponentPermanentsAndPutCountersEffect(
-                        CounterType.AIM, 4,
-                        new PermanentNotPredicate(new PermanentIsEnchantmentPredicate())));
+                ChoosePermanentsEffect.exactly(4,
+                        Subjects.controlledBy(Subjects.eachOpponent(),
+                                new PermanentNotPredicate(new PermanentIsEnchantmentPredicate())),
+                        "four nonenchantment permanents you don't control"),
+                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE), CounterType.AIM));
 
         // "At the beginning of your end step, if two or more permanents you don't control
         // have an aim counter on them, destroy one of those permanents at random."

@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerNameCardRevealTopEffect;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import java.util.UUID;
@@ -19,7 +20,7 @@ import org.springframework.stereotype.Component;
 public class TargetPlayerNameCardRevealTopEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final LibraryRevealSupport libraryRevealSupport;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,7 +38,7 @@ public class TargetPlayerNameCardRevealTopEffectHandler implements NormalEffectH
                 entry.getControllerId(), targetPlayerId, entry.getSourcePermanentId(),
                 revealEffect.damageOnMiss(), entry.getCard());
 
-        List<String> cardNames = libraryRevealSupport.collectPublicCardNames(gameData);
+        List<String> cardNames = playerInputService.cardNamesOfferedTo(gameData, targetPlayerId);
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 targetPlayerId, null, null, choiceContext, cardNames, "Choose a card name."));
 

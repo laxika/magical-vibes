@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantTriggeredAbilityToMatchingHandCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyGrantAbilitiesEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -19,11 +20,10 @@ public class PainfulBond extends Card {
 
     public PainfulBond() {
         addSpellEffect(new DrawCardEffect(2));
-        addSpellEffect(new PerpetuallyGrantTriggeredAbilityToMatchingHandCardsEffect(
-                Triggers.youCastThisSpell(),
-                List.of(new LoseLifeEffect(1)),
-                new CardAllOfPredicate(List.of(
+        addSpellEffect(new PerpetuallyGrantAbilitiesEffect(
+                Subjects.cardsInYourHand(new CardAllOfPredicate(List.of(
                         new CardNotPredicate(new CardTypePredicate(CardType.LAND)),
-                        new CardMaxManaValuePredicate(3)))));
+                        new CardMaxManaValuePredicate(3)))),
+                Triggers.youCastThisSpell(), new LoseLifeEffect(1)));
     }
 }

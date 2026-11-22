@@ -56,7 +56,7 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
         boolean everyTarget = e.subject() instanceof PermanentSubject.AllTargets;
         List<Permanent> recipients = subjectResolutionService.permanents(gameData, entry, effect,
                 everyTarget ? Subjects.target() : e.subject());
-        if (!everyTarget && recipients.size() > 1) {
+        if (!everyTarget && !(e.subject() instanceof PermanentSubject.ThisWay) && recipients.size() > 1) {
             recipients = recipients.subList(0, 1);
         }
         for (Permanent target : recipients) {

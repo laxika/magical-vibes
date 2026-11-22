@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.exile.ExileService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -46,7 +47,8 @@ class EachPlayerNameCardRevealTopEffectHandlerTest {
     private BattlefieldEntryService battlefieldEntryService;
     @Mock
     private ExileService exileService;
-    private LibraryRevealSupport libraryRevealSupport;
+    @Mock
+    private PlayerInputService playerInputService;
     private GameData gd;
     private UUID player1Id;
     private UUID player2Id;
@@ -74,11 +76,9 @@ class EachPlayerNameCardRevealTopEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         gd.activePlayerId = player1Id;
 
-        libraryRevealSupport = new LibraryRevealSupport(gameLogService,
-                InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService));
         eachPlayerNameCardRevealTopEffectHandler = new EachPlayerNameCardRevealTopEffectHandler(
                 InteractionRegistryTestSupport.registryFor(sessionManager, cardViewFactory, gameLogService),
-                libraryRevealSupport);
+                playerInputService);
 
     }
 

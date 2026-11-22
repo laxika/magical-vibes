@@ -62,7 +62,7 @@ public class ApocalypseChime extends Card {
                         true,
                         EachPermanentScope.ALL_PLAYERS,
                         null,
-                        false)),
+                        null)),
                 "{2}, {T}, Sacrifice Apocalypse Chime: Destroy all nontoken permanents with a name "
                         + "originally printed in the Homelands expansion. They can't be regenerated."));
     }

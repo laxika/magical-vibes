@@ -46,9 +46,10 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
 
     public BoostTargetCreatureEffect {
         subject = subject == null ? Subjects.target() : subject;
-        if (!subject.declaresTarget()) {
-            throw new IllegalArgumentException(
-                    "BoostTargetCreatureEffect boosts its target; a non-targeting subject is BoostSelfEffect: " + subject);
+        if (!subject.declaresTarget() && !(subject instanceof PermanentSubject.ThisWay)
+                && !(subject instanceof PermanentSubject.Except)) {
+            throw new IllegalArgumentException("BoostTargetCreatureEffect boosts its target or what a choice named "
+                    + "or left; another non-targeting subject is BoostSelfEffect: " + subject);
         }
     }
 
@@ -56,6 +57,11 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
                                      PermanentPredicate filter, Duration duration, int targetGroup,
                                      DynamicAmount castTimeXValue) {
         this(powerBoost, toughnessBoost, filter, duration, targetGroup, castTimeXValue, Subjects.target());
+    }
+
+    /** "Each of them gets +X/+Y until end of turn": X and Y found once, as the effect is applied (CR 608.2h). */
+    public BoostTargetCreatureEffect(PermanentSubject subject, DynamicAmount powerBoost, DynamicAmount toughnessBoost) {
+        this(powerBoost, toughnessBoost, null, Duration.UNTIL_END_OF_TURN, UNBOUND_TARGET_GROUP, null, subject);
     }
 
     /** "Target creature and all other creatures with the same name as that creature get +X/+Y until end of turn". */
@@ -120,6 +126,6 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
 
     @Override
     public TargetSpec targetSpec() {
-        return TargetSpec.benign(TargetPredicates.creature(), filter);
+        return subject.declaresTarget() ? TargetSpec.benign(TargetPredicates.creature(), filter) : TargetSpec.NONE;
     }
 }

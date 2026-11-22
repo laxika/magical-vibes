@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOpponentsCantCastUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class ChooseCardNameOpponentsCantCastUntilNextTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final LibraryRevealSupport libraryRevealSupport;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -29,11 +30,10 @@ public class ChooseCardNameOpponentsCantCastUntilNextTurnEffectHandler implement
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         ChooseCardNameOpponentsCantCastUntilNextTurnEffect chooseName =
                 (ChooseCardNameOpponentsCantCastUntilNextTurnEffect) effect;
-        List<String> cardNames = chooseName.excludedTypes().isEmpty()
-                ? libraryRevealSupport.collectAllCardNamesInGame(gameData)
-                : libraryRevealSupport.collectCardNamesInGameExcluding(gameData, chooseName.excludedTypes());
+        List<String> cardNames = playerInputService.cardNamesOfferedTo(
+                gameData, entry.getControllerId(), chooseName.excludedTypes(), null);
         var choiceContext = new ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice(
-                entry.getControllerId(), !chooseName.excludedTypes().isEmpty(), chooseName.excludedTypes());
+                entry.getControllerId(), chooseName.excludedTypes());
         String prompt = chooseName.excludedTypes().isEmpty()
                 ? "Choose a card name."
                 : "Choose a non" + chooseName.excludedTypes().stream()

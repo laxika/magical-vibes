@@ -1423,7 +1423,8 @@ public class ConditionEvaluationService {
                             ctx.resolutionResults().outcome(c.kind()).movedCards().stream().map(MovedCard::cardId))
                     .map(id -> gameQueryService.findCardById(gameData, id))
                     .anyMatch(card -> card != null && predicateEvaluationService.matchesCardPredicate(
-                            card, c.cardFilter(), ctx.sourceCard() == null ? null : ctx.sourceCard().getId()))
+                            card, c.cardFilter(), ctx.sourceCard() == null ? null : ctx.sourceCard().getId(),
+                            gameData, gameData.ownerOf(card)))
                     : c.filter() == null
                     ? ctx.resolutionResults().outcome(c.kind()).amount() >= c.minimum()
                     : ctx.resolutionResults().outcome(c.kind()).objectIds().stream()

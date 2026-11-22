@@ -106,7 +106,8 @@ class DestroyAllPermanentsEffectHandlerTest {
                 new DepartureService(gameQueryService, permanentRemovalService, graveyardService,
                         mock(GrantedTriggeredAbilitySupport.class), gameLogService));
         destroyAllPermanentsHandler = new DestroyAllPermanentsEffectHandler(destructionSupport,
-                predicateEvaluationService, effectHandlerRegistry, gameOutcomeService);
+                predicateEvaluationService, effectHandlerRegistry, gameOutcomeService,
+                mock(com.github.laxika.magicalvibes.service.effect.SubjectResolutionService.class));
 
     }
 

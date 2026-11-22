@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +19,7 @@ import java.util.UUID;
 public class PerpetuallyBoostTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -28,8 +30,10 @@ public class PerpetuallyBoostTargetCreatureEffectHandler implements NormalEffect
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         PerpetuallyBoostTargetCreatureEffect boost =
                 (PerpetuallyBoostTargetCreatureEffect) effect;
-        List<UUID> targetIds = entry.targetsForEffect(effect);
-        if (targetIds.isEmpty() && entry.getTargetId() != null) {
+        boolean targeted = boost.subject().declaresTarget();
+        List<UUID> targetIds = targeted ? entry.targetsForEffect(effect)
+                : subjectResolutionService.permanentIds(gameData, entry, effect, boost.subject());
+        if (targeted && targetIds.isEmpty() && entry.getTargetId() != null) {
             targetIds = List.of(entry.getTargetId());
         }
 

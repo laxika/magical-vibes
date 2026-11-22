@@ -4,10 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.OpponentControlsMoreLands;
-import com.github.laxika.magicalvibes.model.effect.ChooseAnotherPlayerGainsControlOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfSourceCreatureEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -27,7 +31,10 @@ public class DiscerningFinancier extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{W}",
-                List.of(new ChooseAnotherPlayerGainsControlOfTargetPermanentEffect(), new DrawCardEffect(1)),
+                List.of(new ChoosePlayerEffect(Subjects.eachOpponent(), "another player"),
+                        new TargetPlayerGainsControlOfSourceCreatureEffect(
+                                Subjects.playersThisWay(StepKind.CHOOSE), Duration.PERMANENT, Subjects.target()),
+                        new DrawCardEffect(1)),
                 "{2}{W}: Choose another player. That player gains control of target Treasure you control. You draw a card.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentHasSubtypePredicate(CardSubtype.TREASURE),

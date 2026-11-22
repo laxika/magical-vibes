@@ -26,4 +26,10 @@ public record ChooseSubtypeOnEnterEffect(List<CardSubtype> allowedSubtypes, bool
     public ChooseSubtypeOnEnterEffect {
         allowedSubtypes = allowedSubtypes == null ? List.of() : List.copyOf(allowedSubtypes);
     }
+
+    @Override
+    public String choicePrompt() {
+        return allowedSubtypes.equals(CardSubtype.planeswalkerTypes())
+                ? "Choose a planeswalker type." : SubtypeChoiceOnEnterEffect.super.choicePrompt();
+    }
 }

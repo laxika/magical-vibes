@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameForDelayedCreatureCombatDamageEffect;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,7 +20,7 @@ import java.util.List;
 public class ChooseCardNameForDelayedCreatureCombatDamageEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final LibraryRevealSupport libraryRevealSupport;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -31,7 +32,7 @@ public class ChooseCardNameForDelayedCreatureCombatDamageEffectHandler implement
         var chooseEffect = (ChooseCardNameForDelayedCreatureCombatDamageEffect) effect;
         var choiceContext = new ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice(
                 entry.getControllerId(), chooseEffect.effects(), entry.getCard(), entry.getSourcePermanentId());
-        List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGame(gameData);
+        List<String> cardNames = playerInputService.cardNamesOfferedTo(gameData, entry.getControllerId());
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 entry.getControllerId(), null, null, choiceContext, cardNames, "Choose a card name."));
 

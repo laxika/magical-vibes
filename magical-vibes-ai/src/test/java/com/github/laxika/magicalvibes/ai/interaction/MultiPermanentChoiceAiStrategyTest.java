@@ -8,6 +8,14 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MultiPermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StackEntryType;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import org.junit.jupiter.api.BeforeEach;
@@ -111,6 +119,49 @@ class MultiPermanentChoiceAiStrategyTest {
                 List.of(weak.getId(), mid.getId(), strong.getId()), 2), context());
 
         assertChosen(List.of(strong.getId(), mid.getId()));
+    }
+
+    @Test
+    @DisplayName("A choice of creatures with different powers answers with no two of one power")
+    void choosesOnePerDifferentPower() throws Exception {
+        Permanent first = creature("First", 3);
+        Permanent second = creature("Second", 3);
+        Permanent small = creature("Small", 1);
+        gameData.playerBattlefields.get(opponentId).addAll(List.of(first, second, small));
+        when(gameQueryService.getEffectivePower(gameData, first)).thenReturn(3);
+        when(gameQueryService.getEffectivePower(gameData, second)).thenReturn(3);
+        when(gameQueryService.getEffectivePower(gameData, small)).thenReturn(1);
+
+        ChoosePermanentsEffect choose = ChoosePermanentsEffect.anyNumber(Subjects.allCreatures(), "any number")
+                .withDifferent(ChoosePermanentsEffect.Different.POWER);
+        answerChoice(choose, List.of(first, second, small), 3, null);
+
+        assertChosen(List.of(first.getId(), small.getId()));
+    }
+
+    @Test
+    @DisplayName("A choice of what a destroy-the-rest leaves keeps the AI's own strongest creature")
+    void keepsItsOwnCreatureFromTheWipe() throws Exception {
+        Permanent own = creature("Own", 2);
+        Permanent opposing = creature("Opposing", 6);
+        gameData.playerBattlefields.get(aiPlayerId).add(own);
+        gameData.playerBattlefields.get(opponentId).add(opposing);
+
+        ChoosePermanentsEffect choose = ChoosePermanentsEffect.upTo(1, Subjects.allCreatures(), "up to one");
+        answerChoice(choose, List.of(own, opposing), 1, DestroyAllPermanentsEffect.sparing(
+                new PermanentIsCreaturePredicate(), Subjects.thisWay(StepKind.CHOOSE)));
+
+        assertChosen(List.of(own.getId()));
+    }
+
+    private void answerChoice(ChoosePermanentsEffect choose, List<Permanent> offered, int maximum, CardEffect next)
+            throws Exception {
+        List<CardEffect> steps = next == null ? List.of(choose) : List.of(choose, next);
+        gameData.pendingEffectResolutionEntry = new StackEntry(StackEntryType.SORCERY_SPELL, new Card(), aiPlayerId,
+                "Source", steps, (UUID) null, (UUID) null);
+        strategy.answer(new PendingInteraction.MultiPermanentChoice(aiPlayerId,
+                offered.stream().map(Permanent::getId).toList(), maximum,
+                new MultiPermanentChoiceContext.ChoosePermanents(choose, 0), "Choose."), context());
     }
 
     @Test

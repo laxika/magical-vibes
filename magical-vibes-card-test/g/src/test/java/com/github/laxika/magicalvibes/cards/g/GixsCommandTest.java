@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -201,5 +202,21 @@ class GixsCommandTest extends BaseCardTest {
 
     private void addMana() {
         harness.addMana(player1, ManaColor.BLACK, 5);
+    }
+
+    @Test
+    @DisplayName("The log doesn't name a chosen face-down creature")
+    void logDoesNotNameChosenFaceDownCreature() {
+        Permanent hidden = harness.addToBattlefieldAndReturn(player2, new ObstinateBaloth());
+        hidden.setFaceDown(2, 2, java.util.Set.of(com.github.laxika.magicalvibes.model.CardType.CREATURE));
+        harness.setHand(player1, List.of(new GixsCommand()));
+        addMana();
+
+        harness.castModalSorceryWithModes(player1, 0, 2, new int[]{0, 3}, List.of());
+        harness.passBothPriorities();
+        harness.handleMultiplePermanentsChosen(player1, List.of(hidden.getId()));
+
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("chooses")
+                && line.plainText().contains("Obstinate Baloth"));
     }
 }

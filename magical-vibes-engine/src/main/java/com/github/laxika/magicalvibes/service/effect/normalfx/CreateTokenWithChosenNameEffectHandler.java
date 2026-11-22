@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokenWithChosenNameEffe
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +24,7 @@ import java.util.List;
 public class CreateTokenWithChosenNameEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final LibraryRevealSupport libraryRevealSupport;
+    private final PlayerInputService playerInputService;
     private final GameQueryService gameQueryService;
     private final AmountEvaluationService amountEvaluationService;
 
@@ -57,7 +58,7 @@ public class CreateTokenWithChosenNameEffectHandler implements NormalEffectHandl
                 new ChoiceContext.CreateTokenWithChosenNameChoice(
                         entry.getCard(), entry.getControllerId(), chosenNameEffect.tokenTemplate(),
                         amount, power, toughness);
-        List<String> cardNames = libraryRevealSupport.collectAllCardNamesInGame(gameData);
+        List<String> cardNames = playerInputService.cardNamesOfferedTo(gameData, entry.getControllerId());
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                 entry.getControllerId(), null, null, choiceContext, cardNames,
                 "Choose a name for the token."));

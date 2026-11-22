@@ -31,7 +31,7 @@ class DuneblastTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(choice.maxCount()).isEqualTo(1);
-        assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.DestroyRestChoice.class);
+        assertThat(choice.context()).isInstanceOf(MultiPermanentChoiceContext.ChoosePermanents.class);
 
         harness.handleMultiplePermanentsChosen(player1, List.of(harness.getPermanentId(player2, "Llanowar Elves")));
 

@@ -75,6 +75,10 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** {@code ChoosePermanentsEffect} of exactly one: the chosen permanent becomes the resolving entry's CHOOSE step. */
+    record RecordChosenPermanents(com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect effect)
+            implements PermanentChoiceContext {}
+
     /** {@code ChoosePlayerEffect}: the chosen player becomes the resolving entry's CHOOSE step. */
     record RecordChosenPlayer(java.util.List<UUID> playerIds) implements PermanentChoiceContext {}
 
@@ -729,11 +733,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record RiskyMoveOpponentChoice(Card sourceCard, UUID sourcePermanentId, UUID controllerId,
                                    UUID creatureId) implements PermanentChoiceContext {}
 
-    /** Discerning Financier: the controller chooses another player to gain control of a target permanent. */
-    record ChooseAnotherPlayerGainsControlOfTargetPermanent(
-            UUID controllerId, UUID targetPermanentId, String sourceCardName)
-            implements PermanentChoiceContext {}
-
     /** Rohgahh of Kher Keep: the ability controller chooses which opponent gains the tapped permanents. */
     record ChooseOpponentGainsControlOfSourceAndMatchingPermanents(
             UUID choosingPlayerId,
@@ -803,27 +802,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             UUID choosingPlayerId,
             UUID copyControllerId,
             Card sourceCard
-    ) implements PermanentChoiceContext {}
-
-    /** The controller chooses an artifact or creature they control to copy. */
-    record ChooseControlledArtifactOrCreatureToCopy(Card sourceCard, UUID controllerId)
-            implements PermanentChoiceContext {}
-
-    record ChooseOpponentCreatureThenBoostOthers(
-            UUID sourcePermanentId,
-            Card sourceCard,
-            UUID controllerId,
-            int powerBoost,
-            int toughnessBoost
-    ) implements PermanentChoiceContext {}
-
-    /** The controller chooses an opposing creature for a perpetual power/toughness modification. */
-    record ChooseOpponentCreatureAndPerpetuallyBoost(
-            UUID sourcePermanentId,
-            Card sourceCard,
-            UUID controllerId,
-            int powerBoost,
-            int toughnessBoost
     ) implements PermanentChoiceContext {}
 
     /** Awaken the Maelstrom: choose a permanent you control for the token-copy effect. */

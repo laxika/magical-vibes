@@ -20,10 +20,11 @@ public record TargetPlayerGainsControlOfSourceCreatureEffect(PlayerSubject playe
 
     public TargetPlayerGainsControlOfSourceCreatureEffect {
         if (!(player instanceof PlayerSubject.You || player instanceof PlayerSubject.TargetPlayer
-                || player instanceof PlayerSubject.ControllerOf)) {
+                || player instanceof PlayerSubject.ControllerOf || player instanceof PlayerSubject.PlayersThisWay)) {
             throw new IllegalArgumentException("One player gains control: " + player);
         }
-        if (!permanent.equals(Subjects.source()) && !permanent.equals(Subjects.attached())) {
+        if (!permanent.equals(Subjects.source()) && !permanent.equals(Subjects.attached())
+                && !(permanent.equals(Subjects.target()) && !player.declaresTarget())) {
             throw new IllegalArgumentException("Unsupported permanent to gain control of: " + permanent);
         }
     }
@@ -76,7 +77,10 @@ public record TargetPlayerGainsControlOfSourceCreatureEffect(PlayerSubject playe
 
     @Override
     public TargetSpec targetSpec() {
-        return player.declaresTarget() ? TargetSpec.benign(TargetPredicates.player()) : TargetSpec.NONE;
+        if (player.declaresTarget()) {
+            return TargetSpec.benign(TargetPredicates.player());
+        }
+        return permanent.declaresTarget() ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
     }
 
 

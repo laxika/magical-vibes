@@ -800,9 +800,6 @@ public class PermanentChoiceHandlerService {
             riskyMoveEffectHandler.completeOpponentChoice(gameData, permanentId, riskyMove,
                     new GameData.InteractionAnswerReplay(player, permanentChoice,
                             new InteractionAnswer.PermanentChosen(permanentId)));
-        } else if (context instanceof PermanentChoiceContext.ChooseAnotherPlayerGainsControlOfTargetPermanent chooseAnotherPlayer) {
-            battlefieldHandler.handleChooseAnotherPlayerGainsControlOfTargetPermanent(
-                    gameData, permanentId, chooseAnotherPlayer);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentGainsControlOfSourceAndMatchingPermanents chooseOpponent) {
             battlefieldHandler.handleTapAndChooseOpponentGainsControl(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentForSelfFlicker chooseOpponent) {
@@ -825,14 +822,8 @@ public class PermanentChoiceHandlerService {
             memoriesReturningEffectHandler.completeOpponentChoice(gameData, permanentId, memoriesChoice);
         } else if (context instanceof PermanentChoiceContext.OpponentChoosesCreatureTheyControlToCopy echoChamberChoice) {
             battlefieldHandler.handleOpponentChoosesCreatureTheyControlToCopy(gameData, permanentId, echoChamberChoice);
-        } else if (context instanceof PermanentChoiceContext.ChooseControlledArtifactOrCreatureToCopy chooseCopy) {
-            battlefieldHandler.handleChooseControlledArtifactOrCreatureToCopy(gameData, permanentId, chooseCopy);
         } else if (context instanceof PermanentChoiceContext.AnimateChosenOwnPermanent animateChoice) {
             battlefieldHandler.handleAnimateChosenOwnPermanent(gameData, permanentId, animateChoice);
-        } else if (context instanceof PermanentChoiceContext.ChooseOpponentCreatureThenBoostOthers zenosChoice) {
-            battlefieldHandler.handleChooseOpponentCreatureThenBoostOthers(gameData, permanentId, zenosChoice);
-        } else if (context instanceof PermanentChoiceContext.ChooseOpponentCreatureAndPerpetuallyBoost aloraChoice) {
-            battlefieldHandler.handleChooseOpponentCreatureAndPerpetuallyBoost(gameData, permanentId, aloraChoice);
         } else if (context instanceof PermanentChoiceContext.GuidedPassageOpponentChoice guidedPassageChoice) {
             guidedPassageEffectHandler.completeOpponentChoice(gameData, permanentId, guidedPassageChoice);
         } else if (context instanceof PermanentChoiceContext.MausoleumTurnkeyOpponentChoice mausoleumTurnkeyChoice) {
@@ -880,6 +871,8 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.ChosenPermanentReference) {
             gameData.pendingEffectResolutionEntry.setChosenPermanentId(permanentId);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.RecordChosenPermanents chosen) {
+            battlefieldHandler.handleRecordChosenPermanents(gameData, permanentId, chosen);
         } else if (context instanceof PermanentChoiceContext.RecordChosenPlayer chosen) {
             battlefieldHandler.handleRecordChosenPlayer(gameData, permanentId, chosen);
         } else if (context instanceof PermanentChoiceContext.BackdraftPlayerChoice) {

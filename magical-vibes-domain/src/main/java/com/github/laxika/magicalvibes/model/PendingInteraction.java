@@ -134,8 +134,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.PutCardFromHandIntoGraveyardChoice,
         PendingInteraction.PerpetualOffspringCardChoice,
         PendingInteraction.PerpetualCreatureCardChoice,
-        PendingInteraction.PerpetualTriggeredAbilityCardChoice,
-        PendingInteraction.PerpetualTriggeredAbilityCardsChoice,
         PendingInteraction.PerpetualStaticEffectCardChoice,
         PendingInteraction.PerpetualTargetCardChoice,
         PendingInteraction.WordOfCommandCardChoice,
@@ -2705,7 +2703,13 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
 
         @Override
         public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiPermanentPick(validIds, validPlayerIds, validCardIds, 0, maxCount);
+            int minCount = switch (context) {
+                case MultiPermanentChoiceContext.ChoosePermanents choice -> choice.minimum();
+                case MultiPermanentChoiceContext.ReturnChosenPermanentsToHand choice -> choice.minimum();
+                case null, default -> 0;
+            };
+            return new InteractionOptions.MultiPermanentPick(validIds, validPlayerIds, validCardIds,
+                    Math.min(minCount, maxCount), maxCount);
         }
     }
 
@@ -4068,30 +4072,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** Chooses a card in hand to receive a perpetual triggered ability. */
-    record PerpetualTriggeredAbilityCardChoice(UUID playerId,
-                                               java.util.List<Integer> validIndices,
-                                               String prompt,
-                                               java.util.List<Ability> grantedAbilities,
-                                               CardPredicate filter)
-            implements PendingInteraction, HandChoice {
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(validIndices, false);
-        }
-
-        /** The effects of {@link #grantedAbilities}, in order. */
-        public java.util.List<CardEffect> grantedEffects() {
-            return grantedAbilities.stream().flatMap(ability -> AbilityEffects.effectsOf(ability).stream()).toList();
-        }
-    }
-
     /** Chooses an optional hand card to receive a perpetual static effect. */
     record PerpetualStaticEffectCardChoice(UUID playerId, java.util.List<Integer> validIndices,
                                            String prompt, CardEffect staticEffect,
@@ -4110,32 +4090,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.CardIndexPick(validIndices, true);
-        }
-    }
-
-    /** Chooses up to a bounded number of hand cards to receive a perpetual triggered ability. */
-    record PerpetualTriggeredAbilityCardsChoice(UUID playerId,
-                                                java.util.List<UUID> validCardIds,
-                                                String prompt,
-                                                int maxCount,
-                                                java.util.List<Ability> grantedAbilities,
-                                                CardPredicate filter)
-            implements PendingInteraction {
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.MultiCardPick(validCardIds, 0,
-                    Math.min(maxCount, validCardIds.size()));
-        }
-
-        /** The effects of {@link #grantedAbilities}, in order. */
-        public java.util.List<CardEffect> grantedEffects() {
-            return grantedAbilities.stream().flatMap(ability -> AbilityEffects.effectsOf(ability).stream()).toList();
         }
     }
 

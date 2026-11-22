@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.cards.b.BruvacTheGrandiloquent;
 import com.github.laxika.magicalvibes.cards.m.Mulldrifter;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
@@ -32,7 +33,7 @@ class LammastideWeaveTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice.playerId()).isEqualTo(player1.getId());
-        assertThat(choice.context()).isInstanceOf(ChoiceContext.NameCardMillGainLifeChoice.class);
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ChooseCardNameAtResolutionChoice.class);
     }
 
     @Test
@@ -186,5 +187,19 @@ class LammastideWeaveTest extends BaseCardTest {
 
         assertThat(harness.getConn1().getMessagesContaining("Choose a card name."))
                 .anyMatch(message -> message.contains("Mulldrifter"));
+    }
+
+    @Test
+    @DisplayName("The names offered leave out a card only an opponent's hand holds")
+    void offeredNamesLeaveOutHiddenCards() {
+        Card hidden = new Card();
+        hidden.setName("Hidden Hand Card");
+        hidden.setType(CardType.CREATURE);
+        harness.setHand(player2, List.of(hidden));
+
+        cast(player2);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
+                .doesNotContain("Hidden Hand Card");
     }
 }

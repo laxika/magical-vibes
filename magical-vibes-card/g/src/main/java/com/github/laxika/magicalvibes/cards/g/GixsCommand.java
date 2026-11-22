@@ -5,13 +5,14 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseUpToOnePermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
-import com.github.laxika.magicalvibes.model.effect.GrantKeywordToChosenCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCountersOnChosenPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardsFromControllerGraveyardToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
@@ -32,10 +33,12 @@ public class GixsCommand extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Put two +1/+1 counters on up to one creature. It gains lifelink until end of turn",
                         SequenceEffect.of(
-                                new ChooseUpToOnePermanentEffect(new PermanentIsCreaturePredicate(),
-                                        "Choose up to one creature to get two +1/+1 counters and lifelink."),
-                                new PutCountersOnChosenPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 2),
-                                new GrantKeywordToChosenCreatureEffect(Keyword.LIFELINK, Duration.UNTIL_END_OF_TURN))),
+                                ChoosePermanentsEffect.upTo(1, Subjects.allCreatures(),
+                                        "up to one creature to get two +1/+1 counters and lifelink"),
+                                new PutCounterOnTargetPermanentEffect(
+                                        Subjects.thisWay(StepKind.CHOOSE), CounterType.PLUS_ONE_PLUS_ONE, 2),
+                                new GrantKeywordEffect(Keyword.LIFELINK, Subjects.thisWay(StepKind.CHOOSE),
+                                        Duration.UNTIL_END_OF_TURN))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy each creature with power 2 or less",
                         new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(

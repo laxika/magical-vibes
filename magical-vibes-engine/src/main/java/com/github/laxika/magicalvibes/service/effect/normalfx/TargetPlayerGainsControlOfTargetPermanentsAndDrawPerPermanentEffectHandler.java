@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
-import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -13,9 +12,7 @@ import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 @Component
@@ -64,12 +61,8 @@ public class TargetPlayerGainsControlOfTargetPermanentsAndDrawPerPermanentEffect
             gainedControlCount++;
         }
 
-        List<Card> hand = gameData.playerHands.getOrDefault(entry.getControllerId(), List.of());
-        Set<UUID> cardsInHandBeforeDraw = new HashSet<>();
-        hand.forEach(card -> cardsInHandBeforeDraw.add(card.getId()));
+        DrawnThisWay snapshot = DrawnThisWay.before(gameData, entry.getControllerId());
         playerInteractionSupport.applyDrawCards(gameData, entry.getControllerId(), gainedControlCount);
-        gameData.playerHands.getOrDefault(entry.getControllerId(), List.of()).stream()
-                .filter(card -> !cardsInHandBeforeDraw.contains(card.getId()))
-                .forEach(card -> entry.recordCardDrawnThisResolution(card.getId()));
+        snapshot.cards(gameData).forEach(card -> entry.recordCardDrawnThisResolution(card.getId()));
     }
 }

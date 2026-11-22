@@ -201,8 +201,9 @@ class ConjurersBanTest extends BaseCardTest {
     @Test
     @DisplayName("Choosing a name does not reveal cards in the opponent's hidden zones")
     void namePromptDoesNotRevealOpponentsHiddenCards() {
-        harness.setHand(player2, List.of(new SkarrgTheRagePits()));
-        harness.setLibrary(player2, List.of(new Quicken()));
+        // Cards no catalog lists: a listed card's name is offered wherever the card is (CR 201.4).
+        harness.setHand(player2, List.of(unlistedCard("Hidden Hand Card")));
+        harness.setLibrary(player2, List.of(unlistedCard("Hidden Library Card")));
         harness.setLibrary(player1, List.of(new ConjurersBan()));
         harness.clearMessages();
         harness.castFromHand(player1, new ConjurersBan(), "{W}{B}");
@@ -211,6 +212,13 @@ class ConjurersBanTest extends BaseCardTest {
         assertThat(harness.getConn1().getMessagesContaining("Choose a card name."))
                 .isNotEmpty()
                 .allSatisfy(message -> assertThat(message)
-                        .doesNotContain("Skarrg, the Rage Pits", "Quicken"));
+                        .doesNotContain("Hidden Hand Card", "Hidden Library Card"));
+    }
+
+    private static com.github.laxika.magicalvibes.model.Card unlistedCard(String name) {
+        var card = new com.github.laxika.magicalvibes.model.Card();
+        card.setName(name);
+        card.setType(com.github.laxika.magicalvibes.model.CardType.SORCERY);
+        return card;
     }
 }

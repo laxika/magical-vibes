@@ -1,11 +1,14 @@
 package com.github.laxika.magicalvibes.cards.z;
 
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsChosenPermanentPredicate;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.cards.s.ShinryuTranscendentRival;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ChooseOpponentCreatureThenBoostOthersEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -21,7 +24,10 @@ public class ZenosYaeGalvus extends Card {
         setBackFaceCard(new ShinryuTranscendentRival());
 
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new ChooseOpponentCreatureThenBoostOthersEffect(-2, -2));
+                ChoosePermanentsEffect.exactly(1, Subjects.creaturesYourOpponentsControl(),
+                        "a creature an opponent controls"),
+                new BoostTargetCreatureEffect(
+                        Subjects.except(Subjects.otherCreatures(), Subjects.thisWay(StepKind.CHOOSE)), -2, -2));
         addTrigger(Triggers.leavesBattlefield(new PermanentIsChosenPermanentPredicate(),
                         ObjectRelation.ANOTHER),
                 new TransformSelfEffect());

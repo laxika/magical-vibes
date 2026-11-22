@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameSpellsAndLandsCantBePlayedUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,7 @@ import org.springframework.stereotype.Component;
 public class ChooseCardNameSpellsAndLandsCantBePlayedUntilNextTurnEffectHandler implements NormalEffectHandlerBean {
 
     private final InteractionHandlerRegistry interactionHandlerRegistry;
-    private final LibraryRevealSupport libraryRevealSupport;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -27,7 +28,7 @@ public class ChooseCardNameSpellsAndLandsCantBePlayedUntilNextTurnEffectHandler 
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        List<String> cardNames = libraryRevealSupport.collectPublicCardNames(gameData);
+        List<String> cardNames = playerInputService.cardNamesOfferedTo(gameData, entry.getControllerId());
         var choiceContext = new ChoiceContext.SpellsAndLandsCantBePlayedUntilNextTurnChoice(
                 entry.getControllerId());
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(

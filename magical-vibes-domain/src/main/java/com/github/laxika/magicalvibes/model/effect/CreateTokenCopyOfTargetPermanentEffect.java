@@ -75,9 +75,10 @@ public record CreateTokenCopyOfTargetPermanentEffect(
                 && !(subject instanceof PermanentSubject.Triggering)
                 && !(subject instanceof PermanentSubject.TriggeringAll)
                 && !(subject instanceof PermanentSubject.Attached)
-                && !(subject instanceof PermanentSubject.Named)) {
+                && !(subject instanceof PermanentSubject.Named)
+                && !(subject instanceof PermanentSubject.ThisWay)) {
             throw new IllegalArgumentException("A token copy copies target(), triggering(), triggeringAll(), attached() "
-                    + "or named(id): " + subject);
+                    + "named(id) or thisWay(kind): " + subject);
         }
         if (animateIfNotCreature != null
                 && (!(animateIfNotCreature.power() instanceof Fixed)

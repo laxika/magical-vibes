@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.cards.CardCatalog;
 import com.github.laxika.magicalvibes.cards.CatalogEntry;
 import com.github.laxika.magicalvibes.cards.CardSet;
-import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -18,7 +17,6 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.UUID;
 
 /**
@@ -33,9 +31,6 @@ public class LibraryRevealSupport {
 
     private final GameLogService gameLogService;
     private CardCatalog cardCatalog;
-    private volatile List<String> catalogCreatureNames;
-    private volatile List<String> catalogNonBasicLandNames;
-    private volatile List<String> catalogAllNames;
     private volatile java.util.Map<String, List<OracleData>> catalogSplitCardsByHalfName;
     private final com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry interactionHandlerRegistry;
 
@@ -84,60 +79,6 @@ public class LibraryRevealSupport {
         interactionHandlerRegistry.begin(gameData, new PendingInteraction.LibraryReorder(
                 controllerId, topCards, true, controllerId,
                 "Put these cards on the bottom of your library in any order (first chosen will be closest to the top)."));
-    }
-
-    /** Every distinct creature card name across all zones, sorted alphabetically (Wood Sage). */
-    public List<String> collectCreatureCardNamesInGame(GameData gameData) {
-        Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
-                card -> card.hasType(CardType.CREATURE) && !card.isToken()));
-        if (cardCatalog != null) {
-            List<String> cached = catalogCreatureNames;
-            if (cached == null) {
-                cached = catalogNames(oracle -> oracle.hasType(CardType.CREATURE));
-                catalogCreatureNames = cached;
-            }
-            names.addAll(cached);
-        }
-        return new ArrayList<>(names);
-    }
-
-    /** Every distinct nonland card name across all zones (Tamiyo, Collector of Tales). */
-    public List<String> collectNonlandCardNamesInGame(GameData gameData) {
-        return collectCardNamesInGame(gameData, card -> !card.hasType(CardType.LAND));
-    }
-
-    public List<String> collectAllCardNamesInGame(GameData gameData) {
-        return collectCardNamesInGame(gameData, card -> true);
-    }
-
-    /** Public card names offered as suggestions without exposing hidden zones. */
-    public List<String> collectPublicCardNames(GameData gameData) {
-        Set<String> names = new TreeSet<>();
-        for (UUID playerId : gameData.playerIds) {
-            gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
-                    .filter(permanent -> !permanent.isFaceDown())
-                    .forEach(permanent -> names.addAll(permanent.getCard().getNames()));
-            gameData.playerGraveyards.getOrDefault(playerId, List.of())
-                    .forEach(card -> names.addAll(card.getNames()));
-            gameData.getPlayerExiledCards(playerId).stream()
-                    .filter(card -> gameData.findExiledCard(card.getId()) != null
-                            && !gameData.findExiledCard(card.getId()).faceDown())
-                    .forEach(card -> names.addAll(card.getNames()));
-        }
-        gameData.stack.forEach(entry -> names.addAll(entry.getCard().getNames()));
-        return new ArrayList<>(names);
-    }
-
-    /** Validates a freely chosen card name independently of the public suggestions. */
-    public boolean isCardNameAllowed(GameData gameData, String name) {
-        return collectAllCardNamesInGame(gameData).stream().anyMatch(candidate -> candidate.equalsIgnoreCase(name))
-                || isCatalogCardNameAllowed(name, List.of());
-    }
-
-    /** Every distinct card name in the game that has none of the excluded card types. */
-    public List<String> collectCardNamesInGameExcluding(GameData gameData, List<CardType> excludedTypes) {
-        Set<CardType> excluded = Set.copyOf(excludedTypes);
-        return collectCardNamesInGame(gameData, card -> !matchesCardTypes(card, excluded));
     }
 
     /** Validates a name outside the current game against implemented printings and type restrictions. */
@@ -198,85 +139,6 @@ public class LibraryRevealSupport {
         cached = java.util.Map.copyOf(byHalfName);
         catalogSplitCardsByHalfName = cached;
         return cached;
-    }
-
-    /** Every distinct card name in the game with the required card type. */
-    public List<String> collectCardNamesInGameOfType(GameData gameData, CardType requiredType) {
-        if (requiredType == CardType.CREATURE) {
-            return collectCreatureCardNamesInGame(gameData);
-        }
-        Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
-                card -> card.hasType(requiredType)));
-        if (cardCatalog != null) {
-            names.addAll(catalogNames(oracle -> oracle.hasType(requiredType)));
-        }
-        return new ArrayList<>(names);
-    }
-
-    /** Every distinct card name in the game plus every implemented card name, since any card name may be named. */
-    public List<String> collectAllCardNamesInGameAndCatalog(GameData gameData) {
-        Set<String> names = new TreeSet<>(collectAllCardNamesInGame(gameData));
-        if (cardCatalog != null) {
-            List<String> cached = catalogAllNames;
-            if (cached == null) {
-                cached = catalogNames(oracle -> true);
-                catalogAllNames = cached;
-            }
-            names.addAll(cached);
-        }
-        return new ArrayList<>(names);
-    }
-
-    /** Every distinct card name in the game except basic land card names (Desperate Research). */
-    public List<String> collectNonBasicLandCardNamesInGame(GameData gameData) {
-        Set<String> names = new TreeSet<>(collectCardNamesInGame(gameData,
-                card -> !(card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))));
-        if (cardCatalog != null) {
-            List<String> cached = catalogNonBasicLandNames;
-            if (cached == null) {
-                cached = catalogNames(oracle -> !(oracle.hasType(CardType.LAND)
-                        && oracle.supertypes().contains(CardSupertype.BASIC)));
-                catalogNonBasicLandNames = cached;
-            }
-            names.addAll(cached);
-        }
-        return new ArrayList<>(names);
-    }
-
-    /** Every name an implemented card whose oracle data matches can be chosen by, sorted. */
-    private List<String> catalogNames(java.util.function.Predicate<OracleData> candidate) {
-        Set<String> names = new TreeSet<>();
-        for (CatalogEntry entry : cardCatalog.getEntries()) {
-            if (candidate.test(entry.oracle())) {
-                names.addAll(entry.oracle().names());
-            }
-        }
-        return List.copyOf(names);
-    }
-
-    private List<String> collectCardNamesInGame(GameData gameData, java.util.function.Predicate<Card> candidate) {
-        Set<String> names = new TreeSet<>();
-        for (UUID pid : gameData.playerIds) {
-            gameData.playerBattlefields.getOrDefault(pid, List.of()).stream()
-                    .filter(p -> candidate.test(p.getCard()))
-                    .forEach(p -> names.addAll(p.getCard().getNames()));
-            gameData.playerHands.getOrDefault(pid, List.of()).stream()
-                    .filter(candidate)
-                    .forEach(c -> names.addAll(c.getNames()));
-            gameData.playerGraveyards.getOrDefault(pid, List.of()).stream()
-                    .filter(candidate)
-                    .forEach(c -> names.addAll(c.getNames()));
-            gameData.playerDecks.getOrDefault(pid, List.of()).stream()
-                    .filter(candidate)
-                    .forEach(c -> names.addAll(c.getNames()));
-            gameData.getPlayerExiledCards(pid).stream()
-                    .filter(candidate)
-                    .forEach(c -> names.addAll(c.getNames()));
-        }
-        gameData.stack.stream()
-                .filter(se -> candidate.test(se.getCard()))
-                .forEach(se -> names.addAll(se.getCard().getNames()));
-        return new ArrayList<>(names);
     }
 
     public static List<Card> takeTopCards(List<Card> deck, int count) {

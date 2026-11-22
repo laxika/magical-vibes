@@ -4,11 +4,20 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardSupertype;
-import com.github.laxika.magicalvibes.model.effect.ChooseUpToNMatchingCreaturesThenMayExileRestEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUntilCardPredicateMayPlayWhileSourceControlledEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSupertypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import java.util.List;
 
 @CardRegistration(set = "WHO", collectorNumber = "121")
 @CardRegistration(set = "WHO", collectorNumber = "726")
@@ -22,7 +31,16 @@ public class TheDayOfTheDoctor extends Card {
         addTrigger(Triggers.chapter(2), search);
         addTrigger(Triggers.chapter(3), search);
         addTrigger(Triggers.chapter(4),
-                new ChooseUpToNMatchingCreaturesThenMayExileRestEffect(
-                        3, new PermanentHasSubtypePredicate(CardSubtype.DOCTOR), "Doctors"));
+                ChoosePermanentsEffect.upTo(3,
+                        Subjects.controlledBy(Subjects.eachPlayer(), new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(),
+                                new PermanentHasSubtypePredicate(CardSubtype.DOCTOR)))),
+                        "up to three Doctors"),
+                new MayEffect(
+                        SequenceEffect.of(
+                                new ExileTargetPermanentEffect(
+                                        Subjects.except(Subjects.allCreatures(), Subjects.thisWay(StepKind.CHOOSE))),
+                                new DealDamageToPlayersEffect(13, Subjects.you())),
+                        "Exile all other creatures? If you do, The Day of the Doctor deals 13 damage to you."));
     }
 }

@@ -986,8 +986,8 @@ class PlayerInputServiceTest {
         void requiredTypeOffersOnlyMatchingNames() {
             Card artifact = createCard("Sol Ring", CardType.ARTIFACT);
             Card creature = createCreature("Bear");
-            gd.playerHands.get(PLAYER2_ID).add(artifact);
-            gd.playerHands.get(PLAYER2_ID).add(creature);
+            gd.playerHands.get(PLAYER1_ID).add(artifact);
+            gd.playerHands.get(PLAYER1_ID).add(creature);
 
             svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(), CardType.ARTIFACT);
 
@@ -1003,7 +1003,7 @@ class PlayerInputServiceTest {
             basicLand.setSupertypes(Set.of(CardSupertype.BASIC));
             Card nonbasicLand = createCard("Bojuka Bog", CardType.LAND);
             Card creature = createCreature("Bear");
-            gd.playerHands.get(PLAYER2_ID).addAll(List.of(basicLand, nonbasicLand, creature));
+            gd.playerHands.get(PLAYER1_ID).addAll(List.of(basicLand, nonbasicLand, creature));
             CreateTokenEffect tokenTemplate = CreateTokenEffect.blackZombie(1);
 
             svc.beginSpellCardNameChoice(gd, PLAYER1_ID, PLAYER2_ID, List.of(), null,

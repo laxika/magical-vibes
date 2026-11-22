@@ -95,9 +95,7 @@ public final class AiInteractionStrategies {
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.SuspendedCardTimeCounterChoice.class, 1));
         register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.ArtifactPermanentOrGraveyardCardChoice.class, 1));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.TargetPlayerChoosesCardsFromHandChoice.class));
-        register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualTriggeredAbilityCardChoice.class));
         register(new OfferedCardIndexChoiceAiStrategy<>(PendingInteraction.PerpetualStaticEffectCardChoice.class));
-        register(new OfferedCardsChoiceAiStrategy<>(PendingInteraction.PerpetualTriggeredAbilityCardsChoice.class, 0));
         register(new KeepCardsInHandChoiceAiStrategy());
         register(new EachPlayerChoosesOneCardOfEachColorChoiceAiStrategy());
         register(new PutLandsFromHandChoiceAiStrategy());

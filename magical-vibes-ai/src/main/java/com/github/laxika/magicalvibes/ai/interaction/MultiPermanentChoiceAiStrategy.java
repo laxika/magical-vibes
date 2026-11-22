@@ -45,7 +45,10 @@ class MultiPermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInt
         List<Permanent> opponentField = gameData.getOpponentBattlefield(ctx.aiPlayerId());
 
         List<UUID> chosen;
-        if (interaction.context() instanceof MultiPermanentChoiceContext.StackedDividedDamageTargets divided
+        if (interaction.context() instanceof MultiPermanentChoiceContext.ChoosePermanents choice) {
+            chosen = ChosenPermanentsAiChoice.choose(
+                    ctx, choice.effect(), validPermanentIds, choice.minimum(), interaction.maxCount());
+        } else if (interaction.context() instanceof MultiPermanentChoiceContext.StackedDividedDamageTargets divided
                 && divided.prevention()) {
             chosen = validPlayerIds != null && validPlayerIds.contains(ctx.aiPlayerId())
                     ? List.of(ctx.aiPlayerId())

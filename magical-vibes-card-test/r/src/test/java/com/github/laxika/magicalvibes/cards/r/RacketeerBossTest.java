@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -27,8 +28,8 @@ class RacketeerBossTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         resolveAllTriggers();
 
-        PendingInteraction.PerpetualTriggeredAbilityCardsChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PerpetualTriggeredAbilityCardsChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.validCardIds()).containsExactly(first.getId(), second.getId());
 
@@ -49,5 +50,21 @@ class RacketeerBossTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
         harness.castCreature(player1, gd.playerHands.get(player1.getId()).indexOf(bears));
         resolveAllTriggers();
+    }
+
+    @Test
+    @DisplayName("The log doesn't name the card chosen from the hand")
+    void logDoesNotNameTheChosenHandCard() {
+        GrizzlyBears chosen = new GrizzlyBears();
+        harness.setHand(player1, List.of(new RacketeerBoss(), chosen));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
+
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Grizzly Bears"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().contains("perpetually gains"));
     }
 }

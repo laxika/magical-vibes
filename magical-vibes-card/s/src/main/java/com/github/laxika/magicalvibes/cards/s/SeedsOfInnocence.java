@@ -16,6 +16,6 @@ public class SeedsOfInnocence extends Card {
                 true,
                 EachPermanentScope.ALL_PLAYERS,
                 new EachDestroyedPermanentControllerGainsLifeEqualToManaValueEffect(),
-                false));
+                null));
     }
 }

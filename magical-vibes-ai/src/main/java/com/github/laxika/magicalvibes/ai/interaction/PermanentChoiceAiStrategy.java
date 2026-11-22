@@ -63,6 +63,13 @@ class PermanentChoiceAiStrategy implements AiInteractionStrategy<PendingInteract
             }
         }
 
+        if (interaction.context() instanceof PermanentChoiceContext.RecordChosenPermanents choice) {
+            UUID chosen = ChosenPermanentsAiChoice.choose(ctx, choice.effect(), List.copyOf(validIds), 1, 1).getFirst();
+            log.info("AI: Choosing permanent {} as an effect resolves in game {}", chosen, ctx.gameId());
+            ctx.gameActions().answerInteraction(new InteractionAnswer.PermanentChosen(chosen));
+            return;
+        }
+
         // Try opponent's best creature first
         UUID best = opponentField.stream()
                 .filter(p -> validIds.contains(p.getId()))

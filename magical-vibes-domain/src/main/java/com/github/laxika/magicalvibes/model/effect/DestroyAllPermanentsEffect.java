@@ -22,35 +22,35 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * @param scope                               every battlefield, or only the targeted player's (Rain of Daggers)
  * @param thenEffect                          optional per-destroyed-permanent rider resolved after destruction;
  *                                            {@code null} for a plain board wipe
- * @param sparesPermanentsCreatedThisResolution when {@code true}, permanents created earlier in this same
- *                                            resolution (recorded on {@code StackEntry.createdPermanentIds}) are
- *                                            excluded, implementing "destroy all <em>other</em> creatures" where
- *                                            "other" means other than the tokens this spell just made (Martial Coup)
+ * @param spared                              permanents named by an earlier step of the same resolution that the
+ *                                            wipe leaves ("destroy all <em>other</em> creatures" after creating
+ *                                            tokens, Martial Coup; "destroy the rest" after a choice, Duneblast), or
+ *                                            {@code null}
  */
 public record DestroyAllPermanentsEffect(
         PermanentPredicate filter,
         boolean cannotBeRegenerated,
         EachPermanentScope scope,
         CardEffect thenEffect,
-        boolean sparesPermanentsCreatedThisResolution
+        PermanentSubject spared
 ) implements BoardWipeEffect {
 
     public DestroyAllPermanentsEffect(PermanentPredicate filter) {
-        this(filter, false, EachPermanentScope.ALL_PLAYERS, null, false);
+        this(filter, false, EachPermanentScope.ALL_PLAYERS, null, null);
     }
 
     public DestroyAllPermanentsEffect(PermanentPredicate filter, boolean cannotBeRegenerated) {
-        this(filter, cannotBeRegenerated, EachPermanentScope.ALL_PLAYERS, null, false);
+        this(filter, cannotBeRegenerated, EachPermanentScope.ALL_PLAYERS, null, null);
     }
 
     /** "Destroy all creatures target player controls": the targeted player's battlefield only. */
     public DestroyAllPermanentsEffect(PermanentPredicate filter, EachPermanentScope scope) {
-        this(filter, false, scope, null, false);
+        this(filter, false, scope, null, null);
     }
 
     /** Board wipe with a per-destroyed-permanent rider ("For each land destroyed this way, its controller …"). */
     public DestroyAllPermanentsEffect(PermanentPredicate filter, CardEffect thenEffect) {
-        this(filter, false, EachPermanentScope.ALL_PLAYERS, thenEffect, false);
+        this(filter, false, EachPermanentScope.ALL_PLAYERS, thenEffect, null);
     }
 
     /**
@@ -59,7 +59,12 @@ public record DestroyAllPermanentsEffect(
      * <em>other</em> creature. Pair with an unconditional {@code CreateTokenEffect} resolving before it.
      */
     public static DestroyAllPermanentsEffect sparingPermanentsCreatedThisResolution(PermanentPredicate filter) {
-        return new DestroyAllPermanentsEffect(filter, false, EachPermanentScope.ALL_PLAYERS, null, true);
+        return sparing(filter, Subjects.createdThisResolution());
+    }
+
+    /** "Destroy the rest", "destroy all other [filter]": all matching permanents but those {@code spared} names. */
+    public static DestroyAllPermanentsEffect sparing(PermanentPredicate filter, PermanentSubject spared) {
+        return new DestroyAllPermanentsEffect(filter, false, EachPermanentScope.ALL_PLAYERS, null, spared);
     }
 
     /** Destroy-all always sweeps the board. */

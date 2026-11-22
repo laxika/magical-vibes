@@ -52,7 +52,7 @@ class SeasonOfWeavingTest extends BaseCardTest {
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(choice.validIds()).containsExactlyInAnyOrder(captain.getId(), bow.getId());
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.ChooseControlledArtifactOrCreatureToCopy.class);
+                .isInstanceOf(PermanentChoiceContext.RecordChosenPermanents.class);
 
         harness.handlePermanentChosen(player1, bow.getId());
 

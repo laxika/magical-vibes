@@ -479,7 +479,8 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
      * same resolution acted on, as the stack entry's resolution scratchpad recorded them, those still on the
      * battlefield as the same objects (CR 400.7). Only for the kinds whose objects stay on the battlefield
      * ({@link StepKind#PUT_COUNTERS}, {@link StepKind#REMOVE_COUNTERS}, {@link StepKind#DEAL_DAMAGE},
-     * {@link StepKind#MANIFEST}: "put a +1/+1 counter on it" after a manifest); tokens created
+     * {@link StepKind#MANIFEST}: "put a +1/+1 counter on it" after a manifest, {@link StepKind#CHOOSE}: "those
+     * creatures" after {@code ChoosePermanentsEffect}); tokens created
      * this way are {@link CreatedThisResolution} and permanents returned this way {@link ReturnedThisResolution}. A step
      * result.
      *
@@ -495,7 +496,7 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
         public ThisWay {
             Objects.requireNonNull(kind, "kind");
             switch (kind) {
-                case PUT_COUNTERS, REMOVE_COUNTERS, DEAL_DAMAGE, MANIFEST -> {
+                case PUT_COUNTERS, REMOVE_COUNTERS, DEAL_DAMAGE, MANIFEST, CHOOSE -> {
                 }
                 case CREATE_TOKEN -> throw new IllegalArgumentException(
                         "Tokens created this way are Subjects.createdThisResolution()");

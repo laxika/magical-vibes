@@ -341,8 +341,6 @@ public class ChoiceHandlerService {
                 || context instanceof ChoiceContext.RevealLibraryNameGuessChoice
                 || context instanceof ChoiceContext.EachPlayerCardNameRevealChoice
                 || context instanceof ChoiceContext.SphinxAmbassadorNameChoice
-                || context instanceof ChoiceContext.NameCardMillGainLifeChoice
-                || context instanceof ChoiceContext.NameCardMillDrawChoice
                 || context instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice
                 || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice
                 || context instanceof ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice;
@@ -356,6 +354,13 @@ public class ChoiceHandlerService {
                 gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         if (isCardNameChoice(colorChoice.context()) && gameQueryService.isCardNameUnchoosable(gameData, colorName)) {
             throw new IllegalArgumentException("The name " + colorName + " can't be chosen");
+        }
+        if (isCardNameChoice(colorChoice.context())
+                && !(colorChoice.context() instanceof ChoiceContext.CreateTokenWithChosenNameChoice)
+                && !isCardNameAllowed(gameData, colorChoice, colorName)) {
+            String qualifier = colorChoice.context() instanceof ChoiceContext.CardNameChoice named
+                    && named.nonbasicLandOnly() ? "nonbasic land " : "";
+            throw new IllegalArgumentException("Invalid " + qualifier + "card name: " + colorName);
         }
         if (colorChoice.context() instanceof ChoiceContext.LandManaDrainAbilityChoice choice) {
             if (!player.getId().equals(colorChoice.playerId())) throw new IllegalStateException("Not your turn to choose");
@@ -714,32 +719,6 @@ public class ChoiceHandlerService {
             return;
         }
 
-        if (colorChoice.context() instanceof ChoiceContext.RevealHandDamageAndExileByNameChoice ctx
-                && (playerInputService.isNameExcludedByType(gameData, colorName, ctx.excludedTypes())
-                || !colorChoice.options().contains(colorName)
-                && !libraryRevealSupport.isCatalogCardNameAllowed(colorName, ctx.excludedTypes()))) {
-            throw new IllegalArgumentException("Invalid card name for the required card types: " + colorName);
-        }
-        if (colorChoice.context() instanceof ChoiceContext.CardNameChoice ctx
-                && !ctx.excludedTypes().isEmpty()
-                && (playerInputService.isNameExcludedByType(gameData, colorName, ctx.excludedTypes())
-                || !colorChoice.options().contains(colorName)
-                && !libraryRevealSupport.isCatalogCardNameAllowed(colorName, ctx.excludedTypes()))) {
-            throw new IllegalArgumentException("Invalid card name for the required card types: " + colorName);
-        }
-        if (colorChoice.context() instanceof ChoiceContext.CardNameChoice ctx
-                && (ctx.nonbasicLandOnly() || ctx.card().getStaticEffects().stream()
-                        .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect choice
-                                && choice.excludeBasicLandNames()))
-                && !colorChoice.options().contains(colorName)) {
-            throw new IllegalArgumentException("Invalid nonbasic land card name: " + colorName);
-        }
-        if (colorChoice.context() instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice ctx
-                && ctx.restrictToAllowedNames()
-                && !colorChoice.options().contains(colorName)
-                && !libraryRevealSupport.isCatalogCardNameAllowed(colorName, ctx.excludedTypes())) {
-            throw new IllegalArgumentException("Invalid restricted card name: " + colorName);
-        }
         if (colorChoice.context() instanceof ChoiceContext.TriggeredModalChoice
                 && !colorChoice.options().contains(colorName)) {
             throw new IllegalArgumentException("Invalid mode: " + colorName);
@@ -984,21 +963,10 @@ public class ChoiceHandlerService {
 
         // Card name choice (Pithing Needle, etc.)
         if (colorChoice.context() instanceof ChoiceContext.CardNameChoice ctx) {
-            if (ctx.requiredType() != null && !colorChoice.options().contains(colorName)) {
-                throw new IllegalArgumentException("Invalid " + ctx.requiredType().getDisplayName().toLowerCase()
-                        + " card name choice: " + colorName);
-            }
             handleCardNameChosen(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseCardNameAtResolutionChoice ctx) {
-            var choice = ctx.choice();
-            if (playerInputService.isNameExcludedByType(gameData, colorName, choice.excludedTypes())
-                    || !colorChoice.options().contains(colorName)
-                    && (choice.requiredType() != null || choice.notBasicLandName()
-                    || !libraryRevealSupport.isCatalogCardNameAllowed(colorName, choice.excludedTypes()))) {
-                throw new IllegalArgumentException("Invalid card name choice: " + colorName);
-            }
             handleChooseCardNameAtResolutionChosen(gameData, player, colorName, ctx);
             return;
         }
@@ -1285,9 +1253,6 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.EachPlayerCardNameRevealChoice ctx) {
-            if (!libraryRevealSupport.isCardNameAllowed(gameData, colorName)) {
-                throw new IllegalArgumentException("Invalid card name: " + colorName);
-            }
             handleEachPlayerCardNameRevealChoice(gameData, player, colorName, ctx);
             return;
         }
@@ -1320,36 +1285,19 @@ public class ChoiceHandlerService {
             handleBecomeChosenColorsChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.NameCardMillGainLifeChoice ctx) {
-            handleNameCardMillGainLifeChoice(gameData, player, colorName, ctx);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice ctx) {
             handleOpponentsCantCastNamedSpellsUntilNextTurnChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.SpellsAndLandsCantBePlayedUntilNextTurnChoice ctx) {
-            if (!libraryRevealSupport.isCardNameAllowed(gameData, colorName)) {
-                throw new IllegalArgumentException("Invalid card name: " + colorName);
-            }
             handleSpellsAndLandsCantBePlayedUntilNextTurnChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.NameCardMillDrawChoice ctx) {
-            handleNameCardMillDrawChoice(gameData, player, colorName, ctx);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx) {
-            if (!libraryRevealSupport.isCardNameAllowed(gameData, colorName)) {
-                throw new IllegalArgumentException("Invalid card name: " + colorName);
-            }
             handleTargetPlayerNameCardRevealTopChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice ctx) {
-            if (!libraryRevealSupport.isCardNameAllowed(gameData, colorName)) {
-                throw new IllegalArgumentException("Invalid card name: " + colorName);
-            }
             handleChooseCardNameForDelayedCreatureCombatDamageChoice(gameData, player, colorName, ctx);
             return;
         }
@@ -1802,6 +1750,41 @@ public class ChoiceHandlerService {
         stateBasedActionService.performStateBasedActions(gameData);
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+    }
+
+    /**
+     * Whether {@code name} answers a "choose a card name" prompt: a card's name without the prompt's excluded types
+     * (CR 201.4, 201.4a). A prompt whose quality only its options express takes only one of them; any other also takes
+     * a name of the catalog it didn't offer. A token's name is none unless a card has it.
+     */
+    private boolean isCardNameAllowed(GameData gameData, PendingInteraction.ColorChoice choice, String name) {
+        List<CardType> excluded = List.of();
+        boolean offeredOnly = false;
+        switch (choice.context()) {
+            case ChoiceContext.CardNameChoice named -> {
+                excluded = named.excludedTypes();
+                offeredOnly = named.revealedNamesOnly() || named.nonbasicLandOnly() || named.requiredType() != null
+                        || named.card() != null && named.card().getStaticEffects().stream()
+                        .anyMatch(effect -> effect instanceof com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect enters
+                                && enters.excludeBasicLandNames());
+            }
+            case ChoiceContext.ChooseCardNameAtResolutionChoice named -> {
+                excluded = named.choice().excludedTypes();
+                offeredOnly = named.choice().requiredType() != null || named.choice().notBasicLandName();
+            }
+            case ChoiceContext.DualCardNameChoice ignored -> offeredOnly = true;
+            case ChoiceContext.ExileByNameChoice ignored -> offeredOnly = true;
+            case ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice named -> excluded = named.excludedTypes();
+            case ChoiceContext.RevealHandDamageAndExileByNameChoice named -> excluded = named.excludedTypes();
+            case ChoiceContext.RevealLibraryNameGuessChoice named -> excluded = named.excludedTypes();
+            default -> {
+            }
+        }
+        if (!excluded.isEmpty() && playerInputService.isNameExcludedByType(gameData, name, excluded)) {
+            return false;
+        }
+        return choice.options().contains(name)
+                || !offeredOnly && libraryRevealSupport.isCatalogCardNameAllowed(name, excluded);
     }
 
     /**
@@ -3312,9 +3295,6 @@ public class ChoiceHandlerService {
     }
 
     private void handleCardNameChosen(GameData gameData, Player player, String cardName, ChoiceContext.CardNameChoice ctx) {
-        if (!libraryRevealSupport.isCardNameAllowed(gameData, cardName)) {
-            throw new IllegalArgumentException("Invalid card name: " + cardName);
-        }
         gameData.interaction.clearAwaitingInput();
 
         Card card = ctx.card();
@@ -7052,7 +7032,7 @@ public class ChoiceHandlerService {
             var nextContext = new ChoiceContext.EachPlayerCardNameRevealChoice(
                     ctx.playerOrder(), updatedNames);
 
-            List<String> cardNames = libraryRevealSupport.collectPublicCardNames(gameData);
+            List<String> cardNames = playerInputService.cardNamesOfferedTo(gameData, nextPlayerId);
             interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
                     nextPlayerId, null, null, nextContext, cardNames, "Choose a card name."));
 
@@ -7115,78 +7095,6 @@ public class ChoiceHandlerService {
         } else {
             inputCompletionService.publishStateAfterInput(gameData);
         }
-    }
-
-    private void handleNameCardMillGainLifeChoice(GameData gameData, Player player, String cardName,
-                                                  ChoiceContext.NameCardMillGainLifeChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
-        String choiceLog = player.getUsername() + " chooses \"" + cardName + "\".";
-        gameLogService.append(gameData, GameLog.text(choiceLog));
-        log.info("Game {} - {} chooses card name \"{}\" (name/mill/gain life)",
-                gameData.id, player.getUsername(), cardName);
-
-        List<Card> matchedCards = millAndMatchingNamedCards(gameData, ctx.targetPlayerId(), cardName);
-        if (!matchedCards.isEmpty()) {
-            Card matched = matchedCards.getFirst();
-            int manaValue = matchedCards.stream().mapToInt(Card::getManaValue).sum();
-            lifeSupport.applyGainLife(gameData, ctx.controllerId(), manaValue);
-            String controllerName = gameData.playerIdToName.get(ctx.controllerId());
-            String lifeLog = controllerName + " gains " + manaValue + " life.";
-            gameLogService.append(gameData, GameLog.text(lifeLog));
-            log.info("Game {} - {} milled the named card {}, {} gains {} life",
-                    gameData.id, gameData.playerIdToName.get(ctx.targetPlayerId()),
-                    matched.getName(), controllerName, manaValue);
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleNameCardMillDrawChoice(GameData gameData, Player player, String cardName,
-                                              ChoiceContext.NameCardMillDrawChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
-        String choiceLog = player.getUsername() + " chooses \"" + cardName + "\".";
-        gameLogService.append(gameData, GameLog.text(choiceLog));
-        log.info("Game {} - {} chooses card name \"{}\" (name/mill/draw)",
-                gameData.id, player.getUsername(), cardName);
-
-        List<Card> matchedCards = millAndMatchingNamedCards(gameData, ctx.targetPlayerId(), cardName);
-        if (!matchedCards.isEmpty()) {
-            Card matched = matchedCards.getFirst();
-            playerInteractionSupport.applyDrawCards(gameData, ctx.controllerId(), 1);
-            String controllerName = gameData.playerIdToName.get(ctx.controllerId());
-            log.info("Game {} - {} milled the named card {}, {} draws a card",
-                    gameData.id, gameData.playerIdToName.get(ctx.targetPlayerId()),
-                    matched.getName(), controllerName);
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Mills one card from {@code targetPlayerId} and returns every milled card whose name matches
-     * {@code cardName}. A replacement effect may mill several cards (Bruvac) or send a milled card to a
-     * public zone other than the graveyard (Leyline of the Void); the card still counts as milled, and an
-     * effect asking about "the milled card" gets one answer per milled card (CR 701.17c, CR 701.17d).
-     */
-    private List<Card> millAndMatchingNamedCards(GameData gameData, UUID targetPlayerId, String cardName) {
-        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-        List<Card> libraryBefore = deck == null ? List.of() : new ArrayList<>(deck);
-
-        graveyardService.resolveMillPlayer(gameData, targetPlayerId, 1);
-
-        Set<UUID> libraryAfter = new LinkedHashSet<>();
-        if (deck != null) {
-            deck.forEach(card -> libraryAfter.add(card.getId()));
-        }
-        List<Card> matched = new ArrayList<>();
-        for (Card card : libraryBefore) {
-            if (!libraryAfter.contains(card.getId()) && card.getName().equals(cardName)) {
-                matched.add(card);
-            }
-        }
-        return matched;
     }
 
     private void handleOpponentsCantCastNamedSpellsUntilNextTurnChoice(GameData gameData, Player player,
@@ -7310,7 +7218,7 @@ public class ChoiceHandlerService {
         Card topCard = deck.getFirst();
         gameLogService.append(gameData, GameLog.textCardText(targetName + " reveals ", topCard, "."));
 
-        if (topCard.getName().equals(cardName)) {
+        if (topCard.hasName(cardName)) {
             deck.removeFirst();
             gameData.addCardToHand(targetPlayerId, topCard);
             gameLogService.append(gameData, GameLog.textCardText(targetName + " puts ", topCard, " into their hand."));
@@ -7360,24 +7268,6 @@ public class ChoiceHandlerService {
         damageSupport.dealDamageToPlayer(gameData, damageEntry, targetPlayerId, ctx.damageOnMiss());
     }
 
-    private List<String> collectAllCardNamesInGame(GameData gameData) {
-        Set<String> names = new TreeSet<>();
-        for (UUID pid : gameData.playerIds) {
-            gameData.playerBattlefields.getOrDefault(pid, List.of())
-                    .forEach(p -> names.add(p.getCard().getName()));
-            gameData.playerHands.getOrDefault(pid, List.of())
-                    .forEach(c -> names.add(c.getName()));
-            gameData.playerGraveyards.getOrDefault(pid, List.of())
-                    .forEach(c -> names.add(c.getName()));
-            gameData.playerDecks.getOrDefault(pid, List.of())
-                    .forEach(c -> names.add(c.getName()));
-            gameData.getPlayerExiledCards(pid)
-                    .forEach(c -> names.add(c.getName()));
-        }
-        gameData.stack.forEach(se -> names.add(se.getCard().getName()));
-        return new ArrayList<>(names);
-    }
-
     private void handleExileByNameChoice(GameData gameData, String cardName, ChoiceContext.ExileByNameChoice ctx) {
         PendingInteraction.ColorChoice choice =
                 gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
@@ -7400,17 +7290,17 @@ public class ChoiceHandlerService {
 
         List<Card> hand = gameData.playerHands.get(targetPlayerId);
         if (hand != null) {
-            matchingCards.addAll(hand.stream().filter(c -> c.getName().equals(cardName)).toList());
+            matchingCards.addAll(hand.stream().filter(c -> c.hasName(cardName)).toList());
         }
 
         List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
         if (graveyard != null) {
-            matchingCards.addAll(graveyard.stream().filter(c -> c.getName().equals(cardName)).toList());
+            matchingCards.addAll(graveyard.stream().filter(c -> c.hasName(cardName)).toList());
         }
 
         List<Card> library = gameData.playerDecks.get(targetPlayerId);
         if (library != null) {
-            matchingCards.addAll(library.stream().filter(c -> c.getName().equals(cardName)).toList());
+            matchingCards.addAll(library.stream().filter(c -> c.hasName(cardName)).toList());
         }
 
         if (matchingCards.isEmpty()) {
@@ -7463,7 +7353,7 @@ public class ChoiceHandlerService {
         }
 
         // Damage = damagePerCard for each copy with the chosen name revealed from hand this way.
-        long copiesInHand = hand == null ? 0 : hand.stream().filter(c -> c.getName().equals(cardName)).count();
+        long copiesInHand = hand == null ? 0 : hand.stream().filter(c -> c.hasName(cardName)).count();
         int damage = (int) (copiesInHand * ctx.damagePerCard());
         if (damage > 0) {
             StackEntry damageEntry = new StackEntry(
@@ -7474,9 +7364,9 @@ public class ChoiceHandlerService {
 
         // CR 701.23b: graveyard copies are found mandatorily, while the controller may choose any number
         // of the hand and library copies to find. Without hidden-zone copies, nothing is left to choose.
-        boolean hiddenZoneCopies = (hand != null && hand.stream().anyMatch(c -> c.getName().equals(cardName)))
+        boolean hiddenZoneCopies = (hand != null && hand.stream().anyMatch(c -> c.hasName(cardName)))
                 || (gameData.playerDecks.get(targetPlayerId) != null
-                && gameData.playerDecks.get(targetPlayerId).stream().anyMatch(c -> c.getName().equals(cardName)));
+                && gameData.playerDecks.get(targetPlayerId).stream().anyMatch(c -> c.hasName(cardName)));
         if (hiddenZoneCopies) {
             playerInputService.beginMultiZoneExileChoice(
                     gameData, controllerId, collectMatchingCards(gameData, targetPlayerId, cardName),
@@ -7489,7 +7379,7 @@ public class ChoiceHandlerService {
         int exiledCount = 0;
 
         if (hand != null) {
-            List<Card> toExile = hand.stream().filter(c -> c.getName().equals(cardName)).toList();
+            List<Card> toExile = hand.stream().filter(c -> c.hasName(cardName)).toList();
             hand.removeAll(toExile);
             toExile.forEach(card -> gameData.addToExile(targetPlayerId, card));
             exiledCount += toExile.size();
@@ -7497,7 +7387,7 @@ public class ChoiceHandlerService {
 
         List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
         if (graveyard != null) {
-            List<Card> toExile = graveyard.stream().filter(c -> c.getName().equals(cardName)).toList();
+            List<Card> toExile = graveyard.stream().filter(c -> c.hasName(cardName)).toList();
             graveyard.removeAll(toExile);
             toExile.forEach(card -> gameData.addToExile(targetPlayerId, card));
             if (!toExile.isEmpty()) {
@@ -7508,7 +7398,7 @@ public class ChoiceHandlerService {
 
         List<Card> library = gameData.playerDecks.get(targetPlayerId);
         if (library != null) {
-            List<Card> toExile = library.stream().filter(c -> c.getName().equals(cardName)).toList();
+            List<Card> toExile = library.stream().filter(c -> c.hasName(cardName)).toList();
             library.removeAll(toExile);
             toExile.forEach(card -> gameData.addToExile(targetPlayerId, card));
             exiledCount += toExile.size();
@@ -7532,13 +7422,13 @@ public class ChoiceHandlerService {
         List<Card> graveyard = gameData.playerGraveyards.get(targetPlayerId);
         List<Card> library = gameData.playerDecks.get(targetPlayerId);
         if (hand != null) {
-            matchingCards.addAll(hand.stream().filter(card -> card.getName().equals(cardName)).toList());
+            matchingCards.addAll(hand.stream().filter(card -> card.hasName(cardName)).toList());
         }
         if (graveyard != null) {
-            matchingCards.addAll(graveyard.stream().filter(card -> card.getName().equals(cardName)).toList());
+            matchingCards.addAll(graveyard.stream().filter(card -> card.hasName(cardName)).toList());
         }
         if (library != null) {
-            matchingCards.addAll(library.stream().filter(card -> card.getName().equals(cardName)).toList());
+            matchingCards.addAll(library.stream().filter(card -> card.hasName(cardName)).toList());
         }
         return matchingCards;
     }
@@ -7611,9 +7501,6 @@ public class ChoiceHandlerService {
      */
     private void handleRevealLibraryNameGuessChoice(GameData gameData, String cardName,
             ChoiceContext.RevealLibraryNameGuessChoice ctx) {
-        if (!playerInputService.isOfferedCardNameExcludingTypes(gameData, cardName, ctx.excludedTypes())) {
-            throw new IllegalArgumentException("Choose a nonland card name");
-        }
         gameData.interaction.clearAwaitingInput();
 
         String controllerName = gameData.playerIdToName.get(ctx.controllerId());
@@ -7743,7 +7630,7 @@ public class ChoiceHandlerService {
         }
 
         boolean isCreature = selectedCard.hasType(CardType.CREATURE);
-        boolean nameDoesNotMatch = !selectedCard.getName().equals(cardName);
+        boolean nameDoesNotMatch = !selectedCard.hasName(cardName);
         boolean blockedByCage = gameQueryService.isCardBlockedFromEnteringFromZone(gameData, selectedCard, Zone.LIBRARY);
 
         if (isCreature && nameDoesNotMatch && !blockedByCage) {

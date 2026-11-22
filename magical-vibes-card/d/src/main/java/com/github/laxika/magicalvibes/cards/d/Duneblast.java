@@ -2,7 +2,11 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ChooseUpToOneCreatureDestroyRestEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "KTK", collectorNumber = "174")
 @CardRegistration(set = "DMC", collectorNumber = "148")
@@ -12,6 +16,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseUpToOneCreatureDestroyR
 public class Duneblast extends Card {
 
     public Duneblast() {
-        addSpellEffect(new ChooseUpToOneCreatureDestroyRestEffect());
+        addSpellEffect(ChoosePermanentsEffect.upTo(1, Subjects.allCreatures(), "up to one creature to keep"));
+        addSpellEffect(DestroyAllPermanentsEffect.sparing(
+                new PermanentIsCreaturePredicate(), Subjects.thisWay(StepKind.CHOOSE)));
     }
 }

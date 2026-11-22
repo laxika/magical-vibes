@@ -2366,3 +2366,29 @@ ChooseCardFromHandAndApplyPerpetualPowerToughnessAndCostReductionEffect,split,9,
 ChooseCardFromHandToPerpetuallyGrantActivatedAbilityEffect,split,9,run 14: ChooseCardEffect.announced(cardsInYourHand) + PerpetuallyGrantCardCharacteristicsEffect.to
 ChooseCardExiledWithSourceMayPlayThisTurnEffect,split,9,run 14: ChooseCardEffect over exiledWithSource + AllowPlayCardsFromExileEffect.thisTurn
 ChooseNonlandCardExiledWithSourceMayCastEffect,split,9,run 14: ChooseCardEffect over cardsThisWay(EXILE; nonland) + AllowPlayCardsFromExileEffect.whileExiled with any mana
+ChoosePermanentsEffect,survivor,9,"run 15: new record (candidates subject, minimum, maximum, a quality that must differ); records CHOOSE for thisWay(CHOOSE)"
+PerpetuallyGrantAbilitiesEffect,survivor,9,"run 15: new record (card subject, abilities); absorbs the matching-hand grant and the second half of three choices"
+DestroyAllPermanentsEffect,survivor,9,run 15: sparesPermanentsCreatedThisResolution became a spared PermanentSubject (destroy the rest)
+PerpetuallyBoostTargetCreatureEffect,survivor,9,run 15: takes a PermanentSubject (a chosen creature); the source sibling still follows a card across zones: step 10
+TargetPlayerGainsControlOfSourceCreatureEffect,survivor,9,run 15: playersThisWay gains control of target(); a follow-up reading a control change still has no GAIN_CONTROL kind
+ChooseUpToOneCreatureDestroyRestEffect,split,9,run 15: ChoosePermanentsEffect.upTo + DestroyAllPermanentsEffect.sparing
+ChooseUpToTwoCreaturesDestroyRestEffect,split,9,run 15: ChoosePermanentsEffect.upTo + DestroyAllPermanentsEffect.sparing
+ChooseCreatureOrPlaneswalkerDestroyRestEffect,split,9,run 15: ChoosePermanentsEffect.exactly + DestroyAllPermanentsEffect.sparing
+ChooseUpToOnePermanentEffect,split,9,run 15: ChoosePermanentsEffect.upTo + the counter and keyword verbs over thisWay(CHOOSE)
+ChooseOpponentPermanentsAndPutCountersEffect,split,9,run 15: ChoosePermanentsEffect.exactly + PutCounterOnTargetPermanentEffect over thisWay(CHOOSE)
+ChooseCreaturesWithDifferentManaValuesDestroyEffect,split,9,run 15: ChoosePermanentsEffect.withDifferent + DestroyTargetPermanentEffect over thisWay(CHOOSE)
+ChooseCreaturesWithDifferentPowersBoostAndGrantVigilanceEffect,split,9,run 15: ChoosePermanentsEffect.withDifferent + the boost and keyword verbs over thisWay(CHOOSE)
+ChooseCreaturesWithDifferentPowersGrantDoubleStrikeEffect,split,9,run 15: ChoosePermanentsEffect.withDifferent + GrantKeywordEffect over thisWay(CHOOSE)
+ChooseOpponentCreatureThenBoostOthersEffect,split,9,"run 15: ChoosePermanentsEffect.exactly + BoostTargetCreatureEffect over except(otherCreatures, chosen)"
+ChooseControlledArtifactOrCreatureTokenCopyEffect,split,9,run 15: ChoosePermanentsEffect.exactly + the token-copy step over thisWay(CHOOSE)
+ChooseCreaturesToBlockThisTurnIfAbleEffect,split,9,run 15: ChoosePermanentsEffect.anyNumber + SetCombatRequirementThisTurnEffect over thisWay(CHOOSE)
+ChooseOpponentCreatureAndPerpetuallyBoostEffect,split,9,run 15: ChoosePermanentsEffect.exactly + PerpetuallyBoostTargetCreatureEffect over thisWay(CHOOSE) (was blocked on the choice subject)
+ChooseUpToNMatchingCreaturesThenMayExileRestEffect,split,9,"run 15: ChoosePermanentsEffect.upTo + MayEffect of the exile over except(allCreatures, chosen) and the damage"
+ChoosePlaneswalkerTypeOnEnterEffect,absorbed,9,run 15: ChooseSubtypeOnEnterEffect(CardSubtype.planeswalkerTypes())
+ChooseAnotherPlayerGainsControlOfTargetPermanentEffect,split,9,"run 15: ChoosePlayerEffect + TargetPlayerGainsControlOfSourceCreatureEffect(playersThisWay, target())"
+ChooseCardFromHandToPerpetuallyGrantTriggeredAbilityEffect,split,9,run 15: ChooseCardEffect.announced + PerpetuallyGrantAbilitiesEffect
+ChooseCardsFromHandToPerpetuallyGrantTriggeredAbilityEffect,split,9,run 15: ChooseCardEffect.upTo + PerpetuallyGrantAbilitiesEffect
+PerpetuallyGrantTriggeredAbilityToRandomMatchingHandCardEffect,split,9,run 15: ChooseCardEffect.atRandom + PerpetuallyGrantAbilitiesEffect
+PerpetuallyGrantTriggeredAbilityToMatchingHandCardsEffect,absorbed,9,run 15: PerpetuallyGrantAbilitiesEffect(cardsInYourHand(filter))
+NameCardMillTargetGainLifeEffect,split,9,run 15: the name step + MillEffect + GainLifeEffect(AmountThisWay.milledManaValue) if named
+NameCardMillTargetDrawEffect,split,9,run 15: the name step + MillEffect + DrawCardEffect if named

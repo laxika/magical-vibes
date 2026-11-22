@@ -1141,11 +1141,13 @@ public class AmountEvaluationService {
         }
         if (thisWay.cardFilter() != null) {
             UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
-            return (int) results.outcome(thisWay.kind()).objectIds().stream()
+            boolean manaValue = thisWay.stat() == AmountThisWay.Stat.MANA_VALUE;
+            return results.outcome(thisWay.kind()).objectIds().stream()
                     .map(id -> gameQueryService.findCardById(gameData, id))
                     .filter(card -> card != null && predicateEvaluationService.matchesCardPredicate(
-                            card, thisWay.cardFilter(), sourceCardId))
-                    .count();
+                            card, thisWay.cardFilter(), sourceCardId, gameData, gameData.ownerOf(card)))
+                    .reduce(0, (total, card) -> SaturatingMath.add(total, manaValue ? card.getManaValue() : 1),
+                            SaturatingMath::add);
         }
         if (thisWay.stat() == AmountThisWay.Stat.STILL_EXILED) {
             return stillExiled(gameData, results.outcome(StepKind.EXILE));

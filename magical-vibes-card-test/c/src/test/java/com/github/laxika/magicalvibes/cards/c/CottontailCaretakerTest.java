@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -141,5 +142,20 @@ class CottontailCaretakerTest extends BaseCardTest {
             resolveAllTriggers();
             harness.handleCardChosen(player1, 2 - i);
         }
+    }
+
+    @Test
+    @DisplayName("The log doesn't name the card chosen from the hand")
+    void logDoesNotNameTheChosenHandCard() {
+        harness.setHand(player1, List.of(new CottontailCaretaker(), new GlorySeeker()));
+        harness.addMana(player1, ManaColor.WHITE, 2);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Glory Seeker"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().contains("perpetually gains"));
     }
 }

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -89,5 +90,19 @@ class SparasBodyguardTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.addMana(player1, ManaColor.WHITE, 1);
         harness.addMana(player1, ManaColor.BLUE, 1);
+    }
+
+    @Test
+    @DisplayName("The log doesn't name the card chosen from the hand")
+    void logDoesNotNameTheChosenHandCard() {
+        harness.setHand(player1, List.of(new SparasBodyguard(), new GrizzlyBears()));
+        addBodyguardMana();
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+
+        harness.handleCardChosen(player1, 0);
+
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Grizzly Bears"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().contains("perpetually gains"));
     }
 }

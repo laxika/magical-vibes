@@ -1897,7 +1897,7 @@ Do these individually; each is self-contained. Reassess before starting — seve
 | `EachPlayerDiscardsHandThenDrawsEffect(mode)` | 2 classes | **Surfaces a bug**: one handler sets `discardCausedByOpponent = false` unconditionally, the other `!playerId.equals(controllerId)`. The `false` looks wrong |
 | `MakeCreatureUnblockableEffect(+ massFilter)` | `MakeAllCreaturesUnblockableEffect` (1) | `targetSpec()` becomes three-way; 34 existing call sites must keep their current spec |
 | `SetPreparedEffect(boolean prepared)` | 2 classes | Pre-existing inconsistency: one is `benign(CREATURE)`, the other `benign(PERMANENT)`. Merging forces a decision |
-| `NameCardMillTargetEffect(reward)` | 2 classes | Also collapses 2 `ChoiceContext` records + 2 `ChoiceHandlerService` methods. **Changes a Jackson-serialized wire shape — do alone** |
+| `NameCardMillTargetEffect(reward)` | 2 classes | Done another way (effect-cleanup step 9, run 15): both split into the name step, `MillEffect` and a conditional reward; their two contexts and methods are gone |
 | `PutCounterOnEachMatchingPermanentEffect` | `PutPlusOnePlusOneCounterOnEachCreatureTargetPlayerControlsEffect` (2) | Survivor's javadoc already names this case. Confirm the `entry.targetsForEffect(effect)` fallback |
 | `PutTargetIntoLibraryNFromTopEffect(position, allowSpellTarget, targetFilter)` | 2 classes | The spell path is gated by a class-keyed stack validator that must become field-driven |
 | `ShuffleTargetCardsFromGraveyardIntoLibraryEffect(+ targetPlayer)` | 1 class | `boolean targetPlayer` is already the idiom in this family. Unify on `GraveyardReturnSupport.processTargetedGraveyardCards` |

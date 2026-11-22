@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.EffectHandler;
 import com.github.laxika.magicalvibes.service.effect.EffectHandlerRegistry;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -46,6 +47,7 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
     private final PredicateEvaluationService predicateEvaluationService;
     private final EffectHandlerRegistry effectHandlerRegistry;
     private final GameOutcomeService gameOutcomeService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -72,11 +74,10 @@ public class DestroyAllPermanentsEffectHandler implements NormalEffectHandlerBea
         // "With that spell's mana value" (Celestial Kirin) reads the triggering spell as the ability resolves.
         PermanentPredicate filter = AmountEvaluationService.bindTriggeringSpellManaValue(gameData, e.filter(), entry);
 
-        // "Destroy all other creatures" (Martial Coup): spare permanents this same resolution just
-        // created, so the Soldier tokens made moments earlier survive the wipe.
-        List<UUID> sparedIds = e.sparesPermanentsCreatedThisResolution()
-                ? entry.getCreatedPermanentIds()
-                : List.of();
+        // "Destroy all other creatures" (Martial Coup), "destroy the rest" (Duneblast): spare what an earlier step of
+        // this resolution created or chose.
+        List<UUID> sparedIds = e.spared() == null
+                ? List.of() : subjectResolutionService.permanentIds(gameData, entry, e, e.spared());
 
         List<Permanent> toDestroy = new ArrayList<>();
         // Controllers are captured before destruction — afterwards the permanents are gone and their
