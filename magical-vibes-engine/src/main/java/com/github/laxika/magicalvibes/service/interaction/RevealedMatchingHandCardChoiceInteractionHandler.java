@@ -10,8 +10,6 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
@@ -90,17 +88,6 @@ public class RevealedMatchingHandCardChoiceInteractionHandler
 
         gameData.interaction.clearAwaitingInput();
         pendingEntry.setChosenObjectCard(chosen);
-        int previousEffectIndex = gameData.pendingEffectResolutionIndex - 1;
-        if (interaction.keepInHand()
-                && interaction.choosingPlayerId().equals(interaction.targetPlayerId())
-                && previousEffectIndex >= 0
-                && previousEffectIndex < pendingEntry.getEffectsToResolve().size()
-                && (pendingEntry.getEffectsToResolve().get(previousEffectIndex) instanceof MayEffect may
-                ? may.wrapped() : pendingEntry.getEffectsToResolve().get(previousEffectIndex))
-                instanceof RevealSubtypeFromHandEffect) {
-            cardRevealService.revealMatchingHandCardsToAllPlayers(
-                    gameData, interaction.targetPlayerId(), List.of(chosen));
-        }
         if (interaction.keepInHand()) {
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " keeps ", chosen, " in "

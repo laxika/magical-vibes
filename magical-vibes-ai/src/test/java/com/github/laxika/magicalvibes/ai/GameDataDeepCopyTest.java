@@ -103,6 +103,7 @@ class GameDataDeepCopyTest {
         StackEntry parked = new StackEntry(
                 StackEntryType.SORCERY_SPELL, new GrizzlyBears(), player1.getId(), "Parked spell", List.of());
         parked.setChosenParity(com.github.laxika.magicalvibes.model.ManaValueParity.ODD);
+        parked.setChosenCardName("Grizzly Bears");
         gd.pendingEffectResolutionEntry = parked;
 
         GameData copy = gd.simulationCopy();
@@ -113,6 +114,7 @@ class GameDataDeepCopyTest {
         assertThat(copy.graveyardTargetOperation.chooseCardIndex).isEqualTo(2);
         assertThat(copy.pendingEffectResolutionEntry.getChosenParity())
                 .isEqualTo(com.github.laxika.magicalvibes.model.ManaValueParity.ODD);
+        assertThat(copy.pendingEffectResolutionEntry.getChosenCardName()).isEqualTo("Grizzly Bears");
     }
 
     @Test

@@ -3,14 +3,23 @@ package com.github.laxika.magicalvibes.ai.interaction;
 import com.github.laxika.magicalvibes.ai.AiGameActions;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardHasNameChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.LandManaEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
@@ -31,6 +40,8 @@ import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -285,6 +296,92 @@ class ColorChoiceAiStrategyTest {
     }
 
     @Test
+    @DisplayName("A name chosen for a reveal from the AI's hand is the one that hand holds most of")
+    void nameForOwnHandRevealComesFromThatHand() {
+        addOpponent();
+        gameData.playerHands.put(aiPlayerId, new ArrayList<>(List.of(namedCard("Own Once"), namedCard("Own Twice"),
+                namedCard("Own Twice"))));
+        gameData.playerDecks.put(aiPlayerId, new ArrayList<>(List.of(namedCard("In Library"), namedCard("In Library"),
+                namedCard("In Library"))));
+
+        assertThat(nameChosenFor(null, RevealCardsFromHandEffect.atRandom(Subjects.you(), 1))).isEqualTo("Own Twice");
+    }
+
+    @Test
+    @DisplayName("A name chosen for a reveal from the AI's library is the one that library holds most of")
+    void nameForOwnLibraryRevealComesFromThatLibrary() {
+        addOpponent();
+        gameData.playerHands.put(aiPlayerId, new ArrayList<>(List.of(namedCard("Own Once"), namedCard("Own Once"),
+                namedCard("Own Once"))));
+        gameData.playerDecks.put(aiPlayerId, new ArrayList<>(List.of(namedCard("In Library"), namedCard("Own Twice"),
+                namedCard("Own Twice"))));
+
+        assertThat(nameChosenFor(null, new RevealTopCardOfLibraryEffect(Subjects.you()))).isEqualTo("Own Twice");
+    }
+
+    @Test
+    @DisplayName("Targeting itself, the AI names a card of the hand it reveals")
+    void nameForSelfTargetedRevealComesFromOwnHand() {
+        addOpponent();
+        gameData.playerHands.put(aiPlayerId, new ArrayList<>(List.of(namedCard("Own Once"))));
+
+        assertThat(nameChosenFor(aiPlayerId, RevealCardsFromHandEffect.hand(Subjects.targetPlayer())))
+                .isEqualTo("Own Once");
+    }
+
+    @Test
+    @DisplayName("A name chosen for an opponent's hand is a card seen of theirs, never one only hidden zones hold")
+    void nameForOpponentHandComesFromPublicZones() {
+        UUID opponentId = addOpponent();
+        gameData.playerHands.put(opponentId, new ArrayList<>(List.of(namedCard("Secret"), namedCard("Secret"))));
+        gameData.playerDecks.put(opponentId, new ArrayList<>(List.of(namedCard("Secret"), namedCard("Secret"))));
+        Permanent faceDown = new Permanent(namedCard("Secret"));
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        gameData.playerBattlefields.put(opponentId, new ArrayList<>(List.of(faceDown)));
+        gameData.addToExile(opponentId, namedCard("Secret"), UUID.randomUUID(), true);
+        gameData.playerGraveyards.put(opponentId, new ArrayList<>(List.of(namedCard("Seen"))));
+        gameData.playerHands.put(aiPlayerId, new ArrayList<>(List.of(namedCard("Own Once"))));
+
+        assertThat(nameChosenFor(opponentId, RevealCardsFromHandEffect.hand(Subjects.targetPlayer())))
+                .isEqualTo("Seen");
+    }
+
+    @Test
+    @DisplayName("With nothing of the opponent's seen, the AI names one of its own cards")
+    void nameWithNothingSeenComesFromOwnCards() {
+        UUID opponentId = addOpponent();
+        gameData.playerHands.put(opponentId, new ArrayList<>(List.of(namedCard("Secret"))));
+        gameData.playerDecks.put(aiPlayerId, new ArrayList<>(List.of(namedCard("Own Once"))));
+
+        assertThat(nameChosenFor(opponentId, RevealCardsFromHandEffect.hand(Subjects.targetPlayer())))
+                .isEqualTo("Own Once");
+    }
+
+    @Test
+    @DisplayName("The AI names only a choosable card among those it knows")
+    void nameKnownButUnchoosableIsSkipped() {
+        addOpponent();
+        when(gameQueryService.isCardNameUnchoosable(eq(gameData), anyString()))
+                .thenAnswer(call -> "Own Twice".equals(call.getArgument(1)));
+        gameData.playerHands.put(aiPlayerId, new ArrayList<>(List.of(namedCard("Own Once"), namedCard("Own Twice"),
+                namedCard("Own Twice"))));
+
+        assertThat(nameChosenFor(null, RevealCardsFromHandEffect.atRandom(Subjects.you(), 1))).isEqualTo("Own Once");
+    }
+
+    @Test
+    @DisplayName("A dig whose next card's name can't be chosen names another card of the library")
+    void digSkipsUnchoosableNameForAnotherLibraryCard() {
+        addOpponent();
+        when(gameQueryService.isCardNameUnchoosable(eq(gameData), anyString()))
+                .thenAnswer(call -> "In Library".equals(call.getArgument(1)));
+        gameData.playerDecks.put(aiPlayerId, new ArrayList<>(List.of(namedCard("In Library"), namedCard("Own Once"))));
+
+        assertThat(nameChosenFor(null, new RevealCardsFromTopUntilEffect(
+                new CardHasNameChosenThisResolutionPredicate()))).isEqualTo("Own Once");
+    }
+
+    @Test
     @DisplayName("Free-form name guess falls back to another visible card when its pick can't be chosen")
     void freeFormNameGuessAvoidsUnchoosableName() {
         Card glimpse = mock(Card.class);
@@ -307,5 +404,44 @@ class ColorChoiceAiStrategyTest {
         ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
         verify(gameActions).answerInteraction(captor.capture());
         assertThat(captor.getValue()).isEqualTo(new InteractionAnswer.ListChoiceMade("Grizzly Bears"));
+    }
+
+    private UUID addOpponent() {
+        UUID opponentId = UUID.randomUUID();
+        gameData.orderedPlayerIds.add(aiPlayerId);
+        gameData.orderedPlayerIds.add(opponentId);
+        gameData.playerIds.add(aiPlayerId);
+        gameData.playerIds.add(opponentId);
+        return opponentId;
+    }
+
+    private static Card namedCard(String name) {
+        Card card = new Card();
+        card.setName(name);
+        card.setType(CardType.CREATURE);
+        return card;
+    }
+
+    /** The name the AI answers with from a catalog-sized list, as a resolution's "choose a card name" step asks. */
+    private String nameChosenFor(UUID targetId, CardEffect next) {
+        List<String> options = new ArrayList<>();
+        for (int i = 0; i < 30_000; i++) {
+            options.add("Aardvark %05d".formatted(i));
+        }
+        options.addAll(List.of("In Library", "Own Once", "Own Twice", "Secret", "Seen"));
+        var choose = new ChooseCardNameAtResolutionEffect();
+        Card source = namedCard("Source");
+        gameData.pendingEffectResolutionEntry = new StackEntry(StackEntryType.SORCERY_SPELL, source, aiPlayerId,
+                "Source", List.of(choose, next), targetId, (UUID) null);
+        PendingInteraction.ColorChoice interaction = new PendingInteraction.ColorChoice(aiPlayerId, null, null,
+                new ChoiceContext.ChooseCardNameAtResolutionChoice(source, aiPlayerId, null, choose, null),
+                options, "Choose a card name.");
+
+        strategy.answer(interaction, new AiInteractionContext(
+                gameData, gameData.id, aiPlayerId, gameQueryService, gameActions));
+
+        ArgumentCaptor<InteractionAnswer> captor = ArgumentCaptor.forClass(InteractionAnswer.class);
+        verify(gameActions).answerInteraction(captor.capture());
+        return ((InteractionAnswer.ListChoiceMade) captor.getValue()).choice();
     }
 }

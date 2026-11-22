@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.p;
 import com.github.laxika.magicalvibes.cards.a.AlhammarretsArchive;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.s.SagesOfTheAnima;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -15,7 +16,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({PactWeapon.class, GrizzlyBears.class, Forest.class, AlhammarretsArchive.class})
+@CardUsed({PactWeapon.class, GrizzlyBears.class, Forest.class, AlhammarretsArchive.class, SagesOfTheAnima.class})
 class PactWeaponTest extends BaseCardTest {
 
     @Test
@@ -207,5 +208,24 @@ class PactWeaponTest extends BaseCardTest {
         assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, creature)).isEqualTo(2);
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
+    }
+
+    @Test
+    @DisplayName("A card a replaced draw puts into the hand is not revealed, boosts nothing and costs no life")
+    void cardPutIntoHandInsteadOfTheDrawIsNotRevealed() {
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent weapon = harness.addToBattlefieldAndReturn(player1, new PactWeapon());
+        weapon.setAttachedTo(creature.getId());
+        harness.addToBattlefield(player1, new SagesOfTheAnima());
+        Card putIntoHand = new GrizzlyBears();
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(putIntoHand));
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(putIntoHand);
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gqs.getEffectivePower(gd, creature)).isEqualTo(2);
     }
 }

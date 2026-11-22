@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardExiledWithSourceMayPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesFromHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -33,7 +36,8 @@ public class MuseVessel extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{1}",
-                List.of(new ChooseCardExiledWithSourceMayPlayThisTurnEffect()),
+                List.of(ChooseCardEffect.announced(Subjects.exiledWithSource(), "a card exiled with this artifact"),
+                        AllowPlayCardsFromExileEffect.thisTurn(Subjects.cardsThisWay(StepKind.CHOOSE))),
                 "{1}: Choose a card exiled with this artifact. You may play that card this turn."
         ));
     }

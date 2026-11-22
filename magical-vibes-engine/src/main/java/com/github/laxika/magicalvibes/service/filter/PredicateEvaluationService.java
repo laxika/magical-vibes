@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.filter;
 
+import com.github.laxika.magicalvibes.model.filter.CardHasNameChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AdventureCast;
@@ -752,6 +753,11 @@ public class PredicateEvaluationService {
                 CardType chosenType = source == null ? null : source.getChosenCardType();
                 yield chosenType != null
                         && gameQueryService.cardHasType(card, chosenType, gameData, cardOwnerId);
+            }
+            case CardHasNameChosenThisResolutionPredicate ignored -> {
+                StackEntry resolving = resolving(gameData);
+                String chosen = resolving == null ? null : resolving.getChosenCardName();
+                yield chosen != null && card.hasName(chosen);
             }
             case CardHasSourceChosenNamePredicate ignored -> {
                 if (gameData == null || sourceCardId == null) {

@@ -32,7 +32,7 @@ class DivinersLockboxTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player1.getId());
-        assertThat(choice.context()).isInstanceOf(ChoiceContext.ChooseCardNameRevealTopCardChoice.class);
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ChooseCardNameAtResolutionChoice.class);
     }
 
     @Test

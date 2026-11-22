@@ -5,9 +5,13 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.ChooseNameRevealRandomCardsFromTargetHandDiscardMatchingEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardHasNameChosenThisResolutionPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -19,10 +23,13 @@ import java.util.List;
 public class DementiaSliver extends Card {
 
     public DementiaSliver() {
+        CardPredicate named = new CardHasNameChosenThisResolutionPredicate();
         ActivatedAbility dementiaAbility = new ActivatedAbility(
                 true,
                 null,
-                List.of(new ChooseNameRevealRandomCardsFromTargetHandDiscardMatchingEffect(1)),
+                List.of(new ChooseCardNameAtResolutionEffect(),
+                        RevealCardsFromHandEffect.atRandom(Subjects.targetPlayer(), 1),
+                        new DiscardCardsEffect(Subjects.revealedThisWay(named))),
                 "{T}: Choose a card name. Target opponent reveals a card at random from their hand. "
                         + "If that card has the chosen name, that player discards it. Activate only during your turn.",
                 new PlayerPredicateTargetFilter(

@@ -57,7 +57,6 @@ import com.github.laxika.magicalvibes.model.effect.EarthbendTargetLandEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
 import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealSubtypeFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerWithMostCreaturesGainsControlOfSourceCreatureEffect;
@@ -317,6 +316,19 @@ class StepTriggerServiceTest {
                         .toStaticBonus(0, 0, false));
         lenient().when(gameQueryService.getEffectiveGraveyardTriggeredAbilities(eq(gd), any(Card.class)))
                 .thenAnswer(invocation -> ((Card) invocation.getArgument(1)).getTriggeredAbilities());
+    }
+
+    private static com.github.laxika.magicalvibes.model.effect.CardEffect revealDinosaurToGainLife() {
+        return com.github.laxika.magicalvibes.model.effect.SequenceEffect.of(
+                com.github.laxika.magicalvibes.model.effect.ChooseCardEffect.oneOf(Subjects.cardsInYourHand(
+                        new com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate(CardSubtype.DINOSAUR)),
+                        "a Dinosaur card"),
+                com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect.cards(Subjects.you(),
+                        Subjects.cardsThisWay(com.github.laxika.magicalvibes.model.StepKind.CHOOSE)),
+                new com.github.laxika.magicalvibes.model.effect.ConditionalEffect(
+                        new com.github.laxika.magicalvibes.model.condition.HappenedThisWay(
+                                com.github.laxika.magicalvibes.model.StepKind.REVEAL),
+                        new GainLifeEffect(2)));
     }
 
     @Nested
@@ -1484,7 +1496,7 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             Card priestCard = createCardWithName("Priest of the Wakening Sun");
             priestCard.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                    new MayEffect(new RevealSubtypeFromHandEffect(CardSubtype.DINOSAUR, new GainLifeEffect(2)),
+                    new MayEffect(revealDinosaurToGainLife(),
                             "Reveal a Dinosaur card from your hand to gain 2 life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(priestCard));
 
@@ -1505,7 +1517,7 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             Card priestCard = createCardWithName("Priest of the Wakening Sun");
             priestCard.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                    new MayEffect(new RevealSubtypeFromHandEffect(CardSubtype.DINOSAUR, new GainLifeEffect(2)),
+                    new MayEffect(revealDinosaurToGainLife(),
                             "Reveal a Dinosaur card from your hand to gain 2 life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(priestCard));
 
@@ -1527,7 +1539,7 @@ class StepTriggerServiceTest {
             gd.turnNumber = 2;
             Card priestCard = createCardWithName("Priest of the Wakening Sun");
             priestCard.addTrigger(Triggers.upkeep(ActivePlayer.YOU),
-                    new MayEffect(new RevealSubtypeFromHandEffect(CardSubtype.DINOSAUR, new GainLifeEffect(2)),
+                    new MayEffect(revealDinosaurToGainLife(),
                             "Reveal a Dinosaur card from your hand to gain 2 life?"));
             gd.playerBattlefields.get(player1Id).add(new Permanent(priestCard));
 

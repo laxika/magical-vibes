@@ -35,10 +35,10 @@ class GeistchannelerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        PendingInteraction.PerpetualPowerToughnessChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PerpetualPowerToughnessChoice.class);
-        assertThat(choice.validIndices()).containsExactly(0, 1);
-        harness.handleCardChosen(player1, 0);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.cards()).containsExactly(gd.playerHands.get(player1.getId()).get(0), gd.playerHands.get(player1.getId()).get(1));
+        chooseHandCard(player1, 0);
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveSorcery(player1, 0, 0);
@@ -73,12 +73,12 @@ class GeistchannelerTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.passBothPriorities();
 
-        PendingInteraction.PerpetualPowerToughnessChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PerpetualPowerToughnessChoice.class);
-        assertThat(choice.validIndices()).containsExactly(0);
-        assertThatThrownBy(() -> harness.handleCardChosen(player1, 3))
-                .isInstanceOf(IllegalArgumentException.class);
-        harness.handleCardChosen(player1, 0);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.cards()).containsExactly(gd.playerHands.get(player1.getId()).get(0));
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(java.util.UUID.randomUUID())))
+                .isInstanceOf(IllegalStateException.class);
+        chooseHandCard(player1, 0);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -93,7 +93,7 @@ class GeistchannelerTest extends BaseCardTest {
             harness.castCreature(player1, 0);
             harness.passBothPriorities();
             harness.passBothPriorities();
-            harness.handleCardChosen(player1, i == 0 ? 1 : 0);
+            chooseHandCard(player1, i == 0 ? 1 : 0);
         }
 
         assertThatThrownBy(() -> harness.castSorcery(player1, 0))
@@ -114,7 +114,7 @@ class GeistchannelerTest extends BaseCardTest {
         harness.castCreature(player1, 0);
         harness.passBothPriorities();
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseHandCard(player1, 0);
 
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveSorcery(player1, 0, 0);
@@ -125,5 +125,9 @@ class GeistchannelerTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLUE, 1);
         harness.castAndResolveSorcery(player1, 0, 0);
         harness.assertInGraveyard(player1, "Divination");
+    }
+
+    private void chooseHandCard(com.github.laxika.magicalvibes.model.Player player, int index) {
+        harness.handleMultipleCardsChosen(player, List.of(gd.playerHands.get(player1.getId()).get(index).getId()));
     }
 }

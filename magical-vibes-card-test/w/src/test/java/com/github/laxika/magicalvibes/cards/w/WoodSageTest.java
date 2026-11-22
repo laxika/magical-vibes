@@ -40,7 +40,7 @@ class WoodSageTest extends BaseCardTest {
         var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player1.getId());
-        assertThat(choice.context()).isInstanceOf(ChoiceContext.ChooseCreatureNameRevealTopCardsChoice.class);
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ChooseCardNameAtResolutionChoice.class);
     }
 
     @Test

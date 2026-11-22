@@ -52,19 +52,31 @@ public class RevealUntilTwoNonlandCardsWithManaValueAndCastOneEffectHandler
             }
         }
 
-        String sourceName = entry.getCard().getName();
         String playerName = gameData.playerIdToName.get(controllerId);
+        exiled.forEach(card -> gameData.addToExile(controllerId, card));
+        // Exiled face up, so everybody may examine each card (CR 406.3).
+        GameLog.Builder exiledLine = GameLog.builder().text(playerName + " exiles ");
+        for (int i = 0; i < exiled.size(); i++) {
+            if (i > 0) {
+                exiledLine.text(", ");
+            }
+            exiledLine.card(exiled.get(i));
+        }
+        gameLogService.append(gameData, exiledLine
+                .text(" from the top of their library (" + entry.getCard().getName() + ").").build());
         if (qualifying.isEmpty()) {
-            Collections.shuffle(exiled);
-            deck.addAll(exiled);
-            gameLogService.append(gameData, GameLog.text(sourceName
-                    + " exiles cards from " + playerName + "'s library without finding a qualifying card; they are put on the bottom of the library."));
+            List<Card> returned = new ArrayList<>();
+            for (Card card : exiled) {
+                if (gameData.removeFromExile(card.getId())) {
+                    returned.add(card);
+                }
+            }
+            Collections.shuffle(returned);
+            deck.addAll(returned);
+            gameLogService.append(gameData, GameLog.text(
+                    playerName + " puts the exiled cards on the bottom of their library in a random order."));
             return;
         }
-
-        exiled.forEach(card -> gameData.addToExile(controllerId, card));
-        gameLogService.append(gameData, GameLog.text(playerName + " exiles cards from the top of their library for "
-                + sourceName + "."));
         String prompt = qualifying.size() == 1
                 ? "You may cast the qualifying card without paying its mana cost."
                 : "You may cast one of the two qualifying cards without paying its mana cost.";

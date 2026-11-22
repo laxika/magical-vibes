@@ -4,11 +4,12 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.ChooseOpponentEachCreatesTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import java.util.List;
 import java.util.Set;
 
@@ -20,11 +21,12 @@ import java.util.Set;
 public class SylvanOffering extends Card {
 
     public SylvanOffering() {
-        addSpellEffect(new ChooseOpponentEachCreatesTokensEffect(
-                new CreateTokenEffect("Treefolk", new XValue(), new XValue(), CardColor.GREEN,
-                        List.of(CardSubtype.TREEFOLK), Set.of(), Set.of())));
-        addSpellEffect(new ChooseOpponentEachCreatesTokensEffect(
-                new CreateTokenEffect(new XValue(), "Elf Warrior", 1, 1, CardColor.GREEN,
-                        List.of(CardSubtype.ELF, CardSubtype.WARRIOR), Set.of(), Set.of())));
+        PlayerSubject youAndThatPlayer = Subjects.allOf(Subjects.you(), Subjects.playersThisWay(StepKind.CHOOSE));
+        addSpellEffect(ChoosePlayerEffect.opponent());
+        addSpellEffect(new CreateTokenEffect("Treefolk", new XValue(), new XValue(), CardColor.GREEN,
+                List.of(CardSubtype.TREEFOLK), Set.of(), Set.of()).forController(youAndThatPlayer));
+        addSpellEffect(ChoosePlayerEffect.opponent());
+        addSpellEffect(new CreateTokenEffect(new XValue(), "Elf Warrior", 1, 1, CardColor.GREEN,
+                List.of(CardSubtype.ELF, CardSubtype.WARRIOR), Set.of(), Set.of()).forController(youAndThatPlayer));
     }
 }

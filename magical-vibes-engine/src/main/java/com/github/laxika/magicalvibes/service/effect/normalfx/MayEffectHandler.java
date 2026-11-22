@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CipherEncodeEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
@@ -20,6 +21,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
@@ -77,11 +79,13 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
             // Nothing can be discarded, so there is no choice to offer and "if you do" can't happen.
             return;
         }
-        if (e.wrapped() instanceof com.github.laxika.magicalvibes.model.effect.RevealSubtypeFromHandEffect reveal
-                && gameData.playerHands.getOrDefault(entry.getControllerId(), List.of()).stream()
-                .noneMatch(card -> gameQueryService.cardHasSubtype(
-                        card, reveal.subtype(), gameData, entry.getControllerId()))) {
-            // No card of the subtype in hand to reveal, so no choice is offered and the ability does nothing.
+        if (e.wrapped() instanceof SequenceEffect reveal && reveal.steps().size() > 1
+                && reveal.steps().getFirst() instanceof ChooseCardEffect choice && !choice.upTo()
+                && choice.cards().inHiddenZone()
+                && reveal.steps().get(1) instanceof RevealCardsFromHandEffect shown && shown.cards() != null
+                && subjectResolutionService.cards(gameData, entry, choice, choice.cards()).isEmpty()) {
+            // No card of the kind in hand to reveal, so no choice is offered: revealing one didn't happen.
+            insertElseEffect(entry, e);
             return;
         }
         if (e.wrapped() instanceof LookAtTopCardsOfTargetLibraryEffect look

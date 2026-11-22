@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.i.Incinerate;
 import com.github.laxika.magicalvibes.cards.e.EverybodyLives;
+import com.github.laxika.magicalvibes.cards.l.LibraryOfLeng;
 import com.github.laxika.magicalvibes.cards.m.MemoryLapse;
 import com.github.laxika.magicalvibes.cards.m.MistDragon;
 import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
@@ -22,7 +23,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({Sirocco.class, MemoryLapse.class, StalkingTiger.class, Incinerate.class,
-        MistDragon.class, TamiyoCollectorOfTales.class, SpiritualFocus.class, EverybodyLives.class})
+        MistDragon.class, TamiyoCollectorOfTales.class, SpiritualFocus.class, EverybodyLives.class, LibraryOfLeng.class})
 class SiroccoTest extends BaseCardTest {
 
     private void castSiroccoOn(int targetLife, List<Card> targetHand) {
@@ -217,5 +218,19 @@ class SiroccoTest extends BaseCardTest {
         harness.assertInHand(player2, "Memory Lapse");
         harness.assertNotInGraveyard(player2, "Memory Lapse");
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("Each discard may be replaced by putting the card on top of the library")
+    void discardTakesDiscardReplacements() {
+        harness.addToBattlefield(player2, new LibraryOfLeng());
+        Card revealed = new MemoryLapse();
+        castSiroccoOn(20, List.of(revealed));
+
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(revealed);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 }

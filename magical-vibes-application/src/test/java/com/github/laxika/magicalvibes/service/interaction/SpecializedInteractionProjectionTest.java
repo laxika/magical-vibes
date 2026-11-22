@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.interaction;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.HandChoiceDestination;
@@ -236,6 +237,21 @@ class SpecializedInteractionProjectionTest {
         }
         assertThat(prompt(new PendingInteraction.BrilliantUltimatumPileChoice(controllerId, ids, List.of())).prompt())
                 .doesNotContain("Hidden");
+    }
+
+    @Test
+    @DisplayName("An index pick over a card pool sends no card and no card name")
+    void pooledIndexPickSendsNoCard() {
+        Card hidden = card("Hidden");
+        gameData.addToExile(opponentId, hidden, UUID.randomUUID(), true);
+
+        InteractionPromptMessage message = prompt(PendingInteraction.GraveyardChoice
+                .builder(controllerId, List.of(0), GraveyardChoiceDestination.BATTLEFIELD, "Choose a card.")
+                .cardPool(List.of(hidden))
+                .build());
+
+        assertThat(message.cards()).isNullOrEmpty();
+        assertThat(message.prompt()).doesNotContain("Hidden");
     }
 
     private InteractionPromptMessage prompt(PendingInteraction interaction) {

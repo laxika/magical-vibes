@@ -34,7 +34,7 @@ class DesperateResearchTest extends BaseCardTest {
 
         var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.context()).isInstanceOf(ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice.class);
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ChooseCardNameAtResolutionChoice.class);
         assertThat(choice.options()).contains("Kavu Titan").doesNotContain("Plains");
     }
 

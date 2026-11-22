@@ -32,9 +32,9 @@ class MagusOfTheScrollTest extends BaseCardTest {
         var interaction = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(interaction.playerId()).isEqualTo(player1.getId());
         assertThat(interaction.context())
-                .isInstanceOf(ChoiceContext.ChooseNameRevealRandomHandCardDamageChoice.class);
-        var context = (ChoiceContext.ChooseNameRevealRandomHandCardDamageChoice) interaction.context();
-        assertThat(context.targetId()).isEqualTo(seer.getId());
+                .isInstanceOf(ChoiceContext.ChooseCardNameAtResolutionChoice.class);
+        var context = (ChoiceContext.ChooseCardNameAtResolutionChoice) interaction.context();
+        assertThat(gd.pendingEffectResolutionEntry.getTargetId()).isEqualTo(seer.getId());
         assertThat(context.sourcePermanentId()).isEqualTo(magus.getId());
         assertThat(interaction.options()).contains("Magus of the Scroll", "Fathom Seer");
         assertThat(magus.isTapped()).isTrue();

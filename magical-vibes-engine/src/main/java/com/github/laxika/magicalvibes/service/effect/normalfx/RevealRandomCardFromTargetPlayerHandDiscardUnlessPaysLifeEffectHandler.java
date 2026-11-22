@@ -13,7 +13,6 @@ import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.service.CardRevealService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
@@ -31,7 +30,7 @@ public class RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeEffectHand
     private final CardRevealService cardRevealService;
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final GraveyardService graveyardService;
+    private final PlayerInteractionSupport playerInteractionSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -62,7 +61,7 @@ public class RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeEffectHand
                 || (gameQueryService.canPlayerLoseLife(gameData, targetPlayerId)
                 && gameData.getLife(targetPlayerId) >= lifeCost);
         if (!canPay) {
-            discardCard(gameData, targetPlayerId, revealed.getId(), entry.getCard(), entry.getControllerId());
+            discardCard(gameData, targetPlayerId, revealed.getId(), entry.getControllerId());
             return;
         }
 
@@ -77,8 +76,7 @@ public class RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeEffectHand
         return card.hasType(CardType.LAND) ? 1 : card.getManaValue();
     }
 
-    public void discardCard(GameData gameData, UUID playerId, UUID cardId, Card sourceCard,
-            UUID sourceControllerId) {
+    public void discardCard(GameData gameData, UUID playerId, UUID cardId, UUID sourceControllerId) {
         List<Card> hand = gameData.playerHands.get(playerId);
         if (hand == null) {
             return;
@@ -88,13 +86,7 @@ public class RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeEffectHand
             return;
         }
 
-        hand.remove(card);
         gameData.discardCausedByOpponent = sourceControllerId != null && !sourceControllerId.equals(playerId);
-        graveyardService.discardCard(gameData, playerId, card);
-        gameLogService.append(gameData, GameLog.textCardText(
-                gameData.playerIdToName.get(playerId) + " discards ", card, "."));
-        log.info("Game {} - {} discards {} ({})", gameData.id,
-                gameData.playerIdToName.get(playerId), card.getName(), sourceCard.getName());
-        gameData.discarded(playerId, card);
+        playerInteractionSupport.discardCards(gameData, playerId, List.of(card));
     }
 }

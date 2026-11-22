@@ -365,15 +365,9 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentGainsControlOfSourceEffectHandler chooseOpponentGainsControlOfSourceEffectHandler;
 
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentDrawAndUntapEffectHandler chooseOpponentDrawAndUntapEffectHandler;
-
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentForTargetingRelayEffectHandler chooseOpponentForTargetingRelayEffectHandler;
 
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentEachCreatesTokensEffectHandler chooseOpponentEachCreatesTokensEffectHandler;
-
     private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentThenSearchLandDifferenceEffectHandler chooseOpponentThenSearchLandDifferenceEffectHandler;
-
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.ChooseOpponentReturnsCardFromGraveyardToHandEffectHandler chooseOpponentReturnsCardFromGraveyardToHandEffectHandler;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerMayPutCountersOnCreatureAndRestrictAttacksEffectHandler eachPlayerMayPutCountersAndRestrictAttacksHandler;
 
@@ -416,6 +410,7 @@ public class PermanentChoiceBattlefieldHandlerService {
     private final com.github.laxika.magicalvibes.service.effect.normalfx.BalduvianWarlordEffectHandler balduvianWarlordEffectHandler;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MakeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler makeTargetCreaturesCopiesOfChosenCreatureUntilEndOfTurnEffectHandler;
+    private final com.github.laxika.magicalvibes.service.effect.normalfx.ChoosePlayerEffectHandler choosePlayerEffectHandler;
 
     /**
      * Retribution: the creatures' controller has picked which of the two targets to sacrifice; the
@@ -1291,27 +1286,9 @@ public class PermanentChoiceBattlefieldHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
-    public void handleChooseOpponentDrawAndUntap(GameData gameData, UUID playerId,
-            PermanentChoiceContext.ChooseOpponentDrawAndUntap context) {
-        chooseOpponentDrawAndUntapEffectHandler.completeChoice(gameData, playerId, context);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
     public void handleChooseOpponentForTargetingRelay(GameData gameData, UUID playerId,
             PermanentChoiceContext.ChooseOpponentForTargetingRelay context) {
         chooseOpponentForTargetingRelayEffectHandler.completeChoice(gameData, playerId, context);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleChooseOpponentEachCreatesTokens(GameData gameData, UUID playerId,
-            PermanentChoiceContext.ChooseOpponentEachCreatesTokens context) {
-        chooseOpponentEachCreatesTokensEffectHandler.completeChoice(gameData, playerId, context);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleChooseOpponentReturnsCardFromGraveyard(GameData gameData, UUID playerId,
-            PermanentChoiceContext.ChooseOpponentReturnsCardFromGraveyard context) {
-        chooseOpponentReturnsCardFromGraveyardToHandEffectHandler.completeChoice(gameData, playerId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
@@ -1688,6 +1665,12 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleMayAbilityTapCostChoice(GameData gameData, Player player, UUID permanentId,
                                               PermanentChoiceContext.MayAbilityTapCostChoice mayTapCostChoice) {
         mayAbilityTapCostService.completeTapCostChoice(gameData, player, mayTapCostChoice, permanentId);
+    }
+
+    public void handleRecordChosenPlayer(GameData gameData, UUID playerId,
+            PermanentChoiceContext.RecordChosenPlayer context) {
+        choosePlayerEffectHandler.completeChoice(gameData, playerId, context);
+        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 
     public void handleChoosePlayerThenReturnCreatureToHand(

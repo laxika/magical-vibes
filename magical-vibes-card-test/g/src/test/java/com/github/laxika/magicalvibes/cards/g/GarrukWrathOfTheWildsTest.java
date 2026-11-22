@@ -31,8 +31,8 @@ class GarrukWrathOfTheWildsTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.PerpetualPowerToughnessChoice.class);
-        harness.handleCardChosen(player1, 0);
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseHandCard(player1, 0);
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0);
@@ -107,7 +107,7 @@ class GarrukWrathOfTheWildsTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, 0, null, null);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseHandCard(player1, 0);
 
         harness.addMana(player1, ManaColor.GREEN, 1);
         harness.castCreature(player1, 0);
@@ -210,5 +210,9 @@ class GarrukWrathOfTheWildsTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).anyMatch(
                 permanent -> permanent.getCard().getId().equals(choice.cards().getFirst().getId()));
         assertThat(evokers.getPlusOnePlusOneCounters()).isZero();
+    }
+
+    private void chooseHandCard(com.github.laxika.magicalvibes.model.Player player, int index) {
+        harness.handleMultipleCardsChosen(player, List.of(gd.playerHands.get(player1.getId()).get(index).getId()));
     }
 }

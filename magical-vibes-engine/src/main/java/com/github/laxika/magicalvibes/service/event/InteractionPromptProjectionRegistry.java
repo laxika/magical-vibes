@@ -250,11 +250,7 @@ public class InteractionPromptProjectionRegistry {
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualEnterExileHandCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
-        register(PendingInteraction.PerpetualCastCostHandCardChoice.class,
-                (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualCreatureCardChoice.class,
-                (gameData, interaction) -> projectHandChoice(interaction, false));
-        register(PendingInteraction.PerpetualActivatedAbilityCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
         register(PendingInteraction.PerpetualTriggeredAbilityCardChoice.class,
                 (gameData, interaction) -> projectHandChoice(interaction, false));
@@ -2062,7 +2058,7 @@ public class InteractionPromptProjectionRegistry {
 
     private static boolean isCardNameChoice(ChoiceContext context) {
         return context instanceof ChoiceContext.CardNameChoice
-                || context instanceof ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice
+                || context instanceof ChoiceContext.ChooseCardNameAtResolutionChoice
                 || context instanceof ChoiceContext.ExileByNameChoice
                 || context instanceof ChoiceContext.SphinxAmbassadorNameChoice
                 || context instanceof ChoiceContext.EachPlayerCardNameRevealChoice
@@ -2071,11 +2067,7 @@ public class InteractionPromptProjectionRegistry {
                 || context instanceof ChoiceContext.SpellsAndLandsCantBePlayedUntilNextTurnChoice
                 || context instanceof ChoiceContext.NameCardMillDrawChoice
                 || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice
-                || context instanceof ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice
-                || context instanceof ChoiceContext.ChooseCardNameRevealTopCardChoice
                 || context instanceof ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice
-                || context instanceof ChoiceContext.ChooseNameRevealHandDiscardChoice
-                || context instanceof ChoiceContext.ChooseCardNameRevealHandThenChoice
                 || context instanceof ChoiceContext.AssemblyHallCreatureCardChoice
                 || context instanceof ChoiceContext.InfernalTutorCardChoice;
     }

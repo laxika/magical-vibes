@@ -47,9 +47,9 @@ class MuseVesselTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        PendingInteraction.ExiledCardMayPlayChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ExiledCardMayPlayChoice.class);
-        assertThat(choice.validCardIds()).containsExactly(creature.getId(), land.getId());
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.cards()).extracting(card -> card.getId()).containsExactly(creature.getId(), land.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));
         harness.addMana(player1, ManaColor.COLORLESS, 1);
@@ -96,7 +96,7 @@ class MuseVesselTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.ExiledCardMayPlayChoice.class))
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class))
                 .isNull();
     }
 
@@ -196,9 +196,9 @@ class MuseVesselTest extends BaseCardTest {
         harness.activateAbility(player1, 0, 1, null, null);
         harness.passBothPriorities();
 
-        PendingInteraction.ExiledCardMayPlayChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ExiledCardMayPlayChoice.class);
-        assertThat(choice.validCardIds()).containsExactly(creature.getId());
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.cards()).extracting(card -> card.getId()).containsExactly(creature.getId());
         assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(otherCard.getId())))
                 .isInstanceOf(IllegalStateException.class);
         harness.handleMultipleCardsChosen(player1, List.of(creature.getId()));

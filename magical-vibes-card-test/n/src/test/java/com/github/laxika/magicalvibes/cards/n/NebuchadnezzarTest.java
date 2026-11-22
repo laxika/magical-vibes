@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.n;
 
 import com.github.laxika.magicalvibes.cards.a.Abomination;
+import com.github.laxika.magicalvibes.cards.l.LibraryOfLeng;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -14,8 +15,26 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Nebuchadnezzar.class, Abomination.class})
+@CardUsed({Nebuchadnezzar.class, Abomination.class, LibraryOfLeng.class})
 class NebuchadnezzarTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("The discard may be replaced by putting the card on top of the library")
+    void discardTakesDiscardReplacements() {
+        addCreatureReady(player1, new Nebuchadnezzar());
+        harness.addToBattlefield(player2, new LibraryOfLeng());
+        Abomination named = new Abomination();
+        harness.setHand(player2, List.of(named));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Abomination");
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(named);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+    }
 
     @Test
     @DisplayName("Name suggestions do not reveal changes to an opponent's hidden hand")

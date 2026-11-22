@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.j;
 
+import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
+import com.github.laxika.magicalvibes.cards.s.SagesOfTheAnima;
 import com.github.laxika.magicalvibes.cards.s.SparkDouble;
 import com.github.laxika.magicalvibes.cards.t.TazeemRoilmage;
 import com.github.laxika.magicalvibes.cards.t.TeferisAgelessInsight;
@@ -20,7 +22,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({JaceMirrorMage.class, TazeemRoilmage.class, Island.class, SparkDouble.class, TeferisAgelessInsight.class})
+@CardUsed({JaceMirrorMage.class, TazeemRoilmage.class, Island.class, SparkDouble.class, TeferisAgelessInsight.class, SagesOfTheAnima.class, GrizzlyBears.class})
 class JaceMirrorMageTest extends BaseCardTest {
 
     @Test
@@ -162,5 +164,19 @@ class JaceMirrorMageTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return jace;
+    }
+
+    @Test
+    @org.junit.jupiter.api.DisplayName("A card a replaced draw puts into the hand removes no loyalty")
+    void cardPutIntoHandInsteadOfTheDrawRemovesNoLoyalty() {
+        Permanent jace = addReadyJace(player1, 4);
+        harness.addToBattlefield(player1, new SagesOfTheAnima());
+        GrizzlyBears putIntoHand = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(putIntoHand));
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(putIntoHand);
+        assertThat(jace.getCounterCount(CounterType.LOYALTY)).isEqualTo(4);
     }
 }

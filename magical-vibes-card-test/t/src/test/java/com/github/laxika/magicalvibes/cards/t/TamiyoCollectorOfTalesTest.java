@@ -39,7 +39,7 @@ class TamiyoCollectorOfTalesTest extends BaseCardTest {
 
         var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.context()).isInstanceOf(ChoiceContext.ChooseNonlandCardNameRevealTopCardsChoice.class);
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ChooseCardNameAtResolutionChoice.class);
         assertThat(choice.options()).contains("Mind Rot").doesNotContain("Forest");
 
         harness.handleListChoice(player1, "Mind Rot");

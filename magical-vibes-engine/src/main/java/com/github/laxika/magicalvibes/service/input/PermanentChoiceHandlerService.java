@@ -773,8 +773,6 @@ public class PermanentChoiceHandlerService {
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentGainsControlOfSource chooseOpponent) {
             battlefieldHandler.handleChooseOpponentGainsControlOfSource(gameData, permanentId, chooseOpponent);
-        } else if (context instanceof PermanentChoiceContext.ChooseOpponentDrawAndUntap chooseOpponent) {
-            battlefieldHandler.handleChooseOpponentDrawAndUntap(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ToymakersTrapOpponentChoice chooseOpponent) {
             toymakersTrapEffectHandler.completeOpponentChoice(gameData, permanentId, chooseOpponent);
             if (!gameData.interaction.isAwaitingInput()) {
@@ -782,10 +780,6 @@ public class PermanentChoiceHandlerService {
             }
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentForTargetingRelay chooseOpponent) {
             battlefieldHandler.handleChooseOpponentForTargetingRelay(gameData, permanentId, chooseOpponent);
-        } else if (context instanceof PermanentChoiceContext.ChooseOpponentEachCreatesTokens chooseOpponent) {
-            battlefieldHandler.handleChooseOpponentEachCreatesTokens(gameData, permanentId, chooseOpponent);
-        } else if (context instanceof PermanentChoiceContext.ChooseOpponentReturnsCardFromGraveyard chooseOpponent) {
-            battlefieldHandler.handleChooseOpponentReturnsCardFromGraveyard(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.ChooseOpponentThenSearchLandDifference chooseOpponent) {
             battlefieldHandler.handleChooseOpponentThenSearchLandDifference(gameData, permanentId, chooseOpponent);
         } else if (context instanceof PermanentChoiceContext.OrzhovAdvokistCreatureChoice advokistChoice) {
@@ -886,6 +880,8 @@ public class PermanentChoiceHandlerService {
                 || context instanceof PermanentChoiceContext.ChosenPermanentReference) {
             gameData.pendingEffectResolutionEntry.setChosenPermanentId(permanentId);
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+        } else if (context instanceof PermanentChoiceContext.RecordChosenPlayer chosen) {
+            battlefieldHandler.handleRecordChosenPlayer(gameData, permanentId, chosen);
         } else if (context instanceof PermanentChoiceContext.BackdraftPlayerChoice) {
             gameData.pendingEffectResolutionEntry.setTargetId(permanentId);
             var sorceries = gameData.getSpellsCastThisTurn(permanentId).stream()

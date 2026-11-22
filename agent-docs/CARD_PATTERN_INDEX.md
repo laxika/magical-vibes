@@ -154,7 +154,7 @@
 | instant/sorcery incorporation from hand or graveyard plus non-targeted multicolored instant/sorcery return | `m/MappingTheMaze.java` + `ChooseCardFromHandOrGraveyardAndApplyPerpetualIncorporationEffect` + `ReturnCardsFromControllerGraveyardToHandEffect` |
 | upkeep draft from a spellbook, exile the choice, and grant end-of-turn play permission | `a/ArmsScavenger.java` + `DraftCardFromSpellbookEffect(..., true)` + `ReduceEquipCostEffect(1)` |
 | ETB draw and face-up spellbook exile; activated Aura ability copies the exiled card onto the enchanted land with haste | `l/LooseInThePark.java` + `DraftCardFromSpellbookToExileEffect(..., false)` + `EnchantedPermanentBecomesCopyOfExiledCardUntilEndOfTurnEffect` + `GrantKeywordEffect(HASTE, Subjects.attached())` |
-| planeswalker with a perpetual hand-card choice, spellbook battlefield draft, and mass trample pump | `g/GarrukWrathOfTheWilds.java` + `ChooseCardFromHandAndApplyPerpetualPowerToughnessAndCostReductionEffect` + `DraftCardFromSpellbookEffect(..., false, true)` |
+| planeswalker with a perpetual hand-card choice, spellbook battlefield draft, and mass trample pump | `g/GarrukWrathOfTheWilds.java` + `ChooseCardEffect.announced(cardsInYourHand(filter)) + PerpetuallyBoostCardEffect.toCards(cardsThisWay(CHOOSE), p, t) + PerpetuallyChangeCastCostEffect(cardsThisWay(CHOOSE), -amount)` + `DraftCardFromSpellbookEffect(..., false, true)` |
 | random opponent gains control of source permanent | EFFECTS_QUICK_REFERENCE.md and EFFECTS_INDEX.md |
 | each opponent chooses between a free cast from their library and four-card total-mana-value damage | `e/EnsnaredByTheMara.java` + `EnsnaredByTheMaraVillainousChoiceEffect` |
 | villainous-choice replacement plus optional additional vote | `t/TheValeyard.java` + `TheValeyardEffect` + `MayVoteAdditionalTimeEffect` |
@@ -300,7 +300,7 @@
 | perpetually gain selected keywords of another creature that enters under your control | `m/MutablePupa.java` | `Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL) PerpetuallyGainKeywordsOfTriggeringCreatureEffect()` |
 | landfall perpetually grants a random library land a tap-draw trigger | `a/AmbassadorOfEvendo.java` | `Triggers.enters(Triggers.LAND, ObjectRelation.YOU_CONTROL) PerpetuallyGrantTapDrawToRandomLandInLibraryEffect()` |
 | conjure a named card into the top N cards of a library with a perpetual casting option | EFFECTS_QUICK_REFERENCE.md and EFFECTS_INDEX.md |
-| choose an opponent, then you and that player each create tokens | `ChooseOpponentEachCreatesTokensEffect` |
+| choose an opponent, then you and that player each create tokens | `ChoosePlayerEffect.opponent() + CreateTokenEffect.forController(allOf(you(), playersThisWay(CHOOSE)))` |
 | each opponent draws a card, then the controller draws for each opponent who drew | `EachOpponentDrawsThenControllerDrawsEffect()` |
 | on leaving, choose an opponent with more lands and fetch Plains equal to the land-count difference | `ChooseOpponentThenSearchLandDifferenceEffect(CardSubtype.PLAINS)` |
 | beginning-of-combat opponent choice remembered for a static menace grant to creatures attacking that player | `t/TriarchStalker.java` + `ChooseOpponentForTargetingRelayEffect` + `PermanentIsAttackingRememberedPlayerPredicate` |
@@ -387,7 +387,7 @@ This index has been split into smaller files for faster lookup. Each file is und
 | perpetually modify a physical card's power and toughness | `PerpetuallyBoostCardEffect` + `GameData.perpetualCardPowerToughnessModifiers` |
 | perpetually boost other own creatures and matching creature cards in hand of a chosen type | `ChooseSubtypeOnEnterEffect` + `GrantChosenSubtypeToOwnCreaturesEffect.toSelf()` + `PerpetuallyBoostOtherOwnCreaturesAndHandCreatureCardsOfChosenSubtypeEffect` |
 | perpetually boost a Vehicle when a matching creature crews it | `Triggers.creatureYouControlCrewsVehicle().withObjectFilter(...)` + `PerpetuallyBoostCardEffect.ofTriggeringPermanent(p, t)` |
-| choose a nonland hand card that perpetually costs less to cast | `ChooseCardFromHandToPerpetuallyReduceCastCostEffect` + `GameData.perpetualCardCastCostReductions` |
+| choose a nonland hand card that perpetually costs less to cast | `ChooseCardEffect.announced(cardsInYourHand(filter)) + PerpetuallyChangeCastCostEffect(cardsThisWay(CHOOSE), -amount)` + `GameData.perpetualCardCastCostReductions` |
 | ETB makes each owned card with `{X}` in its mana cost perpetually cost {1} less | `s/ScalarScholar.java` + `PerpetuallyReduceCostForMatchingOwnedCardsEffect(new CardHasXInManaCostPredicate(), 1)` |
 | target opponent chooses X cards from hand; look at them and may cast one revealed spell for free | `e/ExtractBrain.java` + `RevealCardsChooseOneToCastEffect` |
 | target a creature card in your graveyard, make it perpetually only one card type, and let you cast it this turn | `GrantTargetGraveyardCardCastEffect` + `PerpetuallySetTargetCreatureCardTypeEffect` |

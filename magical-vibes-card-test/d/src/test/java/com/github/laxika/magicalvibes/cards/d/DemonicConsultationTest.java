@@ -32,7 +32,7 @@ class DemonicConsultationTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice.playerId()).isEqualTo(player1.getId());
-        assertThat(choice.context()).isInstanceOf(ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice.class);
+        assertThat(choice.context()).isInstanceOf(ChoiceContext.ChooseCardNameAtResolutionChoice.class);
     }
 
     @Test

@@ -90,12 +90,6 @@ public class ImprovisationCapstoneCastChoiceInteractionHandler
             return;
         }
 
-        PendingInteraction.PortentOfCalamityState portentState =
-                gameData.pollPendingInteraction(PendingInteraction.PortentOfCalamityState.class);
-        if (portentState != null) {
-            gameData.pendingExileFreeCastRemainderToHand.clear();
-            gameData.pendingExileFreeCastRemainderToHand.addAll(portentState.revealedCardIds());
-        }
         exileFreeCastQueueSupport.castChosenSpellsWithoutPaying(gameData, player, cardIds);
     }
 }

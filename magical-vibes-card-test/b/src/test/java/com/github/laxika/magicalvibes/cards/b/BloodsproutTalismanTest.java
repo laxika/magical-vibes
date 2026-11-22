@@ -28,6 +28,21 @@ class BloodsproutTalismanTest extends BaseCardTest {
     }
 
     @Test
+    @org.junit.jupiter.api.DisplayName("The log doesn't name the card chosen in the hand")
+    void logDoesNotNameTheChosenHandCard() {
+        Permanent talisman = harness.enterBattlefieldAndReturn(player1, new BloodsproutTalisman());
+        talisman.untap();
+        harness.setHand(player1, List.of(new GrizzlyBears()));
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        chooseHandCard(player1, 0);
+
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Grizzly Bears"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().contains("perpetually costs"));
+    }
+
+    @Test
     void choosesNonlandCardAndMakesItCostOneLessPerpetually() {
         Permanent talisman = harness.enterBattlefieldAndReturn(player1, new BloodsproutTalisman());
         talisman.untap();
@@ -37,12 +52,12 @@ class BloodsproutTalismanTest extends BaseCardTest {
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
 
-        PendingInteraction.PerpetualCastCostHandCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PerpetualCastCostHandCardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validIndices()).containsExactly(1);
+        assertThat(choice.cards()).containsExactly(gd.playerHands.get(player1.getId()).get(1));
 
-        harness.handleCardChosen(player1, 1);
+        chooseHandCard(player1, 1);
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
@@ -65,10 +80,10 @@ class BloodsproutTalismanTest extends BaseCardTest {
         harness.assertLife(player1, 19);
         assertThat(talisman.isTapped()).isTrue();
         assertThat(gd.interaction.activeInteraction(
-                PendingInteraction.PerpetualCastCostHandCardChoice.class)).isNull();
+                PendingInteraction.MultiGraveyardChoice.class)).isNull();
 
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseHandCard(player1, 0);
         harness.assertLife(player1, 19);
     }
 
@@ -100,7 +115,7 @@ class BloodsproutTalismanTest extends BaseCardTest {
         assertThat(talisman.isTapped()).isTrue();
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(
-                PendingInteraction.PerpetualCastCostHandCardChoice.class)).isNull();
+                PendingInteraction.MultiGraveyardChoice.class)).isNull();
         harness.assertInHand(player1, "Forest");
     }
 
@@ -115,14 +130,14 @@ class BloodsproutTalismanTest extends BaseCardTest {
         harness.setHand(player1, List.of(new GrizzlyBears()));
         harness.passBothPriorities();
 
-        PendingInteraction.PerpetualCastCostHandCardChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.PerpetualCastCostHandCardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player1.getId());
-        assertThat(choice.validIndices()).containsExactly(0);
-        assertThatThrownBy(() -> harness.handleCardChosen(player2, 0))
+        assertThat(choice.cards()).containsExactly(gd.playerHands.get(player1.getId()).get(0));
+        assertThatThrownBy(() -> chooseHandCard(player2, 0))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleCardChosen(player1, 0);
+        chooseHandCard(player1, 0);
     }
 
     @Test
@@ -134,7 +149,7 @@ class BloodsproutTalismanTest extends BaseCardTest {
             talisman.untap();
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
-            harness.handleCardChosen(player1, 0);
+            chooseHandCard(player1, 0);
         }
 
         harness.forceActivePlayer(player1);
@@ -158,7 +173,7 @@ class BloodsproutTalismanTest extends BaseCardTest {
             talisman.untap();
             harness.activateAbility(player1, 0, null, null);
             harness.passBothPriorities();
-            harness.handleCardChosen(player1, 0);
+            chooseHandCard(player1, 0);
         }
 
         harness.forceActivePlayer(player1);
@@ -180,7 +195,7 @@ class BloodsproutTalismanTest extends BaseCardTest {
 
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseHandCard(player1, 0);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -204,7 +219,7 @@ class BloodsproutTalismanTest extends BaseCardTest {
         harness.setHand(player2, List.of(new Unsummon()));
         harness.activateAbility(player1, 0, null, null);
         harness.passBothPriorities();
-        harness.handleCardChosen(player1, 0);
+        chooseHandCard(player1, 0);
 
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -228,5 +243,9 @@ class BloodsproutTalismanTest extends BaseCardTest {
 
         harness.assertOnBattlefield(player1, "Grizzly Bears");
         harness.assertInHand(player1, "Grizzly Bears");
+    }
+
+    private void chooseHandCard(com.github.laxika.magicalvibes.model.Player player, int index) {
+        harness.handleMultipleCardsChosen(player, List.of(gd.playerHands.get(player1.getId()).get(index).getId()));
     }
 }

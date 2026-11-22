@@ -73,11 +73,12 @@ class ColorChoiceInteractionHandlerTest {
     }
 
     @Test
-    @DisplayName("exile-top reveal-until-named card-name choice is searchable")
-    void exileTopRevealUntilNamedChoiceIsSearchable() {
+    @DisplayName("card-name choice made as an effect resolves is searchable")
+    void cardNameAtResolutionChoiceIsSearchable() {
         PendingInteraction.ColorChoice choice = new PendingInteraction.ColorChoice(
                 PLAYER1_ID, null, null,
-                new ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice(PLAYER1_ID, 6, 0),
+                new ChoiceContext.ChooseCardNameAtResolutionChoice(null, PLAYER1_ID, null,
+                        new com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect(), null),
                 List.of("Divining Witch", "Mind Slash"), "Choose a card name.");
 
         InteractionPromptMessage msg = projectionSupport.begin(gd, choice);

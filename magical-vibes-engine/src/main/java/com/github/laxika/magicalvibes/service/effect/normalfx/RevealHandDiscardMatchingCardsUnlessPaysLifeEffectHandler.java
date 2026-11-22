@@ -2,22 +2,18 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealHandDiscardMatchingCardsUnlessPaysLifeEffect;
 import com.github.laxika.magicalvibes.service.CardRevealService;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.graveyard.GraveyardService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 /**
@@ -27,15 +23,13 @@ import org.springframework.stereotype.Component;
  * at a time (remaining card ids live in {@link GameData#revealHandDiscardUnlessPaysRemaining}); a
  * card the player can't pay for is discarded immediately.
  */
-@Slf4j
 @Component
 @RequiredArgsConstructor
 public class RevealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler implements NormalEffectHandlerBean {
 
     private final CardRevealService cardRevealService;
-    private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final GraveyardService graveyardService;
+    private final PlayerInteractionSupport playerInteractionSupport;
     private final PredicateEvaluationService predicateEvaluationService;
 
     @Override
@@ -78,8 +72,7 @@ public class RevealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler implement
     public void afterCardDecision(GameData gameData, PendingMayAbility ability,
             RevealHandDiscardMatchingCardsUnlessPaysLifeEffect effect, UUID playerId, boolean paid) {
         if (!paid) {
-            discardCard(gameData, playerId, ability.targetCardId(), ability.sourceCard(),
-                    ability.sourceControllerId());
+            discardCard(gameData, playerId, ability.targetCardId(), ability.sourceControllerId());
         }
         if (gameData.revealHandDiscardUnlessPaysRemaining.isEmpty()) {
             return;
@@ -101,7 +94,7 @@ public class RevealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler implement
         boolean canPay = gameQueryService.canPlayerLoseLife(gameData, playerId)
                 && gameData.getLife(playerId) >= effect.lifeCost();
         if (!canPay) {
-            discardCard(gameData, playerId, cardId, sourceCard, sourceControllerId);
+            discardCard(gameData, playerId, cardId, sourceControllerId);
             if (gameData.revealHandDiscardUnlessPaysRemaining.isEmpty()) {
                 return;
             }
@@ -116,23 +109,13 @@ public class RevealHandDiscardMatchingCardsUnlessPaysLifeEffectHandler implement
                 sourceCard, playerId, List.of(effect), prompt, cardId, sourceControllerId));
     }
 
-    private void discardCard(GameData gameData, UUID playerId, UUID cardId, Card sourceCard,
-            UUID sourceControllerId) {
+    private void discardCard(GameData gameData, UUID playerId, UUID cardId, UUID sourceControllerId) {
         Card card = findInHand(gameData, playerId, cardId);
         if (card == null) {
             return;
         }
         gameData.discardCausedByOpponent = !playerId.equals(sourceControllerId);
-        if (gameData.discardCausedByOpponent && gameQueryService.isDiscardPrevented(gameData, playerId)) {
-            return;
-        }
-        gameData.playerHands.get(playerId).remove(card);
-        graveyardService.discardCard(gameData, playerId, card);
-        gameLogService.append(gameData, GameLog.textCardText(
-                gameData.playerIdToName.get(playerId) + " discards ", card, "."));
-        log.info("Game {} - {} discards {} ({})", gameData.id,
-                gameData.playerIdToName.get(playerId), card.getName(), sourceCard.getName());
-        gameData.discarded(playerId, card);
+        playerInteractionSupport.discardCards(gameData, playerId, List.of(card));
     }
 
     private Card findInHand(GameData gameData, UUID playerId, UUID cardId) {

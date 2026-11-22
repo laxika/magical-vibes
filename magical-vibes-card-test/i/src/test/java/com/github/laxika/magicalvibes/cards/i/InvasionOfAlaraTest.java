@@ -190,4 +190,27 @@ class InvasionOfAlaraTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNotNull();
     }
+
+    @Test
+    @DisplayName("Cards are exiled and named also when none qualifies")
+    void exilesAndNamesCardsWhenNoneQualifies() {
+        setLibrary(List.of(new Plains()));
+
+        castInvasion();
+
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().contains("exiles")
+                && line.plainText().contains("Plains"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().contains("bottom"));
+    }
+
+    @Test
+    @DisplayName("Every card exiled before the free-cast choice is named")
+    void namesTheExiledCards() {
+        setLibrary(List.of(new Plains(), new GrizzlyBears()));
+
+        castInvasion();
+
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().contains("exiles")
+                && line.plainText().contains("Plains") && line.plainText().contains("Grizzly Bears"));
+    }
 }

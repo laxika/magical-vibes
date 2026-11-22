@@ -28,7 +28,7 @@ class TunnelVisionTest extends BaseCardTest {
         PendingInteraction.ColorChoice choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(choice.context())
-                .isInstanceOf(ChoiceContext.ChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice.class);
+                .isInstanceOf(ChoiceContext.ChooseCardNameAtResolutionChoice.class);
     }
 
     @Test

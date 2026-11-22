@@ -38,7 +38,7 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #CHOOSE}: the number of cards chosen without moving them ({@code ChooseCardEffect}, a revealed-hand
  *       choice that keeps the card in the hand), those cards, their owners, each one's {@link StepOutcome#movedCards()}
  *       entry naming the zone and stay it was chosen in; or of a player chosen at random
- *       ({@code ChoosePlayerAtRandomEffect}), that player;</li>
+ *       ({@code ChoosePlayerAtRandomEffect}) or by the controller ({@code ChoosePlayerEffect}), that player;</li>
  *   <li>{@link #PUT_INTO_GRAVEYARD}: the number of exiled cards put into a graveyard ({@code
  *       PutExiledCardsIntoOwnersGraveyardEffect}; a card a replacement sent elsewhere is not counted), those cards,
  *       their owners;</li>

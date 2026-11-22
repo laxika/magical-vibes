@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model;
 
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CastCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseSubtypeForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
@@ -1490,16 +1491,8 @@ public sealed interface ChoiceContext {
      *                              the stack)
      */
     record ChooseCardNameAtResolutionChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
-                                             CardType requiredType,
+                                             ChooseCardNameAtResolutionEffect choice,
                                              ChooseSubtypeForSourceEffect followUpSubtypeChoice) implements ChoiceContext {
-        public ChooseCardNameAtResolutionChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId,
-                                                CardType requiredType) {
-            this(sourceCard, controllerId, sourcePermanentId, requiredType, null);
-        }
-
-        public ChooseCardNameAtResolutionChoice(Card sourceCard, UUID controllerId, UUID sourcePermanentId) {
-            this(sourceCard, controllerId, sourcePermanentId, null, null);
-        }
     }
 
     record CreateTokenWithChosenNameChoice(Card sourceCard, UUID controllerId, CreateTokenEffect tokenTemplate,
@@ -1980,49 +1973,6 @@ public sealed interface ChoiceContext {
     record NameCardMillDrawChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
 
     /**
-     * Tunnel Vision: the controller names a card, then the target player reveals until finding it.
-     * If found, the other revealed cards go to the graveyard and the named card returns to the top;
-     * otherwise the target player shuffles their library.
-     */
-    record ChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice(UUID controllerId,
-                                                                    UUID targetPlayerId)
-            implements ChoiceContext {}
-
-    /**
-     * The controller names a card, then exiles the top {@code topExileCount} cards of their library
-     * and reveals until finding the named card (to hand; rest of the dig exiled). If the named card
-     * is never revealed, the entire remaining library is exiled. The controller loses
-     * {@code lifeLossPerExiled} life per card exiled by the effect.
-     */
-    record ChooseNameExileTopRevealUntilNamedChoice(UUID controllerId, int topExileCount,
-                                                     int lifeLossPerExiled)
-            implements ChoiceContext {}
-
-    /**
-     * Wood Sage: the controller names a creature card, then reveals the top {@code count} cards of
-     * their library, putting every revealed card with that name into their hand and the rest into
-     * their graveyard.
-     */
-    record ChooseCreatureNameRevealTopCardsChoice(UUID controllerId, Card sourceCard, int count)
-            implements ChoiceContext {}
-
-    /**
-     * Tamiyo, Collector of Tales: the controller names a nonland card, then reveals the top
-     * {@code count} cards of their library, putting matching cards into their hand and the rest
-     * into their graveyard.
-     */
-    record ChooseNonlandCardNameRevealTopCardsChoice(UUID controllerId, Card sourceCard, int count)
-            implements ChoiceContext {}
-
-    /**
-     * Desperate Research: the controller names a non-basic-land card, then reveals the top
-     * {@code count} cards of their library, putting every revealed card with that name into their
-     * hand and exiling the rest.
-     */
-    record ChooseNameRevealTopCardsToHandRestToExileChoice(UUID controllerId, Card sourceCard, int count)
-            implements ChoiceContext {}
-
-    /**
      * Comply / Academic Probation: the controller names a card; until their next turn, their
      * opponents can't cast spells with that name. Resolving it makes a floating effect on each opponent that
      * ends at the start of the controller's next turn.
@@ -2066,12 +2016,6 @@ public sealed interface ChoiceContext {
         }
     }
 
-    /**
-     * Diviner's Lockbox: the controller names a card, then reveals the top card of their library.
-     * A matching card inserts the source sacrifice and three-card draw into the paused ability.
-     */
-    record ChooseCardNameRevealTopCardChoice(UUID controllerId) implements ChoiceContext {}
-
     record ChooseCardNameForDelayedCreatureCombatDamageChoice(
             UUID controllerId,
             List<CardEffect> effects,
@@ -2083,37 +2027,6 @@ public sealed interface ChoiceContext {
             effects = List.copyOf(effects);
         }
     }
-
-    /**
-     * Cursed Scroll: the controller names a card, then reveals a card at random from their own hand.
-     * If the revealed card has that name, {@code sourceCard} deals {@code damage} damage to
-     * {@code targetId} (the any-target chosen when the ability was activated).
-     */
-    record ChooseNameRevealRandomHandCardDamageChoice(UUID controllerId, UUID targetId, UUID sourcePermanentId,
-                                                     Card sourceCard, int damage) implements ChoiceContext {}
-
-    /**
-     * Nebuchadnezzar: the controller names a card, then the target player reveals cards at random
-     * from their hand and discards the revealed cards with the chosen name.
-     */
-    record ChooseNameRevealRandomHandCardsDiscardChoice(UUID controllerId, UUID targetPlayerId,
-                                                        Card sourceCard, int revealCount)
-            implements ChoiceContext {}
-
-    /** The controller names a card; the target reveals their hand and discards matching cards. */
-    record ChooseNameRevealHandDiscardChoice(UUID controllerId, UUID targetPlayerId,
-                                              boolean discardOnlyOneAndDrawIfNoMatch)
-            implements ChoiceContext {
-
-        public ChooseNameRevealHandDiscardChoice(UUID controllerId, UUID targetPlayerId) {
-            this(controllerId, targetPlayerId, false);
-        }
-    }
-
-    /** The controller names a card; the damaged player reveals their hand and a matching name
-     * inserts the follow-up effect into the paused resolution. */
-    record ChooseCardNameRevealHandThenChoice(UUID controllerId, UUID targetPlayerId,
-                                               CardEffect followUpEffect) implements ChoiceContext {}
 
     /**
      * The controller chooses a permanent type at resolution time (e.g. Creeping Renaissance),

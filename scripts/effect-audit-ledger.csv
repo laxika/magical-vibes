@@ -2336,3 +2336,33 @@ RevealMatchingCardsFromTargetHandAndKeepEffect,blocked-step-model,9,"run 13: the
 ExileRandomInstantOrSorceryFromTargetHandMayCastFreeEffect,blocked-other,9,"run 13: the random hand reveal exists; left: no exile step over a revealed hand card and the next-end-step return ""if you haven't cast it"" (Planeswalker's Mischief)"
 PutTargetOnBottomThenRevealUntilSharedCardTypeToBattlefieldRestOnBottomRandomEffect,blocked-other,9,run 13: the reveal-until and library steps exist; left only: no card filter bound to the moved permanent's last-known types; one card (Reality Scramble)
 DrawCardRevealDiscardUnlessLandEffect,blocked-step-model,9,"run 13: DiscardCardsEffect and the hand reveal exist; left: it draws by rerunning itself and needs the unreplaced draw's card (CR 121.6c), as Pact Weapon and Jace do"
+RevealPlanarCardsUntilFivePlanesEffect,blocked-other,9,"run 14: verdict corrected from unique: waits with the five other planar-deck reveals for a planar-deck card subject (its zone, a reveal step and a bottom-in-any-order step over it); also a choice among them on top"
+RevealPlanarCardsUntilPlaneAndPlaneswalkEffect,blocked-other,9,"run 14: verdict corrected from unique: waits with the five other planar-deck reveals for a planar-deck card subject (its zone, a reveal step and a bottom-in-any-order step over it); also a planeswalk that does not depart"
+RevealPlanarCardsUntilPlaneAndTriggerChaosEffect,blocked-other,9,"run 14: verdict corrected from unique: waits with the five other planar-deck reveals for a planar-deck card subject (its zone, a reveal step and a bottom-in-any-order step over it); also a chaos-trigger step"
+RevealPlanarCardsUntilTwoPlanesAndPlaneswalkEffect,blocked-other,9,"run 14: verdict corrected from unique: waits with the five other planar-deck reveals for a planar-deck card subject (its zone, a reveal step and a bottom-in-any-order step over it); also a double planeswalk"
+RevealTopPlanarCardMayPutOnBottomEffect,blocked-other,9,"run 14: verdict corrected from unique: waits with the five other planar-deck reveals for a planar-deck card subject (its zone, a reveal step and a bottom step over it)"
+RevealTopPlanarCardsAndTriggerChaosEffect,blocked-other,9,"run 14: verdict corrected from unique: waits with the five other planar-deck reveals for a planar-deck card subject (its zone, a reveal step and a bottom-in-any-order step over it); also a chaos-trigger step"
+RevealSubtypeFromHandEffect,split,9,run 14: MayEffect over ChooseCardEffect.oneOf + RevealCardsFromHandEffect.cards + HappenedThisWay(REVEAL); MayEffectHandler asks nothing without such a card
+ChooseCardNameRevealHandThenEffect,split,9,run 14: ChooseCardNameAtResolutionEffect + the hand reveal + HappenedThisWay.toACard(REVEAL; named)
+ChooseNameRevealHandDiscardMatchingEffect,split,9,run 14: ChooseCardNameAtResolutionEffect + the hand reveal + DiscardCardsEffect(revealedThisWay(named))
+ChooseNameRevealHandDiscardOneOrDrawEffect,split,9,run 14: ChooseCardNameAtResolutionEffect + the hand reveal + ChooseCardEffect by the target + DiscardCardsEffect + draw if none was discarded
+ChooseNameRevealRandomCardFromHandDealDamageEffect,split,9,run 14: ChooseCardNameAtResolutionEffect + the random hand reveal + the damage if it has the name
+ChooseNameRevealRandomCardsFromTargetHandDiscardMatchingEffect,split,9,run 14: ChooseCardNameAtResolutionEffect + the random hand reveal + DiscardCardsEffect(revealedThisWay(named))
+ChooseNameRevealTopCardsToHandRestToExileEffect,split,9,run 14: ChooseCardNameAtResolutionEffect + the top reveal + put into hand + exile the rest
+ChooseCreatureNameRevealTopCardsToHandRestToGraveyardEffect,split,9,run 14: ChooseCardNameAtResolutionEffect + the top reveal + put into hand + the rest into the graveyard
+ChooseNonlandCardNameRevealTopCardsToHandRestToGraveyardEffect,split,9,run 14: ChooseCardNameAtResolutionEffect + the top reveal + put into hand + the rest into the graveyard
+ChooseNameRevealUntilNamedPutOnTopRestToGraveyardEffect,split,9,run 14: ChooseCardNameAtResolutionEffect + RevealCardsFromTopUntilEffect + the moves; a shuffle if none was found
+ChooseCardNameRevealTopCardEffect,split,9,run 14: ChooseCardNameAtResolutionEffect + the top reveal + sacrifice and draw if it has the name
+ChooseNameExileTopRevealUntilNamedToHandEffect,split,9,run 14: ChooseCardNameAtResolutionEffect + the top exile + RevealCardsFromTopUntilEffect + the moves + the life loss
+ChooseCardNameAtResolutionEffect,survivor,9,"run 14: excluded types and ""not a basic land name""; records the name for CardHasNameChosenThisResolutionPredicate; 20 cards"
+ChooseCardNameAndExileFromZonesEffect,blocked-other,9,run 14: the recorded chosen-name step exists now; left: ExileCardsWithSameNameEffect takes no name; with its count and token riders
+ChoosePlayerEffect,survivor,9,"run 14: new step: one of the players a subject names, recording CHOOSE for playersThisWay"
+ChooseOpponentDrawAndUntapEffect,split,9,run 14: ChoosePlayerEffect.opponent twice + draw and untap over allOf(you; that player)
+ChooseOpponentEachCreatesTokensEffect,split,9,run 14: ChoosePlayerEffect.opponent + CreateTokenEffect.forController(allOf(you; that player))
+ChooseOpponentReturnsCardFromGraveyardToHandEffect,split,9,run 14: ChoosePlayerEffect.opponent + ChooseCardEffect by that player + PutCardsIntoHandEffect
+ChooseCardFromHandAndApplyPerpetualCostReductionEffect,split,9,run 14: ChooseCardEffect.announced(cardsInYourHand) + PerpetuallyChangeCastCostEffect
+ChooseCardFromHandToPerpetuallyReduceCastCostEffect,split,9,run 14: ChooseCardEffect.announced(cardsInYourHand) + PerpetuallyChangeCastCostEffect
+ChooseCardFromHandAndApplyPerpetualPowerToughnessAndCostReductionEffect,split,9,run 14: ChooseCardEffect.announced(cardsInYourHand) + PerpetuallyBoostCardEffect.toCards + PerpetuallyChangeCastCostEffect
+ChooseCardFromHandToPerpetuallyGrantActivatedAbilityEffect,split,9,run 14: ChooseCardEffect.announced(cardsInYourHand) + PerpetuallyGrantCardCharacteristicsEffect.to
+ChooseCardExiledWithSourceMayPlayThisTurnEffect,split,9,run 14: ChooseCardEffect over exiledWithSource + AllowPlayCardsFromExileEffect.thisTurn
+ChooseNonlandCardExiledWithSourceMayCastEffect,split,9,run 14: ChooseCardEffect over cardsThisWay(EXILE; nonland) + AllowPlayCardsFromExileEffect.whileExiled with any mana

@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.service.input;
 
-import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.BattlefieldEntryCard;
 import com.github.laxika.magicalvibes.model.Card;
@@ -84,7 +83,6 @@ import com.github.laxika.magicalvibes.service.effect.EffectResolutionService;
 import com.github.laxika.magicalvibes.service.effect.GraveyardTargetingSupport;
 import com.github.laxika.magicalvibes.service.effect.ReflexiveAbilitySupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardFromHandToPerpetuallyGrantEnterExileEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ChooseCardFromHandToPerpetuallyReduceCastCostEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.EquipSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileFreeCastQueueSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExileSupport;
@@ -286,38 +284,6 @@ public class CardChoiceHandlerService {
         }
         copy.freeze();
         hand.set(cardIndex, copy);
-
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    /** Records a perpetual activated ability on a chosen card in the controller's hand. */
-    public void handlePerpetualActivatedAbilityCardChosen(GameData gameData, Player player, int cardIndex) {
-        PendingInteraction.PerpetualActivatedAbilityCardChoice choice =
-                gameData.interaction.activeInteraction(PendingInteraction.PerpetualActivatedAbilityCardChoice.class);
-        if (choice == null || !player.getId().equals(choice.playerId())) {
-            throw new IllegalStateException("Not your turn to choose");
-        }
-        if (!choice.validIndices().contains(cardIndex)) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
-        }
-
-        List<Card> hand = gameData.playerHands.get(player.getId());
-        if (hand == null || cardIndex < 0 || cardIndex >= hand.size()) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
-        }
-
-        Card selectedCard = hand.get(cardIndex);
-        ActivatedAbility ability = choice.ability();
-        gameData.interaction.clearAwaitingInput();
-        gameData.perpetualActivatedAbilities.compute(selectedCard.getId(), (ignored, existing) -> {
-            List<ActivatedAbility> updated = new ArrayList<>(existing == null ? List.of() : existing);
-            if (!updated.contains(ability)) {
-                updated.add(ability);
-            }
-            return List.copyOf(updated);
-        });
-        gameLogService.append(gameData, GameLog.cardThen(
-                selectedCard, " perpetually gains " + ability.getDescription() + "."));
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
@@ -904,31 +870,6 @@ public class CardChoiceHandlerService {
                 .add(ChooseCardFromHandToPerpetuallyGrantEnterExileEffectHandler.grantedEnterEffect());
         gameLogService.append(gameData, GameLog.cardThen(
                 selectedCard, " perpetually gains its exile ability."));
-
-        inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    public void handlePerpetualCastCostHandCardChosen(GameData gameData, Player player, int cardIndex) {
-        PendingInteraction.PerpetualCastCostHandCardChoice choice =
-                gameData.interaction.activeInteraction(PendingInteraction.PerpetualCastCostHandCardChoice.class);
-        if (choice == null || !player.getId().equals(choice.playerId())) {
-            throw new IllegalStateException("Not your turn to choose");
-        }
-        if (!choice.validIndices().contains(cardIndex)) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
-        }
-
-        List<Card> hand = gameData.playerHands.get(player.getId());
-        if (hand == null || cardIndex >= hand.size()) {
-            throw new IllegalStateException("Invalid card index: " + cardIndex);
-        }
-
-        Card selectedCard = hand.get(cardIndex);
-        gameData.interaction.clearAwaitingInput();
-        ChooseCardFromHandToPerpetuallyReduceCastCostEffectHandler.remember(
-                gameData, selectedCard, choice.amount());
-        gameLogService.append(gameData, GameLog.cardThen(
-                selectedCard, " perpetually gains \"This spell costs {1} less to cast.\"."));
 
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }

@@ -74,8 +74,7 @@ public class RevealRandomCardFromTargetPlayerHandDiscardUnlessPaysLifeHandler
             log.info("Game {} - {} pays {} life to keep {} ({})", gameData.id,
                     player.getUsername(), lifeCost, revealed.getName(), ability.sourceCard().getName());
         } else {
-            effectHandler.discardCard(gameData, playerId, revealed.getId(), ability.sourceCard(),
-                    ability.sourceControllerId());
+            effectHandler.discardCard(gameData, playerId, revealed.getId(), ability.sourceControllerId());
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);

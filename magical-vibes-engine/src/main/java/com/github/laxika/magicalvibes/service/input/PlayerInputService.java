@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PowerToughnessForm;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.model.DiscardFollowUp;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -38,6 +39,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.event.VisualCueService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.turn.UntapStepService;
@@ -48,6 +50,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.context.annotation.Lazy;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
 
@@ -2521,6 +2524,41 @@ public class PlayerInputService {
                 nonbasicLandOnly, attachedTo, null);
     }
 
+    /**
+     * "Choose a card name" as an effect resolves: the names of every offered printing and of the cards the chooser
+     * can know, so the list says nothing about another player's hand or library or a hidden face (CR 400.2, 406.3).
+     */
+    public void beginCardNameAtResolutionChoice(GameData gameData, ChoiceContext.ChooseCardNameAtResolutionChoice context) {
+        ChooseCardNameAtResolutionEffect choice = context.choice();
+        List<String> cardNames;
+        String prompt;
+        CatalogNames catalog = catalogNames();
+        if (choice.notBasicLandName()) {
+            Set<String> names = new TreeSet<>(collectCardNamesKnownTo(gameData, context.controllerId(),
+                    card -> (!card.isToken() || card.isTokenCard())
+                            && !(card.hasType(CardType.LAND) && card.getSupertypes().contains(CardSupertype.BASIC))));
+            if (catalog != null) {
+                names.addAll(catalog.nonbasic());
+            }
+            cardNames = new ArrayList<>(names);
+            prompt = "Choose a card name other than a basic land card name.";
+        } else {
+            Set<String> names = new TreeSet<>(collectCardNamesKnownTo(gameData, context.controllerId(),
+                    card -> isNameCandidate(card, choice.excludedTypes(), choice.requiredType())));
+            if (catalog != null) {
+                names.addAll(catalog.matching(new CardNameFilter(choice.excludedTypes(), choice.requiredType())));
+            }
+            cardNames = new ArrayList<>(names);
+            String qualifier = choice.requiredType() != null
+                    ? choice.requiredType().getDisplayName().toLowerCase() + " "
+                    : choice.excludedTypes().isEmpty() ? "" : "non" + choice.excludedTypes().stream()
+                            .map(type -> type.name().toLowerCase()).reduce((a, b) -> a + "/" + b).orElse("") + " ";
+            prompt = "Choose a " + qualifier + "card name.";
+        }
+        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
+                context.controllerId(), null, null, context, cardNames, prompt));
+    }
+
     public void beginLiarsPendulumNameChoice(GameData gameData, UUID controllerId, UUID targetPlayerId,
                                              UUID sourcePermanentId, Card sourceCard) {
         ChoiceContext.LiarsPendulumChoice choiceContext =
@@ -2669,38 +2707,6 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a card name (reveal hand, damage, exile)", gameData.id, playerName);
     }
 
-    public void beginChooseNameRevealHandDiscardChoice(GameData gameData, UUID choosingPlayerId,
-                                                       UUID targetPlayerId, List<CardType> excludedTypes) {
-        ChoiceContext.ChooseNameRevealHandDiscardChoice choiceContext =
-                new ChoiceContext.ChooseNameRevealHandDiscardChoice(choosingPlayerId, targetPlayerId, false);
-        beginChooseNameRevealHandDiscardChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes,
-                choiceContext);
-    }
-
-    public void beginChooseNameRevealHandDiscardOneOrDrawChoice(GameData gameData, UUID choosingPlayerId,
-                                                                UUID targetPlayerId, List<CardType> excludedTypes) {
-        ChoiceContext.ChooseNameRevealHandDiscardChoice choiceContext =
-                new ChoiceContext.ChooseNameRevealHandDiscardChoice(choosingPlayerId, targetPlayerId, true);
-        beginChooseNameRevealHandDiscardChoice(gameData, choosingPlayerId, targetPlayerId, excludedTypes,
-                choiceContext);
-    }
-
-    private void beginChooseNameRevealHandDiscardChoice(
-            GameData gameData, UUID choosingPlayerId, UUID targetPlayerId, List<CardType> excludedTypes,
-            ChoiceContext.ChooseNameRevealHandDiscardChoice choiceContext) {
-        List<String> cardNames = collectCardNamesInGameExcluding(gameData, excludedTypes);
-        String excludedLabel = excludedTypes.stream()
-                .map(type -> type.name().toLowerCase())
-                .reduce((first, second) -> first + "/" + second)
-                .orElse("");
-        String prompt = "Choose a non" + excludedLabel + " card name.";
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                choosingPlayerId, null, null, choiceContext, cardNames, prompt));
-
-        log.info("Game {} - Awaiting {} to choose a card name (reveal hand, discard matching)",
-                gameData.id, gameData.playerIdToName.get(choosingPlayerId));
-    }
-
     /** Begins Assembly Hall's choice of a creature card name from the controller's hand. */
     public void beginAssemblyHallCreatureCardChoice(GameData gameData, UUID controllerId) {
         List<Card> hand = gameData.playerHands.getOrDefault(controllerId, List.of());
@@ -2824,6 +2830,52 @@ public class PlayerInputService {
             names.addAll(catalog.matching(new CardNameFilter(List.copyOf(excludedTypes), requiredType)));
         }
         return new ArrayList<>(names);
+    }
+
+    /**
+     * The names of the face-up cards in the public zones, of what the stack shows ({@link #showsNameOnStack}) and
+     * of {@code viewerId}'s own hand and library.
+     */
+    private Set<String> collectCardNamesKnownTo(GameData gameData, UUID viewerId, Predicate<Card> candidate) {
+        Set<String> names = new TreeSet<>();
+        Consumer<Card> offer = card -> {
+            if (candidate.test(card)) {
+                names.addAll(card.getNames());
+            }
+        };
+        for (UUID playerId : gameData.playerIds) {
+            gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                    .filter(permanent -> !permanent.isFaceDown())
+                    .forEach(permanent -> offer.accept(permanent.getCard()));
+            gameData.playerGraveyards.getOrDefault(playerId, List.of()).forEach(offer);
+            gameData.getPlayerExiledCards(playerId).stream()
+                    .filter(card -> !gameData.isExiledFaceDown(card.getId()))
+                    .forEach(offer);
+        }
+        gameData.playerHands.getOrDefault(viewerId, List.of()).forEach(offer);
+        gameData.playerDecks.getOrDefault(viewerId, List.of()).forEach(offer);
+        gameData.stack.stream()
+                .filter(entry -> showsNameOnStack(gameData, entry))
+                .forEach(entry -> offer.accept(entry.getCard()));
+        return names;
+    }
+
+    /**
+     * Whether the stack shows the name of {@code entry}'s card: not a spell cast face down (CR 708.4), nor the source
+     * of an ability that is or last was face down on the battlefield (CR 708.2) or lies face down in exile (CR 406.3).
+     */
+    private boolean showsNameOnStack(GameData gameData, StackEntry entry) {
+        Card card = entry.getCard();
+        if (card == null || entry.isCastFaceDown() || gameData.isExiledFaceDown(card.getId())
+                || VisualCueService.Source.of(gameData, entry).name() == null) {
+            return false;
+        }
+        // An ability may name its source by the card alone, without the permanent.
+        return gameData.playerBattlefields.values().stream()
+                .flatMap(List::stream)
+                .noneMatch(permanent -> permanent.isFaceDown()
+                        && (card.getId().equals(permanent.getCard().getId())
+                        || card.getId().equals(permanent.getOriginalCard().getId())));
     }
 
     /** Names of every card in the game that isn't a basic land card (Null Chamber). */

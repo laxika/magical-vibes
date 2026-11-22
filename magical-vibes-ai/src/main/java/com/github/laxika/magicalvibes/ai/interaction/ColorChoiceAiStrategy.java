@@ -1,6 +1,15 @@
 package com.github.laxika.magicalvibes.ai.interaction;
 
+import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.Zone;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealTopCardOfLibraryEffect;
+import com.github.laxika.magicalvibes.model.filter.CardHasNameChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.service.input.ChoiceHandlerService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.model.Card;
@@ -16,6 +25,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -188,15 +198,12 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             return;
         }
 
-        if (context instanceof ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice dig) {
-            // Demonic Consultation: name a card past the initial exile window so the dig can find it.
-            List<Card> aiDeck = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());
-            int skip = Math.min(dig.topExileCount(), aiDeck.size());
-            String chosenName = aiDeck.size() > skip
-                    ? aiDeck.get(skip).getName()
-                    : (aiDeck.isEmpty() ? "Island" : aiDeck.getLast().getName());
-            log.info("AI: Choosing card name \"{}\" for exile-top/reveal-until dig in game {}",
-                    chosenName, gameId);
+        if (context instanceof ChoiceContext.ChooseCardNameAtResolutionChoice) {
+            StackEntry resolving = gameData.pendingEffectResolutionEntry;
+            Optional<String> dug = digsForChosenName(resolving) ? nameToDigFor(ctx, interaction, resolving)
+                    : Optional.empty();
+            String chosenName = dug.orElseGet(() -> nameAtResolution(ctx, interaction, resolving));
+            log.info("AI: Choosing card name \"{}\" as an effect resolves in game {}", chosenName, gameId);
             answerWith(ctx, interaction, chosenName);
             return;
         }
@@ -665,5 +672,117 @@ class ColorChoiceAiStrategy implements AiInteractionStrategy<PendingInteraction.
             }
         }
         return null;
+    }
+
+    /** Whether the resolution reveals from its controller's library until a card has the name being chosen. */
+    private static boolean digsForChosenName(StackEntry resolving) {
+        return resolving != null && resolving.getEffectsToResolve().stream()
+                .anyMatch(effect -> effect instanceof RevealCardsFromTopUntilEffect reveal
+                        && reveal.library() instanceof PlayerSubject.You
+                        && reveal.until() instanceof CardHasNameChosenThisResolutionPredicate);
+    }
+
+    /** The name of the first card past what the effect exiles before it digs, if that name can be chosen. */
+    private static Optional<String> nameToDigFor(AiInteractionContext ctx, PendingInteraction.ColorChoice interaction,
+                                                 StackEntry resolving) {
+        List<Card> library = ctx.gameData().playerDecks.getOrDefault(ctx.aiPlayerId(), List.of());
+        if (library.isEmpty()) {
+            return Optional.empty();
+        }
+        String name = library.get(Math.min(cardsExiledBeforeTheDig(resolving), library.size() - 1)).getName();
+        return interaction.options().contains(name) && !ctx.gameQueryService().isCardNameUnchoosable(ctx.gameData(), name)
+                ? Optional.of(name) : Optional.empty();
+    }
+
+    /**
+     * The offered, choosable name the AI's knowledge favors: what it holds most of in its own hand or library where the
+     * effect reveals from there, otherwise what is seen most of the other players', then of any, then of its own cards.
+     * No other player's hand or library and no hidden face is read (CR 400.2, 406.3).
+     */
+    private static String nameAtResolution(AiInteractionContext ctx, PendingInteraction.ColorChoice interaction,
+                                           StackEntry resolving) {
+        GameData gameData = ctx.gameData();
+        UUID aiPlayerId = ctx.aiPlayerId();
+        List<Card> hand = gameData.playerHands.getOrDefault(aiPlayerId, List.of());
+        List<Card> library = gameData.playerDecks.getOrDefault(aiPlayerId, List.of());
+        List<List<Card>> pools = new ArrayList<>();
+        if (revealsOwnHand(resolving, aiPlayerId)) {
+            pools.add(hand);
+        } else if (revealsOwnLibrary(resolving, aiPlayerId)) {
+            pools.add(library);
+        }
+        List<Card> seenOfOthers = new ArrayList<>();
+        List<Card> seenOfOwn = new ArrayList<>();
+        for (UUID playerId : gameData.orderedPlayerIds) {
+            (playerId.equals(aiPlayerId) ? seenOfOwn : seenOfOthers).addAll(publicCards(gameData, playerId));
+        }
+        pools.add(seenOfOthers);
+        pools.add(seenOfOwn);
+        pools.add(Stream.concat(hand.stream(), library.stream()).toList());
+
+        for (List<Card> pool : pools) {
+            Optional<String> name = mostHeldName(ctx, interaction.options(), pool);
+            if (name.isPresent()) {
+                return name.get();
+            }
+        }
+        return choosableName(ctx, interaction).orElse("Island");
+    }
+
+    /** The offered, choosable name most of {@code cards} have; the earlier option among equals. */
+    private static Optional<String> mostHeldName(AiInteractionContext ctx, List<String> options, List<Card> cards) {
+        Map<String, Integer> held = new HashMap<>();
+        cards.forEach(card -> card.getNames().forEach(name -> held.merge(name, 1, Integer::sum)));
+        String best = null;
+        for (String name : options) {
+            if (held.containsKey(name) && (best == null || held.get(name) > held.get(best))
+                    && !ctx.gameQueryService().isCardNameUnchoosable(ctx.gameData(), name)) {
+                best = name;
+            }
+        }
+        return Optional.ofNullable(best);
+    }
+
+    /** The cards of {@code playerId} face up on the battlefield, in the graveyard and in exile. */
+    private static List<Card> publicCards(GameData gameData, UUID playerId) {
+        List<Card> cards = new ArrayList<>();
+        gameData.playerBattlefields.getOrDefault(playerId, List.of()).stream()
+                .filter(permanent -> !permanent.isFaceDown())
+                .forEach(permanent -> cards.add(permanent.getCard()));
+        cards.addAll(gameData.playerGraveyards.getOrDefault(playerId, List.of()));
+        gameData.getPlayerExiledCards(playerId).stream()
+                .filter(card -> !gameData.isExiledFaceDown(card.getId()))
+                .forEach(cards::add);
+        return cards;
+    }
+
+    private static boolean revealsOwnHand(StackEntry resolving, UUID aiPlayerId) {
+        return resolving != null && resolving.getEffectsToResolve().stream()
+                .anyMatch(effect -> effect instanceof RevealCardsFromHandEffect reveal
+                        && namesAi(resolving, reveal.player(), aiPlayerId));
+    }
+
+    private static boolean revealsOwnLibrary(StackEntry resolving, UUID aiPlayerId) {
+        return resolving != null && resolving.getEffectsToResolve().stream()
+                .anyMatch(effect -> effect instanceof RevealTopCardOfLibraryEffect top
+                        && namesAi(resolving, top.player(), aiPlayerId)
+                        || effect instanceof RevealCardsFromTopUntilEffect until
+                        && namesAi(resolving, until.library(), aiPlayerId));
+    }
+
+    /** Whether {@code player} is the AI: "you" of the effect it controls, or the player targeted being the AI. */
+    private static boolean namesAi(StackEntry resolving, PlayerSubject player, UUID aiPlayerId) {
+        return player instanceof PlayerSubject.You && aiPlayerId.equals(resolving.getControllerId())
+                || player instanceof PlayerSubject.TargetPlayer && aiPlayerId.equals(resolving.getTargetId());
+    }
+
+    private static int cardsExiledBeforeTheDig(StackEntry resolving) {
+        int count = 0;
+        for (CardEffect effect : resolving.getEffectsToResolve()) {
+            if (effect instanceof ExileTopCardOfOwnLibraryEffect exile && exile.count() instanceof Fixed fixed) {
+                count += fixed.value();
+            }
+        }
+        return count;
     }
 }

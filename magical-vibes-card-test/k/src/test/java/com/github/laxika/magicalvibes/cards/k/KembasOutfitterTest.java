@@ -34,8 +34,8 @@ class KembasOutfitterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.PerpetualActivatedAbilityCardChoice.class);
-        harness.handleCardChosen(player1, 0);
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
+        chooseHandCard(player1, 0);
 
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castArtifact(player1, 0);
@@ -110,9 +110,9 @@ class KembasOutfitterTest extends BaseCardTest {
         harness.handleListChoice(player1, HAND_MODE);
         harness.passBothPriorities();
 
-        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
+        assertThatThrownBy(() -> chooseHandCard(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
-        harness.handleCardChosen(player1, 1);
+        chooseHandCard(player1, 1);
         assertThat(gd.interaction.activeInteraction()).isNull();
     }
 
@@ -159,5 +159,9 @@ class KembasOutfitterTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(recastHammer.getAttachedTo()).isEqualTo(outfitter.getId());
+    }
+
+    private void chooseHandCard(com.github.laxika.magicalvibes.model.Player player, int index) {
+        harness.handleMultipleCardsChosen(player, List.of(gd.playerHands.get(player1.getId()).get(index).getId()));
     }
 }

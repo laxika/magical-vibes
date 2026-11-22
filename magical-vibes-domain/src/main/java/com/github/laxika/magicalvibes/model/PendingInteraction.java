@@ -63,7 +63,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.ImprovisationCapstoneCastChoice,
         PendingInteraction.AminatousAuguryChoice,
         PendingInteraction.InvokeCalamityCastChoice,
-        PendingInteraction.PortentOfCalamityState,
         PendingInteraction.PlarggAndNassariOpponentChoice,
         PendingInteraction.PlarggAndNassariCardChoice,
         PendingInteraction.EyeOfTheStormCastChoice,
@@ -135,14 +134,12 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         PendingInteraction.PutCardFromHandIntoGraveyardChoice,
         PendingInteraction.PerpetualOffspringCardChoice,
         PendingInteraction.PerpetualCreatureCardChoice,
-        PendingInteraction.PerpetualActivatedAbilityCardChoice,
         PendingInteraction.PerpetualTriggeredAbilityCardChoice,
         PendingInteraction.PerpetualTriggeredAbilityCardsChoice,
         PendingInteraction.PerpetualStaticEffectCardChoice,
         PendingInteraction.PerpetualTargetCardChoice,
         PendingInteraction.WordOfCommandCardChoice,
         PendingInteraction.PerpetualEnterExileHandCardChoice,
-        PendingInteraction.PerpetualCastCostHandCardChoice,
         PendingInteraction.StrongholdGambitCardChoice,
         PendingInteraction.TargetedHandCardChoice,
         PendingInteraction.MasterOfPredicamentsCardChoice,
@@ -1026,25 +1023,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         @Override
         public InteractionOptions legalOptions() {
             return new InteractionOptions.MultiCardPick(validCardIds, 0, 2);
-        }
-    }
-
-    /** State carried while one optional exile is offered for each card type. */
-    record PortentOfCalamityState(UUID playerId, java.util.List<UUID> revealedCardIds)
-            implements PendingInteraction {
-
-        public PortentOfCalamityState {
-            revealedCardIds = java.util.List.copyOf(revealedCardIds);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return InteractionOptions.ACCEPT_DECLINE;
         }
     }
 
@@ -4090,27 +4068,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
         }
     }
 
-    /** Chooses a card in hand to receive a perpetual activated ability. */
-    record PerpetualActivatedAbilityCardChoice(UUID playerId, java.util.List<Integer> validIndices,
-                                               String prompt,
-                                               com.github.laxika.magicalvibes.model.ActivatedAbility ability)
-            implements PendingInteraction, HandChoice {
-
-        public PerpetualActivatedAbilityCardChoice {
-            validIndices = java.util.List.copyOf(validIndices);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(validIndices, false);
-        }
-    }
-
     /** Chooses a card in hand to receive a perpetual triggered ability. */
     record PerpetualTriggeredAbilityCardChoice(UUID playerId,
                                                java.util.List<Integer> validIndices,
@@ -4457,26 +4414,6 @@ public sealed interface PendingInteraction permits PermanentChoiceContext,
             implements PendingInteraction, HandChoice {
 
         public PerpetualEnterExileHandCardChoice {
-            validIndices = java.util.List.copyOf(validIndices);
-        }
-
-        @Override
-        public UUID decidingPlayerId() {
-            return playerId;
-        }
-
-        @Override
-        public InteractionOptions legalOptions() {
-            return new InteractionOptions.CardIndexPick(validIndices, false);
-        }
-    }
-
-    /** Bloodsprout Talisman: choose a nonland card from hand for a perpetual cast-cost reduction. */
-    record PerpetualCastCostHandCardChoice(UUID playerId, java.util.List<Integer> validIndices,
-                                           int amount, String prompt)
-            implements PendingInteraction, HandChoice {
-
-        public PerpetualCastCostHandCardChoice {
             validIndices = java.util.List.copyOf(validIndices);
         }
 

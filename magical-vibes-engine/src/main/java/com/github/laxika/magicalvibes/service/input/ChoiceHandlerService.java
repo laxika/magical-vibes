@@ -55,7 +55,6 @@ import com.github.laxika.magicalvibes.model.TextReplacement;
 import com.github.laxika.magicalvibes.model.VoteChoiceContext;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.DevotionToColor;
-import com.github.laxika.magicalvibes.model.effect.PlayersLoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LandwalkIgnoredForBlockingEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
@@ -79,7 +78,6 @@ import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.JinnieFayTokenReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ManaRestriction;
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SphinxAmbassadorPutOnBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorForSourceEffect;
@@ -345,19 +343,9 @@ public class ChoiceHandlerService {
                 || context instanceof ChoiceContext.SphinxAmbassadorNameChoice
                 || context instanceof ChoiceContext.NameCardMillGainLifeChoice
                 || context instanceof ChoiceContext.NameCardMillDrawChoice
-                || context instanceof ChoiceContext.ChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice
-                || context instanceof ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice
-                || context instanceof ChoiceContext.ChooseCreatureNameRevealTopCardsChoice
-                || context instanceof ChoiceContext.ChooseNonlandCardNameRevealTopCardsChoice
-                || context instanceof ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice
                 || context instanceof ChoiceContext.OpponentsCantCastNamedSpellsUntilNextTurnChoice
                 || context instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice
-                || context instanceof ChoiceContext.ChooseCardNameRevealTopCardChoice
-                || context instanceof ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice
-                || context instanceof ChoiceContext.ChooseNameRevealRandomHandCardDamageChoice
-                || context instanceof ChoiceContext.ChooseNameRevealRandomHandCardsDiscardChoice
-                || context instanceof ChoiceContext.ChooseNameRevealHandDiscardChoice
-                || context instanceof ChoiceContext.ChooseCardNameRevealHandThenChoice;
+                || context instanceof ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice;
     }
 
     public void handleListChoice(GameData gameData, Player player, String colorName) {
@@ -752,15 +740,6 @@ public class ChoiceHandlerService {
                 && !libraryRevealSupport.isCatalogCardNameAllowed(colorName, ctx.excludedTypes())) {
             throw new IllegalArgumentException("Invalid restricted card name: " + colorName);
         }
-        if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealHandDiscardChoice
-                && !colorChoice.options().contains(colorName)) {
-            throw new IllegalArgumentException("Invalid card name: " + colorName);
-        }
-        if (colorChoice.context() instanceof ChoiceContext.ChooseCardNameRevealHandThenChoice
-                && !colorChoice.options().contains(colorName)
-                && !libraryRevealSupport.isCatalogCardNameAllowed(colorName, List.of())) {
-            throw new IllegalArgumentException("Invalid card name: " + colorName);
-        }
         if (colorChoice.context() instanceof ChoiceContext.TriggeredModalChoice
                 && !colorChoice.options().contains(colorName)) {
             throw new IllegalArgumentException("Invalid mode: " + colorName);
@@ -1013,9 +992,11 @@ public class ChoiceHandlerService {
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseCardNameAtResolutionChoice ctx) {
-            if (!colorChoice.options().contains(colorName)
-                    && (ctx.requiredType() != null
-                    || !libraryRevealSupport.isCatalogCardNameAllowed(colorName, List.of()))) {
+            var choice = ctx.choice();
+            if (playerInputService.isNameExcludedByType(gameData, colorName, choice.excludedTypes())
+                    || !colorChoice.options().contains(colorName)
+                    && (choice.requiredType() != null || choice.notBasicLandName()
+                    || !libraryRevealSupport.isCatalogCardNameAllowed(colorName, choice.excludedTypes()))) {
                 throw new IllegalArgumentException("Invalid card name choice: " + colorName);
             }
             handleChooseCardNameAtResolutionChosen(gameData, player, colorName, ctx);
@@ -1358,59 +1339,11 @@ public class ChoiceHandlerService {
             handleNameCardMillDrawChoice(gameData, player, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice ctx) {
-            handleChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice(gameData, player, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.ChooseCreatureNameRevealTopCardsChoice ctx) {
-            if (!colorChoice.options().contains(colorName)) throw new IllegalArgumentException("Invalid creature card name");
-            handleChooseCreatureNameRevealTopCardsChoice(gameData, player, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.ChooseNonlandCardNameRevealTopCardsChoice ctx) {
-            handleChooseNonlandCardNameRevealTopCardsChoice(gameData, player, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice ctx) {
-            handleChooseNameRevealTopCardsToHandRestToExileChoice(gameData, player, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice ctx) {
-            if (!libraryRevealSupport.isCardNameAllowed(gameData, colorName)) {
-                throw new IllegalArgumentException("Invalid card name: " + colorName);
-            }
-            handleChooseNameExileTopRevealUntilNamedChoice(gameData, player, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealRandomHandCardDamageChoice ctx) {
-            handleChooseNameRevealRandomHandCardDamageChoice(gameData, player, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealRandomHandCardsDiscardChoice ctx) {
-            handleChooseNameRevealRandomHandCardsDiscardChoice(gameData, player, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.ChooseNameRevealHandDiscardChoice ctx) {
-            if (ctx.discardOnlyOneAndDrawIfNoMatch()) {
-                handleChooseNameRevealHandDiscardOneOrDrawChoice(gameData, player, colorName, ctx);
-            } else {
-                handleChooseNameRevealHandDiscardChoice(gameData, player, colorName, ctx);
-            }
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.ChooseCardNameRevealHandThenChoice ctx) {
-            handleChooseCardNameRevealHandThenChoice(gameData, player, colorName, ctx);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx) {
             if (!libraryRevealSupport.isCardNameAllowed(gameData, colorName)) {
                 throw new IllegalArgumentException("Invalid card name: " + colorName);
             }
             handleTargetPlayerNameCardRevealTopChoice(gameData, player, colorName, ctx);
-            return;
-        }
-        if (colorChoice.context() instanceof ChoiceContext.ChooseCardNameRevealTopCardChoice ctx) {
-            handleChooseCardNameRevealTopCardChoice(gameData, player, colorName, ctx);
             return;
         }
         if (colorChoice.context() instanceof ChoiceContext.ChooseCardNameForDelayedCreatureCombatDamageChoice ctx) {
@@ -3433,9 +3366,13 @@ public class ChoiceHandlerService {
                                                         ChoiceContext.ChooseCardNameAtResolutionChoice ctx) {
         gameData.interaction.clearAwaitingInput();
 
+        StackEntry resolving = gameData.pendingEffectResolutionEntry;
+        // "As this becomes attached" chooses outside a resolution: nothing after it reads the name from an entry.
+        if (resolving != null) {
+            resolving.setChosenCardName(cardName);
+        }
         if (ctx.sourcePermanentId() != null) {
             Permanent source = gameQueryService.findPermanentById(gameData, ctx.sourcePermanentId());
-            StackEntry resolving = gameData.pendingEffectResolutionEntry;
             if (source == null && resolving != null) {
                 source = resolving.getSourcePermanentSnapshot();
             }
@@ -7180,220 +7117,6 @@ public class ChoiceHandlerService {
         }
     }
 
-    /**
-     * Cursed Scroll: the controller has named a card and now reveals one card at random from their
-     * own hand. On a match the source deals the stored damage to the any-target picked when the
-     * ability was activated. An empty hand reveals nothing and deals no damage.
-     */
-    private void handleChooseNameRevealRandomHandCardDamageChoice(
-            GameData gameData, Player player, String cardName,
-            ChoiceContext.ChooseNameRevealRandomHandCardDamageChoice ctx) {
-        if (!libraryRevealSupport.isCardNameAllowed(gameData, cardName)) {
-            throw new IllegalArgumentException("Invalid card name: " + cardName);
-        }
-        gameData.interaction.clearAwaitingInput();
-
-        gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses \"" + cardName + "\"."));
-        log.info("Game {} - {} chooses card name \"{}\" (name/reveal random/damage)",
-                gameData.id, player.getUsername(), cardName);
-
-        List<Card> hand = gameData.playerHands.get(ctx.controllerId());
-        if (hand == null || hand.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(player.getUsername() + " has no cards to reveal."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        Card revealed = hand.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(hand.size()));
-        gameLogService.append(gameData,
-                GameLog.textCardText(player.getUsername() + " reveals ", revealed, " at random."));
-        cardRevealService.revealToAllPlayers(gameData, ctx.controllerId(),
-                com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND, List.of(revealed));
-
-        if (!revealed.getName().equals(cardName)) {
-            log.info("Game {} - revealed {} does not match \"{}\", no damage", gameData.id, revealed.getName(), cardName);
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        StackEntry damageEntry = new StackEntry(
-                StackEntryType.ACTIVATED_ABILITY,
-                ctx.sourceCard(),
-                ctx.controllerId(),
-                ctx.sourceCard().getName() + "'s ability",
-                List.of(),
-                ctx.targetId(),
-                ctx.sourcePermanentId());
-        damageSupport.resolveAnyTargetDamage(gameData, damageEntry, ctx.targetId(), ctx.damage(), false);
-        stateBasedActionService.performStateBasedActions(gameData);
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    /**
-     * Nebuchadnezzar: the controller has named a card; the target player reveals up to X distinct
-     * cards at random from their hand, then discards the matching revealed cards.
-     */
-    private void handleChooseNameRevealRandomHandCardsDiscardChoice(
-            GameData gameData, Player player, String cardName,
-            ChoiceContext.ChooseNameRevealRandomHandCardsDiscardChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
-        UUID targetPlayerId = ctx.targetPlayerId();
-        List<Card> hand = gameData.playerHands.get(targetPlayerId);
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
-        gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses \"" + cardName + "\"."));
-
-        if (hand == null || hand.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(targetName + " reveals an empty hand."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        int revealCount = Math.min(Math.max(ctx.revealCount(), 0), hand.size());
-        List<Card> shuffledHand = new ArrayList<>(hand);
-        Collections.shuffle(shuffledHand);
-        List<Card> revealed = new ArrayList<>(shuffledHand.subList(0, revealCount));
-
-        gameLogService.append(gameData,
-                appendCards(GameLog.builder().text(targetName + " reveals "), revealed)
-                        .text(" at random.").build());
-        cardRevealService.revealToAllPlayers(gameData, targetPlayerId,
-                com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND, revealed);
-
-        List<Card> toDiscard = revealed.stream()
-                .filter(card -> card.getName().equals(cardName))
-                .toList();
-        gameData.discardCausedByOpponent = true;
-        gameData.beginDiscardEvent(targetPlayerId);
-        for (Card card : toDiscard) {
-            hand.remove(card);
-            graveyardService.discardCard(gameData, targetPlayerId, card);
-            gameLogService.append(gameData, GameLog.textCardText(targetName + " discards ", card, "."));
-            gameData.discarded(targetPlayerId, card);
-        }
-        gameData.finishDiscardEvent();
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleChooseCardNameRevealHandThenChoice(
-            GameData gameData, Player player, String cardName,
-            ChoiceContext.ChooseCardNameRevealHandThenChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
-        UUID targetPlayerId = ctx.targetPlayerId();
-        UUID controllerId = ctx.controllerId();
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
-        List<Card> hand = gameData.playerHands.get(targetPlayerId);
-
-        gameLogService.append(gameData, GameLog.text(controllerName + " chooses \"" + cardName + "\"."));
-        cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
-
-        boolean nameWasRevealed = hand != null && hand.stream()
-                .anyMatch(card -> card.getName().equals(cardName));
-        if (nameWasRevealed) {
-            StackEntry pendingEntry = gameData.pendingEffectResolutionEntry;
-            if (pendingEntry == null) {
-                throw new IllegalStateException("No pending effect resolution entry");
-            }
-            pendingEntry.insertEffectsToResolve(
-                    gameData.pendingEffectResolutionIndex, List.of(ctx.followUpEffect()));
-        } else {
-            gameLogService.append(gameData, GameLog.text(targetName + " has no card named \""
-                    + cardName + "\" in their hand."));
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleChooseNameRevealHandDiscardChoice(
-            GameData gameData, Player player, String cardName,
-            ChoiceContext.ChooseNameRevealHandDiscardChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
-        UUID targetPlayerId = ctx.targetPlayerId();
-        UUID controllerId = ctx.controllerId();
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
-        List<Card> hand = gameData.playerHands.get(targetPlayerId);
-
-        gameLogService.append(gameData, GameLog.text(controllerName + " chooses \"" + cardName + "\"."));
-        cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
-
-        if (hand == null || hand.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(targetName + " reveals an empty hand."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        List<Card> toDiscard = hand.stream()
-                .filter(card -> card.hasName(cardName))
-                .toList();
-        if (toDiscard.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(targetName + " has no cards named \""
-                    + cardName + "\" to discard."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        hand.removeAll(toDiscard);
-        gameData.discardCausedByOpponent = !targetPlayerId.equals(controllerId);
-        gameData.beginDiscardEvent(targetPlayerId);
-        for (Card card : toDiscard) {
-            graveyardService.discardCard(gameData, targetPlayerId, card);
-            gameLogService.append(gameData, GameLog.textCardText(targetName + " discards ", card, "."));
-            gameData.discarded(targetPlayerId, card);
-        }
-        gameData.finishDiscardEvent();
-
-        gameLogService.append(gameData, GameLog.text(targetName + " discards " + toDiscard.size()
-                + " card" + (toDiscard.size() == 1 ? "" : "s") + " named \"" + cardName + "\"."));
-        log.info("Game {} - {} discards {} card(s) named {}", gameData.id, targetName,
-                toDiscard.size(), cardName);
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleChooseNameRevealHandDiscardOneOrDrawChoice(
-            GameData gameData, Player player, String cardName,
-            ChoiceContext.ChooseNameRevealHandDiscardChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
-        UUID targetPlayerId = ctx.targetPlayerId();
-        UUID controllerId = ctx.controllerId();
-        String controllerName = gameData.playerIdToName.get(controllerId);
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
-        List<Card> hand = gameData.playerHands.get(targetPlayerId);
-
-        gameLogService.append(gameData, GameLog.text(controllerName + " chooses \"" + cardName + "\"."));
-        cardRevealService.revealHandToAllPlayers(gameData, targetPlayerId);
-
-        List<Integer> matchingIndices = new ArrayList<>();
-        if (hand != null) {
-            for (int i = 0; i < hand.size(); i++) {
-                if (hand.get(i).getName().equals(cardName)) {
-                    matchingIndices.add(i);
-                }
-            }
-        }
-
-        if (matchingIndices.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(targetName + " has no card named \""
-                    + cardName + "\" to discard. " + controllerName + " draws a card."));
-            drawService.resolveDrawCard(gameData, controllerId);
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        gameData.discardCausedByOpponent = !targetPlayerId.equals(controllerId);
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.RevealedHandChoice(
-                targetPlayerId, targetPlayerId, matchingIndices, 1, true, false,
-                List.of(), null, "Choose a card named \"" + cardName + "\" to discard.", false, false));
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
     private void handleNameCardMillGainLifeChoice(GameData gameData, Player player, String cardName,
                                                   ChoiceContext.NameCardMillGainLifeChoice ctx) {
         gameData.interaction.clearAwaitingInput();
@@ -7436,57 +7159,6 @@ public class ChoiceHandlerService {
             log.info("Game {} - {} milled the named card {}, {} draws a card",
                     gameData.id, gameData.playerIdToName.get(ctx.targetPlayerId()),
                     matched.getName(), controllerName);
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice(
-            GameData gameData, Player player, String cardName,
-            ChoiceContext.ChooseNameRevealUntilNamedPutOnTopRestToGraveyardChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
-        UUID targetPlayerId = ctx.targetPlayerId();
-        String targetName = gameData.playerIdToName.get(targetPlayerId);
-        gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses \"" + cardName + "\"."));
-
-        List<Card> deck = gameData.playerDecks.get(targetPlayerId);
-        if (deck == null || deck.isEmpty()) {
-            if (deck != null) {
-                Collections.shuffle(deck);
-            }
-            gameLogService.append(gameData, GameLog.text(targetName + "'s library is empty."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        List<Card> revealed = new ArrayList<>();
-        Card found = null;
-        while (!deck.isEmpty()) {
-            Card card = deck.removeFirst();
-            revealed.add(card);
-            if (card.getName().equals(cardName)) {
-                found = card;
-                break;
-            }
-        }
-
-        String revealedNames = revealed.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-        gameLogService.append(gameData, GameLog.text(targetName + " reveals " + revealedNames + "."));
-
-        if (found == null) {
-            Collections.shuffle(revealed);
-            deck.addAll(revealed);
-            gameLogService.append(gameData, GameLog.text(
-                    targetName + " does not reveal a card named \"" + cardName + "\" and shuffles their library."));
-        } else {
-            revealed.remove(found);
-            for (Card card : revealed) {
-                graveyardService.addCardToGraveyard(gameData, targetPlayerId, card, Zone.LIBRARY);
-            }
-            deck.addFirst(found);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    targetName + " puts ", found, " on top of their library."));
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -7560,94 +7232,6 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleChooseCreatureNameRevealTopCardsChoice(GameData gameData, Player player,
-                                                              String cardName,
-                                                              ChoiceContext.ChooseCreatureNameRevealTopCardsChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
-        UUID controllerId = ctx.controllerId();
-        String controllerName = gameData.playerIdToName.get(controllerId);
-
-        gameLogService.append(gameData, GameLog.text(
-                player.getUsername() + " chooses \"" + cardName + "\"."));
-
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        if (deck == null || deck.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(controllerName + "'s library is empty."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        List<Card> revealed = new ArrayList<>();
-        int toReveal = Math.min(ctx.count(), deck.size());
-        for (int i = 0; i < toReveal; i++) {
-            revealed.add(deck.removeFirst());
-        }
-
-        String revealedNames = revealed.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-        gameLogService.append(gameData, GameLog.text(controllerName + " reveals " + revealedNames + "."));
-
-        for (Card card : revealed) {
-            if (card.getName().equals(cardName)) {
-                gameData.addCardToHand(controllerId, card);
-            } else {
-                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
-            }
-        }
-
-        log.info("Game {} - {} names \"{}\" with {} — revealed {} card(s)",
-                gameData.id, player.getUsername(), cardName,
-                ctx.sourceCard() != null ? ctx.sourceCard().getName() : "?", revealed.size());
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleChooseNonlandCardNameRevealTopCardsChoice(GameData gameData, Player player,
-                                                                  String cardName,
-                                                                  ChoiceContext.ChooseNonlandCardNameRevealTopCardsChoice ctx) {
-        if (libraryRevealSupport.collectNonlandCardNamesInGame(gameData).stream()
-                .noneMatch(name -> name.equalsIgnoreCase(cardName))) {
-            throw new IllegalArgumentException("Invalid nonland card name: " + cardName);
-        }
-        gameData.interaction.clearAwaitingInput();
-
-        UUID controllerId = ctx.controllerId();
-        String controllerName = gameData.playerIdToName.get(controllerId);
-
-        gameLogService.append(gameData, GameLog.text(
-                player.getUsername() + " chooses \"" + cardName + "\"."));
-
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        if (deck == null || deck.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(controllerName + "'s library is empty."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        List<Card> revealed = new ArrayList<>();
-        int toReveal = Math.min(ctx.count(), deck.size());
-        for (int i = 0; i < toReveal; i++) {
-            revealed.add(deck.removeFirst());
-        }
-
-        String revealedNames = revealed.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-        gameLogService.append(gameData, GameLog.text(controllerName + " reveals " + revealedNames + "."));
-
-        for (Card card : revealed) {
-            if (card.getName().equals(cardName)) {
-                gameData.addCardToHand(controllerId, card);
-            } else {
-                graveyardService.addCardToGraveyard(gameData, controllerId, card, Zone.LIBRARY);
-            }
-        }
-
-        log.info("Game {} - {} names \"{}\" with {} — revealed {} card(s)",
-                gameData.id, player.getUsername(), cardName,
-                ctx.sourceCard() != null ? ctx.sourceCard().getName() : "?", revealed.size());
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
     private void handleSpellColorChoice(GameData gameData, Player player, String colorName) {
         CardColor color = CardColor.valueOf(colorName);
 
@@ -7704,155 +7288,6 @@ public class ChoiceHandlerService {
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
     }
 
-    private void handleChooseNameRevealTopCardsToHandRestToExileChoice(
-            GameData gameData, Player player, String cardName,
-            ChoiceContext.ChooseNameRevealTopCardsToHandRestToExileChoice ctx) {
-        PendingInteraction.ColorChoice active =
-                gameData.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
-        if (active != null && active.options().stream().noneMatch(cardName::equalsIgnoreCase)
-                && libraryRevealSupport.isCatalogCardNameAllowed(cardName, List.of())) {
-            throw new IllegalArgumentException("Choose a card name other than a basic land card name");
-        }
-        gameData.interaction.clearAwaitingInput();
-
-        UUID controllerId = ctx.controllerId();
-        String controllerName = gameData.playerIdToName.get(controllerId);
-
-        gameLogService.append(gameData, GameLog.text(
-                player.getUsername() + " chooses \"" + cardName + "\"."));
-
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        if (deck == null || deck.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(controllerName + "'s library is empty."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        List<Card> revealed = new ArrayList<>();
-        int toReveal = Math.min(ctx.count(), deck.size());
-        for (int i = 0; i < toReveal; i++) {
-            revealed.add(deck.removeFirst());
-        }
-
-        String revealedNames = revealed.stream().map(Card::getName).reduce((a, b) -> a + ", " + b).orElse("");
-        gameLogService.append(gameData, GameLog.text(controllerName + " reveals " + revealedNames + "."));
-
-        for (Card card : revealed) {
-            if (card.getName().equals(cardName)) {
-                gameData.addCardToHand(controllerId, card);
-            } else {
-                gameData.addToExile(controllerId, card);
-            }
-        }
-
-        log.info("Game {} - {} names \"{}\" with {} — revealed {} card(s)",
-                gameData.id, player.getUsername(), cardName,
-                ctx.sourceCard() != null ? ctx.sourceCard().getName() : "?", revealed.size());
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleChooseNameExileTopRevealUntilNamedChoice(GameData gameData, Player player,
-                                                                String cardName,
-                                                                ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
-        UUID controllerId = ctx.controllerId();
-        String controllerName = gameData.playerIdToName.get(controllerId);
-
-        gameLogService.append(gameData, GameLog.text(
-                player.getUsername() + " chooses \"" + cardName + "\"."));
-        log.info("Game {} - {} chooses card name \"{}\" (exile-top/reveal-until-named)",
-                gameData.id, player.getUsername(), cardName);
-
-        List<Card> deck = gameData.playerDecks.get(controllerId);
-        if (deck == null) {
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        // Exile the top N cards (or fewer if the library is smaller).
-        int toExile = Math.min(ctx.topExileCount(), deck.size());
-        List<Card> initialExile = new ArrayList<>(toExile);
-        for (int i = 0; i < toExile; i++) {
-            initialExile.add(deck.removeFirst());
-        }
-        for (Card card : initialExile) {
-            gameData.addToExile(controllerId, card);
-        }
-        if (toExile > 0) {
-            gameLogService.append(gameData, GameLog.text(
-                    controllerName + " exiles the top " + toExile + " card"
-                            + (toExile == 1 ? "" : "s") + " of their library."));
-        }
-
-        // Reveal until the named card (or the library empties).
-        List<Card> revealed = new ArrayList<>();
-        Card found = null;
-        while (!deck.isEmpty()) {
-            Card card = deck.removeFirst();
-            revealed.add(card);
-            if (card.getName().equals(cardName)) {
-                found = card;
-                break;
-            }
-        }
-
-        if (!revealed.isEmpty()) {
-            String revealedNames = revealed.stream().map(Card::getName)
-                    .reduce((a, b) -> a + ", " + b).orElse("");
-            gameLogService.append(gameData, GameLog.text(
-                    controllerName + " reveals " + revealedNames + "."));
-        }
-
-        if (found != null) {
-            revealed.remove(found);
-            gameData.addCardToHand(controllerId, found);
-            gameLogService.append(gameData, GameLog.textCardText(
-                    controllerName + " puts ", found, " into their hand."));
-            for (Card card : revealed) {
-                gameData.addToExile(controllerId, card);
-            }
-            if (!revealed.isEmpty()) {
-                gameLogService.append(gameData, GameLog.text(
-                        controllerName + " exiles the other revealed cards."));
-            }
-        } else {
-            for (Card card : revealed) {
-                gameData.addToExile(controllerId, card);
-            }
-            if (revealed.isEmpty() && initialExile.isEmpty()) {
-                gameLogService.append(gameData, GameLog.text(
-                        controllerName + "'s library is empty."));
-            } else {
-                gameLogService.append(gameData, GameLog.text(
-                        controllerName + " does not reveal a card named \"" + cardName
-                                + "\" — remaining revealed cards are exiled."));
-            }
-        }
-
-        int exiledCount = initialExile.size() + revealed.size();
-        if (ctx.lifeLossPerExiled() > 0 && exiledCount > 0) {
-            int lifeLoss = exiledCount * ctx.lifeLossPerExiled();
-            StackEntry parked = gameData.pendingEffectResolutionEntry;
-            if (parked != null) {
-                // The loss follows the exile (CR 608.2c) as the step the parked resolution resumes with, so the
-                // Lich's Duel Mastery sacrifice that replaces it asks its CR 616.1 questions before any life is lost
-                // without revealing or exiling again.
-                parked.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
-                        List.of(new PlayersLoseLifeEffect(Map.of(controllerId, lifeLoss))));
-            } else {
-                lifeSupport.applyLifeLoss(gameData, controllerId, lifeLoss, controllerName);
-            }
-        }
-
-        log.info("Game {} - {} name/reveal-until-named effect: initialExile={}, revealed={}, found={}",
-                gameData.id, controllerName, initialExile.size(), revealed.size(),
-                found != null ? found.getName() : "none");
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
     private void handleTargetPlayerNameCardRevealTopChoice(GameData gameData, Player player, String cardName,
                                                            ChoiceContext.TargetPlayerNameCardRevealTopChoice ctx) {
         gameData.interaction.clearAwaitingInput();
@@ -7885,33 +7320,6 @@ public class ChoiceHandlerService {
             gameLogService.append(gameData, GameLog.textCardText(targetName + " puts ", topCard, " into their graveyard."));
             dealRevealMissDamage(gameData, ctx, targetPlayerId);
             log.info("Game {} - {} named incorrectly, {} goes to graveyard", gameData.id, targetName, topCard.getName());
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleChooseCardNameRevealTopCardChoice(GameData gameData, Player player, String cardName,
-                                                         ChoiceContext.ChooseCardNameRevealTopCardChoice ctx) {
-        gameData.interaction.clearAwaitingInput();
-
-        String playerName = gameData.playerIdToName.get(ctx.controllerId());
-        gameLogService.append(gameData, GameLog.text(player.getUsername() + " chooses \"" + cardName + "\"."));
-
-        List<Card> deck = gameData.playerDecks.get(ctx.controllerId());
-        if (deck == null || deck.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(playerName + "'s library is empty."));
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        Card topCard = deck.getFirst();
-        gameLogService.append(gameData, GameLog.textCardText(playerName + " reveals ", topCard, "."));
-        if (topCard.getName().equals(cardName) && gameData.pendingEffectResolutionEntry != null) {
-            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
-                    gameData.pendingEffectResolutionIndex,
-                    List.of(new SacrificeSelfEffect(), new DrawCardEffect(3)));
-            log.info("Game {} - {} named the top card correctly; Lockbox sacrifices and draws three",
-                    gameData.id, playerName);
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

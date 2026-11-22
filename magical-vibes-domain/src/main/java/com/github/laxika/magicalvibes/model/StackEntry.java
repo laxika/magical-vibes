@@ -469,6 +469,8 @@ public class StackEntry {
     @Setter private UUID beheldCardOwnerId;
     @Setter private CardSubtype beholdChosenSubtype;
     @Setter private CardSubtype chosenCreatureType;
+    /** The card name chosen while this resolved, for the steps after the choice. */
+    @Setter private String chosenCardName;
     /** "Odd or even" as it was chosen while this resolved, for the steps after the choice. */
     @Setter private ManaValueParity chosenParity;
     private final Map<UUID, CardSubtype> chosenCreatureTypes = new HashMap<>();
@@ -1462,6 +1464,7 @@ public class StackEntry {
         this.beheldCardOwnerId = source.beheldCardOwnerId;
         this.beholdChosenSubtype = source.beholdChosenSubtype;
         this.chosenCreatureType = source.chosenCreatureType;
+        this.chosenCardName = source.chosenCardName;
         this.chosenParity = source.chosenParity;
         this.chosenCreatureTypes.putAll(source.chosenCreatureTypes);
         this.damageSourceCard = source.damageSourceCard;
@@ -2182,6 +2185,7 @@ public class StackEntry {
         this.beheldCardOwnerId = null;
         this.beholdChosenSubtype = null;
         this.chosenCreatureType = null;
+        this.chosenCardName = null;
         this.damageSourceCard = null;
         this.damageSourceControllerId = null;
         this.exilesCreaturesDamaged = false;

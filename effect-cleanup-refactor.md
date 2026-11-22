@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 13: Exile, Each, Return, Put and Reveal closed, Reveal with one split-ready `step-9` row; next Choose, 99 rare records) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 14: Exile, Each, Return, Put and Reveal closed; Choose started, 80 rare records left) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -619,6 +619,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 11 | Run 10's two defects, the Return family's five shared blockers with the waiting rows and the Aura hosts; Put started | done for Return, Put barely started (44 rows: 13 absorbed, 20 split, 5 survivors, 2 blocked-other, 4 unique; 58 card files changed; `ChooseCardEffect` up to N / one of each, `exiledWithSource()` / `exiledCards` / `except`, the creature-type step, `attachedTo`, CR 400.4a on the returns) |
 | 12 | Run 11's two defects, the Put records' shared blockers (exiled-card target, command zone, hand, graveyard top, random) with their ledgered rows, then Put's rare tail | done, Put closed (115 rows: 19 absorbed, 23 split, 15 survivors, 28 blocked-other, 29 unique, 1 `step-9`; 49 card files changed; five `CardSubject` variants, a chooser and a random choice on `ChooseCardEffect`, `PutCardsIntoLibraryEffect` with `StepKind.PUT_INTO_LIBRARY`; four prompts and log lines no longer show face-down cards) |
 | 13 | Run 12's defects (the prompts' minimum, face-down cards in prompts, Liege of the Tangle, Gruesome Encore), the Reveal family's shared parts with their ledgered rows, then its rare records | done, Reveal closed (120 rare records: 2 absorbed, 71 split, 22 blocked, 25 unique; with the other rows 80 records deleted; 96 card files changed; `RevealCardsFromTopUntilEffect`, `RevealCardsFromHandEffect`, `DiscardCardsEffect`, the library step over revealed cards) |
+| 14 | Run 13's defects (pooled index prompts, the two discards, Invasion of Alara, replaced draws), the reveal-from-hand row and the planar verdicts, then Choose: the chosen name and player and the hand and exile choices with existing second halves | done for the defects and parts, Choose open (30 rows: 21 split, 2 survivors, 7 blocked-other, six of them corrected planar verdicts, 21 records deleted; 28 card files changed; `ChooseCardNameAtResolutionEffect` with `CardHasNameChosenThisResolutionPredicate`, `ChoosePlayerEffect`; 80 rare Choose records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -7460,6 +7461,128 @@ the other new cases fail on HEAD; more than two players; a client round trip of 
   `RevealTargetHandEffect`); they are step 10's unless a run takes them.
 - Two classes each wait for: a card subject on the copy effects, a delayed ability about a RETURN step, qualities found at resolution
   on `ChooseCardEffect`.
+
+### Step 9, run 14 (2026-11-22, Choose started)
+
+The defects run 13 left, `RevealSubtypeFromHandEffect`, the planar verdicts, then the first part of Choose: the chosen name with every
+record it splits, the chosen player, and the hand and exile choices whose second halves existed. Stopped there: 80 of the family's 99 rare
+records are left. Ratchet 4,266 / 3,492 → 4,246 / 3,472 records / handlers (21 records and handlers deleted, 1 added). 28 card files
+changed by scratch scripts. Oracle text checked with `get_card` for all 28; rulings with `get_rulings` for Invasion of Alara, Pact Weapon,
+Jace, Wand of Ith, Intellectual Offering, Armored Kincaller, Brain Pry, Spoils of the Vault, Tunnel Vision and Cursed Scroll. CR 201.4,
+400.2, 402.3, 406.3, 608.2c, 609.3, 614.1, 614.6 and 709.4a checked with `get_rule` (2026-11-22).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | `step-9` | Left unaudited |
+|---|---|---|---|---|---|---|---|---|
+| Choose | 23 rows (19 rare records, 1 of three cards, 1 ledgered row, 2 steps) | 0 | 20 | 2 (one new record) | 1 other (note narrowed: no name on the same-name exile) | 0 | 0 | 80 rare records |
+| Reveal | 7 ledgered rows | 0 | 1 (`RevealSubtypeFromHandEffect`) | 0 | 6 other (corrected from unique: a planar-deck card subject) | 0 | 0 | no rare record. All families: 2,278 rare records without a row |
+
+- **The chosen name.** `ChooseCardNameAtResolutionEffect` takes excluded types and "other than a basic land card name", and the
+  resolution keeps the name (`StackEntry.chosenCardName`) for `CardHasNameChosenThisResolutionPredicate`, read like the chosen creature
+  type. Eleven records, ten choice contexts and their completions went.
+- **The chosen player.** `ChoosePlayerEffect(players, label)` records CHOOSE for `playersThisWay(CHOOSE)`, unasked with one player.
+- **By existing parts.** The four perpetual hand choices and two exiled-card choices are `ChooseCardEffect` and the verb over
+  `cardsThisWay(CHOOSE)`. `RevealCardsFromHandEffect.atRandom` takes an amount.
+- **Reveal a card from hand, if you do.** `MayEffectHandler` asks nothing for a may over a hand choice and its reveal when no card
+  qualifies, and performs the may's else branch.
+- **Planar.** Six records share one cause, so they are blocked-other, not unique: no card subject names the planar deck's cards. Not
+  built: the subject needs the reveal, bottom-order and planeswalk steps to be of use.
+
+**Behaviour changes.**
+
+1. Sirocco's and Wand of Ith's discards take the discard replacements and preventions (CR 614.1). `discardTakesDiscardReplacements` in
+   both tests (failed before).
+2. Invasion of Alara exiles also when no card qualifies and names every card it exiles (Oracle "exile cards", CR 406.3).
+   `exilesAndNamesCardsWhenNoneQualifies`, `namesTheExiledCards` (both failed before).
+3. A card a replacement puts into the hand from the library is not a card drawn this way (CR 614.6; the rulings of Pact Weapon and Jace,
+   Mirror Mage): `DrawCardEffectHandler` records only cards that were drawn, for every reader of the DRAW step. A test in both cards'
+   classes with Sages of the Anima (both failed before).
+4. The names' discards (Cabal Therapy, Cabal Therapist, Brain Pry, Nebuchadnezzar, Dementia Sliver) take the discard replacements and
+   preventions (CR 614.1). `NebuchadnezzarTest.discardTakesDiscardReplacements`.
+5. Brain Pry draws also when the discard can't happen (Oracle "If they can't"). `BrainPryTest.drawsWhenDiscardIsPrevented`. Its only
+   matching card is discarded unasked. A discard that Library of Leng puts on the library is a discard, so no card is drawn, and none
+   with the replacement declined (`discardToLibraryIsADiscard`, `declinedReplacementIsADiscard`; both passed without a fix).
+6. "Has the chosen name" is either name of a split card in every converted record (CR 709.4a; nine compared the full name).
+   `CursedScrollTest.splitCardHasEitherChosenName`.
+7. The name prompt of this step offers the catalog's names and those of cards the chooser can know: no card of another hand or library,
+   no face-down face (CR 400.2, 406.3). `CursedScrollTest.offeredNamesLeaveOutHiddenCards`. From the stack it offers no spell cast face
+   down (CR 708.4) and no source of an ability that is or last was face down on the battlefield or lies face down in exile (CR 708.2,
+   406.3; added on review): the five `offeredNamesLeaveOut…Spell` / `…Source…` cases of `CursedScrollTest`, all failing before that fix,
+   over cards no catalog lists (in the application the catalog's names would hide the difference for an implemented card). Every
+   converted prompt, and the four cards that had the step, now offer the catalog's names; a name of an excluded type is rejected
+   everywhere.
+8. A perpetual cost change doesn't name a card in a hand or library in the log (CR 400.2).
+   `BloodsproutTalismanTest.logDoesNotNameTheChosenHandCard`.
+9. Entries and moves are the steps': what is put into a graveyard or exile from a library goes through their services, Lockbox's and
+   Isperia's riders read the recorded reveal, the two players of the Offerings draw, untap and create in one step in APNAP order.
+   Prompts, log lines and answers by card id are the steps'.
+10. AI only: the dig's name strategy reads the parked steps and names only an offered, choosable card. The step's other names come from
+    what the AI knows, not the catalog's first (added on review): most held in its own hand or library where the effect reveals from
+    there, else most seen of the others' public cards, then of any, then of its own. `ColorChoiceAiStrategyTest`'s seven new cases over a
+    30,000-name list failed before. Cursed Scroll's, Magus of the Scroll's and Diviner's Lockbox's damage and draw are inside a
+    condition, which the AI's value readers don't look into.
+
+**1a, the pooled index prompts.** All 25 creators of a `GraveyardChoice` with a pool were read. The wire message carries the indices,
+the prompt and a flag, no card and no name, and no creator's text names a pooled card, so there was nothing to mask and no test could
+fail first. `SpecializedInteractionProjectionTest.pooledIndexPickSendsNoCard` guards that (passes on HEAD).
+
+**1d, what is still missing for a replaced draw.** A draw replaced by exactly one draw of the same player (Enduring Renewal's
+"otherwise", Aladdin's Lamp, Chains of Mephistopheles, Breathstealer's Crypt, a draw from the bottom or from anywhere) still reveals.
+`DrawService` applies some 20 replacements, each in its own branch and several after a prompt, and reports none of them: it needs a
+"this draw was replaced" record on the draw that the branches set and that survives the pauses, a mechanism of its own.
+
+**What a player sees.** The hand choice of the perpetual and reveal steps is the owner's prompt alone and its log names no card; the
+revealed card alone is shown to all (`ArmoredKincallerTest`, `BloodsproutTalismanTest`). The exile choices mask face-down cards. The
+name prompt: item 7.
+
+**Seen, not changed.**
+
+- Other name prompts still offer the names of every card in the game, hidden hands and libraries included, with no catalog around them
+  to hide it: Comply and Academic Probation, The Clone Saga's chapter, `CreateTokenWithChosenNameEffect` (CR 400.2). The prompts of
+  `PlayerInputService` add the catalog, which covers those names only where every card is in it.
+- The stack view is one for all players and carries a face-down spell's card and description: `GameViewProjectionFactory.getStackViews`
+  passes `entry.getCard()` to the view factory unmasked (CR 708.4, 708.5; read, not reproduced).
+- The AI's other name strategies read an opponent's hand (Null Chamber, Comply) or library (the name-and-mill guesses).
+- The perpetual hand choices left (offspring, the two triggered-ability grants, the shield static, Pull of the Mist Moon) name the
+  hidden card in the log (CR 400.2).
+- Three draw handlers beside `DrawCardEffectHandler` record every new card in hand as drawn (each opponent draws, the two
+  draw-per-permanent records; CR 614.6).
+- The client shows graveyards for an index pick over a pool, so a pooled card in exile can't be picked there (frontend).
+- `MULTI_PERMANENT_PICK` still has no minimum on the wire, which a permanent choice step will need.
+
+**Tests edited.** The new cases above, `ChoosePlayerEffectHandlerTest` and the chosen name in the AI's `GameDataDeepCopyTest`. Renamed
+contexts, prompts and answers, same assertions: the name cards' tests, `ArmoredKincallerTest`, `SkullwinderTest`, `MuseVesselTest`,
+`AuthorOfShadowsTest`, the four perpetual cards' tests (an index becomes that card's id; an out-of-range index an unknown id, rejected
+with `IllegalStateException`), `ColorChoiceInteractionHandlerTest` (the step's context), `StepTriggerServiceTest` (builds the split
+steps), `PendingInteractionContractTest` (the dead state is gone). Contradicted the step's rule: `BrainPryTest` answers no prompt for a
+single matching card; its rejections of an empty, illegal or wrong player's answer moved to the two-card case.
+
+**Tests run.** The final sources in two Gradle runs, one `--tests` list per task, with no source change between them (the second
+added the engine's component-scan test; tasks with unchanged filters kept their results). Counted from those runs' XML by the test cases'
+class names, as long file names are shortened: 716 classes (1,125 suites, 11,104 cases, 29 skipped by an assumption, 0 failures): every
+changed card's and changed test class, card samples of the hand reveal, discard, choice, may, draw, draw-replacement, play-permission and
+put-into-graveyard users, the application's architecture tests with `EffectCountRatchetTest`, its interaction tests and the application
+and AI tests of the changed mechanisms. Every project's main and test sources compile on the final tree. Failed before their fixes: the
+seven tests of items 1 to 3. Not run: the full suites, the AI fuzz and stress tests, the frontend. Not verified: that the other new cases
+fail on HEAD; the player choice through a game of more than two players (its handler test only); the size of the catalog-wide name list
+on the wire in the application; the AI's answers to the new prompts.
+After the review's fixes the touched classes ran again in one Gradle run: 48 classes (80 suites, 679 cases, 0 failures), the changed
+cards' and changed tests, the name step's cards, the prompt, AI and component-scan tests and `EffectCountRatchetTest`.
+
+**For the next run (run 15: Choose, 80 rare records).**
+
+- First, the other "choose a card name" prompts (Comply and Academic Probation, The Clone Saga's chapter, the named-token effect, and
+  `PlayerInputService`'s collectors): offer what `collectCardNamesKnownTo` offers and no hidden hand, library or face (CR 400.2, 406.3,
+  708.4), with the AI's answers to them reading no opponent's hidden zone.
+- A choose-permanents step recording CHOOSE (count, a minimum, "different" power or mana value) with `thisWay(CHOOSE)` unblocks about
+  fifteen: the three choose-and-destroy-the-rest records, the three different-quality records, up to one permanent, the counters, boost,
+  token-copy, block, attach and two-creature records, and the ledger's `ChooseOpponentCreatureAndPerpetuallyBoostEffect`.
+- `ChoosePlayerEffect` is there for Boreas Charger (a search count), Multiple Choice (a chooser on the chosen return), Fateful Handoff
+  and Discerning Financier (a player on the gain-control step), Backdraft and `ChooseOpponentGainsControlOfSourceEffect`.
+- A perpetual grant step over a card subject (abilities, static, damage, blitz, casting grants) unblocks seven hand choices, a conjure
+  step over a card subject Holographic Double and Nashi, a void-counter card predicate Dauthi Voidwalker.
+- The chosen name is recorded: a name on `ExileCardsWithSameNameEffect` frees Thought Hemorrhage and the ledgered name-exile head;
+  the three lasting name restrictions need their verb to read the entry's name (and their prompts fixed as above).
+- The two causes run 13 named with two classes each (a copy over a card subject, qualities found at resolution) got no third here.
 
 ## Prompt
 

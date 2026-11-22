@@ -113,7 +113,6 @@ class PendingInteractionContractTest {
             PendingWhimsOfTheFates.class,
             PendingValkiCopyChoice.class,
             PendingValkiHandExileChoice.class,
-            PendingInteraction.PortentOfCalamityState.class,
             PendingInteraction.RevealedFreeCastGroup.class,
             PendingInteraction.RippleFreeCastGroup.class,
             PendingInteraction.LandManaDrainContinuation.class,

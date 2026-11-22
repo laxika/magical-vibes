@@ -32,14 +32,14 @@ class SkullwinderTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         chooseOpponentIfPrompted();
 
-        PendingInteraction.GraveyardChoice choice = gd.interaction
-                .activeInteraction(PendingInteraction.GraveyardChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice = gd.interaction
+                .activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player2.getId());
-        assertThat(choice.cardPool()).extracting(Card::getId)
+        assertThat(choice.cards()).extracting(Card::getId)
                 .containsExactly(opponentCard.getId(), otherOpponentCard.getId());
 
-        harness.handleGraveyardCardChosen(player2, 0);
+        harness.handleMultipleCardsChosen(player2, List.of(opponentCard.getId()));
 
         assertThat(gd.playerHands.get(player2.getId())).contains(opponentCard);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(otherOpponentCard);

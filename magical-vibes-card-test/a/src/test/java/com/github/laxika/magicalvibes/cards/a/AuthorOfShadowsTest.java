@@ -32,10 +32,10 @@ class AuthorOfShadowsTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
         assertThat(gd.getCardsExiledByPermanent(author.getId()))
                 .containsExactlyInAnyOrder(chosen, notChosen, land);
-        PendingInteraction.ExiledCardMayPlayChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.ExiledCardMayPlayChoice.class);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
         assertThat(choice).isNotNull();
-        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(chosen.getId(), notChosen.getId());
+        assertThat(choice.cards()).extracting(card -> card.getId()).containsExactlyInAnyOrder(chosen.getId(), notChosen.getId());
 
         harness.handleMultipleCardsChosen(player1, List.of(chosen.getId()));
         assertThat(gd.exilePlayPermissionHolders()).containsEntry(chosen.getId(), player1.getId());

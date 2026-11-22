@@ -1,8 +1,11 @@
 package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.c.CoilingOracle;
+import com.github.laxika.magicalvibes.cards.l.LibraryOfLeng;
 import com.github.laxika.magicalvibes.cards.s.StompAndHowl;
+import com.github.laxika.magicalvibes.cards.t.TamiyoCollectorOfTales;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BrainPry.class, BloodCrypt.class, CoilingOracle.class, StompAndHowl.class})
+@CardUsed({BrainPry.class, BloodCrypt.class, CoilingOracle.class, StompAndHowl.class,
+        TamiyoCollectorOfTales.class, LibraryOfLeng.class})
 class BrainPryTest extends BaseCardTest {
 
     @Test
@@ -29,12 +33,18 @@ class BrainPryTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "Stomp and Howl");
 
-        PendingInteraction.RevealedHandChoice choice =
-                gd.interaction.activeInteraction(PendingInteraction.RevealedHandChoice.class);
-        assertThat(choice.choosingPlayerId()).isEqualTo(player2.getId());
-        assertThat(choice.validIndices()).containsExactly(0, 1);
+        PendingInteraction.MultiGraveyardChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.decidingPlayerId()).isEqualTo(player2.getId());
+        assertThat(choice.cards()).containsExactly(firstStompAndHowl, secondStompAndHowl);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player2, List.of(coilingOracle.getId())))
+                .isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> harness.handleMultipleCardsChosen(player1, List.of(firstStompAndHowl.getId())))
+                .isInstanceOf(IllegalStateException.class);
 
-        harness.handleCardChosen(player2, 1);
+        harness.handleMultipleCardsChosen(player2, List.of(secondStompAndHowl.getId()));
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(firstStompAndHowl, coilingOracle);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(secondStompAndHowl);
@@ -76,7 +86,7 @@ class BrainPryTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player1.getId());
 
         harness.handleListChoice(player1, "Stomp and Howl");
-        harness.handleCardChosen(player1, 1);
+        harness.handleMultipleCardsChosen(player1, List.of(secondStompAndHowl.getId()));
 
         assertThat(gd.playerHands.get(player1.getId())).containsExactly(firstStompAndHowl);
         assertThat(gd.playerGraveyards.get(player1.getId()))
@@ -123,14 +133,8 @@ class BrainPryTest extends BaseCardTest {
 
         harness.handleListChoice(player1, "Stomp and Howl");
 
-        assertThatThrownBy(() -> harness.handleCardChosen(player2, -1))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handleCardChosen(player2, 1))
-                .isInstanceOf(IllegalStateException.class);
-        assertThatThrownBy(() -> harness.handleCardChosen(player1, 0))
-                .isInstanceOf(IllegalStateException.class);
-        harness.handleCardChosen(player2, 0);
-
+        // The only card with that name is discarded: nothing is left to choose.
+        assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(otherCard);
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(matchingCard);
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
@@ -146,11 +150,60 @@ class BrainPryTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.handleListChoice(player1, "Blood Crypt"))
                 .isInstanceOf(IllegalArgumentException.class);
         harness.handleListChoice(player1, "Stomp and Howl");
-        harness.handleCardChosen(player2, 1);
-
         assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(matchingCard);
         assertThat(gd.playerHands.get(player2.getId())).extracting(Card::getName)
                 .containsExactly("Blood Crypt");
+    }
+
+    @Test
+    @DisplayName("Draws a card when the target can't be made to discard the named card")
+    void drawsWhenDiscardIsPrevented() {
+        Permanent tamiyo = harness.addToBattlefieldAndReturn(player2, new TamiyoCollectorOfTales());
+        tamiyo.setCounterCount(CounterType.LOYALTY, 5);
+        Card drawnCard = new CoilingOracle();
+        Card matchingCard = new StompAndHowl();
+        harness.setLibrary(player1, List.of(drawnCard));
+        cast(List.of(matchingCard));
+
+        harness.handleListChoice(player1, "Stomp and Howl");
+
+        assertThat(gd.playerHands.get(player2.getId())).containsExactly(matchingCard);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(drawnCard);
+    }
+
+    @Test
+    @DisplayName("A discard put on top of the library instead counts as discarded, so the caster doesn't draw")
+    void discardToLibraryIsADiscard() {
+        harness.addToBattlefield(player2, new LibraryOfLeng());
+        Card matchingCard = new StompAndHowl();
+        Card notDrawn = new CoilingOracle();
+        harness.setLibrary(player1, List.of(notDrawn));
+        cast(List.of(matchingCard));
+
+        harness.handleListChoice(player1, "Stomp and Howl");
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(matchingCard);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(notDrawn);
+    }
+
+    @Test
+    @DisplayName("Declining the replacement discards to the graveyard, and the caster doesn't draw")
+    void declinedReplacementIsADiscard() {
+        harness.addToBattlefield(player2, new LibraryOfLeng());
+        Card matchingCard = new StompAndHowl();
+        Card notDrawn = new CoilingOracle();
+        harness.setLibrary(player1, List.of(notDrawn));
+        cast(List.of(matchingCard));
+
+        harness.handleListChoice(player1, "Stomp and Howl");
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerGraveyards.get(player2.getId())).containsExactly(matchingCard);
+        assertThat(gd.playerHands.get(player1.getId())).isEmpty();
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(notDrawn);
     }
 
     private void cast(List<Card> targetHand) {

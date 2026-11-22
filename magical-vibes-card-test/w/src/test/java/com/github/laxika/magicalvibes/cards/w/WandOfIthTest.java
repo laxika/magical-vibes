@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.b.BloodletterOfAclazotz;
 import com.github.laxika.magicalvibes.cards.c.CourageousResolve;
 import com.github.laxika.magicalvibes.cards.e.Evermind;
+import com.github.laxika.magicalvibes.cards.l.LibraryOfLeng;
 import com.github.laxika.magicalvibes.cards.m.MazeOfIth;
 import com.github.laxika.magicalvibes.cards.p.PlatinumEmperion;
 import com.github.laxika.magicalvibes.cards.s.ScarwoodGoblins;
@@ -21,7 +22,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({WandOfIth.class, MazeOfIth.class, ScarwoodGoblins.class, BloodletterOfAclazotz.class,
-        Evermind.class, PlatinumEmperion.class, CourageousResolve.class})
+        Evermind.class, PlatinumEmperion.class, CourageousResolve.class, LibraryOfLeng.class})
 class WandOfIthTest extends BaseCardTest {
 
     private void readyWand() {
@@ -263,5 +264,19 @@ class WandOfIthTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         assertThatThrownBy(() -> harness.activateAbility(player1, 0, null, player2.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The discard may be replaced by putting the card on top of the library")
+    void discardTakesDiscardReplacements() {
+        harness.addToBattlefield(player2, new LibraryOfLeng());
+        Card revealed = new MazeOfIth();
+        activateOn(revealed);
+
+        harness.handleMayAbilityChosen(player2, false);
+        harness.handleMayAbilityChosen(player2, true);
+
+        assertThat(gd.playerDecks.get(player2.getId()).getFirst()).isSameAs(revealed);
+        assertThat(gd.playerGraveyards.get(player2.getId())).isEmpty();
     }
 }

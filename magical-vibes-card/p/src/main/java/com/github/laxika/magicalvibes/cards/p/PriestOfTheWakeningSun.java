@@ -4,11 +4,17 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RevealSubtypeFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -22,7 +28,11 @@ public class PriestOfTheWakeningSun extends Card {
         // At the beginning of your upkeep, you may reveal a Dinosaur card from your hand.
         // If you do, you gain 2 life.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new MayEffect(
-                new RevealSubtypeFromHandEffect(CardSubtype.DINOSAUR, new GainLifeEffect(2)),
+                SequenceEffect.of(
+                        ChooseCardEffect.oneOf(Subjects.cardsInYourHand(new CardSubtypePredicate(CardSubtype.DINOSAUR)),
+                                "a Dinosaur card to reveal from your hand"),
+                        RevealCardsFromHandEffect.cards(Subjects.you(), Subjects.cardsThisWay(StepKind.CHOOSE)),
+                        new ConditionalEffect(new HappenedThisWay(StepKind.REVEAL), new GainLifeEffect(2))),
                 "Reveal a Dinosaur card from your hand to gain 2 life?"));
 
         // {3}{W}{W}, Sacrifice this creature: Search your library for a Dinosaur card,

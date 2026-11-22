@@ -108,32 +108,6 @@ public final class HandCardChoiceInteractionHandlers {
         }
     }
 
-    /** Kemba's Outfitter: choose a hand card to receive a perpetual activated ability. */
-    @Component
-    public static class PerpetualActivatedAbilityCardChoiceInteractionHandler
-            extends Base<PendingInteraction.PerpetualActivatedAbilityCardChoice> {
-
-        private final CardChoiceHandlerService cardChoiceHandlerService;
-
-        public PerpetualActivatedAbilityCardChoiceInteractionHandler(
-                CardChoiceHandlerService cardChoiceHandlerService) {
-            this.cardChoiceHandlerService = cardChoiceHandlerService;
-        }
-
-        @Override
-        public Class<PendingInteraction.PerpetualActivatedAbilityCardChoice> handledType() {
-            return PendingInteraction.PerpetualActivatedAbilityCardChoice.class;
-        }
-
-        @Override
-        public void handleAnswer(GameData gameData, Player player,
-                                 PendingInteraction.PerpetualActivatedAbilityCardChoice interaction,
-                                 InteractionAnswer answer) {
-            cardChoiceHandlerService.handlePerpetualActivatedAbilityCardChosen(
-                    gameData, player, cardIndex(answer));
-        }
-    }
-
     /** Pass the Torch: choose a hand card to receive a perpetual triggered ability. */
     @Component
     public static class PerpetualTriggeredAbilityCardChoiceInteractionHandler
@@ -156,32 +130,6 @@ public final class HandCardChoiceInteractionHandlers {
                                  PendingInteraction.PerpetualTriggeredAbilityCardChoice interaction,
                                  InteractionAnswer answer) {
             cardChoiceHandlerService.handlePerpetualTriggeredAbilityCardChosen(
-                    gameData, player, cardIndex(answer));
-        }
-    }
-
-    /** Retraced Image — reveal one card from hand and conditionally put it onto the battlefield. */
-    @Component
-    public static class PerpetualCastCostHandCardChoiceInteractionHandler
-            extends Base<PendingInteraction.PerpetualCastCostHandCardChoice> {
-
-        private final CardChoiceHandlerService cardChoiceHandlerService;
-
-        public PerpetualCastCostHandCardChoiceInteractionHandler(
-                CardChoiceHandlerService cardChoiceHandlerService) {
-            this.cardChoiceHandlerService = cardChoiceHandlerService;
-        }
-
-        @Override
-        public Class<PendingInteraction.PerpetualCastCostHandCardChoice> handledType() {
-            return PendingInteraction.PerpetualCastCostHandCardChoice.class;
-        }
-
-        @Override
-        public void handleAnswer(GameData gameData, Player player,
-                                 PendingInteraction.PerpetualCastCostHandCardChoice interaction,
-                                 InteractionAnswer answer) {
-            cardChoiceHandlerService.handlePerpetualCastCostHandCardChosen(
                     gameData, player, cardIndex(answer));
         }
     }

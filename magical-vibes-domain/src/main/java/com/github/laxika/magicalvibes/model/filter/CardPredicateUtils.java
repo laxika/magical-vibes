@@ -51,7 +51,8 @@ public final class CardPredicateUtils {
         if (predicate instanceof CardHasSourceChosenColorPredicate) {
             return "card of the chosen color";
         }
-        if (predicate instanceof CardHasSourceChosenNamePredicate) {
+        if (predicate instanceof CardHasSourceChosenNamePredicate
+                || predicate instanceof CardHasNameChosenThisResolutionPredicate) {
             return "card with the chosen name";
         }
         if (predicate instanceof CardSharesNameWithCardExiledWithSourcePredicate) {

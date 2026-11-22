@@ -119,7 +119,7 @@ class ArmoredKincallerTest extends BaseCardTest {
         harness.publishState();
 
         assertThat(gd.interaction.activeInteraction())
-                .isInstanceOf(PendingInteraction.RevealedMatchingHandCardChoice.class);
+                .isInstanceOf(PendingInteraction.MultiGraveyardChoice.class);
         harness.assertLife(player1, 20);
         assertThat(harness.getConn2().getSentMessages()).allSatisfy(message ->
                 assertThat(message).doesNotContain(first.getId().toString(), second.getId().toString()));

@@ -5,11 +5,14 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.ChooseCardFromHandAndApplyPerpetualPowerToughnessAndCostReductionEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftCardFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostCardEffect;
+import com.github.laxika.magicalvibes.model.effect.PerpetuallyChangeCastCostEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -40,8 +43,11 @@ public class GarrukWrathOfTheWilds extends Card {
         // "This spell costs {1} less to cast."
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new ChooseCardFromHandAndApplyPerpetualPowerToughnessAndCostReductionEffect(
-                        new CardTypePredicate(CardType.CREATURE), 1, 1, 1)),
+                List.of(
+                        ChooseCardEffect.announced(Subjects.cardsInYourHand(new CardTypePredicate(CardType.CREATURE)),
+                                "a creature card in your hand"),
+                        PerpetuallyBoostCardEffect.toCards(Subjects.cardsThisWay(StepKind.CHOOSE), 1, 1),
+                        new PerpetuallyChangeCastCostEffect(Subjects.cardsThisWay(StepKind.CHOOSE), -1)),
                 "+1: Choose a creature card in your hand. It perpetually gets +1/+1 and perpetually gains "
                         + "\"This spell costs {1} less to cast.\""));
 

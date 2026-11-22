@@ -38,7 +38,7 @@ class DiviningWitchTest extends BaseCardTest {
                 gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
         assertThat(choice).isNotNull();
         assertThat(choice.context())
-                .isInstanceOf(ChoiceContext.ChooseNameExileTopRevealUntilNamedChoice.class);
+                .isInstanceOf(ChoiceContext.ChooseCardNameAtResolutionChoice.class);
     }
 
     @Test

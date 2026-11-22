@@ -138,6 +138,6 @@ class IsperiaTheInscrutableTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.ColorChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).context())
-                .isInstanceOf(ChoiceContext.ChooseCardNameRevealHandThenChoice.class);
+                .isInstanceOf(ChoiceContext.ChooseCardNameAtResolutionChoice.class);
     }
 }

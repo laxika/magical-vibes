@@ -75,6 +75,9 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
         }
     }
 
+    /** {@code ChoosePlayerEffect}: the chosen player becomes the resolving entry's CHOOSE step. */
+    record RecordChosenPlayer(java.util.List<UUID> playerIds) implements PermanentChoiceContext {}
+
     record BackdraftPlayerChoice() implements PermanentChoiceContext {}
     record BackdraftSorceryChoice() implements PermanentChoiceContext {}
 
@@ -283,9 +286,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     /** Choose Your Champion: the targeted opponent chooses which player shares the restriction. */
     record TargetOpponentChoosesPlayerForRestriction(UUID controllerId, UUID targetOpponentId,
                                                      String sourceCardName) implements PermanentChoiceContext {}
-    /** Intellectual Offering: choose an opponent for one of its two independent modes. */
-    record ChooseOpponentDrawAndUntap(UUID controllerId, boolean untapChoice, String sourceCardName)
-            implements PermanentChoiceContext {}
     /** The Toymaker's Trap: choose which opponent makes the guess in a multiplayer game. */
     record ToymakersTrapOpponentChoice(UUID controllerId, UUID sourcePermanentId, Card sourceCard,
                                        int chosenNumber) implements PermanentChoiceContext {}
@@ -296,13 +296,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
             this(controllerId, sourcePermanentId, sourceCardName, false);
         }
     }
-    /** Sylvan Offering: choose the opponent who creates tokens alongside the controller. */
-    record ChooseOpponentEachCreatesTokens(UUID controllerId,
-                                           com.github.laxika.magicalvibes.model.effect.CreateTokenEffect token,
-                                           String sourceCardName) implements PermanentChoiceContext {}
-    /** Skullwinder: choose the opponent who returns a card from their graveyard to their hand. */
-    record ChooseOpponentReturnsCardFromGraveyard(UUID controllerId, Card sourceCard, CardPredicate filter)
-            implements PermanentChoiceContext {}
     /** Boreas Charger: choose an opponent before searching for the land-count difference. */
     record ChooseOpponentThenSearchLandDifference(UUID controllerId, CardSubtype subtype,
                                                    String sourceCardName) implements PermanentChoiceContext {}

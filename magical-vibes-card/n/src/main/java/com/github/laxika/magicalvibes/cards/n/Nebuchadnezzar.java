@@ -5,7 +5,12 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
-import com.github.laxika.magicalvibes.model.effect.ChooseNameRevealRandomCardsFromTargetHandDiscardMatchingEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCardNameAtResolutionEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardHasNameChosenThisResolutionPredicate;
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -18,10 +23,13 @@ import java.util.List;
 public class Nebuchadnezzar extends Card {
 
     public Nebuchadnezzar() {
+        CardPredicate named = new CardHasNameChosenThisResolutionPredicate();
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{X}",
-                List.of(new ChooseNameRevealRandomCardsFromTargetHandDiscardMatchingEffect(new XValue())),
+                List.of(new ChooseCardNameAtResolutionEffect(),
+                        RevealCardsFromHandEffect.atRandom(Subjects.targetPlayer(), new XValue()),
+                        new DiscardCardsEffect(Subjects.revealedThisWay(named))),
                 "{X}, {T}: Choose a card name. Target opponent reveals X cards at random from their hand. "
                         + "Then that player discards all cards with that name revealed this way. Activate only during your turn.",
                 new PlayerPredicateTargetFilter(

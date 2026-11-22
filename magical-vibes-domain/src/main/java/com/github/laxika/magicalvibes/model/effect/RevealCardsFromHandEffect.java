@@ -38,7 +38,12 @@ public record RevealCardsFromHandEffect(PlayerSubject player, CardSubject cards,
 
     /** "[Player] reveals [count] card(s) at random from their hand." */
     public static RevealCardsFromHandEffect atRandom(PlayerSubject player, int count) {
-        return new RevealCardsFromHandEffect(player, null, new Fixed(count), null);
+        return atRandom(player, new Fixed(count));
+    }
+
+    /** "Reveals X cards at random from their hand". */
+    public static RevealCardsFromHandEffect atRandom(PlayerSubject player, DynamicAmount count) {
+        return new RevealCardsFromHandEffect(player, null, Objects.requireNonNull(count, "count"), null);
     }
 
     /** "[Player] reveals [those cards] from their hand." */
