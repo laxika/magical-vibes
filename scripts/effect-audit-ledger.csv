@@ -1529,3 +1529,95 @@ GoadCreaturesUntilNextTurnEffect,blocked-other,5m,"a floating rule over a predic
 MustBlockTargetCreatureEffect,blocked-other,5m,two positional targets (blocker and blocked); MustBlockSourceEffect is also its floating payload: merge in step 10
 CopyTriggeringSpellOrAbilityEffect,blocked-other,5m,"dispatches to three copy paths by what triggered (spell, activated, triggered ability), from the trigger snapshot; the target sibling has a fourth: one copy path first (step 10)"
 CopyTargetSpellOrAbilityEffect,blocked-other,5m,copies a targeted stack entry of any of those kinds with its own retarget choice (Return the Favor): one copy path with the triggering sibling first
+ExileUpToOneCardFromGraveyardEffect,survivor,9,run 5: PlayerSubject graveyardOf (from(players)): absorbed the target-graveyard record and carries five own-graveyard splits; a mandatory only candidate in your own graveyard is not asked about
+PutCounterOnExiledCardsEffect,survivor,9,"run 5: new step record: a named counter (ExiledCardCounter) on the cards a CardSubject names in exile (memory, brain, croak, fetch)"
+ExileMatchingCardFromTargetGraveyardEffect,absorbed,9,"run 5: ExileUpToOneCardFromGraveyardEffect.matching / oneMatching(filter)[.withSource()].from(targetPlayer()) (Hama, Dreams of Steel and Oil)"
+ExileIfHadCounterElseReturnWithCounterEffect,absorbed,9,"run 5: ConditionalReplacementEffect(SourceCounterThreshold(1, DEATH), return with the counter, ExileSourceCardFromGraveyardEffect) (Bogardan Phoenix)"
+ExileAllButBottomCardOfTargetLibraryEffect,absorbed,9,"run 5: ExileTopCardOfOwnLibraryEffect.of(targetPlayer(), library size - 1); its player target is harmful now (Nicol Bolas, the Arisen)"
+ExileOwnGraveyardCardThenEachOpponentLosesLifeEffect,split,9,"run 5: ExileUpToOneCardFromGraveyardEffect.matching(Elf).from(you()) + if exiled LoseLifeEffect (Trystan, Penitent Culler)"
+ExileOwnGraveyardCardPutHalfManaValueCountersOnSourceEffect,split,9,run 5: ExileUpToOneCardFromGraveyardEffect.oneMatching(filter).from(you()) + PutCountersOnSelfEffect(half exiledManaValue) (Torrent Sculptor)
+ExileOwnLandFromGraveyardThenPutCounterOnTargetCreatureEffect,split,9,run 5: oneMatching(land).from(you()) + if exiled PutCounterOnTargetPermanentEffect (Forgotten Harvest)
+ExileOwnCardFromGraveyardThenPutCountersOnSharedTypeCreaturesEffect,split,9,"run 5: oneMatching(another creature).from(you()) + if exiled a reflexive PutCountersOnOtherSharedTypeCreaturesWithExiledCardEffect, which reads the EXILE step (Resplendent Marshal)"
+ExileOwnCreatureFromGraveyardCreateZombieTokenCopyEffect,split,9,run 5: matching(creature).from(you()) + CreateTokenCopyOfCardEffect.of(cardsThisWay(EXILE)); both resume flags of run 4's note are gone (God-Pharaoh's Gift)
+ExileTargetCardFromGraveyardPutCounterOnTargetCreatureEffect,split,9,"run 5: ExileGraveyardCardsEffect.exactTargetedFromAnyGraveyard(1, null, true) + if a creature card a reflexive counter (Agatha's Soul Cauldron)"
+ExileMilledCreatureAndCreateTokenEffect,split,9,"run 5: ExileTriggeringCardFromGraveyardEffect + CreateTokenEffect, unconditional (Undead Alchemist)"
+ExileTargetCreatureCardFromGraveyardCreateTokenWithManaValueCounterEffect,split,9,run 5: exactTargetedFromAnyGraveyard + if exiled the Spirit + if mana value 4 or greater PutCountersOnCreatedPermanentsEffect (Summoner's Sending)
+ExileTargetPermanentPutManaValueCountersOnTargetCreatureEffect,split,9,run 5: ExileTargetPermanentEffect (group 0) + PutCounterOnTargetPermanentEffect(exiledManaValue) (group 1) (Ruinous Intrusion)
+ExileTargetAssassinCreatureCardFromGraveyardWithMemoryCounterEffect,split,9,run 5: upToOneTargetFromControllerGraveyard(filter) + PutCounterOnExiledCardsEffect(MEMORY) (Altaïr)
+ExileTargetLegendaryCreatureCardFromGraveyardWithMemoryCounterEffect,split,9,run 5: upToOneTargetFromAnyGraveyard(filter) + PutCounterOnExiledCardsEffect(MEMORY) (The Animus)
+ExileTargetCreatureCardFromGraveyardWithBrainCounterEffect,split,9,"run 5: exactTargetedFromAnyGraveyard + PutCounterOnExiledCardsEffect(BRAIN) (Rex, Cyber-Hound)"
+ExileTriggeringPermanentCardFromLibraryWithCroakCounterEffect,split,9,run 5: ExileTriggeringCardFromGraveyardEffect + PutCounterOnExiledCardsEffect(CROAK) (Grolnok)
+ExileTopCardOfEachPlayersLibraryWithFetchCountersAndPutCountersOnSourceEffect,split,9,run 5: linkedToSource(eachPlayer()) + PutCounterOnExiledCardsEffect(FETCH) + PutCountersOnSelfEffect(AmountThisWay.exiledCards(noncreature)) (Pako)
+ExileTopCardsAndApplyColorRidersEffect,split,9,run 5: library exile + Treasure / draw / damage by AmountThisWay.exiledCards(filter) (Culmination of Studies)
+ExileTopCardOfDamagedPlayerLibraryMayPutPermanentOntoBattlefieldOrCreateTokenEffect,split,9,run 5: library exile + may putOntoBattlefield(cardsThisWay(EXILE)) else the token (Fishing Gear)
+ExileGraveyardCardsAndMayCastCopiesEffect,split,9,run 5: anyNumberOfTargetsFromControllerGraveyard + CopyImprintedCardAndMayCastCopyEffect.of(cards).payingItsCosts() (The Tale of Tamiyo)
+ExileOwnGraveyardInstantsOrSorceriesAndMayCastCopiesEffect,split,9,run 5: OWN_ALL_MATCHING + CopyImprintedCardAndMayCastCopyEffect.of(cards) (Mizzix's Mastery overloaded)
+ExileTopCardMayDealDamageOrPlayEffect,split,9,"run 5: library exile + if exiled MayEffect(damage by exiledManaValue, else AllowPlayCardsFromExileEffect.thisTurn) (Spark of Creativity)"
+ExileTopCardMayGetEnergyOrPlayThisTurnEffect,split,9,"run 5: library exile + MayEffect(energy, else AllowPlayCardsFromExileEffect.thisTurn) (Synth Eradicator)"
+ExileTargetPermanentAndCreateTokenCopiesForEachOtherPlayerEffect,dead,9,run 5: only an unused import of Fractured Identity named it; the card uses ExileTargetPermanentAndCreateTokenCopyForEachOtherPlayerEffect
+ExileAllCreaturesYouDontControlAndSearchBasicLandsToBattlefieldTappedEffect,dead,9,run 5: only an unused import of Winds of Abandon named it; the card uses ExileAllPermanentsAndSearchBasicLandPerControllerEffect
+ExileTargetPlayerTopCardsForSacrificedManaValueMayPlayUntilNextEndStepEffect,blocked-other,9,"run 5: the composition exists, but AllowPlayCardsFromExileEffect gives any-type mana to no land card, so an exiled land with an Adventure would lose it (Rakdos, the Muscle's test pins the mark on lands)"
+ExileAllCreaturesAndCreateTokenWithCountersEqualToTotalPowerEffect,blocked-other,9,run 5: per-player total last-known power of what an EXILE step exiled: the wipe records no departures (Oversimplify)
+ExileAllCreaturesAndCreateTokensEqualToTotalPowerEffect,blocked-other,9,run 5: as Oversimplify: a per-player total last-known power of an exile wipe (Grand Ossuary)
+ExileAllPermanentsAndSearchBasicLandPerControllerEffect,blocked-other,9,"run 5: per-player count of an exile wipe, then queued optional searches that enter together (Winds of Abandon)"
+ExileAllCreaturesOfChosenManaValueParityEffect,blocked-other,9,run 5: the parity is chosen at resolution: no choose-parity step and no predicate reading that choice (Extinction Event)
+ExileOtherNonlandPermanentsWithManaValueAtMostEventValueEffect,blocked-other,9,"run 5: neither the set subject nor ExileAllPermanentsEffect gives its filter the event value, and RemoveAllCountersEffect records no step (Sarulf)"
+ExileEachTargetSpellEffect,blocked-other,9,run 5: no exile-target-spell step recording EXILE (Mindbreak Trap; with Aven Interrupter and Gale's Redirection)
+ExileTargetSpellAndPlotEffect,blocked-other,9,"run 5: no exile-target-spell step recording EXILE, and no plot step over a CardSubject (Aven Interrupter)"
+ExileTargetSpellAndGrantCastPermissionEffect,blocked-other,9,run 5: no exile-target-spell step recording EXILE; the permission would be AllowPlayCardsFromExileEffect.whileExiled (Gale's Redirection)
+ExileOtherSpellsAndCounterAbilitiesEffect,unique,9,run 5: one sweep of the stack that exiles spells and counters abilities (Summary Dismissal)
+ExileAllButBottomCardsOfEachLibraryFaceDownEffect,blocked-other,9,"run 5: the library exile has no face-down option and evaluates one count for every player, not each library size less six (Doomsday Excruciator)"
+ExileTargetNonlandPermanentIfManaValueAtMostConvergeEffect,blocked-other,9,"run 5: ConditionalEffect(TargetPermanentManaValueAtMostColorsSpent, exile) expresses it, but the AI's removal scoring does not look inside a ConditionalEffect (Prismatic Ending)"
+ExileTargetPermanentAndCreateTokenCopyForEachOtherPlayerEffect,blocked-other,9,"run 5: no token-copy step of a departed target (last-known copiable values, face-down) with a controller per player (Fractured Identity)"
+ExileTargetCardFromGraveyardWithDiscoveryCounterMayPlayThisTurnEffect,blocked-other,9,run 5: the permission is one play among every card with a discovery counter: no subject for those and no permission group on the step (Lara Croft)
+ExileSelfWithFetchCounterEffect,blocked-other,9,"run 5: the exile step records one card per permanent: a mutated Hex leaves several cards, each of which gets the counter (Hex, Kellan's Companion)"
+ExileTargetCreatureCardFromGraveyardDealPowerDamageToSourceEffect,blocked-other,9,run 5: the exiled card is the damage source: no damage step whose source is a CardSubject (Selfless Exorcist)
+ExileTargetCreatureCardFromGraveyardPutPowerCountersEffect,blocked-other,9,run 5: the any-graveyard target path reads every target of the entry: no target-group component for the fused spell (Flesh // Blood)
+ExileTargetNonlandCardFromGraveyardAndSearchSameNameEffect,blocked-other,9,run 5: no same-name card predicate over a CardSubject for the search (Secret Salvage)
+ExileNonBasicLandGraveyardAndSameNameFromLibraryEffect,blocked-other,9,run 5: no same-name predicate over the exiled cards for a search of another player's library that exiles (Haunting Echoes)
+ExileTargetGraveyardCardAndAllWithSameNameEffect,blocked-other,9,"run 5: no same-name set over a graveyard card target, for permanents and cards (Moratorium Stone)"
+ExileTopUntilNonlandMayCastWithoutPayingManaCostEffect,blocked-other,9,run 5: the rider of DestroyTargetPermanentThenEffect run as the destroyed permanent's controller: the cast-now step offers the card to the resolving controller only (Transforming Flourish)
+ExileTopCardOfDamagedPlayerLibraryMayCastOrCreateTreasureEffect,blocked-other,9,"run 5: no cast-now step that pays the cost and records whether it was cast (Vaan; as Chandra, Torch of Defiance)"
+ExileTopCardMayCastOrDealDamageEffect,blocked-other,9,"run 5: no cast-now step that pays the cost and records whether it was cast (Chandra, Torch of Defiance; as Vaan)"
+ExileTopCardOfTargetOpponentLibraryWithArtifactThresholdEffect,blocked-other,9,run 5: the cast-now offer is capped per face of an Adventurer card beside a timed permission: no such option on the cast-now step (Rashmi and Ragavan)
+ExileTopCardOfEachPlayersLibraryWithPlanarSourceEffect,blocked-other,9,run 5: linked to the planar object: the library exile links only to a source permanent (The Matrix of Time)
+ExileTopCardsOfTargetOpponentCreateTokenPerChosenColorEffect,blocked-other,9,run 5: no choose-a-color step before the exile and no card predicate reading that choice (Oona)
+ExileTopCardsMayPlayUntilNextEndStepAndDamageForEachStillExiledEffect,blocked-other,9,run 5: a delayed trigger bound to cardsThisWay(EXILE): damage for each still exiled (Dragonhawk)
+ExileBottomCardMatchingMayCastThisTurnAndCreateTokenForStillExiledEffect,blocked-other,9,"run 5: a delayed trigger bound to cardsThisWay(EXILE), and no bottom-of-library search exile (Bank Job)"
+ExileTopCardsOfDamagedPlayerLibraryAndPutCreatureOntoBattlefieldEffect,blocked-other,9,run 5: no choose-one-of-cardsThisWay step before putOntoBattlefield (Lord of the Void)
+ExileTopCardsChooseSpellAndCastCopiesEffect,blocked-other,9,"run 5: no choose-one-of-cardsThisWay step before the copies (Chandra, Pyromaster)"
+ExileOpponentsGraveyardsAndCreateArtifactTokenCopyEffect,blocked-other,9,run 5: a reflexive target among the cards exiled this way: no target filter over cardsThisWay (Espers to Magicite)
+ExileTopCardOfDamagedPlayerLibraryAndGrantCreatureControllerPlayPermissionWithPerpetualCharacteristicsEffect,blocked-other,9,run 5: no perpetual grant step over a CardSubject (Pep)
+ExileTopCardsRepeatIfLastNonlandCreateTokensEffect,unique,9,"run 5: repeats the process by the last card exiled, then counts over every pass (Rally the Horde)"
+ExileTopCardsRepeatOnDuplicateEffect,unique,9,run 5: repeats the process while two cards of the pass share a name (Scalpelexis)
+ExileCreatedPermanentsAtControllerEndStepEffect,blocked-other,9,run 5: no delayed trigger over createdThisResolution with a timing (Stone Idol Trap; as Waylay and Tilonalli's Summoner)
+ExileCreatedPermanentsAtNextCleanupEffect,blocked-other,9,run 5: no delayed trigger over createdThisResolution with a timing (Waylay)
+ExileCreatedPermanentsAtEndStepUnlessConditionEffect,blocked-other,9,run 5: no delayed trigger over createdThisResolution with a timing and a resolution condition (Tilonalli's Summoner)
+ExileTargetPermanentUnlessControllerPaysEffect,blocked-other,9,run 5: the ransom combinator of step 10 (option C): its payment prompt and rider (Excise)
+ExileSourceFromGraveyardAndTargetCreatureUnlessPaysEffect,blocked-other,9,run 5: the ransom combinator of step 10 over two exiles (Carrionette)
+ExileTokensWithSameNameAsLeavingCreatureEffect,blocked-other,9,run 5: no subject for tokens sharing a departed permanent's last-known name: otherPermanentsSharing needs it present (Dual Nature)
+ExileTargetPermanentUntilOpponentBecomesMonarchEffect,unique,9,run 5: an exile whose duration ends with a monarch event (Palace Jailer)
+ExileTargetPermanentUntilTargetEnchantmentLeavesEffect,unique,9,"run 5: an exile until a second target leaves, both rechecked (Calix, Destiny's Hand)"
+ExileTargetCreatureAndAurasUntilSourceLeavesEffect,unique,9,run 5: returns tapped with the noted counters and Auras when the source leaves or untaps (Tawnos's Coffin)
+ExileSpellAndReturnTransformedEffect,unique,9,run 5: the resolving spell's own disposition when cast from a graveyard (Esper Origins)
+ExileSelfForVoyageEffect,unique,9,run 5: starts the voyage state the card's own landfall and return abilities read (Cosima)
+ExileHandFaceDownWithSourceEffect,blocked-other,9,run 5: a face-down option on ExileTargetPlayerHandEffect would be set by two cards until the delayed returns split (Bottled Cloister; as Induced Amnesia)
+ExileTargetPlayerHandFaceDownWithSourceThenDrawEffect,blocked-other,9,"run 5: a face-down option on ExileTargetPlayerHandEffect, which also records no EXILE step for ""that many"" (Induced Amnesia)"
+ExileTargetPlayerHandFaceDownAndReturnAtNextTurnEndStepEffect,blocked-other,9,run 5: face-down hand exile + a delayed return bound to cardsThisWay(EXILE) (Suppress)
+ExileTargetPlayerHandFaceDownWithSourceAndReturnAtNextEndStepEffect,blocked-other,9,run 5: face-down hand exile + a delayed return bound to cardsThisWay(EXILE) (Apple of Eden)
+ExileDyingCreatureAndCreateSpiritTokenCopyEffect,blocked-other,9,run 5: the token's link to the exiled card and a copy of the creature as it last existed (Hofri Ghostforge; as Timothar)
+ExileSourceCardFromGraveyardAndCollectEvidenceEffect,blocked-other,9,"run 5: collect evidence records no step for ""if you do"" and its feasibility is checked before the exile (Lamplight Phoenix)"
+ExileTargetCreatureCardFromGraveyardThenSeekWithMenaceEffect,blocked-other,9,run 5: no seek step recording the sought card for a perpetual grant (Puppet Raiser)
+ExileTargetCreatureCardThenConjureSkeletonDuplicateEffect,unique,9,run 5: conjures a modified duplicate of the exiled card (Legion Reconsecrator)
+ExileAllCreaturesYouControlThenRevealCreaturesToBattlefieldEffect,blocked-other,9,run 5: no reveal-until-N-matching step that puts them onto the battlefield together and shuffles (Mass Polymorph)
+ExileAllCreaturesYouControlAndRegisterDelayedRevealEffect,blocked-other,9,run 5: a delayed trigger that keeps the count an EXILE step recorded (Synthetic Destiny)
+ExileTopCardOfEachLibraryAndGrantLesserManaValueFreePlayEffect,blocked-other,9,"run 5: no predicate comparing to one card of the exile step, the controller's (Triple Triad)"
+ExileSourceAndTopCardChooseOneMayPlayUntilNextTurnEffect,blocked-other,9,run 5: a choice group on the permission over two exile steps' cards (Flameskull; as Lara Croft)
+ExileOneOfDiscardedCardsFromGraveyardEffect,blocked-other,9,run 5: no choose-one-of-the-triggering-cards subject for the graveyard exile (Conspiracy Theorist)
+ExileUpToOneOfEachCardTypeFromGraveyardEffect,unique,9,run 5: a choice constrained to one card of each card type (Grime Gorger)
+ExileUpToCombatDamageCardsFromGraveyardEffect,blocked-other,9,run 5: ExileGraveyardCardsEffect's target count is fixed; the trigger's damage sets this one (Froghemoth)
+ExileAnyNumberOfOwnGraveyardCardsThenEffect,blocked-other,9,run 5: no any-number choice on the own-graveyard exile step (Specter of Mortality; as Winter)
+ExileTargetCreatureCardFromGraveyardAndBecomeCopyEffect,blocked-other,9,"run 5: no become-a-copy step over a CardSubject, keeping the ability that made it (Dimir Doppelganger)"
+ExileCardFromAnyGraveyardThenMayBecomeCopyEffect,blocked-other,9,"run 5: ExileUpToOneCardFromGraveyardEffect is its first half; no become-a-copy step over a CardSubject (Lazav, Familiar Stranger)"
+ExileTargetPermanentAndBecomeCopyUntilEndOfTurnEffect,blocked-other,9,"run 5: no become-a-copy of a departed target as it last existed, beside a scheduled return (Identity Thief)"
+ExileCreaturesFromTargetGraveyardThenManifestEffect,blocked-other,9,run 5: no manifest step over cardsThisWay as a shuffled face-down pile (Ghastly Conscription)

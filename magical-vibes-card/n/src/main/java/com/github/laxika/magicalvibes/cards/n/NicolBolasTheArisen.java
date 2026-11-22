@@ -5,10 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
+import com.github.laxika.magicalvibes.model.amount.CardsInLibrary;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureOrPlaneswalkerEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllButBottomCardOfTargetLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
@@ -41,7 +46,8 @@ public class NicolBolasTheArisen extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -12,
-                List.of(new ExileAllButBottomCardOfTargetLibraryEffect()),
+                List.of(ExileTopCardOfOwnLibraryEffect.of(Subjects.targetPlayer(),
+                        new Sum(new CardsInLibrary(CountScope.TARGET_PLAYER), new Fixed(-1)))),
                 "−12: Exile all but the bottom card of target player's library."));
     }
 }

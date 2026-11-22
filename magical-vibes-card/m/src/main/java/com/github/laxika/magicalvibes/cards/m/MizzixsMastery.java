@@ -11,8 +11,8 @@ import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileOwnGraveyardInstantsOrSorceriesAndMayCastCopiesEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileSpellEffect;
+import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
@@ -41,7 +41,9 @@ public class MizzixsMastery extends Card {
                 SequenceEffect.of(
                         ExileGraveyardCardsEffect.oneTargetFromControllerGraveyard(instantOrSorcery),
                         CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE))),
-                new ExileOwnGraveyardInstantsOrSorceriesAndMayCastCopiesEffect()));
+                SequenceEffect.of(
+                        new ExileGraveyardCardsEffect(0, GraveyardExileScope.OWN_ALL_MATCHING, instantOrSorcery),
+                        CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE)))));
         target(new GraveyardCardPredicateTargetFilter(instantOrSorcery, ownGraveyard));
         addSpellEffect(new ExileSpellEffect());
     }

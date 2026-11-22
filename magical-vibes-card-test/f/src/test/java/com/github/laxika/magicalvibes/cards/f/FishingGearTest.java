@@ -74,6 +74,22 @@ class FishingGearTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Fish")).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Creates a Fish when the damaged player's library has no card to exile")
+    void createsFishForEmptyLibrary() {
+        Permanent gear = addReadyGear();
+        Permanent creature = addReadyCreature();
+        gear.setAttachedTo(creature.getId());
+        creature.setAttacking(true);
+        harness.setLibrary(player2, List.of());
+
+        resolveCombat();
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(findPermanents(player1, "Fish")).hasSize(1);
+    }
+
     private Permanent addReadyGear() {
         Permanent gear = harness.addToBattlefieldAndReturn(player1, new FishingGear());
         gear.setSummoningSick(false);

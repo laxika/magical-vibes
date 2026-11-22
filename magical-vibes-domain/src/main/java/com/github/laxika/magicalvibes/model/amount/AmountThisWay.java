@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.model.amount;
 
 import com.github.laxika.magicalvibes.model.StepKind;
 
+import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 
 import java.util.Objects;
@@ -50,9 +51,12 @@ import java.util.Objects;
  * @param includesUnremoved  every permanent the destroy step applied to counts, not only those it destroyed
  * @param negativeKept       a negative power or toughness total is the amount, for an effect that sets a power or
  *                           toughness to it
+ * @param cardFilter         "for each land card exiled this way" ({@link #exiledCards}): only the exiled cards that
+ *                           match it count, each judged as the card is now (as {@code HappenedThisWay.toACard} judges
+ *                           them); {@code null} for all of them
  */
 public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter, boolean yours,
-                            boolean includesUnremoved, boolean negativeKept)
+                            boolean includesUnremoved, boolean negativeKept, CardPredicate cardFilter)
         implements DynamicAmount {
 
     /** What {@link AmountThisWay} reads from the step. */
@@ -86,9 +90,18 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
             throw new IllegalArgumentException(
                     "Only a destroy step's count or stat covers what it didn't destroy: " + kind + " " + stat);
         }
+        if (cardFilter != null && (kind != StepKind.EXILE || stat != Stat.AMOUNT)) {
+            throw new IllegalArgumentException("Only an exile step's count is filtered as cards: " + kind + " " + stat);
+        }
         if (negativeKept && stat != Stat.POWER && stat != Stat.TOUGHNESS) {
             throw new IllegalArgumentException("Only a power or toughness can be negative: " + stat);
         }
+    }
+
+    /** The amount over every card or removed permanent the other components count. */
+    public AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter, boolean yours,
+                         boolean includesUnremoved, boolean negativeKept) {
+        this(kind, stat, filter, yours, includesUnremoved, negativeKept, null);
     }
 
     /** The amount over the removed permanents that count, a negative total read as 0. */
@@ -145,6 +158,15 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
      */
     public AmountThisWay keepingNegative() {
         return new AmountThisWay(kind, stat, filter, yours, includesUnremoved, true);
+    }
+
+    /**
+     * "For each blue card exiled this way", "the number of noncreature cards exiled this way": how many cards matching
+     * {@code filter} the most recent exile step exiled.
+     */
+    public static AmountThisWay exiledCards(CardPredicate filter) {
+        return new AmountThisWay(StepKind.EXILE, Stat.AMOUNT, null, false, false, false,
+                Objects.requireNonNull(filter, "filter"));
     }
 
     /** "The total mana value of permanents destroyed this way": the last-known mana value of what a destroy step destroyed. */

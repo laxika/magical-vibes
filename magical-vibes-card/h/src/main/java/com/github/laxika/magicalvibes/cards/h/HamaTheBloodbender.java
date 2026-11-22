@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithSourceEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileMatchingCardFromTargetGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -34,6 +34,7 @@ public class HamaTheBloodbender extends Card {
         ))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         new MillEffect(3, Subjects.targetPlayer()),
-                        new ExileMatchingCardFromTargetGraveyardEffect(noncreatureNonland, true, true));
+                        ExileUpToOneCardFromGraveyardEffect.matching(noncreatureNonland).withSource()
+                                .from(Subjects.targetPlayer()));
     }
 }

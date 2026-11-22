@@ -1128,11 +1128,19 @@ public class AmountEvaluationService {
      * permanent as it last existed on the battlefield and by the controller it had as it left. One that includes what a
      * destroy step didn't destroy reads every departure of that step, a permanent still on the battlefield as it is
      * now; it reads nothing unless the departures are that step's (the permanents among them that were destroyed are
-     * its outcome's).
+     * its outcome's). A count of exiled cards matching a card filter judges each card as it is now.
      */
     private int amountThisWay(GameData gameData, AmountContext ctx, AmountThisWay thisWay) {
         StackEntry entry = ctx.stackEntry();
         ResolutionResults results = entry.getResolutionResults();
+        if (thisWay.cardFilter() != null) {
+            UUID sourceCardId = entry.getCard() == null ? null : entry.getCard().getId();
+            return (int) results.outcome(thisWay.kind()).objectIds().stream()
+                    .map(id -> gameQueryService.findCardById(gameData, id))
+                    .filter(card -> card != null && predicateEvaluationService.matchesCardPredicate(
+                            card, thisWay.cardFilter(), sourceCardId))
+                    .count();
+        }
         if (thisWay.stat() == AmountThisWay.Stat.AMOUNT && thisWay.filter() == null && !thisWay.yours()
                 && !thisWay.includesUnremoved()) {
             return results.outcome(thisWay.kind()).amount();

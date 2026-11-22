@@ -10,8 +10,12 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileUpToOneCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
+import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.service.exile.ExileService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +26,9 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * "You may exile a [creature] card from a graveyard." Gathers every matching card in every graveyard and asks the
- * controller to choose up to one (exactly one when mandatory). The answer is recorded by
+ * "You may exile a [creature] card from a graveyard." Gathers every matching card in every graveyard, or in those of
+ * the players the effect names, and asks the controller to choose up to one (exactly one when mandatory, unasked when
+ * it is the only one in their own graveyard). The answer is recorded by
  * {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} through
  * {@code graveyardTargetOperation.resolutionTimeExileThenEffectResume}, and this handler resolves again with it before
  * anything changed: it exiles the chosen card (tracked with the source permanent when the effect says so) and records
@@ -35,9 +40,11 @@ public class ExileUpToOneCardFromGraveyardEffectHandler implements NormalEffectH
 
     private final GameLogService gameLogService;
     private final GameQueryService gameQueryService;
-    private final GraveyardReturnSupport graveyardReturnSupport;
+    private final ExileService exileService;
+    private final PermanentRemovalService permanentRemovalService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final PlayerInputService playerInputService;
+    private final SubjectResolutionService subjectResolutionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -55,37 +62,33 @@ public class ExileUpToOneCardFromGraveyardEffectHandler implements NormalEffectH
             state.resolutionTimeExileThenEffectChoiceMade = false;
             state.resolutionTimeExileThenEffectChosenCardId = null;
             gameData.rerunCurrentEffectAfterInteraction = false;
-            String playerName = gameData.playerIdToName.get(entry.getControllerId());
             if (chosenCardId == null) {
+                String playerName = gameData.playerIdToName.get(entry.getControllerId());
                 gameLogService.append(gameData, GameLog.text(
                         playerName + " chooses not to exile a card from a graveyard."));
                 return;
             }
-            Card chosen = matchingCards(gameData, entry, exileEffect).stream()
+            matchingCards(gameData, entry, exileEffect).stream()
                     .filter(card -> card.getId().equals(chosenCardId))
                     .findFirst()
-                    .orElse(null);
-            UUID ownerId = chosen == null ? null : gameQueryService.findGraveyardOwnerById(gameData, chosenCardId);
-            List<LastKnownCardStats> known = chosen == null ? List.of()
-                    : gameQueryService.asInGraveyard(gameData, List.of(chosen));
-            if (chosen == null || ownerId == null
-                    || !graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, chosenCardId, chosen,
-                    exileEffect.trackWithSource() ? entry.getSourcePermanentId() : null)) {
-                return;
-            }
-            entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(chosenCardId), List.of(ownerId))
-                    .withLastKnownCards(known));
-            gameLogService.append(gameData, GameLog.textCardText(
-                    playerName + " exiles ", chosen, " from a graveyard."));
+                    .ifPresent(chosen -> exile(gameData, entry, exileEffect, chosen));
             return;
         }
 
         List<Card> candidates = matchingCards(gameData, entry, exileEffect);
         if (candidates.isEmpty()) {
+            String where = exileEffect.graveyardOf() == null ? "any graveyard" : "that graveyard";
             gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                     exileEffect.filter() == null
-                            ? " finds no cards in any graveyard to exile."
-                            : " finds no matching card in any graveyard to exile."));
+                            ? " finds no cards in " + where + " to exile."
+                            : " finds no matching card in " + where + " to exile."));
+            return;
+        }
+
+        // "Exile a card from your graveyard" with one card to exile leaves nothing to choose.
+        if (exileEffect.mandatory() && candidates.size() == 1
+                && exileEffect.graveyardOf() instanceof PlayerSubject.You) {
+            exile(gameData, entry, exileEffect, candidates.getFirst());
             return;
         }
 
@@ -98,10 +101,30 @@ public class ExileUpToOneCardFromGraveyardEffectHandler implements NormalEffectH
                         : "Choose up to one card from a graveyard to exile.");
     }
 
+    private void exile(GameData gameData, StackEntry entry, ExileUpToOneCardFromGraveyardEffect effect, Card card) {
+        UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, card.getId());
+        List<LastKnownCardStats> known = gameQueryService.asInGraveyard(gameData, List.of(card));
+        if (ownerId == null) {
+            return;
+        }
+        permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, card.getId());
+        if (effect.trackWithSource() && entry.getSourcePermanentId() != null) {
+            exileService.exileCard(gameData, ownerId, card, entry.getSourcePermanentId());
+        } else {
+            exileService.exileCard(gameData, ownerId, card);
+        }
+        entry.recordStep(StepKind.EXILE, StepOutcome.ofObjects(List.of(card.getId()), List.of(ownerId))
+                .withLastKnownCards(known));
+        gameLogService.append(gameData, GameLog.textCardText(
+                gameData.playerIdToName.get(entry.getControllerId()) + " exiles ", card, " from a graveyard."));
+    }
+
     private List<Card> matchingCards(GameData gameData, StackEntry entry, ExileUpToOneCardFromGraveyardEffect effect) {
         List<Card> candidates = new ArrayList<>();
         UUID sourceCardId = entry.getCard().getId();
-        for (UUID playerId : gameData.orderedPlayerIds) {
+        List<UUID> graveyardPlayerIds = effect.graveyardOf() == null ? gameData.orderedPlayerIds
+                : subjectResolutionService.players(gameData, entry, effect, effect.graveyardOf());
+        for (UUID playerId : graveyardPlayerIds) {
             List<Card> graveyard = gameData.playerGraveyards.get(playerId);
             if (graveyard == null) {
                 continue;

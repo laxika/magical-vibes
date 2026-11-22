@@ -598,7 +598,6 @@ public class TargetPolarityClassifier {
             entry("DoubleDamageFromTargetPermanentThisTurnEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ChannelHarmEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("ControlledCreaturesDealPowerDamageToTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("ExileTopCardMayDealDamageOrPlayEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealTopCardDealManaValueDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealTopCardsToHandThenDealNonlandManaValueDamageToAnyTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("RevealUntilNonlandBottomThenDealManaValueDamageEffect", TargetPolarity.HARMFUL_DAMAGE),

@@ -132,53 +132,19 @@ public class GraveyardTargetOperationState {
     /** Battlefield/player targets selected for a modal spell paired with this graveyard choice. */
     public List<UUID> permanentTargetIds;
     /**
-     * Resolution-time "exile up to one target card from a graveyard" (Grixis Sojourners' death and
-     * cycling triggers). When set, {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen}
-     * exiles the chosen card and resumes the paused ability resolution (e.g. the cycling draw)
-     * instead of pushing a new stack entry. Set by
-     * {@code ExileUpToOneCardFromGraveyardEffectHandler}.
-     */
-    public boolean resolutionTimeExileResume;
-    /**
      * The controller of Immortal Coil is choosing which cards of their own graveyard to exile for the
      * damage it prevented. When set, {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen}
      * exiles the chosen cards. Set by {@code DamageSupport.applyImmortalCoilPrevention}.
      */
     public boolean resolutionTimeExileOwnGraveyardResume;
-    /**
-     * Resolution-time "you may exile a creature card from your graveyard. If you do, create a 4/4
-     * black Zombie token copy with haste until end of turn" (God-Pharaoh's Gift). When set,
-     * {@code GraveyardChoiceHandlerService.handleMultipleCardsChosen} exiles the chosen card,
-     * creates the transformed token copy, and resumes the paused ability resolution. Set by
-     * {@code ExileOwnCreatureFromGraveyardCreateZombieTokenCopyEffectHandler}.
-     */
-    public boolean resolutionTimeExileCreateZombieTokenCopyResume;
     public boolean resolutionTimeDragonApproachResume;
     /** Resolution-time choice for Chandra, Heart of Fire's graveyard-and-library exile. */
     public ExileMatchingCardsFromGraveyardAndLibraryContext resolutionTimeExileMatchingCardsResume;
-    /** Resolution-time optional filtered exile whose successful choice has a life-loss rider. */
-    public boolean resolutionTimeExileThenEachOpponentLosesLifeResume;
-    /** Whether the optional filtered exile choice has been answered. */
-    public boolean resolutionTimeExileThenEachOpponentLosesLifeChoiceMade;
-    /** The card chosen by the optional filtered exile choice, or {@code null} for decline. */
-    public UUID resolutionTimeExileThenEachOpponentLosesLifeChosenCardId;
-    /** Resolution-time land exile followed by a target-creature counter placement. */
-    public boolean resolutionTimeExileThenPutCounterOnTargetCreatureResume;
     public ExileUpToOneMatchingCardFromEachGraveyardContext
             resolutionTimeExileUpToOneMatchingCardFromEachGraveyardResume;
     /** Resolution-time mandatory exile of one card from each player's graveyard. */
     public EachPlayerExilesCardFromGraveyardContext eachPlayerExilesCardFromGraveyard;
     public boolean resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume;
-    public boolean resolutionTimeExileThenPutCountersOnSharedTypeCreaturesResume;
-    public boolean resolutionTimeExileThenPutCountersOnSharedTypeCreaturesChoiceMade;
-    public UUID resolutionTimeExileThenPutCountersOnSharedTypeCreaturesChosenCardId;
-    /** Whether the land-exile choice has been answered. */
-    public boolean resolutionTimeExileThenPutCounterOnTargetCreatureChoiceMade;
-    /** The land chosen by the resolution-time exile choice, or {@code null} for decline. */
-    public UUID resolutionTimeExileThenPutCounterOnTargetCreatureChosenCardId;
-    public boolean resolutionTimeExileOwnGraveyardCardPutCountersResume;
-    public boolean resolutionTimeExileOwnGraveyardCardPutCountersChoiceMade;
-    public UUID resolutionTimeExileOwnGraveyardCardPutCountersChosenCardId;
     public boolean resolutionTimeExileOneOfDiscardedCardsResume;
     public boolean resolutionTimeExileOneOfDiscardedCardsChoiceMade;
     public List<UUID> resolutionTimeExileOneOfDiscardedCardsCandidateIds = List.of();

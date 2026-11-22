@@ -5,13 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Zone;
-import com.github.laxika.magicalvibes.model.effect.ExileMilledCreatureAndCreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTriggeringCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceCombatDamageWithMillEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import java.util.Set;
 
 @CardRegistration(set = "ISD", collectorNumber = "84")
 @CardRegistration(set = "SLD", collectorNumber = "836")
@@ -29,8 +31,7 @@ public class UndeadAlchemist extends Card {
         // exile that card and create a 2/2 black Zombie creature token.
         addTrigger(Triggers.putIntoGraveyardFrom(Zone.LIBRARY, Triggers.NONTOKEN_CREATURE,
                 ObjectRelation.OPPONENT_OWNS),
-                new ExileMilledCreatureAndCreateTokenEffect(
-                "Zombie", 2, 2, CardColor.BLACK, List.of(CardSubtype.ZOMBIE)
-        ));
+                new ExileTriggeringCardFromGraveyardEffect(),
+                new CreateTokenEffect("Zombie", 2, 2, CardColor.BLACK, List.of(CardSubtype.ZOMBIE), Set.of(), Set.of()));
     }
 }

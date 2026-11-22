@@ -1,9 +1,12 @@
 package com.github.laxika.magicalvibes.ai.simulation;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.n.NicolBolasTheRavager;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
+import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.GameTestHarness;
@@ -38,6 +41,26 @@ class RolloutPolicyTest {
         GameSimulator simulator = HeadlessSimulationContext.getSimulator();
         engine = new MCTSEngine(simulator);
         playerId = player1.getId();
+    }
+
+    @Test
+    @DisplayName("Nicol Bolas, the Arisen's library exile is aimed at the opponent")
+    void libraryExileTargetsTheOpponent() {
+        NicolBolasTheRavager card = new NicolBolasTheRavager();
+        Permanent bolas = harness.addToBattlefieldAndReturn(player1, card);
+        bolas.setCard(card.getBackFaceCard());
+        bolas.setTransformed(true);
+        bolas.setCounterCount(CounterType.LOYALTY, 20);
+        bolas.setSummoningSick(false);
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+
+        List<SimulationAction> actions = HeadlessSimulationContext.getSimulator().getLegalActions(gd, playerId);
+
+        assertThat(actions)
+                .contains(new SimulationAction.ActivateAbility(bolas.getId(), 3, harness.getPlayer2().getId()))
+                .doesNotContain(new SimulationAction.ActivateAbility(bolas.getId(), 3, playerId));
     }
 
     @Nested

@@ -9,7 +9,6 @@ import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
 import com.github.laxika.magicalvibes.model.condition.Overloaded;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalReplacementEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileAllCreaturesYouDontControlAndSearchBasicLandsToBattlefieldTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileAllPermanentsAndSearchBasicLandPerControllerEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;

@@ -68,8 +68,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.EachPlayerMayExile
 import com.github.laxika.magicalvibes.service.effect.normalfx.LifeSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.PermanentCounterSupport;
 import com.github.laxika.magicalvibes.service.effect.normalfx.SpellweaverVoluteSupport;
-import com.github.laxika.magicalvibes.service.effect.normalfx.TokenCopySupport;
-import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.service.effect.DredgeSupport;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
@@ -130,25 +128,9 @@ public class GraveyardChoiceHandlerService {
     private final DredgeSupport dredgeSupport;
     private final ObjectProvider<DrawService> drawServiceProvider;
     private final SpellweaverVoluteSupport spellweaverVoluteSupport;
-    private final TokenCopySupport tokenCopySupport;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private TriggeredAbilityStackService triggeredAbilityStackService;
-
-    /**
-     * God-Pharaoh's Gift: creates a copy of the exiled card, except it's a 4/4 black Zombie, as one token creation
-     * event whose count replacements and additions the controller orders (CR 616.1). "It gains haste until end of
-     * turn" covers every token the event creates, added ones such as Queen Allenal's Soldier included. The creation
-     * may pause for the order prompt or Jinnie Fay; the paused trigger then resumes once it finishes.
-     */
-    private void createGodPharaohsGiftZombieCopy(GameData gameData, StackEntry entry, Card exiledCard) {
-        var zombieCopy = new CreateTokenCopyOfTargetPermanentEffect(List.of(), Set.of(), 4, 4, Map.of(), true,
-                false, false, false, false, false, CardColor.BLACK, Set.of(), false, List.of(), List.of(), false,
-                false, new Fixed(1), false, Set.of(), false, List.of(), null, false, true);
-        tokenCopySupport.createTokenCopiesWithCopyException(gameData, entry, List.of(exiledCard), null,
-                entry.getControllerId(), zombieCopy,
-                tokenCard -> tokenCopySupport.replaceCreatureTypes(tokenCard, List.of(CardSubtype.ZOMBIE)));
-    }
 
     public void handleGraveyardCardChosen(GameData gameData, Player player, int cardIndex) {
         if (gameData.interaction.activeInteraction(PendingInteraction.GraveyardChoice.class) == null) {
@@ -1466,16 +1448,6 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
-        if (gameData.graveyardTargetOperation.resolutionTimeExileOwnGraveyardCardPutCountersResume) {
-            gameData.interaction.clearAwaitingInput();
-            gameData.graveyardTargetOperation.resolutionTimeExileOwnGraveyardCardPutCountersResume = false;
-            gameData.graveyardTargetOperation.resolutionTimeExileOwnGraveyardCardPutCountersChoiceMade = true;
-            gameData.graveyardTargetOperation.resolutionTimeExileOwnGraveyardCardPutCountersChosenCardId =
-                    cardIds.isEmpty() ? null : cardIds.getFirst();
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
         if (gameData.graveyardTargetOperation.resolutionTimeDragonApproachResume) {
             StackEntry entry = gameData.pendingEffectResolutionEntry;
             if (entry == null) {
@@ -1550,20 +1522,6 @@ public class GraveyardChoiceHandlerService {
                 Collections.shuffle(gameData.playerDecks.get(ownerId), ThreadLocalRandom.current());
             }
             inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
-            return;
-        }
-
-        if (gameData.graveyardTargetOperation
-                .resolutionTimeExileThenPutCountersOnSharedTypeCreaturesResume) {
-            gameData.interaction.clearAwaitingInput();
-            gameData.graveyardTargetOperation
-                    .resolutionTimeExileThenPutCountersOnSharedTypeCreaturesResume = false;
-            gameData.graveyardTargetOperation
-                    .resolutionTimeExileThenPutCountersOnSharedTypeCreaturesChoiceMade = true;
-            gameData.graveyardTargetOperation
-                    .resolutionTimeExileThenPutCountersOnSharedTypeCreaturesChosenCardId =
-                    cardIds.isEmpty() ? null : cardIds.getFirst();
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 
@@ -1780,28 +1738,6 @@ public class GraveyardChoiceHandlerService {
             return;
         }
 
-        // Resolution-time optional filtered exile with a life-loss rider: record the answer and
-        // let the effect handler perform the zone change and rider on resumption.
-        if (gameData.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeResume) {
-            gameData.interaction.clearAwaitingInput();
-            gameData.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeResume = false;
-            gameData.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeChoiceMade = true;
-            gameData.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeChosenCardId =
-                    cardIds.isEmpty() ? null : cardIds.getFirst();
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        if (gameData.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureResume) {
-            gameData.interaction.clearAwaitingInput();
-            gameData.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureResume = false;
-            gameData.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureChoiceMade = true;
-            gameData.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureChosenCardId =
-                    cardIds.isEmpty() ? null : cardIds.getFirst();
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
         if (gameData.graveyardTargetOperation.resolutionTimeOneCardPerFilterResume) {
             gameData.interaction.clearAwaitingInput();
             gameData.graveyardTargetOperation.resolutionTimeOneCardPerFilterResume = false;
@@ -1827,51 +1763,6 @@ public class GraveyardChoiceHandlerService {
             gameData.graveyardTargetOperation.resolutionTimeExileOwnGraveyardResume = false;
             graveyardService.exileChosenCardsFromGraveyard(gameData, player.getId(), cardIds);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-            return;
-        }
-
-        // Resolution-time "exile up to one …" mid-resolution choices (Grixis Sojourners exile-only,
-        // God-Pharaoh's Gift exile+4/4 black Zombie token copy with haste until EOT): the choice was
-        // begun mid-resolution, so complete the effect and resume the paused ability rather than
-        // pushing a new stack entry.
-        if (gameData.graveyardTargetOperation.resolutionTimeExileResume
-                || gameData.graveyardTargetOperation.resolutionTimeExileCreateZombieTokenCopyResume) {
-            boolean createZombieTokenCopy =
-                    gameData.graveyardTargetOperation.resolutionTimeExileCreateZombieTokenCopyResume;
-            UUID sourcePermanentId = gameData.graveyardTargetOperation.sourcePermanentId;
-            gameData.interaction.clearAwaitingInput();
-            gameData.graveyardTargetOperation.resolutionTimeExileResume = false;
-            gameData.graveyardTargetOperation.resolutionTimeExileCreateZombieTokenCopyResume = false;
-            gameData.graveyardTargetOperation.sourcePermanentId = null;
-            if (cardIds.isEmpty()) {
-                gameLogService.append(gameData, GameLog.text(
-                        player.getUsername() + " chooses not to exile a card from a graveyard."));
-            } else {
-                for (UUID cardId : cardIds) {
-                    Card card = gameQueryService.findCardInGraveyardById(gameData, cardId);
-                    if (card != null) {
-                        if (sourcePermanentId != null) {
-                            UUID ownerId = gameQueryService.findGraveyardOwnerById(gameData, cardId);
-                            if (ownerId != null) {
-                                permanentRemovalService.removeCardFromGraveyardByIdForExile(gameData, cardId);
-                                exileService.exileCard(gameData, ownerId, card, sourcePermanentId);
-                            } else {
-                                graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
-                            }
-                        } else {
-                            graveyardReturnSupport.exileCardFromAnyGraveyard(gameData, cardId, card);
-                        }
-                        gameLogService.append(gameData, GameLog.textCardText(
-                                player.getUsername() + " exiles ", card, " from a graveyard."));
-                        if (createZombieTokenCopy && gameData.pendingEffectResolutionEntry != null) {
-                            createGodPharaohsGiftZombieCopy(gameData, gameData.pendingEffectResolutionEntry, card);
-                        }
-                    }
-                }
-            }
-            // The shared epilogue resumes the paused resolution (e.g. the cycling draw) and
-            // auto-passes once no further input is needed.
-            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
 

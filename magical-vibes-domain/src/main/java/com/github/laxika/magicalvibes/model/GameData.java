@@ -8681,15 +8681,6 @@ public class GameData {
         exiledCardsWithIceCounters.add(card.getId());
     }
 
-    /** Adds a card to exile and marks it with a croak counter. */
-    public void addToExileWithCroakCounter(UUID ownerId, Card card) {
-        spellsWithDreamCounterOnResolution.remove(card.getId());
-        spellsWithPlotOnResolution.remove(card.getId());
-        if (putOnBottomOfLibraryInsteadOfExile(ownerId, card)) return;
-        addToExile(ownerId, card);
-        exiledCardsWithCroakCounters.add(card.getId());
-    }
-
     /** Adds a card to exile and marks it with a void counter. */
     public void addToExileWithVoidCounter(UUID ownerId, Card card) {
         addToExile(ownerId, card);
@@ -10751,7 +10742,6 @@ public class GameData {
         copy.graveyardTargetOperation.kicked = this.graveyardTargetOperation.kicked;
         copy.graveyardTargetOperation.resolutionTimeCollectEvidenceResume =
                 this.graveyardTargetOperation.resolutionTimeCollectEvidenceResume;
-        copy.graveyardTargetOperation.resolutionTimeExileResume = this.graveyardTargetOperation.resolutionTimeExileResume;
         copy.graveyardTargetOperation.resolutionTimeExileOwnGraveyardResume = this.graveyardTargetOperation.resolutionTimeExileOwnGraveyardResume;
         copy.graveyardTargetOperation.resolutionTimeExileThenMayBecomeCopyResume =
                 this.graveyardTargetOperation.resolutionTimeExileThenMayBecomeCopyResume;
@@ -10767,18 +10757,6 @@ public class GameData {
                 this.graveyardTargetOperation.eachPlayerExilesCardFromGraveyard;
         copy.graveyardTargetOperation.resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume =
                 this.graveyardTargetOperation.resolutionTimeShuffleUpToThreeCardsFromEachGraveyardResume;
-        copy.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeResume =
-                this.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeResume;
-        copy.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeChoiceMade =
-                this.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeChoiceMade;
-        copy.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeChosenCardId =
-                this.graveyardTargetOperation.resolutionTimeExileThenEachOpponentLosesLifeChosenCardId;
-        copy.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureResume =
-                this.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureResume;
-        copy.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureChoiceMade =
-                this.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureChoiceMade;
-        copy.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureChosenCardId =
-                this.graveyardTargetOperation.resolutionTimeExileThenPutCounterOnTargetCreatureChosenCardId;
         copy.graveyardTargetOperation.resolutionTimeExileThenEffectResume =
                 this.graveyardTargetOperation.resolutionTimeExileThenEffectResume;
         copy.graveyardTargetOperation.resolutionTimeExileThenEffectChoiceMade =
@@ -10794,12 +10772,6 @@ public class GameData {
                         ? null : new ArrayList<>(this.graveyardTargetOperation.resolutionTimeExileAnyNumberWithFourCardTypesChosenCardIds);
         copy.graveyardTargetOperation.resolutionTimeDragonApproachResume =
                 this.graveyardTargetOperation.resolutionTimeDragonApproachResume;
-        copy.graveyardTargetOperation.resolutionTimeExileOwnGraveyardCardPutCountersResume =
-                this.graveyardTargetOperation.resolutionTimeExileOwnGraveyardCardPutCountersResume;
-        copy.graveyardTargetOperation.resolutionTimeExileOwnGraveyardCardPutCountersChoiceMade =
-                this.graveyardTargetOperation.resolutionTimeExileOwnGraveyardCardPutCountersChoiceMade;
-        copy.graveyardTargetOperation.resolutionTimeExileOwnGraveyardCardPutCountersChosenCardId =
-                this.graveyardTargetOperation.resolutionTimeExileOwnGraveyardCardPutCountersChosenCardId;
         copy.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsResume =
                 this.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsResume;
         copy.graveyardTargetOperation.resolutionTimeExileOneOfDiscardedCardsChoiceMade =

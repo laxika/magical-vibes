@@ -3,10 +3,15 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.ControllerEnergyAtLeast;
+import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsFromExileEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.ExileTopCardMayGetEnergyOrPlayThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.EnergyCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTopCardOfOwnLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -18,7 +23,10 @@ import java.util.List;
 public class SynthEradicator extends Card {
 
     public SynthEradicator() {
-        addTrigger(Triggers.attacks(), new ExileTopCardMayGetEnergyOrPlayThisTurnEffect());
+        addTrigger(Triggers.attacks(),
+                ExileTopCardOfOwnLibraryEffect.of(Subjects.you()),
+                new MayEffect(new EnergyCountersEffect(2), "Get {E}{E}?",
+                        AllowPlayCardsFromExileEffect.thisTurn(Subjects.cardsThisWay(StepKind.EXILE))));
 
         addActivatedAbility(new ActivatedAbility(
                 true,

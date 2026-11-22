@@ -3,9 +3,11 @@ package com.github.laxika.magicalvibes.cards.t;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
-import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsAndMayCastCopiesEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerTwoRepeatIfSharedCardTypeThenDrawEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNameStartsWithPredicate;
@@ -32,7 +34,7 @@ public class TheTaleOfTamiyo extends Card {
         addTrigger(Triggers.chapter(3),
                 new MillControllerTwoRepeatIfSharedCardTypeThenDrawEffect());
         addTrigger(Triggers.chapter(4),
-                new ExileGraveyardCardsAndMayCastCopiesEffect(
-                        instantSorceryOrTamiyoPlaneswalker, GraveyardSearchScope.CONTROLLERS_GRAVEYARD));
+                ExileGraveyardCardsEffect.anyNumberOfTargetsFromControllerGraveyard(instantSorceryOrTamiyoPlaneswalker),
+                CopyImprintedCardAndMayCastCopyEffect.of(Subjects.cardsThisWay(StepKind.EXILE)).payingItsCosts());
     }
 }

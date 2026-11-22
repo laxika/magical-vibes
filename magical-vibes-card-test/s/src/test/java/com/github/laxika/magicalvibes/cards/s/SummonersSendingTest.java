@@ -133,6 +133,27 @@ class SummonersSendingTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A target that left and returned to the graveyard is a new object and is not exiled")
+    void returnedTargetIsNotExiled() {
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player2, List.of(target));
+        harness.addToBattlefield(player1, new SummonersSending());
+        advanceToEndStep();
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        gd.playerGraveyards.get(player2.getId()).clear();
+        gd.markGraveyardEntry(target);
+        gd.playerGraveyards.get(player2.getId()).add(target);
+
+        harness.passBothPriorities();
+        if (gd.interaction.isAwaitingInput()) {
+            harness.handleMayAbilityChosen(player1, true);
+        }
+
+        harness.assertInGraveyard(player2, "Grizzly Bears");
+        assertThat(findPermanents(player1, "Spirit")).isEmpty();
+    }
+
+    @Test
     @DisplayName("The Spirit receives its counter after entering and triggering Mentor of the Meek")
     void counterIsPlacedAfterTheSpiritEnters() {
         HillGiant target = new HillGiant();

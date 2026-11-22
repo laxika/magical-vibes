@@ -212,6 +212,12 @@ public record ExileGraveyardCardsEffect(
                 filter, false, false, true, null, false);
     }
 
+    /** "Exile any number of target [filter] cards from your graveyard" (The Tale of Tamiyo). */
+    public static ExileGraveyardCardsEffect anyNumberOfTargetsFromControllerGraveyard(CardPredicate filter) {
+        return new ExileGraveyardCardsEffect(Integer.MAX_VALUE, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,
+                filter, false, false, false, null, false, true);
+    }
+
     /** "Exile any number of target cards from your graveyard. You may play those cards this turn." */
     public static ExileGraveyardCardsEffect targetedFromControllerGraveyardMayPlayThisTurn() {
         return new ExileGraveyardCardsEffect(Integer.MAX_VALUE, GraveyardExileScope.TARGET_CARDS_CONTROLLER_GRAVEYARD,

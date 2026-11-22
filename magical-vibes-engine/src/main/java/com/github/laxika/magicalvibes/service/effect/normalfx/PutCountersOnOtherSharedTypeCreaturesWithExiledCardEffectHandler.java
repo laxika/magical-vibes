@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnOtherSharedTypeCreaturesWithExiledCardEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -29,7 +30,10 @@ public class PutCountersOnOtherSharedTypeCreaturesWithExiledCardEffectHandler im
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (PutCountersOnOtherSharedTypeCreaturesWithExiledCardEffect) effect;
-        Card exiled = entry.getExiledCostCardSnapshot();
+        Card exiled = entry.getResolutionResults().outcome(StepKind.EXILE).objectIds().stream()
+                .findFirst()
+                .map(cardId -> gameQueryService.findCardById(gameData, cardId))
+                .orElse(null);
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
         if (exiled == null || battlefield == null) {
             return;

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -34,6 +35,24 @@ class EntrailsFeasterTest extends BaseCardTest {
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(creatureCard);
         assertThat(feaster.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
         assertThat(feaster.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature card exiled after dying this turn is no longer a card put into that graveyard this turn")
+    void exiledCardIsForgottenAsPutIntoTheGraveyardThisTurn() {
+        addCreatureReady(player1, new EntrailsFeaster());
+        Card creatureCard = new ElvishWarrior();
+        harness.setGraveyard(player2, List.of(creatureCard));
+
+        advanceToUpkeep(player1);
+        gd.cardsPutIntoGraveyardFromBattlefieldThisTurn
+                .computeIfAbsent(player2.getId(), ignored -> ConcurrentHashMap.newKeySet())
+                .add(creatureCard.getId());
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(creatureCard.getId()));
+
+        assertThat(gd.cardsPutIntoGraveyardFromBattlefieldThisTurn.get(player2.getId()))
+                .doesNotContain(creatureCard.getId());
     }
 
     @Test

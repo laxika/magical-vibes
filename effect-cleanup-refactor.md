@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 4 done: Exile, 40, 22, 42 and 51 audited) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 5 done: Exile, 40, 22, 42, 51 and 92 audited) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -609,6 +609,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 2 | Exile: the graveyard last-known P/T bug, the until-source-leaves family with the Detention Sphere `step-9` row, a timed permission step over a `CardSubject` and the records it splits | done (22 audited: 3 absorbed, 7 split, 5 survivors (one new step record), 7 blocked-other; 19 card files rewritten; graveyard exile steps record `StepOutcome.lastKnownCards`, `AmountThisWay.keepingNegative()`, `ExileTargetPermanentUntilSourceLeavesEffect` takes a `PermanentSubject`, `AllowPlayCardsFromExileEffect`; Glorious Protector's simultaneous return fixed; random / exile-until steps and the cast-copies `step-9` row not reached) |
 | 3 | Exile: the random-card exile step and the exile-until step with the records they split, the `AllowPlayCardsFromExileEffect` rider rows (Suspend Aggression, Mnemonic Betrayal), the cast-copies `step-9` row, the top-card permission records | done (42 audited: 2 absorbed, 15 split, 2 survivors (two new step records), 17 blocked-other, 7 unique; 21 card files rewritten; `ExileCardAtRandomEffect`, `ExileCardsFromTopUntilEffect`, `cardsThisWay(kind, filter)`; no `AllowPlayCardsFromExileEffect` rider added (each had one user); the cast-copies row ledgered blocked-other) |
 | 4 | Exile: run 3's shared blockers (put-into-hand step, "onto the battlefield or into your hand", the source-linked library exile), then the one-card tail (no two-card record was left) | done (51 audited: 3 absorbed, 16 split, 7 survivors (one new step record), 14 blocked-other, 11 unique; 22 card files rewritten; `PutCardsIntoHandEffect`, `CardManaValueAtMostAmountPredicate`, `ReturnAllCardsExiledWithSourceEffect.putOntoBattlefield`, `ExileTopCardOfOwnLibraryEffect.linkedToSource`, `AllowPlayCardsFromExileEffect.playableOnlyIf` / `.playableByOwner()`, `EachOpponentExilesFromHandEffect.byPlayers`; the targeted graveyard exile no longer exiles a card that left and came back) |
+| 5 | Exile: run 4's God-Pharaoh's Gift row and Agatha's `step-9` row, a graveyard-owner subject on the choose-a-card exile, a counter step on exiled cards, a card-filtered exile count, then the one-card tail | done (92 audited: 3 absorbed, 20 split, 2 dead, 2 survivors (one new step record), 55 blocked-other, 10 unique; 27 card files rewritten; `ExileUpToOneCardFromGraveyardEffect.from`, `PutCounterOnExiledCardsEffect`, `AmountThisWay.exiledCards`; six resume flag groups deleted; Fishing Gear's empty library fixed by Oracle text) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -6444,6 +6445,84 @@ four Seraph cases above. All test sources compile.
   perpetual boost, the returns from a graveyard, goad and must-block.
 - The `blocked-other` pairs that need one path before a subject: fight, heist, turn face down, hand size (one interface with players),
   return the dying creature, copy a spell or ability, and a source-card `CardSubject` for the card-axis pairs.
+
+### Step 9, run 5 (2026-11-22)
+
+Family Exile, continued: run 4's God-Pharaoh's Gift item, the `step-9` row step 5m handed over (Agatha's Soul Cauldron), three shared
+parameters or steps the tail needed, then the one-card tail, cheapest compositions first. Ratchet 4,593 / 3,835 → 4,569 / 3,808 records /
+handlers (25 records and 28 handlers deleted, 1 record and handler added). 27 card files changed (by scratch scripts; every changed line
+read back by eye; Fractured Identity and Winds of Abandon lost an unused import only). Oracle text checked with `get_card` for each of the
+25 rewritten cards; rulings with `get_rulings` (Fishing Gear, Pako, Altaïr, Culmination of Studies, Torrent Sculptor, Ruinous Intrusion,
+Summoner's Sending, Induced Amnesia, Prismatic Ending, Rakdos the Muscle, The Tale of Tamiyo, Spark of Creativity). CR 122.1, 400.7,
+603.12, 608.2c and 608.2h checked with `get_rule` (2026-11-22).
+
+| Family | Audited | Absorbed | Split | Survivor | Dead | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|---|
+| Exile | 92 (87 classes without a row, 3 ledger rows taken up, 2 survivors, one a new step record) | 3 | 20 | 2 (one new step record) | 2 | 55 blocked-other: 9 a delayed trigger bound to a step's cards, permanents or count (Dragonhawk, Bank Job, Synthetic Destiny, the three created-permanent exiles, the delayed hand returns, Hofri's link), 4 no choose-one step over cards or triggering cards, 4 same-name sets over a card, 4 per-player results of an exile step or a count per player, 3 no exile-target-spell step, 4 cast-now options, 3 become-a-copy steps, 3 a permission group or predicate over several exiled cards, 2 face-down hand exile, 2 ransom heads for step 10, 2 choose-a-quality steps, the rest one each (the ledger names it) | 10 | 101 records (73 used by fewer than three cards); no `step-9` Exile row left. All families: 2,810 rare records without a row |
+
+- **"From your graveyard", "from that player's graveyard".** `ExileUpToOneCardFromGraveyardEffect` gained `PlayerSubject graveyardOf`
+  (`.from(players)`, `oneMatching(filter)` for the mandatory form; `targetPlayer()` declares the benign player target). It absorbed
+  `ExileMatchingCardFromTargetGraveyardEffect` (Hama, Dreams of Steel and Oil; run 1's blocker) and carries five splits: Trystan,
+  God-Pharaoh's Gift, Torrent Sculptor, Forgotten Harvest, Resplendent Marshal. A mandatory choice of the only matching card in your own
+  graveyard is not asked, as those records didn't ask. Six bespoke resume flag groups and God-Pharaoh's Gift's token helper left
+  `GraveyardChoiceHandlerService`. Resplendent Marshal's reflexive effect reads the EXILE step it carries, not a cost-card snapshot.
+- **A counter on the exiled cards.** New `PutCounterOnExiledCardsEffect(CardSubject, ExiledCardCounter)` (memory, brain, croak, fetch)
+  after an exile step: Altaïr, The Animus, Rex, Grolnok, Pako. `GameData.addToExileWithCroakCounter` is gone. The counter (CR 122.1) is
+  its own step right after the exile, within the same resolution.
+- **"For each blue card exiled this way".** `AmountThisWay.exiledCards(CardPredicate)` (the cards judged as they are now, like
+  `HappenedThisWay.toACard`): Culmination of Studies, Pako, and The Binding of the Titans, which no longer reads the event value.
+  `ExileGraveyardCardsEffect.eventValueFilter` has no card left; its component can go with step 10's collapse of that record.
+- **Smaller ones.** Agatha's Soul Cauldron, Undead Alchemist, Summoner's Sending, Ruinous Intrusion, Fishing Gear, The Tale of Tamiyo
+  (`anyNumberOfTargetsFromControllerGraveyard`), Mizzix's Mastery overloaded, Spark of Creativity and Synth Eradicator split onto existing
+  steps; Bogardan Phoenix and Nicol Bolas, the Arisen absorbed by parameters (the ledger has each expression). Two records were dead:
+  only unused imports named them.
+
+**Behaviour changes.**
+
+1. Fishing Gear creates the Fish when the damaged player's library is empty ("If you don't", Oracle; CR 608.2c). The old handler did
+   nothing. `FishingGearTest.createsFishForEmptyLibrary`.
+2. Agatha, Altaïr, The Animus, Rex, Summoner's Sending and The Tale of Tamiyo don't exile a target that left its graveyard and came back
+   (CR 400.7), as run 4 fixed the survivor. `SummonersSendingTest.returnedTargetIsNotExiled`.
+3. A card the choose-a-card graveyard exile moves is no longer "put into a graveyard from the battlefield this turn" (CR 400.7), as the
+   other graveyard exiles already had it. `EntrailsFeasterTest.exiledCardIsForgottenAsPutIntoTheGraveyardThisTurn`.
+4. AI only: Nicol Bolas's −12 declares a harmful player target, so the simulator aims it at the opponent (it preferred itself).
+   `RolloutPolicyTest.libraryExileTargetsTheOpponent`.
+5. Log lines and prompt texts are the steps'; Pako's players are in APNAP order (they were in seat order). No test asserted the old ones.
+
+**Seen, not changed.**
+
+- `AllowPlayCardsFromExileEffect.withAnyManaType()` gives no any-type mana to a land card, so a land with an Adventure exiled that way
+  can't be cast as the Adventure with mana of any type ("mana of any type can be spent to cast those spells"). Rakdos, the Muscle stays
+  on its record for it; its test asserts the mark on an exiled land.
+- `SpellEvaluator`'s removal scoring doesn't look inside a `ConditionalEffect`; Prismatic Ending stays on its record for it.
+- The exile steps record one card per permanent, so a step over `cardsThisWay(EXILE)` sees only one card of a merged permanent (Hex).
+- `GraveyardReturnSupport.exileCardFromAnyGraveyard` doesn't clear the "put into a graveyard from the battlefield this turn" sets that
+  `PermanentRemovalService.removeCardFromGraveyardByIdForExile` clears, nor does the own-all sweep of `ExileGraveyardCardsEffect`
+  (CR 400.7); only the choose-a-card step was moved to the latter.
+
+**Tests edited.** The three new card cases and the AI case above;
+`ExileTargetPermanentPutManaValueCountersOnTargetCreatureEffectHandlerTest` went with its handler (`RuinousIntrusionTest` covers the case).
+No assertion changed.
+
+**Tests run** (one Gradle run, forced rerun of the final tree, one `--tests` list per task, counted by XML file name): 213 classes
+(388 suites, 3,362 cases), all pass: the changed cards' tests and the card tests constructing one of them, every card test of
+`ExileUpToOneCardFromGraveyardEffect` and the new step, every card reading `AmountThisWay.exiled*` or `cardsThisWay(EXILE)`, samples of
+`ExileGraveyardCardsEffect`, `CopyImprintedCardAndMayCastCopyEffect`, `ExileTopCardOfOwnLibraryEffect`, `AllowPlayCardsFromExileEffect`
+and `MayEffect`; the application's ratchets, resolver, step-result, targeting, trigger and graveyard-choice tests; the AI polarity, copy,
+selector and simulator tests. The application, AI, engine testFixtures and all 26 letters' card-test sources compile. Not run: the full
+suites.
+
+**For the next run (Exile, run 6, then Each).**
+
+- The cheapest shared blockers this run counted: a delayed trigger over `createdThisResolution()` with a timing (Stone Idol Trap, Waylay,
+  Tilonalli's Summoner) and over `cardsThisWay(EXILE)` (Three Wishes, Elkin Lair, Mnemonic Betrayal, Dragonhawk, Bank Job, the hand
+  returns); an exile-target-spell step recording EXILE (Mindbreak Trap, Aven Interrupter, Gale's Redirection); a face-down option and an
+  EXILE record on `ExileTargetPlayerHandEffect` (Bottled Cloister, Induced Amnesia, then Hex Magic / Invasion of Kaldheim's record, whose
+  AI draw estimate must survive); a choose-one step over `cardsThisWay(EXILE)` (Lord of the Void, Chandra Pyromaster, Capricious
+  Hellraiser); a same-name predicate over a `CardSubject`.
+- Not read yet, in the 73: the "instead of dying" replacement records, the hand exiles with counters, Settle the Wreckage, Dragon's
+  Approach, Chandra, Heart of Fire, Primal Surge, the chosen-permanent exiles (Dalek, The War Games, Fugitive of the Judoon), the cost
+  records and the opening-hand and as-enters exiles. Run 6 can close the family.
 
 ## Prompt
 
