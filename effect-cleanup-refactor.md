@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 22: Exile, Each, Return, Put, Reveal, Choose, Grant and Create closed, Prevent partly done; 1,966 rare records left, Prevent's 17 static preventions next) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 23: Exile, Each, Return, Put, Reveal, Choose, Grant and Create closed, Prevent partly done; 1,955 rare records left, Prevent's six by-side and plane statics next) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -628,6 +628,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 20 | The seven face-down Create rows, run 19's small defects (Battle for Bretagard, Liberated Livestock, the Create prompts' source names, Gather Specimens, the attached tokens' pairing), then Prevent's rare records | done for Create and the defects, Prevent open (28 rows: 7 absorbed, 2 survivors (one new record), 1 blocked-other, 18 unique; 7 records deleted; 8 card files rewritten; the token copy's set path chooses attack targets in one event, `PreventAllButOneDamageToControllerAndPermanentsEffect`; two defects not reproduced; 47 rare Prevent records left) |
 | 21 | Run 20's Mercenaries log, the Prevent shields with subjects (redirect, source-to-recipient, filtered target, tokens), then Prevent's rare records | done for the shields, Prevent open (25 rows: 3 absorbed, 1 survivor (new), 1 dead, 20 unique; 5 records and 5 handlers deleted, 1 of each added; 3 card files rewritten; `PreventNextDamageAndRedirectEffect`; the static prevention record designed, not built; 23 rare Prevent records left) |
 | 22 | Run 21's face-down pool labels, then the static prevention record and Prevent's rare statics | done for the labels and six statics, Prevent open (7 rows: 6 absorbed, 1 survivor (new); 6 records and 2 marker interfaces deleted, 1 record added; 8 card files rewritten; `PreventDamageToRecipientsEffect`, `DamageContext.sourceName()`; 17 rare Prevent records left) |
+| 23 | Prevent's remaining statics: spell sources, the chosen colour, amounts, Gideon's Intervention; the damage-prevented event | done for 11 statics, Prevent open (11 rows: 8 absorbed, 3 unique; 8 records and 3 marker interfaces deleted; 10 card files rewritten; `fromSpells()`, `fromInstantAndSorcerySpells()`, `fromSourcesOfChosenColor()`, `preventing(amount)`, `toEveryone()`; every player-pool prevention tells Selfless Squire; 6 rare Prevent records left, all by-side or plane statics) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -8357,6 +8358,111 @@ Not run: the full suites, the AI fuzz and stress tests, the frontend. Not verifi
   Realm / Avatar, Djeru / The Western Cloud, Gisela, Cover of Winter, Plated Pegasus, Hedron-Field Purists, Daunting Defender) need an
   amount and a by-side form; Kessig is a plane, which the reader would have to scan.
 - The damage-prevented event sweep above.
+
+### Step 9, run 23 (2026-11-23, Prevent partly done)
+
+Prevent's remaining rare statics, by the "For the next run" list of run 22, then the damage-prevented event. Ratchet 4,140 / 3,381 →
+4,132 / 3,381 records / handlers (8 records deleted, and the marker interfaces `SpellDamagePreventionEffect`,
+`ControllerAndCreaturesDamagePreventionEffect`, `FilteredCreaturesDamagePreventionEffect`; the statics had no handlers). 10 card files
+rewritten by hand; Oracle text checked with `get_card` for all 10 and for the 3 unique verdicts' cards and Djeru / The Western Cloud;
+Selfless Squire's rulings with `get_rulings`. CR 114.3, 608.2h, 615.1, 615.5, 615.12, 616.1, 616.1e, 707.10, 708.2, 709.3, 709.3a,
+709.3b, 709.4 and 709.4a checked with `get_rule` (2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Prevent | 11 rows (11 rare records) | 8 | 0 | 0 (survivor extended) | 0 | 3 | 6 rare records (19 records in all), by-side and plane statics |
+
+All families: 1,955 rare records without a row (run 22: 1,966). May (58 rare) not started.
+
+- **`PreventDamageToRecipientsEffect` grew** `SourceKind sourceKind` (`fromSpells()`, `fromInstantAndSorcerySpells()`: the spell deals the
+  damage itself, `GameQueryService.isDealtBySpell` (a spell entry with no source permanent) and the event's `explicitSource()` unset, so a
+  creature a spell makes fight is not a spell source), `boolean sourceOfChosenColor` (`fromSourcesOfChosenColor()`: the effect permanent's
+  chosen colour against the source's colours as a damage source, Ghostly Flame applied, as the absorbed query did), `DynamicAmount amount`
+  (`preventing(n | amount)`, evaluated for the effect's permanent as the damage would be dealt) and the factory `toEveryone()`
+  (`allPermanents()` and `eachPlayer()`). Each is set by at least two cards. The reader is now
+  `DamagePreventionService.staticPreventionsOfPermanentDamage` / `staticPreventionsOfPlayerDamage`, returning each applicable effect with
+  an instance key (its permanent and its place there) and its amount; each pool has `StaticRecipientPrevention` (one option, any effect that
+  prevents all) and `StaticRecipientPartialPrevention` (one option per amount effect, per source portion, so the affected player orders each
+  against the other effects, CR 616.1, 616.1e). Both ask whether the damage, and its source's damage, can be prevented (CR 615.12). A
+  source filter never matches an emblem (CR 114.3), which `cardHasChosenName` did for the name check.
+- **Folded.** Rem Karolus (`toYouAnd(otherPermanentsYouControl()).fromSpells()`), Energy Storm (`toEveryone().fromInstantAndSorcerySpells()`),
+  Plated Pegasus (`toEveryone().fromSpells().preventing(1)`), Prismatic Ward and Chromatic Armor (`to(attachedCreature()).fromSourcesOfChosenColor()`),
+  Shield of the Realm and Shield of the Avatar (`to(attachedCreature()).preventing(…)`), Hedron-Field Purists (`toYouAnd(creaturesYouControl()).preventing(n)`
+  in its level conditions), Daunting Defender (`to(controlledBy(you(), allOf(creature, Cleric))).preventing(1)`), Gideon's Intervention
+  (`toYouAnd(permanentsYouControl()).from(PermanentHasSourceChosenNamePredicate)`). Their rules and queries are deleted: the pools'
+  `SpellToControllerAndPermanents`, `InstantOrSorceryPrevented`, `SpellDamagePrevention`, `ColorToEnchantedCreaturePrevented`,
+  `ChosenNamePrevented` and Gideon's half of `ProtectionFromName`, the creature step `AttachedPerSourceReduction`, the Hedron / Daunting
+  branches of the `ControllerAndCreaturesPerSource` step (now Cover of Winter's only), `GameQueryService.isSpellDamageTo…Prevented`,
+  `isDamageFromInstantOrSorcerySpellPrevented`, `getSpellDamagePrevention`, `isColorDamageToEnchantedCreaturePrevented`,
+  `isDamageFromChosenNamePreventedForController`, and Energy Storm's pre-pool branch of `DamageSupport.isDamageSourcePreventedWithLog`.
+  The AI read none of them.
+- **Gideon's Intervention's name checks hold on the predicate path.** Split names (CR 709.4a): `PermanentHasSourceChosenNamePredicate`
+  ends in `Card.hasName`, as `cardHasChosenName` did, and reads a Room's unlocked doors and a layered name. Face-down sources (CR 708.2):
+  the predicate reads the effective name, none while face down (guard test added; the old permanent path already got this right through
+  `permanentHasName`). Emblems (CR 114.3): the new emblem guard. Ability loss: `activeStaticEffects`.
+- **The damage-prevented event (Selfless Squire).** Its ruling: "Any effect that uses the word 'prevent' will cause it to trigger." The
+  player pool's base `PlayerDamageCandidateSource.apply` now sends `DamageDealtEvent.PreventedToPlayer` with the amount any
+  `PREVENTION`-kind option took off; the sends in `playerFlag`, the static rule and the three shield methods
+  (`applyPlayerDamagePreventionShield`, `applyPlayerCombatDamagePreventionShield`, `applyCombatDamagePreventionTokenShield`, pool-only)
+  are removed so nothing is sent twice. Only Selfless Squire reads the event.
+- **Unique.** Cover of Winter (one X shared by all of a creature's combat recipients, divided by its controller's choice), Well-Laid Plans
+  (a relation between source and damaged creature), Gisela (half the damage, rounded up): each the only card of its shape; a parameter for
+  one card is the guard rail's "moves the special case".
+- **Not reached (6 rare records).** The by-side statics read before the pools by `isPreventedFromDealingDamage` and
+  `isDamageFromPermanentSourceToCreaturePrevented`: Heart of Light (`PreventAllDamageToAndByEnchantedCreatureEffect`), Statecraft,
+  Woolly Razorback, Goblin Furrier and Indentured Oaf (`PreventDamageBySelfToCreaturesEffect`), New Master of Arms and Kessig
+  (`PreventAllCombatDamageByCreaturesExceptEffect`); Djeru and The Western Cloud (`PreventFixedDamageToPlaneswalkersYouControlEffect`) need
+  the static reader to read face-up planes (Kessig too). Five records share the by-side blocker, so it is built, not ledgered blocked.
+
+**Behaviour changes.** "Failed before" means the new test failed on a `git archive` copy of HEAD with the new tests copied in.
+
+1. Selfless Squire gets counters for damage to you prevented by any prevention effect, not only the flag rules and the next-damage
+   shields: `SelflessSquireTest.otherPreventionEffectsTriggerIt` (Energy Storm) and `partialPreventionGetsThatManyCounters` (Plated
+   Pegasus, 1 counter), both failed before (0 counters).
+2. Energy Storm prevents in the damage pools instead of before them, so the affected player orders it (CR 616.1) and a recipient whose
+   damage "can't be prevented" this turn takes it; its log line is the pool's.
+3. Rem Karolus and Plated Pegasus count only damage a spell deals itself: no longer a spell entry with a source permanent (a creature a
+   spell makes deal damage to a player).
+4. Prismatic Ward, Chromatic Armor, Shield of the Realm / Avatar, Hedron-Field Purists and Daunting Defender stop while their permanent
+   has lost its abilities, is face down, or (an Aura) has its effects ignored, and none prevents damage from a source whose damage can't be
+   prevented; the old queries checked some of these each.
+5. Two amount preventions are two options (each "Prevent N of the damage (<card>)"), not one summed option; per-source amounts log
+   "N damage to <permanent> is prevented." / "<source>'s N damage to <player> is prevented." (the Shields, Hedron-Field Purists and Daunting
+   Defender logged nothing before; Plated Pegasus's permanent line read "N of <permanent>'s damage is prevented.").
+
+**What a player sees.** The partial options name the preventing permanent by `FaceDownVisibility.publicName` (it is never face down while
+its static applies).
+
+**Seen, not changed.**
+
+- Angel of Suffering ("you may prevent that damage. If you do, mill") and Kind-`REPLACEMENT` "prevented and replaced with milling" rules
+  in `PlayerDamageFinalReplacements` are not `PREVENTION` options, so Selfless Squire still misses them; the Cleric "you may prevent" choice
+  prevents in its completion, outside the pool, and sends nothing either (CR 615, Selfless Squire's ruling).
+- A split spell on the stack has only the cast half's name (CR 709.3b), but the chosen-name predicate, like the old check, reads both of
+  the card's names for a spell source.
+- `DamagePreventionService.applyPlayerPreventionShield` and its three public entry points, and the public
+  `applyControllerAndCreaturesFixedPerSourceDamagePrevention` overloads, have no main caller (run 22's item); kept.
+
+**Tests edited.** The new cases above (`SelflessSquireTest`), `GideonsInterventionTest.faceDownSourceHasNoName` (guard, passes on the old
+code too). `EffectCountRatchetTest`'s baseline. No assertion changed.
+
+**Tests run.** The final sources (but a one-line Javadoc example in `PreventDamageToRecipientsEffect`, edited during the run and compiled
+after it) in one Gradle run, every test task `--rerun`, one `--tests` list per task, counted from that run's XML by the timestamps: 80
+classes (1,156 cases, 0 failures, 0 skipped): the 67 test classes that name one of the 11 rewritten or touched cards (the 8 of run 22,
+Healing Grace, Cover of Winter, Gisela, Djeru, Runed Halo and `PlayerHasProtectionFromChosenNameEffect`'s users among them), the 11
+application classes naming `DamagePreventionService` or the damage pools (`DamagePreventionSpecTest`, `CombatDamageServiceTest`,
+`SimultaneousDamageMechanicTest`, `GameQueryServiceTest`), `EffectCountRatchetTest` and the AI's `TargetPolarityGuardTest`. On HEAD (a
+`git archive` copy with the new `SelflessSquireTest`) both new Squire cases failed at the counter count. Compiled: domain, engine, the letter
+card modules c, d, e, g, h, p, r, s and shared, the application and AI test sources, webservice; the letter test modules compiled in the run.
+No deleted handler. Not run: the full suites, the AI fuzz and stress tests, the frontend. Not verified: more than two players.
+
+**For the next run (run 24: Prevent's by-side statics; then May 58, Perpetually 60, Conjure 51, Register 54, Target 79).**
+
+- Build the by-side form (damage dealt by [permanents] [to recipients], combat or not) and move `isPreventedFromDealingDamage`'s static
+  branches and `isDamageFromPermanentSourceToCreaturePrevented` into the pools as source-side options, keeping the CR 616.1 chooser
+  (the recipient's controller); fold Heart of Light, Statecraft, Woolly Razorback, Goblin Furrier / Indentured Oaf, New Master of Arms.
+- Read face-up planes in the static reader (the planar controller's subjects), then fold Djeru / The Western Cloud and Kessig.
+- The Selfless Squire gaps above (Angel of Suffering, the Cleric completion).
 
 ## Prompt
 

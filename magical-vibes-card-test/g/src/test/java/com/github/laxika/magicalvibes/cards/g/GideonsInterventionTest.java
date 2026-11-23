@@ -5,6 +5,7 @@ import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.f.FireIce;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -151,6 +153,30 @@ class GideonsInterventionTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(p -> p.getId().equals(blocker.getId()));
         assertThat(blocker.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Combat damage from a face-down creature is not prevented, as it has no name")
+    void faceDownSourceHasNoName() {
+        addReadyIntervention(player1, "Grizzly Bears");
+
+        Permanent attacker = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        attacker.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        attacker.setSummoningSick(false);
+        attacker.setAttacking(true);
+
+        Permanent blocker = harness.addToBattlefieldAndReturn(player1, new HillGiant());
+        blocker.setSummoningSick(false);
+        blocker.setBlocking(true);
+        blocker.addBlockingTarget(0);
+
+        harness.forceActivePlayer(player2);
+        harness.forceStep(TurnStep.DECLARE_BLOCKERS);
+        harness.clearPriorityPassed();
+
+        harness.passBothPriorities();
+
+        assertThat(blocker.getMarkedDamage()).isEqualTo(2);
     }
 
     @Test

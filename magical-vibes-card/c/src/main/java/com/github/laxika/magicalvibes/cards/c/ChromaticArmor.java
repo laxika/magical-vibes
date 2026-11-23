@@ -8,7 +8,8 @@ import com.github.laxika.magicalvibes.model.effect.ChooseColorForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseActivationCostPerCounterEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventColorDamageToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToRecipientsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -19,7 +20,8 @@ import java.util.List;
 public class ChromaticArmor extends Card {
 
     public ChromaticArmor() {
-        target(TargetFilters.creature()).addStaticEffect(new PreventColorDamageToEnchantedCreatureEffect());
+        target(TargetFilters.creature()).addStaticEffect(
+                PreventDamageToRecipientsEffect.to(Subjects.attachedCreature()).fromSourcesOfChosenColor());
         addStaticEffect(new ChooseColorOnEnterEffect());
         addStaticEffect(new EnterWithCountersEffect(CounterType.SLEIGHT, new Fixed(1)));
 

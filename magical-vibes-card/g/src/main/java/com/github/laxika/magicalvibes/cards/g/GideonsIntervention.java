@@ -3,8 +3,10 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardNameOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenNameEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToRecipientsEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsWithChosenNameCantBeCastEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSourceChosenNamePredicate;
 
 @CardRegistration(set = "AKH", collectorNumber = "15")
 @CardRegistration(set = "AKR", collectorNumber = "20")
@@ -15,6 +17,7 @@ public class GideonsIntervention extends Card {
         // Your opponents can't cast spells with the chosen name (opponents-only).
         addStaticEffect(new SpellsWithChosenNameCantBeCastEffect(true));
         // Prevent all damage to you and permanents you control by sources with the chosen name.
-        addStaticEffect(new PreventDamageFromChosenNameEffect());
+        addStaticEffect(PreventDamageToRecipientsEffect.toYouAnd(Subjects.permanentsYouControl())
+                .from(new PermanentHasSourceChosenNamePredicate()));
     }
 }

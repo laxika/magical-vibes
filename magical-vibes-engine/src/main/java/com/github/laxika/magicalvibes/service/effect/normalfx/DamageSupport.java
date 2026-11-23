@@ -774,10 +774,6 @@ public class DamageSupport {
             gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
             return true;
         }
-        if (gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(gameData, entry)) {
-            gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));
-            return true;
-        }
         if (gameQueryService.isDamageFromTargetSpellPrevented(gameData, entry)
                 && gameQueryService.getTargetSpellDamagePreventionShield(gameData, entry).lifeGainPlayerId() == null) {
             gameLogService.append(gameData, GameLog.cardThen(source, "'s damage is prevented."));

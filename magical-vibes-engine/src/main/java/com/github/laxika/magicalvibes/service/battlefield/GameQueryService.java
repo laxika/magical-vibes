@@ -146,9 +146,6 @@ import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromChosen
 import com.github.laxika.magicalvibes.model.effect.GrantProtectionFromChosenCardTypeToControllerAndOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerHasProtectionFromOpponentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ProtectionFromChosenPlayerEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventDamageFromChosenNameEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventDamageFromInstantAndSorcerySpellsEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventFixedDamageFromSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerDamageReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ReduceSpellDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.ReplaceDamageAboveThresholdEffect;
@@ -297,7 +294,6 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchan
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToCreaturesYouControlEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventArtifactDamageToSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventColorDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromDesertsToSelfAndBandedCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreaturesEffect;
@@ -322,7 +318,6 @@ import com.github.laxika.magicalvibes.model.effect.SourceDamageMultiplyingEffect
 import com.github.laxika.magicalvibes.model.effect.SourceOpponentDamageBonusEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingAbilityGrantingEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellDamageBonusEffect;
-import com.github.laxika.magicalvibes.model.effect.SpellDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.StaticBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.SubtypeSourceDamageBonusEffect;
@@ -8074,30 +8069,6 @@ public class GameQueryService {
     }
 
     /**
-     * Prismatic Ward: returns {@code true} if {@code creature} is enchanted by an Aura carrying
-     * {@link PreventColorDamageToEnchantedCreatureEffect} whose chosen colour is among the damage
-     * source's colours. Only prevents damage (not blocking/targeting/enchanting), and only while
-     * damage is currently preventable (respects Leyline of Punishment, etc.).
-     */
-    public boolean isColorDamageToEnchantedCreaturePrevented(GameData gameData, Permanent creature, Set<CardColor> sourceColors) {
-        return isColorDamageToEnchantedCreaturePrevented(gameData, creature, sourceColors, false);
-    }
-
-    public boolean isColorDamageToEnchantedCreaturePrevented(GameData gameData, Permanent creature,
-                                                              Set<CardColor> sourceColors, boolean isCombatDamage) {
-        if (creature == null || sourceColors == null || sourceColors.isEmpty()) return false;
-        if (!isDamagePreventable(gameData, isCombatDamage)) return false;
-        sourceColors = getDamageSourceColors(gameData, sourceColors);
-        if (sourceColors.isEmpty()) return false;
-        final Set<CardColor> effectiveColors = sourceColors;
-        return gameData.anyPermanentMatches(aura ->
-                aura.isAttached() && creature.getId().equals(aura.getAttachedTo())
-                        && aura.getChosenColor() != null && effectiveColors.contains(aura.getChosenColor())
-                        && aura.getCard().getStaticEffects().stream()
-                                .anyMatch(PreventColorDamageToEnchantedCreatureEffect.class::isInstance));
-    }
-
-    /**
      * Well-Laid Plans: returns {@code true} when a global shared-color creature damage prevention
      * effect is active and the source and recipient are different creatures with at least one
      * current color in common.
@@ -10150,80 +10121,11 @@ public class GameQueryService {
     }
 
     /**
-     * Returns {@code true} if {@code controllerId} controls a permanent with a
-     * {@link PreventDamageFromChosenNameEffect} static effect whose chosen card name is one of
-     * {@code source}'s names, either half of a split card included (CR 709.4a) (Gideon's Intervention). Damage from such a source to that player or to the
-     * permanents they control is prevented (damage only â€” targeting and enchanting are unaffected).
+     * Whether a spell deals the damage of {@code entry} itself: the entry is a spell with no source permanent, so no
+     * permanent it made fight or deal damage is the source. A spell copy is a spell (CR 707.10).
      */
-    public boolean isDamageFromChosenNamePreventedForController(GameData gameData, UUID controllerId, Card source) {
-        if (source == null || controllerId == null) {
-            return false;
-        }
-        List<Permanent> bf = gameData.playerBattlefields.get(controllerId);
-        if (bf == null) {
-            return false;
-        }
-        for (Permanent perm : bf) {
-            if (cardHasChosenName(gameData, source, perm.getChosenName())
-                    && !hasLostAllAbilities(gameData, perm)
-                    && perm.getCard().getStaticEffects().stream()
-                            .anyMatch(PreventDamageFromChosenNameEffect.class::isInstance)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Energy Storm: returns {@code true} when any permanent has
-     * {@link PreventDamageFromInstantAndSorcerySpellsEffect} and {@code entry} is an instant or
-     * sorcery spell dealing damage as itself (not via a permanent that fights/bites). Combat and
-     * ability damage are unaffected. Honours {@link #isDamagePreventable}.
-     */
-    public boolean isDamageFromInstantOrSorcerySpellPrevented(GameData gameData, StackEntry entry) {
-        if (!isDamagePreventable(gameData) || entry == null) {
-            return false;
-        }
-        StackEntryType type = entry.getEntryType();
-        if (type != StackEntryType.INSTANT_SPELL && type != StackEntryType.SORCERY_SPELL) {
-            return false;
-        }
-        return anyBattlefieldHasStaticEffect(gameData, PreventDamageFromInstantAndSorcerySpellsEffect.class);
-    }
-
-    /** Returns whether a spell's damage is prevented for the given controller or that controller's permanents. */
-    public boolean isSpellDamageToControllerAndPermanentsPrevented(GameData gameData, StackEntry entry,
-                                                                    UUID recipientControllerId) {
-        if (!isDamagePreventable(gameData) || entry == null || recipientControllerId == null
-                || !isSpellStackEntry(entry.getEntryType())) {
-            return false;
-        }
-        return playerBattlefieldHasStaticEffect(gameData, recipientControllerId, SpellDamagePreventionEffect.class);
-    }
-
-    /**
-     * Returns whether a spell's damage to a permanent is prevented by a spell-damage prevention effect on
-     * another permanent its controller controls. The protected permanent itself does not count as the
-     * "another permanent" a prevention effect names (e.g. Rem Karolus, Stalwart Slayer).
-     */
-    public boolean isSpellDamageToPermanentPrevented(GameData gameData, StackEntry entry, Permanent recipient) {
-        if (!isDamagePreventable(gameData) || entry == null || recipient == null
-                || !isSpellStackEntry(entry.getEntryType())) {
-            return false;
-        }
-        UUID controllerId = findPermanentController(gameData, recipient.getId());
-        List<Permanent> bf = controllerId == null ? null : gameData.playerBattlefields.get(controllerId);
-        if (bf == null) return false;
-        for (Permanent perm : bf) {
-            if (perm.getId().equals(recipient.getId())) continue;
-            if (!perm.isFaceDown()
-                    && !gameData.losesAllAbilitiesByEffect(perm)
-                    && staticEffectsIncludingTemporary(gameData, perm, controllerId).stream()
-                    .anyMatch(SpellDamagePreventionEffect.class::isInstance)) {
-                return true;
-            }
-        }
-        return false;
+    public boolean isDealtBySpell(StackEntry entry) {
+        return entry != null && entry.getSourcePermanentId() == null && isSpellStackEntry(entry.getEntryType());
     }
 
     /** Returns the first turn-scoped damage-prevention shield matching the targeted spell. */
@@ -10338,33 +10240,6 @@ public class GameQueryService {
                     if (effect instanceof ReduceSpellDamageEffect reduce) {
                         total[0] += reduce.amount();
                     }
-                }
-            }
-        });
-        return total[0];
-    }
-
-    /**
-     * Returns the amount prevented from each damage event dealt by a spell as itself, or zero when
-     * the event is not preventable spell damage.
-     */
-    public int getSpellDamagePrevention(GameData gameData, StackEntry entry) {
-        if (!isDamagePreventable(gameData) || entry == null || entry.getSourcePermanentId() != null
-                || !isSpellStackEntry(entry.getEntryType())) {
-            return 0;
-        }
-        int[] total = {0};
-        gameData.forEachBattlefield((playerId, battlefield) -> {
-            for (Permanent permanent : battlefield) {
-                int prevented = 0;
-                for (CardEffect effect : LayerSystemService.currentCard(gameData, permanent)
-                        .getStaticEffects()) {
-                    if (effect instanceof PreventFixedDamageFromSpellsEffect prevention) {
-                        prevented += prevention.amount();
-                    }
-                }
-                if (prevented > 0 && !hasLostAllAbilities(gameData, permanent)) {
-                    total[0] += prevented;
                 }
             }
         });

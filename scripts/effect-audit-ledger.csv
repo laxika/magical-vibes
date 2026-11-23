@@ -2724,3 +2724,14 @@ PreventDamageFromDesertsToSelfEffect,absorbed,9,run 22: PreventDamageToRecipient
 PreventAllNoncombatDamageToAttachedCreatureEffect,absorbed,9,"run 22: PreventDamageToRecipientsEffect.to(attachedCreature()), noncombatOnly for Magebane Armor; Inviolability's combat half folded too"
 PreventAllNoncombatDamageToControllerAndPermanentsEffect,absorbed,9,run 22: PreventDamageToRecipientsEffect.toYouAnd(otherPermanentsYouControl()).noncombatOnly() (The Wanderer)
 PreventDamageToControlledCreaturesFromControlledSourcesEffect,absorbed,9,run 22: PreventDamageToRecipientsEffect.to(creaturesYouControl()).fromSourcesYouControl() (Light of Sanction)
+PreventSpellDamageToControllerAndPermanentsEffect,absorbed,9,run 23: PreventDamageToRecipientsEffect.toYouAnd(otherPermanentsYouControl()).fromSpells() (Rem Karolus)
+PreventDamageFromInstantAndSorcerySpellsEffect,absorbed,9,run 23: PreventDamageToRecipientsEffect.toEveryone().fromInstantAndSorcerySpells() (Energy Storm)
+PreventFixedDamageFromSpellsEffect,absorbed,9,run 23: PreventDamageToRecipientsEffect.toEveryone().fromSpells().preventing(1) (Plated Pegasus)
+PreventColorDamageToEnchantedCreatureEffect,absorbed,9,"run 23: PreventDamageToRecipientsEffect.to(attachedCreature()).fromSourcesOfChosenColor() (Prismatic Ward, Chromatic Armor)"
+PreventXDamageFromEachSourceToAttachedCreatureEffect,absorbed,9,"run 23: PreventDamageToRecipientsEffect.to(attachedCreature()).preventing(amount) (Shield of the Realm, Shield of the Avatar)"
+PreventFixedDamagePerSourceToControllerAndCreaturesEffect,absorbed,9,run 23: PreventDamageToRecipientsEffect.toYouAnd(creaturesYouControl()).preventing(n) (Hedron-Field Purists)
+PreventFixedDamagePerSourceToCreaturesYouControlEffect,absorbed,9,"run 23: PreventDamageToRecipientsEffect.to(controlledBy(you(), allOf(creature, Cleric))).preventing(1) (Daunting Defender)"
+PreventDamageFromChosenNameEffect,absorbed,9,run 23: PreventDamageToRecipientsEffect.toYouAnd(permanentsYouControl()).from(PermanentHasSourceChosenNamePredicate) (Gideon's Intervention)
+PreventXDamagePerSourceToControllerAndCreaturesEffect,unique,9,"run 23: one X shared by all of a creature's combat recipients (you and/or your creatures), divided by its controller's choice (Cover of Winter)"
+PreventDamageToCreaturesByCreaturesOfSharedColorEffect,unique,9,run 23: a relation between the damage source and the damaged creature (sharing a color) that no other card has (Well-Laid Plans)
+PreventHalfDamageToControllerAndTheirPermanentsEffect,unique,9,"run 23: prevents half the damage, rounded up; the only static halving prevention (Gisela, Blade of Goldnight)"

@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.condition.AllOf;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventFixedDamagePerSourceToControllerAndCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToRecipientsEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 
@@ -40,12 +40,15 @@ public class HedronFieldPurists extends Card {
                 new AllOf(List.of(
                         new SourceCounterThreshold(1, CounterType.LEVEL),
                         new NotCondition(new SourceCounterThreshold(5, CounterType.LEVEL)))),
-                new PreventFixedDamagePerSourceToControllerAndCreaturesEffect(1)));
+                prevention(1)));
         addStaticEffect(preventionAtLevel(5, 2));
     }
 
     private ConditionalEffect preventionAtLevel(int level, int amount) {
-        return new ConditionalEffect(new SourceCounterThreshold(level, CounterType.LEVEL),
-                new PreventFixedDamagePerSourceToControllerAndCreaturesEffect(amount));
+        return new ConditionalEffect(new SourceCounterThreshold(level, CounterType.LEVEL), prevention(amount));
+    }
+
+    private static PreventDamageToRecipientsEffect prevention(int amount) {
+        return PreventDamageToRecipientsEffect.toYouAnd(Subjects.creaturesYouControl()).preventing(amount);
     }
 }

@@ -41,7 +41,7 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
             "ControllerAndCreaturesPerSource", "AllButOneToHero", "PermanentSourceToCreature",
             "ArtifactToEnchantedCreature", "ArtifactToSelf", "CreatureSourceToSelf", "DesertsToCamelOrBanded",
             "SelfDamagePrevention", "ControlledCreaturesReduction", "HalfDamage",
-            "AttachedPerSourceReduction", "ControlledCreatureDamageLimit");
+            "ControlledCreatureDamageLimit");
 
     PermanentDamagePreventions(GameQueryService gameQueryService, GameLogService gameLogService,
                                DamagePreventionService prevention, ObjectProvider<DamageSupport> damageSupport,
@@ -91,15 +91,6 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                             preventionSource(ctx).getCard(), " is prevented."));
                     return prevented(ctx);
                 }));
-        all.add(spellPrevention("SpellToControllerAndPermanents", "Prevent the spell's damage to your permanents",
-                ctx -> gameQueryService.isSpellDamageToPermanentPrevented(
-                        ctx.gameData(), ctx.entry(), ctx.target())));
-        all.add(pure("InstantOrSorceryPrevented", PREVENTION,
-                ctx -> !ctx.targetProtectedFromPrevention() && ctx.dealtByStackEntry()
-                        && gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(ctx.gameData(), ctx.entry()),
-                ctx -> "Prevent damage from instants and sorceries",
-                PermanentDamageCandidateSource::prevented,
-                (ctx, result) -> logSpellPrevented(ctx)));
         all.add(effect("TargetSpellPrevented", PREVENTION,
                 ctx -> !ctx.targetProtectedFromPrevention() && ctx.dealtByStackEntry()
                         && gameQueryService.isDamageFromTargetSpellPrevented(ctx.gameData(), ctx.entry())
@@ -129,18 +120,6 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                     return ctx.event().withAmount(ctx.amount()
                             - damageSupport.getObject().applyDralnuReplacement(ctx.gameData(), ctx.target(), ctx.amount()));
                 }).whole());
-        all.add(pure("SpellDamagePrevention", PREVENTION,
-                ctx -> !ctx.targetProtectedFromPrevention() && ctx.dealtByStackEntry()
-                        && gameQueryService.getSpellDamagePrevention(ctx.gameData(), ctx.entry()) > 0,
-                ctx -> "Prevent " + gameQueryService.getSpellDamagePrevention(ctx.gameData(), ctx.entry())
-                        + " of the spell's damage",
-                ctx -> ctx.event().withAmount(
-                        ctx.amount() - gameQueryService.getSpellDamagePrevention(ctx.gameData(), ctx.entry())),
-                (ctx, result) -> {
-                    gameLogService.append(ctx.gameData(), GameLog.textCardText((ctx.amount() - result.amount()) + " of ",
-                            ctx.target().getCard(), "'s damage is prevented."));
-                    return null;
-                }));
         all.add(pure("OpponentSourceReduction", PREVENTION,
                 ctx -> !ctx.targetProtectedFromPrevention() && opponentSourceReduction(ctx) < ctx.amount(),
                 ctx -> "Prevent " + (ctx.amount() - opponentSourceReduction(ctx))
@@ -208,12 +187,20 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                     return prevented(ctx);
                 }).wholeIncludingUnpreventable());
         all.add(preventAll("StaticRecipientPrevention", "Prevent the damage to it",
-                ctx -> gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat())
-                        && (ctx.damageSource() == null || !gameQueryService.damageCantBePreventedFromSource(
-                        ctx.gameData(), ctx.damageSource(), ctx.combat()))
-                        && prevention.staticallyPreventsDamageToPermanent(ctx.gameData(), ctx.target(),
-                        ctx.targetControllerId(), ctx.entry(), ctx.sourceCard(), ctx.damageSource(),
-                        ctx.sourceControllerId(), ctx.combat())));
+                ctx -> staticPreventions(ctx).stream().anyMatch(DamagePreventionService.StaticPrevention::preventsAll)));
+        all.add(new Rule<PermanentDamageContext>("StaticRecipientPartialPrevention", PREVENTION, true,
+                ctx -> ctx.targetProtectedFromPrevention() ? List.of() : staticPreventions(ctx).stream()
+                        .filter(found -> !found.preventsAll())
+                        .map(DamagePreventionService.StaticPrevention::instance).toList(),
+                (ctx, instance) -> "Prevent " + partialAmount(ctx, instance) + " of the damage ("
+                        + FaceDownVisibility.publicName(ctx.gameData(), partialPrevention(ctx, instance).source()) + ")",
+                (ctx, instance) -> ctx.event().withAmount(Math.max(0, ctx.amount() - partialAmount(ctx, instance))),
+                (ctx, instance) -> {
+                    int prevented = Math.min(ctx.amount(), partialAmount(ctx, instance));
+                    gameLogService.append(ctx.gameData(), GameLog.textCardText(prevented + " damage to ",
+                            ctx.target().getCard(), " is prevented."));
+                    return new ApplyResult.Applied<>(ctx.event().withAmount(ctx.amount() - prevented));
+                }));
         all.add(effect("PreventCombatDamageAndShuffle", PREVENTION,
                 ctx -> ctx.combat() && ctx.damageSource() != null
                         && gameQueryService.shufflesTargetIntoOwnersLibraryAfterCombatDamagePrevention(
@@ -230,16 +217,9 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
         all.add(preventAll("ColorPreventedForTarget", "Prevent damage from sources of this color",
                 ctx -> prevention.isColorDamagePreventedForTarget(
                         ctx.gameData(), ctx.target().getId(), ctx.damageSourceColors(), ctx.combat())));
-        all.add(preventAll("ColorToEnchantedCreaturePrevented", "Prevent damage from sources of the chosen color",
-                ctx -> gameQueryService.isColorDamageToEnchantedCreaturePrevented(
-                        ctx.gameData(), ctx.target(), ctx.damageSourceColors(), ctx.combat())));
         all.add(preventAll("SharedColorPrevented", "Prevent damage between creatures that share a color",
                 ctx -> gameQueryService.isDamageBetweenCreaturesOfSharedColorPrevented(
                         ctx.gameData(), ctx.target(), preventionSource(ctx), ctx.combat())));
-        all.add(preventAll("ChosenNamePrevented", "Prevent damage from sources with the chosen name",
-                ctx -> gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat())
-                        && gameQueryService.isDamageFromChosenNamePreventedForController(
-                        ctx.gameData(), ctx.targetControllerId(), ctx.sourceCard())));
         all.add(preventAll("NamedPlanePrevented", "Prevent damage from the named plane",
                 ctx -> !ctx.combat() && gameQueryService.isDamageFromNamedPlanePreventedForControlledPermanent(
                         ctx.gameData(), ctx.entry(), ctx.targetControllerId())));
@@ -289,6 +269,31 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                         ctx.gameData(), ctx.target(), ctx.amount(), ctx.combat())),
                 PermanentDamageCandidateSource::noLog));
         return List.copyOf(all);
+    }
+
+    /**
+     * The static preventions of the damage, none while it can't be prevented (CR 615.12): damage can't be prevented
+     * this turn, or its source's damage can't be.
+     */
+    private List<DamagePreventionService.StaticPrevention> staticPreventions(PermanentDamageContext ctx) {
+        if (!gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat())
+                || ctx.damageSource() != null && gameQueryService.damageCantBePreventedFromSource(
+                ctx.gameData(), ctx.damageSource(), ctx.combat())) {
+            return List.of();
+        }
+        return prevention.staticPreventionsOfPermanentDamage(ctx.gameData(), ctx.target(), ctx.targetControllerId(),
+                new DamagePreventionService.StaticDamage(ctx.entry(), ctx.sourceCard(), ctx.damageSource(),
+                        ctx.sourceControllerId(), ctx.combat(), ctx.dealtByStackEntry(), ctx.damageSourceColors()));
+    }
+
+    private DamagePreventionService.StaticPrevention partialPrevention(PermanentDamageContext ctx, String instance) {
+        return staticPreventions(ctx).stream().filter(found -> found.instance().equals(instance)).findFirst()
+                .orElse(new DamagePreventionService.StaticPrevention(instance, ctx.target(), 0));
+    }
+
+    private int partialAmount(PermanentDamageContext ctx, String instance) {
+        Integer amount = partialPrevention(ctx, instance).amount();
+        return amount == null ? 0 : amount;
     }
 
     /** One {@link CreatureDamageStep} as an option. */

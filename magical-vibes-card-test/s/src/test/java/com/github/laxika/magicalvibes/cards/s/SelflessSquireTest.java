@@ -1,5 +1,7 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.e.EnergyStorm;
+import com.github.laxika.magicalvibes.cards.p.PlatedPegasus;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,7 +15,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({SelflessSquire.class, Shock.class})
+@CardUsed({SelflessSquire.class, Shock.class, EnergyStorm.class, PlatedPegasus.class})
 class SelflessSquireTest extends BaseCardTest {
 
     @Test
@@ -39,6 +41,32 @@ class SelflessSquireTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(18);
         assertThat(squire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isZero();
+    }
+
+    @Test
+    @DisplayName("Damage to you prevented by another prevention effect also puts counters on it")
+    void otherPreventionEffectsTriggerIt() {
+        Permanent squire = harness.addToBattlefieldAndReturn(player1, new SelflessSquire());
+        harness.addToBattlefield(player2, new EnergyStorm());
+
+        castShockAtPlayer();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 20);
+        assertThat(squire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
+    }
+
+    @Test
+    @DisplayName("Damage partly prevented puts as many counters on it as was prevented")
+    void partialPreventionGetsThatManyCounters() {
+        Permanent squire = harness.addToBattlefieldAndReturn(player1, new SelflessSquire());
+        harness.addToBattlefield(player2, new PlatedPegasus());
+
+        castShockAtPlayer();
+        harness.passBothPriorities();
+
+        harness.assertLife(player1, 19);
+        assertThat(squire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(1);
     }
 
     private Permanent castSquire() {

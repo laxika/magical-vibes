@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventColorDamageToEnchantedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToRecipientsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -11,7 +12,8 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 public class PrismaticWard extends Card {
 
     public PrismaticWard() {
-        target(TargetFilters.creature()).addStaticEffect(new PreventColorDamageToEnchantedCreatureEffect());
+        target(TargetFilters.creature()).addStaticEffect(
+                PreventDamageToRecipientsEffect.to(Subjects.attachedCreature()).fromSourcesOfChosenColor());
         addStaticEffect(new ChooseColorOnEnterEffect());
     }
 }

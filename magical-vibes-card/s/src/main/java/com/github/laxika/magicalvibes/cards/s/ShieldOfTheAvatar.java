@@ -5,14 +5,15 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToRecipientsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
 @CardRegistration(set = "M15", collectorNumber = "230")
 public class ShieldOfTheAvatar extends Card {
 
     public ShieldOfTheAvatar() {
-        addStaticEffect(new PreventXDamageFromEachSourceToAttachedCreatureEffect(
+        addStaticEffect(PreventDamageToRecipientsEffect.to(Subjects.attachedCreature()).preventing(
                 new PermanentCount(new PermanentIsCreaturePredicate(), CountScope.CONTROLLER)));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }

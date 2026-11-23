@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
+import com.github.laxika.magicalvibes.model.rules.DamageDealtEvent;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 
@@ -72,6 +73,26 @@ abstract class PlayerDamageCandidateSource extends DamageCandidateSource<PlayerD
                 : entry.getCard().getId();
         return new PlayerDamageContext(gameData, event, entry.getEffectiveDamageSourceCard(), sourcePermanent,
                 sourceControllerId, gameQueryService.getDamageSourceColors(gameData, sourceColors), damageSourceId);
+    }
+
+    /**
+     * Applies the option; when a prevention effect lowered the damage, the player is told that much damage that would
+     * have been dealt to them was prevented, which "whenever damage that would be dealt to you is prevented" sees
+     * whichever prevention effect it was (Selfless Squire's ruling).
+     */
+    @Override
+    public ApplyResult<DamageEvent> apply(GameData gameData, DamageEvent event, ReplacementOption option) {
+        ApplyResult<DamageEvent> result = super.apply(gameData, event, option);
+        if (option.kind() == ReplacementOption.Kind.PREVENTION
+                && result instanceof ApplyResult.Applied<DamageEvent> applied) {
+            int prevented = event.amount() - applied.event().amount();
+            if (prevented > 0) {
+                DamageDealtEvent.PreventedToPlayer notice =
+                        new DamageDealtEvent.PreventedToPlayer(event.recipientPlayerId(), prevented);
+                gameData.rulesEvents.separately(() -> gameData.rulesEvents.emit(notice));
+            }
+        }
+        return result;
     }
 
     /** "Source's damage to Player is prevented." */

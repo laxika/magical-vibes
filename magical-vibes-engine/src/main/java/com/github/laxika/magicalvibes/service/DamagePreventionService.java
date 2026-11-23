@@ -80,8 +80,6 @@ import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.effect.PreventXDamagePerSourceToControllerAndCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventNoncombatDamageToControllerAndGainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventHalfDamageToControllerAndTheirPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.ControllerAndCreaturesDamagePreventionEffect;
-import com.github.laxika.magicalvibes.model.effect.FilteredCreaturesDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndSourceControllerDrawsEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfAndDealThatMuchDamageEffect;
@@ -92,7 +90,6 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.ControllerOpponentDamageMillReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventSpellDamageToOpponentAndCreateTokensEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllButOneDamageToControllerAndPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventXDamageFromEachSourceToAttachedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.SelfDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.DamagePreventionControlChangeEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -135,8 +132,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
@@ -305,78 +304,144 @@ public class DamagePreventionService {
     }
 
     /**
-     * Whether a {@link PreventDamageToRecipientsEffect} on the battlefield names {@code target} (on the battlefield of
-     * {@code targetControllerId}) among the permanents it shields and prevents this damage: its kind, its source's
-     * controller and its source filter are judged as the damage would be dealt (CR 615.1). Whether the damage can be
-     * prevented at all is the caller's question.
+     * The damage a static {@link PreventDamageToRecipientsEffect} judges: one source's damage to one recipient, as it
+     * would be dealt (CR 615.1).
      *
      * @param entry              the damage's stack entry, read for the source's last-known state
      * @param sourceCard         the card dealing the damage
      * @param explicitSource     the permanent dealing it (a fight or bite, combat) or the entry's live source, or
      *                           {@code null}
      * @param sourceControllerId the source's controller
+     * @param combat             whether it is combat damage
+     * @param dealtByEntry       whether the stack entry deals it itself rather than a permanent it makes deal damage
+     * @param sourceColors       the source's colors as a source of damage (after Ghostly Flame)
      */
-    public boolean staticallyPreventsDamageToPermanent(GameData gameData, Permanent target, UUID targetControllerId,
-                                                       StackEntry entry, Card sourceCard, Permanent explicitSource,
-                                                       UUID sourceControllerId, boolean combatDamage) {
+    public record StaticDamage(StackEntry entry, Card sourceCard, Permanent explicitSource, UUID sourceControllerId,
+                               boolean combat, boolean dealtByEntry, Set<CardColor> sourceColors) {
+    }
+
+    /**
+     * One static prevention that applies to a damage event.
+     *
+     * @param instance the effect's key among the applicable ones: its permanent and its place on that permanent
+     * @param source   the permanent with the effect
+     * @param amount   how much of the source's damage it prevents, or {@code null} for all of it
+     */
+    public record StaticPrevention(String instance, Permanent source, Integer amount) {
+
+        /** Whether it prevents all of the damage. */
+        public boolean preventsAll() {
+            return amount == null;
+        }
+    }
+
+    /**
+     * The {@link PreventDamageToRecipientsEffect}s on the battlefield that name {@code target} (on the battlefield of
+     * {@code targetControllerId}) among the permanents they shield and prevent this damage: its kind, its source's
+     * kind, color and controller and the source filter are judged as the damage would be dealt (CR 615.1); an amount
+     * is evaluated now, and an effect that would prevent none isn't listed. Whether the damage can be prevented at all
+     * is the caller's question.
+     */
+    public List<StaticPrevention> staticPreventionsOfPermanentDamage(GameData gameData, Permanent target,
+                                                                     UUID targetControllerId, StaticDamage damage) {
+        List<StaticPrevention> found = new ArrayList<>();
+        Map<UUID, Integer> places = new HashMap<>();
         for (GameQueryService.ActiveStaticEffect<PreventDamageToRecipientsEffect> active
                 : gameQueryService.activeStaticEffects(gameData, PreventDamageToRecipientsEffect.class)) {
+            int place = places.merge(active.source().getId(), 1, Integer::sum);
             PreventDamageToRecipientsEffect prevention = active.effect();
             if (prevention.permanents() != null
                     && !gameData.ignoresEffectOf(active.source().getId(),
                     IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class, targetControllerId)
                     && gameQueryService.staticSubjectNames(gameData, active.source(), active.controllerId(),
                     targetControllerId, target, prevention.permanents())
-                    && preventsFromSource(gameData, active, entry, sourceCard, explicitSource, sourceControllerId,
-                    combatDamage)) {
-                return true;
+                    && preventsFromSource(gameData, active, damage)) {
+                addPrevention(gameData, active, place, found);
             }
         }
-        return false;
+        return found;
     }
 
-    /**
-     * {@link #staticallyPreventsDamageToPermanent} for damage to the player {@code playerId}.
-     */
-    public boolean staticallyPreventsDamageToPlayer(GameData gameData, UUID playerId, StackEntry entry,
-                                                    Card sourceCard, Permanent explicitSource,
-                                                    UUID sourceControllerId, boolean combatDamage) {
+    /** {@link #staticPreventionsOfPermanentDamage} for damage to the player {@code playerId}. */
+    public List<StaticPrevention> staticPreventionsOfPlayerDamage(GameData gameData, UUID playerId,
+                                                                  StaticDamage damage) {
+        List<StaticPrevention> found = new ArrayList<>();
+        Map<UUID, Integer> places = new HashMap<>();
         for (GameQueryService.ActiveStaticEffect<PreventDamageToRecipientsEffect> active
                 : gameQueryService.activeStaticEffects(gameData, PreventDamageToRecipientsEffect.class)) {
+            int place = places.merge(active.source().getId(), 1, Integer::sum);
             PreventDamageToRecipientsEffect prevention = active.effect();
             if (prevention.players() != null
                     && SubjectResolutionService.namesPlayer(active.source(), active.controllerId(), playerId,
                     prevention.players())
-                    && preventsFromSource(gameData, active, entry, sourceCard, explicitSource, sourceControllerId,
-                    combatDamage)) {
-                return true;
+                    && preventsFromSource(gameData, active, damage)) {
+                addPrevention(gameData, active, place, found);
             }
         }
-        return false;
+        return found;
+    }
+
+    private void addPrevention(GameData gameData,
+                               GameQueryService.ActiveStaticEffect<PreventDamageToRecipientsEffect> active,
+                               int place, List<StaticPrevention> found) {
+        Integer amount = null;
+        if (active.effect().amount() != null) {
+            amount = amountEvaluationService.evaluate(gameData, active.effect().amount(),
+                    AmountContext.forStaticEffect(active.source(), active.controllerId()));
+            if (amount <= 0) {
+                return;
+            }
+        }
+        found.add(new StaticPrevention(active.source().getId() + "#" + place, active.source(), amount));
     }
 
     private boolean preventsFromSource(GameData gameData,
                                        GameQueryService.ActiveStaticEffect<PreventDamageToRecipientsEffect> active,
-                                       StackEntry entry, Card sourceCard, Permanent explicitSource,
-                                       UUID sourceControllerId, boolean combatDamage) {
+                                       StaticDamage damage) {
         PreventDamageToRecipientsEffect prevention = active.effect();
-        if (!prevention.damage().covers(combatDamage)) {
+        if (!prevention.damage().covers(damage.combat())) {
+            return false;
+        }
+        boolean spellDealsIt = damage.dealtByEntry() && gameQueryService.isDealtBySpell(damage.entry());
+        switch (prevention.sourceKind()) {
+            case ANY -> {
+            }
+            case SPELL -> {
+                if (!spellDealsIt) {
+                    return false;
+                }
+            }
+            case INSTANT_OR_SORCERY_SPELL -> {
+                if (!spellDealsIt || damage.entry().getEntryType() != StackEntryType.INSTANT_SPELL
+                        && damage.entry().getEntryType() != StackEntryType.SORCERY_SPELL) {
+                    return false;
+                }
+            }
+        }
+        if (prevention.sourceOfChosenColor() && (active.source().getChosenColor() == null
+                || damage.sourceColors() == null
+                || !gameQueryService.getDamageSourceColors(gameData, damage.sourceColors())
+                .contains(active.source().getChosenColor()))) {
             return false;
         }
         if (prevention.sourceControllers() != null && !SubjectResolutionService.namesPlayer(active.source(),
-                active.controllerId(), sourceControllerId, prevention.sourceControllers())) {
+                active.controllerId(), damage.sourceControllerId(), prevention.sourceControllers())) {
             return false;
         }
         if (prevention.sources() == null) {
             return true;
+        }
+        if (damage.sourceCard() != null && damage.sourceCard().getType() == CardType.EMBLEM) {
+            // CR 114.3: an emblem has no characteristics but its abilities, so no source filter names it.
+            return false;
         }
         FilterContext context = FilterContext.of(gameData)
                 .withSourceCardId(active.source().getCard().getId())
                 .withSourcePermanentId(active.source().getId())
                 .withSourcePermanentSnapshot(active.source())
                 .withSourceControllerId(active.controllerId());
-        return gameQueryService.matchesDamageSourcePredicate(gameData, entry, sourceCard, explicitSource,
-                prevention.sources(), context, context);
+        return gameQueryService.matchesDamageSourcePredicate(gameData, damage.entry(), damage.sourceCard(),
+                damage.explicitSource(), prevention.sources(), context, context);
     }
 
     public int applyGlobalPreventionShield(GameData gameData, int damage) {
@@ -751,11 +816,6 @@ public class DamagePreventionService {
         steps.add(step("HalfDamage", "Prevent half the damage", prevention, true,
                 (gd, c, damage) -> preventable(gd, c) && hasHalfDamagePrevention(gd, controllerOf(gd, c.permanent())),
                 (gd, c, damage) -> applyHalfDamagePrevention(gd, controllerOf(gd, c.permanent()), damage)));
-        steps.add(step("AttachedPerSourceReduction", "Prevent some of the damage to the equipped creature",
-                prevention, true,
-                (gd, c, damage) -> preventable(gd, c)
-                        && applyAttachedPerSourceDamageReduction(gd, c.permanent(), damage) < damage,
-                (gd, c, damage) -> applyAttachedPerSourceDamageReduction(gd, c.permanent(), damage)));
         steps.add(step("OtherCreatureToCounters", "Prevent the damage and put +1/+1 counters on it", prevention, false,
                 (gd, c, damage) -> preventable(gd, c)
                         && hasOtherCreatureDamagePreventionSource(gd, c.permanent(), c.combatDamage()),
@@ -1174,9 +1234,9 @@ public class DamagePreventionService {
     }
 
     /**
-     * Applies fixed per-source prevention to a player's damage and to damage to that player's
-     * creatures. Conditional static effects are resolved against their carrying permanent so
-     * level counters and similar live conditions are evaluated at damage time.
+     * Applies Cover of Winter's "if a creature would deal combat damage to you and/or one or more creatures you
+     * control, prevent X of that damage" to a player's damage and to damage to that player's creatures. Conditional
+     * static effects are resolved against their carrying permanent, so live conditions are evaluated at damage time.
      */
     private int applyControllerAndCreaturesFixedPerSourceDamagePrevention(
             GameData gameData, UUID controllerId, int damage, boolean combatDamage, Permanent damageSource,
@@ -1191,21 +1251,7 @@ public class DamagePreventionService {
             for (CardEffect effect : source.getCard().getStaticEffects()) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(
                         gameData, source, controllerId, effect);
-                if (resolved instanceof ControllerAndCreaturesDamagePreventionEffect prevention) {
-                    reduction += prevention.amount();
-                } else if (resolved instanceof FilteredCreaturesDamagePreventionEffect prevention
-                        && protectedCreature != null
-                        && (!combatDamage || damageSource != null)
-                        && (prevention.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
-                        protectedCreature,
-                        prevention.filter(),
-                        FilterContext.of(gameData)
-                                .withSourceCardId(source.getCard().getId())
-                                .withSourceControllerId(controllerId)
-                                .withSourcePermanentSnapshot(source)
-                                .withSourcePermanentId(source.getId())))) {
-                    reduction += prevention.amount();
-                } else if (resolved instanceof PreventXDamagePerSourceToControllerAndCreaturesEffect prevention
+                if (resolved instanceof PreventXDamagePerSourceToControllerAndCreaturesEffect prevention
                         && (!prevention.combatOnly() || combatDamage)
                         && (!prevention.creatureSourcesOnly() || sourceIsCreature)) {
                     reduction += amountEvaluationService.evaluate(gameData, prevention.amount(),
@@ -1236,20 +1282,7 @@ public class DamagePreventionService {
             for (CardEffect effect : source.getCard().getStaticEffects()) {
                 CardEffect resolved = staticEffectConditionResolver.resolve(
                         gameData, source, controllerId, effect);
-                if (resolved instanceof ControllerAndCreaturesDamagePreventionEffect prevention) {
-                    reduction += prevention.amount();
-                } else if (resolved instanceof FilteredCreaturesDamagePreventionEffect prevention
-                        && protectedCreature != null
-                        && (prevention.filter() == null || predicateEvaluationService.matchesPermanentPredicate(
-                        protectedCreature,
-                        prevention.filter(),
-                        FilterContext.of(gameData)
-                                .withSourceCardId(source.getCard().getId())
-                                .withSourceControllerId(controllerId)
-                                .withSourcePermanentSnapshot(source)
-                                .withSourcePermanentId(source.getId())))) {
-                    reduction += prevention.amount();
-                } else if (resolved instanceof PreventXDamagePerSourceToControllerAndCreaturesEffect prevention
+                if (resolved instanceof PreventXDamagePerSourceToControllerAndCreaturesEffect prevention
                         && (!prevention.combatOnly() || combatDamage)
                         && (!prevention.creatureSourcesOnly() || gameQueryService.isCreature(gameData, damageSource))) {
                     int amount = amountEvaluationService.evaluate(gameData, prevention.amount(),
@@ -3404,36 +3437,6 @@ public class DamagePreventionService {
                 .toList();
     }
 
-    /**
-     * Applies per-source damage reduction from attached permanents with
-     * {@link PreventXDamageFromEachSourceToAttachedCreatureEffect}
-     * (e.g. Shield of the Realm: "If a source would deal damage to equipped creature, prevent 2 of that damage.").
-     * Sums the reduction from all such attached permanents and reduces the damage accordingly (min 0).
-     */
-    private int applyAttachedPerSourceDamageReduction(GameData gameData, Permanent creature, int damage) {
-        if (damage <= 0) return damage;
-
-        int totalReduction = 0;
-        for (UUID playerId : gameData.orderedPlayerIds) {
-            List<Permanent> battlefield = gameData.playerBattlefields.get(playerId);
-            if (battlefield == null) continue;
-            for (Permanent p : battlefield) {
-                if (p.isAttached() && p.getAttachedTo().equals(creature.getId())
-                        && !gameQueryService.hasLostAllAbilities(gameData, p)) {
-                    for (CardEffect effect : p.getCard().getStaticEffects()) {
-                        if (effect instanceof PreventXDamageFromEachSourceToAttachedCreatureEffect e) {
-                            totalReduction += amountEvaluationService.evaluate(gameData, e.amount(),
-                                    AmountContext.forStaticEffect(p, playerId));
-                        }
-                    }
-                }
-            }
-        }
-
-        if (totalReduction <= 0) return damage;
-        return Math.max(0, damage - totalReduction);
-    }
-
     private void recordPlusOnePlusOneCounterPlacedOnControlledPermanent(
             GameData gameData, Permanent permanent, int count) {
         UUID controllerId = gameQueryService.findPermanentController(gameData, permanent.getId());
@@ -3464,9 +3467,7 @@ public class DamagePreventionService {
      */
     public int applyPlayerDamagePreventionShield(GameData gameData, UUID playerId, int damage) {
         if (damage <= 0) return damage;
-        int prevented = gameData.usePlayerDamagePreventionShields(playerId, false, damage);
-        notifyControllerDamagePrevented(gameData, playerId, prevented);
-        return damage - prevented;
+        return damage - gameData.usePlayerDamagePreventionShields(playerId, false, damage);
     }
 
     /** Fixed per-source prevention covering a player and their creatures, for damage to the player. */
@@ -3902,16 +3903,13 @@ public class DamagePreventionService {
     /** Consumes the player's "prevent the next N combat damage" shield and returns what remains. */
     public int applyPlayerCombatDamagePreventionShield(GameData gameData, UUID playerId, int damage) {
         if (damage <= 0) return damage;
-        int prevented = gameData.usePlayerDamagePreventionShields(playerId, true, damage);
-        notifyControllerDamagePrevented(gameData, playerId, prevented);
-        return damage - prevented;
+        return damage - gameData.usePlayerDamagePreventionShields(playerId, true, damage);
     }
 
     /** Prevents combat damage to a player and creates that many tokens from their token shield. */
     public int applyCombatDamagePreventionTokenShield(GameData gameData, UUID playerId, int damage) {
         CombatDamagePreventionTokenShield tokenShield = gameData.combatDamagePreventionTokenShield(playerId);
         if (tokenShield == null || damage <= 0) return damage;
-        notifyControllerDamagePrevented(gameData, playerId, damage);
         permanentControlSupportProvider.getObject().applyCreateToken(
                 gameData, playerId, tokenShield.token(), damage, tokenShield.sourceSetCode());
         return 0;
@@ -3985,8 +3983,8 @@ public class DamagePreventionService {
     }
 
     /**
-     * Per-source prevention for a creature its controller protects, counting a player's division of
-     * shared prevention among simultaneous combat recipients.
+     * Cover of Winter's prevention for its controller or a creature they control, counting a player's division of
+     * the shared prevention among a source's simultaneous combat recipients.
      */
     public int controllerAndCreaturesPerSourcePrevention(GameData gameData, UUID controllerId, int damage,
                                                          boolean combatDamage, Permanent damageSource,

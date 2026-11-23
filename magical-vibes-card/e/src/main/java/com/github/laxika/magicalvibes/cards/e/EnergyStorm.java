@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingPermanentsDoesntUntapEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventDamageFromInstantAndSorcerySpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToRecipientsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +19,7 @@ public class EnergyStorm extends Card {
         addTrigger(Triggers.upkeep(ActivePlayer.YOU), new CumulativeUpkeepEffect("{1}"));
 
         // Prevent all damage that would be dealt by instant and sorcery spells.
-        addStaticEffect(new PreventDamageFromInstantAndSorcerySpellsEffect());
+        addStaticEffect(PreventDamageToRecipientsEffect.toEveryone().fromInstantAndSorcerySpells());
 
         // Creatures with flying don't untap during their controllers' untap steps.
         addStaticEffect(new MatchingPermanentsDoesntUntapEffect(new PermanentHasKeywordPredicate(Keyword.FLYING)));

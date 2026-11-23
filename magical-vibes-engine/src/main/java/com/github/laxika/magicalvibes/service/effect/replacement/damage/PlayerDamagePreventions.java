@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
 import com.github.laxika.magicalvibes.model.replacement.ReplacementOption;
 import com.github.laxika.magicalvibes.service.DamagePreventionService;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.DamageSupport;
@@ -60,11 +61,6 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                                     "'s damage to " + ctx.playerName() + " is prevented by flying."));
                             return null;
                         }),
-                preventAll("SpellToControllerAndPermanents", "Prevent the spell's damage",
-                        ctx -> gameQueryService.isSpellDamageToControllerAndPermanentsPrevented(
-                                ctx.gameData(), ctx.entry(), ctx.playerId())),
-                preventAll("InstantOrSorceryPrevented", "Prevent damage from instants and sorceries",
-                        ctx -> gameQueryService.isDamageFromInstantOrSorcerySpellPrevented(ctx.gameData(), ctx.entry())),
                 effect("TargetSpellPrevented", PREVENTION,
                         ctx -> gameQueryService.isDamageFromTargetSpellPrevented(ctx.gameData(), ctx.entry())
                                 && !(!ctx.combat() && damageSupport.getObject().isSourcePermanentPreventedFromDealingDamage(
@@ -76,18 +72,6 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                             damageSupport.getObject().gainLifeForTargetSpellDamage(ctx.gameData(), ctx.entry(), ctx.amount());
                             logPrevented(ctx, null);
                             return prevented(ctx);
-                        }),
-                pure("SpellDamagePrevention", PREVENTION,
-                        ctx -> gameQueryService.getSpellDamagePrevention(ctx.gameData(), ctx.entry()) > 0,
-                        ctx -> "Prevent " + gameQueryService.getSpellDamagePrevention(ctx.gameData(), ctx.entry())
-                                + " of the spell's damage",
-                        ctx -> ctx.event().withAmount(
-                                ctx.amount() - gameQueryService.getSpellDamagePrevention(ctx.gameData(), ctx.entry())),
-                        (ctx, result) -> {
-                            gameLogService.append(ctx.gameData(), GameLog.cardThen(ctx.source(),
-                                    "'s " + (ctx.amount() - result.amount()) + " damage to " + ctx.playerName()
-                                            + " is prevented."));
-                            return null;
                         }),
                 preventAll("ColorPreventedForTarget", "Prevent damage from sources of this color",
                         ctx -> prevention.isColorDamagePreventedForTarget(
@@ -130,11 +114,8 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                         ctx -> preventable(ctx) && gameQueryService.playerHasProtectionFromOpponents(
                                 ctx.gameData(), ctx.playerId(), ctx.sourceControllerId())),
                 preventAll("ProtectionFromName", "Protection from the chosen name",
-                        ctx -> preventable(ctx)
-                                && (gameQueryService.playerHasProtectionFromChosenName(
-                                ctx.gameData(), ctx.playerId(), chosenNameCheckSource(ctx))
-                                || gameQueryService.isDamageFromChosenNamePreventedForController(
-                                ctx.gameData(), ctx.playerId(), chosenNameCheckSource(ctx)))),
+                        ctx -> preventable(ctx) && gameQueryService.playerHasProtectionFromChosenName(
+                                ctx.gameData(), ctx.playerId(), chosenNameCheckSource(ctx))),
                 preventAll("ProtectionFromCardType", "Protection from the chosen card type",
                         ctx -> preventable(ctx) && gameQueryService.playerHasProtectionFromChosenCardType(
                                 ctx.gameData(), ctx.playerId(), ctx.source(), ctx.sourcePermanent())),
@@ -248,19 +229,21 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                                 + " damage to you",
                         ctx -> ctx.event().withAmount(prevention.applyPlayerDamagePreventionShield(
                                 ctx.gameData(), ctx.playerId(), ctx.amount()))).whole(),
-                pure("StaticRecipientPrevention", PREVENTION,
-                        ctx -> preventable(ctx)
-                                && (ctx.sourcePermanent() == null || !gameQueryService.damageCantBePreventedFromSource(
-                                ctx.gameData(), ctx.sourcePermanent(), ctx.combat()))
-                                && prevention.staticallyPreventsDamageToPlayer(ctx.gameData(), ctx.playerId(),
-                                ctx.entry(), ctx.source(), ctx.sourcePermanent(), ctx.sourceControllerId(),
-                                ctx.combat()),
-                        ctx -> "Prevent the damage to you",
-                        PlayerDamageCandidateSource::prevented,
-                        (ctx, result) -> {
-                            logPrevented(ctx, result);
-                            prevention.notifyControllerDamagePrevented(ctx.gameData(), ctx.playerId(), ctx.amount());
-                            return null;
+                preventAll("StaticRecipientPrevention", "Prevent the damage to you",
+                        ctx -> staticPreventions(ctx).stream()
+                                .anyMatch(DamagePreventionService.StaticPrevention::preventsAll)),
+                new Rule<PlayerDamageContext>("StaticRecipientPartialPrevention", PREVENTION, true,
+                        ctx -> staticPreventions(ctx).stream().filter(found -> !found.preventsAll())
+                                .map(DamagePreventionService.StaticPrevention::instance).toList(),
+                        (ctx, instance) -> "Prevent " + partialAmount(ctx, instance) + " of the damage ("
+                                + FaceDownVisibility.publicName(ctx.gameData(), partialPrevention(ctx, instance).source())
+                                + ")",
+                        (ctx, instance) -> ctx.event().withAmount(Math.max(0, ctx.amount() - partialAmount(ctx, instance))),
+                        (ctx, instance) -> {
+                            int prevented = Math.min(ctx.amount(), partialAmount(ctx, instance));
+                            gameLogService.append(ctx.gameData(), GameLog.cardThen(ctx.source(),
+                                    "'s " + prevented + " damage to " + ctx.playerName() + " is prevented."));
+                            return new ApplyResult.Applied<>(ctx.event().withAmount(ctx.amount() - prevented));
                         }),
                 new Rule<PlayerDamageContext>("ClericPrevention", PREVENTION, false,
                         ctx -> !prevention.clericPreventionSources(ctx.gameData()).isEmpty() && preventable(ctx)
@@ -287,6 +270,31 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
         return ctx.source();
     }
 
+    /**
+     * The static preventions of the damage, none while it can't be prevented (CR 615.12): damage can't be prevented
+     * this turn, or its source's damage can't be.
+     */
+    private List<DamagePreventionService.StaticPrevention> staticPreventions(PlayerDamageContext ctx) {
+        if (!preventable(ctx) || ctx.sourcePermanent() != null
+                && gameQueryService.damageCantBePreventedFromSource(ctx.gameData(), ctx.sourcePermanent(), ctx.combat())) {
+            return List.of();
+        }
+        return prevention.staticPreventionsOfPlayerDamage(ctx.gameData(), ctx.playerId(),
+                new DamagePreventionService.StaticDamage(ctx.entry(), ctx.source(), ctx.sourcePermanent(),
+                        ctx.sourceControllerId(), ctx.combat(), ctx.event().explicitSource() == null,
+                        ctx.damageSourceColors()));
+    }
+
+    private DamagePreventionService.StaticPrevention partialPrevention(PlayerDamageContext ctx, String instance) {
+        return staticPreventions(ctx).stream().filter(found -> found.instance().equals(instance)).findFirst()
+                .orElse(new DamagePreventionService.StaticPrevention(instance, null, 0));
+    }
+
+    private int partialAmount(PlayerDamageContext ctx, String instance) {
+        Integer amount = partialPrevention(ctx, instance).amount();
+        return amount == null ? 0 : amount;
+    }
+
     private boolean preventable(PlayerDamageContext ctx) {
         return gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat());
     }
@@ -302,16 +310,13 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
         return pure(family, PREVENTION, applies, ctx -> label, PlayerDamageCandidateSource::prevented, this::logPrevented);
     }
 
-    /** A blanket prevention for the damaged player; a prevented-damage trigger sees what it stops. */
+    /** A blanket prevention for the damaged player, asked once about all the damage. */
     private Rule<PlayerDamageContext> playerFlag(String family, String label, Predicate<PlayerDamageContext> applies) {
         return pure(family, PREVENTION,
                 ctx -> preventable(ctx) && applies.test(ctx),
                 ctx -> label,
                 PlayerDamageCandidateSource::prevented,
-                (ctx, result) -> {
-                    prevention.notifyControllerDamagePrevented(ctx.gameData(), ctx.playerId(), ctx.amount());
-                    return null;
-                }).whole();
+                PlayerDamageCandidateSource::noLog).whole();
     }
 
     /**
