@@ -7542,14 +7542,16 @@ public class GameQueryService {
             }
         }
         AccumulatorSnapshot beforeIndefinite = explain != null ? AccumulatorSnapshot.of(accumulator) : null;
-        CardPowerToughnessModifier perpetualModifier =
-                gameData.perpetualCardPowerToughnessModifiers.get(target.getCard().getId());
+        // A perpetual P/T change is made to the card; a face-down permanent has none of its card's characteristics
+        // (CR 708.2a), so it applies once the permanent is turned face up.
+        CardPowerToughnessModifier perpetualModifier = target.isFaceDown() ? null
+                : gameData.perpetualCardPowerToughnessModifiers.get(target.getCard().getId());
         if (perpetualModifier != null) {
             accumulator.addPower(perpetualModifier.power());
             accumulator.addToughness(perpetualModifier.toughness());
         }
-        var handPerpetualModifier =
-                gameData.perpetualPowerToughnessModifiers.get(target.getOriginalCard().getId());
+        var handPerpetualModifier = target.isFaceDown() ? null
+                : gameData.perpetualPowerToughnessModifiers.get(target.getOriginalCard().getId());
         if (handPerpetualModifier != null) {
             accumulator.addPower(handPerpetualModifier.power());
             accumulator.addToughness(handPerpetualModifier.toughness());

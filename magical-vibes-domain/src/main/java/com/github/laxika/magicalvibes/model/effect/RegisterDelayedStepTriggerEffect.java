@@ -15,10 +15,12 @@ import java.util.Objects;
  * {@link #aboutPutOntoBattlefield}: "it" is the permanent the card became, the ability's triggering permanent when it
  * is one. An object that left its zone since is a new object and isn't affected (CR 603.7c, 400.7). An ability that does
  * nothing but act on those objects is not created when there are none, as it could affect nothing; one that does more
- * ("return those cards to your hand, then draw a card") always is ({@code alsoIfNothingHappened}, CR 603.7a).
+ * ("return those cards to your hand, then draw a card") always is ({@code alsoIfNothingHappened}, CR 603.7a). One about
+ * no earlier step ("discard three cards at the beginning of the next end step") is {@link #atNext}.
  *
  * @param about            the step it is about: the most recent one of that kind, or, for
- *                         {@link StepKind#CREATE_TOKEN}, every permanent this resolution created
+ *                         {@link StepKind#CREATE_TOKEN}, every permanent this resolution created; {@code null} for
+ *                         none, an ability that is always created and names no object it is about
  * @param step             the step it waits for
  * @param effects          what it does
  * @param player           the player it is about ("that player's next turn", {@code ActivePlayer.CHOSEN_PLAYER}), its
@@ -35,10 +37,12 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
         implements CardEffect {
 
     public RegisterDelayedStepTriggerEffect {
-        Objects.requireNonNull(about, "about");
         Objects.requireNonNull(step, "step");
         effects = List.copyOf(effects);
-        if (about != StepKind.EXILE && about != StepKind.CREATE_TOKEN && about != StepKind.SEEK
+        if (about == null && (ifAnyStillExiled || !alsoIfNothingHappened)) {
+            throw new IllegalArgumentException("An ability about no step is always created and has no cards to check");
+        }
+        if (about != null && about != StepKind.EXILE && about != StepKind.CREATE_TOKEN && about != StepKind.SEEK
                 && about != StepKind.RETURN) {
             throw new IllegalArgumentException("A delayed ability is about exiled or sought cards or permanents "
                     + "created or put onto the battlefield: " + about);
@@ -52,6 +56,11 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
         if (ifAnyStillExiled && about != StepKind.EXILE && about != StepKind.SEEK) {
             throw new IllegalArgumentException("Only exiled or sought cards can still be where they went: " + about);
         }
+    }
+
+    /** At the next {@code step}, {@code effects}, about no earlier step ("at the beginning of the next end step, …"). */
+    public static RegisterDelayedStepTriggerEffect atNext(StepTrigger step, CardEffect... effects) {
+        return new RegisterDelayedStepTriggerEffect(null, step, List.of(effects), null, false, false, true);
     }
 
     /** At {@code step}, {@code effects} about the cards the last exile step exiled. */

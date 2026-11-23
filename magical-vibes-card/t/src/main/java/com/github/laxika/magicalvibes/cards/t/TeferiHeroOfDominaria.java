@@ -8,7 +8,6 @@ import com.github.laxika.magicalvibes.model.effect.CreateEmblemEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutTargetPermanentIntoLibraryNFromTopEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedUntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -16,6 +15,10 @@ import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 
 @CardRegistration(set = "DOM", collectorNumber = "207")
 @CardRegistration(set = "SLD", collectorNumber = "248")
@@ -26,7 +29,9 @@ public class TeferiHeroOfDominaria extends Card {
         // +1: Draw a card. At the beginning of the next end step, untap up to two lands.
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new DrawCardEffect(1), new RegisterDelayedUntapPermanentsEffect(2, new PermanentIsLandPredicate())),
+                List.of(new DrawCardEffect(1), RegisterDelayedStepTriggerEffect.atNext(
+                        Triggers.endStep(ActivePlayer.ANY), new UntapPermanentsEffect(
+                                Subjects.controlledBy(Subjects.eachPlayer(), new PermanentIsLandPredicate()), null, 2))),
                 "+1: Draw a card. At the beginning of the next end step, untap up to two lands."
         ));
 

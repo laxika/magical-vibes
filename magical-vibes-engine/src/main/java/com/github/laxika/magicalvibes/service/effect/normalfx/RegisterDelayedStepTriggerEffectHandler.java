@@ -27,7 +27,8 @@ import java.util.stream.Collectors;
 
 /**
  * Registers the delayed triggered ability with what the step it is about did, as that is now: each card bound to its
- * stay (CR 603.7c), so the ability's effects read that step as the steps of the resolution that made it do.
+ * stay (CR 603.7c), so the ability's effects read that step as the steps of the resolution that made it do. One about
+ * no step is registered about nothing.
  */
 @Component
 @RequiredArgsConstructor
@@ -46,6 +47,16 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
         UUID playerId = register.player() == null ? null
                 : subjectResolutionService.player(gameData, entry, effect, register.player());
         if (register.player() != null && playerId == null) {
+            return;
+        }
+        if (register.about() == null) {
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    entry.getControllerId(), entry.getCard(),
+                    new TriggeredAbility(register.step(), TriggerOptions.DEFAULT,
+                            register.effects().toArray(CardEffect[]::new)),
+                    entry.getSourcePermanentId(), null, playerId,
+                    register.afterThisTurn() ? DelayedReferents.NONE.afterTurn(gameData.turnNumber)
+                            : DelayedReferents.NONE));
             return;
         }
         StepOutcome bound = switch (register.about()) {

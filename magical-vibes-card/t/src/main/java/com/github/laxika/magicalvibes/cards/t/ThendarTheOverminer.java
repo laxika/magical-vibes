@@ -1,7 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
-import com.github.laxika.magicalvibes.cards.w.Wastes;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.CardType;
@@ -34,7 +33,7 @@ public class ThendarTheOverminer extends Card {
                         new PermanentAllOfPredicate(List.of(Triggers.LAND, nonbasicLand)),
                         ObjectRelation.ANY),
                 new ConjureCardOntoBattlefieldForTriggeringPermanentControllerEffect(
-                        Wastes::new, Set.of(CardType.LAND)));
+                        "FIN", "309", Set.of(CardType.LAND)));
 
         PermanentPredicate tappedCreature = new PermanentAllOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(),

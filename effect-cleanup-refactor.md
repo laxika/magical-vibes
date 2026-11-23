@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 29: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent and May closed (May's 11 cost combinators listed for step 10); 1,876 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure started (48 rare)) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 30: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent and May closed (May's 11 cost combinators listed for step 10); 1,867 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (44 rare), Register started (43 rare)) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -635,6 +635,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 27 | Run 26's hand-content log line, May's 18 engine-built prompt markers (May closed), then Perpetually's rare records | done for the log line and May, Perpetually started (20 rows: 2 absorbed, 4 survivors, 13 unique, 1 dead; 3 records, 2 may / normal handlers and 1 cost-modification handler deleted; 1 card file rewritten; `GameLog.putsNoCardOntoBattlefield`, `MayCastMilledSpellWithoutPayingManaCostEffect.exileInsteadOfGraveyard`, `GameData.perpetualEnterEffectsByCardId` gone; 54 rare Perpetually records left) |
 | 28 | Run 27's two perpetual stores, Perpetually's rare records outside a hand or library, the Spawnsire cost check | Perpetually open (8 rows: 5 absorbed, 1 survivor (Forgeborn's record renamed), 2 unique; 6 records and 6 handlers deleted, 1 of each added; 5 card files rewritten; `GameData.perpetualAbilityGrants` holds every perpetual ability kind, `perpetualActivatedAbilities` and `perpetualTriggeredAbilities` gone, `PerpetuallyGrantAbilityToTriggeringCardEffect`; Spawnsire's free casts pay cost increases; 47 rare Perpetually records left, Conjure not started) |
 | 29 | Perpetually's rare records outside a hand or library, Brittle Blast's face-down defect, then Conjure | Perpetually open, Conjure started (18 rows: 2 absorbed, 2 blocked-other (the human's "it" decision), 14 unique; 2 records and 2 handlers deleted; 3 card files rewritten; a face-down permanent no longer has Brittle Blast's perpetual replacement; Song of Point Prime's and Voidcalled Devotee's conjured card has its printing and a log line; 30 rare Perpetually records left (hand, library, graveyard-ability store), 48 rare Conjure) |
+| 30 | Conjure's rare battlefield records, Undersimplify's face-down defect, then Register | Conjure open, Register started (10 rows: 5 absorbed, 1 survivor, 4 unique; 5 records and 5 handlers deleted; 7 card files rewritten; `RegisterDelayedStepTriggerEffect.atNext`; Squadron Carrier's and Thendar's conjured cards have their printing; Perforator Crocodile's Stab Wounds enter attached, none for a creature they can't enchant; a face-down spell is Undersimplify's creature spell; 44 rare Conjure and 43 rare Register records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -9115,6 +9116,107 @@ stress tests, the frontend. Not verified: more than two players.
   which seeds only battlefield abilities: it needs a zone on the stored grant.
 - Conjure: read the battlefield conjures side by side (above), then the graveyard and exile duplicates (`ConjureDuplicateOfTarget…`,
   `ConjureDuplicateOfTriggering…`); the hand and library conjures wait for the logging decision.
+
+### Step 9, run 30 (2026-11-23, Conjure open, Register started)
+
+Conjure's rare battlefield records, Undersimplify's face-down defect, then the start of Register. Ratchet 4,111 / 3,365 → 4,104 / 3,358
+records / handlers (5 records and 5 handlers deleted; HEAD itself held 4,109 / 3,363, so the old baselines had a slack of 2). 7 card files
+rewritten (Squadron Carrier, Thendar, Ideas Unbound, False Memories, Bearer of the Heavens, Casey Jones, Teferi, Hero of Dominaria; Perforator
+Crocodile's and Undersimplify's handlers changed, not their classes); Oracle text checked with `get_card` for those 7 and Archival Whorl,
+Perforator Crocodile, Stab Wound, Undersimplify, Three Tree Battalion, Mythweaver Poq and Dragonsoul Prodigy; rulings with `get_rulings` for
+Perforator Crocodile (none). CR 303.4f, 303.4g, 303.4i, 400.7, 608.2h, 708.2 and 708.4 checked with `get_rule` (2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Conjure | 4 rare records | 0 | 0 | 0 | 0 | 4 | 44 rare, 55 in all |
+| Register | 5 rare records and the survivor | 5 | 0 | 1 (`RegisterDelayedStepTriggerEffect`) | 0 | 0 | 43 rare, 53 in all |
+
+All families: 1,867 rare records without a row (run 29: 1,876). Perpetually: 30 rare left, unchanged.
+
+- **The battlefield conjures, side by side.** `ConjureCardToBattlefieldEffect` (25 cards: a printing, owner set, tapped when the entry
+  makes created permanents attack, created id recorded, logged, creature enter handling, the conjure event count); `ConjureCardNamedOntoBattlefieldEffect`
+  (9: a printing, enter-tapped types, the legend rule, logged by player); `ConjureCardOntoBattlefieldEffect` (a `Supplier`, enter-tapped types,
+  a not-conjured flag and entry counters for the spellbook draft, land or creature enter handling, no log, the card never marked conjured);
+  `ConjureCardOntoBattlefieldForTriggeringPermanentControllerEffect` (Thendar: a `Supplier`, another player); `ConjureCardToOpponentBattlefieldEffect`
+  (Archival Whorl's gift); `ConjureCardsAttachedToOpposingCreaturesEffect` (Perforator Crocodile). The two multi-card records stay apart (step 10).
+- **Squadron Carrier** conjures `ConjureCardToBattlefieldEffect("EOE", "38")`: the Starfighter Pilot printing's card, marked conjured, logged
+  "<source> conjures Starfighter Pilot onto the battlefield." `ConjureCardOntoBattlefieldEffect` is left to `DraftFromSpellbookEffectHandler`,
+  which builds it for a `Supplier` spellbook's chosen card (unique, engine-built; those cards still have no printing identity, below).
+- **Thendar, the Overminer** keeps its record (unique: a player subject on a battlefield conjure would have this card only). It names the
+  printing (`"FIN", "309"`: Wastes has no YEOE printing; FIN is the class's first registration and an Arena set, a choice, any printing of
+  Wastes is the same card), marks it conjured, resolves "its controller" through `controllerOf(triggering())` (the same last-known lookup,
+  CR 608.2h) and logs "<player> conjures Wastes onto the battlefield." An entry replaced away from the battlefield gets no enter handling.
+- **Perforator Crocodile.** The handler conjured each Stab Wound unattached through the survivor's handler and attached it afterwards; one
+  that couldn't enchant its creature (protection from black) stayed unattached and was put into the graveyard. Now each enters attached
+  (the placement fires the attachment event) and none is conjured for a creature it can't legally enchant (CR 303.4i: an Aura put onto the
+  battlefield attached to an object it can't enchant stays where it is; a conjured card has nowhere else, so it isn't created). The conjure
+  event counts only the cards conjured. Log line: "<source> conjures Stab Wound onto the battlefield attached to <creature>." (the creature
+  by `FaceDownVisibility.publicName`).
+- **Archival Whorl** (unique): the gift's recipient and the gift-given event are the gift's (`TargetOpponentCreatesTokenEffect.gift` keeps the
+  same flag); a gift flag on a conjure survivor would have this card only.
+- **Undersimplify** read the target spell's card to decide "if it's a creature spell"; a face-down spell is a 2/2 creature spell
+  (CR 708.2, 708.4). The handler now judges `CastingPermissionService.spellAsEffectsSeeIt(entry)` and changes the card cast face down.
+- **`RegisterDelayedStepTriggerEffect.atNext(step, effects...)`**: "at the beginning of the next [step], …" about no earlier step: `about`
+  null, always created, no referents, no permanent. It absorbs five records whose handlers only registered `atNextStep(step, controller,
+  card, source, null, effect)`: the same trigger, options, controller, source card and permanent, and no referents. Their handlers logged
+  only to the server log.
+- **AI.** It reads none of the deleted records.
+
+**Behaviour changes.** "Failed before" means the new test failed with the engine of HEAD.
+
+1. A face-down spell targeted by Undersimplify perpetually gets -2/-0 on the card cast face down (CR 708.2, 708.4):
+   `UndersimplifyTest.faceDownSpellIsACreatureSpell` (failed before: no modifier).
+2. Perforator Crocodile conjures no Stab Wound for a creature it can't enchant, and each enters attached (CR 303.4i):
+   `PerforatorCrocodileTest.noStabWoundForACreatureItCannotEnchant` (not run on HEAD; the old handler left that Stab Wound unattached for the
+   state-based actions to put into the graveyard, which the test's graveyard assertion catches).
+3. Squadron Carrier's and Thendar's conjured cards have their printing, are marked conjured and are logged:
+   `SquadronCarrierTest.conjuredPilotHasItsPrintingAndIsLogged`, `ThendarTheOverminerTest.conjuredWastesHasItsPrintingAndIsLogged` (new;
+   not run on HEAD, the old handlers set none of it).
+4. The five Register cards: none intended.
+5. A face-down permanent gets neither perpetual P/T store (`perpetualCardPowerToughnessModifiers`, `perpetualPowerToughnessModifiers`):
+   the layer-7 reader in `GameQueryService.assembleStaticBonusUnguarded` skips them while it is face down, as the ability seeding and
+   Brittle Blast's store do (CR 708.2a); turned face up, the card's change applies. Card readers outside the battlefield are unchanged.
+   `UndersimplifyTest.perpetualChangeAppliesOnlyOnceTurnedFaceUp` and `BeginAnewTest.boostedCardCastFaceDownIsTwoTwoUntilTurnedFaceUp`
+   (both failed with this run's other changes and without the reader's check: 0 and 3 power, not 2).
+
+**What a player sees.** Three new conjure log lines (Squadron Carrier, Thendar, Perforator Crocodile's names its creature). No prompt or zone
+view changes; nothing names a hidden card.
+
+**Seen, not changed.**
+
+- `DraftFromSpellbookEffectHandler`'s `Supplier` spellbooks, and `ConjureCardIntoLibraryAtPositionEffect`,
+  `ConjureCardIntoGraveyardThenDoubleAndShuffleEffect` and `ConjureCardIntoTopCardsOfLibraryEffect`, still create cards with no printing
+  identity; the spellbook's battlefield card is never marked conjured.
+- `ConjureCardToOpponentBattlefieldEffectHandler` gives Archival Whorl's gift to `getOpponentId` (two players only; CR 702.174a: the chosen
+  opponent) and fires the gift-given event at that effect, where CR 702.174c says the gift is given as the spell resolves.
+- `ConjureCardToBattlefieldEffectHandler` gives a conjured land no land enter handling (`processLandETBEffects`), unlike the `Supplier`
+  conjures; no user conjures a land with an enter choice today (not checked card by card).
+- Dragonsoul Prodigy's "It gains haste" is written into the duplicate's printed keywords, so a copy of it copies haste; a gained ability is
+  not a copiable value (CR 707.2). Not reproduced.
+
+**Tests edited.** The four new cases above. Display names on every method of `PerforatorCrocodileTest` and `UndersimplifyTest`.
+`EffectCountRatchetTest`'s baselines.
+
+**Tests run.** After the face-down P/T check, one Gradle run on the final sources: 98 XML files, 822 cases, 0 failures (the list below,
+`BeginAnewTest`, the application `FaceDown*` tests, `TriggeringCardsFaceDownExileTest`, the perpetual-P/T users' `--tests-for` samples,
+morph, manifest, cloak and disguise card tests). The run before it, one `--tests` list per task, counted from that run's XML by timestamp: 44 XML files,
+394 cases, 0 failures, 0 skipped: the 23 classes referencing a changed card (Squadron Carrier, Thendar, Perforator Crocodile, Undersimplify,
+Ideas Unbound, False Memories, Bearer of the Heavens, Casey Jones, Teferi, Starfighter Pilot, Stab Wound, Gift of Doom), the `--tests-for`
+sample (12 per class) of `RegisterDelayedStepTriggerEffect` and `ConjureCardToBattlefieldEffect`, `EffectCountRatchetTest` (at 4,104 / 3,358).
+Before the fix, `UndersimplifyTest` ran 7 cases, 1 failed (the new one). Compiled: domain, engine, the changed card modules and their test
+sources, the application test sources. No deleted record is named by any test, AI or other card source (grepped). No deleted handler is
+marked `AsksDeathReplacementsFirst` or calls `LifeSupport.askBefore*`. Not run: the full suites, the AI fuzz and stress tests, the frontend.
+Not verified: more than two players.
+
+**For the next run (run 31: Conjure's duplicates, then Register's rare records).**
+
+- The human's decisions still hold Perpetually's 30 rare records and Conjure's hand and library conjures: what a conjure or a perpetual
+  change to a hidden-zone card logs, and the perpetual "it" (CR 400.7).
+- Conjure's battlefield duplicates (Three Tree Battalion's picked card with a perpetual base 1/1, Mythweaver Poq's simultaneous lands,
+  Dragonsoul Prodigy's triggering spell with haste and a delayed shuffle): read side by side for one "conjure a duplicate of [subject]
+  onto the battlefield" step; then the graveyard and exile duplicates and the random-spellbook battlefield records.
+- Register's next shared part: the "about the source" registrations (Giant Slug, Archangel Avacyn, Aang: `atNextStep` with the source as
+  the permanent, skipped when there is none); then the mana-at-next-phase, next-draw replacement and return-from-graveyard records.
 
 ## Prompt
 

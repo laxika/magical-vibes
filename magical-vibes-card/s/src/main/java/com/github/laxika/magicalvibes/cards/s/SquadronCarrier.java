@@ -18,7 +18,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.SourceCounterThreshold;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
-import com.github.laxika.magicalvibes.model.effect.ConjureCardOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureCardToBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
@@ -33,7 +33,7 @@ public class SquadronCarrier extends Card {
         ActivatedAbility conjurePilot = new ActivatedAbility(
                 false,
                 "{W}",
-                List.of(new ConjureCardOntoBattlefieldEffect(StarfighterPilot::new, Set.of(), true)),
+                List.of(new ConjureCardToBattlefieldEffect("EOE", "38")),
                 "Exhaust — {W}: Conjure a card named Starfighter Pilot onto the battlefield. "
                         + "(Activate each exhaust ability only once.)"
         ).withMaxActivationsPerGame(1).withExhaust();

@@ -43,6 +43,25 @@ class ThendarTheOverminerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The conjured Wastes is a printing's card owned by the land's controller, and its conjure is logged")
+    void conjuredWastesHasItsPrintingAndIsLogged() {
+        harness.addToBattlefield(player1, new ThendarTheOverminer());
+        UUID fieldOfRuinId = harness.addToBattlefieldAndReturn(player2, new FieldOfRuin()).getId();
+
+        harness.setHand(player1, List.of(new StoneRain()));
+        harness.addMana(player1, ManaColor.RED, 4);
+        harness.castAndResolveSorcery(player1, 0, fieldOfRuinId);
+        harness.passBothPriorities();
+
+        Permanent wastes = findPermanent(player2, "Wastes");
+        assertThat(wastes.getCard().getSetCode()).isEqualTo("FIN");
+        assertThat(wastes.getCard().getCollectorNumber()).isEqualTo("309");
+        assertThat(wastes.getCard().isConjured()).isTrue();
+        assertThat(wastes.getCard().getOwnerId()).isEqualTo(player2.getId());
+        assertThat(gameLogContains("conjures Wastes onto the battlefield.")).isTrue();
+    }
+
+    @Test
     @DisplayName("Does not conjure for a basic land")
     void doesNotConjureForBasicLand() {
         harness.addToBattlefield(player1, new ThendarTheOverminer());

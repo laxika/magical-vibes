@@ -5,12 +5,16 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.PerpetuallyBoostTargetCreatureSpellEffect;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
 
-/** Applies a perpetual power/toughness change to a targeted creature spell. */
+/**
+ * Applies a perpetual power/toughness change to a targeted creature spell's card. Whether it is a creature spell is
+ * judged as effects see the spell: one cast face down is a creature spell (CR 708.2, 708.4).
+ */
 @Component
 public class PerpetuallyBoostTargetCreatureSpellEffectHandler implements NormalEffectHandlerBean {
 
@@ -34,8 +38,8 @@ public class PerpetuallyBoostTargetCreatureSpellEffectHandler implements NormalE
                 .filter(stackEntry -> stackEntry.getTargetableId().equals(targetId))
                 .findFirst()
                 .orElse(null);
-        if (targetSpell == null || targetSpell.getCard() == null
-                || !targetSpell.getCard().hasType(CardType.CREATURE)) {
+        StackEntry seen = CastingPermissionService.spellAsEffectsSeeIt(targetSpell);
+        if (seen == null || seen.getCard() == null || !seen.getCard().hasType(CardType.CREATURE)) {
             return;
         }
 

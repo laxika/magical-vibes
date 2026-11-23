@@ -373,7 +373,7 @@ on what the mana may pay for.
 | Extra turn | `t/TimeStretch.java` | ExtraTurnEffect |
 | Extra combat | `r/RelentlessAssault.java` | AdditionalCombatMainPhaseEffect |
 | Mill half library (spell) | `t/Traumatize.java` | MillHalfLibraryEffect(false) |
-| Mill seven, then exile seven from your graveyard at the next end step | `f/FalseMemories.java` | `MillEffect(7, CONTROLLER)` + `RegisterExileCardsFromOwnGraveyardAtNextEndStepEffect(7)` |
+| Mill seven, then exile seven from your graveyard at the next end step | `f/FalseMemories.java` | `MillEffect(7, CONTROLLER)` + `RegisterDelayedStepTriggerEffect.atNext(endStep(ANY), ExileGraveyardCardsEffect(7, OWN))` |
 | Shuffle own GY into library, mill that many | `p/PsychicSpiral.java` | ShuffleControllerGraveyardIntoLibraryThenMillTargetEffect() — the count is captured between the shuffle and the mill, so it cannot be composed from ShuffleGraveyardIntoLibraryEffect + MillEffect(CardsInGraveyard) |
 | Mill half library (Triggers.attacks()) | `f/FleetSwallower.java` | Triggers.attacks() MillHalfLibraryEffect(true) — creature attacks, target player mills half library rounded up |
 | Mill then mandatory return one matching card | `p/PicklockPranksterFreeTheFae.java` + `f/FreeTheFae.java` | Adventure: `SequenceEffect.of(MillEffect(4, you()), ChooseCardEffect.announced(cardsThisWay(MILL, filter), label), PutCardsIntoHandEffect(cardsThisWay(CHOOSE)))` — controller chooses one matching card that was actually milled by this resolution |

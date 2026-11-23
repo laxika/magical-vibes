@@ -30,6 +30,23 @@ class SquadronCarrierTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The conjured Starfighter Pilot is the EOE 38 printing's card, marked conjured, and its conjure is logged")
+    void conjuredPilotHasItsPrintingAndIsLogged() {
+        harness.addToBattlefield(player1, new SquadronCarrier());
+        harness.addMana(player1, ManaColor.WHITE, 1);
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        Permanent pilot = findPermanent(player1, "Starfighter Pilot");
+        assertThat(pilot.getCard().getSetCode()).isEqualTo("EOE");
+        assertThat(pilot.getCard().getCollectorNumber()).isEqualTo("38");
+        assertThat(pilot.getCard().isConjured()).isTrue();
+        assertThat(pilot.getCard().getOwnerId()).isEqualTo(player1.getId());
+        assertThat(gameLogContains("conjures Starfighter Pilot onto the battlefield.")).isTrue();
+    }
+
+    @Test
     @DisplayName("The exhaust ability can be activated only once")
     void exhaustCanBeActivatedOnlyOnce() {
         harness.addToBattlefield(player1, new SquadronCarrier());
