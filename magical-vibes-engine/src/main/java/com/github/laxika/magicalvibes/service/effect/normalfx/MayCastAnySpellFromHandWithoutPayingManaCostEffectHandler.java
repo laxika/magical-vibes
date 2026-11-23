@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithou
 import com.github.laxika.magicalvibes.model.effect.MayCastFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
+import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
@@ -40,6 +41,7 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
     private final GameQueryService gameQueryService;
     private final com.github.laxika.magicalvibes.service.CardRevealService cardRevealService;
     private final com.github.laxika.magicalvibes.service.cast.CastingCostService castingCostService;
+    private final AdditionalSpellCostService additionalSpellCostService;
     @org.springframework.beans.factory.annotation.Autowired
     @org.springframework.context.annotation.Lazy
     private SplitCardCastSupport splitCardCastSupport;
@@ -70,14 +72,18 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
 
         // "A spell with [characteristics]" considers only the half of a split card being cast
         // (CR 709.3a), so a split card is offered as the halves that qualify.
+        // A filter about the source ("equal to the number of charge counters on this artifact") reads it as it is
+        // now, or as it last existed (CR 608.2h).
         java.util.function.Predicate<Card> qualifies = spell -> spell.getManaValue() <= maxManaValue
-                && predicateEvaluationService.matchesCardPredicate(spell, e.spellFilter(), null, gameData, controllerId);
+                && predicateEvaluationService.matchesCardPredicate(spell, e.spellFilter(), entry.getCard().getId(),
+                        gameData, controllerId, entry.getSourcePermanentId(), null, entry.getXValue(),
+                        entry.getSourcePermanentSnapshot());
         Map<Card, List<Integer>> eligible = new LinkedHashMap<>();
         List<Card> eligibleAdventures = new ArrayList<>();
         hand.stream()
                 .filter(c -> !e.drawnCardsOnly() || entry.getDrawnCardIdsThisResolution().contains(c.getId()))
                 .filter(c -> !c.hasType(CardType.LAND))
-                .filter(c -> castingCostService.canPayAdditionalSpellCosts(gameData, controllerId, c))
+                .filter(c -> canPayAdditionalCostsOfFreeCast(gameData, controllerId, c))
                 .forEach(c -> {
                     if (SplitCardCastSupport.isSplitCard(c)) {
                         List<Integer> modes = splitCardCastSupport.modesMatching(gameData, c, controllerId, qualifies);
@@ -93,7 +99,7 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
                     if (c.isModalDoubleFaced() && backFace != null && !backFace.hasType(CardType.LAND)
                             && qualifies.test(backFace)) {
                         Card backFaceCopy = c.createRuntimeCopyWithFace(backFace);
-                        if (castingCostService.canPayAdditionalSpellCosts(gameData, controllerId, backFaceCopy)) {
+                        if (canPayAdditionalCostsOfFreeCast(gameData, controllerId, backFaceCopy)) {
                             eligible.put(backFaceCopy, null);
                         }
                     }
@@ -129,5 +135,14 @@ public class MayCastAnySpellFromHandWithoutPayingManaCostEffectHandler implement
                     entry.getSourcePermanentId(), (Integer) null
             ));
         }
+    }
+
+    /**
+     * Whether the spell's additional costs can be paid when its mana cost isn't: "discard a card or pay {5}" needs
+     * only the {5} (CR 118.9, 601.2f).
+     */
+    private boolean canPayAdditionalCostsOfFreeCast(GameData gameData, UUID playerId, Card card) {
+        return additionalSpellCostService.satisfiableWithoutManaCost(gameData, playerId, card)
+                && castingCostService.canPayImposedSacrificeTax(gameData, playerId, card);
     }
 }

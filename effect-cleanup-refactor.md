@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 24: Exile, Each, Return, Put, Reveal, Choose, Grant, Create and Prevent closed; 1,949 rare records left, May (59 rare) next) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 25: Exile, Each, Return, Put, Reveal, Choose, Grant, Create and Prevent closed; 1,929 rare records left, May open (38 rare: 3 "if you don't" casts, 11 cost combinators for step 10, 24 engine-built prompt markers)) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -630,6 +630,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 22 | Run 21's face-down pool labels, then the static prevention record and Prevent's rare statics | done for the labels and six statics, Prevent open (7 rows: 6 absorbed, 1 survivor (new); 6 records and 2 marker interfaces deleted, 1 record added; 8 card files rewritten; `PreventDamageToRecipientsEffect`, `DamageContext.sourceName()`; 17 rare Prevent records left) |
 | 23 | Prevent's remaining statics: spell sources, the chosen colour, amounts, Gideon's Intervention; the damage-prevented event | done for 11 statics, Prevent open (11 rows: 8 absorbed, 3 unique; 8 records and 3 marker interfaces deleted; 10 card files rewritten; `fromSpells()`, `fromInstantAndSorcerySpells()`, `fromSourcesOfChosenColor()`, `preventing(amount)`, `toEveryone()`; every player-pool prevention tells Selfless Squire; 6 rare Prevent records left, all by-side or plane statics) |
 | 24 | Prevent's by-side and plane statics, the Selfless Squire gaps, then May | done, Prevent closed, May not started (6 rows: 6 absorbed; 6 records and 2 marker interfaces deleted; 9 card files rewritten; `dealtBy(filter)`, "dealt by" preventions moved into the recipients' pools, face-up planes read by the static reader, a filter judges the card an ability names as the source; Angel of Suffering, The Mindskinner and the Cleric choice tell Selfless Squire) |
+| 25 | Run 24's Mindskinner question and missing display names, then May's rare records with cards | done for those, May open (21 rows: 4 absorbed, 1 survivor, 14 unique, 2 blocked-other; 4 records and 4 handlers deleted; 5 card files changed, 4 rewritten; the hand free-cast step's filter sees its source, its offers check additional costs without the mana cost; In Search of Greatness reads a face-down permanent as mana value 0; The Mindskinner not a defect) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -8566,6 +8567,129 @@ fuzz and stress tests, the frontend. Not verified: more than two players, a phen
   then the one-card casting permissions (read `agent-docs/architecture/casting-stack.md` first); the cost combinators wait for step 10.
 - The handler pre-checks of `isPreventedFromDealingDamage` above, if a run takes the floating "can't deal damage" effects.
 - The Mindskinner's unpreventable portion above.
+
+### Step 9, run 25 (2026-11-23, May open)
+
+Run 24's two small items, then May's rare records that have cards. Ratchet 4,126 / 3,381 → 4,122 / 3,377 records / handlers (4 records
+and their 4 handlers deleted). 4 card files rewritten by hand (Electrodominance, Lady Octopus, Brain in a Jar, River Song's Diary), 1 card's
+handler fixed (In Search of Greatness); Oracle text checked with `get_card` for those 5 and for the cards of the 16 unique / blocked verdicts
+and of the cost combinators listed below (two playtest cards have no Scryfall entry under their registered codes: Command the Chaff was
+checked as `CMB1` 18, Your Wish Is My Command was not found); rulings with `get_rulings` for The Mindskinner. CR 118.9, 118.12, 510.2,
+601.2b, 601.2f, 603.4, 608.2h, 615.12, 701.38d, 708.2 and 716.3a checked with `get_rule` (2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| May | 21 rows (20 rare records and the survivor) | 4 | 0 | 1 (extended) | 2 (other: no card subject for exiled cards by counter kind) | 14 | 38 rare records (44 in all) |
+
+All families: 1,929 rare records without a row (run 24: 1,949). May had 58 rare records at the start by this run's count (run 24 said
+59): 20 now have a row (4 of them deleted), 38 are left: 3 "if you don't" casts, 11 cost combinators for step 10 and 24 engine-built
+prompt markers.
+
+- **The Mindskinner is not a defect.** Its two rules (`OpponentDamageMill`, `OpponentDamageMillUnpreventable`) are per-source rules, so a
+  combat event asks each source's portion alone, with that portion's own "can't be prevented" flag (`DamageCandidateSource.portionView`).
+  Reproduced with The Mindskinner and Excruciator attacking together: the damaged player orders the two options, Excruciator's 7 is dealt
+  (CR 615.12: the prevention still mills) and The Mindskinner's 10 is prevented, 17 cards milled.
+  `TheMindskinnerTest.preventsOnlyThePreventablePortionOfCombatDamage` (passes on HEAD too).
+- **Display names.** Every test method of `SelflessSquireTest`, `DjeruWithEyesOpenTest`, `KessigTest`, `TheWesternCloudTest` and
+  `TheMindskinnerTest` now has one.
+- **The hand free-cast step absorbs three records.** `MayCastAnySpellFromHandWithoutPayingManaCostEffect` takes Electrodominance
+  (`new XValue()` as its maximum), Lady Octopus (`CardTypePredicate(ARTIFACT)`, `CountersOnSource(INGENUITY)`) and Brain in a Jar
+  (`allOf(instant or sorcery, CardManaValueEqualsSourceCountersPredicate(CHARGE))`). Its filter is now judged with the entry's card,
+  source permanent, X and source snapshot, so a filter about the source reads it as it is, or as it last existed (CR 608.2h), as the
+  absorbed handlers did. Each absorbed handler queued the same `MayCastFromHandWithoutPayingManaCostEffect(false)` offers; the survivor adds
+  a choice group (only read for a decline effect, which none had) and the source permanent id. The AI read none of the records.
+- **River Song's Diary** is `MayCastCardExiledWithSourceEffect.randomSelection()`: one card chosen at random among the nonland cards exiled
+  with it. Its handler's own "four or more" check was the trigger's intervening if, which is checked again on resolution (CR 603.4,
+  `upkeepDoesNothingIfExiledCountDropsBelowFourBeforeResolution` still passes).
+- **Unique (14).** Each is the only card of its shape, and a parameter for one card would move the special case: the held-card prompt
+  `MayPutSelectedCardOntoBattlefieldEffect` (Treasure Chest, Ruin in Their Wake, and three engine paths: the library search follow-up, the
+  look-at-top step, the conjured card; no card subject names a card held out of every zone), the extra vote (`MayVoteAdditionalTimeEffect`,
+  CR 701.38d, both of its cards share it), Spell Queller (the owner is offered), Evercoat Ursine (play, lands too), Gwenom (a timed bundle of
+  three library-top permissions, read at four casting-permission sites), The Face of Boe (suspend cost), Bösium Strip, Piracy, Anrakyr, Geode
+  Golem, Twinning Glass, Command the Chaff, Your Wish Is My Command, Kaya's emblem. Ledger notes name each reason.
+- **Blocked (2).** Goliath Daydreamer and Dragon-Kami's Egg cast from "cards you own in exile with dream / hatching counters on them"; no
+  card subject reads counters on exiled cards, and the two kinds live in two `GameData` stores. Two records, below the build threshold.
+- **Not ledgered: the "if you don't" casts.** In Search of Greatness ("if you don't, scry 1"), Kellan, the Kid ("if you don't, you may put a
+  land card") and Baral and Kari Zev ("if you don't, create First Mate Ragavan") share the blocker of `MayCastAnySpellFromHandWithoutPayingManaCostEffect`'s
+  step-8 row. With that row they are four, so the next run builds it rather than ledgering them blocked: the marker
+  `MayCastFromHandWithoutPayingManaCostEffect` already carries a `declineEffect` that `MayCastHandlerService.queueDeclineEffect` runs once
+  every offer of the group is declined; the survivor would take it as a component and run it at once when nothing is offered. Baral also
+  needs "lesser mana value that shares a card type with it" against the triggering spell, In Search of Greatness "equal to 1 plus the
+  highest mana value among other permanents you control".
+- **Cost combinators (CR 118.12), listed for step 10, not ledgered:** `MayPayLandDropEffect` (Boulder Jockey), `MayPayTapAndSacrificePermanentEffect`
+  (A Golden Opportunity), `MayPayLifeAndCreateTokenEqualToAmountEffect` (Tivash), `MayPayLifeAndDrawEqualToAmountEffect` (Tymna),
+  `MayPayLifeAndPutCountersOnEnteringCreatureEqualToPowerEffect` (Madame Null), and by the same rule's "[a player] may [do something]. If
+  [they do / don't]": `MaySacrificePermanentForCounterOrTapSourceEffect` (Ravenous Vampire), `MaySacrificePermanentForCounterOrRemoveSourceCounterEffect`
+  (Crovax), `MayReturnPermanentToHandAndEnterWithCountersEffect` (Rescuer Sphinx), `MayHaveThisLandEnterTappedForRadCountersEffect`
+  (Mariposa Military Base), `MayPayForArtifactsOrCreaturesCantAttackThisCombatEffect` (Overencumbered). `MayPayLifeForColorlessManaUntilEndOfTurnEffect`
+  (Channel) is named like them but is a timed special action ("any time you could activate a mana ability"); it is listed with them as asked.
+- **Engine-built prompt markers (24, no card).** Built by: `MayPlayExiledCardWithoutPayingManaCostEffect` (22 engine files: the exile free
+  casts), `MayCastFromHandWithoutPayingManaCostEffect` (17: the hand free casts, Counterlash), `MayCastExiledCardWithNormalCostEffect` (6),
+  `MayCastCopyWithoutPayingManaCostEffect` / `MayCastCopyWithNormalCostEffect` / `MayCastCopyWithManaCostEffect` (the copy casts: Garth
+  One-Eye, the exiled-card copies), `MayCastForMiracleCostEffect` / `MayCastForReverseMiracleCostEffect` / `MayCastForMadnessCostEffect`
+  (the miracle, reverse-miracle and madness handlers), `MayCastCardFromOutsideGameWithNormalCostEffect` / `MayCastFromOutsideGameWithoutPayingManaCostEffect`
+  / `MayCastFromSideboardWithoutPayingManaCostEffect` (outside the game), `MayCastExiledCardThenBottomRestEffect` (the draw replacement,
+  Possibility Storm, Tibalt's Trickery), `MayCastExiledCardWithCostReductionEffect`, `MayCastExiledCardWithoutPayingManaCostOrPutIntoHandEffect`,
+  `MayCastMilledSpellWithoutPayingManaCostEffect`, `MayCastSpellFromTargetGraveyardWithoutPayingManaCostEffect`,
+  `MayCastCardFromOpponentGraveyardWithoutPayingManaCostEffect`, `MayCastAnyNumberOfSpellsFromHandWithoutPayingManaCostEffect`,
+  `MayCastRevealedSpellWithoutPayingManaCostEffect`, `MayCastRippleCardWithoutPayingManaCostEffect`, `MayPayKickerForFreeCastEffect`
+  (`ExileFreeCastSupport`), `MayPlaySourceExiledCardWithoutPayingManaCostEffect` (Evercoat Ursine's offers) and `MayPayLifeForBlackManaEffect`
+  (a cost-modification handler; no card names it). Fold candidates, not done: the three copy-cast markers into one with a cost mode, and the
+  three alternative-cost markers (miracle, reverse miracle, madness) into one; each is a prompt marker whose may handler routes to a
+  different `MayCastHandlerService` path, so a fold must keep each path's chooser, decline and AI answer.
+
+**Behaviour changes.** "Failed before" means the new test failed on a `git archive` copy of HEAD with the new tests copied in.
+
+1. Electrodominance, Lady Octopus and Brain in a Jar offer an Adventure (CR 716.3a) or a modal back face that fits, as the survivor does:
+   `ElectrodominanceTest.offersAnAdventureThatFitsX`, `BrainInAJarTest.offersAnInstantAdventureOfACreatureCard` (both failed before: no
+   offer for Bonecrusher Giant's Stomp).
+2. Every user of the hand free-cast step (28 cards) offers a spell whose additional cost is "discard a card or pay {N}" when the {N} alone can
+   be paid: a free cast doesn't pay the mana cost (CR 118.9, 601.2f), and the offer was checked with it
+   (`castingCostService.canPayAdditionalSpellCosts` → `AdditionalSpellCostService.satisfiableWithoutManaCost`, the check the cast itself makes):
+   `KariZevsExpertiseTest.offersASpellWhoseAdditionalCostIsPayableWithoutItsManaCost` (failed before: no offer),
+   `ElectrodominanceTest.offersASpellWhoseAdditionalManaCostCanBePaid`.
+3. The three absorbed hand records no longer offer a spell whose mandatory additional cost can't be paid at all (Bankrupt in Blood with no
+   creatures); before, the offer was made and the cast then failed. See the test change below.
+4. River Song's Diary's decline logs "<player> declines to play <the offered card>." instead of naming the Diary:
+   `RiverSongsDiaryTest.decliningLogsTheOfferedCard` (failed before).
+5. In Search of Greatness reads a face-down permanent's mana value as 0 (CR 708.2; it read the hidden card's):
+   `InSearchOfGreatnessTest.readsAFaceDownPermanentAsManaValueZero` (failed before: no offer).
+
+**What a player sees.** The free-cast offers go to the controller only and name their own hand's or a face-up exiled card. In Search of
+Greatness no longer offers or withholds a spell by the mana value of a face-down card, which told its controller nothing hidden but
+judged a characteristic the permanent doesn't have.
+
+**Seen, not changed.**
+
+- `MayPlayExiledCardWithoutPayingManaCostHandler`'s exclusive withdrawal removes every pending exclusive offer, not only the accepted offer's
+  siblings: two exile free-cast triggers waiting at once would lose the second's offers.
+- Twinning Glass compares names with `getName()` equality rather than `Card.hasName` (a split card's or a Room's names), offers spells with
+  unpayable additional costs and no Adventure or back face.
+- `ElectrodominanceTest` and `RiverSongsDiaryTest` still have test methods without `@DisplayName` (AGENTS.md), apart from the ones this run
+  touched.
+
+**Tests edited.** The new cases above, `TheMindskinnerTest.preventsOnlyThePreventablePortionOfCombatDamage`, display names in five classes.
+`ElectrodominanceTest.decliningDoesNotRevealTheUncastCard` offers Grizzly Bears instead of Bankrupt in Blood: with no creature to sacrifice
+Bankrupt in Blood can't be cast and is no longer offered (item 3), so the test's premise moved to a card that is; its assertion (no log line
+names the declined card) is unchanged. `EffectCountRatchetTest`'s baseline.
+
+**Tests run.** The final sources in one Gradle run, every test task `--rerun`, one `--tests` list per task, counted from that run's XML by
+the timestamps: 63 classes (550 cases, 0 failures, 0 skipped): the 61 test classes naming one of the changed cards, every card using
+`MayCastAnySpellFromHandWithoutPayingManaCostEffect` or `MayCastCardExiledWithSourceEffect`, In Search of Greatness, The Mindskinner and
+the four display-name classes; `EffectCountRatchetTest` and the AI's `TargetPolarityGuardTest`. No application test names a changed
+handler. On HEAD (a `git archive` copy with the six edited card test classes) the 6 "failed before" cases above failed and the Mindskinner
+case and `offersASpellWhoseAdditionalManaCostCanBePaid` passed (the old Electrodominance handler checked no additional cost). Compiled:
+domain, engine, the letter card modules b, e, i, l, r, the application and AI test sources; the letter test modules compiled in the run.
+No deleted handler is marked `AsksDeathReplacementsFirst` or calls `LifeSupport.askBefore*`. Not run: the full suites, the AI fuzz and
+stress tests, the frontend. Not verified: more than two players.
+
+**For the next run (run 26: May's "if you don't" casts; then Perpetually 60, Conjure 51, Register 54, Target 79).**
+
+- Build the decline effect on `MayCastAnySpellFromHandWithoutPayingManaCostEffect` from the marker's `declineEffect`, run at once when
+  nothing is offered; fold Kellan, In Search of Greatness and Baral and Kari Zev (with the two filters above), and revisit the survivor's
+  step-8 `blocked-step-model` row.
+- The engine-built markers above: say for each whether it folds; the copy-cast and alternative-cost groups first.
+- The exclusive-withdrawal item above, if a run takes the exile free casts.
 
 ## Prompt
 

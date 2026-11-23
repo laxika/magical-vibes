@@ -12,12 +12,15 @@ import com.github.laxika.magicalvibes.model.effect.ScryEffect;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
 public class MayCastPermanentFromHandWithManaValueEffectHandler implements NormalEffectHandlerBean {
+
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -65,6 +68,7 @@ public class MayCastPermanentFromHandWithManaValueEffectHandler implements Norma
         }
     }
 
+    /** A face-down permanent's mana value is 0 (CR 708.2). */
     private int greatestOtherPermanentManaValue(GameData gameData, StackEntry entry) {
         List<Permanent> battlefield = gameData.playerBattlefields.get(entry.getControllerId());
         if (battlefield == null) return 0;
@@ -72,7 +76,7 @@ public class MayCastPermanentFromHandWithManaValueEffectHandler implements Norma
         UUID sourcePermanentId = entry.getSourcePermanentId();
         return battlefield.stream()
                 .filter(permanent -> sourcePermanentId == null || !permanent.getId().equals(sourcePermanentId))
-                .mapToInt(permanent -> permanent.getCard().getManaValue())
+                .mapToInt(gameQueryService::getPermanentManaValue)
                 .max()
                 .orElse(0);
     }

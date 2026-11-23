@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.cards.n.NaggingThoughts;
 import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.cards.p.PressForAnswers;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
+import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -289,4 +290,25 @@ class BrainInAJarTest extends BaseCardTest {
         assertThat(jar.isTapped()).isFalse();
         assertThat(gd.stack).isEmpty();
     }
+    @Test
+    @CardUsed(BonecrusherGiant.class)
+    @DisplayName("Offers an instant Adventure whose mana value equals the counters on a creature card")
+    void offersAnInstantAdventureOfACreatureCard() {
+        Permanent jar = harness.addToBattlefieldAndReturn(player1, new BrainInAJar());
+        jar.setCounterCount(CounterType.CHARGE, 1);
+        BonecrusherGiant adventurer = new BonecrusherGiant();
+        harness.setHand(player1, List.of(adventurer));
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.MayAbilityChoice offer =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(offer).isNotNull();
+        assertThat(offer.description()).contains("Stomp");
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(adventurer);
+    }
+
 }

@@ -2,15 +2,18 @@ package com.github.laxika.magicalvibes.cards.e;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.b.BankruptInBlood;
+import com.github.laxika.magicalvibes.cards.l.LightningAxe;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.a.AngelicChorus;
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.q.Quench;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
+import com.github.laxika.magicalvibes.cards.b.BonecrusherGiant;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.ArrayList;
@@ -81,8 +84,9 @@ class ElectrodominanceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the free cast does not reveal the card that was offered")
     void decliningDoesNotRevealTheUncastCard() {
-        harness.setHand(player1, List.of(new Electrodominance(), new BankruptInBlood()));
+        harness.setHand(player1, List.of(new Electrodominance(), new GrizzlyBears()));
         harness.addMana(player1, ManaColor.RED, 4);
         harness.castInstant(player1, 0, 2, player2.getId());
         harness.passBothPriorities();
@@ -91,8 +95,8 @@ class ElectrodominanceTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player1, false);
 
         assertThat(gd.gameLog.subList(logSize, gd.gameLog.size()).stream()
-                .map(GameLogEntry::plainText)).noneMatch(log -> log.contains("Bankrupt in Blood"));
-        harness.assertInHand(player1, "Bankrupt in Blood");
+                .map(GameLogEntry::plainText)).noneMatch(log -> log.contains("Grizzly Bears"));
+        harness.assertInHand(player1, "Grizzly Bears");
     }
 
     @Test
@@ -210,5 +214,43 @@ class ElectrodominanceTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Tear — Destroy target enchantment");
+    }
+    @Test
+    @CardUsed(BonecrusherGiant.class)
+    @DisplayName("Offers an Adventure whose own mana value is X or less on a card whose creature costs more")
+    void offersAnAdventureThatFitsX() {
+        BonecrusherGiant adventurer = new BonecrusherGiant();
+        harness.setHand(player1, List.of(new Electrodominance(), adventurer));
+        harness.addMana(player1, ManaColor.RED, 4);
+
+        harness.castInstant(player1, 0, 2, player2.getId());
+        harness.passBothPriorities();
+
+        PendingInteraction.MayAbilityChoice offer =
+                gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class);
+        assertThat(offer).isNotNull();
+        assertThat(offer.description()).contains("Stomp");
+        harness.handleMayAbilityChosen(player1, false);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(adventurer);
+    }
+
+
+    @Test
+    @CardUsed(LightningAxe.class)
+    @DisplayName("Offers a spell whose \"discard a card or pay {5}\" cost can be paid with mana left over after the free cast")
+    void offersASpellWhoseAdditionalManaCostCanBePaid() {
+        LightningAxe axe = new LightningAxe();
+        Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.setHand(player1, List.of(new Electrodominance(), axe));
+        harness.addMana(player1, ManaColor.RED, 8);
+
+        harness.castInstant(player1, 0, 1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, bears.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(axe.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
     }
 }

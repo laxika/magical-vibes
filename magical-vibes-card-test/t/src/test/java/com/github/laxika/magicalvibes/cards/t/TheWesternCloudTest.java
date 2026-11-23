@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -39,6 +40,7 @@ class TheWesternCloudTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevents damage to the planeswalkers and creatures of its controller")
     void preventsDamageToThePlaneswalkersAndCreaturesOfItsController() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent planeswalker = addChandra(player1, 5);
@@ -59,6 +61,7 @@ class TheWesternCloudTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chaos creates three tapped Treasures that each deal damage to creatures and planeswalkers")
     void chaosCreatesThreeTappedTreasuresThatEachDamageCreaturesAndPlaneswalkers() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent planeswalker = addChandra(player1, 5);
@@ -77,6 +80,7 @@ class TheWesternCloudTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Treasures deal their damage while the chaos ability resolves")
     void treasureDamageIsDealtDuringTheChaosAbilityResolution() {
         Permanent creature = harness.addToBattlefieldAndReturn(player2, new DevouringStrossus());
         Permanent planeswalker = addChandra(player2, 5);
@@ -93,6 +97,7 @@ class TheWesternCloudTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not prevent damage to players")
     void doesNotPreventDamageToPlayers() {
         harness.setHand(player2, List.of(new Shock(), new Shock()));
         harness.addMana(player2, ManaColor.RED, 2);
@@ -105,6 +110,7 @@ class TheWesternCloudTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The prevention follows the current planar controller")
     void protectionFollowsTheCurrentPlanarController() {
         Permanent oldControllerCreature = harness.addToBattlefieldAndReturn(player1, new DevouringStrossus());
         Permanent newControllerCreature = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());

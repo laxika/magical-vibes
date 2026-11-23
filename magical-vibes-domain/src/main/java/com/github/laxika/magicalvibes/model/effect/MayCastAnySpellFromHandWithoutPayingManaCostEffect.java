@@ -10,7 +10,9 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * <p>On resolution the controller is offered each matching nonland hand card as a
  * may-cast-from-hand-without-paying choice via {@link MayCastFromHandWithoutPayingManaCostEffect};
  * casting one clears the rest, so only a single spell is cast. A {@code null}
- * {@code spellFilter} matches every nonland hand card.
+ * {@code spellFilter} matches every nonland hand card. A filter about the source (Brain in a Jar's
+ * "mana value equal to the number of charge counters on this artifact") reads the source as it is, or as
+ * it last existed once it has left the battlefield.
  *
  * @param spellFilter which hand cards are eligible ({@code null} = any nonland)
  * @param maxManaValue maximum eligible mana value ({@code null} = no maximum)

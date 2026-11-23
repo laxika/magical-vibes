@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.cards.r.RavenousLindwurm;
 import com.github.laxika.magicalvibes.cards.s.SculptorOfWinter;
 import com.github.laxika.magicalvibes.cards.t.TibaltCosmicImpostor;
 import com.github.laxika.magicalvibes.cards.v.ValkiGodOfLies;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.interaction.InteractionAnswer;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -17,6 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -181,5 +184,24 @@ class InSearchOfGreatnessTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNull();
         assertThat(gd.interaction.activeInteraction(PendingInteraction.Scry.class)).isNull();
+    }
+
+    @Test
+    @DisplayName("Reads a face-down permanent's mana value as 0")
+    void readsAFaceDownPermanentAsManaValueZero() {
+        harness.addToBattlefield(player1, new InSearchOfGreatness());
+        Permanent faceDown = harness.addToBattlefieldAndReturn(player1, new RavenousLindwurm());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        LlanowarElves freeCard = new LlanowarElves();
+        harness.setHand(player1, new ArrayList<>(List.of(freeCard)));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class)).isNotNull();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        assertThat(countPermanents(player1, "Llanowar Elves")).isEqualTo(1);
     }
 }

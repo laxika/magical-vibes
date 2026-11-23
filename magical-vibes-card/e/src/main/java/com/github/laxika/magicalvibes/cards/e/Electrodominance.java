@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.MayCastSpellFromHandWithManaValueAtMostXEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 
 @CardRegistration(set = "RNA", collectorNumber = "99")
 @CardRegistration(set = "OTP", collectorNumber = "23")
@@ -13,6 +13,6 @@ public class Electrodominance extends Card {
 
     public Electrodominance() {
         addSpellEffect(new DealDamageToAnyTargetEffect(new XValue()));
-        addSpellEffect(new MayCastSpellFromHandWithManaValueAtMostXEffect());
+        addSpellEffect(new MayCastAnySpellFromHandWithoutPayingManaCostEffect(new XValue()));
     }
 }

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.c.CounselOfTheSoratami;
 import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.model.GameLogEntry;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -153,4 +154,21 @@ class RiverSongsDiaryTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
         assertThat(gd.getCardsExiledByPermanent(diary.getId())).hasSize(3);
     }
+    @Test
+    @DisplayName("Declining logs the card that was offered, not the Diary")
+    void decliningLogsTheOfferedCard() {
+        Permanent diary = harness.addToBattlefieldAndReturn(player1, new RiverSongsDiary());
+        for (int i = 0; i < 4; i++) {
+            gd.addToExile(player1.getId(), new CounselOfTheSoratami(), diary.getId());
+        }
+        advanceToUpkeep(player1);
+        resolveAllTriggers();
+        int logSize = gd.gameLog.size();
+
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.gameLog.subList(logSize, gd.gameLog.size()).stream().map(GameLogEntry::plainText))
+                .contains("Alice declines to play Counsel of the Soratami.");
+    }
+
 }

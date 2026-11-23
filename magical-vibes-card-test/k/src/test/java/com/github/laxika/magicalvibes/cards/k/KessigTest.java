@@ -13,6 +13,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,6 +35,7 @@ class KessigTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevents combat damage dealt by creatures that are not Werewolves")
     void preventsCombatDamageByNonWerewolfCreatures() {
         harness.setLife(player1, 20);
         addAttacker(player2);
@@ -44,6 +46,7 @@ class KessigTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The chaos ability is one object on the stack")
     void chaosAbilityIsOneStackObject() {
         harness.inMutationScope(() -> planar.chaos(gd));
 
@@ -52,6 +55,7 @@ class KessigTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chaos boosts your creatures and makes them Werewolves until end of turn")
     void chaosBoostsYourCreaturesAndMakesThemWerewolvesUntilEndOfTurn() {
         Permanent attacker = addAttacker(player1);
         harness.setLife(player2, 20);
@@ -70,6 +74,7 @@ class KessigTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Chaos affects only the creatures you control as it resolves")
     void chaosAffectsOnlyCreaturesControlledAtResolution() {
         Permanent own = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent opponent = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -95,6 +100,7 @@ class KessigTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two chaos bonuses add up and both end at end of turn")
     void chaosBonusesStackAndAllExpireAtEndOfTurn() {
         Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
 
@@ -118,6 +124,7 @@ class KessigTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The prevention ends when Kessig stops being the face-up plane")
     void preventionEndsWhenKessigLeavesTheCommandZone() {
         addAttacker(player1);
         harness.setLife(player2, 20);

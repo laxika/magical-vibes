@@ -130,6 +130,7 @@ class SelflessSquireTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Its counters come from a trigger that uses the stack after the damage is prevented")
     void countersUseTheStackAfterDamageIsPrevented() {
         Permanent squire = castSquire();
         castShockAtPlayer();
@@ -142,6 +143,7 @@ class SelflessSquireTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The damage stays prevented after Selfless Squire dies")
     void preventionContinuesAfterSquireDies() {
         Permanent squire = castSquire();
         harness.setHand(player2, List.of(new Shock()));
@@ -155,6 +157,7 @@ class SelflessSquireTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Its enter trigger still prevents damage if it dies in response")
     void preventionResolvesEvenIfSquireDiesInResponseToItsEnterTrigger() {
         harness.setHand(player1, List.of(new SelflessSquire()));
         harness.addMana(player1, ManaColor.WHITE, 1);
@@ -174,6 +177,7 @@ class SelflessSquireTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Every Selfless Squire triggers for the same prevented damage")
     void everySquireTriggersForTheSamePreventedDamage() {
         Permanent first = castSquire();
         Permanent second = harness.addToBattlefieldAndReturn(player1, new SelflessSquire());

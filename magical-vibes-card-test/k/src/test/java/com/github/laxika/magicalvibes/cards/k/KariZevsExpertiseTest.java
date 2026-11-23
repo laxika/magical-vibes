@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.f.FountainOfYouth;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LightningAxe;
 import com.github.laxika.magicalvibes.cards.s.SerraAngel;
 import com.github.laxika.magicalvibes.cards.s.SleekSchooner;
 import com.github.laxika.magicalvibes.model.Keyword;
@@ -188,7 +189,25 @@ class KariZevsExpertiseTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(target);
     }
 
-    private void castExpertise(Permanent target, List<com.github.laxika.magicalvibes.model.Card> hand) {
+@Test
+    @CardUsed(LightningAxe.class)
+    @DisplayName("Offers a spell whose \"discard a card or pay {5}\" cost can be paid without its mana cost")
+    void offersASpellWhoseAdditionalCostIsPayableWithoutItsManaCost() {
+        Permanent stolen = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent axeTarget = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
+        LightningAxe axe = new LightningAxe();
+        harness.addMana(player1, ManaColor.COLORLESS, 5);
+
+        castExpertise(stolen, List.of(new KariZevsExpertise(), axe));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, axeTarget.getId());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getId()).isEqualTo(axe.getId());
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotalAllMana()).isZero();
+    }
+
+        private void castExpertise(Permanent target, List<com.github.laxika.magicalvibes.model.Card> hand) {
         harness.setHand(player1, hand);
         addExpertiseMana();
         harness.castSorcery(player1, 0, target.getId());

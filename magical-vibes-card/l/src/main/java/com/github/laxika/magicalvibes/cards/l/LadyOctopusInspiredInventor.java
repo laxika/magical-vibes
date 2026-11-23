@@ -3,9 +3,12 @@ package com.github.laxika.magicalvibes.cards.l;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
-import com.github.laxika.magicalvibes.model.effect.MayCastArtifactFromHandWithManaValueAtMostSourceCountersEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.MayCastAnySpellFromHandWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -22,8 +25,8 @@ public class LadyOctopusInspiredInventor extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new MayCastArtifactFromHandWithManaValueAtMostSourceCountersEffect(
-                        CounterType.INGENUITY)),
+                List.of(new MayCastAnySpellFromHandWithoutPayingManaCostEffect(
+                        new CardTypePredicate(CardType.ARTIFACT), new CountersOnSource(CounterType.INGENUITY))),
                 "{T}: You may cast an artifact spell from your hand with mana value less than or equal "
                         + "to the number of ingenuity counters on Lady Octopus without paying its mana cost."
         ));

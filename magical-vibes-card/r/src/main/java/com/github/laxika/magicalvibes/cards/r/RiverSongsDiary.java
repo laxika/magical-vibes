@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.condition.SourceExiledCardsThreshold;
 import com.github.laxika.magicalvibes.model.effect.ExileTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.TriggeringSpellExile;
-import com.github.laxika.magicalvibes.model.effect.MayCastRandomCardExiledWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.MayCastCardExiledWithSourceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -29,6 +29,6 @@ public class RiverSongsDiary extends Card {
                 new ExileTriggeringSpellEffect(TriggeringSpellExile.TRACKED_BY_SOURCE, false));
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
                 TriggerOptions.DEFAULT.withInterveningIf(new SourceExiledCardsThreshold(4)),
-                new MayCastRandomCardExiledWithSourceEffect());
+                MayCastCardExiledWithSourceEffect.randomSelection());
     }
 }

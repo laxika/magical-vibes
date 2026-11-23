@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.e.Excruciator;
 import com.github.laxika.magicalvibes.cards.g.GlacialChasm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MirrorGallery;
@@ -8,10 +9,12 @@ import com.github.laxika.magicalvibes.cards.s.Skullcrack;
 import com.github.laxika.magicalvibes.cards.z.ZuranSpellcaster;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.networking.message.BlockerAssignment;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -21,10 +24,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({TheMindskinner.class, Shock.class, GrizzlyBears.class, ZuranSpellcaster.class,
-        MirrorGallery.class, Skullcrack.class, GlacialChasm.class})
+        MirrorGallery.class, Skullcrack.class, GlacialChasm.class, Excruciator.class})
 class TheMindskinnerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("A spell you control mills an opponent instead of dealing damage to them")
     void replacesSpellDamageWithMill() {
         addCreatureReady(player1, new TheMindskinner());
         harness.setLibrary(player2, library(5));
@@ -39,6 +43,7 @@ class TheMindskinnerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An activated ability you control mills an opponent instead of dealing damage to them")
     void replacesActivatedAbilityDamageWithMill() {
         addCreatureReady(player1, new TheMindskinner());
         addCreatureReady(player1, new ZuranSpellcaster());
@@ -53,6 +58,7 @@ class TheMindskinnerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Another creature you control mills instead of dealing combat damage to an opponent")
     void replacesCombatDamageWithMill() {
         addCreatureReady(player1, new TheMindskinner());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
@@ -67,6 +73,7 @@ class TheMindskinnerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not replace damage to its controller or damage an opponent deals")
     void doesNotReplaceDamageToItsControllerOrDamageFromAnOpponent() {
         addCreatureReady(player1, new TheMindskinner());
         harness.setLibrary(player1, library(5));
@@ -88,6 +95,7 @@ class TheMindskinnerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two Mindskinners mill only once for the same damage")
     void multipleMindskinnersDoNotMultiplyTheReplacement() {
         addCreatureReady(player1, new MirrorGallery());
         addCreatureReady(player1, new TheMindskinner());
@@ -102,6 +110,7 @@ class TheMindskinnerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot be blocked")
     void cannotBeBlocked() {
         Permanent blocker = addCreatureReady(player2, new GrizzlyBears());
         Permanent attacker = addCreatureReady(player1, new TheMindskinner());
@@ -117,6 +126,7 @@ class TheMindskinnerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Still mills when spell damage can't be prevented, and the damage is dealt")
     void millsEvenWhenSpellDamageCannotBePrevented() {
         addCreatureReady(player1, new TheMindskinner());
         harness.setLibrary(player2, library(5));
@@ -133,6 +143,7 @@ class TheMindskinnerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Still mills when combat damage can't be prevented, and the damage is dealt")
     void millsEvenWhenCombatDamageCannotBePrevented() {
         addCreatureReady(player1, new TheMindskinner());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
@@ -152,6 +163,7 @@ class TheMindskinnerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each Mindskinner mills when the damage can't be prevented")
     void eachMindskinnerMillsWhenDamageCannotBePrevented() {
         harness.addToBattlefield(player1, new MirrorGallery());
         addCreatureReady(player1, new TheMindskinner());
@@ -170,6 +182,7 @@ class TheMindskinnerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The damaged player orders it against their own prevention")
     void affectedPlayerChoosesBetweenMindskinnerAndOtherPrevention() {
         addCreatureReady(player1, new TheMindskinner());
         harness.addToBattlefield(player2, new GlacialChasm());
@@ -186,6 +199,7 @@ class TheMindskinnerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Its own combat damage mills instead")
     void replacesItsOwnCombatDamageWithMill() {
         Permanent attacker = addCreatureReady(player1, new TheMindskinner());
         attacker.setAttacking(true);
@@ -200,6 +214,7 @@ class TheMindskinnerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Prevents all the damage even when the library has too few cards")
     void stillPreventsAllDamageWhenTheLibraryHasTooFewCards() {
         Permanent attacker = addCreatureReady(player1, new TheMindskinner());
         attacker.setAttacking(true);
@@ -214,6 +229,7 @@ class TheMindskinnerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not replace damage to an opponent's creature")
     void doesNotReplaceDamageToAnOpponentsCreature() {
         addCreatureReady(player1, new TheMindskinner());
         Permanent target = addCreatureReady(player2, new GrizzlyBears());
@@ -229,6 +245,7 @@ class TheMindskinnerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Does not replace damage an opponent deals to themselves")
     void doesNotReplaceAnOpponentsDamageToThemselves() {
         addCreatureReady(player1, new TheMindskinner());
         harness.setLibrary(player2, library(5));
@@ -244,6 +261,7 @@ class TheMindskinnerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Stops replacing damage once it leaves the battlefield")
     void stopsReplacingDamageAfterLeavingTheBattlefield() {
         Permanent mindskinner = addCreatureReady(player1, new TheMindskinner());
         harness.setLibrary(player2, library(5));
@@ -257,6 +275,27 @@ class TheMindskinnerTest extends BaseCardTest {
 
         harness.assertLife(player2, 18);
         assertThat(gd.playerDecks.get(player2.getId())).hasSize(5);
+    }
+
+    @Test
+    @DisplayName("In one combat damage event, prevents only the portion that can be prevented and mills for both")
+    void preventsOnlyThePreventablePortionOfCombatDamage() {
+        Permanent excruciator = addCreatureReady(player1, new Excruciator());
+        excruciator.setAttacking(true);
+        Permanent mindskinner = addCreatureReady(player1, new TheMindskinner());
+        mindskinner.setAttacking(true);
+        harness.setLibrary(player2, library(20));
+        harness.setLife(player2, 20);
+
+        resolveCombat();
+        while (gd.interaction.isAwaitingInput()) {
+            var order = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+            assertThat(order.playerId()).isEqualTo(player2.getId());
+            harness.handleListChoice(player2, order.options().getFirst());
+        }
+
+        harness.assertLife(player2, 13);
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(17);
     }
 
     private List<Card> library(int count) {
