@@ -4332,10 +4332,15 @@ public class LibraryChoiceHandlerService {
 
         // Rest exiled (Browse): one card to hand, the others exiled face up.
         if (remainingToExile) {
-            if (!selectedCards.isEmpty()) {
+            // A card put into a hand unrevealed stays hidden (CR 400.2): the line doesn't name it.
+            if (!selectedCards.isEmpty() && revealSelected) {
                 gameLogService.append(gameData,
                         appendCards(GameLog.builder().text(playerName + " puts "), selectedCards)
                                 .text(" into their hand.").build());
+            } else if (!selectedCards.isEmpty()) {
+                gameLogService.append(gameData, GameLog.text(playerName + " puts "
+                        + (selectedCards.size() == 1 ? "a card" : selectedCards.size() + " cards")
+                        + " into their hand."));
             }
             for (Card card : remainingCards) {
                 exileService.exileCard(gameData, controllerId, card);

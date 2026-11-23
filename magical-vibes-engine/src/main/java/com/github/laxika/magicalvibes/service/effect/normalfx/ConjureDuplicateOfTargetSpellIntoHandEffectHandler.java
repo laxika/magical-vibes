@@ -41,7 +41,7 @@ public class ConjureDuplicateOfTargetSpellIntoHandEffectHandler implements Norma
         gameData.perpetualAnyColorManaForCastCardIds.add(duplicate.getId());
         gameData.addCardToHand(entry.getControllerId(), duplicate);
         ActionEvents.conjured(gameData, entry.getControllerId(), 1);
-        gameLogService.append(gameData, GameLog.textCardText(
-                "A duplicate of ", duplicate, " is conjured into your hand."));
+        gameLogService.append(gameData, GameLog.textCardText("A duplicate of ", duplicate,
+                " is conjured into " + gameData.playerIdToName.get(entry.getControllerId()) + "'s hand."));
     }
 }

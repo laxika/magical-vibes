@@ -61,7 +61,8 @@ public class SeekHighestManaValueCardEffectHandler implements NormalEffectHandle
         library.remove(selected);
         gameData.addCardToHand(controllerId, selected);
         ActionEvents.sought(gameData, controllerId, List.of(selected));
-        gameLogService.append(gameData, GameLog.textCardText(
-                gameData.playerIdToName.get(controllerId) + " seeks ", selected, " into their hand."));
+        // A sought card is a random library card (CR 400.2): the line doesn't name it.
+        gameLogService.append(gameData, GameLog.text(
+                gameData.playerIdToName.get(controllerId) + " seeks a card into their hand."));
     }
 }

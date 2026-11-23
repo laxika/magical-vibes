@@ -66,8 +66,10 @@ public class PerpetuallySetRandomLandInLibraryAsBasicIslandEffectHandler impleme
 
         int selectedIndex = library.indexOf(selected);
         library.set(selectedIndex, modified);
-        gameLogService.append(gameData, GameLog.cardThen(selected,
-                " perpetually becomes a basic Island in addition to its other types and gains \""
+        // The card stays in a library (CR 400.2): the line names it as the card's text does.
+        gameLogService.append(gameData, GameLog.text("A random land card in "
+                + gameData.playerIdToName.get(entry.getControllerId()) + "'s library"
+                + " perpetually becomes a basic Island in addition to its other types and gains \""
                         + GAINED_ABILITY + "\"."));
     }
 }

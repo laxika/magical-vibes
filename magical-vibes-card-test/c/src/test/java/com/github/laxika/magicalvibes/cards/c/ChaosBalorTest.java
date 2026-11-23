@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -151,5 +152,22 @@ class ChaosBalorTest extends BaseCardTest {
     private void attackWithBalor() {
         addCreatureReady(player1, new ChaosBalor());
         declareAttackers(List.of(0));
+    }
+
+    @Test
+    @DisplayName("The log doesn't name the sought cards")
+    void logNamesNoSoughtCard() {
+        harness.setHand(player1, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        attackWithBalor();
+        chooseModes(DISCARD_MODE, DAMAGE_AND_TREASURE_MODE);
+        harness.handlePermanentChosen(player1, player1.getId());
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Grizzly Bears"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals("Chaos Balor seeks a card into hand."));
     }
 }

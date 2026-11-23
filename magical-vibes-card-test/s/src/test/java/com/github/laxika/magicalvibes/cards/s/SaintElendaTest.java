@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -91,5 +92,23 @@ class SaintElendaTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The log doesn't name the card conjured by choice into hand")
+    void logNamesNoConjuredCard() {
+        harness.setHand(player1, java.util.List.of(new SaintElenda()));
+        harness.addMana(player1, ManaColor.WHITE, 7);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        Card selected = ((PendingInteraction.SpellbookCardChoice) gd.interaction.activeInteraction())
+                .cards().getFirst();
+        harness.handleMultipleCardsChosen(player1, java.util.List.of(selected.getId()));
+        harness.handleMayAbilityChosen(player1, false);
+
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains(selected.getName()));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                player1.getUsername() + " conjures a card from a spellbook into their hand."));
     }
 }

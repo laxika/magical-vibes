@@ -70,7 +70,8 @@ public class ConjureDuplicateOfTargetCreatureCardOntoTopOfLibraryEffectHandler
                 });
         library.addFirst(duplicate);
         ActionEvents.conjured(gameData, entry.getControllerId(), 1);
-        gameLogService.append(gameData, GameLog.textCardText(
-                "A duplicate of ", targetCard, " is conjured onto the top of your library."));
+        gameLogService.append(gameData, GameLog.textCardText("A duplicate of ", targetCard,
+                " is conjured onto the top of "
+                        + gameData.playerIdToName.get(entry.getControllerId()) + "'s library."));
     }
 }

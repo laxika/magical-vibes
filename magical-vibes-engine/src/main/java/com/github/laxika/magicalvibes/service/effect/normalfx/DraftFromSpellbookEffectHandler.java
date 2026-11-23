@@ -54,9 +54,16 @@ public class DraftFromSpellbookEffectHandler implements NormalEffectHandlerBean 
                                         draft.entryCounterCount()));
                     })
                     .toList();
-            playerInputService.beginChooseModeChoice(
-                    gameData, entry.getControllerId(), entry.getCard(), new ChooseOneEffect(options),
-                    entry.getSourcePermanentId());
+            if (draft.mode() == DraftFromSpellbookEffect.DraftMode.CONJURE_TO_HAND) {
+                // The options are named after the cards: the one drafted into a hand isn't logged (CR 400.2).
+                playerInputService.beginSecretChooseModeChoice(
+                        gameData, entry.getControllerId(), entry.getCard(), new ChooseOneEffect(options),
+                        entry.getSourcePermanentId());
+            } else {
+                playerInputService.beginChooseModeChoice(
+                        gameData, entry.getControllerId(), entry.getCard(), new ChooseOneEffect(options),
+                        entry.getSourcePermanentId());
+            }
             return;
         }
 

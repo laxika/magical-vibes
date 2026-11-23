@@ -21,6 +21,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -184,5 +185,24 @@ class TomeOfGadwickTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The conjured spellbook card is neither revealed nor named in the log")
+    void conjuredCardIsNotRevealed() {
+        harness.setHand(player1, List.of());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        Permanent tome = harness.addToBattlefieldAndReturn(player1, new TomeOfGadwick());
+        tome.setAttachedTo(creature.getId());
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        String conjured = gd.playerHands.get(player1.getId()).getFirst().getName();
+        assertThat(harness.getConn2().getMessagesContaining("\"type\":\"REVEAL_HAND\"")).isEmpty();
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains(conjured));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                player1.getUsername() + " conjures a card into their hand."));
     }
 }

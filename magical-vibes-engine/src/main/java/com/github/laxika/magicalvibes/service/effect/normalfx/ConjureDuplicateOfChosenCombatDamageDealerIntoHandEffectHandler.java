@@ -79,8 +79,8 @@ public class ConjureDuplicateOfChosenCombatDamageDealerIntoHandEffectHandler
         duplicate.setOwnerId(controllerId);
         duplicate.freeze();
         gameData.addCardToHand(controllerId, duplicate);
-        gameLogService.append(gameData, GameLog.textCardText(
-                "A duplicate of ", duplicate, " is conjured into your hand."));
+        gameLogService.append(gameData, GameLog.textCardText("A duplicate of ", duplicate,
+                " is conjured into " + gameData.playerIdToName.get(controllerId) + "'s hand."));
         ActionEvents.conjured(gameData, controllerId, 1);
     }
 }

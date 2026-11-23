@@ -119,4 +119,20 @@ class HydroponicsArchitectTest extends BaseCardTest {
         card.setType(type);
         return card;
     }
+
+    @Test
+    @DisplayName("The log tells every player a random land card changed without naming it")
+    void logNamesNoLibraryCard() {
+        Card land = card("Utility Land", CardType.LAND);
+        harness.setLibrary(player1, List.of(land));
+        addCreatureReady(player1, new HydroponicsArchitect());
+
+        declareAttackers(List.of(0));
+        resolveAllTriggers();
+
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Utility Land"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                "A random land card in " + player1.getUsername() + "'s library perpetually becomes a basic Island"
+                        + " in addition to its other types and gains \"When this land enters, draw a card.\"."));
+    }
 }

@@ -53,9 +53,9 @@ public class DraftTwiceSpellbookChoiceInteractionHandler
 
         gameData.interaction.clearAwaitingInput();
         gameData.addCardToHand(player.getId(), chosen);
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " drafts ", chosen,
-                " from " + interaction.sourceCardName() + "'s spellbook."));
+        // A drafted card goes into a hidden zone (CR 400.2): the line doesn't name it.
+        gameLogService.append(gameData, GameLog.text(
+                player.getUsername() + " drafts a card from " + interaction.sourceCardName() + "'s spellbook."));
 
         List<Card> draftedCards = new ArrayList<>(interaction.draftedCards());
         draftedCards.add(chosen);

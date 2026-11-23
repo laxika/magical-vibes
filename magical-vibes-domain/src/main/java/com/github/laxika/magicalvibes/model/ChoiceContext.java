@@ -2428,14 +2428,21 @@ public sealed interface ChoiceContext {
      *
      * <p>{@code sourcePermanentId} identifies the permanent whose consumed modes are recorded when
      * {@code consumeMode} is set. {@code asEnters} records a named mode on a permanent before its ETB
-     * abilities are collected.
+     * abilities are collected. {@code secret} is a choice the other players don't learn, a card drafted into a hand
+     * among modes named after the cards (CR 400.2): the chosen mode isn't logged.
      */
     record ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
                             UUID sourcePermanentId, boolean consumeMode,
-                            List<String> chosenLabels, boolean asEnters) implements ChoiceContext {
+                            List<String> chosenLabels, boolean asEnters, boolean secret) implements ChoiceContext {
 
         public ChooseModeChoice {
             chosenLabels = chosenLabels == null ? List.of() : List.copyOf(chosenLabels);
+        }
+
+        public ChooseModeChoice(Card sourceCard, UUID controllerId, ChooseOneEffect effect,
+                                UUID sourcePermanentId, boolean consumeMode,
+                                List<String> chosenLabels, boolean asEnters) {
+            this(sourceCard, controllerId, effect, sourcePermanentId, consumeMode, chosenLabels, asEnters, false);
         }
     }
 

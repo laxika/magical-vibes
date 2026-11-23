@@ -52,8 +52,9 @@ public class ConjureDuplicateOfExiledCardIntoTopFiveEffectHandler implements Nor
         int insertionBound = Math.min(4, library.size());
         int insertionIndex = ThreadLocalRandom.current().nextInt(insertionBound + 1);
         library.add(insertionIndex, duplicate);
-        gameLogService.append(gameData, GameLog.textCardText(
-                "A duplicate of ", duplicate, " is conjured into the top five cards of your library."));
+        gameLogService.append(gameData, GameLog.textCardText("A duplicate of ", duplicate,
+                " is conjured into the top five cards of "
+                        + gameData.playerIdToName.get(entry.getControllerId()) + "'s library."));
         ActionEvents.conjured(gameData, entry.getControllerId(), 1);
     }
 }

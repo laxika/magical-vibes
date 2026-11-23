@@ -51,8 +51,8 @@ public class ConjureDuplicateOfTargetCreatureCardFromOpponentGraveyardIntoHandEf
         duplicate.addStaticEffect(new PerpetualAnyManaTypeToCastSelfEffect());
         duplicate.freeze();
         gameData.addCardToHand(entry.getControllerId(), duplicate);
-        gameLogService.append(gameData, GameLog.textCardText(
-                "A duplicate of ", duplicate, " is conjured into your hand."));
+        gameLogService.append(gameData, GameLog.textCardText("A duplicate of ", duplicate,
+                " is conjured into " + gameData.playerIdToName.get(entry.getControllerId()) + "'s hand."));
         ActionEvents.conjured(gameData, entry.getControllerId(), 1);
     }
 }

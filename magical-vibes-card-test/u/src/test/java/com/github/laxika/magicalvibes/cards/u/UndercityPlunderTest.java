@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -163,5 +164,21 @@ class UndercityPlunderTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(ownEvokers.getPlusOnePlusOneCounters()).isEqualTo(1);
         assertThat(opponentsEvokers.getPlusOnePlusOneCounters()).isZero();
+    }
+
+    @Test
+    @DisplayName("The log doesn't name the random library card whose duplicate is conjured")
+    void logNamesNoRandomLibraryCard() {
+        harness.setLibrary(player2, List.of(new ThayanEvokers()));
+        harness.setHand(player2, new ArrayList<>(List.of(new Forest(), new Forest())));
+        cast();
+
+        harness.handleCardChosen(player2, 0);
+        harness.handleMayAbilityChosen(player2, false);
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Thayan Evokers"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                player1.getUsername() + " conjures a card into their hand."));
     }
 }

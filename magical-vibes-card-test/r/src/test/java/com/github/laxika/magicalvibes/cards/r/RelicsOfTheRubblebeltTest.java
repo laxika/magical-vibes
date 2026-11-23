@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -69,5 +70,30 @@ class RelicsOfTheRubblebeltTest extends BaseCardTest {
         assertThat(draftedPermanent.isTapped()).isTrue();
         assertThat(gd.playerHands.get(player1.getId())).hasSize(1);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("The log names the drafted card put onto the battlefield, not the one left in hand")
+    void logNamesNoDraftedCardLeftInHand() {
+        harness.setHand(player1, List.of(new RelicsOfTheRubblebelt()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+        Card firstChoice = gd.interaction.activeInteraction(PendingInteraction.DraftTwiceSpellbookChoice.class)
+                .cards().getFirst();
+        harness.handleMultipleCardsChosen(player1, List.of(firstChoice.getId()));
+        Card secondChoice = gd.interaction.activeInteraction(PendingInteraction.DraftTwiceSpellbookChoice.class)
+                .cards().stream().filter(card -> !card.getName().equals(firstChoice.getName()))
+                .findFirst().orElseThrow();
+        harness.handleMultipleCardsChosen(player1, List.of(secondChoice.getId()));
+        List<Card> hand = gd.playerHands.get(player1.getId());
+        int battlefieldIndex = hand.indexOf(firstChoice);
+        harness.handleCardChosen(player1, battlefieldIndex);
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(secondChoice);
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains(secondChoice.getName()));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().contains(firstChoice.getName()));
     }
 }

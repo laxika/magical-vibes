@@ -113,7 +113,7 @@ class RakdosTheShowstopperTest extends BaseCardTest {
                 .filter(log -> log.endsWith("for " + creatureName + "."))
                 .findFirst()
                 .orElseThrow();
-        boolean lost = flipLog.contains(" loses the coin flip ");
+        boolean lost = flipLog.contains(" comes up tails ");
         boolean onBattlefield = gd.playerBattlefields.values().stream()
                 .flatMap(List::stream)
                 .anyMatch(permanent -> permanent.getCard().getName().equals(creatureName));
@@ -123,5 +123,18 @@ class RakdosTheShowstopperTest extends BaseCardTest {
 
         assertThat(onBattlefield != inGraveyard).isTrue();
         assertThat(inGraveyard).isEqualTo(lost);
+    }
+
+    @Test
+    @DisplayName("The log says which way each coin comes up, as no player wins or loses these flips")
+    void logNamesNoWinnerOfTheFlips() {
+        harness.addToBattlefield(player2, new GrizzlyBears());
+
+        castRakdos();
+
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText))
+                .noneMatch(log -> log.contains("wins the coin flip") || log.contains("loses the coin flip"))
+                .anyMatch(log -> log.matches(player1.getUsername()
+                        + "'s coin flip for Rakdos, the Showstopper comes up (heads|tails) for Grizzly Bears\\."));
     }
 }

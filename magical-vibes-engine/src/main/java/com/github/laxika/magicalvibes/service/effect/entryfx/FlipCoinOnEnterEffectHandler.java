@@ -92,11 +92,9 @@ public class FlipCoinOnEnterEffectHandler implements EntryReplacementHandlerBean
         boolean heads = result.heads();
         String sourceName = FaceDownVisibility.publicName(gameData, enteringPermanent);
 
-        String flipLog = heads
-                ? gameData.playerIdToName.get(controllerId) + " wins the coin flip for " + sourceName
-                        + coinFlipService.replacementDetails(result) + "."
-                : gameData.playerIdToName.get(controllerId) + " loses the coin flip for " + sourceName
-                        + coinFlipService.replacementDetails(result) + ".";
+        // A flip that cares only whether the coin comes up heads or tails has no winner (CR 705.2).
+        String flipLog = gameData.playerIdToName.get(controllerId) + "'s coin flip for " + sourceName
+                + " comes up " + (heads ? "heads" : "tails") + coinFlipService.replacementDetails(result) + ".";
         gameLogService.append(gameData, GameLog.text(flipLog));
         int power = heads ? flipEffect.headsPower() : flipEffect.tailsPower();
         int toughness = heads ? flipEffect.headsToughness() : flipEffect.tailsToughness();

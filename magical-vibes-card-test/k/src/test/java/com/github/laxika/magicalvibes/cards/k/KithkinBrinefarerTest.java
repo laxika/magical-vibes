@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.PerpetualPowerToughnessModifier;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -170,5 +171,21 @@ class KithkinBrinefarerTest extends BaseCardTest {
                 .filteredOn(card -> card.getName().equals("Kithkin Brinefarer"))
                 .hasSize(2);
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The log doesn't name the drawn card whose duplicate is conjured")
+    void logNamesNoDrawnCard() {
+        harness.addToBattlefield(player1, new KithkinBrinefarer());
+        harness.setHand(player1, List.of());
+        harness.setLibrary(player1, List.of(new KithkinBrinefarer()));
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCards(gd, player1.getId(), 1));
+        resolveAllTriggers();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("is conjured"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                player1.getUsername() + " conjures a card into their hand."));
     }
 }

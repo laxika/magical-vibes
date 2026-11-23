@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -158,5 +159,18 @@ class NaktamunShinesAgainTest extends BaseCardTest {
         harness.clearPriorityPassed();
         harness.passBothPriorities();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Chapter I logs one line that counts no card")
+    void chapterILogsNoCount() {
+        harness.setHand(player1, List.of(new GrizzlyBears(), new GrizzlyBears()));
+        addSaga(0);
+
+        triggerChapter();
+
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals("Naktamun Shines Again perpetually gives"
+                + " +1/+0 to each creature card its controller owns with mana value 2 or less."));
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("card(s)"));
     }
 }

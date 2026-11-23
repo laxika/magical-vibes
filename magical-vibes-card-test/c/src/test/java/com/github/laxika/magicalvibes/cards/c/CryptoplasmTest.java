@@ -256,4 +256,20 @@ class CryptoplasmTest extends BaseCardTest {
 
         assertThat(cryptoplasm.getCard().getName()).isEqualTo("Blisterstick Shaman");
     }
+
+    @Test
+    @DisplayName("Becoming a copy is logged as a copy, not as a lost target")
+    void copyIsLoggedAsCopy() {
+        addCreatureReady(player1, new Cryptoplasm());
+        addCreatureReady(player2, new GrizzlyBears());
+        UUID bearsId = harness.getPermanentId(player2, "Grizzly Bears");
+
+        advanceToUpkeep(player1);
+        harness.handlePermanentChosen(player1, bearsId);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("is no longer on the battlefield"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals("Cryptoplasm becomes a copy of Grizzly Bears."));
+    }
 }

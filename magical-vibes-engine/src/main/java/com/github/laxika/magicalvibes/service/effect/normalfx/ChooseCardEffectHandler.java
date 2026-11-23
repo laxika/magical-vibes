@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.StepOutcome;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
@@ -24,7 +25,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -107,7 +110,7 @@ public class ChooseCardEffectHandler implements NormalEffectHandlerBean {
                     offered.stream().map(LocatedCard::card).toList(), most, choose.upTo() ? 0 : most, prompt);
             return;
         }
-        record(gameData, entry, candidates.stream()
+        record(gameData, entry, choose, candidates.stream()
                 .filter(located -> picked.contains(located.card().getId())).toList(), chooserId, hidden);
     }
 
@@ -117,7 +120,27 @@ public class ChooseCardEffectHandler implements NormalEffectHandlerBean {
                 AmountContext.forStackEntry(entry, entry.getSourcePermanentSnapshot()));
         List<LocatedCard> drawn = new ArrayList<>(candidates);
         Collections.shuffle(drawn, ThreadLocalRandom.current());
-        record(gameData, entry, List.copyOf(drawn.subList(0, Math.clamp(wanted, 0, drawn.size()))), null, hidden);
+        record(gameData, entry, choose,
+                List.copyOf(drawn.subList(0, Math.clamp(wanted, 0, drawn.size()))), null, hidden);
+    }
+
+    /**
+     * A choice among cards in a hand or library that nothing revealed (CR 400.2): one line for each hand or library
+     * chosen from, which names no card and counts none but as the instruction does ("a card", "cards"); the step that
+     * moves the cards says what everybody sees.
+     */
+    private void logHiddenChoice(GameData gameData, ChooseCardEffect choose, List<LocatedCard> chosen,
+                                 UUID chooserId) {
+        boolean one = choose.each().isEmpty()
+                && choose.count() instanceof Fixed fixed && fixed.value() == 1;
+        Set<String> lines = new LinkedHashSet<>();
+        for (LocatedCard card : chosen) {
+            String where = gameData.playerIdToName.get(card.ownerId()) + "'s "
+                    + (card.zone() == Zone.HAND ? "hand" : "library");
+            String how = chooserId == null ? " chosen at random." : " chosen.";
+            lines.add(one ? "A card in " + where + " is" + how : "Cards in " + where + " are" + how);
+        }
+        lines.forEach(line -> gameLogService.append(gameData, GameLog.text(line)));
     }
 
     private boolean matches(GameData gameData, StackEntry entry, LocatedCard located, ChooseCardEffect.Each each) {
@@ -127,8 +150,8 @@ public class ChooseCardEffectHandler implements NormalEffectHandlerBean {
                 judged, each.filter(), entry.getCard().getId(), gameData, located.ownerId());
     }
 
-    private void record(GameData gameData, StackEntry entry, List<LocatedCard> chosen, UUID chooserId,
-                        boolean hidden) {
+    private void record(GameData gameData, StackEntry entry, ChooseCardEffect choose, List<LocatedCard> chosen,
+                        UUID chooserId, boolean hidden) {
         List<UUID> cardIds = new ArrayList<>();
         List<UUID> ownerIds = new ArrayList<>();
         List<MovedCard> moved = new ArrayList<>();
@@ -142,14 +165,12 @@ public class ChooseCardEffectHandler implements NormalEffectHandlerBean {
         }
         entry.recordStep(StepKind.CHOOSE,
                 cardIds.isEmpty() ? StepOutcome.NONE : StepOutcome.ofObjects(cardIds, ownerIds, moved));
+        if (hidden) {
+            logHiddenChoice(gameData, choose, chosen, chooserId);
+            return;
+        }
         for (LocatedCard card : chosen) {
-            if (hidden) {
-                // Nothing revealed it (CR 400.2): the step that moves it says what everybody sees.
-                gameLogService.append(gameData, GameLog.text("A card in "
-                        + gameData.playerIdToName.get(card.ownerId()) + "'s "
-                        + (card.zone() == Zone.HAND ? "hand" : "library")
-                        + (chooserId == null ? " is chosen at random." : " is chosen.")));
-            } else if (chooserId == null) {
+            if (chooserId == null) {
                 gameLogService.append(gameData, gameData.isExiledFaceDown(card.card().getId())
                         ? GameLog.text("A face-down card in exile is chosen at random.")
                         : GameLog.cardThen(card.card(), " is chosen at random."));

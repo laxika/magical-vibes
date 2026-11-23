@@ -61,9 +61,9 @@ public class EachPlayerDiscardsHandThenConjuresFromAdjacentPlayerLibraryEffectHa
                 duplicate.freeze();
                 gameData.perpetualAnyColorManaForCastCardIds.add(duplicate.getId());
                 gameData.addCardToHand(playerId, duplicate);
-                gameLogService.append(gameData, GameLog.cardThen(duplicate, " is conjured into "
-                        + gameData.playerIdToName.get(playerId) + "'s hand."));
             }
+            gameLogService.append(gameData, GameLog.conjuresIntoHand(
+                    gameData.playerIdToName.get(playerId), conjure.count()));
             ActionEvents.conjured(gameData, playerId, conjure.count());
         }
     }

@@ -79,9 +79,10 @@ public class PerpetualBoostOwnCreatureCardsEffectHandler implements NormalEffect
             }
         }
 
-        gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
-                .text("perpetually gives +" + boost.powerBoost() + "/+0 to "
-                        + affectedCardIds.size() + " creature card(s).").build());
+        // Most of those cards are in a hand or library (CR 400.2): the line counts none of them.
+        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " perpetually gives +" + boost.powerBoost()
+                + "/+0 to each creature card its controller owns with mana value " + boost.maxManaValue()
+                + " or less."));
     }
 
     private void collectZone(List<Card> cards, UUID ownerId,

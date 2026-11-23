@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -62,5 +63,25 @@ class JuggleThePerformanceTest extends BaseCardTest {
 
         assertThat(ownEvokers.getPlusOnePlusOneCounters()).isEqualTo(1);
         assertThat(opponentEvokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The log doesn't name the random library cards whose duplicates are conjured")
+    void logNamesNoRandomLibraryCard() {
+        harness.setHand(player1, List.of(new JuggleThePerformance()));
+        harness.setHand(player2, List.of(new Forest()));
+        harness.setLibrary(player1, List.of(new ThayanEvokers()));
+        harness.setLibrary(player2, List.of(new ThayanEvokers()));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castSorcery(player1, 0);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(7);
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Thayan Evokers"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                player1.getUsername() + " conjures 7 cards into their hand."));
     }
 }

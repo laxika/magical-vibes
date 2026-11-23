@@ -85,12 +85,17 @@ public class SpellbookDraftChoiceInteractionHandler
             gameData.pendingEffectResolutionEntry.insertEffectsToResolve(
                     gameData.pendingEffectResolutionIndex, interaction.chosenCardEffects());
         }
-        String destination = interaction.putChosenCardOntoBattlefield()
-                ? " onto the battlefield" : interaction.exileChosenCard() ? " into exile" : "";
-        gameLogService.append(gameData, GameLog.textCardText(
-                gameData.playerIdToName.get(interaction.playerId())
-                        + (interaction.conjure() ? " conjures " : " drafts "), chosen,
-                " from " + interaction.sourceCardName() + "'s spellbook" + destination + "."));
+        // A card drafted into a hand, or held, is hidden (CR 400.2): the draft was announced as "a card", and only a
+        // card that goes public or is revealed is named.
+        if (interaction.putChosenCardOntoBattlefield() || interaction.exileChosenCard()
+                || interaction.revealChosenCard()) {
+            String destination = interaction.putChosenCardOntoBattlefield()
+                    ? " onto the battlefield" : interaction.exileChosenCard() ? " into exile" : "";
+            gameLogService.append(gameData, GameLog.textCardText(
+                    gameData.playerIdToName.get(interaction.playerId())
+                            + (interaction.conjure() ? " conjures " : " drafts "), chosen,
+                    " from " + interaction.sourceCardName() + "'s spellbook" + destination + "."));
+        }
         if (interaction.conjure()) {
             ActionEvents.conjured(gameData, interaction.playerId(), 1);
         }

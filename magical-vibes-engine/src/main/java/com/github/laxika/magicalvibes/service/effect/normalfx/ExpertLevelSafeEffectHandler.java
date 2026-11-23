@@ -67,7 +67,8 @@ public class ExpertLevelSafeEffectHandler implements NormalEffectHandlerBean {
 
         List<CardEffect> followUp = state.controllerChoice.equals(state.opponentChoice)
                 ? List.of(new SacrificeSelfEffect(), new PutAllCardsExiledWithSourceIntoOwnersHandsEffect())
-                : List.of(new ExileTopCardsToSourceEffect(1, true));
+                // "You don't get to look at the cards exiled by Expert-Level Safe's abilities" (its ruling).
+                : List.of(ExileTopCardsToSourceEffect.faceDownWithoutLookPermission(1));
         int effectIndex = entry.getEffectsToResolve().indexOf(effect);
         if (effectIndex < 0) {
             throw new IllegalStateException("Could not locate Expert-Level Safe effect on stack entry");

@@ -64,7 +64,8 @@ public class ConjureDuplicateOfEnlistedCreatureIntoTopFiveEffectHandler implemen
         int insertionIndex = ThreadLocalRandom.current().nextInt(insertionBound + 1);
         library.add(insertionIndex, duplicate);
         ActionEvents.conjured(gameData, controllerId, 1);
-        gameLogService.append(gameData, GameLog.textCardText(
-                "A duplicate of ", duplicate, " is conjured into the top five cards of your library."));
+        gameLogService.append(gameData, GameLog.textCardText("A duplicate of ", duplicate,
+                " is conjured into the top five cards of "
+                        + gameData.playerIdToName.get(controllerId) + "'s library."));
     }
 }

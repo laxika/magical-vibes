@@ -33,7 +33,7 @@ class MoltenSentryTest extends BaseCardTest {
                     .filter(log -> log.contains("coin flip for Molten Sentry"))
                     .findFirst()
                     .orElseThrow();
-            if (flipLog.contains("wins the coin flip")) {
+            if (flipLog.contains("comes up heads")) {
                 assertThat(gqs.getEffectivePower(gd, sentry)).isEqualTo(5);
                 assertThat(gqs.getEffectiveToughness(gd, sentry)).isEqualTo(2);
                 assertThat(gqs.hasKeyword(gd, sentry, Keyword.HASTE)).isTrue();
@@ -119,5 +119,17 @@ class MoltenSentryTest extends BaseCardTest {
         assertThat(gqs.getEffectiveToughness(gd, sentry)).isEqualTo(1);
         assertThat(gqs.hasKeyword(gd, sentry, Keyword.HASTE)).isFalse();
         assertThat(gqs.hasKeyword(gd, sentry, Keyword.DEFENDER)).isFalse();
+    }
+
+    @Test
+    @DisplayName("No player wins or loses the heads-or-tails entry flip, and the log says so")
+    void entryFlipHasNoWinner() {
+        harness.castFromHand(player1, new MoltenSentry(), "{3}{R}");
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("wins the coin flip")
+                || line.plainText().contains("loses the coin flip"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().matches(
+                player1.getUsername() + "'s coin flip for Molten Sentry comes up (heads|tails)\\."));
     }
 }

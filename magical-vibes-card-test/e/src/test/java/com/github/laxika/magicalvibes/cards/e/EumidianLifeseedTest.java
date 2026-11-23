@@ -104,4 +104,25 @@ class EumidianLifeseedTest extends BaseCardTest {
         assertThat(gd.playerManaPools.get(player1.getId()).getLandAbilityOnlyMana(ManaColor.GREEN)).isEqualTo(1);
         harness.assertInHand(player1, "Eumidian Lifeseed");
     }
+
+    @Test
+    @DisplayName("The log doesn't name the drafted card")
+    void logNamesNoDraftedCard() {
+        harness.setHand(player1, List.of(new EumidianLifeseed()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castArtifact(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        com.github.laxika.magicalvibes.model.ChoiceContext.ChooseModeChoice context =
+                (com.github.laxika.magicalvibes.model.ChoiceContext.ChooseModeChoice) gd.interaction
+                        .activeInteraction(PendingInteraction.ColorChoice.class).context();
+        String chosenName = context.effect().options().getFirst().label();
+        harness.handleListChoice(player1, chosenName);
+
+        harness.assertInHand(player1, chosenName);
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains(chosenName));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                player1.getUsername() + " drafts a card from Eumidian Lifeseed's spellbook into their hand."));
+    }
 }

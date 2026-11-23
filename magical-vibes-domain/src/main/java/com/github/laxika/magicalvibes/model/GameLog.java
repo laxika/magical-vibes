@@ -51,6 +51,15 @@ public final class GameLog {
         return text(playerName + " puts no card onto the battlefield.");
     }
 
+    /**
+     * "{player} conjures a card into their hand." for a conjure into a hand whose card the text doesn't name: a random
+     * card, a duplicate of a card in a hidden zone, a card chosen or drafted from a spellbook. The hand is hidden
+     * (CR 400.2) but its size isn't, so the line counts the cards.
+     */
+    public static GameLogEntry conjuresIntoHand(String playerName, int count) {
+        return text(playerName + " conjures " + (count == 1 ? "a card" : count + " cards") + " into their hand.");
+    }
+
     public static GameLogEntry isDestroyed(Card card) {
         return builder().card(card).text(" is destroyed.").build();
     }

@@ -780,8 +780,7 @@ public class MayCopyHandlerService {
         }
 
         String targetName = FaceDownVisibility.publicName(gameData, targetPerm);
-        
-        gameLogService.append(gameData, GameLog.cardThen(sourceCard, "'s copy target is no longer on the battlefield."));
+        gameLogService.append(gameData, GameLog.text(originalName + " becomes a copy of " + targetName + "."));
         log.info("Game {} - {} becomes a copy of {}", gameData.id, originalName, targetName);
 
         playerInputService.processNextMayAbility(gameData);

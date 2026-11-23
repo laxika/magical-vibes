@@ -39,8 +39,8 @@ public class ChooseCreatureCardFromHandAndConjureDuplicateIntoHandEffectHandler
             duplicate.setOwnerId(entry.getControllerId());
             duplicate.freeze();
             gameData.addCardToHand(entry.getControllerId(), duplicate);
-            gameLogService.append(gameData, GameLog.cardThen(duplicate, " is conjured into "
-                    + gameData.playerIdToName.get(entry.getControllerId()) + "'s hand."));
+            gameLogService.append(gameData, GameLog.conjuresIntoHand(
+                    gameData.playerIdToName.get(entry.getControllerId()), 1));
             ActionEvents.conjured(gameData, entry.getControllerId(), 1);
             return;
         }

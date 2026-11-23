@@ -78,8 +78,8 @@ public class ExileTargetCreatureCardThenConjureSkeletonDuplicateEffectHandler
         duplicate.freeze();
 
         graveyardService.addCardToGraveyard(gameData, entry.getControllerId(), duplicate);
-        gameLogService.append(gameData, GameLog.textCardText(
-                "A modified duplicate of ", targetCard, " is conjured into your graveyard."));
+        gameLogService.append(gameData, GameLog.textCardText("A modified duplicate of ", targetCard,
+                " is conjured into " + gameData.playerIdToName.get(entry.getControllerId()) + "'s graveyard."));
         ActionEvents.conjured(gameData, entry.getControllerId(), 1);
     }
 }

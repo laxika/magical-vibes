@@ -56,16 +56,16 @@ public class TargetPlayerDiscardsHandThenSeeksEffectHandler implements NormalEff
                             card, seekEffect.seekFilter(), null, gameData, targetPlayerId))
                     .toList());
             if (matchingCards.isEmpty()) {
-                gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
-                        .text("seeks but finds no matching card.").build());
+                gameLogService.append(gameData,
+                        GameLog.cardThen(entry.getCard(), " seeks but finds no matching card."));
                 break;
             }
 
             Card chosen = matchingCards.get(ThreadLocalRandom.current().nextInt(matchingCards.size()));
             library.remove(chosen);
             gameData.addCardToHand(targetPlayerId, chosen);
-            gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
-                    .text("seeks and puts " + chosen.getName() + " into hand.").build());
+            // A sought card is a random library card (CR 400.2): the line doesn't name it.
+            gameLogService.append(gameData, GameLog.cardThen(entry.getCard(), " seeks a card into hand."));
         }
     }
 }

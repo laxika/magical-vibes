@@ -68,6 +68,11 @@ Why: two abilities of one source are separately targetable.
 Owner: `FaceDownVisibility`; applied by `GameViewProjectionFactory` (stack views) and `GameLogService.append` (card segments; `appendRevealing` for a reveal).
 Why: the card's name, or its printing alone, tells an opponent what was cast face down.
 
+### The log names no card of a hand or library the text doesn't make public (CR 400.2)
+The log is one list every player reads: a random, drafted, sought or chosen card going into a hand or library is "a card" (`GameLog.conjuresIntoHand`), a perpetual change to cards there is one line with no name or count (`PerpetualChangeLog`), and lines name players, not "you".
+Owner: `GameLogService` (no per-player entries); the logging handler.
+Why: a log line is the only place other players would learn the card.
+
 ### A player's prompt names the face-down objects that player may look at (CR 708.5, 708.6)
 Text only one player reads (their prompt, option labels, error) names a face-down spell or permanent they control, or control the controller of, through `FaceDownVisibility.nameShownTo(gameData, entry or permanent, viewerId)`; the log, events, views and any text several players read keep `publicName`/`sourceName`. A permanent is seen by its current controller, not its owner.
 Owner: `FaceDownVisibility.maySee`; applied by `InteractionPromptProjectionRegistry` (combat damage assignment) and `DamageContext.nameShownToChooser` (replacement-order labels, which answers match, so both sides use the event's chooser).

@@ -66,8 +66,8 @@ public class ConjureDuplicateOfTargetPermanentIntoGraveyardWithUnearthEffectHand
 
         gameData.perpetualGraveyardAbilities.put(
                 duplicate.getId(), List.of(Card.unearthAbility(UNEARTH_COST)));
-        gameLogService.append(gameData, GameLog.textCardText(
-                entry.getCard().getName() + " conjures a duplicate of ", target.getCard(),
-                " into your graveyard with unearth " + UNEARTH_COST + "."));
+        gameLogService.append(gameData, GameLog.cardTextCard(entry.getCard(), " conjures a duplicate of ",
+                target.getCard(), " into " + gameData.playerIdToName.get(entry.getControllerId())
+                        + "'s graveyard with unearth " + UNEARTH_COST + "."));
     }
 }

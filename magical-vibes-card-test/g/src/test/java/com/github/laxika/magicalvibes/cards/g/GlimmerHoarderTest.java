@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -106,5 +107,22 @@ class GlimmerHoarderTest extends BaseCardTest {
         harness.forceActivePlayer(activePlayer);
         harness.forceStep(TurnStep.END_OF_COMBAT);
         harness.passUntil(activePlayer, TurnStep.POSTCOMBAT_MAIN);
+    }
+
+    @Test
+    @DisplayName("The log doesn't name the drafted card that becomes an enchantment")
+    void logNamesNoDraftedCard() {
+        Permanent hoarder = harness.addToBattlefieldAndReturn(player1, new GlimmerHoarder());
+        hoarder.tap();
+
+        advanceToPostcombatMain(player1);
+        harness.passBothPriorities();
+        Card selected = ((PendingInteraction.SpellbookCardChoice) gd.interaction.activeInteraction())
+                .cards().getFirst();
+        harness.handleMultipleCardsChosen(player1, java.util.List.of(selected.getId()));
+
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains(selected.getName()));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(player1.getUsername()
+                + " drafts a card from a spellbook into their hand. It perpetually becomes an enchantment."));
     }
 }

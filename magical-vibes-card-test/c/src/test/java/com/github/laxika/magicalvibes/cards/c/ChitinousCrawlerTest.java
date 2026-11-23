@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -186,5 +187,21 @@ class ChitinousCrawlerTest extends BaseCardTest {
 
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The shared log names the player whose graveyard gets the duplicate, not \"your graveyard\"")
+    void logNamesThePlayerWhoseGraveyardGetsTheDuplicate() {
+        GrizzlyBears target = new GrizzlyBears();
+        harness.setGraveyard(player1, List.of(target));
+        harness.addToBattlefield(player1, new ChitinousCrawler());
+
+        harness.passUntil(player1, TurnStep.BEGINNING_OF_COMBAT);
+        harness.handleMultipleCardsChosen(player1, List.of(target.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("your graveyard"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                "A duplicate of Grizzly Bears is conjured into " + player1.getUsername() + "'s graveyard."));
     }
 }

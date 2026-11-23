@@ -85,7 +85,7 @@ public class DraftCardFromSpellbookEffectHandler implements NormalEffectHandlerB
                 false, 1, false, null,
                 false, false, false, draft.battlefieldSelectionFollowUp(),
                 false, false, false, false, null,
-                false, null);
+                false, null).withRevealSelected(selectedToBattlefield || draft.revealChosenCard());
         if (draft.makeSelectedArtifactCreature()) {
             choice = choice.withSelectedCardFollowUp(
                     new CardTruePredicate(),

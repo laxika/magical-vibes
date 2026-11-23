@@ -69,8 +69,8 @@ public class ReturnCardAndConjureOpponentGraveyardDuplicateEffectHandler
             duplicate.freeze();
             gameData.addCardToHand(controllerId, duplicate);
             conjuredCount++;
-            gameLogService.append(gameData, GameLog.textCardText(
-                    "A duplicate of ", duplicate, " is conjured into your hand."));
+            gameLogService.append(gameData, GameLog.textCardText("A duplicate of ", duplicate,
+                    " is conjured into " + gameData.playerIdToName.get(controllerId) + "'s hand."));
         }
         ActionEvents.conjured(gameData, controllerId, conjuredCount);
     }

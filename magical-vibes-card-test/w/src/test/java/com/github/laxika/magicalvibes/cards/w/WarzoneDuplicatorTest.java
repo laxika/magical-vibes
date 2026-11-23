@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -102,5 +103,17 @@ class WarzoneDuplicatorTest extends BaseCardTest {
                 .validIds()).contains(target.getId());
         harness.handlePermanentChosen(player1, target.getId());
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("The shared log names the player who gets the duplicate, not \"your hand\"")
+    void logNamesThePlayerWhoGetsTheDuplicate() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        harness.enterBattlefieldAndReturn(player1, new WarzoneDuplicator());
+        chooseTarget(target);
+
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("your hand"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                "A duplicate of Grizzly Bears is conjured into " + player1.getUsername() + "'s hand."));
     }
 }

@@ -254,4 +254,19 @@ class StoryweaveTest extends BaseCardTest {
                 .reduce((first, second) -> second)
                 .orElseThrow();
     }
+
+    @Test
+    @DisplayName("The shared log names the player whose next enchantment creature gets the counters")
+    void logNamesThePlayer() {
+        Permanent saga = addSagaTarget();
+        harness.setHand(player1, List.of(new Storyweave()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castInstant(player1, 0, 1, saga.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("your control"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().startsWith(
+                "The next enchantment creature entering under " + player1.getUsername() + "'s control this turn"));
+    }
 }

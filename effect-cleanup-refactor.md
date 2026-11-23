@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,251 `step-9` rows in 293 batches, 49 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Next: fold run 1 of the Fold queue. Waiting on the owner: 78 rows (hidden-zone logging 73, perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Next: fold run 1 of the Fold queue. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -64,10 +64,10 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 4,862 rows over 4,404 classes, the consolidation's 102 included. Latest verdict per class:
-`step-9` 1,251, unique 1,161, absorbed 506, blocked-other 487, split 454, survivor 258, blocked-step-model 140, blocked-player-loop 97,
-dead 50. Waiting: 1,251 `step-9` rows for fold runs; 78 rows on the owner's open questions (hidden-zone logging 73, perpetual "it" 3,
-gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 4,935 rows over 4,404 classes, the consolidation's 102 and defect run
+D10's 73 included. Latest verdict per class: `step-9` 1,322, unique 1,161, absorbed 506, split 454, blocked-other 415, survivor 259,
+blocked-step-model 140, blocked-player-loop 97, dead 50. Waiting: 1,322 `step-9` rows for fold runs; 5 rows on the owner's open
+questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
 
@@ -276,8 +276,8 @@ Each run ends with its family row in Findings: audited, absorbed, split, blocked
 | Create | 19–20 | closed; token copies read copiable values |
 | Prevent | 20–24 | closed; `PreventDamageToRecipientsEffect`, preventions moved into the damage pools |
 | May | 25–27 | closed; 11 cost combinators listed for step 10 |
-| Perpetually | 27–29, P16 | triaged: the hand and library records wait for the owner's logging and "it" decisions |
-| Conjure | 29–31, P16 | triaged: the hand and library conjures wait for the logging decision; the CONJURE step, duplicate-destination and graveyard-ability store batches are in the Fold queue |
+| Perpetually | 27–29, P16, D10 | triaged: the hand and library records are in fold run 12b since D10; three wait for the owner's "it" decision |
+| Conjure | 29–31, P16, D10 | triaged: the hand and library conjures are in fold run 12a since D10; the CONJURE step, duplicate-destination and graveyard-ability store batches are in the Fold queue |
 | Register | 30–34 | closed; the delayed step and event registrations, `NoteAmountEffect` |
 | Target | 32–41 | closed; `PlayerRestrictionEffect`, the gain-control and choose-permanents choosers, one cast check |
 | Every other rare record (+ 34 stale step-4/5 rows) | T1–T7, P01–P16 | triaged, no code changed (T*n* = triage run *n*, P*nn* = parallel chunk *nn*): every rare record has a verdict; the fold batches, defects and re-triage rows are merged into the Fold queue, Defect queue and Re-triage sections (Standing knowledge) |
@@ -354,6 +354,14 @@ step 8's run N); its full text is in the git history named at the top.
   player who may not look at it; a name prompt offers only the catalog's names and names of cards the chooser can know
   (`PlayerInputService.cardNamesOfferedTo`, checked by `ChoiceHandlerService.isCardNameAllowed`); the AI answers from what it can know
   (runs 12 to 16, 27).
+- **The public log says only what the card's text makes public** (owner's decision 2026-11-23; CR 400.2). The game log is one list every
+  player gets (`GameLogService` emits to all players; `GameLogEntry` has no audience), so nothing is logged for one player: the owner's
+  hand shows the card. A conjure of a card the text names may name it; a random pick (a random spellbook card, a random library card,
+  a sought card) and a drafted or chosen spellbook card going into a hand are "a card" (`GameLog.conjuresIntoHand`), and so is a
+  duplicate of a hidden card (a library or hand card, a drawn card); a duplicate of a public card may be named. A perpetual change to
+  cards in a hand or library is one line per hand or library with no name and no count, logged also when no card there matches
+  (`PerpetualChangeLog`); a choice among hidden cards is one line counting no more than the instruction does (`ChooseCardEffectHandler`).
+  A hand count is public (CR 402.3), so "conjures 7 cards" is fine. Lines name players, never "you" (defect run D10).
 
 **Rules a fold must keep:**
 
@@ -471,7 +479,7 @@ Counts are ledger rows of existing classes whose latest note names the cause (ap
 | A delayed trigger shape (end-of-combat, coin flip, the old delayed mechanism) | about 20 | the delayed-mechanism unification onto `RegisterDelayed*` |
 | Planar deck cards | 9 | a card subject for the planar deck with its reveal, bottom-order and planeswalk steps |
 | Next-draw replacement payloads (`DrawService`'s inline payloads) | about 20 | a "this draw was replaced" record in `DrawService` |
-| Owner's questions (hidden-zone logging, perpetual "it", gift opponent) | 78 | the owner's decisions below |
+| Owner's questions (perpetual "it", gift opponent) | 5 | the owner's decisions below |
 | A token controller on `CreateTokenEffect` / the token copies | 8 | a `PlayerSubject` token controller with the Esix, investigate and attack paths agreeing |
 | Out-of-battlefield characteristics (the all-zones grants) | 5 | a redesign of the out-of-battlefield characteristic queries (outside this plan) |
 | One or two classes each | most of the other blocked-other rows | a third user; each note names the part |
@@ -502,7 +510,8 @@ the 3+-card fold leads are Fold queue rows (`delayed-leads`, `life-lock`, `copie
   count and no per-card lines. Where the log can address one player, the owner also gets the details; otherwise the owner's hand shows
   the card. This unblocks the 73 rows that waited on the question: re-verdict them as fold candidates, and fix today's leaks
   (`DraftCardIntoHandEffect` naming the drafted card, Hydroponics Architect naming its random library card, the per-card perpetual
-  hand lines) in a defect run with failing-first tests.
+  hand lines) in a defect run with failing-first tests. Done in defect run D10: the leaks fixed, the rule under Conventions, the 73 rows
+  re-verdicted (71 `step-9` in fold runs 12, 12a, 12b and 20; one survivor; Territorial Strike's `blocked-other` for a beheld-object subject).
 
 ### The owner's open questions
 
@@ -524,7 +533,7 @@ the 3+-card fold leads are Fold queue rows (`delayed-leads`, `life-lock`, `copie
 
 ### Fold and defect queues
 
-The fold queue (293 batches over 1,251 `step-9` rows, ordered into 49 fold runs), the defect queue (220 defects in nine groups,
+The fold queue (299 batches over 1,322 `step-9` rows, ordered into 51 fold runs), the defect queue (220 defects in nine groups,
 proposed as twelve defect runs) and the re-triage list are in `effect-cleanup-queues.md`. A fold or defect run reads its own rows
 there and updates them when it lands.
 
@@ -807,6 +816,71 @@ baselines. New cases in 12 card test classes. No assertion was loosened.
 
 **For the next run.** Fold runs as triage runs 3 to 5 recommend. Giant Albatross and Last Light of Durin's Day each need a piece named in
 the open defects; Rakdos Charm waits with the bite's simultaneous damage.
+
+### Step 9, defect run D10 (2026-11-23)
+
+Defect run D10 (logs and hidden information) with the owner's hidden-zone logging decision, no folding. Ratchet unchanged at
+4,044 / 3,299 (no record went away; `PerpetualChangeLog` is a helper, not a handler). Ledger: 73 rows appended for the rows that waited on the
+decision (71 `step-9`, `ConjureSpellbookIntoLibraryEffect` `survivor`, `DestroyTargetPermanentThenPerpetuallyBoostEffect` `blocked-other`).
+Two card files changed (Pinchy McStingbutt's `.revealed()`; no card rewritten otherwise). Oracle text checked with `get_card` for
+Hydroponics Architect, Undercity Plunder, Clone Crafter, Agent of Raffine, Juggle the Performance, Runecarved Obelisk, Cerise, Chaos Balor,
+Naktamun Shines Again, Holographic Double, Spellchain Scatter, Scalesoul Gnome, Kithkin Brinefarer, Tome of Gadwick, Pinchy McStingbutt,
+Stormkeld Curator // Giant Secrets, Mischievous Lookout, Kavaron Consumed, Housemeld, Eumidian Lifeseed, Tireless Angler, Saint Elenda,
+Glimmer Hoarder, Relics of the Rubblebelt, Support Skyforge, Swine Rebellion, Ravenous Pursuit, Molten Sentry and Rakdos, the Showstopper;
+rulings with `get_rulings` for Juggle the Performance (none) and Expert-Level Safe. CR 400.2, 402.3, 406.3, 705.2, 705.3, 707.2, 708.2,
+708.2a checked with `get_rule` (2026-11-23).
+
+**Can the log address one player?** No. `GameLogEntry` has segments and no audience; `GameLogService.record` emits
+`GameLogAppended` to `GameEventAudience.allPlayers()`, and `JoinGame` sends the whole log to every seat. No per-player line was built: the
+owner's hand shows the card. The rule is under Conventions ("The public log says only what the card's text makes public") and in
+`agent-docs/architecture/casting-stack.md`.
+
+| Defect | Verdict | Test (failed first?) |
+|---|---|---|
+| `DraftCardIntoHandEffect` named the drafted card; so did the draft mode label, `SpellbookDraftChoice` (into a hand), `SpellbookCardChoice` (conjure or draft into hand, may-cast, enchantment), the draft-twice and the artifact-creature draft lines | fixed: "X drafts a card from S's spellbook into their hand.", the mode label of a draft into a hand unlogged (`ChooseModeChoice.secret`, `PlayerInputService.beginSecretChooseModeChoice`), the card named only when it goes public or is revealed; the Skyforge selection is `withRevealSelected(false)` and the rest-to-exile branch honours it | Eumidian Lifeseed, Tireless Angler, Saint Elenda, Glimmer Hoarder, Relics of the Rubblebelt, Support Skyforge, Swine Rebellion (yes, all) |
+| Hydroponics Architect named its random library card | fixed: "A random land card in X's library perpetually becomes ..." | `HydroponicsArchitectTest.logNamesNoLibraryCard` (yes) |
+| `PerpetuallyGrantAbilitiesEffect`, `PerpetuallyChangeCastCostEffect` logged one line per hidden card (a count) | fixed: `PerpetualChangeLog`, one "Each affected card in X's hand ..." line per hand or library, also when none matches | Rope-Line Attendant (2), Racketeer Boss (yes, all) |
+| `ChooseCardEffectHandler` logged one line per hidden chosen card | fixed: one line per hand or library, "a card" only where the instruction picks one | `RacketeerBossTest` (yes) |
+| Naktamun Shines Again counted the boosted cards | fixed: the line states the instruction | `NaktamunShinesAgainTest.chapterILogsNoCount` (yes) |
+| Undercity Plunder, Clone Crafter / Lae'zel, Agent of Raffine, Juggle the Performance named a duplicate of a random or top library card; Holographic Double of a hand card, Kithkin Brinefarer of a drawn card | fixed: `GameLog.conjuresIntoHand` ("X conjures a card / 7 cards into their hand."); Holographic Double's hand choice (`RevealedHandChoice` keep-in-hand) names no card | six card tests (yes, all) |
+| Tome of Gadwick, Giant Secrets revealed and named their random spellbook card; only Pinchy McStingbutt says "and reveal it" | fixed: `ConjureRandomCardFromSpellbookToHandEffect.reveal` (`.revealed()`, Pinchy); unrevealed, "a card" | `TomeOfGadwickTest.conjuredCardIsNotRevealed` (yes); `PinchyMcStingbuttTest` still passes |
+| Runecarved Obelisk / Cerise and Chaos Balor named the sought card | fixed: "seeks a card into their hand" | Runecarved Obelisk, Chaos Balor (yes) |
+| Second person in the shared log (twelve conjure handlers, Storyweave) | fixed: the player is named | Warzone Duplicator, Chitinous Crawler, Storyweave (yes: those three handlers were edited back for the failing run); the other nine handlers have no new test |
+| Molten Sentry, Rakdos logged a winner of a heads-or-tails flip (CR 705.2) | fixed: "X's coin flip for S comes up heads / tails" (no event changed) | Molten Sentry, Rakdos (yes) |
+| `MayCopyHandlerService.handleBecomeCopyChoice` logged a lost target after a copy | fixed: "X becomes a copy of Y." | `CryptoplasmTest.copyIsLoggedAsCopy` (yes) |
+| Expert-Level Safe's mismatch exile with a look permission | not a defect in behaviour: the look is granted only to a spell's exile (`ExileTopCardsToSourceEffectHandler`) or read from the card's printed effects (the view), so the engine-built exile gave none; the record now says `faceDownWithoutLookPermission(1)` as the ruling does | `ExpertLevelSafeTest.mismatchExileGivesNoLookPermission` (no; kept as a guard) |
+| Grant handlers naming a floating effect's source | not a defect: `GameData.addFloatingEffect` relabels it (`withPublicSourceName`) | none |
+| Laquatus's Creativity at an empty hand | not a defect: "discards 0 cards." tells nothing a hand count doesn't (CR 402.3) | none |
+| Malik and Vault 11's secret choices; Mycosynth Gardens and Valki's missing line; Moonring Mirror / Duplicity's look, the face-down Aura host, `cardsThisWay(REVEAL)` | left: the vote fold; a missing line breaks no rule; not verified this run | none |
+
+**The 73 waiting rows.** Re-verdicted from their notes, each note's fold re-read: 6 join `seek-step` (run 20), 4 `drafted-step` and 3
+`conjure-dup` (run 12); new batches `conjure-named` (8 + the survivor) and `dup-hand` (21) as fold run 12a, `perp-hidden-sets` (12),
+`perp-chosen` (11), `perp-owned` (3) and `perp-topmost` (3) as fold run 12b. Changed from the note: Ravenous Pursuit's record folds onto
+`PerpetuallyBoostCardEffect` (it takes a `DynamicAmount`, so the one-card amount run 37 feared isn't needed); Territorial Strike's stays
+`blocked-other` (the beheld object has no subject and one reader). The fold runs keep the logging rule; each ledger note says the line.
+
+**Behaviour changes.** Log lines only, but the Tome of Gadwick / Giant Secrets reveal (a `REVEAL_HAND` message to every player) is gone, and
+Holographic Double's, Swine Rebellion's and Relics' keep-in-hand prompts no longer name the card ("X keeps the chosen card(s) in Y's hand.").
+A `LibraryRevealChoice` that puts a card into a hand and exiles the rest now names that card only with `revealSelected` (the
+default stays true; Support Skyforge's selection is the caller set to false; Browse and Plunge into Darkness, which may use the branch,
+passed unchanged).
+
+**What a player sees.** No new prompt. The drafting player's mode prompt is unchanged; the other player no longer reads the drafted,
+sought, conjured or perpetually changed hidden card in the log.
+
+**Shared-engine changes.** `ChooseCardEffectHandler` (hidden choice line), `CardChoiceHandlerService` (keep-in-hand lines), `LibraryChoiceHandlerService`
+(rest-to-exile honours `revealSelected`), `ChoiceHandlerService` + `PlayerInputService` + `ChoiceContext.ChooseModeChoice.secret`,
+the three spellbook interaction handlers, `GameLog.conjuresIntoHand`, `PerpetualChangeLog`, `MayCopyHandlerService`, the two flip handlers.
+
+**Seen, not changed.** In the Defect queue's group 8: the may-copy handler copies `targetPerm.getCard()`, not `cardToCopy` (CR 707.2,
+708.2); Support Skyforge's unchosen spellbook cards are exiled and named; Juggle the Performance picks seven from a smaller library; a
+hidden "up to" choice of none and a random pick that finds none log nothing.
+
+**Tests edited.** `MoltenSentryTest`, `RakdosTheShowstopperTest` and `KrarksThumbTest`'s two Molten Sentry cases read "comes up heads /
+tails" (they read the old flip line); `TirelessAnglerTest` expectation set before the run. New cases in 26 card test classes. No assertion
+was loosened.
+
+**For the next run.** Fold run 1 of the Fold queue; fold runs 12a and 12b take the rows this run unblocked, after run 12's CONJURE step.
 
 ## Prompt
 

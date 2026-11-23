@@ -1865,10 +1865,10 @@ public class CardChoiceHandlerService {
         List<Card> chosenCards = new ArrayList<>(revealedHandChoice.chosenCards());
         chosenCards.add(chosenCard);
 
-        boolean privateLibraryPlacement = !revealedHandChoice.discardMode() && !revealedHandChoice.exileMode()
-                && !revealedHandChoice.bottomThenDrawMode() && !revealedHandChoice.shuffleIntoLibraryMode()
-                && !revealedHandChoice.keepInHand();
-        gameLogService.append(gameData, privateLibraryPlacement
+        // A card that stays in a hand, or goes into a library, stays hidden (CR 400.2): the line doesn't name it.
+        boolean staysHidden = !revealedHandChoice.discardMode() && !revealedHandChoice.exileMode()
+                && !revealedHandChoice.bottomThenDrawMode() && !revealedHandChoice.shuffleIntoLibraryMode();
+        gameLogService.append(gameData, staysHidden
                 ? GameLog.text(player.getUsername() + " chooses a card from " + targetName + "'s hand.")
                 : GameLog.textCardText(player.getUsername() + " chooses ", chosenCard, " from " + targetName + "'s hand."));
         log.info("Game {} - {} chooses {} from {}'s hand", gameData.id, player.getUsername(), chosenCard.getName(), targetName);
@@ -2007,8 +2007,9 @@ public class CardChoiceHandlerService {
                         chosenCards.stream().map(card -> gameData.boundToStay(
                                 new MovedCard(card.getId(), card.getId(), Zone.HAND, targetPlayerId))).toList()));
             }
-            gameLogService.append(gameData,
-                    appendCards(GameLog.builder().text(player.getUsername() + " keeps "), chosenCards)
+            gameLogService.append(gameData, keepInHand
+                    ? GameLog.text(player.getUsername() + " keeps the chosen card(s) in " + targetName + "'s hand.")
+                    : appendCards(GameLog.builder().text(player.getUsername() + " keeps "), chosenCards)
                             .text(" in " + targetName + "'s hand.").build());
         } else if (discardMode) {
             // Talara's Bane: the chooser gains life equal to the chosen card's toughness before discard.

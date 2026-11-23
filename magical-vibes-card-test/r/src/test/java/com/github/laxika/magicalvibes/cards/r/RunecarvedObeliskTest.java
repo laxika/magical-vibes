@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -46,5 +47,21 @@ class RunecarvedObeliskTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Runecarved Obelisk");
         harness.assertInHand(player1, "Grizzly Bears");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(tooExpensive, lower);
+    }
+
+    @Test
+    @DisplayName("The log doesn't name the sought card")
+    void logNamesNoSoughtCard() {
+        Permanent obelisk = harness.addToBattlefieldAndReturn(player1, new RunecarvedObelisk());
+        obelisk.setCounterCount(CounterType.CHARGE, 2);
+        harness.setLibrary(player1, List.of(new GrizzlyBears()));
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+
+        harness.assertInHand(player1, "Grizzly Bears");
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Grizzly Bears"));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                player1.getUsername() + " seeks a card into their hand."));
     }
 }

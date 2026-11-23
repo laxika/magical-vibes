@@ -4279,8 +4279,10 @@ public class ChoiceHandlerService {
                     gameData.pendingEffectResolutionIndex, chosen.effects());
         }
 
-        gameLogService.append(gameData, GameLog.textCardText(
-                player.getUsername() + " chooses \"" + chosenLabel + "\" for ", ctx.sourceCard(), "."));
+        if (!ctx.secret()) {
+            gameLogService.append(gameData, GameLog.textCardText(
+                    player.getUsername() + " chooses \"" + chosenLabel + "\" for ", ctx.sourceCard(), "."));
+        }
         log.info("Game {} - {} chooses mode \"{}\" for {}", gameData.id, player.getUsername(),
                 chosenLabel, ctx.sourceCard().getName());
 

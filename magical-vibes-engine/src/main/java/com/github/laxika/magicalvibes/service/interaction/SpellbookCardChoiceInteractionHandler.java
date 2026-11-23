@@ -73,9 +73,10 @@ public class SpellbookCardChoiceInteractionHandler
                 gameData.addCardToHand(player.getId(), selected);
             }
             gameData.interaction.clearAwaitingInput();
+            // Cards chosen from a spellbook into a hand are hidden (CR 400.2): the line counts them, as the hand's
+            // size shows, and names none.
             gameLogService.append(gameData, GameLog.text(player.getUsername()
-                    + (interaction.conjure() ? " conjures " : " drafts ")
-                    + String.join(", ", selectedCards.stream().map(Card::getName).toList())
+                    + (interaction.conjure() ? " conjures " : " drafts ") + cardsFromASpellbook(selectedCards.size())
                     + " into their hand."));
             if (interaction.conjure()) {
                 ActionEvents.conjured(
@@ -123,18 +124,20 @@ public class SpellbookCardChoiceInteractionHandler
                     player.getId(),
                     List.of(new MayCastFromHandWithoutPayingManaCostEffect(false)),
                     "Cast " + drafted.getName() + " without paying its mana cost?"));
-            gameLogService.append(gameData, GameLog.textCardText(
-                    gameData.playerIdToName.get(player.getId())
-                            + (interaction.conjure() ? " conjures " : " drafts "), drafted,
-                    " from a spellbook into their hand."));
+            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(player.getId())
+                    + (interaction.conjure() ? " conjures " : " drafts ") + cardsFromASpellbook(1)
+                    + " into their hand."));
             if (interaction.conjure()) {
                 ActionEvents.conjured(gameData, player.getId(), 1);
             }
         } else {
-            gameLogService.append(gameData, GameLog.textCardText(
-                    gameData.playerIdToName.get(player.getId()) + " drafts ", drafted,
-                    " from a spellbook into their hand. It perpetually becomes an enchantment."));
+            gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(player.getId()) + " drafts "
+                    + cardsFromASpellbook(1) + " into their hand. It perpetually becomes an enchantment."));
         }
         inputCompletionService.processMayAbilitiesThenAutoPassPreservingPriority(gameData);
+    }
+
+    private static String cardsFromASpellbook(int count) {
+        return (count == 1 ? "a card" : count + " cards") + " from a spellbook";
     }
 }

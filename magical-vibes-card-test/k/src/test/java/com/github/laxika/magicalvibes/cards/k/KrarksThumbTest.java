@@ -538,7 +538,7 @@ class KrarksThumbTest extends BaseCardTest {
         assertThat(gqs.hasKeyword(gd, sentry, Keyword.DEFENDER)).isEqualTo(kept.equals("Tails"));
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(sentryFlipLogs()).singleElement().asString()
-                .contains(kept.equals("Heads") ? "wins the coin flip" : "loses the coin flip")
+                .contains(kept.equals("Heads") ? "comes up heads" : "comes up tails")
                 .contains("(flipped 2 coins and ignored 1)");
     }
 
@@ -555,7 +555,7 @@ class KrarksThumbTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gqs.getEffectivePower(gd, sentry)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, sentry)).isEqualTo(5);
-        assertThat(sentryFlipLogs()).singleElement().asString().contains("loses the coin flip");
+        assertThat(sentryFlipLogs()).singleElement().asString().contains("comes up tails");
     }
 
     @Test

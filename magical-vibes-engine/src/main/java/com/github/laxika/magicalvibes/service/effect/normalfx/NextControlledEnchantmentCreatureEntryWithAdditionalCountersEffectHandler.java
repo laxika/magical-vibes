@@ -31,7 +31,8 @@ public class NextControlledEnchantmentCreatureEntryWithAdditionalCountersEffectH
                 entry.getSourcePermanentId(), entry.getControllerId(), effect, entry.getControllerId(),
                 Duration.UNTIL_END_OF_TURN));
         gameLogService.append(gameData, GameLog.text(
-                "The next enchantment creature entering under your control this turn gets "
+                "The next enchantment creature entering under "
+                        + gameData.playerIdToName.get(entry.getControllerId()) + "'s control this turn gets "
                         + counters.count() + " additional +1/+1 counter(s)."));
     }
 }

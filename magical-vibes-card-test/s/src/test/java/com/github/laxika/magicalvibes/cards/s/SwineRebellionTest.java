@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -143,5 +144,23 @@ class SwineRebellionTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The log names the conjured card put onto the battlefield, not the one left in hand")
+    void logNamesNoConjuredCardLeftInHand() {
+        castSwineRebellion();
+        PendingInteraction.SpellbookCardChoice spellbookChoice =
+                gd.interaction.activeInteraction(PendingInteraction.SpellbookCardChoice.class);
+        Card first = spellbookChoice.cards().getFirst();
+        Card second = spellbookChoice.cards().stream()
+                .filter(card -> !card.getName().equals(first.getName())).findFirst().orElseThrow();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+        harness.handleCardChosen(player1, gd.playerHands.get(player1.getId()).indexOf(first));
+
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(second);
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains(second.getName()));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                player1.getUsername() + " conjures 2 cards from a spellbook into their hand."));
     }
 }

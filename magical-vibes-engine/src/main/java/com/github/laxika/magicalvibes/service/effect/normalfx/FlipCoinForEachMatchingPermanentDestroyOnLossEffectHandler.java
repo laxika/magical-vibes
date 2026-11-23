@@ -63,10 +63,11 @@ public class FlipCoinForEachMatchingPermanentDestroyOnLossEffectHandler implemen
         for (int i = 0; i < matchingPermanents.size(); i++) {
             Permanent permanent = matchingPermanents.get(i);
             CoinFlipResult result = results.get(i);
-            String outcome = result.heads() ? "wins" : "loses";
-            gameLogService.append(gameData, GameLog.text(playerName + " " + outcome
-                    + " the coin flip for " + sourceName + " for " + FaceDownVisibility.publicName(gameData, permanent)
-                    + coinFlipService.replacementDetails(result) + "."));
+            // Heads or tails, no player wins or loses these flips (CR 705.2).
+            gameLogService.append(gameData, GameLog.text(playerName + "'s coin flip for " + sourceName
+                    + " comes up " + (result.heads() ? "heads" : "tails") + " for "
+                    + FaceDownVisibility.publicName(gameData, permanent) + coinFlipService.replacementDetails(result)
+                    + "."));
 
             if (!result.heads()) {
                 lostPermanents.add(permanent);

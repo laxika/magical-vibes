@@ -58,18 +58,22 @@ public class ConjureRandomCardFromSpellbookToHandEffectHandler implements Normal
             conjuredCard.freeze();
             gameData.addCardToHand(entry.getControllerId(), conjuredCard);
             conjuredCards.add(conjuredCard);
-
-            String playerName = gameData.playerIdToName.get(entry.getControllerId());
-            gameLogService.append(gameData, GameLog.builder()
-                    .text(playerName + " reveals ")
-                    .card(conjuredCard)
-                    .text(" conjured by ")
-                    .card(entry.getCard())
-                    .text(".")
-                    .build());
         }
 
-        if (!conjuredCards.isEmpty()) {
+        String playerName = gameData.playerIdToName.get(entry.getControllerId());
+        if (!conjuredCards.isEmpty() && !conjure.reveal()) {
+            // The hand is hidden (CR 400.2): unrevealed, the cards are not named.
+            gameLogService.append(gameData, GameLog.conjuresIntoHand(playerName, conjuredCards.size()));
+        } else if (!conjuredCards.isEmpty()) {
+            for (Card conjuredCard : conjuredCards) {
+                gameLogService.append(gameData, GameLog.builder()
+                        .text(playerName + " reveals ")
+                        .card(conjuredCard)
+                        .text(" conjured by ")
+                        .card(entry.getCard())
+                        .text(".")
+                        .build());
+            }
             cardRevealService.revealToAllPlayers(
                     gameData, entry.getControllerId(),
                     com.github.laxika.magicalvibes.model.event.GameEventFact.RevealZone.HAND,

@@ -167,4 +167,25 @@ class SupportSkyforgeTest extends BaseCardTest {
         assertThat(selected.hasType(CardType.CREATURE)).isTrue();
         assertThat(gd.getPlayerExiledCards(player1.getId())).isEmpty();
     }
+
+    @Test
+    @DisplayName("The log doesn't name the drafted card that becomes an artifact creature")
+    void logNamesNoDraftedCard() {
+        addCreatureReady(player1, new SupportSkyforge());
+        addCreatureReady(player1, new GrizzlyBears());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        Card selected = gd.interaction.activeInteraction(PendingInteraction.LibraryRevealChoice.class)
+                .allCards().getFirst();
+        harness.handleMultipleCardsChosen(player1, List.of(selected.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(selected);
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains(selected.getName()));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                "Support Skyforge perpetually makes the drafted card an artifact creature."));
+    }
 }

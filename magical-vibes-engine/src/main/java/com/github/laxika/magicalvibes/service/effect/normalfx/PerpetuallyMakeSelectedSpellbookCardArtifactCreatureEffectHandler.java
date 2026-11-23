@@ -50,7 +50,8 @@ public class PerpetuallyMakeSelectedSpellbookCardArtifactCreatureEffectHandler i
         selectedCard.setType(CardType.CREATURE);
         selectedCard.setAdditionalTypes(additionalTypes);
         selectedCard.freeze();
+        // The drafted card is in a hand (CR 400.2): the line doesn't name it.
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                " perpetually makes " + selectedCard.getName() + " an artifact creature."));
+                " perpetually makes the drafted card an artifact creature."));
     }
 }

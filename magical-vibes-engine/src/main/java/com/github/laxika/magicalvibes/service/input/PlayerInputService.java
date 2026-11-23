@@ -1068,9 +1068,25 @@ public class PlayerInputService {
     public void beginChooseModeChoice(GameData gameData, UUID controllerId, Card sourceCard,
             com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId,
             boolean consumeMode, List<String> chosenLabels) {
-        ChoiceContext.ChooseModeChoice ctx =
-                new ChoiceContext.ChooseModeChoice(sourceCard, controllerId, effect,
-                        sourcePermanentId, consumeMode, chosenLabels, false);
+        beginChooseModeChoice(gameData, new ChoiceContext.ChooseModeChoice(sourceCard, controllerId, effect,
+                sourcePermanentId, consumeMode, chosenLabels, false));
+    }
+
+    /**
+     * {@link #beginChooseModeChoice(GameData, UUID, Card, com.github.laxika.magicalvibes.model.effect.ChooseOneEffect,
+     * UUID)} for a choice the other players don't learn ({@link ChoiceContext.ChooseModeChoice#secret()}).
+     */
+    public void beginSecretChooseModeChoice(GameData gameData, UUID controllerId, Card sourceCard,
+            com.github.laxika.magicalvibes.model.effect.ChooseOneEffect effect, UUID sourcePermanentId) {
+        beginChooseModeChoice(gameData, new ChoiceContext.ChooseModeChoice(sourceCard, controllerId, effect,
+                sourcePermanentId, false, List.of(), false, true));
+    }
+
+    private void beginChooseModeChoice(GameData gameData, ChoiceContext.ChooseModeChoice ctx) {
+        UUID controllerId = ctx.controllerId();
+        Card sourceCard = ctx.sourceCard();
+        var effect = ctx.effect();
+        UUID sourcePermanentId = ctx.sourcePermanentId();
         List<String> optionLabels = effect.options().stream()
                 .map(com.github.laxika.magicalvibes.model.effect.ChooseOneEffect.ChooseOneOption::label)
                 .filter(label -> !ctx.chosenLabels().contains(label))

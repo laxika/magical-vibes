@@ -17,6 +17,6 @@ public class PinchyMcStingbutt extends Card {
                         new ConjureRandomCardFromSpellbookToHandEffect.CardPrintingReference("SOK", "64"),
                         new ConjureRandomCardFromSpellbookToHandEffect.CardPrintingReference("HOU", "67"),
                         new ConjureRandomCardFromSpellbookToHandEffect.CardPrintingReference("AKH", "189")
-                )));
+                )).revealed());
     }
 }

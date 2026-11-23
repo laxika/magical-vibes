@@ -28,7 +28,9 @@ public class DraftCardIntoHandEffectHandler implements NormalEffectHandlerBean {
         card.setOwnerId(entry.getControllerId());
         card.freeze();
         gameData.addCardToHand(entry.getControllerId(), card);
-        gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                " drafts " + card.getName() + " into their hand."));
+        // A drafted card goes into a hidden zone (CR 400.2): the line doesn't name it.
+        gameLogService.append(gameData, GameLog.textCardText(
+                gameData.playerIdToName.get(entry.getControllerId()) + " drafts a card from ", entry.getCard(),
+                "'s spellbook into their hand."));
     }
 }

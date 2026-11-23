@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.cards.w.WormholeSerpent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -152,5 +153,23 @@ class TirelessAnglerTest extends BaseCardTest {
 
         assertThat(gd.playerHands.get(player1.getId())).hasSize(2);
         assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The log doesn't name the drafted card")
+    void logNamesNoDraftedCard() {
+        harness.addToBattlefield(player1, new TirelessAngler());
+        harness.setHand(player1, List.of(new Island()));
+
+        harness.playLand(player1, 0);
+        harness.passBothPriorities();
+        var drafted = gd.interaction.activeInteraction(PendingInteraction.SpellbookDraftChoice.class)
+                .cards().getFirst();
+        harness.handleMultipleCardsChosen(player1, List.of(drafted.getId()));
+
+        assertThat(gd.playerHands.get(player1.getId())).contains(drafted);
+        assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains(drafted.getName()));
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().equals(
+                player1.getUsername() + " drafts a card from Tireless Angler's spellbook."));
     }
 }

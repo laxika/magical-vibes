@@ -44,8 +44,8 @@ public class ConjureRandomCardFromTargetPlayerLibraryEffectHandler implements No
         copy.freeze();
         gameData.perpetualAnyColorManaForCastCardIds.add(copy.getId());
         gameData.addCardToHand(entry.getControllerId(), copy);
-        gameLogService.append(gameData, GameLog.cardThen(copy, " is conjured into "
-                + gameData.playerIdToName.get(entry.getControllerId()) + "'s hand."));
+        gameLogService.append(gameData, GameLog.conjuresIntoHand(
+                gameData.playerIdToName.get(entry.getControllerId()), 1));
         ActionEvents.conjured(gameData, entry.getControllerId(), 1);
     }
 }

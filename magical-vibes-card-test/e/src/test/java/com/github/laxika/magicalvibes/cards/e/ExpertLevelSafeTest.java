@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.service.JacksonConfig;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import java.util.List;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -177,5 +178,24 @@ class ExpertLevelSafeTest extends BaseCardTest {
 
     private void addManaForAbility() {
         harness.addMana(player1, ManaColor.COLORLESS, 1);
+    }
+
+    @Test
+    @DisplayName("Its controller can't look at the card a mismatch exiles face down (its ruling)")
+    void mismatchExileGivesNoLookPermission() throws Exception {
+        Permanent safe = castSafe(List.of(new GrizzlyBears(), new GrizzlyBears(), new GrizzlyBears()));
+        addManaForAbility();
+        harness.activateAbility(player1, 0, null, player2.getId());
+        harness.passBothPriorities();
+        harness.handleXValueChosen(player1, 1);
+        harness.handleXValueChosen(player2, 2);
+        harness.publishState();
+
+        String message = harness.getConn1().getMessagesContaining("\"type\":\"GAME_STATE\"").getLast();
+        GameStateMessage state = new JacksonConfig().objectMapper().readValue(message, GameStateMessage.class);
+        var safeView = state.battlefields().stream().flatMap(List::stream)
+                .filter(permanent -> permanent.id().equals(safe.getId())).findFirst().orElseThrow();
+        assertThat(safeView.faceDownExiledCount()).isEqualTo(3);
+        assertThat(safeView.faceDownExiledCards()).isEmpty();
     }
 }

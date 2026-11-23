@@ -67,4 +67,25 @@ class RacketeerBossTest extends BaseCardTest {
         assertThat(gd.gameLog).noneMatch(line -> line.plainText().contains("Grizzly Bears"));
         assertThat(gd.gameLog).anyMatch(line -> line.plainText().contains("perpetually gains"));
     }
+
+    @Test
+    @DisplayName("Choosing two hand cards logs one choice line and one grant line, neither counting the cards")
+    void choiceOfTwoHandCardsCountsNothingInTheLog() {
+        GrizzlyBears first = new GrizzlyBears();
+        GrizzlyBears second = new GrizzlyBears();
+        harness.setHand(player1, List.of(new RacketeerBoss(), first, second));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.GREEN, 1);
+
+        harness.castCreature(player1, 0);
+        resolveAllTriggers();
+        harness.handleMultipleCardsChosen(player1, List.of(first.getId(), second.getId()));
+
+        assertThat(gd.gameLog).filteredOn(line -> line.plainText().contains("chosen")
+                        || line.plainText().contains("chooses") || line.plainText().contains("perpetually"))
+                .extracting(line -> line.plainText())
+                .containsExactly(
+                        "Cards in " + player1.getUsername() + "'s hand are chosen.",
+                        "Each affected card in " + player1.getUsername() + "'s hand perpetually gains an ability.");
+    }
 }
