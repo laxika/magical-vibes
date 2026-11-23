@@ -24,7 +24,7 @@ bottom.
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,313 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts; triage run 2 gave Search and Cant (79 rare) theirs; triage run 3 gave Sacrifice and Destroy (75 rare) theirs; triage run 4 gave Look and Remove (71 rare) theirs; triage run 5 gave Add and Gain (64 rare) theirs; triage run 6 gave Become, Draw and Double (85 rare) theirs (365 `step-9` rows wait for fold runs). Defect runs 1 and 2 fixed most of the defects the triage runs saw (their Findings). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; the next families with no owner's question are Set (27 rare), Seek (26), Copy (26), Deal (25), Cast (25) and Allow (25). |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,234 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts; triage run 2 gave Search and Cant (79 rare) theirs; triage run 3 gave Sacrifice and Destroy (75 rare) theirs; triage run 4 gave Look and Remove (71 rare) theirs; triage run 5 gave Add and Gain (64 rare) theirs; triage run 6 gave Become, Draw and Double (85 rare) theirs; triage run 7 gave Set, Copy and Seek (79 rare) and two stale step-4/5 rows theirs (434 `step-9` rows wait for fold runs). Defect runs 1 and 2 fixed most of the defects the triage runs saw (their Findings). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; the next families with no owner's question are Deal (25 rare), Cast (25), Allow (25), Boost (23), Specialize (19) and Opponent (19). |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -285,6 +285,7 @@ Each run ends with its family row in Findings: audited, absorbed, split, blocked
 | Look, Remove | T4 | triaged, no code changed: 71 rows (`step-9` 53, `unique` 18); fold batches in T4's Findings, among them one store for counters on exiled cards and a player-counter removal |
 | Add, Gain | T5 | triaged, no code changed: 64 rows (`step-9` 49, `blocked-other` 3, `unique` 12); fold batches in T5's Findings, among them one counter-placement replacement, one token addition, the ability borrowers over permanent and static card subjects |
 | Become, Draw, Double | T6 | triaged, no code changed: 85 rows (`step-9` 63, `blocked-other` 6, `unique` 16); fold batches in T6's Findings, among them a copier subject and copy exceptions on `BecomeCopyOfSubjectEffect`, the draw-then-discard reads of the DISCARD step, the source, recipient and floated damage doublers, the counter doublers onto triage 5's counter-placement batch |
+| Set, Copy, Seek (+ 2 stale step-4/5 rows) | T7 | triaged, no code changed: 81 rows (`step-9` 69, `blocked-other` 6, `unique` 6); fold batches in T7's Findings, among them a P/T-from-amount batch on `SetBasePowerToughnessToAmountEffect`, one seek step recording SEEK, the spell-copier and copy-per-permanent batches, a next-time delayed registration, the card-copy-cast batch on `CopyImprintedCardAndMayCastCopyEffect` |
 
 Cross-cutting results of those runs, now conventions or shared pieces (Standing knowledge): the face-down hiding rules; stay checks
 (CR 400.7, 603.7c) on every return and delayed return; what a put step moves enters through the entry batch (as-enters and Aura host
@@ -1561,6 +1562,123 @@ Flourishing (each the only implementer of its replacement or the only reader of 
   (5), `BecomeColorlessEffect` (9), `BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect` (3),
   `BecomeCopyOfTargetPermanentUntilYourNextTurnEffect` (3), `BecomeNightEffect` (3), `DoubleTargetCreaturePowerEffect` (5),
   `DoubleControllerDamageEffect` (4), `DoubleDamageEffect` (3), `DoubleDrawExceptFirstDrawStepDrawEffect` (3).
+
+### Step 9, triage run 7 (2026-11-23)
+
+Verdicts only: no Java, test or agent-docs file changed; the ratchet did not move. 81 ledger rows appended (step 9, notes
+`triage 7: …`): the whole of Set (27 rare), Copy (26 rare) and Seek (26 rare), and the two stale rows triage run 6 listed
+(`PutCounterThenMayBecomeCopyOfCardsEffect`, 5e; `EachOpponentDiscardsDownToHandSizeEffect`, 4e; new rows, the old ones kept). Every record was read with its handler to the end
+and the card classes that use it; for the records with no handler of their own, their readers: `TurnCleanupService`'s hand-size
+fold, `GameData.getMaximumLifeTotal`, `LayerSystemService`'s layer-3 and type cases with `LayerClassifier`, `CloneService` /
+`ExiledCreatureCopyOnEnterService` / `MayCopyHandlerService` (the copy-on-enter and retarget completions), `CopySupport`, and the
+survivors they were judged against (`SetBasePowerToughnessEffect` and `SetBasePowerToughnessToAmountEffect` with their handlers and
+the `TargetPower` / `SourcePower` / `TriggeringPermanentPower` evaluators, `SetCardTypesEffect`, `GrantEffectToTargetEffect`,
+`CopyTriggeringSpellEffect`, `CopyImprintedCardAndMayCastCopyEffect`, `RegisterGlobalTriggeredAbilityEffect`, `SeekLibraryEffect`,
+`SeekCardsToHandEffect`). Oracle text checked with `get_card` for every `unique` and `blocked-*` card (Psychic Paper, Duplicant,
+You Compleat Me (`MB2`), Mystic Barrier, Ulalek, Cerise, Darigaaz's Whelp, Hardened Bonds, Goblin Trapfinder, Thought Rattle,
+Circadian Struggle, Chronicler of Worship) and for Galion, Shape Stealer, The Curse of Fenric, Brine Hag, Exuberant Wolfbear,
+Hydro-Man, Midnight Oil, Winter, Sway of Illusion, The Master, Leori, Baron Helmut Zemo, Spellweaver Volute, Reversal of Fortune,
+God-Eternal Kefnet, Gogo, Exterminator Magmarch, Feather, Parnesse, Hive Mind, Curse of Echoes, Trove Mage, Vinesoul Spider,
+Crucias, Inquisitor Captain, Archaeomancer's Spade, Darkstar Banisher, Song of Seasons, Choice of Fortunes, Grow Old Together,
+Hamza, Diviner of Fates, Plunderer's Prize and Cunning Azurescale // Divining Dive; the others were judged from their card classes.
+Rulings read: Curse of Echoes (it turned the record's draft `blocked-player-loop` into a fold: each copier creates its copy in
+turn, APNAP). CR 101.4, 205.1a, 205.1b, 509.1h, 603.4, 603.7b, 605.3a, 608.2b, 608.2h, 611.2c, 707.10, 708.2a and 721.3d checked with
+`get_rule` (2026-11-23).
+
+| Family | Triaged | `step-9` | `blocked-other` | `unique` | Left unaudited |
+|---|---|---|---|---|---|
+| Set | 27 rare | 23 | 0 | 4 | 0 rare, 11 in all |
+| Copy | 26 rare | 25 | 0 | 1 | 0 rare, 8 in all |
+| Seek | 26 rare | 19 | 6 | 1 | 0 rare, 4 in all |
+| stale step-4/5 rows | 2 | 2 | 0 | 0 | |
+
+All families: 1,234 rare records without a row (before: 1,313). `step-9` rows waiting for fold runs: 434 (latest verdict per
+class).
+
+**Two seek primitives.** `SeekLibraryEffect` (33 cards: count, filter, hand / battlefield / exile-with-source destination, a
+`ManaValueBound`, the cloak and face-down options) raises the sought event but records no step; `SeekCardsToHandEffect` (run 24)
+records SEEK but only seeks to hand. Most Seek records fold onto one of them once the survivor (`SeekLibraryEffect`, recording SEEK
+as the other does) has: a GRAVEYARD destination, a top-N scope, a `ManaValueBound` relation (greater / less than, three records), a
+seeker `PlayerSubject` (the exiled card's owner, two records), and SEEK for the follow-up steps (`cardsThisWay(SEEK)`). The
+unaudited 3+-card `SeekEffect` (17), `SeekCardToBattlefieldEffect` (5) and `SeekLibraryToHandEffect` (4) belong to the same fold.
+
+**Fold batches** (survivor or shared component → records, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| P/T from an amount | `SetBasePowerToughnessToAmountEffect` (8 cards) with a null side ("leave alone"), any `Duration` on `source()` and `target()`, a target path evaluated against the live source, a derived benign `targetSpec` | Exuberant Wolfbear + Galion (one record), Riptide Mangler, Shape Stealer (keeps its combat-opponent-at-trigger fallback), Eldrazi Mimic (keeps the departure-snapshot read), Halfdane, Sentinel, Wall of Tombstones, Sworn Defender: 8 (9) |
+| base P/T, by parameters | `SetBasePowerToughnessEffect` as it is | Surge Engine + Tenth District Hero (`source()`, PERMANENT), Minsc + Storvald (Storvald's fixed modes; Minsc onto the amount record), Inkfathom Witch (`narrowed(allCreatures(), unblocked attacking)`), Creepy Puppeteer (`except(triggeringAttackers(), source())`): 4 (6) |
+| base P/T, with a new part | a "dealt damage to the source this turn" predicate (with Giant Albatross's blocked set); triage 3's delayed-about-the-target batch | Brine Hag, Cycle of Life (split): 2 (2) |
+| floated name | `SetNameEffect` with a one-shot path, a subject and a `Duration`; `Permanent.persistentName` goes | Awakening of Vitu-Ghazi + The Curse of Fenric (one record); Tenth District Hero's granted-name special cases and The Irencrag's name join: 1 (2) |
+| self grants, by parameters | `GrantEffectToTargetEffect.toSource`, `SetTargetPermanentSupertypeEffect` (5) with a subject, `SetCardTypesEffect` one-shot on `source()` (with the unaudited `SetCardTypesUntilEndOfTurnEffect`, 5) | Surge Engine's can't-be-blocked, Tenth District Hero's legendary, Hydro-Man: 3 (3) |
+| resolution colour (triage 6) | `BecomeChosenColorsUntilEndOfTurnEffect` with a subject, a `Duration` and a colour spec | Sway of Illusion (one chosen colour over all targets), Surge Engine's blue: 2 (2) |
+| maximum hand size | one hand-size record with a `PlayerSubject` and a `DynamicAmount`, read by `TurnCleanupService` | Midnight Oil, Winter (+ `Delirium` and a difference amount); the 5m blocked `SetControllerMaximumHandSizeEffect`, `SetOpponentMaximumHandSizeEffect`, `ReduceOpponentMaxHandSizeEffect` (their blocker is this batch) and the unaudited controller reduce / increase records: 2 (2) |
+| Set, single | `ConditionalEffect(EventValueAtLeast)` | Long Rest: 1 (1) |
+| stale rows | triage 6's copy batch (`BecomeCopyOfSubjectEffect` over a chosen triggering card); `DiscardEffect(eachOpponent())` with a per-player amount, recording DISCARD (triage 6's draw-then-discard batch) | Spirit of Resilience (split: counter, then may copy), Kozilek, Compleated + Your Nightmares Are Delicious (one record; its `thenEffect` goes): 2 (3) |
+| spell copier | `CopyTriggeringSpellEffect` with a copier `PlayerSubject`, resolving through the engine-built `CopyControllerCastSpellEffect` (kept) | Hive Mind + Curse of Echoes (one record; APNAP, optional per copier), Parnesse, `CopyControllerCastSpellEffect`: 3 (3) |
+| copy per permanent | one "copy that spell, the copy targets [permanent]" step over a `PermanentSubject`, copies under a copier subject | Exterminator Magmarch (`ChoosePermanentsEffect`), Feather (choose and pay per creature, cost-shape), Ink-Treader Nephilim, Precursor Golem; the unaudited `CopySpellForEachOtherControlledCreatureEffect` (3) and `CopySpellForEachOtherPermanentOrPlayerEffect` (3): 4 (4) |
+| copy on enter | `CopyCreatureCardInGraveyardOnEnterEffect` (4) with a candidate `CardSubject` and triage 6's copy exceptions; triage 4's one store for counters on exiled cards | The Master, Lazotep Convert: 2 (2) |
+| copy a card, may cast it | `CopyImprintedCardAndMayCastCopyEffect.of(cards)` with card subjects outside exile, a cost reduction and an up-to-N cap | God-Eternal Kefnet, Baron Helmut Zemo, Spellweaver Volute (`ifCastThen`), Reversal of Fortune (reveal + choose): 4 (4) |
+| next-time delayed | `RegisterGlobalTriggeredAbilityEffect` with a next-time-only form (`nextThisTurn`, CR 603.7b) and a manafx handler | Magus Lucea Kane, Pit Automaton, Storm King's Thunder (noted X), Repeated Reverberation, Jaya's Phoenix; the unaudited `CopyNextSpellCastThisTurnEffect` (4) and `CopyNextInstantOrSorceryCastThisTurnEffect` (21): 5 (5) |
+| chosen-value binding | a choice at resolution bound into a registered trigger's or rule's filter when it is made | Leori; run 18's blocked `GrantFlashToNextSpellOfChosenSubtypeThisTurnEffect` and `GrantFreeCastForNextSpellOfChosenCardTypeEffect`: 1 (1) |
+| ability copy | `CopyControllerActivatedAbilityEffect` over a snapshot of either kind; `CopyTargetActivatedOrTriggeredAbilityEffect` (10) with a copies amount and a "can't be copied" ability flag | Gogo, `CopyTriggeredAbilityFromSnapshotEffect`, `CopyControllerActivatedAbilityEffect`: 3 (1) |
+| retarget markers | `CopyAbilityRetargetEffect` with an optional activated ability | `CopyTriggeredAbilityRetargetEffect`, `CopyActivatedAbilityRetargetEffect`, `CopyAbilityRetargetEffect`: 3 (engine-built) |
+| seek, by parameters | `SeekLibraryEffect` / `SeekCardsToHandEffect` as they are | Spirited Simulacrum + Worldweave (one record), Wandering Treefolk, Diviner of Fates (`CardSharesCardTypeWithCardsPredicate(triggeringCards())`): 3 (4) |
+| seek, survivor's additions | `SeekLibraryEffect` recording SEEK, with the additions above | Archaeomancer's Spade + Vinesoul Spider (one record; Vinesoul's is not a seek), Trove Mage + Grow Old Together (one record), Crucias, Ghitu Embercoiler, Cackling Observer, Darkstar Banisher, Karlach's blue face (+ a free-cast grant bound to `cardsThisWay(SEEK)`), Hamza (+ a manifest step), Sarevok (+ a graveyard duplicate, with Chitinous Crawler's unique row), Plunderer's Prize (+ the spell's perpetual cost on the stack and `ReturnToHandEffect`'s this-spell form), Cunning Azurescale (a secret land-or-nonland choice, with Abundant Harvest's unique row): 11 (13) |
+| seek, then choose | the SEEK step + `ChooseCardEffect` over `cardsThisWay(SEEK)` + the put steps | Song of Seasons, Choice of Fortunes, Inquisitor Captain, Vhal's green face, Klement's engine-built record: 5 (4) |
+
+Blocked (6), all the owner's hidden-zone logging question (a perpetual change to a sought card in hand): Darigaaz's Whelp, Hardened
+Bonds, Goblin Trapfinder, Thought Rattle, Circadian Struggle, Chronicler of Worship. Each folds as the seek step plus the perpetual
+`CardSubject` verbs over `cardsThisWay(SEEK)` once the owner decides.
+
+Unique (6): Set: Psychic Paper (the one static chosen-name setter), Duplicant (the imprinted card's creature types), You Compleat Me
+(the one maximum life total), Mystic Barrier (the left-or-right direction). Copy: Ulalek (the one stack-wide copier). Seek: Cerise and
+Runecarved Obelisk (the highest-mana-value pick).
+
+**Seen, not changed** (confirmed by reading, not run):
+
+- Eleven seek handlers raise no sought event, so "whenever you seek" (Lurker in the Deep, Val, Vexyr) misses them: Archaeomancer's
+  Spade, Trove Mage and Grow Old Together, Wandering Treefolk, Crucias, Ghitu Embercoiler, Karlach's blue face, Sarevok's
+  specialization, Darkstar Banisher, Vhal's green face, Klement's specialization (Chronicler of Worship and Vinesoul Spider don't
+  seek, so they are right). Sure of the code.
+- Crucias's seek shuffles the library afterwards; its text has no shuffle. Sure of the code.
+- Cunning Azurescale // Divining Dive is cast through `AdventureCast`; Divining Dive is an Omen, which is shuffled into its owner's
+  library as it resolves (CR 721.3d), and 13 other cards use `OmenCast`. Sure of the code.
+- Hydro-Man becoming a land keeps its creature types: `SetCardTypesUntilYourNextTurnEffect`'s layer case only overrides the card
+  types, where `SetCardTypesEffect`'s drops subtypes of a removed card type (CR 205.1a). `SetCardTypesUntilEndOfTurnEffect`'s case
+  has the same shape (its cards not checked). Sure of the code.
+- Precursor Golem counts Golems by printed subtypes (`perm.getCard().getSubtypes()`): a face-down Golem counts (CR 708.2a) and a
+  creature that became a Golem doesn't. Sure of the code.
+- Feather, Radiant Arbiter's {2} per creature is paid only from mana already in the pool: no mana abilities can be activated for it
+  (CR 605.3a). Fairly sure (no payment prompt on the path).
+- Hive Mind and Curse of Echoes create the copies in seat order from the first seat, where the active player creates first and the
+  others follow in turn order (Curse of Echoes ruling, CR 101.4); multiplayer only. Hive Mind's handler also has an unreachable
+  optional branch. Sure of the code.
+- `TriggeringPermanentPower` / `Toughness` prefer the value recorded at trigger time over the departure snapshot of a triggering
+  permanent that left; CR 608.2h reads it as it last existed (Eldrazi Mimic's handler does). Fairly sure; not traced which cards
+  differ.
+- `CopyControllerActivatedAbilityEffect` copies neither the source snapshot nor the chosen permanent of an activated ability, which
+  the target ability copiers carry (CR 707.10 copies decisions made for it). Unverified whether a card reads them.
+- Vhal's green face takes its sought cards straight from the library to the battlefield and the library, where Inquisitor Captain's
+  pass through the hand; which one the text wants wasn't checked (its face text wasn't read).
+
+**For the next run.**
+
+- Triage run 8: Deal (25 rare), Cast (25), Allow (25); then Boost (23), Specialize (19), Opponent (19). Conjure (39) and Perpetually
+  (30) still wait for the owner, and so do this run's six perpetual seeks.
+- The two stale rows triage run 6 listed are re-triaged (above); they unblock its Spirit of Resilience and Your Nightmares folds.
+- Stale or re-triage rows these batches touch: the 5m hand-size rows (`SetControllerMaximumHandSizeEffect`,
+  `SetOpponentMaximumHandSizeEffect`, `ReduceOpponentMaxHandSizeEffect`), run 18's two chosen-value rows, run 13's
+  `RevealUntilChosenLandOrNonlandToHandEffect` and run 31's `ConjureDuplicateOfTargetCreatureCardIntoGraveyardEffect` (unique, now with
+  a second user each).
+- Fold runs: the cheapest batches need only existing records: base P/T by parameters, seek by parameters, Long Rest, the retarget
+  markers. The seek step (one primitive recording SEEK) unlocks 16 records and the six blocked ones later; the P/T-from-amount batch
+  needs the null side and the live-source target path first.
+- The unaudited 3+-card records these batches touch: `SeekEffect` (17), `SeekCardToBattlefieldEffect` (5), `SeekLibraryToHandEffect`
+  (4), `CopyNextInstantOrSorceryCastThisTurnEffect` (21), `CopyNextSpellCastThisTurnEffect` (4), `CopyTargetActivatedOrTriggeredAbilityEffect`
+  (10), `CopyTargetTriggeredAbilityEffect` (4), `CopyCreatureCardInGraveyardOnEnterEffect` (4), `CopySpellForEachOtherControlledCreatureEffect`
+  (3), `CopySpellForEachOtherPermanentOrPlayerEffect` (3), `SetTargetPermanentSupertypeEffect` (5), `SetCardTypesUntilEndOfTurnEffect`
+  (5).
 
 ## Prompt
 
