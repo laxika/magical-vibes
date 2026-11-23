@@ -390,6 +390,47 @@ three-player gift of a card and of a Fish; Jolly Gerbils with Cruelclaw's Heist)
 
 ---
 
+## 81. A player can't tell their own face-down permanents apart on the board or in id-only prompts
+
+**Status:** open · **Found:** 2026-11-23, face-down prompt fix (`7f0153443c`), by reading the code
+
+**Failing tests:**
+- None yet. Add: a player controls two face-down permanents of different cards; the board state sent to that player
+  tells them apart (the card, or at least a stable per-player label), the state sent to the opponent doesn't, and a
+  "choose a permanent you control" prompt offering both lets that player tell which is which.
+
+**What the rules require.** CR 708.5: a player may look at a face-down permanent they control, and no player may look
+at one another player controls. CR 708.6: a player who controls several face-down spells or permanents must be able to
+tell them apart at all times. CR 724.4: the controller of a controlled player also sees that player's face-down
+permanents. `7f0153443c` fixed the prompts that carry text (`FaceDownVisibility.nameShownTo(gameData, permanent,
+viewerId)`): damage replacement-order labels, combat damage assignment and the Illicit Auction bid. But
+`PermanentViewFactory` masks a face-down permanent the same way for every player (`createFaceDownCardView`), and the
+usual permanent prompts (`permanentPick`, `multiPermanentPick`) send only ids, which the client draws from that masked
+board. So two of a player's own face-down creatures look identical to them on the board and in those prompts.
+
+**Why it's large.** The board view has to differ per player: the controller (and whoever controls that player) gets the
+card's view alongside the face-down one, and everyone else keeps the masked view. That touches how game state is built
+and broadcast (one shared view today, or per player?), reconnects and spectators, and the client, which has to show a
+face-down permanent its controller may peek at (a face-down frame plus the card on hover) and use it in permanent
+choices. It must not reopen entry 79 (ids that link a hidden card to an earlier sighting). About 90 text prompts in some
+60 handlers still name a face-down permanent with `publicName`, and about 94 targeting error messages in
+`TargetLegalityService` have no known recipient; those can move to `nameShownTo` in the same pass.
+
+**Prompt to start it:**
+
+```
+Do missing-features-to-do.md entry 81: let a player tell their own face-down permanents apart on the board and in
+permanent prompts, without showing them to anyone else. First read agent-docs/ARCHITECTURE.md, the face-down sections of
+agent-docs/architecture/casting-stack.md, FaceDownVisibility (maySee, nameShownTo), PermanentViewFactory,
+FaceDownControllerPromptTest and FaceDownStackIdentityTest, and verify CR 708.5, 708.6 and 724.4 with get_rule. Then
+trace how board state reaches each player (built once or per viewer, reconnects, spectators) and how the client renders
+a permanentPick/multiPermanentPick choice, and propose a design: a per-viewer permanent view that adds the card for its
+controller, how the client shows it, and how it stays clear of entry 79's id linking. Show me the design and wait for my
+approval before changing the protocol or the frontend. Start with failing tests. Don't commit until I say so.
+```
+
+---
+
 <!--
 Template — copy everything between the lines, give it the next number, and append above.
 
