@@ -128,7 +128,8 @@ public class TargetValidationService {
      *
      * <p>The zone-wide graveyard gate (Ground Seal) stays here rather than in the predicate: it is
      * a property of the board, not of the candidate. So is the CR 702.16b protection check, which
-     * rides on the orthogonal {@link TargetSpec#harmful()} axis.</p>
+     * runs for every permanent target whatever {@link TargetSpec#harmful()} says: protection stops
+     * a beneficial target as well.</p>
      */
     /** The permanent the choosing ability's source is or last was: as the context names it, else by its card. */
     private static UUID sourcePermanentId(TargetValidationContext ctx) {
@@ -256,9 +257,7 @@ public class TargetValidationService {
                 throw new IllegalStateException(rejectionMessage(predicate, restriction, target, filterContext));
             }
         }
-        if (spec.harmful()) {
-            checkProtection(ctx, target);
-        }
+        checkProtection(ctx, target);
     }
 
     private Card gameDataHandCard(TargetValidationContext ctx, UUID controllerId, UUID targetId) {

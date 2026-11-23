@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Ravener.class, GrizzlyBears.class})
+@CardUsed({Ravener.class, GrizzlyBears.class, LeylineOfSanctity.class})
 class RavenerTest extends BaseCardTest {
 
     @Test
@@ -131,6 +132,28 @@ class RavenerTest extends BaseCardTest {
         assertThatThrownBy(() -> declareAttackers(List.of()))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("must attack");
+    }
+
+    @Test
+    @DisplayName("With no opponent it can target, the attack trigger is removed (CR 603.3d)")
+    void noTargetableOpponentRemovesTrigger() {
+        Permanent bear = addCreatureReady(player1, new GrizzlyBears());
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        harness.setHand(player1, List.of(new Ravener()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castInstantForX(player1, 0, 1, List.of());
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, bear.getId());
+
+        harness.assertOnBattlefield(player1, "Ravener");
+        assertThat(gameLogContains("has no valid targets")).isTrue();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        declareAttackers(List.of());
+        assertThat(bear.isAttackedThisTurn()).isFalse();
     }
 
     private void castRavener(int x, java.util.UUID creatureTarget, java.util.UUID playerTarget) {

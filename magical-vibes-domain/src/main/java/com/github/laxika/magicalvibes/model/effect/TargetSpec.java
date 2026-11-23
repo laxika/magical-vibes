@@ -25,9 +25,9 @@ import java.util.Optional;
  *                         {@link #predicate()} narrowing is folded in — read
  *                         {@link #targetPredicate()} for the full restriction.
  * @param harmful          {@code true} when the effect deals damage / destroys / exiles /
- *                         sacrifices / fights its target — i.e. protection from the source must
- *                         be honoured (mirrors the old {@code isDamageOrDestruction()} and the
- *                         validator's {@code checkProtection} call)
+ *                         sacrifices / fights its target: the AI's prior on which side it aims at.
+ *                         It does not decide protection, which stops every target of a source
+ *                         with the stated quality, a beneficial one too (CR 702.16b)
  * @param predicate        an optional narrowing predicate over a permanent target (artifact-only,
  *                         nonland, a subtype, …); {@code null} when the declared target alone
  *                         suffices. Kept as its own component because readers such as
@@ -47,12 +47,12 @@ public record TargetSpec(
     /** The spec for an effect that targets nothing — every derived legacy value is its default. */
     public static final TargetSpec NONE = new TargetSpec(null, false, null, false, 1);
 
-    /** A harmful (protection-honouring) spec for the given target, no narrowing predicate. */
+    /** A harmful spec for the given target, no narrowing predicate. */
     public static TargetSpec harmful(TargetPredicate declaredTarget) {
         return new TargetSpec(declaredTarget, true, null, false, 1);
     }
 
-    /** A benign (no protection check) spec for the given target, no narrowing predicate. */
+    /** A benign spec for the given target, no narrowing predicate. */
     public static TargetSpec benign(TargetPredicate declaredTarget) {
         return new TargetSpec(declaredTarget, false, null, false, 1);
     }

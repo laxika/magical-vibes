@@ -136,6 +136,12 @@ public record TargetDealsPowerDamageToTargetEffect(PermanentSubject dealer,
         return isGroupTarget(dealer) && isGroupTarget(recipient);
     }
 
+    /**
+     * The bite of two target groups declares a benign spec over any player or permanent: its groups' filters say what
+     * each target may be (the dealer and the recipient differ), and protection stops either target whatever the spec's
+     * polarity (CR 702.16b). The polarity is read only by the AI's activated-ability ranking, which must not rank the
+     * dealer, the controller's own creature, as an opposing target.
+     */
     @Override
     public TargetSpec targetSpec() {
         if (readsTwoTargetGroups()) {

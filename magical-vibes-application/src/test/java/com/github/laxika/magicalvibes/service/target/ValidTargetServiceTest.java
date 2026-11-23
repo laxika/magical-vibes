@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardsWithSameNameEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPredicates;
@@ -1148,6 +1149,42 @@ class ValidTargetServiceTest {
             Permanent creature = addPermanentToBattlefield(player2Id, createCreatureCard());
 
             when(gameQueryService.hasProtectionFromSourceSubtypes(gameData, creature, sourceCard)).thenReturn(true);
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0);
+
+            assertThat(response.validPermanentIds()).doesNotContain(creature.getId());
+        }
+
+        @Test
+        @DisplayName("excludes permanent with protection from source color for a benign ability too (CR 702.16b)")
+        void excludesProtectionFromColor_forBenignAbility() {
+            Card sourceCard = createCreatureCard();
+            sourceCard.setColor(CardColor.WHITE);
+            ActivatedAbility ability = new ActivatedAbility(true, "{W}",
+                    List.of(new BoostTargetCreatureEffect(1, 1)), "Target creature gets +1/+1 until end of turn");
+
+            Permanent creature = addPermanentToBattlefield(player1Id, createCreatureCard());
+
+            when(gameQueryService.hasProtectionFrom(gameData, creature, CardColor.WHITE)).thenReturn(true);
+
+            ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
+                    gameData, sourceCard, ability, player1Id, 0);
+
+            assertThat(response.validPermanentIds()).doesNotContain(creature.getId());
+        }
+
+        @Test
+        @DisplayName("excludes permanent with protection from source card types for a benign ability too (CR 702.16b)")
+        void excludesProtectionFromCardType_forBenignAbility() {
+            Card sourceCard = createCreatureCard();
+            sourceCard.setColor(CardColor.WHITE);
+            ActivatedAbility ability = new ActivatedAbility(true, "{W}",
+                    List.of(new BoostTargetCreatureEffect(1, 1)), "Target creature gets +1/+1 until end of turn");
+
+            Permanent creature = addPermanentToBattlefield(player1Id, createCreatureCard());
+
+            when(gameQueryService.hasProtectionFromSourceCardTypes(gameData, creature, sourceCard)).thenReturn(true);
 
             ValidTargetsResponse response = validTargetService.computeValidTargetsForAbility(
                     gameData, sourceCard, ability, player1Id, 0);

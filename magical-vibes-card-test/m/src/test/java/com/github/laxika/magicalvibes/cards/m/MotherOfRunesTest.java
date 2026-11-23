@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
@@ -94,6 +95,26 @@ class MotherOfRunesTest extends BaseCardTest {
         assertThatThrownBy(() -> harness.activateAbility(player1, 2, 0, null, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
         assertThat(secondMother.isTapped()).isFalse();
+    }
+
+    @Test
+    @DisplayName("A creature with protection from white is not offered as a target (CR 702.16b)")
+    void protectedCreatureIsNotOfferedAsTarget() {
+        Permanent firstMother = addCreatureReady(player1, new MotherOfRunes());
+        Permanent target = addCreatureReady(player1, new GiantCockroach());
+        Permanent secondMother = addCreatureReady(player1, new MotherOfRunes());
+
+        harness.activateAbility(player1, 0, 0, null, target.getId());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, CardColor.WHITE.name());
+
+        var response = harness.getValidTargetService().computeValidTargetsForAbility(
+                gd, secondMother.getCard(), secondMother.getCard().getActivatedAbilities(Zone.BATTLEFIELD).getFirst(),
+                player1.getId(), 2);
+
+        assertThat(response.validPermanentIds())
+                .contains(firstMother.getId(), secondMother.getId())
+                .doesNotContain(target.getId());
     }
 
     @ParameterizedTest

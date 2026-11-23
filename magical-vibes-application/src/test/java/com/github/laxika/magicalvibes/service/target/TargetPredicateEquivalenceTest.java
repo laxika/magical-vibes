@@ -538,8 +538,8 @@ class TargetPredicateEquivalenceTest extends BaseCardTest {
 
     /**
      * Whether the real {@code TargetSpec} interpreter accepts {@code targetId} for a benign spec
-     * declaring {@code declaredTarget}. Benign so the CR 702.16b protection check (an orthogonal
-     * axis the predicate deliberately does not carry) never fires.
+     * declaring {@code declaredTarget}. The CR 702.16b protection check runs too, but no permanent
+     * here has protection, so only the declared target decides.
      */
     private boolean specInterpreterAccepts(TargetPredicate declaredTarget, UUID targetId) {
         return targetValidationService.checkEffectTargets(

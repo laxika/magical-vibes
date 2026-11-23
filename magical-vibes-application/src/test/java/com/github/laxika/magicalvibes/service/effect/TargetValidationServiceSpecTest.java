@@ -120,6 +120,13 @@ class TargetValidationServiceSpecTest {
         }
     }
 
+    private record CreatureBenignEffect() implements CardEffect {
+        @Override
+        public TargetSpec targetSpec() {
+            return TargetSpec.benign(TargetPredicates.creature());
+        }
+    }
+
     private record LandBenignEffect() implements CardEffect {
         @Override
         public TargetSpec targetSpec() {
@@ -201,6 +208,18 @@ class TargetValidationServiceSpecTest {
         when(gameQueryService.hasProtectionFrom(gd, creature, CardColor.RED)).thenReturn(true);
 
         assertThat(check(new CreatureHarmfulEffect(), creature.getId()))
+                .isPresent()
+                .get().asString().contains("protection");
+    }
+
+    @Test
+    @DisplayName("benign spec runs the protection check on a permanent target too (CR 702.16b)")
+    void benignSpecRunsProtection() {
+        Permanent creature = permanentOnBattlefield("Pro-Red Bear", CardType.CREATURE);
+        when(gameQueryService.isCreature(gd, creature)).thenReturn(true);
+        when(gameQueryService.hasProtectionFrom(gd, creature, CardColor.RED)).thenReturn(true);
+
+        assertThat(check(new CreatureBenignEffect(), creature.getId()))
                 .isPresent()
                 .get().asString().contains("protection");
     }

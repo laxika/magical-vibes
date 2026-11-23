@@ -29,7 +29,7 @@ public class Ravener extends Card {
         target(TargetFilters.creature());
         target(new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),
-                        "Target must be an opponent"), 0, 1)
+                        "Target must be an opponent"))
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
                         SetCombatRequirementThisTurnEffect.mustAttack(Subjects.target(0), Subjects.targetPlayer(1)));
     }

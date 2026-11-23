@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ReduceOwnCastCostEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreaturesDealPowerDamageToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -18,7 +18,7 @@ public class AlliesAtLast extends Card {
                 new PermanentCount(new PermanentHasSubtypePredicate(CardSubtype.ALLY), CountScope.CONTROLLER)));
 
         target(TargetFilters.creatureAnOpponentControls())
-                .addSpellEffect(new TargetCreaturesDealPowerDamageToTargetEffect(1, 0));
+                .addSpellEffect(new TargetDealsPowerDamageToTargetEffect(1, 0));
         target(TargetFilters.creatureYouControl(), 0, 2);
     }
 }

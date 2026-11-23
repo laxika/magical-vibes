@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 36: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May and Register closed (May's 11 cost combinators listed for step 10; Register's three `RegisterGlobalTriggeredAbility…` duration records wait for the owner); 1,792 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Target open (22 rare)) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 37: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May and Register closed (May's 11 cost combinators listed for step 10; Register's three `RegisterGlobalTriggeredAbility…` duration records wait for the owner); 1,787 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Target open (17 rare)) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -642,6 +642,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 34 | Register's linked pair (the source leaves / untaps / control is lost, "that creature"), then Target's rare records | Register closed, Target open (13 rows: 8 absorbed (two of them re-ledgered rows, one a corrected unique verdict), 2 survivors gaining a subject or options, 3 unique; 8 records and 8 handlers deleted; 9 card files rewritten; `RegisterDelayedEventTriggerEffect.aboutWhenSourceLeavesThisTurn` / `.aboutWhenSourceLeavesOrUntaps` / `.aboutWhenSourceUntapsOrControlLost`, `LookAtHandEffect(PlayerSubject)`, Gravestorm's empty graveyard in `MayEffectHandler`; 0 rare Register and 36 rare Target records left) |
 | 35 | Target's player-choice records (a chooser on `ChoosePermanentsEffect`) and control-gift records (a gaining player and a GAIN_CONTROL step on `GainControlOfTargetEffect`) | Target open (12 rows: 7 absorbed, 3 survivors gaining an option, 2 unique; 7 records and 7 handlers deleted, 2 choice contexts with them; 9 card files rewritten; `ChoosePermanentsEffect.chosenBy`, `GainControlOfTargetEffect.gainedBy`, `StepKind.GAIN_CONTROL`, `CantBlockThisTurnEffect` over `except(controlledBy(…), …)`; End of the Hunt reads a face-down creature as mana value 0; the must-attack and power-damage records not reached; 27 rare Target records left) |
 | 36 | Iroh's "then" record on the gain step, Shuriken's record, the must-attack records, the sacrifice and counter records | Target open (6 rows: 3 absorbed, 2 survivors gaining an option, 1 unique; 3 records and 3 handlers deleted, one `CombatRequirement` constant with them; 5 card files rewritten; `SetCombatRequirementThisTurnEffect.mustAttack(subject, player)`, `MayEffectHandler` asks nothing for a control gift with a target gone; Iroh's gift with an illegal opponent or permanent offers no choice; the power-damage, sacrifice-or-damage and counter-by-player records read and left unaudited; 22 rare Target records left) |
+| 37 | Protection at targeting for every target, Ravener's required opponent, the bite's spec, the power-damage records | Target open (6 rows: 1 absorbed, 1 survivor, 2 unique, 2 blocked-other, the blocked three-card bite row re-noted; 1 record and 1 handler deleted; 2 card files rewritten, Ravener fixed; protection no longer reads `TargetSpec.harmful` in `ValidTargetService` or `TargetValidationService` (CR 702.16b); the bite keeps `benign(playerOrPermanent)`; 17 rare Target records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -9890,6 +9891,113 @@ Not verified: more than two players.
 - A placer on `PutCounterOnTargetPermanentEffect` for `TargetPlayerPutsCounterOnCreatureEffect`, if a third user turns up; the
   sacrifice-or-damage punisher; the "during next turn / next combat" must-attack records (each its own payload and duration).
 - Target's other one-card records (the player restrictions, the copy records, the villainous choice, the discard-then-draw).
+- Still the owner's: the gift opponent (CR 702.174a), the hidden-zone conjure and perpetual logging, the perpetual "it" (CR 400.7), one
+  `Duration` for the three `RegisterGlobalTriggeredAbility…` records, `RegisterDelayedSacrificeSourceWhenTargetLeavesEffect` (6 cards),
+  `TargetPlayerGainsControlOfTargetPermanentEffect` (6 cards) on the gain step.
+
+### Step 9, run 37 (2026-11-23, Target open)
+
+Run 36's two defects first, each reproduced by a test that failed on the old code, then the bite's spec and the power-damage records.
+Ratchet 4,065 / 3,319 → 4,064 / 3,318 records / handlers (1 record and 1 handler deleted, none added). 2 card files rewritten (Allies at
+Last, Terrific Team-Up) and 1 fixed (Ravener); Oracle text checked with `get_card` for those 3 and for Spinning Wheel Kick, Grim Contest,
+The Great Aerie, Chandra's Ignition and Ravenous Pursuit; rulings with `get_rulings` for Allies at Last, Terrific Team-Up and Spinning
+Wheel Kick (none about the damage). CR 115.1, 601.2c, 603.3d, 608.2b, 701.14, 702.11b, 702.16b and 702.18a checked with `get_rule`
+(2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Target | 5 rare records (and the blocked three-card bite row re-noted) | 1 | 0 | 0 | 2 (AI damage marker; a dynamic amount on the hand perpetual step) | 2 | 17 rare, 28 in all |
+| (other) | `TargetDealsPowerDamageToTargetEffect` | | | 1 | | | |
+
+All families: 1,787 rare records without a row (run 36: 1,792). Perpetually 30 rare and Conjure 39 rare, unchanged. Rare records touched
+this run: Target 5; no other family.
+
+- **Protection at targeting (CR 702.16b).** Two shared checks gated protection on the spec's polarity: `ValidTargetService`'s ability
+  enumeration (`isValidAbilityPermanentTarget`: activated abilities, the optional triggered target, a copied or redirected ability's new
+  targets) checked it only when an effect's spec was `harmful`, and `TargetValidationService.validateSpec` (run by the spell, ability,
+  trigger-collector and resolution-recheck paths) called `checkProtection` only for a harmful spec. Both now check every permanent target.
+  Activation (`validateActivatedAbilityTargeting`), the triggered collector (`checkTriggeredPermanentTargetableReason`), the spell paths and
+  the resolution recheck (`isProtectedFromSource`, `isSpellProtected`) already checked it unconditionally, so no illegal activation reached
+  the stack; what was wrong was the candidate list the UI and the AI were offered (Mother of Runes was offered a creature with protection
+  from white, which activation then refused) and the spec check's own verdict. The AI's candidate lists come from that enumeration, so they
+  now agree with the engine; target polarity is unchanged (no classifier reads protection). `TargetSpec.harmful` is now only the AI's prior
+  (`GameSimulator.rankAbilityTargets` is its last reader). The Javadoc of `TargetSpec`, `RedirectNextDamageEffect` and
+  `AdjustEachCounterKindOnTargetEffect` said "benign: no protection check"; corrected.
+- **Ravener.** Its "target opponent" group was up to one; now exactly one (Oracle text; CR 601.2c via 603.3d). With no opponent it can
+  target (Leyline of Sanctity) the trigger is removed once the creature is chosen ("…'s enter-the-battlefield ability has no valid
+  targets."), instead of going on the stack targeting the creature alone.
+- **The bite's spec, settled.** `TargetDealsPowerDamageToTargetEffect`'s two-group form keeps `benign(playerOrPermanent)`: the groups'
+  filters declare what each target may be (the dealer and the recipient differ: creature you control, creature or planeswalker you don't
+  control), protection no longer reads polarity, and `harmful` would turn `GameSimulator.rankAbilityTargets` toward the opponent for the
+  ability bites (Vivien, Garruk, Huatli, Hunter's Bow), whose first target is the controller's own creature. Its AI polarity stays HARMFUL:
+  for a multi-group spell the AI reads only "beneficial or not" per group (`AiTargetSelector.pickPermanentTargetsForGroup`), so the absorbed
+  record's HARMFUL_DAMAGE name-table entry gave the same answers. The Javadoc on `targetSpec()` says so.
+- **Allies at Last, Terrific Team-Up**: `TargetDealsPowerDamageToTargetEffect(1, 0)`: each creature of the dealer group (up to two / one or
+  two) deals damage equal to its power, in turn, to the one recipient, the creature being the damage source, as the old handler did. The
+  survivor also honours "damage can't be prevented" from the dealer before its protection pre-check, which the old handler skipped, and names
+  its damage carrier by `FaceDownVisibility.publicName` instead of the spell's description. A recipient that became illegal is dropped by the
+  stack's recheck (CR 608.2b) before the resolver reads it, which is what the old "still a creature" test did.
+- **Left, with a verdict.** Spinning Wheel Kick's record (blocked-other: the bite would need every recipient of its group, and the AI scores
+  this record as creature damage, `canDamageCreatures` with `TargetPower`, where the bite's group form is not). Grim Contest / The Great Aerie
+  (unique: toughness damage to each other at once; no fight or bite record takes the amount). Chandra's Ignition (unique: one damage event to
+  each other creature and each opponent; the four-card each-other-creature record has no player half). Ravenous Pursuit (blocked-other:
+  `recordingExcessDamage()` then `ChooseCardFromHandAndApplyPerpetualPowerToughnessEffect` with the bite's excess, but that step takes fixed
+  numbers and only this card would set an amount; it is also a perpetual change to a hand card, the owner's logging question).
+- **The three-card bite record** (`EachTargetCreatureDealsPowerDamageToTargetCreatureEffect`: Band Together, Coordinated Clobbering, Graceful
+  Takedown): its blocker is gone; it would be `TargetDealsPowerDamageToTargetEffect(1, 0)` (and `(2, 0)` for Graceful Takedown's second
+  group), the same handler behaviour as the Allies at Last fold. Three cards: the owner's sign-off. Row re-noted, not folded.
+- **Gift** (the owner's question, not changed): no record this run touched handles a gift.
+
+**Behaviour changes.**
+
+1. A benign activated or triggered ability no longer offers a permanent with protection from its source (colour, card type, subtype, the
+   source, its controller) as a target, and the spec check refuses one (CR 702.16b): `MotherOfRunesTest.protectedCreatureIsNotOfferedAsTarget`,
+   `ValidTargetServiceTest.excludesProtectionFromColor_forBenignAbility` / `.excludesProtectionFromCardType_forBenignAbility`,
+   `TargetValidationServiceSpecTest.benignSpecRunsProtection` (new; all four failed before the fix).
+2. Ravener: with no targetable opponent the attack trigger is removed (CR 603.3d): `RavenerTest.noTargetableOpponentRemovesTrigger` (new;
+   failed with the old `0, 1` group).
+3. Allies at Last, Terrific Team-Up: a dealer whose damage can't be prevented is no longer stopped by the recipient's protection pre-check;
+   the damage log names the dealer. Otherwise none intended.
+
+**What a player sees.** Fewer highlighted targets for a beneficial ability aimed at a protected permanent; Ravener's trigger is removed with
+the existing log line; the bite's damage lines name the dealing creature (a face-down one by `FaceDownVisibility`). No prompt or log names a
+hidden card.
+
+**Seen, not changed.**
+
+- A multi-group permanent spell's enter-trigger targets can be announced as the spell is cast (`SpellCastingService`'s "multi-target
+  creature" entry, Burning Sun's Avatar): Ravener cast with the creature target alone is refused ("Must choose 2 targets") when no opponent is
+  targetable, though the spell itself has no targets (the trigger chooses them, CR 603.3d). Cast with no targets it resolves and the trigger
+  asks. Wider than this run.
+- The trigger-time multi-group prompt asks for Ravener's creature before finding that no opponent can be targeted; the ability is then
+  removed, so the answer does nothing, but the question is pointless.
+- Ravenous Pursuit's recipient is declared as "creature an opponent controls" for "creature you don't control" (the same set without teams).
+- `TargetPlayerCantCastNoncreatureSpellsUntilNextTurnEffect` can't become `TargetPlayerCantCastSpellTypesThisTurnEffect` with a duration by
+  types alone: a "noncreature" set of types would also stop an artifact creature spell.
+- The `isPreventedFromDealingDamage` / protection pre-checks in the bite and power-damage handlers (listed only, as asked).
+
+**Tests edited.** `TargetDealsPowerDamageToTargetEffectHandlerTest`: the deleted handler's test case moved here (two dealers, one
+recipient). `TargetPredicateEquivalenceTest`: a helper's Javadoc no longer says a benign spec skips protection. `EffectCountRatchetTest`'s
+baselines. The new cases above. No assertion was loosened or flipped.
+
+**Tests run.** Two large Gradle runs and four small ones, one `--tests` list per task, counted from the XML by file name and timestamp.
+After the protection fix: 1,483 classes (every card test whose source mentions protection, hexproof, shroud or ward or whose name does, and
+40 application / AI targeting and protection classes: `ValidTargetServiceTest`, `TargetLegalityServiceTest`, `TargetValidationServiceSpecTest`,
+`TriggerTargetCollectorTest`, `TargetPredicateEquivalenceTest`, `MultiTargetGroupCandidatesTest`, `AiTargetSelectorTest`,
+`TargetPolarityGuardTest`, …), 1,660 XML files, 15,363 cases, 0 failures. On the final sources: 188 classes (the 40, and the 151 test
+classes referencing a bite or `RedirectNextDamageEffect` card, Allies at Last, Terrific Team-Up, Ravener or Mother of Runes), 361 XML files,
+2,944 cases, 0 failures, 0 errors, `EffectCountRatchetTest` at 4,064 / 3,318. The deleted handler was not `AsksDeathReplacementsFirst` and
+called no `LifeSupport.askBefore*`. Compiled: domain, engine, AI, the application test sources, the card modules and the card-test modules
+the runs reached. No deleted type is named by any source (grepped). Not run: the full suites, the AI fuzz and stress tests, the frontend. Not
+verified: more than two players.
+
+**For the next run (run 38: Target's rare records).**
+
+- The owner's sign-off for `EachTargetCreatureDealsPowerDamageToTargetCreatureEffect` (three cards) on `TargetDealsPowerDamageToTargetEffect`.
+- Target's player restrictions (`TargetPlayerCantCastNoncreatureSpellsUntilNextTurnEffect`, `TargetSpellControllerCantCastSpellsThisTurnEffect`,
+  `TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect`: markers read by `CastingPermissionService` / `AbilityActivationService`), the copy
+  records, the villainous choice, the discard-then-draw, the "during next turn / next combat" must-attack records, the sacrifice-or-damage
+  punisher, a placer for `TargetPlayerPutsCounterOnCreatureEffect`.
 - Still the owner's: the gift opponent (CR 702.174a), the hidden-zone conjure and perpetual logging, the perpetual "it" (CR 400.7), one
   `Duration` for the three `RegisterGlobalTriggeredAbility…` records, `RegisterDelayedSacrificeSourceWhenTargetLeavesEffect` (6 cards),
   `TargetPlayerGainsControlOfTargetPermanentEffect` (6 cards) on the gain step.

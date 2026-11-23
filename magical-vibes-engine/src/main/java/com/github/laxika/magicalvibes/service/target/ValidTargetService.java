@@ -1707,31 +1707,28 @@ public class ValidTargetService {
             return false;
         }
 
-        // Protection from source color/type/subtype (for abilities that deal damage or destroy)
-        boolean dealsDamageOrDestroys = ability.getEffects().stream().anyMatch(e ->
-                e.targetSpec().admits(TargetPredicate.Kind.PERMANENT) && e.targetSpec().harmful());
-        if (dealsDamageOrDestroys) {
-            UUID sourcePermanentId = targetLegalityService.findSourcePermanentIdByCardId(
-                    gameData, sourceCard.getId());
-            Permanent sourcePermanent = sourcePermanentId == null
-                    ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
-            if (sourcePermanent != null
-                    && gameQueryService.hasProtectionFromSource(gameData, perm, sourcePermanent)) {
-                return false;
-            }
-            if (gameQueryService.hasProtectionFromOpponents(gameData, perm, controllerId)) {
-                return false;
-            }
-            if (effectiveSourceColors.stream()
-                    .anyMatch(color -> gameQueryService.hasProtectionFrom(gameData, perm, color))) {
-                return false;
-            }
-            if (gameQueryService.hasProtectionFromSourceCardTypes(gameData, perm, sourceCard)) {
-                return false;
-            }
-            if (gameQueryService.hasProtectionFromSourceSubtypes(gameData, perm, sourceCard)) {
-                return false;
-            }
+        // Protection stops every target of an ability from a source with the quality, a beneficial one
+        // included (CR 702.16b), the same check activation runs.
+        UUID sourcePermanentId = targetLegalityService.findSourcePermanentIdByCardId(
+                gameData, sourceCard.getId());
+        Permanent sourcePermanent = sourcePermanentId == null
+                ? null : gameQueryService.findPermanentById(gameData, sourcePermanentId);
+        if (sourcePermanent != null
+                && gameQueryService.hasProtectionFromSource(gameData, perm, sourcePermanent)) {
+            return false;
+        }
+        if (gameQueryService.hasProtectionFromOpponents(gameData, perm, controllerId)) {
+            return false;
+        }
+        if (effectiveSourceColors.stream()
+                .anyMatch(color -> gameQueryService.hasProtectionFrom(gameData, perm, color))) {
+            return false;
+        }
+        if (gameQueryService.hasProtectionFromSourceCardTypes(gameData, perm, sourceCard)) {
+            return false;
+        }
+        if (gameQueryService.hasProtectionFromSourceSubtypes(gameData, perm, sourceCard)) {
+            return false;
         }
 
         // Per-position filter for multi-target abilities

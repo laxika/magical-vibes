@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.cards.t.TerrificTeamUp;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -54,6 +55,39 @@ class TargetDealsPowerDamageToTargetEffectHandlerTest extends AbstractDamageHand
         assertThat(angel.getMarkedDamage()).isEqualTo(2);
         verify(permanentRemovalService, never()).removePermanentToGraveyard(any(), any());
         assertDamageToPermanent(angel, 2, player1Id, bears.getCard(), bears.getId());
+    }
+
+    @Test
+    @DisplayName("Each creature of the dealer group deals its own power to the one recipient")
+    void eachDealerOfTheGroupDealsItsPower() {
+        Card card = new TerrificTeamUp();
+        Permanent firstSource = addPermanent(player1Id, createCreature("First source", 2, 2));
+        Permanent secondSource = addPermanent(player1Id, createCreature("Second source", 3, 3));
+        Permanent victim = addPermanent(player2Id, createCreature("Victim", 7, 7));
+        StackEntry entry = createMultiTargetEntry(card, player1Id,
+                List.of(victim.getId(), firstSource.getId(), secondSource.getId()));
+
+        stubDamagePreventable();
+        stubNoDamageMultiplier();
+        stubCreatureDamageCore(victim, 7);
+        when(gameQueryService.findPermanentById(gd, firstSource.getId())).thenReturn(firstSource);
+        when(gameQueryService.findPermanentById(gd, secondSource.getId())).thenReturn(secondSource);
+        when(gameQueryService.findPermanentById(gd, victim.getId())).thenReturn(victim);
+        lenient().when(gameQueryService.isCreature(gd, firstSource)).thenReturn(true);
+        lenient().when(gameQueryService.isCreature(gd, secondSource)).thenReturn(true);
+        when(gameQueryService.getPowerBasedDamage(gd, firstSource)).thenReturn(2);
+        when(gameQueryService.getPowerBasedDamage(gd, secondSource)).thenReturn(3);
+        when(gameQueryService.isPreventedFromDealingDamage(gd, firstSource)).thenReturn(false);
+        when(gameQueryService.isPreventedFromDealingDamage(gd, secondSource)).thenReturn(false);
+        when(gameQueryService.hasProtectionFromSource(eq(gd), eq(victim), any(Permanent.class))).thenReturn(false);
+        when(gameQueryService.findPermanentController(eq(gd), eq(firstSource.getId()))).thenReturn(player1Id);
+        when(gameQueryService.findPermanentController(eq(gd), eq(secondSource.getId()))).thenReturn(player1Id);
+        stubNoKeywordsOnSourceWithDamageSource(entry, firstSource);
+        stubNoKeywordsOnSourceWithDamageSource(entry, secondSource);
+
+        targetDealsPowerDamageToTargetHandler.resolve(gd, entry, new TargetDealsPowerDamageToTargetEffect(1, 0));
+
+        assertThat(victim.getMarkedDamage()).isEqualTo(5);
     }
 
     @Test

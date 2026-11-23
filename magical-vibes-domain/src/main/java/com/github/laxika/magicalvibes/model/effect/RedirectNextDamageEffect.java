@@ -64,9 +64,9 @@ public record RedirectNextDamageEffect(RedirectRole protectedRole,
 
     /**
      * The target is harmful exactly when it is the redirect <em>destination</em>: that object is
-     * the one that ends up taking the damage, so protection from the ability's source must stop it
-     * being targeted (CR 702.16b). When the target is the protected object the ability only shields
-     * it, so no protection check applies.
+     * the one that ends up taking the damage. When the target is the protected object the ability
+     * only shields it, so it is benign. Protection from the ability's source stops either target
+     * (CR 702.16b).
      */
     @Override
     public TargetSpec targetSpec() {
