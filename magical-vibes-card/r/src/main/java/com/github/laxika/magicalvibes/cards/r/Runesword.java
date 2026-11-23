@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCreaturesDamagedBySourceInsteadOfDyingEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSacrificeSourceWhenTargetLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEventTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -21,7 +23,8 @@ public class Runesword extends Card {
                 "{3}",
                 List.of(
                         new BoostTargetCreatureEffect(2, 0),
-                        new RegisterDelayedSacrificeSourceWhenTargetLeavesEffect(),
+                        RegisterDelayedEventTriggerEffect.whenLeavesThisTurn(Subjects.target(),
+                                new SacrificeSelfEffect()),
                         new PreventRegenerationOfCreaturesDamagedBySourceThisTurnEffect(),
                         new ExileCreaturesDamagedBySourceInsteadOfDyingEffect()
                 ),

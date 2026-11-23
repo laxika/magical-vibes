@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutExiledCardsIntoOwnersGraveyardEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromTopUntilEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentChoosesCardFromGraveyardEffect;
@@ -33,7 +33,7 @@ public class TashaUnholyArchmage extends Card {
         var creatureCard = new CardTypePredicate(CardType.CREATURE);
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new RegisterGlobalTriggeredAbilityUntilNextTurnEffect(
+                List.of(RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect.untilYourNextTurn(
                         new TriggeredAbility(Triggers.creatureAttacksYouOrYourPlaneswalker(),
                         new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE)))),
                 "+1: Until your next turn, whenever a creature attacks you or Tasha, Unholy Archmage, put a -1/-1 counter on that creature."

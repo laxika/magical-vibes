@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GuardianBeast;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.cards.t.TheEarthCrystal;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -15,7 +16,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StiltzkinMoogleMerchant.class, Forest.class, GuardianBeast.class, TheEarthCrystal.class})
+@CardUsed({StiltzkinMoogleMerchant.class, Forest.class, GuardianBeast.class, TheEarthCrystal.class,
+        LeylineOfSanctity.class})
 class StiltzkinMoogleMerchantTest extends BaseCardTest {
 
     @Test
@@ -55,6 +57,7 @@ class StiltzkinMoogleMerchantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot target yourself as the player who gains control")
     void cannotGivePermanentToYourself() {
         Permanent stiltzkin = addCreatureReady(player1, new StiltzkinMoogleMerchant());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
@@ -67,6 +70,7 @@ class StiltzkinMoogleMerchantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cannot give away a permanent an opponent controls")
     void cannotGiveOpponentsPermanent() {
         Permanent stiltzkin = addCreatureReady(player1, new StiltzkinMoogleMerchant());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new Forest());
@@ -79,6 +83,7 @@ class StiltzkinMoogleMerchantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A permanent that left before resolution is not given and no card is drawn")
     void doesNotDrawWhenPermanentLeavesBeforeResolution() {
         Permanent stiltzkin = addCreatureReady(player1, new StiltzkinMoogleMerchant());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
@@ -99,6 +104,7 @@ class StiltzkinMoogleMerchantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Resolves after Stiltzkin has left the battlefield")
     void resolvesAfterSourceLeavesBattlefield() {
         Permanent stiltzkin = addCreatureReady(player1, new StiltzkinMoogleMerchant());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
@@ -119,6 +125,7 @@ class StiltzkinMoogleMerchantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No card is drawn when the permanent changed hands before resolution")
     void doesNotDrawWhenYouLoseControlOfTargetBeforeResolution() {
         Permanent stiltzkin = addCreatureReady(player1, new StiltzkinMoogleMerchant());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
@@ -139,6 +146,7 @@ class StiltzkinMoogleMerchantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Lifelink gains life from combat damage")
     void gainsLifeFromCombatDamage() {
         addCreatureReady(player1, new StiltzkinMoogleMerchant());
         harness.setLife(player1, 10);
@@ -152,6 +160,7 @@ class StiltzkinMoogleMerchantTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No card is drawn when the permanent can't change controllers")
     @CardUsed({GuardianBeast.class, TheEarthCrystal.class})
     void doesNotDrawWhenControlChangeIsPrevented() {
         Permanent stiltzkin = addCreatureReady(player1, new StiltzkinMoogleMerchant());
@@ -168,6 +177,26 @@ class StiltzkinMoogleMerchantTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("An opponent who became an illegal target gains nothing and no card is drawn")
+    void illegalOpponentGainsNothing() {
+        Permanent stiltzkin = addCreatureReady(player1, new StiltzkinMoogleMerchant());
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new Forest());
+        harness.setLibrary(player1, List.of(new Forest()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+
+        harness.activateAbilityWithMultiTargets(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(stiltzkin), 0,
+                List.of(player2.getId(), target.getId()));
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(target);
         assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(1);
     }

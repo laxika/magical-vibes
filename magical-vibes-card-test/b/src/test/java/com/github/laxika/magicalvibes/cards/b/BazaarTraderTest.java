@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.cards.m.Millstone;
 import com.github.laxika.magicalvibes.cards.p.Pacifism;
 import com.github.laxika.magicalvibes.cards.t.Threaten;
@@ -18,7 +19,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({BazaarTrader.class, Forest.class, GrizzlyBears.class, Millstone.class, Pacifism.class, Threaten.class})
+@CardUsed({BazaarTrader.class, Forest.class, GrizzlyBears.class, Millstone.class, Pacifism.class, Threaten.class,
+        LeylineOfSanctity.class})
 class BazaarTraderTest extends BaseCardTest {
 
     @Test
@@ -150,6 +152,21 @@ class BazaarTraderTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.forceStep(TurnStep.END_STEP);
         harness.clearPriorityPassed();
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(creature);
+    }
+
+    @Test
+    @DisplayName("A player who became an illegal target gains no control (Bazaar Trader's ruling)")
+    void illegalPlayerTargetGainsNothing() {
+        Permanent trader = addTrader();
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.activateAbilityWithMultiTargets(player1,
+                gd.playerBattlefields.get(player1.getId()).indexOf(trader), 0,
+                List.of(player2.getId(), creature.getId()));
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(creature);

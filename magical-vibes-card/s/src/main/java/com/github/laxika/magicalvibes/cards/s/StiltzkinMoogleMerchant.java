@@ -3,8 +3,13 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourceCardPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
@@ -24,7 +29,10 @@ public class StiltzkinMoogleMerchant extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new TargetPlayerGainsControlOfTargetPermanentEffect(new DrawCardEffect(1))),
+                List.of(
+                        new GainControlOfTargetEffect(Duration.PERMANENT).gainedBy(Subjects.targetPlayer(0)),
+                        new ConditionalEffect(new HappenedThisWay(StepKind.GAIN_CONTROL), new DrawCardEffect(1))
+                ),
                 "{2}, {T}: Target opponent gains control of another target permanent you control. If they do, you draw a card.",
                 List.of(
                         new PlayerPredicateTargetFilter(

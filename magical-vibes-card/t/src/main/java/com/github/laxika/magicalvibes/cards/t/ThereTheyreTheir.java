@@ -4,9 +4,11 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.FlickerEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MakeCreatureUnblockableEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerGainsControlOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -36,7 +38,7 @@ public class ThereTheyreTheir extends Card {
                 ).withManaCost("{1}{U}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Their - Target opponent gains control of target creature you control",
-                        List.of(new TargetPlayerGainsControlOfTargetPermanentEffect()),
+                        List.of(new GainControlOfTargetEffect(Duration.PERMANENT).gainedBy(Subjects.targetPlayer(0))),
                         List.of(opponent, TargetFilters.creatureYouControl())
                 ).withManaCost("{2}{U}")
         )));

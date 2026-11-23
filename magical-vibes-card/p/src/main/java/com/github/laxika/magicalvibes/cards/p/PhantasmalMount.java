@@ -6,9 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSacrificeSourceWhenTargetLeavesEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEventTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
@@ -35,7 +34,8 @@ public class PhantasmalMount extends Card {
                         new GrantKeywordEffect(Keyword.FLYING, Subjects.target()),
                         RegisterDelayedEventTriggerEffect.aboutWhenSourceLeavesThisTurn(Subjects.target(),
                                 SacrificeSelfEffect.ofTriggeringPermanent()),
-                        new RegisterDelayedSacrificeSourceWhenTargetLeavesEffect()
+                        RegisterDelayedEventTriggerEffect.whenLeavesThisTurn(Subjects.target(),
+                                new SacrificeSelfEffect())
                 ),
                 "{T}: Target creature you control with toughness 2 or less gets +1/+1 and gains flying "
                         + "until end of turn. When this creature leaves the battlefield this turn, "

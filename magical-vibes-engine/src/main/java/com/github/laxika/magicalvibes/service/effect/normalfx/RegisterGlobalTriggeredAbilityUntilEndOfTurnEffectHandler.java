@@ -6,8 +6,10 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,8 +18,9 @@ import org.springframework.stereotype.Component;
 import java.util.UUID;
 
 /**
- * Stores a global trigger registered by a resolving spell until turn cleanup. The trigger remains
- * active if the registering spell has already moved to its owner's graveyard.
+ * Stores a global trigger registered by a resolving spell or ability until turn cleanup, or until the beginning of its
+ * controller's next turn. The trigger remains active if the registering spell has already moved to its owner's
+ * graveyard.
  */
 @Slf4j
 @Component
@@ -40,13 +43,19 @@ public class RegisterGlobalTriggeredAbilityUntilEndOfTurnEffectHandler implement
         // filters and effects read them (CR 603.7c, 603.7e).
         UUID watchedPlayerId = entry.getTargetId() != null && gameData.playerIds.contains(entry.getTargetId())
                 ? entry.getTargetId() : null;
+        // "Whenever a creature attacks you or <this permanent>" (Tasha, Unholy Archmage) watches the registering
+        // permanent, so attacks on other planeswalkers the player controls don't count.
+        UUID watchedPermanentId = ability.hasWatchedTrigger(Triggers.creatureAttacksYouOrYourPlaneswalker())
+                ? entry.getSourcePermanentId() : null;
+        boolean untilNextTurn = Duration.UNTIL_YOUR_NEXT_TURN.equals(registration.duration());
         gameData.temporaryGlobalTriggeredAbilities.add(new TemporaryGlobalTriggeredAbility(
-                entry.getControllerId(), entry.getCard(), ability, null, false, false, -1, null, null,
+                entry.getControllerId(), entry.getCard(), ability, null, false, untilNextTurn,
+                untilNextTurn ? gameData.turnNumber : -1, null, watchedPermanentId,
                 entry.getSourcePermanentId(), watchedPlayerId, linkedExiledCardId(gameData, entry)));
+        String until = untilNextTurn ? "until their next turn" : "until end of turn";
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
-                " registers a global triggered ability until end of turn."));
-        log.info("Game {} - {} registers a global triggered ability until end of turn",
-                gameData.id, entry.getCard().getName());
+                " registers a global triggered ability " + until + "."));
+        log.info("Game {} - {} registers a global triggered ability {}", gameData.id, entry.getCard().getName(), until);
     }
 
     /**

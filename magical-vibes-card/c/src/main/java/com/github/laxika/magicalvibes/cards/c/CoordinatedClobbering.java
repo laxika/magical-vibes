@@ -2,9 +2,9 @@ package com.github.laxika.magicalvibes.cards.c;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.EachTargetCreatureDealsPowerDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTargetEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -28,6 +28,6 @@ public class CoordinatedClobbering extends Card {
         ), 1, 2);
 
         sources.addSpellEffect(new TapPermanentsEffect(Subjects.target()));
-        victim.addSpellEffect(new EachTargetCreatureDealsPowerDamageToTargetCreatureEffect(1, 0));
+        victim.addSpellEffect(new TargetDealsPowerDamageToTargetEffect(1, 0));
     }
 }

@@ -2,10 +2,12 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.c.CentaurNurturer;
+import com.github.laxika.magicalvibes.cards.e.Excruciator;
 import com.github.laxika.magicalvibes.cards.g.GoblinAssailant;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.j.JayaVeneratedFiremage;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
+import com.github.laxika.magicalvibes.cards.p.PaladinEnVec;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -19,7 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({BandTogether.class, AirElemental.class, GrizzlyBears.class, LlanowarElves.class,
-        CentaurNurturer.class, GoblinAssailant.class, JayaVeneratedFiremage.class})
+        CentaurNurturer.class, GoblinAssailant.class, JayaVeneratedFiremage.class, Excruciator.class,
+        PaladinEnVec.class})
 class BandTogetherTest extends BaseCardTest {
 
     @Test
@@ -80,6 +83,7 @@ class BandTogetherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With no source chosen nothing is dealt")
     void allowsZeroSources() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new CentaurNurturer());
         harness.setHand(player1, List.of(new BandTogether()));
@@ -92,6 +96,7 @@ class BandTogetherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A source that left deals nothing and the other still deals its damage")
     void remainingSourceDealsDamageWhenFirstSourceLeaves() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GoblinAssailant());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GoblinAssailant());
@@ -108,6 +113,7 @@ class BandTogetherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The damage target may be another creature you control")
     void canDamageAnotherCreatureYouControl() {
         Permanent source = harness.addToBattlefieldAndReturn(player1, new GoblinAssailant());
         Permanent target = harness.addToBattlefieldAndReturn(player1, new CentaurNurturer());
@@ -121,6 +127,7 @@ class BandTogetherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A source you no longer control deals no damage")
     void sourceThatChangesControllerDoesNotDealDamage() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GoblinAssailant());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GoblinAssailant());
@@ -137,6 +144,7 @@ class BandTogetherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With the damage target gone the sources deal no damage")
     void missingVictimDoesNotCauseSourcesToDamageEachOther() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GoblinAssailant());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new GoblinAssailant());
@@ -155,6 +163,7 @@ class BandTogetherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A red source's damage gets Jaya's bonus, the creature being the source")
     void redCreatureDamageReceivesJayasBonus() {
         harness.addToBattlefieldAndReturn(player1, new JayaVeneratedFiremage())
                 .setCounterCount(com.github.laxika.magicalvibes.model.CounterType.LOYALTY, 5);
@@ -166,5 +175,33 @@ class BandTogetherTest extends BaseCardTest {
         harness.castAndResolveInstant(player1, 0, List.of(target.getId(), source.getId()));
 
         assertThat(target.getMarkedDamage()).isEqualTo(3);
+    }
+
+    @Test
+    @DisplayName("Protection from the source's colour prevents a source's damage")
+    void protectionFromSourceColourPreventsDamage() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new GoblinAssailant());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PaladinEnVec());
+        harness.setHand(player1, List.of(new BandTogether()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveInstant(player1, 0, List.of(target.getId(), source.getId()));
+
+        assertThat(target.getMarkedDamage()).isZero();
+        assertThat(gd.playerBattlefields.get(player2.getId())).contains(target);
+    }
+
+    @Test
+    @DisplayName("Damage from a source whose damage can't be prevented ignores the target's protection")
+    void unpreventableSourceIgnoresProtection() {
+        Permanent source = harness.addToBattlefieldAndReturn(player1, new Excruciator());
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new PaladinEnVec());
+        harness.setHand(player1, List.of(new BandTogether()));
+        harness.addMana(player1, ManaColor.GREEN, 3);
+
+        harness.castAndResolveInstant(player1, 0, List.of(target.getId(), source.getId()));
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        harness.assertInGraveyard(player2, "Paladin en-Vec");
     }
 }

@@ -31,7 +31,7 @@ import java.util.UUID;
  * Registers the delayed triggered ability with what the exile step did, each card bound to its stay (CR 603.7c), so
  * its effects read that step as {@link RegisterDelayedStepTriggerEffectHandler}'s do; or, for one about a permanent,
  * about the source with that permanent as its entry's triggering permanent, which it doesn't affect once it has left
- * the battlefield (CR 603.7c, 400.7).
+ * the battlefield (CR 603.7c, 400.7); or, for one on that permanent's leaving, about that permanent.
  */
 @Component
 @RequiredArgsConstructor
@@ -83,8 +83,9 @@ public class RegisterDelayedEventTriggerEffectHandler implements NormalEffectHan
                             null, sourceId, false).withReferents(referents));
                 }
             }
-            case SOURCE_LEAVES_OR_UNTAPS, SOURCE_UNTAPS_OR_CONTROL_LOST -> throw new IllegalStateException(
-                    "An ability on an untap is about a permanent: " + register);
+            case SOURCE_LEAVES_OR_UNTAPS, SOURCE_UNTAPS_OR_CONTROL_LOST, PERMANENT_LEAVES ->
+                    throw new IllegalStateException("An ability on an untap or a permanent's leaving is about a "
+                            + "permanent: " + register);
             case YOU_CAST_EXILED_CARD -> cardIds.forEach(cardId ->
                     gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.nextThisTurn(
                             controllerId, entry.getCard(),
@@ -101,6 +102,10 @@ public class RegisterDelayedEventTriggerEffectHandler implements NormalEffectHan
      * as it could affect nothing; one made while the source is untapped waits for its next untap (CR 603.7a).
      */
     private void registerAboutPermanent(GameData gameData, StackEntry entry, RegisterDelayedEventTriggerEffect register) {
+        if (register.event() == RegisterDelayedEventTriggerEffect.Event.PERMANENT_LEAVES) {
+            registerWhenPermanentLeaves(gameData, entry, register);
+            return;
+        }
         UUID sourceId = entry.getSourcePermanentId();
         if (sourceId == null || gameQueryService.findPermanentById(gameData, sourceId) == null) {
             return;
@@ -129,5 +134,25 @@ public class RegisterDelayedEventTriggerEffectHandler implements NormalEffectHan
                         register.effects().stream().map(EffectRegistration::new).toList()),
                 sourceId, sourceId, register.thisTurn())
                 .withReferents(DelayedReferents.NONE.withTriggeringPermanent(about.getFirst())));
+    }
+
+    /**
+     * "When that creature leaves the battlefield [this turn], sacrifice this creature": about the permanent the subject
+     * names now, its source the ability's (CR 603.7e). None is made when the subject names nothing, nor for an ability
+     * with no source permanent; one whose source has already left is still made, and its "this" then affects nothing
+     * (CR 400.7).
+     */
+    private void registerWhenPermanentLeaves(GameData gameData, StackEntry entry,
+                                             RegisterDelayedEventTriggerEffect register) {
+        UUID sourceId = entry.getSourcePermanentId();
+        List<UUID> about = subjectResolutionService.permanentIds(gameData, entry, register, register.permanent());
+        if (sourceId == null || about.isEmpty()) {
+            return;
+        }
+        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.about(
+                entry.getControllerId(), entry.getCard(),
+                new TriggeredAbility(Triggers.leavesBattlefield(ObjectRelation.THIS),
+                        register.effects().toArray(CardEffect[]::new)),
+                about.getFirst(), sourceId, register.thisTurn()));
     }
 }

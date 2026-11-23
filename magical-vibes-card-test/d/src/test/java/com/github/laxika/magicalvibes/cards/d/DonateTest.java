@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.g.GoliathBeetle;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.cards.r.Rescue;
 import com.github.laxika.magicalvibes.cards.y.YavimayaHollow;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Donate.class, GoliathBeetle.class, YavimayaHollow.class, Rescue.class})
+@CardUsed({Donate.class, GoliathBeetle.class, YavimayaHollow.class, Rescue.class, LeylineOfSanctity.class})
 class DonateTest extends BaseCardTest {
 
     @Test
@@ -136,6 +137,22 @@ class DonateTest extends BaseCardTest {
         harness.assertInHand(player1, "Goliath Beetle");
         harness.assertNotInHand(player2, "Goliath Beetle");
         harness.assertNotOnBattlefield(player1, "Goliath Beetle");
+        harness.assertNotOnBattlefield(player2, "Goliath Beetle");
+    }
+
+    @Test
+    @DisplayName("A player who became an illegal target gains no control")
+    void illegalPlayerTargetGainsNothing() {
+        Permanent target = harness.addToBattlefieldAndReturn(player1, new GoliathBeetle());
+        harness.setHand(player1, List.of(new Donate()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.castSorcery(player1, 0, List.of(player2.getId(), target.getId()));
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        harness.passBothPriorities();
+
+        harness.assertOnBattlefield(player1, "Goliath Beetle");
         harness.assertNotOnBattlefield(player2, "Goliath Beetle");
     }
 }

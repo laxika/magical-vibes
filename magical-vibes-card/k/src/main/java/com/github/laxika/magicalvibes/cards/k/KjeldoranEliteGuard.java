@@ -5,7 +5,9 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSacrificeSourceWhenTargetLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEventTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 
@@ -22,7 +24,8 @@ public class KjeldoranEliteGuard extends Card {
                 null,
                 List.of(
                         new BoostTargetCreatureEffect(2, 2),
-                        new RegisterDelayedSacrificeSourceWhenTargetLeavesEffect()
+                        RegisterDelayedEventTriggerEffect.whenLeavesThisTurn(Subjects.target(),
+                                new SacrificeSelfEffect())
                 ),
                 "{T}: Target creature gets +2/+2 until end of turn. When that creature leaves the "
                         + "battlefield this turn, sacrifice this creature. Activate only during combat.",

@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 37: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May and Register closed (May's 11 cost combinators listed for step 10; Register's three `RegisterGlobalTriggeredAbility…` duration records wait for the owner); 1,787 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Target open (17 rare)) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 38: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May and Register closed (May's 11 cost combinators listed for step 10; Register's until-next-turn record folded on a `Duration` in run 38, the end-of-next-turn one kept); 1,785 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Target open (15 rare)) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -643,6 +643,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 35 | Target's player-choice records (a chooser on `ChoosePermanentsEffect`) and control-gift records (a gaining player and a GAIN_CONTROL step on `GainControlOfTargetEffect`) | Target open (12 rows: 7 absorbed, 3 survivors gaining an option, 2 unique; 7 records and 7 handlers deleted, 2 choice contexts with them; 9 card files rewritten; `ChoosePermanentsEffect.chosenBy`, `GainControlOfTargetEffect.gainedBy`, `StepKind.GAIN_CONTROL`, `CantBlockThisTurnEffect` over `except(controlledBy(…), …)`; End of the Hunt reads a face-down creature as mana value 0; the must-attack and power-damage records not reached; 27 rare Target records left) |
 | 36 | Iroh's "then" record on the gain step, Shuriken's record, the must-attack records, the sacrifice and counter records | Target open (6 rows: 3 absorbed, 2 survivors gaining an option, 1 unique; 3 records and 3 handlers deleted, one `CombatRequirement` constant with them; 5 card files rewritten; `SetCombatRequirementThisTurnEffect.mustAttack(subject, player)`, `MayEffectHandler` asks nothing for a control gift with a target gone; Iroh's gift with an illegal opponent or permanent offers no choice; the power-damage, sacrifice-or-damage and counter-by-player records read and left unaudited; 22 rare Target records left) |
 | 37 | Protection at targeting for every target, Ravener's required opponent, the bite's spec, the power-damage records | Target open (6 rows: 1 absorbed, 1 survivor, 2 unique, 2 blocked-other, the blocked three-card bite row re-noted; 1 record and 1 handler deleted; 2 card files rewritten, Ravener fixed; protection no longer reads `TargetSpec.harmful` in `ValidTargetService` or `TargetValidationService` (CR 702.16b); the bite keeps `benign(playerOrPermanent)`; 17 rare Target records left) |
+| 38 | The owner-approved 3+-card folds (the three-card bite, the six-card control gift, the six-card delayed sacrifice, the `RegisterGlobalTriggeredAbility…` durations), then Target's rare records | Target open (11 rows: 4 absorbed (3 to 6 cards each), 4 survivors, 2 unique, the end-of-next-turn row re-noted; 4 records and 4 handlers deleted; 19 card files rewritten; `RegisterDelayedEventTriggerEffect.whenLeavesThisTurn` (`PERMANENT_LEAVES`), `RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect.untilYourNextTurn`; the control gifts no longer scored by the AI as steals; the player restrictions, must-attack, copy, villainous-choice and discard-then-draw records read and left with a design note; 15 rare Target records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -10001,6 +10002,147 @@ verified: more than two players.
 - Still the owner's: the gift opponent (CR 702.174a), the hidden-zone conjure and perpetual logging, the perpetual "it" (CR 400.7), one
   `Duration` for the three `RegisterGlobalTriggeredAbility…` records, `RegisterDelayedSacrificeSourceWhenTargetLeavesEffect` (6 cards),
   `TargetPlayerGainsControlOfTargetPermanentEffect` (6 cards) on the gain step.
+
+### Step 9, run 38 (2026-11-23, Target open)
+
+The owner approved folding records used by three or more cards where the shared record says the same thing for every card.
+Run 37's four approved folds first, then Target's rare records. Ratchet 4,064 / 3,318 → 4,060 / 3,314 records / handlers (4
+records and 4 handlers deleted, none added). 19 card files rewritten (Band Together, Coordinated Clobbering, Graceful Takedown;
+Bazaar Trader, Donate, Harmless Offering, Stiltzkin, There // They're // Their, Zedruu; Acidic Dagger, Heart Wolf, Kjeldoran Elite
+Guard, Kjeldoran Guard, Phantasmal Mount, Runesword; Don't Move, Jace, Architect of Thought, Tasha, Unholy Archmage, Vraska the
+Unseen). Oracle text checked with `get_card` for all 19 and for Hunted Nightmare,
+Mikey & Mona, Star Athlete, Enchanter's Bane, Reflection Net, Hollow Marauder and Genesis of the Daleks; rulings with `get_rulings`
+for Bazaar Trader and Stiltzkin (none). CR 118.12, 120.8, 400.7, 603.7b, 603.7c, 603.7e, 608.2b and 702.16b checked with `get_rule`
+(2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Target | 2 rare records, 2 approved multi-card folds | 2 (3 and 6 cards) | 0 | 0 | 0 | 2 | 15 rare, 26 in all |
+| (other) | `RegisterDelayedSacrificeSourceWhenTargetLeavesEffect` (6 cards), `RegisterGlobalTriggeredAbilityUntilNextTurnEffect` (4), the end-of-next-turn row re-noted | 2 | | 4 (`TargetDealsPowerDamageToTargetEffect`, `GainControlOfTargetEffect`, `RegisterDelayedEventTriggerEffect`, `RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect`) | 1 kept (see below) | | |
+
+All families: 1,785 rare records without a row (run 37: 1,787). Perpetually 30 rare and Conjure 39 rare, unchanged. Rare records
+touched this run: Target 2 (both ledgered unique); the four folded records were used by 3 to 6 cards each.
+
+**The folds, and why each makes sense.**
+
+- **`EachTargetCreatureDealsPowerDamageToTargetCreatureEffect` (Band Together, Coordinated Clobbering, Graceful Takedown) →
+  `TargetDealsPowerDamageToTargetEffect(1, 0)` (and `(2, 0)` for Graceful Takedown's enchanted group).** Same targets (the card's
+  groups), same dealer as damage source, in turn, the same recipient, no chooser, no duration. The old handler's "victim still a
+  creature" test is the stack's recheck (CR 608.2b) plus the bite's target resolution; the bite's two-group spec stays
+  `benign(playerOrPermanent)` (run 37) and its AI polarity HARMFUL, which for a multi-group spell gives the same answer as the old
+  HARMFUL_DAMAGE name entry (`AiTargetSelector.pickPermanentTargetsForGroup` reads only "beneficial or not"). Differences: the bite
+  honours "damage can't be prevented" from the dealer before its protection pre-check (the old handler didn't), names its damage carrier
+  by `FaceDownVisibility.publicName`, logs "X's damage is prevented." instead of "X's damage to Y is prevented.", and doesn't call
+  `checkWinCondition` after creature damage (the state-based check after resolution does).
+- **`TargetPlayerGainsControlOfTargetPermanentEffect` (Bazaar Trader, Donate, Harmless Offering, Stiltzkin, There // They're // Their,
+  Zedruu) → `GainControlOfTargetEffect(Duration.PERMANENT).gainedBy(Subjects.targetPlayer(0))`.** Every card says "target player /
+  opponent gains control of target permanent you control", permanently. The spells bind the gain to the permanent group and mark the
+  player group with `TargetGroupMarkerEffect` (Domineering Will's shape); the abilities and the modal spell read positions 0 and 1.
+  Stiltzkin's "If they do, you draw a card" is `ConditionalEffect(HappenedThisWay(GAIN_CONTROL), DrawCardEffect(1))`: GAIN_CONTROL records
+  only a permanent whose controller became the gainer, which is the old "control changed" test (a Guardian Beast-protected artifact or a
+  permanent already gone records none). Illegal targets behave as before (`StackEntry.getTargetIds` drops them; Bazaar Trader's ruling):
+  new tests pin it. The control effect's source name is `FaceDownVisibility.sourceName` instead of the card's name.
+- **`RegisterDelayedSacrificeSourceWhenTargetLeavesEffect` (six cards) → `RegisterDelayedEventTriggerEffect.whenLeavesThisTurn(target(),
+  new SacrificeSelfEffect())`.** The existing record watched only the source (`SOURCE_LEAVES`, "that creature" its triggering
+  permanent), so it didn't say the same; it gained the event `PERMANENT_LEAVES`: a delayed ability about the permanent the subject names,
+  for this turn (CR 603.7b), whose effects' "this" is the registering ability's source (CR 603.7e). Every card says "when that creature
+  leaves the battlefield this turn, sacrifice this [creature / artifact]". Like the old handler it is made when the source has already left
+  (its sacrifice then affects nothing, CR 400.7) and not when the target is gone. The other effects of each ability declare the target
+  (the old record's `benign(creature)` spec was redundant with them).
+- **One `Duration` for the `RegisterGlobalTriggeredAbility…` records: two of three.** `RegisterGlobalTriggeredAbilityUntilNextTurnEffect`
+  (Don't Move, Jace, Architect of Thought, Tasha, Unholy Archmage, Vraska the Unseen: every one "until your next turn, whenever …") is
+  `RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect.untilYourNextTurn(ability)`: the survivor gained `Duration` (`UNTIL_END_OF_TURN`, the
+  default, or `UNTIL_YOUR_NEXT_TURN`). None of the four targets, so the survivor's watched player (a target player) is none, as before;
+  Tasha's watched permanent ("attacks you or Tasha") is read from the trigger for both durations (no end-of-turn card uses that trigger).
+  Log line "… registers a global triggered ability until their next turn." kept. **Left:** `RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect`
+  (Season of the Bold, Nuka-Nuke Launcher): its watched player is a permanent target's controller or the attacked player (the defending
+  player), which the 52-card survivor can't take: `RulesEventPipeline` makes the watched player the triggered entry's target and
+  `CombatDamageTriggers` filters watchers by it, so end-of-turn cards that target a creature would change. Its target filter (Season) and
+  "until the end of that player's next turn" (Nuka-Nuke) are one card each.
+
+**Unique.** `TargetPlayerPutsCounterOnCreatureEffect` (Hunted Nightmare, Mikey & Mona): the target player chooses and puts the counters,
+and the placer feeds the counter events (`OwnPermanentCounterPlacementByPlayer.placingPlayerId`); `ChoosePermanentsEffect.chosenBy` +
+`PutCounterOnTargetPermanentEffect` would need a placer on the 973-card record that only this record sets.
+`TargetPermanentControllerMaySacrificeOrDamageEffect` (Star Athlete, Enchanter's Bane): a cost combinator ("may sacrifice it. If they
+don't" / "unless that player sacrifices it", CR 118.12), with the target as the damage source for one card; it goes with step 10's cost
+combinators, as run 29 ledgered `DrawCardUnlessPaysEffect` and its kin.
+
+**AI.** The deleted control record was a `ControlStealingEffect` with `PERMANENT` duration, so `SpellEvaluator` scored Donate, Harmless
+Offering and There // They're // Their as stealing an opponent's best creature (×1.8) and `HardAiDecisionEngine` counted them as removal;
+`GainControlOfTargetEffect` with another gainer reports no steal duration (run 35), so they no longer are. Their polarity is NEUTRAL (the
+gainer rule) for HARMFUL; for a group the AI reads only "beneficial or not" and the activated-ability ranking reads the spec
+(`benign` before and after), so target picks are unchanged. The two name-table entries of the deleted records were removed.
+`TargetPolarityGuardTest` passes.
+
+**Behaviour changes.**
+
+1. Band Together, Coordinated Clobbering, Graceful Takedown: a dealer whose damage can't be prevented (Excruciator) is no longer stopped by
+   the recipient's protection pre-check (the damage-can't-be-prevented rule of the source; the survivor's check):
+   `BandTogetherTest.unpreventableSourceIgnoresProtection` (new); the prevented line reads "X's damage is prevented.".
+2. The AI no longer values the three control-gift spells as steals (above).
+3. The other folds: none intended.
+
+**What a player sees.** The bite's prevention log line is the survivor's; the gift's and the delayed abilities' log lines are the
+survivors' (the gift's control effect is named by `FaceDownVisibility.sourceName`). No prompt or log names a hidden card.
+
+**Read, left unaudited (for the next run).**
+
+- *Player restrictions* (`TargetPlayerCantCastNoncreatureSpellsUntilNextTurnEffect`, `TargetSpellControllerCantCastSpellsThisTurnEffect`,
+  `TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect`, with the multi-card `TargetPlayerCantCastSpellTypesThisTurnEffect` (6) and
+  `TargetPlayerCantPlayLandsThisTurnEffect` (4)): each is a floating marker on a player that `CastingPermissionService`,
+  `AbilityActivationService`, `GameActionAvailabilityService` and `GameViewProjectionFactory` read by class; the static
+  `PlayerCantCastSpellsEffect`, `OpponentsCantCastSpellsThisTurnEffect` and `PlayersCantCastSpellTypesUntilEndOfYourNextTurnEffect` are
+  the same kind. One record (a `PlayerSubject`, what is restricted as a spell filter or "lands" / "non-mana abilities", a `Duration`) with
+  one reader per question would fold them; a card-type set can't say "noncreature" (an artifact creature spell), and Render Silent needs
+  "the target spell's controller" as a subject. Five or more classes share it: build it, not a blocked verdict.
+- *Copy records*: `TargetCreatureBecomesCopyOfExiledCreatureWithSourceEffect` (Reflection Net) shares "a copier other than the source" with
+  `AttachedCreatureBecomesCopyOfExiledCreatureEffect` (2 cards), `EnchantedPermanentBecomesCopyOfExiledCardUntilEndOfTurnEffect` and
+  `EquippedCreatureBecomesCopyOfTargetCreatureEffect`: a copier subject on `BecomeCopyOfSubjectEffect` folds the four (the Become family,
+  30 rare records, unaudited). `TargetSpellBecomesCopyOfCardEffect` (Transcantation) not read.
+- *Villainous choice*: Genesis of the Daleks is `TargetPlayerChoosesOneEffect.villainousChoiceFacedBy(targetPlayer(), …)` once a
+  `DynamicAmount` reads "the total power of Daleks that died this turn" (`GameData.creatureSubtypeDeathPowerThisTurn`, read only by its
+  handler) and the Dalek option's life loss stays a step after the destruction (its Lich's Duel Mastery rerun).
+- *Discard then draw* (Hollow Marauder): "for each of those opponents who didn't discard a card with mana value 4 or greater" counts the
+  opponents with no card too; it needs a per-player count over the discard step.
+- *Must attack next turn / next combat* (Gideon, Battle-Forged; Sizzling Soloist; The Brothers' War; `TargetPlayersCreaturesMustAttackThisTurnEffect`
+  3 cards): four payload and duration pairs (`CreaturesMustAttackTargetPlayerUntilNextTurnEffect` during the affected player's next turn,
+  `MatchingCreaturesMustAttackEffect` during the next combat or on a player this turn, the each-other pair until your next turn); a
+  `Duration` and an attacked permanent on `SetCombatRequirementThisTurnEffect` would need its readers (`AttackLegalityService`,
+  `DurationClock`, `CreatureControlService`) to take those payloads.
+
+**Seen, not changed.**
+
+- Graceful Takedown's "up to one other target creature you control": the engine does not stop the same creature being chosen for both of
+  its dealer groups (CR 115.3 allows one object per instance of "target", "other" forbids it). Not checked this run.
+- `GainControlOfTargetEffectHandler.resolvePermanent` walks every legal target of the entry and skips the ones that aren't permanents (a
+  gift's player target); correct today, but a card with two permanent groups and a permanent gain bound to one would also take the other.
+- Damage from several dealers of the bite is dealt one dealer at a time, not as one simultaneous event (run 37's note).
+
+**Tests edited.** `BandTogetherTest`: `@DisplayName` on its six unnamed methods, two new cases (protection prevents a red dealer's damage;
+an unpreventable dealer ignores it). `StiltzkinMoogleMerchantTest`: `@DisplayName` on its seven unnamed methods, a new case (an opponent
+who became an illegal target gains nothing and no card is drawn). `BazaarTraderTest`, `DonateTest`: a new case each (an illegal player
+target gains nothing). `EffectCountRatchetTest`'s baselines. No assertion was loosened or flipped; no test asserted a changed log line.
+
+**Tests run.** Two Gradle runs, one `--tests` list per task, counted from the XML by file name and timestamp: 86 classes, 90 XML files,
+825 cases, 0 failures (the 47 test classes referencing a changed card, a sample of each survivor's cards: 8 of
+`RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect`'s, War Barge, Merieke Ri Berit, Giant Oyster, Coffin Queen, 8 of
+`GainControlOfTargetEffect`'s with Iroh, Domineering Will, Coveted Falcon, Sky Swallower, 8 of the bite's with Allies at Last and
+Terrific Team-Up; `TargetDealsPowerDamageToTargetEffectHandlerTest`, `GainControlOfTargetEffectHandlerTest`,
+`CardEffectTargetingConsistencyTest`, `EffectCountRatchetTest` at 4,060 / 3,314, the AI's `TargetPolarityGuardTest`); then the four edited
+card-test classes again on the final sources: 40 cases, 0 failures. No deleted handler was `AsksDeathReplacementsFirst` or called
+`LifeSupport.askBefore*`. Compiled: domain, engine (and its test fixtures), AI (and its tests), the application test sources, the card
+modules and card-test modules a, b, c, d, g, h, j, k, p, r, s, t, v, z. No deleted type is named by any source (grepped). Not run: the full
+suites, the AI fuzz and stress tests, the frontend. Not verified: more than two players.
+
+**For the next run (run 39: Target's rare records).**
+
+- The player-restriction record (above): one record with a `PlayerSubject`, a restriction and a `Duration`, its readers in
+  `CastingPermissionService` / `AbilityActivationService` / `GameActionAvailabilityService` / `GameViewProjectionFactory`, folding the five
+  Target records and the static `PlayerCantCastSpellsEffect` family where they say the same.
+- Genesis of the Daleks on `villainousChoiceFacedBy`, Hollow Marauder's per-player count, the must-attack payloads, Transcantation.
+- Reflection Net with the Become family (a copier subject on `BecomeCopyOfSubjectEffect`).
+- Still the owner's: the gift opponent (CR 702.174a, missing-features entry 80), the hidden-zone conjure and perpetual logging, the perpetual
+  "it" (CR 400.7).
 
 ## Prompt
 

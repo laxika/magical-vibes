@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.condition.DefendingPlayerControlsPermanent;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSacrificeSourceWhenTargetLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEventTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeSelfEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
@@ -27,7 +29,8 @@ public class KjeldoranGuard extends Card {
                 null,
                 List.of(
                         new BoostTargetCreatureEffect(1, 1),
-                        new RegisterDelayedSacrificeSourceWhenTargetLeavesEffect()
+                        RegisterDelayedEventTriggerEffect.whenLeavesThisTurn(Subjects.target(),
+                                new SacrificeSelfEffect())
                 ),
                 "{T}: Target creature gets +1/+1 until end of turn. When that creature leaves the "
                         + "battlefield this turn, sacrifice this creature. Activate only during combat "

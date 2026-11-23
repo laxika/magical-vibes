@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
 
 @CardRegistration(set = "RTR", collectorNumber = "208")
 @CardRegistration(set = "DDM", collectorNumber = "42")
@@ -26,7 +26,7 @@ public class VraskaTheUnseen extends Card {
     public VraskaTheUnseen() {
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new RegisterGlobalTriggeredAbilityUntilNextTurnEffect(new TriggeredAbility(
+                List.of(RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect.untilYourNextTurn(new TriggeredAbility(
                         Triggers.creatureDealsCombatDamageToThisPlaneswalker(), new DestroyTargetPermanentEffect()))),
                 "+1: Until your next turn, whenever a creature deals combat damage to Vraska, destroy that creature."
         ));
