@@ -2673,6 +2673,148 @@ Suggested fold order:
 4. The land-type batch.
 5. The modal additional-cost batch, together with step 10's cost-pair weighing.
 
+### Step 9, parallel triage chunk 10 (2026-11-23)
+
+Only verdicts this time. No repo file changed; the plan and ledger were read at `4d3fe3f4a6`, and the ratchet did not move. The 84 ledger rows (notes `triage P10: …`) are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/ptriage/out-10/ledger-rows.csv.
+
+**What was read**
+- Every record, its handler read to the end, and every card class that uses it.
+- For records with no handler, their readers:
+  - `DrawService`: win on an empty-library draw, the Enduring Renewal replacement, the miracle reveal
+  - `LifeSupport` and `EnduringAngelLifeReplacement`
+  - `GameQueryService`: `canPlayerLifeChange`, the dying-trigger check, the loyalty lock, the tap-ability lock, `canCastSpellFromZone`, the loyalty damage replacement
+  - `AdditionalSpellCostService` (Chorus), `BattlefieldPlacementService` (the as-enters keyword, token and graveyard counter replacements, Storyweave's entry)
+  - `CombatBlockService`, `CreatureCountSupport`, `ZoneChangeCounterSupport`, `PermanentRemovalService`'s hand markers
+  - `LifeGainReplacements`, `PlayerDamageFinalReplacements`, `PreventionSupport.collectAllDamageSourceIds`
+  - `BattleDefeatSupport`, `EpicService`, `ParadigmService`, `ForageEffectHandler`, `AirbendSupport`, `GameOfChaosSupport`, the scheme abandon may handler
+- Siblings compared: the vote handlers (Coercive Portal, Secret Council, Will of the Council), `AirbendTargetPermanentEffect`, `ForcedCostOrElseEffect`, `PutCounterOnControlledCreatureCost`, `DrawDiscardAndConniveEffect`, `ControlTargetPlayerNextTurnEffect`, `ExileTopCardsAndMayCastSpellsEffect`, `DealDamageToAttackedTargetEffect`, `TargetDealsPowerDamageToTargetEffect`, `PlayersCantCastSpellsFromZonesEffect`, `RequirePaymentToBlockEffect`, `ActivatedAbilitiesOfMatchingPermanentsCantBeActivatedEffect`, `ControlledPermanentsEnterWithAdditionalCountersEffect`, `ChooseOneEffect.ModeRestriction`, `FixedIfCondition`, the condition list (`EventValueAtLeast`, `AllOf`, `WaterbendCostPaid`).
+- Oracle text: checked with `get_card` for every `unique` and `blocked` card and for most `step-9` cards. The MB1/MB2 playtest cards (Five Kids in a Trenchcoat, Domesticated Mammoth, Mirrored Lotus, Champion of the Hare-ish, Duelists' Convocation International, Planeswalkerificate, Panglacial Shinobi, No-Regrets Egret) are in no feed, so their class Oracle was used.
+- Rulings: Lethal Scheme, Chorus of the Conclave, Deification.
+- Rules checked with `get_rule`: CR 109.5, 118.12, 118.12a, 119.4, 120.3c, 400.7, 401.4, 603.12, 608.2b, 608.2h, 613.1f, 614.1c, 700.2e, 701.32b, 701.33b, 701.38a, 701.50a, 701.50b, 701.50c, 702.50a, 702.94a, 702.192a, 708.2a. CR 310.11b doesn't exist; it isn't cited.
+
+| Family | Triaged | step-9 | unique | blocked-other |
+|---|---|---|---|---|
+| Vote | 3 | 3 | 0 | 0 |
+| Win | 3 | 2 | 1 | 0 |
+| Abandon, Active, Airbend, Arcane, Attacking | 10 | 7 | 3 | 0 |
+| Battle, Blight, Buddy, Card, Change | 10 | 4 | 5 | 1 |
+| Conditional, Connive, Control, Count, Creature | 10 | 6 | 4 | 0 |
+| Delayed, Enduring, Enter, Epic, Equipped | 10 | 4 | 6 | 0 |
+| Eye, Forage, Game, Garth, Graveyard | 10 | 3 | 7 | 0 |
+| Initialize, Library, Life, Matching, Miracle | 10 | 5 | 5 | 0 |
+| Nefarious, Next, No, Noncreature, Paradigm | 10 | 2 | 8 | 0 |
+| Permanent, Planeswalker, Preserve, Reflect | 8 | 3 | 5 | 0 |
+| All | 84 | 39 | 44 | 1 |
+
+**Fold batches** (records / cards)
+- **two-option vote** — a new `VoteEffect`: two named options, a payload when the first gets more votes, an otherwise payload, ties to otherwise, voters in turn order from you (CR 701.38a). 2 records / 2 cards.
+  - Split Decision: `CounterSpellEffect` / `CopySpellEffect`.
+  - Trial of a Time Lord: guilty puts `exiledWithSource()` on the bottom, each owner ordering their cards (CR 401.4).
+  - Joins chunks 12 and 14's `CoercivePortalEffect`, `GraceOrCondemnationEffect`, `TyrantsChoiceEffect` and `PleaForPowerEffect`, which have the same handler shape.
+- **permanent vote** — `WillOfTheCouncilEffect` (3 cards, unaudited) becomes a vote step over permanents that records the most-voted as CHOOSE. 1 record / 1 card.
+  - Vault 11: a destroy over `thisWay(CHOOSE)`, else each player draws.
+  - Keep the death replacements asked before `finishVoting`.
+- **event-value win, by parameters** — `ConditionalEffect(EventValueAtLeast…, WinGameEffect)`. 2 records / 1 card.
+  - Call the Spirit Dragons' engine-built record.
+  - Luck Bobblehead: `AllOf(EventValueAtLeast(7), NotCondition(EventValueAtLeast(8)))`.
+- **active-player puts, by parameters** — 2 records / 2 cards.
+  - Braids, Conjurer Adept: `ChooseCardEffect` over `cardsInHands(activePlayer(), …)` + `PutCardsOntoBattlefieldEffect`.
+  - Oath of Druids: `RevealCardsFromTopUntilEffect` + `PutCardsOntoBattlefieldEffect(revealedThisWay(creature))` + the rest into the graveyard.
+- **airbend** — `AirbendTargetPermanentEffect` (11 cards) gains a `PermanentSubject`. 2 records / 2 cards.
+  - Avatar's Wrath: `except(allCreatures(), target())`, as one exile event.
+  - Aang, Swift Savior: target creature or `targetSpell()`. Only Aang airbends a spell: weigh it.
+- **card-copy-cast** — triage 7's `CopyImprintedCardAndMayCastCopyEffect.of(exiledWithSource())`, free. 2 records / 2 cards.
+  - Arcane Bombardment: after `ExileCardAtRandomEffect`.
+  - Eye of the Storm: after `ExileTargetSpellEffect` over the triggering spell.
+- **blight costs** — cost-shape: `PutCounterOnControlledCreatureCost` (16 cards) gains a `DynamicAmount` count. 2 records / 3 cards: Soul Immolation, Gristle Glutton, Blighted Nightmare.
+- **connive** — `DrawDiscardAndConniveEffect` (41 cards, run 26 unique) gains a `PermanentSubject` replacing its flags. 2 records / 2 cards: Lethal Scheme, Change of Plans.
+  - Several connivers act one at a time in their controller's order (CR 701.50c).
+- **player control** — `ControlTargetPlayerNextTurnEffect` (6 cards) gains a `Duration` and a controlling `PlayerSubject`. 2 records / 2 cards.
+  - Secret of Bloodbending: next turn or next combat through `WaterbendCostPaid`.
+  - Cruel Entertainment: two crossed applications.
+- **life lock** — survivor `LifeTotalCantChangeEffect` (Platinum Emperion). 2 records / 3 cards.
+  - Teferi's Protection and Perch Protection: `GrantStaticEffectToPlayerEffect.untilYourNextTurn(…)`.
+  - The reader was compared: `canPlayerLifeChange` must read the floated copy.
+- **cost-shape singles** — 2 records / 2 cards; weigh against step 10's cost-combinator merge.
+  - Fear My Authority: `ForcedCostOrElseEffect` over a discard-or-3-life choice, else `SacrificeSelfEffect`, which is the scheme abandon.
+  - Divert: `MayPayManaEffect({2})` by the spell's controller, else `ChangeTargetOfTargetSpellWithSingleTargetEffect`.
+- **joins other chunks' batches** — 1 record / 1 card each unless noted.
+  - Hushbringer: P02's entering-trigger batch gains a dies kind.
+  - Heat Wave: P07's floated-tax batch, block side, gains a life kind and filters.
+  - Katabatic Winds: survivor of P03's tap-ability lock pair.
+  - Hithlain Rope and Bucknard's Everfull Purse: P06's leader-gains-control batch with a seat-direction `PlayerSubject`. 1 record / 2 cards.
+  - Soulless Jailer: P05's static zone-play batch gains a spell filter.
+  - My Crushing Masterstroke: P07's must-attack batch with `ownerOf(target())`.
+  - Reflect Damage: P03's source-keyed redirect batch.
+  - Library of Lat-Nam: triage 3's opponent-chooses-mode `ChooseOneEffect`, with `FatalLoreEffect`.
+  - Blade of Shared Souls: triage 6's copier subject on `BecomeCopyOfSubjectEffect`, `WHILE_REMAINS_ATTACHED`.
+- **other single folds** — 1 record each.
+  - Muck Drubb: `ChangeTargetOfTargetSpellToSourceEffect` gains a new-target subject; 5m's `ChangeTargetOfTargetSpellToEnchantedCreatureEffect` joins. Weigh.
+  - Brood Astronomer: `AwardAnyColorManaEffect(FixedIfCondition(…, 3, 1))`.
+  - Mirkwood Trapper: `ChoosePermanentsEffect.chosenBy(attacking player)` + `BoostTargetCreatureEffect` over `thisWay(CHOOSE)`.
+  - Protean Hydra: `RegisterDelayedStepTriggerEffect.aboutSourceAtNext`.
+  - Epic Experiment: `ExileTopCardsAndMayCastSpellsEffect` gains an uncast-into-graveyard option. Weigh.
+  - Mage Slayer: `DealDamageToAttackedTargetEffect` gains a dealer subject.
+  - Dearly Departed: `ControlledPermanentsEnterWithAdditionalCountersEffect` gains a graveyard form.
+  - Garruk Relentless: split into `DealDamageToTargetCreatureEffect(3)` + `TargetDealsPowerDamageToTargetEffect(target(), source())`.
+  - The forage follow-up (engine-built, no card): `QueueReflexiveAbilityEffect`.
+
+**Blocked (1)**
+- Battle Angels of Tyr, `blocked-other`. The split needs three Conditions on the damaged player: more cards in hand, more lands and more life than each other player. Subjects inside Conditions are outside this plan, and each Condition would be used by this card alone.
+
+**Unique (44)**
+- Engine-built records:
+  - siege defeat
+  - epic's upkeep copy
+  - miracle ×2
+  - paradigm ×2
+  - the two hand markers
+  - forage's event
+  - Game of Chaos' continuation
+  - Garth One-Eye's continuation
+- Playtest one-offs (MB1/MB2): Buddy List ×2, Five Kids in a Trenchcoat, Domesticated Mammoth, Duelists' Convocation International, Planeswalkerificate, Panglacial Shinobi, No-Regrets Egret, Mirrored Lotus.
+- Already one record for two cards:
+  - win on an empty-library draw (Laboratory Maniac, Jace, Wielder of Mysteries)
+  - `CountAsNamedCardForSpellEffect` (Pardic Firecat, Diligent Farmhand)
+  - Nefarious Lich's life-gain replacement (Nefarious Lich, Lich)
+  - `PreserveCountersOnZoneChangeEffect` (Skullbriar, the Walking Grave, Me, the Immortal)
+- Card mechanics no other record shares:
+  - My Laughter Echoes, Arcane Endeavor, Invasion Plans, River of Tears, Chorus of the Conclave
+  - `DelayedTargetGroup` (a component record of two unique delayed-trigger records, not an effect)
+  - Enduring Angel, Enduring Renewal, Duskwalker, Eye for an Eye, Game of Chaos, Garth One-Eye, Yixlid Jailer
+  - Nefarious Lich's damage replacement, Storyweave, Serene Sleuth, Sanctum Prelate, Thieves' Auction, The Immortal Sun, Deification
+
+**Seen, not changed** (confirmed by reading, not run)
+- **Fear My Authority can't be abandoned voluntarily.** When both a discard and 3 life are payable, declining the discard prompt pays the life. "Unless" is a "may" (CR 118.12a), so the player should be able to decline both. Sure.
+- **Chorus of the Conclave ignores the caster.** `AdditionalSpellCostService.hasCreatureSpellAdditionalCountersCost` checks every battlefield and not the caster, so an opponent's Chorus gives you the option. The rules say "you" is the static's controller (CR 109.5). Sure.
+- **Garruk Relentless's return damage isn't damage.** "That creature deals damage equal to its power to him" is a direct loyalty subtraction. It skips damage prevention, protection, damage replacements (doublers) and "deals damage" triggers; under CR 120.3c that damage is what removes the loyalty. Sure. The split fixes it.
+- **Lethal Scheme's connive order is fixed.** The convoking creatures connive in cast order; the controller should choose the order (CR 701.50c, its ruling). Sure, low impact.
+- **Dearly Departed under Yixlid Jailer.** `applyGraveyardEnterWithAdditionalCounters` never asks `graveyardCardsHaveLostAllAbilities`, and it judges the entering card's printed creature type. Sure of the code.
+- **Readers of printed statics with no ability check** (CR 613.1f, 708.2a):
+  - Enduring Angel (`LifeSupport.applyEnduringAngelReplacement`) and Enduring Renewal (`DrawService.findRevealTopCreatureToGraveyardElseDrawSource`) have no lost-abilities check. Sure.
+  - Laboratory Maniac and Jace (`findWinOnEmptyLibraryDrawSource`) check lost abilities but not face down. Fairly sure.
+- **Enduring Angel that can't transform.** Its replacement isn't applied at all, so the life total isn't set to 3 and the loss comes from state-based actions. The result differs only under "can't lose the game". Fairly sure, low impact.
+- **Avatar's Wrath exiles one at a time.** It airbends each creature as its own exile, not as one event. Sure of the code.
+- **Vault 11's secret votes are never revealed.** Nothing logs them, though the text reveals them. Fairly sure, low impact.
+- **Storyweave's log is in the second person** ("your control") in a shared log. Sure, low impact.
+- **Soulless Jailer judges the card's printed type.** `canCastSpellFromZone` reads `card.hasType(CREATURE)`, not the spell being cast (an Adventure or a modal back face). Unsure, low impact.
+
+**Left**
+- Nothing in the chunk.
+- Unaudited records these batches touch: `WillOfTheCouncilEffect` (3 cards), `AirbendTargetPermanentEffect` (11), `PutCounterOnControlledCreatureCost` (16), `ControlTargetPlayerNextTurnEffect` (6), `DealDamageToAttackedTargetEffect` (6), `ControlledPermanentsEnterWithAdditionalCountersEffect` (13), `CreatureEnteringDontCauseTriggersEffect` (4), `CrumblingSanctuaryDamageReplacementEffect`.
+- Rows to re-triage with their batches:
+  - 5m's `ChangeTargetOfTargetSpellToSourceEffect` and `ChangeTargetOfTargetSpellToEnchantedCreatureEffect`
+  - run 26's `DrawDiscardAndConniveEffect`
+  - 4j's `ExileTopCardsAndMayCastSpellsEffect`
+- Suggested fold-run order:
+  1. By-parameter and single folds.
+  2. Life lock.
+  3. Two-option vote, together with chunks 12 and 14.
+  4. Airbend.
+  5. Connive.
+  6. Player control.
+  7. Blight costs, with the cost-shape singles and step 10.
+
 ## Prompt
 
 Replace `<N>` with the step number. For step 9, add the run kind and its scope (`step 9, triage run: Destroy, Search`;
