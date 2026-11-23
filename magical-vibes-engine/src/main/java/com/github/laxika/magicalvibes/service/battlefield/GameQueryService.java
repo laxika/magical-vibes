@@ -182,7 +182,6 @@ import com.github.laxika.magicalvibes.model.effect.CombatDamageSourceExemptionEf
 import com.github.laxika.magicalvibes.model.effect.CombatTaxKind;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesMatchingCantBeBlockedEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledNonlandPermanentsAreColorEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlledSourceCreatureDamagePreventionEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerDamageMultiplyingEffect;
 import com.github.laxika.magicalvibes.model.effect.ControllerOpponentDamageBonusEffect;
@@ -297,12 +296,10 @@ import com.github.laxika.magicalvibes.model.effect.PreventAllCombatDamageToAndBy
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageDealtByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToAndByEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToCreaturesYouControlEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventAllDamageToSelfFromCreaturesItBlocksEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventArtifactDamageToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventColorDamageToEnchantedCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageFromDesertsToSelfAndBandedCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventDamageFromDesertsToSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToSelfFromCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventOpponentCreatureWardTriggersEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventTransformEffect;
@@ -9108,13 +9105,25 @@ public class GameQueryService {
      */
     public boolean matchesDamageSourcePredicate(GameData gameData, StackEntry entry, Card sourceCard,
                                                 Permanent explicitSource, PermanentPredicate predicate) {
+        return matchesDamageSourcePredicate(gameData, entry, sourceCard, explicitSource, predicate,
+                FilterContext.of(gameData), null);
+    }
+
+    /**
+     * {@link #matchesDamageSourcePredicate(GameData, StackEntry, Card, Permanent, PermanentPredicate)} for a filter
+     * that names the source of the effect judging it ("creatures it's blocking"): {@code onBattlefield} judges a source
+     * on the battlefield, {@code onCard} (intrinsic values when {@code null}) its last-known state or a spell's card.
+     */
+    public boolean matchesDamageSourcePredicate(GameData gameData, StackEntry entry, Card sourceCard,
+                                                Permanent explicitSource, PermanentPredicate predicate,
+                                                FilterContext onBattlefield, FilterContext onCard) {
         if (predicate == null) return true;
         Permanent source = explicitSource;
         if (source == null && entry != null && entry.getSourcePermanentId() != null) {
             source = findPermanentById(gameData, entry.getSourcePermanentId());
         }
         if (source != null) {
-            return predicateEvaluationService.matchesPermanentPredicate(gameData, source, predicate);
+            return predicateEvaluationService.matchesPermanentPredicate(source, predicate, onBattlefield);
         }
         Permanent lastKnownSource = entry == null ? null : entry.getSourcePermanentSnapshot();
         if (lastKnownSource == null) {
@@ -9125,7 +9134,7 @@ public class GameQueryService {
             }
         }
         return lastKnownSource != null
-                && predicateEvaluationService.matchesPermanentPredicate(lastKnownSource, predicate, null);
+                && predicateEvaluationService.matchesPermanentPredicate(lastKnownSource, predicate, onCard);
     }
 
     /**
@@ -9146,10 +9155,7 @@ public class GameQueryService {
         boolean preventsAllCreatureDamage = target.getCard().getStaticEffects().stream()
                 .anyMatch(PreventDamageToSelfFromCreaturesEffect.class::isInstance)
                 && hasActiveStaticEffect(gameData, target, PreventDamageToSelfFromCreaturesEffect.class);
-        boolean preventsDamageFromBlockedCreature = target.getCard().getStaticEffects().stream()
-                .anyMatch(PreventAllDamageToSelfFromCreaturesItBlocksEffect.class::isInstance)
-                && hasActiveStaticEffect(gameData, target, PreventAllDamageToSelfFromCreaturesItBlocksEffect.class);
-        if (!preventsAllCreatureDamage && !preventsDamageFromBlockedCreature) return false;
+        if (!preventsAllCreatureDamage) return false;
         Permanent source = explicitSource;
         if (source == null && entry != null && entry.getSourcePermanentId() != null) {
             source = findPermanentById(gameData, entry.getSourcePermanentId());
@@ -9161,28 +9167,21 @@ public class GameQueryService {
             }
         }
         Permanent sourcePermanent = source;
-        if (preventsAllCreatureDamage && sourcePermanent == null && isCombatDamage
+        if (sourcePermanent == null && isCombatDamage
                 && target.getCard().getStaticEffects().stream()
                 .filter(PreventDamageToSelfFromCreaturesEffect.class::isInstance)
                 .map(PreventDamageToSelfFromCreaturesEffect.class::cast)
                 .anyMatch(effect -> !effect.combatOnly() && effect.sourcePredicate() == null)) {
             return true;
         }
-        if (preventsAllCreatureDamage && sourcePermanent != null && isCreature(gameData, sourcePermanent)
+        return sourcePermanent != null && isCreature(gameData, sourcePermanent)
                 && target.getCard().getStaticEffects().stream()
                 .filter(PreventDamageToSelfFromCreaturesEffect.class::isInstance)
                 .map(PreventDamageToSelfFromCreaturesEffect.class::cast)
                 .anyMatch(effect -> (!effect.combatOnly() || isCombatDamage)
                         && (effect.sourcePredicate() == null
                         || predicateEvaluationService.matchesPermanentPredicate(
-                                gameData, sourcePermanent, effect.sourcePredicate())))) {
-            return true;
-        }
-        if (!preventsDamageFromBlockedCreature) {
-            return false;
-        }
-        return source != null && isCreature(gameData, source)
-                && target.isBlocking() && target.getBlockingTargetIds().contains(source.getId());
+                                gameData, sourcePermanent, effect.sourcePredicate())));
     }
 
     /**
@@ -9225,29 +9224,6 @@ public class GameQueryService {
             }
         }
         return false;
-    }
-
-    /** Returns whether damage from a Desert is prevented by the target creature's own static effect. */
-    public boolean isDamageFromDesertsToSelfPrevented(
-            GameData gameData, Permanent target, StackEntry entry, Permanent explicitSource,
-            boolean isCombatDamage) {
-        if (!isDamagePreventable(gameData, isCombatDamage) || target == null
-                || !isCreature(gameData, target)
-                || !hasActiveStaticEffect(gameData, target, PreventDamageFromDesertsToSelfEffect.class)) {
-            return false;
-        }
-
-        Permanent source = explicitSource;
-        if (source == null && entry != null && entry.getSourcePermanentId() != null) {
-            source = findPermanentById(gameData, entry.getSourcePermanentId());
-        }
-        if (source == null && entry != null && entry.getSourcePermanentId() != null) {
-            source = entry.getSourcePermanentSnapshot();
-        }
-        Card sourceCard = source == null && entry != null ? entry.getEffectiveDamageSourceCard() : null;
-        return source != null
-                ? hasEffectiveSubtype(gameData, source, CardSubtype.DESERT)
-                : sourceCard != null && sourceCard.getSubtypes().contains(CardSubtype.DESERT);
     }
 
     public boolean sourceHasKeyword(GameData gameData, StackEntry entry, Permanent explicitSource, Keyword keyword) {
@@ -13829,28 +13805,6 @@ public class GameQueryService {
 
     public boolean isAllDamageToControlledCreaturePrevented(GameData gameData, Permanent creature) {
         return getControlledCreatureDamageLimit(gameData, creature) == 0;
-    }
-
-    /** Returns whether damage from a player's source to that player's creature is prevented. */
-    public boolean isDamageFromControlledSourceToControlledCreaturePrevented(
-            GameData gameData, Permanent creature, UUID sourceControllerId) {
-        return isDamageFromControlledSourceToControlledCreaturePrevented(gameData, creature, sourceControllerId, false);
-    }
-
-    public boolean isDamageFromControlledSourceToControlledCreaturePrevented(
-            GameData gameData, Permanent creature, UUID sourceControllerId, boolean isCombatDamage) {
-        if (!isDamagePreventable(gameData, isCombatDamage) || creature == null || sourceControllerId == null
-                || !isCreature(gameData, creature)) return false;
-        UUID creatureControllerId = findPermanentController(gameData, creature.getId());
-        if (!sourceControllerId.equals(creatureControllerId)) return false;
-        List<Permanent> battlefield = gameData.playerBattlefields.get(creatureControllerId);
-        if (battlefield == null) return false;
-        return battlefield.stream()
-                .filter(permanent -> !permanent.isFaceDown() && !hasLostPrintedAbilities(gameData, permanent))
-                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream()
-                        .map(effect -> staticEffectConditionResolver.resolve(
-                                gameData, permanent, creatureControllerId, effect)))
-                .anyMatch(ControlledSourceCreatureDamagePreventionEffect.class::isInstance);
     }
 
     /**

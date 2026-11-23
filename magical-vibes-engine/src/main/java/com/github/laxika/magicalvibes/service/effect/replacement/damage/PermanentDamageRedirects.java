@@ -49,7 +49,7 @@ class PermanentDamageRedirects extends PermanentDamageCandidateSource {
                 pure("TargetSorceryRedirect", REDIRECT,
                         ctx -> redirectable(ctx) && !ctx.targetProtectedFromPrevention() && ctx.dealtByStackEntry()
                                 && prevention.getTargetSorceryDamageRedirectController(ctx.gameData(), ctx.entry()) != null,
-                        ctx -> ctx.sourceCard().getName() + "'s damage is dealt to its controller",
+                        ctx -> ctx.sourceName() + "'s damage is dealt to its controller",
                         ctx -> ctx.event().withRecipient(
                                 prevention.getTargetSorceryDamageRedirectController(ctx.gameData(), ctx.entry())),
                         (ctx, result) -> {

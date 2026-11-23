@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 
 import java.util.Set;
 import java.util.UUID;
@@ -29,6 +30,12 @@ public record PlayerDamageContext(GameData gameData, DamageEvent event, Card sou
 
     public UUID playerId() {
         return event.recipientPlayerId();
+    }
+
+    @Override
+    public String sourceName() {
+        return sourcePermanent != null ? FaceDownVisibility.publicName(gameData, sourcePermanent)
+                : FaceDownVisibility.publicName(gameData, source);
     }
 
     public String playerName() {

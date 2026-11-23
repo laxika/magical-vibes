@@ -67,6 +67,12 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
         }
 
         GameData gameData();
+
+        /**
+         * The damage source's name as every player may read it in an option label: no card for a face-down source
+         * (CR 708.5), {@link Permanent#displayName} for a nameless one.
+         */
+        String sourceName();
     }
 
     /** Whether a rule is about each source's damage or about all the damage the recipient is dealt. */
@@ -392,7 +398,8 @@ abstract class DamageCandidateSource<C extends DamageCandidateSource.DamageConte
             return "a source";
         }
         Permanent source = entry.getSourcePermanentSnapshot();
-        return source != null && source.isFaceDown() ? FaceDownVisibility.publicName(source) : entry.getCard().getName();
+        return source != null && source.isFaceDown() ? FaceDownVisibility.publicName(source)
+                : Permanent.displayName(entry.getCard());
     }
 
     private static <T> T withUnpreventable(GameData gameData, DamageEvent view, Supplier<T> body) {

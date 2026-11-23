@@ -2717,3 +2717,10 @@ PreventDamageToSelfFromTargetingSpellsEffect,unique,9,"run 21: keyed to spells t
 PreventDamageUpToAmountToSelfEffect,unique,9,run 21: prevents a whole damage event of at most N (Callous Giant); no other record has that amount mode
 PreventDamageFromDesertsToSelfAndBandedCreaturesEffect,unique,9,"run 21: while attacking, to itself and creatures banded with it (Camel); no subject names a band"
 PreventNextDamageFromSelfToYouEffect,unique,9,"run 21: the activating player's shield against the next damage event from this creature, any player may activate (Mercenaries)"
+PreventDamageToRecipientsEffect,survivor,9,"run 22: new static prevention record: permanent / player recipients, a source filter, source controllers and combat scope, one rule in each damage pool"
+PreventAllDamageToSelfFromCreaturesItBlocksEffect,absorbed,9,"run 22: PreventDamageToRecipientsEffect.to(source()).from(creature it's blocking) (Wall of Shadows, Wall of Vapor)"
+PreventAllCombatDamageToSelfFromBlockersEffect,absorbed,9,run 22: PreventDamageToRecipientsEffect.to(source()).from(PermanentBlockingSourcePredicate).combatOnly() (Armored Transport)
+PreventDamageFromDesertsToSelfEffect,absorbed,9,run 22: PreventDamageToRecipientsEffect.to(source()).from(PermanentHasSubtypePredicate(DESERT)) (Desert Nomads)
+PreventAllNoncombatDamageToAttachedCreatureEffect,absorbed,9,"run 22: PreventDamageToRecipientsEffect.to(attachedCreature()), noncombatOnly for Magebane Armor; Inviolability's combat half folded too"
+PreventAllNoncombatDamageToControllerAndPermanentsEffect,absorbed,9,run 22: PreventDamageToRecipientsEffect.toYouAnd(otherPermanentsYouControl()).noncombatOnly() (The Wanderer)
+PreventDamageToControlledCreaturesFromControlledSourcesEffect,absorbed,9,run 22: PreventDamageToRecipientsEffect.to(creaturesYouControl()).fromSourcesYouControl() (Light of Sanction)

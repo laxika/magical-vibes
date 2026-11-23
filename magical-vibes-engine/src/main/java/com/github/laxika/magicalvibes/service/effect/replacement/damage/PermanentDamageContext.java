@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.replacement.DamageEvent;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 
 import java.util.Set;
 import java.util.UUID;
@@ -32,6 +33,12 @@ public record PermanentDamageContext(GameData gameData, DamageEvent event, Perma
 
     public StackEntry entry() {
         return event.entry();
+    }
+
+    @Override
+    public String sourceName() {
+        return damageSource != null ? FaceDownVisibility.publicName(gameData, damageSource)
+                : FaceDownVisibility.publicName(gameData, sourceCard);
     }
 
     /** The damage is dealt by the spell or ability itself rather than by a fighting or biting permanent. */

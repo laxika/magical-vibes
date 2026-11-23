@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.testutil.PermanentGrants;
 import com.github.laxika.magicalvibes.cards.c.CrawWurm;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.s.SarkhanTheMasterless;
+import com.github.laxika.magicalvibes.cards.s.SelflessSquire;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -20,7 +21,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TheWanderer.class, CrawWurm.class, GrizzlyBears.class, Shock.class, SarkhanTheMasterless.class})
+@CardUsed({TheWanderer.class, CrawWurm.class, GrizzlyBears.class, Shock.class, SarkhanTheMasterless.class,
+        SelflessSquire.class})
 class TheWandererTest extends BaseCardTest {
 
     @Test
@@ -35,6 +37,21 @@ class TheWandererTest extends BaseCardTest {
 
         assertThat(gd.getLife(player1.getId())).isEqualTo(20);
         assertThat(bears.getMarkedDamage()).isZero();
+    }
+
+    @Test
+    @DisplayName("Damage it prevents to its controller is logged and counts as damage to you that is prevented")
+    void preventionToControllerIsLoggedAndSeenAsPrevented() {
+        addReadyWanderer(player1, 3);
+        Permanent squire = harness.addToBattlefieldAndReturn(player1, new SelflessSquire());
+        harness.setLife(player1, 20);
+
+        castShock(player2, player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.getLife(player1.getId())).isEqualTo(20);
+        assertThat(gameLogContains("damage to " + player1.getUsername() + " is prevented")).isTrue();
+        assertThat(squire.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(2);
     }
 
     @Test

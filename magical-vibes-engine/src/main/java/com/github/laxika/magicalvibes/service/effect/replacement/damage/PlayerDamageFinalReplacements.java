@@ -122,7 +122,7 @@ class PlayerDamageFinalReplacements extends PlayerDamageCandidateSource {
                         ctx -> ctx.combat() && ctx.sourcePermanent() != null
                                 && combatDamageService.getObject().hasCombatDamageMillReplacement(
                                 ctx.gameData(), ctx.sourcePermanent()),
-                        ctx -> ctx.source().getName() + ": mill that many cards instead",
+                        ctx -> ctx.sourceName() + ": mill that many cards instead",
                         ctx -> {
                             combatDamageService.getObject().replaceCombatDamageWithMill(
                                     ctx.gameData(), ctx.sourcePermanent(), ctx.playerId(), ctx.amount());

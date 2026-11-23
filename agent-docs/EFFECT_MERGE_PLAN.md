@@ -1753,7 +1753,8 @@ bottom-ordered and bottom-random as distinct enum values. (c) Absorbing
 `PreventAllDamageDealtByEnchantedCreatureEffect`,
 `PreventAllNoncombatDamageToAttachedCreatureEffect`.
 
-Partly done by `effect-cleanup-refactor.md` step 5, run 5m: `PreventAllCombatDamageToSelfEffect` and
+Partly done by `effect-cleanup-refactor.md` step 9, run 22: `PreventAllNoncombatDamageToAttachedCreatureEffect` is
+absorbed into `PreventDamageToRecipientsEffect` (`to(attachedCreature()).noncombatOnly()`). Partly done by step 5, run 5m: `PreventAllCombatDamageToSelfEffect` and
 `PreventAllCombatDamageToAndByEnchantedCreatureEffect` carry a host subject (`source()` / `attachedCreature()`), and
 `PreventAllCombatDamageToAndBySelfEffect` and the attached combat-only record are deleted.
 

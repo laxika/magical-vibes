@@ -46,12 +46,12 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
         this.rules = List.of(
                 pure("HarshJudgmentRedirect", REDIRECT,
                         ctx -> harshJudgmentTarget(ctx) != null,
-                        ctx -> "Harsh Judgment: " + ctx.source().getName() + "'s damage is dealt to its controller",
+                        ctx -> "Harsh Judgment: " + ctx.sourceName() + "'s damage is dealt to its controller",
                         ctx -> ctx.event().withRecipient(harshJudgmentTarget(ctx)),
                         this::logRedirectedToController),
                 pure("TargetSorceryRedirect", REDIRECT,
                         ctx -> targetSorceryController(ctx) != null,
-                        ctx -> ctx.source().getName() + "'s damage is dealt to its controller",
+                        ctx -> ctx.sourceName() + "'s damage is dealt to its controller",
                         ctx -> ctx.event().withRecipient(targetSorceryController(ctx)),
                         this::logRedirectedToController),
                 effect("NextInstantOrSorceryRedirect", REDIRECT,
@@ -63,24 +63,24 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
                 effect("SourceNextCombatDamageToController", REDIRECT,
                         ctx -> ctx.combat() && prevention.hasSourceNextCombatDamageToControllerShield(
                                 ctx.gameData(), ctx.damageSourceId()),
-                        ctx -> "The next combat damage from " + ctx.source().getName() + " is dealt to another player",
+                        ctx -> "The next combat damage from " + ctx.sourceName() + " is dealt to another player",
                         ctx -> redirected(ctx, prevention.applySourceNextCombatDamageToControllerShield(
                                 ctx.gameData(), ctx.damageSourceId(), ctx.amount()))),
                 effect("TurnSourceRedirectToController", REDIRECT,
                         ctx -> ctx.combat() && prevention.hasTurnSourceDamageRedirectToController(
                                 ctx.gameData(), ctx.playerId(), ctx.damageSourceId()),
-                        ctx -> "Mirror Strike: " + ctx.source().getName() + " deals the damage to its controller",
+                        ctx -> "Mirror Strike: " + ctx.sourceName() + " deals the damage to its controller",
                         ctx -> redirected(ctx, prevention.applyTurnSourceDamageRedirectToController(
                                 ctx.gameData(), ctx.playerId(), ctx.damageSourceId(), ctx.amount()))),
                 effect("SourceRedirectShield", REDIRECT,
                         ctx -> prevention.hasSourceRedirectShield(ctx.gameData(), ctx.playerId(), ctx.damageSourceId()),
-                        ctx -> "Redirect damage from " + ctx.source().getName() + " (Harm's Way)",
+                        ctx -> "Redirect damage from " + ctx.sourceName() + " (Harm's Way)",
                         ctx -> redirected(ctx, prevention.applySourceRedirectShields(
                                 ctx.gameData(), ctx.playerId(), ctx.damageSourceId(), ctx.amount()))),
                 effect("PlayerSourceNextRedirect", REDIRECT,
                         ctx -> prevention.hasPlayerSourceNextDamageRedirectShield(
                                 ctx.gameData(), ctx.playerId(), ctx.damageSourceId()),
-                        ctx -> "Redirect the next damage from " + ctx.source().getName() + " to a creature",
+                        ctx -> "Redirect the next damage from " + ctx.sourceName() + " to a creature",
                         ctx -> redirected(ctx, prevention.applyPlayerSourceNextDamageRedirectShield(
                                 ctx.gameData(), ctx.playerId(), ctx.damageSourceId(), ctx.amount()))),
                 new Rule<PlayerDamageContext>("SourceNextCombatDamageToOpponentRedirect", REDIRECT, false,
@@ -88,7 +88,7 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
                                 ? prevention.applicableSourceNextCombatDamageToOpponentRedirects(
                                         ctx.gameData(), ctx.damageSourceId())
                                 : List.<String>of(),
-                        (ctx, instance) -> "Soltari Guerrillas: " + ctx.source().getName()
+                        (ctx, instance) -> "Soltari Guerrillas: " + ctx.sourceName()
                                 + "'s damage is dealt to " + redirectDestinationName(ctx.gameData(), instance),
                         (ctx, instance) -> ctx.event(),
                         (ctx, instance) -> new ApplyResult.Applied<>(redirected(ctx,
@@ -97,7 +97,7 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
                                         ctx.amount())))),
                 effect("ReflectDamage", REDIRECT,
                         ctx -> prevention.hasReflectDamageToSourceControllerShield(ctx.gameData(), ctx.damageSourceId()),
-                        ctx -> "Reflect Damage: " + ctx.source().getName() + " deals the damage to its controller",
+                        ctx -> "Reflect Damage: " + ctx.sourceName() + " deals the damage to its controller",
                         ctx -> {
                             int remaining = prevention.applyReflectDamageToSourceControllerShield(
                                     ctx.gameData(), ctx.damageSourceId(), ctx.amount());
@@ -107,7 +107,7 @@ class PlayerDamageRedirects extends PlayerDamageCandidateSource {
                 effect("SourceNextRedirectToPermanent", REDIRECT,
                         ctx -> prevention.hasSourceNextDamageRedirectToPermanent(
                                 ctx.gameData(), ctx.damageSourceId(), null),
-                        ctx -> "Redirect the next damage from " + ctx.source().getName() + " to a creature (Opal-Eye)",
+                        ctx -> "Redirect the next damage from " + ctx.sourceName() + " to a creature (Opal-Eye)",
                         ctx -> redirected(ctx, prevention.applySourceNextDamageRedirectToPermanent(
                                 ctx.gameData(), ctx.damageSourceId(), null, ctx.amount()))),
                 new Rule<PlayerDamageContext>("TurnRedirectToCreature", REDIRECT, false,

@@ -21,8 +21,8 @@ import java.util.function.Predicate;
 
 /**
  * Prevention effects (CR 615) for damage to a permanent: the source- and spell-based preventions,
- * protection-like color and name effects, Swans of Bryn Argoll, Gloom Surgeon, Armored Transport,
- * Comeuppance and Djeru for planeswalkers, Dralnu's sacrifice replacement, and every step of
+ * protection-like color and name effects, the static {@code PreventDamageToRecipientsEffect}s, Swans of Bryn
+ * Argoll, Gloom Surgeon, Comeuppance and Djeru for planeswalkers, Dralnu's sacrifice replacement, and every step of
  * {@link DamagePreventionService#creatureDamageSteps()} (counters, shields, Temper, …). Steps that
  * don't care about the source are asked once about all the combat damage the permanent is dealt.
  */
@@ -39,8 +39,8 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
     /** Steps about the source of the damage; every other step is about all the damage the permanent is dealt. */
     private static final Set<String> PER_SOURCE_STEPS = Set.of("CombatDamageToPlusOneCounter",
             "ControllerAndCreaturesPerSource", "AllButOneToHero", "PermanentSourceToCreature",
-            "ArtifactToEnchantedCreature", "ArtifactToSelf", "CreatureSourceToSelf", "DesertsToSelf",
-            "DesertsToCamelOrBanded", "SelfDamagePrevention", "ControlledCreaturesReduction", "HalfDamage",
+            "ArtifactToEnchantedCreature", "ArtifactToSelf", "CreatureSourceToSelf", "DesertsToCamelOrBanded",
+            "SelfDamagePrevention", "ControlledCreaturesReduction", "HalfDamage",
             "AttachedPerSourceReduction", "ControlledCreatureDamageLimit");
 
     PermanentDamagePreventions(GameQueryService gameQueryService, GameLogService gameLogService,
@@ -156,14 +156,14 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                         && gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat())
                         && prevention.hasTargetSourcePreventionShield(
                         ctx.gameData(), ctx.target().getId(), ctx.damageSourceKey()),
-                ctx -> "Prevent damage from " + ctx.sourceCard().getName() + " (Healing Grace)",
+                ctx -> "Prevent damage from " + ctx.sourceName() + " (Healing Grace)",
                 ctx -> ctx.event().withAmount(prevention.applyTargetSourcePreventionShield(
                         ctx.gameData(), ctx.target().getId(), ctx.damageSourceKey(), ctx.amount(), ctx.combat()))));
         all.add(effect("ChosenSourceNextDamageShield", PREVENTION,
                 ctx -> !ctx.targetProtectedFromPrevention() && prevention.hasChosenSourceNextDamageToAnyTargetShield(
                         ctx.gameData(), ctx.damageSourceKey(), ctx.target().getId(), ctx.combat(),
                         ctx.combat() ? null : ctx.entry()),
-                ctx -> "Use the shield against " + ctx.sourceCard().getName() + " (Sanctum Guardian)",
+                ctx -> "Use the shield against " + ctx.sourceName() + " (Sanctum Guardian)",
                 ctx -> {
                     int remaining = ctx.combat()
                             ? prevention.applyChosenSourceNextDamageToAnyTargetShield(ctx.gameData(),
@@ -176,7 +176,7 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
         all.add(effect("ControllerCreaturesNextSourceShield", PREVENTION,
                 ctx -> !ctx.targetProtectedFromPrevention() && prevention.hasControllerCreaturesNextSourceDamageShield(
                         ctx.gameData(), ctx.targetControllerId(), ctx.damageSourceKey(), ctx.combat()),
-                ctx -> "Prevent the next damage from " + ctx.sourceCard().getName() + " to your creature (Shadowbane)",
+                ctx -> "Prevent the next damage from " + ctx.sourceName() + " to your creature (Shadowbane)",
                 ctx -> ctx.event().withAmount(prevention.applyControllerCreaturesNextSourceDamageShield(
                         ctx.gameData(), ctx.targetControllerId(), ctx.damageSourceKey(), ctx.amount(), ctx.combat()))));
         all.add(effect("ChannelHarm", PREVENTION,
@@ -207,13 +207,13 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
                     logPrevented(ctx, null);
                     return prevented(ctx);
                 }).wholeIncludingUnpreventable());
-        all.add(preventAll("CombatDamageFromBlockerPrevented", "Prevent combat damage from creatures blocking it",
-                ctx -> ctx.combat() && ctx.damageSource() != null
-                        && prevention.isCombatDamageFromBlockerPrevented(ctx.gameData(), ctx.target(), ctx.damageSource())));
-        all.add(preventAll("CombatDamageFromBlockedCreaturePrevented", "Prevent damage from creatures it blocks",
-                ctx -> ctx.combat() && ctx.damageSource() != null
-                        && prevention.isCombatDamageFromCreatureBlockedByTargetPrevented(
-                        ctx.gameData(), ctx.target(), ctx.damageSource())));
+        all.add(preventAll("StaticRecipientPrevention", "Prevent the damage to it",
+                ctx -> gameQueryService.isDamagePreventable(ctx.gameData(), ctx.combat())
+                        && (ctx.damageSource() == null || !gameQueryService.damageCantBePreventedFromSource(
+                        ctx.gameData(), ctx.damageSource(), ctx.combat()))
+                        && prevention.staticallyPreventsDamageToPermanent(ctx.gameData(), ctx.target(),
+                        ctx.targetControllerId(), ctx.entry(), ctx.sourceCard(), ctx.damageSource(),
+                        ctx.sourceControllerId(), ctx.combat())));
         all.add(effect("PreventCombatDamageAndShuffle", PREVENTION,
                 ctx -> ctx.combat() && ctx.damageSource() != null
                         && gameQueryService.shufflesTargetIntoOwnersLibraryAfterCombatDamagePrevention(
@@ -246,15 +246,9 @@ class PermanentDamagePreventions extends PermanentDamageCandidateSource {
         all.add(preventAll("CreatureSourceToSelf", "Prevent damage from creatures",
                 ctx -> !ctx.combat() && gameQueryService.isCreatureSourceDamageToSelfPrevented(
                         ctx.gameData(), ctx.target(), ctx.entry(), ctx.event().explicitSource())));
-        all.add(preventAll("DesertsToSelf", "Prevent damage from Deserts",
-                ctx -> !ctx.combat() && gameQueryService.isDamageFromDesertsToSelfPrevented(
-                        ctx.gameData(), ctx.target(), ctx.entry(), ctx.event().explicitSource(), false)));
         all.add(preventAll("DesertsToCamelOrBanded", "Prevent damage from Deserts",
                 ctx -> !ctx.combat() && gameQueryService.isDamageFromDesertsToCamelOrBandedCreaturePrevented(
                         ctx.gameData(), ctx.target(), ctx.entry(), ctx.event().explicitSource(), false)));
-        all.add(preventAll("ControlledSourceToControlledCreature", "Prevent damage from your sources to your creatures",
-                ctx -> gameQueryService.isDamageFromControlledSourceToControlledCreaturePrevented(
-                        ctx.gameData(), ctx.target(), ctx.sourceControllerId(), ctx.combat())));
         all.add(preventAll("MatchingSourceToControlledCreature", "Prevent damage from matching sources",
                 ctx -> gameQueryService.isDamageFromMatchingSourcePreventedForControlledCreature(
                         ctx.gameData(), ctx.target(), ctx.damageSource())));

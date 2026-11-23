@@ -96,7 +96,7 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                         ctx -> prevention.isSourceDamagePreventedForPlayer(
                                 ctx.gameData(), ctx.playerId(), ctx.damageSourceId(), ctx.combat(),
                                 ctx.damageSourceColors()),
-                        ctx -> "Prevent damage from the chosen source " + ctx.source().getName(),
+                        ctx -> "Prevent damage from the chosen source " + ctx.sourceName(),
                         ctx -> {
                             prevention.applySourceDamagePreventionForPlayer(ctx.gameData(), ctx.playerId(),
                                     ctx.damageSourceId(), ctx.amount(), ctx.damageSourceColors(), ctx.combat());
@@ -147,7 +147,7 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                 effect("TargetSourceShield", PREVENTION,
                         ctx -> preventable(ctx) && prevention.hasTargetSourcePreventionShield(
                                 ctx.gameData(), ctx.playerId(), ctx.damageSourceId()),
-                        ctx -> "Prevent damage from " + ctx.source().getName() + " (Healing Grace)",
+                        ctx -> "Prevent damage from " + ctx.sourceName() + " (Healing Grace)",
                         ctx -> ctx.event().withAmount(prevention.applyTargetSourcePreventionShield(
                                 ctx.gameData(), ctx.playerId(), ctx.damageSourceId(), ctx.amount(), ctx.combat()))),
                 eyeForAnEye("EyeForAnEye", PlayerDamageContext::damageSourceId, false),
@@ -158,7 +158,7 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                         ctx -> prevention.hasChosenSourceNextDamageToAnyTargetShield(
                                 ctx.gameData(), ctx.damageSourceId(), ctx.playerId(), ctx.combat(),
                                 ctx.combat() ? null : ctx.entry()),
-                        ctx -> "Use the shield against " + ctx.source().getName() + " (Sanctum Guardian)",
+                        ctx -> "Use the shield against " + ctx.sourceName() + " (Sanctum Guardian)",
                         ctx -> {
                             int remaining = ctx.combat()
                                     ? prevention.applyChosenSourceNextDamageToAnyTargetShield(ctx.gameData(),
@@ -248,9 +248,20 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                                 + " damage to you",
                         ctx -> ctx.event().withAmount(prevention.applyPlayerDamagePreventionShield(
                                 ctx.gameData(), ctx.playerId(), ctx.amount()))).whole(),
-                playerFlag("NoncombatControllerAndPermanentsPrevented", "Prevent noncombat damage to you",
-                        ctx -> !ctx.combat() && prevention.hasControllerAndPermanentsNoncombatDamagePrevention(
-                                ctx.gameData(), ctx.playerId())),
+                pure("StaticRecipientPrevention", PREVENTION,
+                        ctx -> preventable(ctx)
+                                && (ctx.sourcePermanent() == null || !gameQueryService.damageCantBePreventedFromSource(
+                                ctx.gameData(), ctx.sourcePermanent(), ctx.combat()))
+                                && prevention.staticallyPreventsDamageToPlayer(ctx.gameData(), ctx.playerId(),
+                                ctx.entry(), ctx.source(), ctx.sourcePermanent(), ctx.sourceControllerId(),
+                                ctx.combat()),
+                        ctx -> "Prevent the damage to you",
+                        PlayerDamageCandidateSource::prevented,
+                        (ctx, result) -> {
+                            logPrevented(ctx, result);
+                            prevention.notifyControllerDamagePrevented(ctx.gameData(), ctx.playerId(), ctx.amount());
+                            return null;
+                        }),
                 new Rule<PlayerDamageContext>("ClericPrevention", PREVENTION, false,
                         ctx -> !prevention.clericPreventionSources(ctx.gameData()).isEmpty() && preventable(ctx)
                                 ? ONCE : List.of(),
@@ -312,7 +323,7 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
         return effect(family, ReplacementOption.Kind.REPLACEMENT,
                 ctx -> !(skipSameSource && ctx.damageSourceId().equals(sourceId.apply(ctx)))
                         && prevention.hasEyeForAnEyeShield(ctx.gameData(), ctx.playerId(), sourceId.apply(ctx)),
-                ctx -> "Eye for an Eye: " + ctx.source().getName() + "'s controller is dealt that much damage too",
+                ctx -> "Eye for an Eye: " + ctx.sourceName() + "'s controller is dealt that much damage too",
                 ctx -> {
                     prevention.applyEyeForAnEyeReflection(
                             ctx.gameData(), ctx.playerId(), sourceId.apply(ctx), ctx.amount());
@@ -332,7 +343,7 @@ class PlayerDamagePreventions extends PlayerDamageCandidateSource {
                         && !(skipSameSource && sourceId.apply(ctx).equals(ctx.damageSourceId()))
                         && prevention.hasPlayerNextSourceDamageShield(ctx.gameData(), ctx.playerId(),
                         sourceId.apply(ctx), ctx.combat(), ctx.combat() ? null : ctx.source(), unblocked(ctx)),
-                ctx -> "Prevent the next damage from " + ctx.source().getName() + " (one use)",
+                ctx -> "Prevent the next damage from " + ctx.sourceName() + " (one use)",
                 ctx -> {
                     int remaining = prevention.applyPlayerNextSourceDamageShield(ctx.gameData(), ctx.playerId(),
                             sourceId.apply(ctx), ctx.amount(), ctx.combat(), ctx.combat() ? null : ctx.source(),

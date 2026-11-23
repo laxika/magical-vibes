@@ -2,9 +2,11 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.model.TargetSourceDamagePreventionShield;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.f.FurnaceOfRath;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.m.MoggFanatic;
 import com.github.laxika.magicalvibes.cards.s.ShivanFire;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -17,10 +19,11 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({HealingGrace.class, GrizzlyBears.class, MoggFanatic.class, ShivanFire.class})
+@CardUsed({HealingGrace.class, FurnaceOfRath.class, GrizzlyBears.class, MoggFanatic.class, ShivanFire.class})
 class HealingGraceTest extends BaseCardTest {
 
     // ===== Casting =====
@@ -310,7 +313,7 @@ class HealingGraceTest extends BaseCardTest {
     @DisplayName("The shield's log line doesn't name a face-down chosen source")
     void logHidesAFaceDownSource() {
         Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
-        opponentCreature.setFaceDown(2, 2, java.util.Set.of(com.github.laxika.magicalvibes.model.CardType.CREATURE));
+        opponentCreature.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         harness.setHand(player1, List.of(new HealingGrace()));
         harness.addMana(player1, ManaColor.WHITE, 1);
 
@@ -319,6 +322,29 @@ class HealingGraceTest extends BaseCardTest {
 
         assertThat(gameLogContains("would deal to")).isTrue();
         assertThat(gameLogContains("Grizzly Bears")).isFalse();
+    }
+
+    @Test
+    @DisplayName("The damage order prompt doesn't name a face-down chosen source")
+    void orderPromptHidesAFaceDownSource() {
+        harness.setLife(player1, 20);
+        harness.addToBattlefield(player1, new FurnaceOfRath());
+        Permanent opponentCreature = addCreatureReady(player2, new GrizzlyBears());
+        opponentCreature.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new HealingGrace()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+        harness.handlePermanentChosen(player1, opponentCreature.getId());
+
+        harness.forceActivePlayer(player2);
+        opponentCreature.setAttacking(true);
+        resolveCombat(player2);
+
+        var choice = gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player1.getId());
+        assertThat(choice.options()).anyMatch(option -> option.contains("(Healing Grace)"));
+        assertThat(choice.options()).noneMatch(option -> option.contains("Grizzly Bears"));
+        assertThat(choice.prompt()).doesNotContain("Grizzly Bears");
     }
 
     private Permanent addReadyCreatureWithStats(Player player, int power, int toughness) {

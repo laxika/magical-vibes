@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PreventAllNoncombatDamageToControllerAndPermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.PreventDamageToRecipientsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPowerAtLeastPredicate;
@@ -17,7 +18,8 @@ import java.util.List;
 public class TheWanderer extends Card {
 
     public TheWanderer() {
-        addStaticEffect(new PreventAllNoncombatDamageToControllerAndPermanentsEffect());
+        addStaticEffect(PreventDamageToRecipientsEffect.toYouAnd(Subjects.otherPermanentsYouControl())
+                .noncombatOnly());
 
         addActivatedAbility(new ActivatedAbility(
                 -2,

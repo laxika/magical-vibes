@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 21: Exile, Each, Return, Put, Reveal, Choose, Grant and Create closed, Prevent partly done; 1,972 rare records left, Prevent's static preventions next) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 22: Exile, Each, Return, Put, Reveal, Choose, Grant and Create closed, Prevent partly done; 1,966 rare records left, Prevent's 17 static preventions next) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -627,6 +627,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 19 | Run 18's small defects (Room spell names, mayhem types, unchoosable candidates of the non-target choices), then the Create family's rare records | done, Create closed (67 rare records: 17 absorbed, 3 split, 1 survivor, 10 blocked-other, 37 unique (one is Esix's engine-built record); 20 records deleted; 24 card files rewritten; `exiledAsCost()`, `CardHasMemoryCounterPredicate`, subjects on the token copy and the attached token, CREATE_TOKEN from the attached token) |
 | 20 | The seven face-down Create rows, run 19's small defects (Battle for Bretagard, Liberated Livestock, the Create prompts' source names, Gather Specimens, the attached tokens' pairing), then Prevent's rare records | done for Create and the defects, Prevent open (28 rows: 7 absorbed, 2 survivors (one new record), 1 blocked-other, 18 unique; 7 records deleted; 8 card files rewritten; the token copy's set path chooses attack targets in one event, `PreventAllButOneDamageToControllerAndPermanentsEffect`; two defects not reproduced; 47 rare Prevent records left) |
 | 21 | Run 20's Mercenaries log, the Prevent shields with subjects (redirect, source-to-recipient, filtered target, tokens), then Prevent's rare records | done for the shields, Prevent open (25 rows: 3 absorbed, 1 survivor (new), 1 dead, 20 unique; 5 records and 5 handlers deleted, 1 of each added; 3 card files rewritten; `PreventNextDamageAndRedirectEffect`; the static prevention record designed, not built; 23 rare Prevent records left) |
+| 22 | Run 21's face-down pool labels, then the static prevention record and Prevent's rare statics | done for the labels and six statics, Prevent open (7 rows: 6 absorbed, 1 survivor (new); 6 records and 2 marker interfaces deleted, 1 record added; 8 card files rewritten; `PreventDamageToRecipientsEffect`, `DamageContext.sourceName()`; 17 rare Prevent records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -8277,6 +8278,85 @@ more than two players, the AI's choice of Vengeful Archon's target with the new 
   ones. Records of three or more cards (`PreventDamageToSelfFromCreaturesEffect`, `PreventAllDamageDealtByEnchantedCreatureEffect`, ...)
   need the owner's sign-off.
 - The pool labels' face-down names, and Esix's dropped instructions, as above.
+
+### Step 9, run 22 (2026-11-23, Prevent partly done)
+
+Run 21's face-down pool labels, then the static prevention record run 21 designed, with the first six rare statics folded into it.
+Ratchet 4,145 / 3,381 → 4,140 / 3,381 records / handlers (6 records deleted, 1 added; the marker interfaces
+`ControllerAndPermanentsNoncombatDamagePreventionEffect` and `ControlledSourceCreatureDamagePreventionEffect` deleted; the statics had no
+handlers). 8 card files rewritten by hand; Oracle text checked with `get_card` for all 8. CR 114.3, 615.1, 615.7, 615.12, 616.1, 616.1a, 616.1e, 708.5 and
+709.4a checked with `get_rule` (2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Prevent | 7 rows (6 rare records, 1 new survivor) | 6 | 0 | 1 | 0 | 0 | 17 rare records (30 records in all), every one a static prevention |
+
+All families: 1,966 rare records without a row (run 21: 1,972). May (58 rare) not started.
+
+- **The pool labels.** `DamageCandidateSource.DamageContext.sourceName()` names the damage source as every player may read it
+  (`FaceDownVisibility.publicName` of the live source permanent, else of the source card; CR 708.5); the 19 labels of
+  `PlayerDamagePreventions`, `PlayerDamageRedirects`, `PlayerDamageFinalReplacements`, `PermanentDamagePreventions` and
+  `PermanentDamageRedirects` that built the name from `getName()` read it. The portion suffix names a nameless card by
+  `Permanent.displayName`. The creature steps' labels name no source.
+- **`PreventDamageToRecipientsEffect(permanents, players, sources, sourceControllers, damage)`.** Static: permanent recipients (a static
+  `PermanentSubject`), player recipients (`you()`), a `PermanentPredicate` over the damage source (judged by
+  `GameQueryService.matchesDamageSourcePredicate`'s new overload: the live source, else its last-known state, else a spell's card, with
+  the effect's permanent as the filter's source), "sources you control" (`sourceControllers`) and `DamageKind` (all, combat, noncombat).
+  Read by `DamagePreventionService.staticallyPreventsDamageToPermanent` / `staticallyPreventsDamageToPlayer` over
+  `activeStaticEffects` (face-down and ability-losing permanents carry none; an Aura whose effects are ignored, Volrath's Curse, is
+  skipped as `hasAuraWithEffect` did), one pure per-source rule `StaticRecipientPrevention` in each pool, so the affected player orders it
+  against the other effects as before (CR 616.1, 616.1e). Both rules ask `isDamagePreventable` and the source's "can't be prevented"
+  (CR 615.12), as the creature steps did. A face-up plane's static ability isn't read (none of the folded cards is a plane).
+- **Folded.** Desert Nomads (`to(source()).from(Desert)`), Walls of Shadows and Vapor (`.from(allOf(creature, PermanentBlockedBySourcePredicate))`,
+  combat and noncombat), Armored Transport (`.from(PermanentBlockingSourcePredicate).combatOnly()`), Inviolability (`to(attachedCreature())`,
+  its combat half off `PreventAllCombatDamageToSelfEffect`) and Magebane Armor (`.noncombatOnly()`), Light of Sanction
+  (`to(creaturesYouControl()).fromSourcesYouControl()`), The Wanderer (`toYouAnd(otherPermanentsYouControl()).noncombatOnly()`, not itself).
+  Their pool rules and creature steps (`CombatDamageFromBlockerPrevented`, `CombatDamageFromBlockedCreaturePrevented`, `DesertsToSelf` (rule
+  and step), `ControlledSourceToControlledCreature`, `NoncombatControllerAndPermanents`, `AttachedNoncombat`, the player
+  `NoncombatControllerAndPermanentsPrevented`) and their `GameQueryService` / `DamagePreventionService` queries are deleted; the Wall
+  branch left `isCreatureSourceDamageToSelfPrevented`, which now reads only `PreventDamageToSelfFromCreaturesEffect`. The AI read none of
+  the six.
+
+**Behaviour changes.** "Failed before" means the new test failed on HEAD's sources.
+
+1. The damage order prompt no longer names a face-down source (CR 708.5): `HealingGraceTest.orderPromptHidesAFaceDownSource` (failed before:
+   "Prevent damage from Grizzly Bears (Healing Grace)").
+2. The Wanderer's prevention of damage to you writes the pool's log line ("<source>'s damage to <player> is prevented."), beside the
+   damage-prevented event it already sent: `TheWandererTest.preventionToControllerIsLoggedAndSeenAsPrevented` (with Selfless Squire; not run
+   on HEAD).
+3. The six records' options read "Prevent the damage to it" / "Prevent the damage to you".
+
+**What a player sees.** The 19 labels show "a face-down permanent" (or "a face-down spell") for a face-down source.
+
+**Seen, not changed.**
+
+- The player pool's "prevent all" rules disagree on the damage-prevented event: `playerFlag` rules (Fogs, The Wanderer) send
+  `DamageDealtEvent.PreventedToPlayer`, `preventAll` rules (Rem Karolus, Energy Storm, Gideon's Intervention, the source and colour
+  preventions) only log, so Selfless Squire ("whenever damage that would be dealt to you is prevented") misses those. A sweep of its own.
+- `DamagePreventionService.applyPlayerPreventionShield` and `applyPerSourceCreatureDamagePreventionShield` have no caller in main code (only
+  `CombatDamageServiceTest` stubs them); the folded clauses were removed from them, the methods kept.
+- Gideon's Intervention fits the record by `PermanentHasSourceChosenNamePredicate` only after checking split names (CR 709.4a), emblem
+  sources (CR 114.3) and face-down sources, which `cardHasChosenName` handles and the predicate path does not obviously; not folded.
+
+**Tests edited.** The two new cases above (`HealingGraceTest`, `TheWandererTest`). `EffectCountRatchetTest`'s baseline.
+
+**Tests run.** The final sources in one Gradle run, one `--tests` list per task, counted from that run's XML by the timestamps: 70
+classes (770 cases, 0 failures, 0 skipped): the 61 test classes that name one of the 8 rewritten cards, Healing Grace or Furnace of Rath,
+the 8 application classes naming `DamagePreventionService` or the damage pools (`DamagePreventionSpecTest`, `CombatDamageServiceTest`,
+`SimultaneousDamageMechanicTest` among them), and `EffectCountRatchetTest`. Compiled: the engine, domain, the eight letter card modules and
+their test modules, the application tests, the AI's main and test sources, the engine test fixtures, webservice. No deleted handler.
+Not run: the full suites, the AI fuzz and stress tests, the frontend. Not verified: more than two players, a plane with a static prevention.
+
+**For the next run (run 23: Prevent's 17 statics; then May 58, Perpetually 55, Conjure 49, Register 48, Target 48).**
+
+- Fold into `PreventDamageToRecipientsEffect`: Gideon's Intervention (after the name checks above), Rem Karolus and Energy Storm (a
+  "spells" source kind: two cards, `instantSorceryOnly`-style filter), Prismatic Ward / Chromatic Armor (a chosen-colour source filter that
+  reads `getDamageSourceColors`, Ghostly Flame), Well-Laid Plans (a relation between source and recipient), Heart of Light and Statecraft
+  (to-and-by: the by side is `isPreventedFromDealingDamage`'s branch, read before the pool by combat).
+- The by-side records (Woolly Razorback, Kessig and New Master of Arms, Goblin Furrier and Indentured Oaf) and the amounts (Shield of the
+  Realm / Avatar, Djeru / The Western Cloud, Gisela, Cover of Winter, Plated Pegasus, Hedron-Field Purists, Daunting Defender) need an
+  amount and a by-side form; Kessig is a plane, which the reader would have to scan.
+- The damage-prevented event sweep above.
 
 ## Prompt
 
