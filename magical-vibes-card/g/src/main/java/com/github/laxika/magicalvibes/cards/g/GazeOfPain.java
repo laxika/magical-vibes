@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.AssignNoCombatDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -18,7 +18,7 @@ public class GazeOfPain extends Card {
         // Until end of turn, whenever a creature you control attacks and isn't blocked, you may
         // choose to have it deal damage equal to its power to a target creature. If you do, it
         // assigns no combat damage this turn.
-        addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
+        addSpellEffect(new RegisterGlobalTriggeredAbilityEffect(new TriggeredAbility(
                 Triggers.creatureYouControlAttacksUnblocked(),
                 new MayEffect(SequenceEffect.of(
                         DealDamageToTargetCreatureEffect.byTriggeringPermanent(new TriggeringPermanentPower(true),

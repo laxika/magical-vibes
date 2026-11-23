@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.condition.WaterbendCostPaid;
 import com.github.laxika.magicalvibes.model.effect.BoostAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.WaterbendCost;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -19,7 +19,7 @@ public class RuinousWaterbending extends Card {
         addCastingCost(WaterbendCost.optional(4));
         addSpellEffect(new BoostAllCreaturesEffect(-2, -2));
         addSpellEffect(new ConditionalEffect(new WaterbendCostPaid(),
-                new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+                new RegisterGlobalTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANY), new GainLifeEffect(1)))));
     }
 }

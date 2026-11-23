@@ -1,12 +1,13 @@
 package com.github.laxika.magicalvibes.cards.b;
 
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestrictionEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.GiftPromised;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.GiftEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetSpellToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TargetOpponentCreatesTokenEffect;
@@ -20,6 +21,7 @@ public class BilbosGambit extends Card {
                 TargetOpponentCreatesTokenEffect.gift(CreateTokenEffect.ofTreasureToken(1))));
         addSpellEffect(new ReturnTargetSpellToHandEffect());
         addSpellEffect(new ConditionalEffect(new GiftPromised(),
-                new OpponentsCantCastSpellsThisTurnEffect(Subjects.eachPlayer())));
+                PlayerRestrictionEffect.thisTurn(Subjects.eachPlayer(),
+                        PlayerRestriction.castingSpells())));
     }
 }

@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -20,7 +20,7 @@ public class InfestedThrinax extends Card {
 
     public InfestedThrinax() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+                new RegisterGlobalTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.nontokenCreatureDies(ObjectRelation.YOU_CONTROL),
                         new CreateTokenEffect(new EventValue(), "Saproling", 1, 1,
                                 CardColor.GREEN, List.of(CardSubtype.SAPROLING), Set.of(), Set.of()))));

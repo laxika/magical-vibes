@@ -23,7 +23,7 @@ import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import java.util.List;
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 
 @CardRegistration(set = "WHO", collectorNumber = "21")
 @CardRegistration(set = "WHO", collectorNumber = "626")
@@ -48,7 +48,7 @@ public class TheGirlInTheFireplace extends Card {
                         Keyword.HORSEMANSHIP, Subjects.creaturesYouControl(),
                         new PermanentHasSubtypePredicate(CardSubtype.DOCTOR))))));
 
-        addTrigger(Triggers.chapter(3), new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+        addTrigger(Triggers.chapter(3), new RegisterGlobalTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.creatureYouControlDealsCombatDamageToPlayer(), new TimeTravelEffect(1))));
     }
 }

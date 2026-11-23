@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.o;
 
 import com.github.laxika.magicalvibes.cards.a.AncientSpider;
 import com.github.laxika.magicalvibes.cards.f.ForsakenCity;
+import com.github.laxika.magicalvibes.cards.r.RiftBolt;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({OrimsChant.class, AncientSpider.class, ForsakenCity.class})
+@CardUsed({OrimsChant.class, AncientSpider.class, ForsakenCity.class, RiftBolt.class})
 class OrimsChantTest extends BaseCardTest {
 
     @Test
@@ -29,6 +30,24 @@ class OrimsChantTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castInstant(player2, 0, player1.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("The target player can't suspend a card, which needs them to be able to begin casting it")
+    void targetPlayerCantSuspend() {
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.setHand(player1, List.of(new OrimsChant()));
+        harness.addMana(player1, ManaColor.WHITE, 1);
+        harness.castAndResolveInstant(player1, 0, player1.getId());
+
+        harness.setHand(player1, List.of(new RiftBolt()));
+        harness.addMana(player1, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.activateHandAbility(player1, 0, null))
+                .isInstanceOf(IllegalStateException.class);
+        harness.assertInHand(player1, "Rift Bolt");
     }
 
     @Test

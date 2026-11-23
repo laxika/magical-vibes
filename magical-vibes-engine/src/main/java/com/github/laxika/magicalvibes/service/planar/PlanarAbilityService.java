@@ -1,6 +1,6 @@
 package com.github.laxika.magicalvibes.service.planar;
 
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
 import com.github.laxika.magicalvibes.model.*;
 import com.github.laxika.magicalvibes.model.planar.PlanarObject;
@@ -76,7 +76,7 @@ public class PlanarAbilityService {
                 || !Objects.equals(query.getPriorityPlayerId(game), playerId)) return false;
         if (!ability.isSpecialAction()
                 && (game.hasFloatingEffectOnPlayer(playerId, SenTripletsUpkeepEffect.class)
-                || (!ability.isManaAbility() && game.hasFloatingEffectOnPlayer(playerId, TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect.class)))) {
+                || (!ability.isManaAbility() && game.isRestricted(playerId, PlayerRestriction.Kind.ACTIVATE_NON_MANA_ABILITIES)))) {
             return false;
         }
         if (!ability.isActivatableByAnyPlayer() && !Objects.equals(game.planechase.controllerId, playerId)) return false;

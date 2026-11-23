@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 38: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May and Register closed (May's 11 cost combinators listed for step 10; Register's until-next-turn record folded on a `Duration` in run 38, the end-of-next-turn one kept); 1,785 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Target open (15 rare)) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 39: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May and Register closed (May's 11 cost combinators listed for step 10; Register's until-next-turn record folded on a `Duration` in run 38, the end-of-next-turn one kept, the survivor renamed `RegisterGlobalTriggeredAbilityEffect` in run 39); 1,778 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Target open (11 rare; the player restrictions folded into `PlayerRestrictionEffect` in run 39)) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -644,6 +644,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 36 | Iroh's "then" record on the gain step, Shuriken's record, the must-attack records, the sacrifice and counter records | Target open (6 rows: 3 absorbed, 2 survivors gaining an option, 1 unique; 3 records and 3 handlers deleted, one `CombatRequirement` constant with them; 5 card files rewritten; `SetCombatRequirementThisTurnEffect.mustAttack(subject, player)`, `MayEffectHandler` asks nothing for a control gift with a target gone; Iroh's gift with an illegal opponent or permanent offers no choice; the power-damage, sacrifice-or-damage and counter-by-player records read and left unaudited; 22 rare Target records left) |
 | 37 | Protection at targeting for every target, Ravener's required opponent, the bite's spec, the power-damage records | Target open (6 rows: 1 absorbed, 1 survivor, 2 unique, 2 blocked-other, the blocked three-card bite row re-noted; 1 record and 1 handler deleted; 2 card files rewritten, Ravener fixed; protection no longer reads `TargetSpec.harmful` in `ValidTargetService` or `TargetValidationService` (CR 702.16b); the bite keeps `benign(playerOrPermanent)`; 17 rare Target records left) |
 | 38 | The owner-approved 3+-card folds (the three-card bite, the six-card control gift, the six-card delayed sacrifice, the `RegisterGlobalTriggeredAbility…` durations), then Target's rare records | Target open (11 rows: 4 absorbed (3 to 6 cards each), 4 survivors, 2 unique, the end-of-next-turn row re-noted; 4 records and 4 handlers deleted; 19 card files rewritten; `RegisterDelayedEventTriggerEffect.whenLeavesThisTurn` (`PERMANENT_LEAVES`), `RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect.untilYourNextTurn`; the control gifts no longer scored by the AI as steals; the player restrictions, must-attack, copy, villainous-choice and discard-then-draw records read and left with a design note; 15 rare Target records left) |
+| 39 | The `RegisterGlobalTriggeredAbility…` rename, the player-restriction record (the five Target restrictions and the static `PlayerCantCastSpellsEffect` family), then run 38's other Target leads | Target open (13 rows: 10 absorbed (1 to 6 cards each), 2 survivors (new), 1 blocked-other; 10 records and 9 handlers deleted, 2 records and 1 handler added; 24 card files rewritten and 60 renamed; `PlayerRestrictionEffect`, `PlayerRestriction`, `GameData.restrictionsOnPlayer`; Orim's Chant, Oriss and Xanathar stop suspend (ruling), a silenced player can't cast from a library top or graveyard; Genesis of the Daleks, Hollow Marauder, the must-attack payloads, Transcantation and Reflection Net not reached; 11 rare Target records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -10141,6 +10142,124 @@ suites, the AI fuzz and stress tests, the frontend. Not verified: more than two 
   Target records and the static `PlayerCantCastSpellsEffect` family where they say the same.
 - Genesis of the Daleks on `villainousChoiceFacedBy`, Hollow Marauder's per-player count, the must-attack payloads, Transcantation.
 - Reflection Net with the Become family (a copier subject on `BecomeCopyOfSubjectEffect`).
+- Still the owner's: the gift opponent (CR 702.174a, missing-features entry 80), the hidden-zone conjure and perpetual logging, the perpetual
+  "it" (CR 400.7).
+
+### Step 9, run 39 (2026-11-23, Target open)
+
+Run 38's rename first, then the player-restriction record run 38 designed; the rest of run 38's leads were not reached. Ratchet
+4,060 / 3,314 → 4,052 / 3,306 records / handlers (10 records and 9 handlers deleted; `PlayerRestrictionEffect`, its component
+`PlayerRestriction` and one handler added). 24 card files rewritten (Hope of Ghirapur, Render Silent, Abeyance, Cease-Fire, Moonhold,
+Orim's Chant, Oriss, Samite Guardian, Xanathar, Guild Kingpin, Pardic Miner, Solfatara, Turf Wound, Bilbo's Gambit, Mandate of Peace,
+Silence, Revel in Silence, Xantid Swarm, Single Combat, Azor, the Lawbringer, Sphinx's Decree, Calamity's Wake, Permission Denied,
+Ranger-Captain of Eos, Eloren Wilds, Innocuous Researcher) and 60 renamed only. Oracle text checked with `get_card` for all 24 (Revel in
+Silence through Flamescroll Celebrant); rulings with `get_rulings` for Orim's Chant and Silence ("A player who can't cast a spell can't
+suspend a card."). CR 101.2, 400.7, 611.2a, 702.62a and 702.174a checked with `get_rule` (2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Target | 4 rare records, 2 multi-card (6 and 4 cards) | 5 | 0 | 0 | 1 (a "can't attack" player restriction only Choose Your Champion has) | 0 | 11 rare, 20 in all |
+| (other) | `OpponentsCantCastSpellsThisTurnEffect` (5), `PlayersCantCastNoncreatureSpellsThisTurnEffect` (3), `OpponentsCantCastSpellTypesNextTurnEffect` (2), `PlayerCantCastSpellsEffect` (2), `PlayersCantCastSpellTypesUntilEndOfYourNextTurnEffect` (1) | 5 | | 2 new (`PlayerRestrictionEffect`, `PlayerRestriction`); `RegisterGlobalTriggeredAbilityEffect` renamed | | | |
+
+All families: 1,778 rare records without a row (run 38: 1,785). Perpetually 30 rare and Conjure 39 rare, unchanged. Rare records touched
+this run: Target 4, Opponents 1, Players 1, Player 1 (7 rare in all; the other five folded records were used by 3 to 6 cards).
+
+**The rename.** `RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect` took a `Duration` in run 38; it is now
+`RegisterGlobalTriggeredAbilityEffect` (the name was free), with its handler, its 60 cards, the docs and its ledger row. No test named it.
+
+**The player restriction, and why each fold makes sense.** `PlayerRestrictionEffect(PlayerSubject players, PlayerRestriction restriction,
+Duration duration)` (`.thisTurn(players, restriction)`): each player the subject names gets a floating effect holding the record (one on
+every player for `eachPlayer()`, as the old "players can't" records did); `PlayerRestriction` is `castingSpells()`, `castingSpellsOf(types…)`,
+`castingNoncreatureSpells()` (not a type set: an artifact creature spell is a creature spell), `playingLands()` or
+`activatingNonManaAbilities()`; the durations are the six the cards state. A declared `targetPlayer()` is a harmful player target. Readers
+ask `GameData.restrictionsOnPlayer` / `isRestricted`: `CastingPermissionService` (`isPlayerPreventedFromCasting`, `getRestrictedSpellTypes`,
+the noncreature check, both land checks), `GameActionAvailabilityService` and `GameViewProjectionFactory` (land play),
+`AbilityActivationService` and `PlanarAbilityService` (non-mana abilities). Every folded record said "[players] can't [one of those]
+[a stated duration]" with no chooser, no damage, no layer and no AI reader (no AI file named any of them); the log line is the survivor's
+"X can't …", "X's opponents can't …" or "Players can't …" with the duration's words.
+
+- `OpponentsCantCastSpellsThisTurnEffect` (Silence, Mandate of Peace, Revel in Silence; Xantid Swarm `defendingPlayer()`; Bilbo's Gambit
+  `eachPlayer()`): `thisTurn(subject, castingSpells())`, same subjects, same log lines.
+- `TargetSpellControllerCantCastSpellsThisTurnEffect` (Render Silent): `thisTurn(controllerOf(targetSpell()), castingSpells())`; the subject
+  reads the spell on the stack, else the controller `CounterSpellEffect` recorded, which is the old handler's lookup (and its fallback).
+- `TargetPlayerCantCastSpellTypesThisTurnEffect` (6 cards): Abeyance, Cease-Fire, Moonhold `castingSpellsOf(…)`; Orim's Chant, Oriss and
+  Xanathar wrote "can't cast spells" as every card type and are `castingSpells()` now (behaviour change 1). The engine's own
+  `GameData.preventAdditionalSpellCastsThisTurn` keeps its every-type-but-land set (see Seen, not changed).
+- `TargetPlayerCantPlayLandsThisTurnEffect` (Pardic Miner, Solfatara, Turf Wound, Moonhold), `TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect`
+  (Abeyance), `TargetPlayerCantCastNoncreatureSpellsUntilNextTurnEffect` (Hope of Ghirapur, `UNTIL_YOUR_NEXT_TURN`): same target, same
+  duration. A card with two restrictions on its one target (Abeyance, Moonhold) declares `targetPlayer()` on one and reads
+  `targetPlayerDeclaredElsewhere()` on the other, as Sign in Blood does.
+- `PlayersCantCastNoncreatureSpellsThisTurnEffect` (Calamity's Wake `eachPlayer()`, Permission Denied and Ranger-Captain of Eos
+  `eachOpponent()`; Aurelia's Fury's rider floats the same restriction), `PlayersCantCastSpellTypesUntilEndOfYourNextTurnEffect` (Single
+  Combat), `OpponentsCantCastSpellTypesNextTurnEffect` (Azor, Sphinx's Decree, `DURING_AFFECTED_PLAYERS_NEXT_TURN` per opponent as before).
+- `PlayerCantCastSpellsEffect`, the marker floated by `GrantStaticEffectToPlayerUntilPlaneswalkEffect` (Eloren Wilds, target player),
+  `GrantStaticEffectToPlayerUntilNextTurnEffect` (Innocuous Researcher, you) and `EpicService` (`PERMANENT`): the restriction itself with
+  that duration. The two grant records keep their other cards (Agyrem, Celestine Reef, Teferi's Protection).
+
+**AI.** No AI class named a folded record. The target spec is `harmful(player)` wherever the record declares the target: Cease-Fire's was
+`benign`, Pardic Miner's and the land / ability records declared none, so `GameSimulator.rankAbilityTargets` now prefers the opponent for
+Pardic Miner and Oriss's grandeur (it preferred the AI itself). `TargetPolarityGuardTest` passes.
+
+**Behaviour changes.**
+
+1. Orim's Chant, Oriss's grandeur and Xanathar: "can't cast spells" is now every spell on every casting path, so the player can't suspend a
+   card (the rulings of Orim's Chant and Silence; CR 702.62a's "if you could begin to cast this card"):
+   `OrimsChantTest.targetPlayerCantSuspend` (new; the old type set was not read by the suspend check, which reads only
+   `isPlayerPreventedFromCasting`).
+2. A player under any resolved "can't cast spells" restriction (Silence, Render Silent, Xantid Swarm, Bilbo's Gambit, Mandate of Peace,
+   Revel in Silence, Eloren Wilds, Innocuous Researcher, Epic, and the three cards above) can't cast the top card of their library or a
+   graveyard spell either: those paths read only `getRestrictedSpellTypes`, which now holds every spell type for such a restriction.
+   `SilenceTest.silencedOpponentCannotCastFromLibraryTop` (new); `XanatharGuildKingpinTest.chosenOpponentCannotCastFromTheirLibrary`
+   failed in this run's first test pass until this was fixed, which shows the old gap for the floating "can't cast spells" records.
+3. Log lines: Hope of Ghirapur "… until <controller>'s next turn." (was "until your next turn."); Azor and Sphinx's Decree "… during their
+   next turn." (was "turns."); Abeyance's, Cease-Fire's and Single Combat's type lists read from the card in its order; Eloren Wilds and
+   Innocuous Researcher now log one ("X can't cast spells until a player planeswalks."). No test asserted any of them.
+
+**What a player sees.** The same restrictions with the survivor's log lines; the floating effect is named by `FaceDownVisibility.sourceName`
+(a face-down source is not named). No prompt changed; no hidden card is named.
+
+**Seen, not changed.**
+
+- The library-top and graveyard casting paths (`SpellCastingService`, the blocks that throw "Card is not playable") don't call
+  `isPlayerPreventedFromCasting`: Grand Abolisher, City of Solitude, Dosan, Angelic Arbiter's attack lock, `DefendingPlayerCantCastSpellsWhileAttackingEffect`,
+  Sen Triplets and Choose Your Champion's lock read as still letting a player cast from there (read, not tested; CR 101.2: the "can't"
+  wins). Only the resolved restrictions are fixed here, through the type set.
+- `GameData.preventAdditionalSpellCastsThisTurn` ("you can't cast additional spells this turn", three engine callers) is a type set, so it
+  doesn't stop suspend or a resolution cast (`canCastDuringResolution`); `castingSpells()` would.
+- `DealDividedDamageEffect.damagedPlayersCantCastNoncreatureSpells` (Aurelia's Fury) is a one-card flag; the rider is
+  `PlayerRestrictionEffect.thisTurn(playersDealtDamageThisResolution(), castingNoncreatureSpells())` as a later step.
+- More restrictions of the same shape, not folded this run: `OpponentsCantActivatePlaneswalkerLoyaltyAbilitiesThisTurnEffect` (Revel in
+  Silence's other half), `OpponentsCantCastSpellsWithManaValueUntilNextTurnEffect` (2 cards), `PlayersCantPlayCardsFromHandUntilNextTurnEffect`
+  (Memory Vessel), `SenTripletsUpkeepEffect`'s cast half, `PlayerCantCastSpellsAndAttackWithCreaturesEffect`.
+- `GrantStaticEffectToPlayerUntilEndOfTurnEffect` (5 cards), `…UntilNextTurnEffect` (1 now) and `…UntilPlaneswalkEffect` (2 now) differ only
+  in duration and subject: one record with a `Duration` folds them.
+
+**Tests edited.** `PermissionDeniedTest`: asserts the restricted players through the new `BaseCardTest.playersRestrictedFrom(kind)` instead
+of the deleted class. `EndlessSwarmTest`, `NeverendingTormentTest`, `UndyingFlamesTest`: `silencedPlayers()` (now reading the restriction
+record) instead of `playersAffectedBy(PlayerCantCastSpellsEffect.class)`. `CastingPermissionServiceTest`: builds the restriction with the new
+record. `CardEffectTargetingConsistencyTest`: four allowlist entries of deleted records removed. `OrimsChantTest`, `SilenceTest`: one new case
+each. `EffectCountRatchetTest`'s baselines. No assertion was loosened or flipped.
+
+**Tests run.** Two Gradle runs of the same 160 classes (one `--tests` list per task), counted from the XML by file name and timestamp: the
+148 test classes referencing a changed card (the 24 rewritten and the 60 renamed), the four epic / Permission Denied tests, Aurelia's Fury,
+`CastingPermissionServiceTest`, `GameActionAvailabilityServiceTest`, `DealDividedDamageEffectHandlerTest`, `CardEffectTargetingConsistencyTest`,
+`EffectCountRatchetTest` and the AI's `TargetPolarityGuardTest`. First run: 179 XML files, 1,648 cases, 1 failure (Xanathar, change 2).
+Second run: 179 XML files, 1,649 cases, 0 failures, 0 errors, `EffectCountRatchetTest` at 4,052 / 3,306; then, after an unused
+method was removed from `PlayerRestriction`, `EffectCountRatchetTest`, `CastingPermissionServiceTest`, `PermissionDeniedTest` and
+`AbeyanceTest` on the final sources: 12 XML files, 81 cases, 0 failures. No deleted handler was
+`AsksDeathReplacementsFirst` or called `LifeSupport.askBefore*`. Compiled: domain, engine (and its test fixtures), AI, the application test
+sources, card modules a, b, c, d, e, f, g, h, i, j, m, n, o, p, r, s, shared, t, v, w, x and the card-test modules the runs reached. No deleted
+type is named by any source (grepped). Not run: the full suites, the AI fuzz and stress tests, the frontend. Not verified: more than two
+players; the two new tests against HEAD (each change was established by reading the paths, and the Xanathar failure shows the second).
+
+**For the next run (run 40: Target's rare records).**
+
+- Run 38's leads not reached: Genesis of the Daleks on `villainousChoiceFacedBy` (a "total power of Daleks that died this turn" amount),
+  Hollow Marauder's per-player count over the discard step, the must-attack payloads (Gideon, Battle-Forged; Sizzling Soloist; The
+  Brothers' War; `TargetPlayersCreaturesMustAttackThisTurnEffect`), Transcantation, Reflection Net with the Become family (a copier subject
+  on `BecomeCopyOfSubjectEffect`).
+- The player restrictions left above (loyalty abilities, a mana-value spell filter, cards from hand), Aurelia's Fury's rider, the three
+  `GrantStaticEffectToPlayer…` records on one `Duration`, and the library-top / graveyard paths' missing `isPlayerPreventedFromCasting`.
 - Still the owner's: the gift opponent (CR 702.174a, missing-features entry 80), the hidden-zone conjure and perpetual logging, the perpetual
   "it" (CR 400.7).
 

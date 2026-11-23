@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.a.AncestralVision;
 import com.github.laxika.magicalvibes.cards.f.Forest;
+import com.github.laxika.magicalvibes.cards.f.FutureSight;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.l.LightningBolt;
 import com.github.laxika.magicalvibes.cards.p.ProdigalPyromancer;
@@ -22,7 +23,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({Silence.class, RuneclawBear.class, LightningBolt.class, Forest.class, ProdigalPyromancer.class, AncestralVision.class})
+@CardUsed({Silence.class, RuneclawBear.class, LightningBolt.class, Forest.class, ProdigalPyromancer.class, AncestralVision.class,
+        FutureSight.class, Shock.class})
 class SilenceTest extends BaseCardTest {
 
     @Test
@@ -33,6 +35,20 @@ class SilenceTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getEntryType()).isEqualTo(StackEntryType.INSTANT_SPELL);
         assertThat(gd.stack.getFirst().getCard()).isInstanceOf(Silence.class);
+    }
+
+    @Test
+    @DisplayName("A silenced opponent can't cast the top card of their library either")
+    void silencedOpponentCannotCastFromLibraryTop() {
+        harness.castFromHand(player1, new Silence(), "{W}");
+        harness.passBothPriorities();
+        harness.setLibrary(player2, List.of(new Shock()));
+        harness.addToBattlefield(player2, new FutureSight());
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        assertThatThrownBy(() -> harness.castFromLibraryTop(player2, player1.getId()))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Nested

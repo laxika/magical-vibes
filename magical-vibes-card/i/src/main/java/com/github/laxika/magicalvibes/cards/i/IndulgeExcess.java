@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -26,7 +26,7 @@ public class IndulgeExcess extends Card {
     public IndulgeExcess() {
         setBackFaceCard(new Excess());
 
-        addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
+        addSpellEffect(new RegisterGlobalTriggeredAbilityEffect(new TriggeredAbility(
                 Triggers.creatureYouControlAttacks(),
                 new CreateTokensAttackingEffect(1, new CreateTokenEffect(
                         CardType.CREATURE, 1, "Citizen", 1, 1, CardColor.GREEN,

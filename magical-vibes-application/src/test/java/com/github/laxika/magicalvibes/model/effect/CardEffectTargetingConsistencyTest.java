@@ -64,21 +64,12 @@ class CardEffectTargetingConsistencyTest {
             // Marker: declares a target-group position consumed by a sibling effect and never
             // resolves or chooses a target itself.
             "TargetGroupMarkerEffect",
-            // Pre-resolved: the affected player is carried as the stack entry's target — the
-            // spell-level player target (Moonhold) or the trigger's damaged player (Stigma Lasher) —
-            // and the handler reads entry.getTargetId(); never enters trigger-target collection.
-            "TargetPlayerCantCastSpellTypesThisTurnEffect",
-            "TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect",
             // Pre-resolved: Wasitora's combat damage trigger carries the damaged player's UUID;
             // that player makes a non-targeted sacrifice choice when the trigger resolves.
             "TargetPlayerSacrificesCreatureOrCreatesTokenEffect",
             // Piggyback: reads the player-or-planeswalker target selected for the companion effect
             // on Flames of the Blood Hand; it never contributes a target of its own.
             "TargetPlayerCantGainLifeThisTurnEffect",
-            "TargetPlayerCantPlayLandsThisTurnEffect",
-            // Piggyback: reads the spell target selected for Counterspell on Render Silent; it
-            // never contributes a separate spell or player target.
-            "TargetSpellControllerCantCastSpellsThisTurnEffect",
             // Piggyback: rides on the counterspell's existing spell target (Dream Fracture) — reads
             // the targeted spell from entry.getTargetId(); never contributes a chosen player target.
             "TargetSpellControllerDrawsCardEffect",

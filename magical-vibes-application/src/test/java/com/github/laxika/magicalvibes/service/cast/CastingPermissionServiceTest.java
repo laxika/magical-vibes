@@ -6,7 +6,9 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitControllerToOneMoreSpellThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPlayCardsFromHandUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.Card;
@@ -893,7 +895,8 @@ class CastingPermissionServiceTest {
         @DisplayName("Rejects spell when player is silenced this turn")
         void rejectsWhenSilenced() {
             gd.addFloatingEffect(FloatingContinuousEffect.onPlayer("Test", null, player2Id,
-                new OpponentsCantCastSpellsThisTurnEffect(), player1Id, Duration.UNTIL_END_OF_TURN));
+                PlayerRestrictionEffect.thisTurn(Subjects.eachOpponent(), PlayerRestriction.castingSpells()),
+                player1Id, Duration.UNTIL_END_OF_TURN));
 
             Card bolt = new Card();
             bolt.setName("Lightning Bolt");

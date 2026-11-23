@@ -21,7 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -51,7 +51,7 @@ public class GreatTrainHeist extends Card {
                                 new GrantKeywordEffect(Keyword.FIRST_STRIKE, Subjects.otherCreaturesYouControl()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Choose target opponent. Whenever a creature you control deals combat damage to that player this turn, create a tapped Treasure token.",
-                        new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
+                        new RegisterGlobalTriggeredAbilityEffect(new TriggeredAbility(
                                 Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                                 CreateTokenEffect.ofTappedTreasureToken(1))),
                         opponentFilter)

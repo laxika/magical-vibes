@@ -1,11 +1,13 @@
 package com.github.laxika.magicalvibes.cards.r;
 
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastNoncreatureSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -31,7 +33,8 @@ public class RangerCaptainOfEos extends Card {
                 false,
                 null,
                 List.of(new SacrificeSelfCost(),
-                        PlayersCantCastNoncreatureSpellsThisTurnEffect.forOpponents()),
+                        PlayerRestrictionEffect.thisTurn(Subjects.eachOpponent(),
+                                PlayerRestriction.castingNoncreatureSpells())),
                 "Sacrifice Ranger-Captain of Eos: Your opponents can't cast noncreature spells this turn."));
     }
 }

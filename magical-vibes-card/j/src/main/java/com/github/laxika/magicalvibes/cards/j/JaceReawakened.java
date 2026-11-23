@@ -11,7 +11,7 @@ import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCardFromHandAndPlotEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -48,7 +48,7 @@ public class JaceReawakened extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -6,
-                List.of(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+                List.of(new RegisterGlobalTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.youCastSpell().anySpell(),
                         new CopyTriggeringSpellEffect()))),
                 "-6: Until end of turn, whenever you cast a spell, copy it. You may choose new targets for the copy."

@@ -14,10 +14,10 @@ import java.util.Objects;
  * @param grantedAbility the delayed triggered ability
  * @param duration       how long it lasts: until end of turn, or until the controller's next turn begins
  */
-public record RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(Ability grantedAbility, Duration duration)
+public record RegisterGlobalTriggeredAbilityEffect(Ability grantedAbility, Duration duration)
         implements CardEffect {
 
-    public RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect {
+    public RegisterGlobalTriggeredAbilityEffect {
         Objects.requireNonNull(duration, "duration");
         if (!Duration.UNTIL_END_OF_TURN.equals(duration) && !Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)) {
             throw new IllegalArgumentException("A global triggered ability lasts until end of turn or until your next "
@@ -26,13 +26,13 @@ public record RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(Ability granted
     }
 
     /** {@code grantedAbility} until end of turn. */
-    public RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(Ability grantedAbility) {
+    public RegisterGlobalTriggeredAbilityEffect(Ability grantedAbility) {
         this(grantedAbility, Duration.UNTIL_END_OF_TURN);
     }
 
     /** "Until your next turn, [grantedAbility]": it ends as its controller's next turn begins. */
-    public static RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect untilYourNextTurn(Ability grantedAbility) {
-        return new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(grantedAbility, Duration.UNTIL_YOUR_NEXT_TURN);
+    public static RegisterGlobalTriggeredAbilityEffect untilYourNextTurn(Ability grantedAbility) {
+        return new RegisterGlobalTriggeredAbilityEffect(grantedAbility, Duration.UNTIL_YOUR_NEXT_TURN);
     }
 
     /** The effect of {@link #grantedAbility}, or {@code null} when there is none. */

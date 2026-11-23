@@ -13,10 +13,9 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyTriggeringSpellOrAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
@@ -519,9 +518,25 @@ public abstract class BaseCardTest {
         return affected;
     }
 
-    /** The players who can't cast spells this turn because of a resolved "can't cast spells this turn" effect. */
+    /** The players a resolved "can't cast spells" effect (any duration, or Sen Triplets') stops casting every spell. */
     protected Set<UUID> silencedPlayers() {
-        return playersAffectedBy(TargetSpellControllerCantCastSpellsThisTurnEffect.class,
-                SenTripletsUpkeepEffect.class, OpponentsCantCastSpellsThisTurnEffect.class);
+        Set<UUID> silenced = new LinkedHashSet<>(playersAffectedBy(SenTripletsUpkeepEffect.class));
+        for (UUID playerId : gd.orderedPlayerIds) {
+            if (gd.restrictionsOnPlayer(playerId).stream().anyMatch(PlayerRestriction::stopsEverySpell)) {
+                silenced.add(playerId);
+            }
+        }
+        return silenced;
+    }
+
+    /** The players a resolved {@code PlayerRestrictionEffect} of {@code kind} applies to right now. */
+    protected Set<UUID> playersRestrictedFrom(PlayerRestriction.Kind kind) {
+        Set<UUID> restricted = new LinkedHashSet<>();
+        for (UUID playerId : gd.orderedPlayerIds) {
+            if (gd.isRestricted(playerId, kind)) {
+                restricted.add(playerId);
+            }
+        }
+        return restricted;
     }
 }

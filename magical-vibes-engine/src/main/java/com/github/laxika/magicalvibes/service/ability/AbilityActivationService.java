@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantExtraLoyaltyActivationTo
 import com.github.laxika.magicalvibes.model.effect.AllowTwiceLoyaltyActivationsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GuardianAngelPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantActivatePlaneswalkerLoyaltyAbilitiesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
 import com.github.laxika.magicalvibes.model.Ability;
@@ -10924,8 +10924,7 @@ public class AbilityActivationService {
             throw new IllegalStateException(
                     "You can't activate abilities that aren't mana abilities while a spell with split second is on the stack");
         }
-        if (gameData.hasFloatingEffectOnPlayer(playerId,
-                TargetPlayerCantActivateNonManaAbilitiesThisTurnEffect.class)) {
+        if (gameData.isRestricted(playerId, PlayerRestriction.Kind.ACTIVATE_NON_MANA_ABILITIES)) {
             throw new IllegalStateException("You can't activate abilities that aren't mana abilities this turn");
         }
     }

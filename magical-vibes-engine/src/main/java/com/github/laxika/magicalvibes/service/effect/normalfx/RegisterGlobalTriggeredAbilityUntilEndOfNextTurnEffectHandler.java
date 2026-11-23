@@ -42,7 +42,7 @@ public class RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffectHandler imple
                 entry.getControllerId(), entry.getCard(), (TriggeredAbility) registration.grantedAbility(),
                 registration.targetFilter(), true, false, gameData.turnNumber, expirationPlayerId, null,
                 entry.getSourcePermanentId(), watchedPlayerId,
-                RegisterGlobalTriggeredAbilityUntilEndOfTurnEffectHandler.linkedExiledCardId(gameData, entry)));
+                RegisterGlobalTriggeredAbilityEffectHandler.linkedExiledCardId(gameData, entry)));
         gameLogService.append(gameData, GameLog.cardThen(entry.getCard(),
                 " registers a global triggered ability until the end of their next turn."));
         log.info("Game {} - {} registers a global triggered ability until the end of their next turn",

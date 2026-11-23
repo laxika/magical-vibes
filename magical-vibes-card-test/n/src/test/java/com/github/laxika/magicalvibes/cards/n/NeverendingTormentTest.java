@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.n;
 
-import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsEffect;
 import com.github.laxika.magicalvibes.cards.a.ArabaMothrider;
 import com.github.laxika.magicalvibes.cards.o.OneWithNothing;
 import com.github.laxika.magicalvibes.cards.t.Twincast;
@@ -98,7 +97,7 @@ class NeverendingTormentTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         assertThat(gd.playerDecks.get(player2.getId())).containsExactlyInAnyOrder(mothrider, oneWithNothing);
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(playersAffectedBy(PlayerCantCastSpellsEffect.class)).contains(player1.getId());
+        assertThat(silencedPlayers()).contains(player1.getId());
     }
 
     @Test
@@ -155,7 +154,7 @@ class NeverendingTormentTest extends BaseCardTest {
         assertThat(gd.playerDecks.get(player2.getId())).isEmpty();
         assertThat(gd.getPlayerExiledCards(player2.getId())).containsExactly(libraryCard);
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(playersAffectedBy(PlayerCantCastSpellsEffect.class)).contains(player1.getId());
+        assertThat(silencedPlayers()).contains(player1.getId());
     }
 
     @Test
@@ -168,7 +167,7 @@ class NeverendingTormentTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
         assertThat(gd.interaction.activeInteraction()).isNull();
-        assertThat(playersAffectedBy(PlayerCantCastSpellsEffect.class)).contains(player1.getId());
+        assertThat(silencedPlayers()).contains(player1.getId());
     }
 
     @Test
@@ -185,7 +184,7 @@ class NeverendingTormentTest extends BaseCardTest {
 
         assertThat(gd.playerDecks.get(player2.getId())).containsExactly(libraryCard);
         assertThat(gd.getPlayerExiledCards(player2.getId())).isEmpty();
-        assertThat(playersAffectedBy(PlayerCantCastSpellsEffect.class)).contains(player1.getId());
+        assertThat(silencedPlayers()).contains(player1.getId());
     }
 
     @Test
@@ -218,7 +217,7 @@ class NeverendingTormentTest extends BaseCardTest {
         harness.handleMayAbilityChosen(player2, false);
         harness.passBothPriorities();
 
-        assertThat(playersAffectedBy(PlayerCantCastSpellsEffect.class)).contains(player2.getId());
+        assertThat(silencedPlayers()).contains(player2.getId());
     }
 
     private void chooseLibraryCard(int index) {

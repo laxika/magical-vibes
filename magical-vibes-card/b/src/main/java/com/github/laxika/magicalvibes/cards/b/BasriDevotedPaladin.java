@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
@@ -35,7 +35,7 @@ public class BasriDevotedPaladin extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -1,
-                List.of(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+                List.of(new RegisterGlobalTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.creatureAttacks(),
                         new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)))),
                 "−1: Whenever a creature attacks this turn, put a +1/+1 counter on it."));

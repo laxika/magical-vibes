@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,7 +18,7 @@ public class ThunderOfUnity extends Card {
     public ThunderOfUnity() {
         addTrigger(Triggers.chapter(1), new DrawCardEffect(2), new LoseLifeEffect(2));
 
-        var creatureEntryDrain = new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+        var creatureEntryDrain = new RegisterGlobalTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
                 SequenceEffect.of(
                         new LoseLifeEffect(1, Subjects.eachOpponent()),

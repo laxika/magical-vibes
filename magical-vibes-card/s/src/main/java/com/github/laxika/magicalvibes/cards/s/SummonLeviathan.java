@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasAnySubtypePredicate;
@@ -34,7 +34,7 @@ public class SummonLeviathan extends Card {
                         new PermanentNotPredicate(seaCreature)
                 ))));
 
-        var drawOnSeaCreatureAttack = new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+        var drawOnSeaCreatureAttack = new RegisterGlobalTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.creatureAttacks().withFilter(seaCreature), new DrawCardEffect(1)));
         addTrigger(Triggers.chapter(2), drawOnSeaCreatureAttack);
         addTrigger(Triggers.chapter(3), drawOnSeaCreatureAttack);

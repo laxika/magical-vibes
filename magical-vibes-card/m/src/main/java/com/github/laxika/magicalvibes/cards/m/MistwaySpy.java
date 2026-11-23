@@ -4,7 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -14,7 +14,7 @@ public class MistwaySpy extends Card {
     public MistwaySpy() {
         addMorph("{1}{U}");
         addTrigger(Triggers.turnedFaceUp(null, ObjectRelation.THIS),
-                new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+                new RegisterGlobalTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                         CreateTokenEffect.ofClueToken(1))));
     }

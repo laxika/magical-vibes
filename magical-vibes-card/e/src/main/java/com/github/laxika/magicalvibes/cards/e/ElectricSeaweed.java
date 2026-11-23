@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -24,7 +24,7 @@ public class ElectricSeaweed extends Card {
     public ElectricSeaweed() {
         // When this creature enters, until end of turn, whenever another creature dies, this
         // creature deals 1 damage to each non-Wall creature.
-        addTrigger(Triggers.enters(ObjectRelation.THIS), new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+        addTrigger(Triggers.enters(ObjectRelation.THIS), new RegisterGlobalTriggeredAbilityEffect(
                 new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANOTHER),
                 new DealDamageToEachMatchingPermanentEffect(
                         1,

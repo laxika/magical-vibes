@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetCardsManaValueSum;
 import com.github.laxika.magicalvibes.model.effect.BoostAllOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CopyImprintedCardAndMayCastCopyEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -34,7 +34,7 @@ public class SurgeToVictory extends Card {
                         ExileGraveyardCardsEffect.oneTargetFromControllerGraveyardWithSource(instantOrSorcery)
                                 .imprintingOnSource())
                 .addSpellEffect(new BoostAllOwnCreaturesEffect(new TargetCardsManaValueSum(), new Fixed(0)))
-                .addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+                .addSpellEffect(new RegisterGlobalTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                                 new CopyImprintedCardAndMayCastCopyEffect(false))));
     }

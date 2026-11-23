@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import lombok.RequiredArgsConstructor;
@@ -25,18 +25,18 @@ import java.util.UUID;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class RegisterGlobalTriggeredAbilityUntilEndOfTurnEffectHandler implements NormalEffectHandlerBean {
+public class RegisterGlobalTriggeredAbilityEffectHandler implements NormalEffectHandlerBean {
 
     private final GameLogService gameLogService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
-        return RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect.class;
+        return RegisterGlobalTriggeredAbilityEffect.class;
     }
 
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var registration = (RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect) effect;
+        var registration = (RegisterGlobalTriggeredAbilityEffect) effect;
         TriggeredAbility ability = (TriggeredAbility) registration.grantedAbility();
         // The registration records the registering source permanent, the player the resolving ability targets and
         // the card its source exiled with its linked ability, whatever the ability's effects are; the ability's

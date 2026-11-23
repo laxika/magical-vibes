@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.amount.EventValue;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -34,7 +34,7 @@ public class VizkopaGuildmage extends Card {
                         "Target must be a creature")));
 
         addActivatedAbility(new ActivatedAbility(false, "{1}{W}{B}",
-                List.of(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
+                List.of(new RegisterGlobalTriggeredAbilityEffect(new TriggeredAbility(
                         Triggers.youGainLife(),
                         new LoseLifeEffect(new EventValue(), Subjects.eachOpponent())))),
                 "{1}{W}{B}: Whenever you gain life this turn, each opponent loses that much life."));

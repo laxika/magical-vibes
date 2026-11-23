@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.u;
 
-import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsEffect;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -65,7 +64,7 @@ class UndyingFlamesTest extends BaseCardTest {
 
         harness.castAndResolveSorcery(player1, 0, player2.getId());
 
-        assertThat(playersAffectedBy(PlayerCantCastSpellsEffect.class)).contains(player1.getId());
+        assertThat(silencedPlayers()).contains(player1.getId());
         Card upkeepForest = new Forest();
         Card upkeepShock = new Shock();
         harness.setLibrary(player1, List.of(upkeepForest, upkeepShock));

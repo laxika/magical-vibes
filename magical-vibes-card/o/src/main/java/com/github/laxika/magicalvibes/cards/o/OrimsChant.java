@@ -1,18 +1,18 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreaturesCantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastSpellTypesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
-import java.util.EnumSet;
 
 @CardRegistration(set = "PLS", collectorNumber = "11")
 public class OrimsChant extends Card {
@@ -23,8 +23,8 @@ public class OrimsChant extends Card {
                 "Target must be a player"
         ));
         addStaticEffect(new KickerEffect("{W}"));
-        addSpellEffect(new TargetPlayerCantCastSpellTypesThisTurnEffect(
-                EnumSet.allOf(CardType.class)));
+        addSpellEffect(PlayerRestrictionEffect.thisTurn(Subjects.targetPlayer(),
+                PlayerRestriction.castingSpells()));
         addSpellEffect(new ConditionalEffect(
                 new Kicked(), new CreaturesCantAttackThisTurnEffect()));
     }

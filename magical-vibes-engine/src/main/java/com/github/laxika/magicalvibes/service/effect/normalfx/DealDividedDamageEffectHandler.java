@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastNoncreatureSpellsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -231,7 +233,9 @@ public class DealDividedDamageEffectHandler implements NormalEffectHandlerBean {
         if (e.damagedPlayersCantCastNoncreatureSpells()) {
             for (UUID playerId : entry.getPlayersDealtDamageThisResolution()) {
                 gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
-                        entry.getSourcePermanentId(), entry.getControllerId(), new PlayersCantCastNoncreatureSpellsThisTurnEffect(), playerId,
+                        entry.getSourcePermanentId(), entry.getControllerId(),
+                        PlayerRestrictionEffect.thisTurn(Subjects.playersDealtDamageThisResolution(),
+                                PlayerRestriction.castingNoncreatureSpells()), playerId,
                         Duration.UNTIL_END_OF_TURN));
                 gameLogService.append(gameData, GameLog.text(
                         gameData.playerIdToName.get(playerId) + " can't cast noncreature spells this turn."));

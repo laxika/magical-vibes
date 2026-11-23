@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.h;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
@@ -21,7 +21,7 @@ public class HarshJustice extends Card {
 
         // This turn, whenever an attacking creature deals combat damage to you, it deals that much
         // damage to its controller.
-        addSpellEffect(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
+        addSpellEffect(new RegisterGlobalTriggeredAbilityEffect(new TriggeredAbility(
                 Triggers.creatureDealsCombatDamageToYou().withFilter(new PermanentIsAttackingPredicate()),
                 new DealDamageToPlayersEffect(new EventValue(), Subjects.controllerOf(Subjects.triggering()))
                         .dealtByEventDamageSource())));

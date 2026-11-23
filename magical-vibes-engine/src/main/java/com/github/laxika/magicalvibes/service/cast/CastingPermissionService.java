@@ -12,18 +12,11 @@ import com.github.laxika.magicalvibes.model.effect.GrantControllerLibraryTopPerm
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.OpponentsCantCastSpellsWithManaValueUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastNoncreatureSpellsThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.PlayersCantCastSpellTypesUntilEndOfYourNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantPlayCardsFromHandUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCreatureToHandAndOwnerCantCastSameNameUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardGrantFreePlayUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SenTripletsUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastNoncreatureSpellsUntilNextTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastSpellTypesThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantPlayLandsThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerCantCastSpellsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 import com.github.laxika.magicalvibes.model.AdventureCast;
 import com.github.laxika.magicalvibes.model.Card;
@@ -93,8 +86,8 @@ import com.github.laxika.magicalvibes.model.effect.PlayLandsFromGraveyardPermiss
 import com.github.laxika.magicalvibes.model.effect.PlayLandsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayLandOrCastSpellFromTopOfLibraryOncePerTurnEffect;
 import com.github.laxika.magicalvibes.model.SacrificePermanentsCost;
-import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsAndAttackWithCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.effect.PlayersCantCastInstantsUnlessSpellOrAbilityOnStackEffect;
 import com.github.laxika.magicalvibes.model.effect.PlotNonlandCardsFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SpellCastingRestrictionEffect;
@@ -199,12 +192,7 @@ public class CastingPermissionService {
         Set<String> forbidden = getForbiddenCardNames(gameData, playerId);
         if (isCastForbiddenByName(card, forbidden)) return false;
         if (isNoncreatureSpellCastRestricted(gameData, playerId, card)) return false;
-        // Aurelia's Fury etc.: per-turn "can't cast noncreature spells" restriction on a player.
-        if (!card.hasType(CardType.CREATURE)
-                && gameData.hasFloatingEffectOnPlayer(playerId,
-                PlayersCantCastNoncreatureSpellsThisTurnEffect.class)) return false;
-        if (!card.hasType(CardType.CREATURE)
-                && isNoncreatureSpellCastRestrictedUntilNextTurn(gameData, playerId)) return false;
+        if (isNoncreatureSpellRestrictedByResolvedEffect(gameData, playerId, card)) return false;
         if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return false;
         if (isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)) return false;
         if (isOpponentsManaValueSpellCastRestricted(gameData, playerId, card)) return false;
@@ -297,13 +285,12 @@ public class CastingPermissionService {
      * "Each opponent who attacked with a creature this turn can't cast spells").
      */
     public boolean isPlayerPreventedFromCasting(GameData gameData, UUID playerId) {
-        if (gameData.hasFloatingEffectOnPlayer(playerId,
-                TargetSpellControllerCantCastSpellsThisTurnEffect.class, SenTripletsUpkeepEffect.class, OpponentsCantCastSpellsThisTurnEffect.class)) return true;
+        if (gameData.hasFloatingEffectOnPlayer(playerId, SenTripletsUpkeepEffect.class)) return true;
+        if (gameData.restrictionsOnPlayer(playerId).stream().anyMatch(PlayerRestriction::stopsEverySpell)) return true;
         synchronized (gameData.floatingEffects) {
             if (gameData.floatingEffects.stream().anyMatch(floating ->
                     playerId.equals(floating.affectedPlayerId())
-                            && (floating.effect() instanceof PlayerCantCastSpellsEffect
-                            || floating.effect() instanceof PlayerCantCastSpellsAndAttackWithCreaturesEffect))) {
+                            && floating.effect() instanceof PlayerCantCastSpellsAndAttackWithCreaturesEffect)) {
                 return true;
             }
         }
@@ -385,16 +372,21 @@ public class CastingPermissionService {
         return planeswalker == null ? null : gameData.findControllerOf(planeswalker);
     }
 
+    /** The card types a spell can have: every type but land, which is never a spell, and the planar types. */
+    private static final Set<CardType> EVERY_SPELL_TYPE = java.util.Collections.unmodifiableSet(EnumSet.complementOf(
+            EnumSet.of(CardType.LAND, CardType.PLANE, CardType.PHENOMENON)));
+
     public Set<CardType> getRestrictedSpellTypes(GameData gameData, UUID playerId) {
         Set<CardType> restricted = EnumSet.noneOf(CardType.class);
-        // Moonhold / Abeyance etc.: per-turn "can't cast spells of these types" restriction on a player.
-        for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPlayer(playerId,
-                TargetPlayerCantCastSpellTypesThisTurnEffect.class)) {
-            restricted.addAll(((TargetPlayerCantCastSpellTypesThisTurnEffect) fe.effect()).restrictedTypes());
-        }
-        for (FloatingContinuousEffect fe : gameData.floatingEffectsOnPlayer(playerId,
-                PlayersCantCastSpellTypesUntilEndOfYourNextTurnEffect.class)) {
-            restricted.addAll(((PlayersCantCastSpellTypesUntilEndOfYourNextTurnEffect) fe.effect()).restrictedTypes());
+        // Cease-Fire, Abeyance, Single Combat: a resolved "can't cast [type] spells" restriction on the player. One on
+        // every spell (Silence) also bars every spell type, so the casting paths that read only this set (a library's
+        // top card, a graveyard) refuse its spells as well as isPlayerPreventedFromCasting does.
+        for (PlayerRestriction restriction : gameData.restrictionsOnPlayer(playerId)) {
+            if (restriction.stopsEverySpell()) {
+                restricted.addAll(EVERY_SPELL_TYPE);
+            } else if (restriction.kind() == PlayerRestriction.Kind.CAST_SPELLS) {
+                restricted.addAll(restriction.spellTypes());
+            }
         }
         // Hand to Hand: during combat no player can cast instant spells.
         if (gameQueryService.isCombatActionLockActive(gameData)) {
@@ -1027,11 +1019,7 @@ public class CastingPermissionService {
         if (isSplitSecondActive(gameData)) return true;
         if (isSpellCastingRestrictedByMostRecentSpell(gameData, card)) return true;
         if (isSpellCastingRestrictedByTopLibraryCard(gameData, card)) return true;
-        if (!card.hasType(CardType.CREATURE)
-                && gameData.hasFloatingEffectOnPlayer(playerId,
-                PlayersCantCastNoncreatureSpellsThisTurnEffect.class)) return true;
-        if (!card.hasType(CardType.CREATURE)
-                && isNoncreatureSpellCastRestrictedUntilNextTurn(gameData, playerId)) return true;
+        if (isNoncreatureSpellRestrictedByResolvedEffect(gameData, playerId, card)) return true;
         if (isOpponentsChosenColorSpellCastRestricted(gameData, playerId, card)) return true;
         if (isOpponentsSpellMatchingPredicateRestricted(gameData, playerId, card)) return true;
         return isSpellRestricted(card, restrictedSpellTypes, forbiddenCardNames);
@@ -1101,9 +1089,13 @@ public class CastingPermissionService {
         return card.getSplitHalves().size() >= 2 && card.getName() != null && card.getName().contains(" // ");
     }
 
-    private boolean isNoncreatureSpellCastRestrictedUntilNextTurn(GameData gameData, UUID playerId) {
-        return gameData.hasFloatingEffectOnPlayer(playerId,
-                TargetPlayerCantCastNoncreatureSpellsUntilNextTurnEffect.class);
+    /**
+     * Whether a resolved "can't cast noncreature spells" restriction on the player stops {@code card} (Calamity's Wake,
+     * Hope of Ghirapur): not a set of card types, since an artifact creature spell is a creature spell.
+     */
+    private static boolean isNoncreatureSpellRestrictedByResolvedEffect(GameData gameData, UUID playerId, Card card) {
+        return !card.hasType(CardType.CREATURE)
+                && gameData.isRestricted(playerId, PlayerRestriction.Kind.CAST_NONCREATURE_SPELLS);
     }
 
     public boolean controlsLegendaryCreatureOrPlaneswalker(GameData gameData, UUID playerId) {
@@ -1737,7 +1729,7 @@ public class CastingPermissionService {
                 || gameData.currentStep == TurnStep.POSTCOMBAT_MAIN)
                 && gameData.landsPlayedThisTurn.getOrDefault(playerId, 0) < gameQueryService.getMaxLandsThisTurn(gameData, playerId)
                 && gameData.stack.isEmpty()
-                && !gameData.hasFloatingEffectOnPlayer(playerId, TargetPlayerCantPlayLandsThisTurnEffect.class)
+                && !gameData.isRestricted(playerId, PlayerRestriction.Kind.PLAY_LANDS)
                 && !isLandPlayRestricted(gameData, playerId)
                 && !isLandPlayForbiddenByChosenName(gameData, card)
                 && !isCardPlayRestrictedInHand(gameData, playerId, card);
@@ -1753,7 +1745,7 @@ public class CastingPermissionService {
                 && playerId.equals(gameData.activePlayerId)
                 && gameData.landsPlayedThisTurn.getOrDefault(playerId, 0)
                 < gameQueryService.getMaxLandsThisTurn(gameData, playerId)
-                && !gameData.hasFloatingEffectOnPlayer(playerId, TargetPlayerCantPlayLandsThisTurnEffect.class)
+                && !gameData.isRestricted(playerId, PlayerRestriction.Kind.PLAY_LANDS)
                 && !isLandPlayRestricted(gameData, playerId)
                 && !isLandPlayForbiddenByChosenName(gameData, card)
                 && !isCardPlayRestrictedInHand(gameData, playerId, card);

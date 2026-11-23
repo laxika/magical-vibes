@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveCounterFromSourceCost;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -26,7 +26,7 @@ public class FlitterwingNuisance extends Card {
                 "{2}{U}",
                 List.of(
                         new RemoveCounterFromSourceCost(),
-                        new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
+                        new RegisterGlobalTriggeredAbilityEffect(new TriggeredAbility(
                                 Triggers.creatureYouControlDealsCombatDamageToPlayerOrPlaneswalker(),
                                 new DrawCardEffect(1)))
                 ),

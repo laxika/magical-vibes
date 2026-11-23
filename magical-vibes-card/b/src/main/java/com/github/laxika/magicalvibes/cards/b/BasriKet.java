@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.effect.CreateTokensAttackingEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnEachControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -50,7 +50,7 @@ public class BasriKet extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -2,
-                List.of(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
+                List.of(new RegisterGlobalTriggeredAbilityEffect(new TriggeredAbility(
                         Triggers.playerAttacks().withFilter(new PermanentNotPredicate(new PermanentIsTokenPredicate())),
                         CreateTokensAttackingEffect.thatMany(SOLDIER_TOKEN)))),
                 "−2: Whenever one or more nontoken creatures attack this turn, create that many 1/1 white Soldier creature tokens that are tapped and attacking."

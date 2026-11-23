@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.effect.LookAtHandEffect;
@@ -29,7 +29,7 @@ public class TheRavensWarning extends Card {
                         List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of()),
                 new GainLifeEffect(2));
 
-        addTrigger(Triggers.chapter(2), new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
+        addTrigger(Triggers.chapter(2), new RegisterGlobalTriggeredAbilityEffect(new TriggeredAbility(
                 Triggers.creatureYouControlDealsCombatDamageToPlayer()
                         .withFilter(new PermanentHasKeywordPredicate(Keyword.FLYING)),
                 TriggerOptions.ONE_OR_MORE, new LookAtHandEffect(), new DrawCardEffect(1))));

@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.service.epic;
 
-import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.Card;
@@ -40,7 +42,9 @@ public class EpicService {
         if (controllerId == null) return;
 
         gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
-                entry.getSourcePermanentId(), controllerId, new PlayerCantCastSpellsEffect(), controllerId,
+                entry.getSourcePermanentId(), controllerId,
+                new PlayerRestrictionEffect(Subjects.you(), PlayerRestriction.castingSpells(), Duration.PERMANENT),
+                controllerId,
                 Duration.PERMANENT));
         Card prototype = copySupport.createCopyCardWithoutEpic(entry.getCard());
         // "At the beginning of each of your upkeeps for the rest of the game, copy this spell": a delayed triggered

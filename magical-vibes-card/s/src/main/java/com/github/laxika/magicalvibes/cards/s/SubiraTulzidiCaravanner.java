@@ -14,7 +14,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 
 import java.util.List;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
@@ -49,7 +49,7 @@ public class SubiraTulzidiCaravanner extends Card {
                 "{1}{R}",
                 List.of(
                         new DiscardHandCost(),
-                        new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
+                        new RegisterGlobalTriggeredAbilityEffect(new TriggeredAbility(
                                 Triggers.creatureYouControlDealsCombatDamageToPlayer()
                                         .withFilter(powerAtMostTwoCreature),
                                 new DrawCardEffect(1)))

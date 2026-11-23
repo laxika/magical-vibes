@@ -1,14 +1,14 @@
 package com.github.laxika.magicalvibes.cards.o;
 
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestrictionEffect;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CantAttackThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardTypeCost;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastSpellTypesThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -16,7 +16,6 @@ import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
 
-import java.util.EnumSet;
 import java.util.List;
 
 @CardRegistration(set = "FUT", collectorNumber = "28")
@@ -42,7 +41,8 @@ public class OrissSamiteGuardian extends Card {
                                 new CardNamedPredicate("Oriss, Samite Guardian"),
                                 "Oriss, Samite Guardian"
                         ),
-                        new TargetPlayerCantCastSpellTypesThisTurnEffect(EnumSet.allOf(CardType.class)),
+                        PlayerRestrictionEffect.thisTurn(Subjects.targetPlayer(),
+                                PlayerRestriction.castingSpells()),
                         new CantAttackThisTurnEffect(
                                 Subjects.controlledBy(Subjects.targetPlayer(), new PermanentIsCreaturePredicate()))
                 ),

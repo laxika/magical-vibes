@@ -9,7 +9,7 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.EscalateManaCost;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -23,12 +23,12 @@ public class ShrivelingRot extends Card {
         addSpellEffect(ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Until end of turn, whenever a creature is dealt damage, destroy it",
-                        new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+                        new RegisterGlobalTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.creatureDealtDamage(),
                                 new DestroyTargetPermanentEffect()))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Until end of turn, whenever a creature dies, that creature's controller loses life equal to its toughness",
-                        new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+                        new RegisterGlobalTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.creatureDies(ObjectRelation.ANY),
                                 new LoseLifeEffect(new TriggeringPermanentToughness(),
                                         Subjects.controllerOf(Subjects.triggering()))))))));

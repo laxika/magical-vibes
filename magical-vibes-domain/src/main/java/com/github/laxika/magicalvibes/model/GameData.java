@@ -40,7 +40,8 @@ import com.github.laxika.magicalvibes.model.effect.ExileAnyManaTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileCastWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.LimitControllerToOneMoreSpellThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantCastSpellTypesThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.ForageOrPayManaCost;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPayManaEffect;
@@ -4515,6 +4516,21 @@ public class GameData {
     }
 
     /**
+     * The restrictions the resolved {@link PlayerRestrictionEffect}s put
+     * on {@code playerId} that apply now (see {@link #floatingEffectsOnPlayer}), oldest first.
+     */
+    public final List<PlayerRestriction> restrictionsOnPlayer(UUID playerId) {
+        return floatingEffectsOnPlayer(playerId, PlayerRestrictionEffect.class).stream()
+                .map(fe -> ((PlayerRestrictionEffect) fe.effect()).restriction())
+                .toList();
+    }
+
+    /** Whether a resolved restriction of {@code kind} applies to {@code playerId} now (see {@link #restrictionsOnPlayer}). */
+    public final boolean isRestricted(UUID playerId, PlayerRestriction.Kind kind) {
+        return restrictionsOnPlayer(playerId).stream().anyMatch(restriction -> restriction.kind() == kind);
+    }
+
+    /**
      * The effects of the floating effects of any of {@code types} that apply to {@code playerId} (see
      * {@link #floatingEffectsOnPlayer}), oldest first.
      */
@@ -7711,11 +7727,10 @@ public class GameData {
     public void preventAdditionalSpellCastsThisTurn(String sourceName, UUID playerId) {
         if (playerId == null) return;
 
-        EnumSet<CardType> allSpellTypes = EnumSet.allOf(CardType.class);
-        allSpellTypes.remove(CardType.LAND);
+        CardType[] allSpellTypes = EnumSet.complementOf(EnumSet.of(CardType.LAND)).toArray(CardType[]::new);
         addFloatingEffect(FloatingContinuousEffect.onPlayer(sourceName, null, playerId,
-                new TargetPlayerCantCastSpellTypesThisTurnEffect(allSpellTypes), playerId,
-                Duration.UNTIL_END_OF_TURN));
+                PlayerRestrictionEffect.thisTurn(Subjects.you(), PlayerRestriction.castingSpellsOf(allSpellTypes)),
+                playerId, Duration.UNTIL_END_OF_TURN));
     }
 
     /** Records an oil counter removal from a permanent currently controlled by a player. */

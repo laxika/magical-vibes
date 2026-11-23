@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUnti
 import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.effect.MayPlayCardsFromTopOfLibraryForLifeUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealTopCardGrantFreePlayUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantPlayLandsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.ActivationTimingRestriction;
@@ -901,7 +901,7 @@ public class GameViewProjectionFactory {
 
             if (card.hasType(CardType.LAND)) {
                 if (isActivePlayer && isMainPhase && landsPlayed < gameQueryService.getMaxLandsThisTurn(gameData, playerId) && stackEmpty
-                        && !gameData.hasFloatingEffectOnPlayer(playerId, TargetPlayerCantPlayLandsThisTurnEffect.class)
+                        && !gameData.isRestricted(playerId, PlayerRestriction.Kind.PLAY_LANDS)
                         && !castingPermissionService.isLandPlayRestricted(gameData, playerId)
                         && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)) {
                     playable.add(exileCardView(gameData, playerId, card));

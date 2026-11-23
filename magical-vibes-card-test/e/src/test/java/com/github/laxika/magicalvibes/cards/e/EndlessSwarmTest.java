@@ -1,6 +1,5 @@
 package com.github.laxika.magicalvibes.cards.e;
 
-import com.github.laxika.magicalvibes.model.effect.PlayerCantCastSpellsEffect;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -32,7 +31,7 @@ class EndlessSwarmTest extends BaseCardTest {
                 && gqs.getEffectiveToughness(gd, token) == 1
                 && token.getCard().getColor() == CardColor.GREEN
                 && token.getCard().getSubtypes().contains(CardSubtype.SNAKE));
-        assertThat(playersAffectedBy(PlayerCantCastSpellsEffect.class)).contains(player1.getId());
+        assertThat(silencedPlayers()).contains(player1.getId());
 
         harness.setHand(player1, List.of(new EndlessSwarm()));
         harness.addMana(player1, ManaColor.GREEN, 8);
@@ -50,7 +49,7 @@ class EndlessSwarmTest extends BaseCardTest {
         harness.castAndResolveSorcery(player1, 0, 0);
 
         assertThat(findPermanents(player1, "Snake")).isEmpty();
-        assertThat(playersAffectedBy(PlayerCantCastSpellsEffect.class)).contains(player1.getId());
+        assertThat(silencedPlayers()).contains(player1.getId());
     }
 
     @Test
@@ -116,7 +115,7 @@ class EndlessSwarmTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         assertThat(findPermanents(player1, "Snake")).hasSize(1);
-        assertThat(playersAffectedBy(PlayerCantCastSpellsEffect.class)).doesNotContain(player2.getId());
+        assertThat(silencedPlayers()).doesNotContain(player2.getId());
     }
 
     @Test
@@ -133,7 +132,7 @@ class EndlessSwarmTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(findPermanents(player2, "Snake")).hasSize(1);
-        assertThat(playersAffectedBy(PlayerCantCastSpellsEffect.class)).contains(player2.getId());
+        assertThat(silencedPlayers()).contains(player2.getId());
         harness.passBothPriorities();
         advanceToUpkeep(player2);
         resolveAllTriggers();

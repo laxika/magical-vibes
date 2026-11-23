@@ -15,7 +15,7 @@ import com.github.laxika.magicalvibes.model.effect.PutCountersOnSourceCardEffect
 
 import java.util.List;
 import java.util.Set;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -26,7 +26,7 @@ public class DovinGrandArbiter extends Card {
     public DovinGrandArbiter() {
         addActivatedAbility(new ActivatedAbility(
                 +1,
-                List.of(new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(new TriggeredAbility(
+                List.of(new RegisterGlobalTriggeredAbilityEffect(new TriggeredAbility(
                         Triggers.creatureYouControlDealsCombatDamageToPlayer(),
                         new PutCountersOnSourceCardEffect(CounterType.LOYALTY)))),
                 "+1: Until end of turn, whenever a creature you control deals combat damage to a player, put a loyalty counter on Dovin."));

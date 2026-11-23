@@ -12,7 +12,7 @@ import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardExiledWithSourceIntoHandEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToExileWithSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
@@ -49,7 +49,7 @@ public class RoadsGoEverEverOn extends Card {
                 new PermanentIsCreaturePredicate(),
                 new PermanentControlledBySourceControllerPredicate()));
         addTrigger(Triggers.chapter(4),
-                new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+                new RegisterGlobalTriggeredAbilityEffect(
                         new TriggeredAbility(Triggers.youAttack(),
                         new BoostTargetCreatureEffect(plainsYouControl, plainsYouControl,
                                 creatureYouControl, Duration.UNTIL_END_OF_TURN))));

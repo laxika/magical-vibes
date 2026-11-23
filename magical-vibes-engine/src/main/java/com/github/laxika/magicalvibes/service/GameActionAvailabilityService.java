@@ -1,7 +1,7 @@
 package com.github.laxika.magicalvibes.service;
 
 import com.github.laxika.magicalvibes.model.effect.OtherPlayersCantPlayFromGraveyardsThisTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantPlayLandsThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
 import com.github.laxika.magicalvibes.model.AlternateHandCast;
 
 import com.github.laxika.magicalvibes.model.*;
@@ -706,7 +706,7 @@ public class GameActionAvailabilityService {
                 && castingPermissionService.canCastWithTiming(gameData, playerId, card,
                 ctx.isActivePlayer(), false, ctx.stackEmpty()))
                 && ctx.landsPlayed() < gameQueryService.getMaxLandsThisTurn(gameData, playerId) && ctx.stackEmpty()
-                && !gameData.hasFloatingEffectOnPlayer(playerId, TargetPlayerCantPlayLandsThisTurnEffect.class)
+                && !gameData.isRestricted(playerId, PlayerRestriction.Kind.PLAY_LANDS)
                 && !castingPermissionService.isLandPlayFromHandRestricted(gameData, playerId)
                 && !castingPermissionService.isLandPlayRestricted(gameData, playerId)
                 && !castingPermissionService.isLandPlayForbiddenByChosenName(gameData, card)
@@ -1623,7 +1623,7 @@ public class GameActionAvailabilityService {
         boolean stackEmpty = gameData.stack.isEmpty();
 
         if (!isActivePlayer || !isMainPhase || landsPlayed >= gameQueryService.getMaxLandsThisTurn(gameData, playerId) || !stackEmpty
-                || gameData.hasFloatingEffectOnPlayer(playerId, TargetPlayerCantPlayLandsThisTurnEffect.class)
+                || gameData.isRestricted(playerId, PlayerRestriction.Kind.PLAY_LANDS)
                 || gameData.hasFloatingEffectOnPlayer(playerId, OtherPlayersCantPlayFromGraveyardsThisTurnEffect.class)
                 || castingPermissionService.isLandPlayRestricted(gameData, playerId)
                 || castingPermissionService.isLandPlayFromGraveyardRestricted(gameData, playerId)) {
@@ -1673,7 +1673,7 @@ public class GameActionAvailabilityService {
         int landsPlayed = gameData.landsPlayedThisTurn.getOrDefault(playerId, 0);
         if (!isActivePlayer || !isMainPhase || landsPlayed >= gameQueryService.getMaxLandsThisTurn(gameData, playerId)
                 || !gameData.stack.isEmpty()
-                || gameData.hasFloatingEffectOnPlayer(playerId, TargetPlayerCantPlayLandsThisTurnEffect.class)
+                || gameData.isRestricted(playerId, PlayerRestriction.Kind.PLAY_LANDS)
                 || gameData.hasFloatingEffectOnPlayer(playerId, OtherPlayersCantPlayFromGraveyardsThisTurnEffect.class)
                 || castingPermissionService.isLandPlayRestricted(gameData, playerId)
                 || castingPermissionService.isLandPlayFromGraveyardRestricted(gameData, playerId)

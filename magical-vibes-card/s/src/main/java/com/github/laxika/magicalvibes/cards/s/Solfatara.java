@@ -1,9 +1,11 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.model.effect.PlayerRestriction;
+import com.github.laxika.magicalvibes.model.effect.PlayerRestrictionEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.RegisterDrawCardsAtNextUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPlayerCantPlayLandsThisTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -18,7 +20,8 @@ public class Solfatara extends Card {
         ));
 
         // "Target player can't play lands this turn."
-        addSpellEffect(new TargetPlayerCantPlayLandsThisTurnEffect());
+        addSpellEffect(PlayerRestrictionEffect.thisTurn(Subjects.targetPlayer(),
+                PlayerRestriction.playingLands()));
         // "Draw a card at the beginning of the next turn's upkeep."
         addSpellEffect(new RegisterDrawCardsAtNextUpkeepEffect());
     }

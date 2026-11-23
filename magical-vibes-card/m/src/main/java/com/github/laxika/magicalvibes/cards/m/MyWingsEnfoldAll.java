@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +27,7 @@ public class MyWingsEnfoldAll extends Card {
                         new DrawCardEffect(2)),
                 new ChooseOneEffect.ChooseOneOption(
                         "Until end of turn, whenever you cast an instant or sorcery spell, copy it. You may choose new targets for the copy",
-                        new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+                        new RegisterGlobalTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.youCastSpell().withFilter(instantOrSorcery),
                                 new CopyTriggeringSpellEffect()))))));
     }

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.ExileTargetPlayerHandEffect;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeSelfCost;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -41,9 +41,9 @@ public class AppleOfEdenIsuRelic extends Card {
                         RegisterDelayedStepTriggerEffect.aboutExiled(Triggers.endStep(ActivePlayer.ANY),
                                 new PutCardsIntoHandEffect(Subjects.cardsThisWay(StepKind.EXILE))),
                         new AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect(null),
-                        new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+                        new RegisterGlobalTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.youCastSpell().exiledWithThis(), ownerDraws)),
-                        new RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect(
+                        new RegisterGlobalTriggeredAbilityEffect(
                                 new TriggeredAbility(Triggers.youPlayLand().exiledWithThis(), ownerDraws))
                 ),
                 "{T}, Pay 4 life, Sacrifice Apple of Eden: Look at target opponent's hand and exile "
