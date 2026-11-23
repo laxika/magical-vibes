@@ -8,12 +8,18 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardIfSacrificedPermanentWasCommanderEffect;
-import com.github.laxika.magicalvibes.model.effect.GainControlOfAllCommandersAndPutThemOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.CardSubject;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.CardIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsPlaneswalkerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsSourcePermanentPredicate;
@@ -55,7 +61,11 @@ public class TeveshSzatDoomOfFools extends Card {
 
         addActivatedAbility(new ActivatedAbility(
                 -10,
-                List.of(new GainControlOfAllCommandersAndPutThemOntoBattlefieldEffect()),
+                List.of(GainControlOfTargetEffect.of(
+                                Subjects.controlledBy(Subjects.eachPlayer(), new PermanentIsCommanderPredicate()),
+                                Duration.PERMANENT),
+                        new PutCardsOntoBattlefieldEffect(new CardSubject.InCommandZone(Subjects.eachPlayer(),
+                                new CardIsCommanderPredicate())).underControlOf(Subjects.you())),
                 "−10: Gain control of all commanders. Put all commanders from the command zone onto the battlefield under your control."
         ));
     }

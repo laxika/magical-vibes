@@ -3,12 +3,11 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.TriggeredAbility;
-import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneAtTriggerTimeEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterUnlessPaysEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTriggeredAbilityEffect;
-import com.github.laxika.magicalvibes.model.effect.SetTargetBasePowerToughnessToAmountUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
@@ -30,12 +29,10 @@ public class StorvaldFrostGiantJarl extends Card {
         ChooseOneEffect modes = ChooseOneEffect.oneOrMore(List.of(
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature has base power and toughness 7/7 until end of turn",
-                        new SetTargetBasePowerToughnessToAmountUntilEndOfTurnEffect(
-                                new Fixed(7), new Fixed(7)), TargetFilters.creature()),
+                        new SetBasePowerToughnessEffect(7, 7), TargetFilters.creature()),
                 new ChooseOneEffect.ChooseOneOption(
                         "Target creature has base power and toughness 1/1 until end of turn",
-                        new SetTargetBasePowerToughnessToAmountUntilEndOfTurnEffect(
-                                new Fixed(1), new Fixed(1)), TargetFilters.creature())
+                        new SetBasePowerToughnessEffect(1, 1), TargetFilters.creature())
         ));
         addTrigger(Triggers.enters(ObjectRelation.THIS), new ChooseOneAtTriggerTimeEffect(modes));
         addTrigger(Triggers.attacks(), new ChooseOneAtTriggerTimeEffect(modes));

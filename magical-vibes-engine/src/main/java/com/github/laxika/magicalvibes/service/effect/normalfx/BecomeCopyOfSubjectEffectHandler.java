@@ -78,7 +78,9 @@ public class BecomeCopyOfSubjectEffectHandler implements NormalEffectHandlerBean
             PermanentCopierService.beginCopy(gameData, entry.getCard().getName(), source.getId(),
                     entry.getControllerId(), source, preCopyCard, Duration.UNTIL_END_OF_TURN);
         }
-        gameLogService.append(gameData, GameLog.text(originalName + " becomes a copy of " + copied.getName()
+        String copiedName = copied.getName() == null || copied.getName().isEmpty()
+                ? "a nameless permanent" : copied.getName();
+        gameLogService.append(gameData, GameLog.text(originalName + " becomes a copy of " + copiedName
                 + (untilEndOfTurn ? " until end of turn." : ".")));
     }
 
@@ -90,10 +92,12 @@ public class BecomeCopyOfSubjectEffectHandler implements NormalEffectHandlerBean
         for (UUID id : subjectResolutionService.permanentIds(gameData, entry, become, become.permanent())) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, id);
             if (permanent == null) {
+                // "That creature" after an earlier step moved it: as it last existed on the battlefield (CR 608.2h).
                 permanent = ConditionEvaluationService.lastKnownPermanent(gameData, id);
             }
             if (permanent != null) {
-                return permanent.isFaceDown() ? permanentCopierService.copiableCard(permanent) : permanent.getCard();
+                // Its copiable values (CR 707.2): a face-down one's are those its face-down status lists (CR 708.2).
+                return permanentCopierService.copiableCard(permanent);
             }
         }
         return null;

@@ -48,7 +48,10 @@ import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardOnDeathThisTu
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD20Effect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
-import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryThenDiscoverEffect;
+import com.github.laxika.magicalvibes.model.amount.TargetManaValue;
+import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.DiscoverEffect;
+import com.github.laxika.magicalvibes.model.effect.ShuffleTargetPermanentIntoLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SuspectEffect;
 import com.github.laxika.magicalvibes.model.effect.TapAndPreventCombatDamageByTargetAndBlockersEffect;
 import com.github.laxika.magicalvibes.model.effect.TapCombatOpponentsOfTargetAtEndOfCombatEffect;
@@ -192,7 +195,8 @@ class TargetPolarityGuardTest {
                 new SetCardTypesEffect(Set.of(CardType.ARTIFACT), Subjects.target()), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL);
         assertThat(classifier.classify(gd,
-                new ShuffleTargetPermanentIntoLibraryThenDiscoverEffect(), aiPlayerId))
+                new ShuffleTargetPermanentIntoLibraryEffect(
+                        new DiscoverEffect(new TargetManaValue()), ThenEffectRecipient.TARGET_OWNER), aiPlayerId))
                 .isEqualTo(TargetPolarity.HARMFUL_REMOVAL);
         assertThat(classifier.classify(gd,
                 new AttachOneOfControlledEquipmentToTargetCreatureEffect(), aiPlayerId))

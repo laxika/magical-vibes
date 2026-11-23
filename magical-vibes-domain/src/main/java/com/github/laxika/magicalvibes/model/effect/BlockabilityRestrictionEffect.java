@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * empty/{@code false} defaults for the rest, so a single {@code instanceof BlockabilityRestrictionEffect}
  * match plus a facet read replaces the per-record checks in {@code GameQueryService}. The engine still
  * owns all evaluation — it feeds the returned {@link PermanentPredicate}s to its predicate service and
- * supplies engine-computed facts (attacking-alone, historic-spell-cast) itself.
+ * supplies engine-computed facts (attacking-alone) itself.
  *
  * <p>Scope note: this covers the printed attacker-side evasion shapes ({@code CantBeBlockedEffect},
  * {@code CanBeBlockedOnlyByFilterEffect}, {@code CantBeBlockedByCreaturesMatchingPredicateEffect},
@@ -21,8 +21,7 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * {@code CantBeBlockedByCreaturesWithPowerLessThanIslandCountEffect},
  * {@code CantBeBlockedIfDefenderControlsMatchingPermanentEffect},
  * {@code CantBeBlockedUnlessDefenderControlsCreaturesSharingCreatureTypeEffect},
- * {@code CantBeBlockedIfDefenderControlsMostCreaturesOrTiedEffect},
- * {@code CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect}, and
+ * {@code CantBeBlockedIfDefenderControlsMostCreaturesOrTiedEffect}, and
  * {@code CantBeBlockedIfAttackingAloneEffect}).
  */
 public interface BlockabilityRestrictionEffect extends CardEffect {
@@ -62,14 +61,6 @@ public interface BlockabilityRestrictionEffect extends CardEffect {
      * the flagged ones; a plain defender-condition evasion such as Scrapdiver Serpent is unaffected.
      */
     default boolean unblockableIfDefenderControlsIsLandwalk() {
-        return false;
-    }
-
-    /**
-     * Whether this creature can't be blocked as long as its controller has cast a historic spell this
-     * turn (artifacts, legendaries, and Sagas).
-     */
-    default boolean unblockableIfControllerCastHistoricSpellThisTurn() {
         return false;
     }
 

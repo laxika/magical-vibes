@@ -30,6 +30,7 @@ public class EachPlayerSearchesLibraryEffectHandler implements NormalEffectHandl
     private final AmountEvaluationService amountEvaluationService;
     private final GameQueryService gameQueryService;
     private final BasicLandSearchQueueSupport basicLandSearchQueueSupport;
+    private final LibrarySearchSupport librarySearchSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -41,6 +42,12 @@ public class EachPlayerSearchesLibraryEffectHandler implements NormalEffectHandl
         var search = (EachPlayerSearchesLibraryEffect) effect;
         List<UUID> searchers = subjectResolutionService.players(gameData, entry, effect, search.players());
         if (searchers.isEmpty()) {
+            return;
+        }
+        if (search.destination() == LibrarySearchDestination.TOP_OF_LIBRARY) {
+            // Each searches, shuffles and puts the card found on top before the next one searches.
+            librarySearchSupport.startNextTargetPlayerTopSearch(gameData,
+                    LibrarySearchFollowUp.targetPlayersLibraryToTop(new ArrayList<>(searchers)));
             return;
         }
         Permanent source = entry.getSourcePermanentId() != null

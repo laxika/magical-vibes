@@ -99,13 +99,21 @@ public class SetBasePowerToughnessEffectHandler implements NormalEffectHandlerBe
             }
             gameLogService.append(gameData, GameLog.builder().card(entry.getCard())
                     .text(" sets the base power and toughness of " + count
-                            + " other creature(s) to " + e.power() + "/" + e.toughness()
+                            + " creature(s) to " + e.power() + "/" + e.toughness()
                             + " until end of turn.").build());
             return;
         }
 
-        // source() ("this creature has base P/T X/Y until end of turn", e.g. Marsh Flitter), and any other subject,
-        // resolves against the source.
+        if (!(e.subject() instanceof PermanentSubject.Source)) {
+            // A subject naming its permanents one by one ("that creature" of an attack trigger): each one found as the
+            // effect resolves, wherever it is on the battlefield.
+            for (Permanent permanent : subjectResolutionService.permanents(gameData, entry, effect, e.subject())) {
+                resolveOn(gameData, entry, e, permanent);
+            }
+            return;
+        }
+
+        // source(): "this creature has base P/T X/Y until end of turn" (Marsh Flitter), "... indefinitely" (Surge Engine).
         Permanent target = subjectResolutionService.permanent(gameData, entry, effect, Subjects.source());
         if (target == null) {
             return;

@@ -327,7 +327,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetingSourceKind;
 import com.github.laxika.magicalvibes.model.effect.TokenCreationReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.TwistBasicLandManaColorsEffect;
 import com.github.laxika.magicalvibes.model.effect.WallOnlyTargetingRestrictionEffect;
-import com.github.laxika.magicalvibes.model.filter.CardIsHistoricPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
@@ -689,14 +688,6 @@ public class GameQueryService {
                         && p.getCard().getStaticEffects().stream()
                         .anyMatch(AnimateNonAuraEnchantmentsEffect.class::isInstance)
                         && !hasLostPrintedAbilities(gameData, p));
-    }
-
-    /**
-     * Returns true if the given player cast at least one historic spell (artifact, legendary, or Saga) this turn.
-     */
-    public boolean playerCastHistoricSpellThisTurn(GameData gameData, UUID playerId) {
-        return gameData.getSpellsCastThisTurn(playerId).stream()
-                .anyMatch(card -> predicateEvaluationService.matchesCardPredicate(card, new CardIsHistoricPredicate(), card.getId()));
     }
 
     /**

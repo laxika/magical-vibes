@@ -2,7 +2,8 @@ package com.github.laxika.magicalvibes.cards.u;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfEnteringCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -13,6 +14,6 @@ public class UnstableShapeshifter extends Card {
         // Whenever another creature enters, this creature becomes a copy of that creature,
         // except it has this ability.
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER),
-                new BecomeCopyOfEnteringCreatureEffect());
+                BecomeCopyOfSubjectEffect.of(Subjects.triggering()).keepingThisAbility());
     }
 }

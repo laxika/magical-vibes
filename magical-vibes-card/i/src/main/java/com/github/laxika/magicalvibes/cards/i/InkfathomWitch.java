@@ -3,7 +3,10 @@ package com.github.laxika.magicalvibes.cards.i;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.SetAllUnblockedCreaturesBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsUnblockedAttackingPredicate;
 
 import java.util.List;
 
@@ -19,7 +22,8 @@ public class InkfathomWitch extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{2}{U}{B}",
-                List.of(new SetAllUnblockedCreaturesBasePowerToughnessEffect(4, 1)),
+                List.of(new SetBasePowerToughnessEffect(4, 1, Subjects.allCreatures(),
+                        Duration.UNTIL_END_OF_TURN, new PermanentIsUnblockedAttackingPredicate())),
                 "{2}{U}{B}: Each unblocked creature has base power and toughness 4/1 until end of turn."
         ));
     }

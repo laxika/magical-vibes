@@ -4,7 +4,6 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.Permanent;
-import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByAllCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedIfAbleEffect;
 import com.github.laxika.magicalvibes.service.combat.block.BlockLegalityContext;
@@ -979,7 +978,6 @@ public class CombatSimulator {
 
         boolean cantBeBlocked = gameQueryService.hasCantBeBlocked(gameData, perm)
                 || isCantBeBlockedDueToDefenderCondition(gameData, perm, defenderBattlefield)
-                || isCantBeBlockedDueToHistoricCast(gameData, perm, controllerId)
                 || hasLandwalkAgainstDefender(gameData, perm, bonus, defenderBattlefield);
 
         // Temporarily stolen creatures (e.g. via Act of Treason) have no permanent value to the
@@ -1028,13 +1026,6 @@ public class CombatSimulator {
             }
         }
         return false;
-    }
-
-    private boolean isCantBeBlockedDueToHistoricCast(GameData gameData, Permanent attacker, UUID controllerId) {
-        return attacker.getCard().getStaticEffects().stream()
-                .anyMatch(CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect.class::isInstance)
-                && controllerId != null
-                && gameQueryService.playerCastHistoricSpellThisTurn(gameData, controllerId);
     }
 
     private boolean isCantBeBlockedDueToDefenderCondition(GameData gameData, Permanent attacker,

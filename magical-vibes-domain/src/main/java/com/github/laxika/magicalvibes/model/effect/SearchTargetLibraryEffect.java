@@ -24,7 +24,9 @@ import java.util.Set;
  * ({@code targetPlayerDeclaredElsewhere()}: this effect's own target spec declares the player).
  *
  * <p>Replaced the {@code SearchTargetLibraryFor*} family (cards-to-exile, cards-to-graveyard,
- * card-to-battlefield-under-your-control, and card-to-exile-with-play-permission).
+ * card-to-battlefield-under-your-control, and card-to-exile-with-play-permission). {@code CAST_WITHOUT_PAYING} is
+ * "you may cast that card without paying its mana cost" (Knowledge Exploitation): a card that isn't cast stays in that
+ * library, which is shuffled.
  */
 public record SearchTargetLibraryEffect(DynamicAmount count,
                                         CardPredicate filter,
@@ -43,7 +45,8 @@ public record SearchTargetLibraryEffect(DynamicAmount count,
             LibrarySearchDestination.EXILE_PLAYABLE_UNTIL_END_OF_TURN,
             LibrarySearchDestination.GRAVEYARD,
             LibrarySearchDestination.BATTLEFIELD_UNDER_SEARCHER,
-            LibrarySearchDestination.HAND);
+            LibrarySearchDestination.HAND,
+            LibrarySearchDestination.CAST_WITHOUT_PAYING);
 
     public SearchTargetLibraryEffect {
         if (!SUPPORTED_DESTINATIONS.contains(destination)) {

@@ -8,8 +8,8 @@ import java.util.Objects;
  * or of the permanent {@code permanent} names, as it is or, once an earlier step moved it, by the copiable values it
  * last had on the battlefield (CR 707.2, 608.2h: "becomes a copy of that creature" after exiling it, Identity Thief).
  *
- * <p>It declares no target: the step that moved the card or permanent does. Nothing happens once the source has left
- * the battlefield.
+ * <p>It declares a target only for {@link Subjects#target()} ("becomes a copy of target artifact"); otherwise the step
+ * that moved the card or permanent does. Nothing happens once the source has left the battlefield.
  *
  * @param card            the card copied; {@code null} when {@code permanent} names what is copied
  * @param permanent       the permanent copied; {@code null} when {@code card} names what is copied
@@ -31,6 +31,12 @@ public record BecomeCopyOfSubjectEffect(CardSubject card, PermanentSubject perma
         if (!duration.equals(Duration.PERMANENT) && !duration.equals(Duration.UNTIL_END_OF_TURN)) {
             throw new IllegalArgumentException("No copy of a subject lasts " + duration);
         }
+    }
+
+    @Override
+    public TargetSpec targetSpec() {
+        return permanent != null && permanent.declaresTarget()
+                ? TargetSpec.benign(TargetPredicates.permanent()) : TargetSpec.NONE;
     }
 
     /** "Becomes a copy of that card." */

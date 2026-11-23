@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForSubtypeCardsToTopEffect;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCardsToTopEffect;
+import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +18,6 @@ public class GoblinRecruiter extends Card {
 
     public GoblinRecruiter() {
         addTrigger(Triggers.enters(ObjectRelation.THIS),
-                new SearchLibraryForSubtypeCardsToTopEffect(CardSubtype.GOBLIN));
+                new SearchLibraryForCardsToTopEffect(new CardSubtypePredicate(CardSubtype.GOBLIN)));
     }
 }

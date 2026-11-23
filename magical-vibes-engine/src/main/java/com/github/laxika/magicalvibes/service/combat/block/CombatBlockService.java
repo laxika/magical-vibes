@@ -198,7 +198,6 @@ public class CombatBlockService {
                             .map(defenderBattlefield::get)
                             .anyMatch(blocker -> blockLegalityService.canBlockAttacker(blockContext, blocker, attacker));
                 })
-                .filter(idx -> !CombatHelper.isCantBeBlockedDueToHistoricCast(gameQueryService, gameData, attackerBattlefield.get(idx)))
                 .filter(idx -> !CombatHelper.isCantBeBlockedDueToAttackingAlone(gameQueryService, gameData, attackerBattlefield.get(idx)))
                 .filter(idx -> blockLegalityService.canBeBlockedByAllDefendingCreatures(
                         blockContext, attackerBattlefield.get(idx)))

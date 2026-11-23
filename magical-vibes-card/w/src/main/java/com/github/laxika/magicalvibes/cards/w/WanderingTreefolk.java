@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.amount.BasicLandTypesAmongControlledLands;
 import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
-import com.github.laxika.magicalvibes.model.effect.SeekFromLibraryToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.SeekLibraryEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -20,7 +20,7 @@ public class WanderingTreefolk extends Card {
                 "{7}{G}",
                 List.of(
                         new ReduceActivationCostEffect(new BasicLandTypesAmongControlledLands()),
-                        new SeekFromLibraryToHandEffect(new CardTypePredicate(CardType.CREATURE))
+                        new SeekLibraryEffect(1, new CardTypePredicate(CardType.CREATURE))
                 ),
                 "{7}{G}: Seek a creature card. This ability costs {1} less to activate for each basic land type among lands you control."
         ));

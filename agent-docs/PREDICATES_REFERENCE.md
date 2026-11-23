@@ -576,7 +576,7 @@ does not pick up a widening of the factory. Read the declared target and evaluat
 | `CardSharesNameWithCardExiledWithSourcePredicate` | `()` | a card with the same name as one of the cards exiled with the source permanent, judged with the source (the `GameData` overload and the source card id); nothing without one. Search the City's cast and land-play filters ("whenever you play a card with the same name as one of the exiled cards") |
 | `CardHasSourceChosenSubtypePredicate` | `()` | a creature card carrying the creature subtype chosen by the source permanent; Changeling matches every creature type. Needs the `GameData` overload and the source card ID |
 | `CardHasNameChosenThisResolutionPredicate` | `()` | cards with the name an earlier `ChooseCardNameAtResolutionEffect` of the same resolution chose, either name of a split card (CR 709.4a); needs the `GameData` |
-| `CardHasTypeChosenThisResolutionPredicate` | `()` | cards of the creature type chosen earlier in the same resolution, changeling included; needs the `GameData` |
+| `CardHasTypeChosenThisResolutionPredicate` | `()` | cards of the creature type chosen earlier in the same resolution, changeling included unless a type-setting effect replaced its types (Conspiracy); needs the `GameData` |
 | `CardHasStudyCounterPredicate` | `()` | an exiled card with a study counter; needs the `GameData` |
 | `CardHasVoidCounterPredicate` | `()` | an exiled card with a void counter; needs the `GameData` (Dauthi Voidwalker) |
 | `CardHasMemoryCounterPredicate` | `()` | an exiled card with a memory counter; needs the `GameData` (Altaïr Ibn-La'Ahad) |

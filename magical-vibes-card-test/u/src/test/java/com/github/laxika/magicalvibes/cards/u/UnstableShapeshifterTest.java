@@ -108,10 +108,24 @@ class UnstableShapeshifterTest extends BaseCardTest {
         entering.setFaceDown(2, 2, Set.of(CardType.CREATURE));
         harness.passBothPriorities();
 
-        assertThat(shifter.getCard().getName()).isNull();
+        assertThat(shifter.getCard().getName()).isEmpty();
         assertThat(gqs.getEffectivePower(gd, shifter)).isEqualTo(2);
         assertThat(gqs.getEffectiveToughness(gd, shifter)).isEqualTo(2);
         assertThat(gqs.getEffectiveColors(gd, shifter)).isEmpty();
+        assertThat(gqs.hasKeyword(gd, shifter, Keyword.FLYING)).isFalse();
+    }
+
+    @Test
+    @DisplayName("Copies a cloaked creature's ward {2}, which its face-down status lists")
+    void copiesACloakedCreaturesWard() {
+        Permanent shifter = putShapeshifter();
+
+        Permanent entering = harness.enterBattlefieldAndReturn(player1, new WindDrake());
+        entering.setFaceDownAsCloaked();
+        harness.passBothPriorities();
+
+        assertThat(shifter.getCard().getName()).isEmpty();
+        assertThat(gqs.hasKeyword(gd, shifter, Keyword.WARD)).isTrue();
         assertThat(gqs.hasKeyword(gd, shifter, Keyword.FLYING)).isFalse();
     }
 

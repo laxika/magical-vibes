@@ -69,6 +69,7 @@ class TeveshSzatDoomOfFoolsTest extends BaseCardTest {
         Permanent battlefieldCommander = addCreatureReady(player2, new YoshimaruEverFaithful());
         battlefieldCommander.setCommander(true);
         Card commandZoneCommander = new TeveshSzatDoomOfFools();
+        gd.playerCommanders.put(player2.getId(), List.of(commandZoneCommander));
         gd.playerCommandZones.get(player2.getId()).add(commandZoneCommander);
 
         harness.activateAbility(player1, 0, 2, null, null);
@@ -196,6 +197,26 @@ class TeveshSzatDoomOfFoolsTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(commander);
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(commander);
+    }
+
+    @Test
+    @DisplayName("-10 leaves a card in the command zone that is no commander there")
+    void minusTenLeavesNoncommanderCardsInTheCommandZone() {
+        Permanent tevesh = addReadyTevesh(player1);
+        tevesh.setCounterCount(CounterType.LOYALTY, 10);
+        Card commander = new TeveshSzatDoomOfFools();
+        Card notACommander = new YoshimaruEverFaithful();
+        gd.playerCommanders.put(player2.getId(), List.of(commander));
+        gd.playerCommandZones.get(player2.getId()).add(commander);
+        gd.playerCommandZones.get(player2.getId()).add(notACommander);
+
+        harness.activateAbility(player1, 0, 2, null, null);
+        harness.passBothPriorities();
+
+        assertThat(gd.playerCommandZones.get(player2.getId())).containsExactly(notACommander);
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard().getId().equals(commander.getId()))
+                .noneMatch(permanent -> permanent.getCard().getId().equals(notACommander.getId()));
     }
 
     private Permanent addReadyTevesh(Player player) {

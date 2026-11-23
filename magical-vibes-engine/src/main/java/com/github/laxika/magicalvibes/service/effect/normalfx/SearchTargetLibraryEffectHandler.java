@@ -169,6 +169,7 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
                     ? " to reveal and put it into your hand."
                     : " to reveal and put it into their hand.");
             case BATTLEFIELD_UNDER_SEARCHER -> subject + " to put onto the battlefield under your control.";
+            case CAST_WITHOUT_PAYING -> subject + " to cast without paying its mana cost.";
             default -> throw new IllegalStateException("Unsupported destination " + destination);
         };
     }

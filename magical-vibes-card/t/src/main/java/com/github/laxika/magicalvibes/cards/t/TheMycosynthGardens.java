@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfTargetArtifactWithManaValueXEffect;
+import com.github.laxika.magicalvibes.model.effect.BecomeCopyOfSubjectEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -31,7 +32,7 @@ public class TheMycosynthGardens extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{X}",
-                List.of(new BecomeCopyOfTargetArtifactWithManaValueXEffect()),
+                List.of(BecomeCopyOfSubjectEffect.of(Subjects.target())),
                 "{X}, {T}: This land becomes a copy of target nontoken artifact you control with mana value X.",
                 new ControlledPermanentPredicateTargetFilter(
                         new PermanentAllOfPredicate(List.of(

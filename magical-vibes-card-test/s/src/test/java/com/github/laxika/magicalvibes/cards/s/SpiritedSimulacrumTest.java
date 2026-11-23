@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BlossomingSands;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.d.DryadArbor;
 import com.github.laxika.magicalvibes.cards.g.GrafdiggersCage;
@@ -10,6 +11,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,7 +19,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({SpiritedSimulacrum.class, Forest.class, GrizzlyBears.class, WrathOfGod.class,
-        DryadArbor.class, GrafdiggersCage.class})
+        DryadArbor.class, GrafdiggersCage.class, BlossomingSands.class})
 class SpiritedSimulacrumTest extends BaseCardTest {
 
     @Test
@@ -32,6 +34,21 @@ class SpiritedSimulacrumTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId()))
                 .anyMatch(permanent -> permanent.getCard() == land && permanent.isTapped());
         assertThat(gd.playerDecks.get(player1.getId())).containsExactly(otherLibraryCard);
+    }
+
+    @Test
+    @DisplayName("A sought land's own enter ability triggers")
+    void soughtLandsEnterAbilityTriggers() {
+        BlossomingSands land = new BlossomingSands();
+        harness.setLibrary(player1, List.of(land));
+        harness.setLife(player1, 10);
+
+        harness.enterBattlefieldAndReturn(player1, new SpiritedSimulacrum());
+        resolveAllTriggers();
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .anyMatch(permanent -> permanent.getCard() == land && permanent.isTapped());
+        harness.assertLife(player1, 11);
     }
 
     @Test

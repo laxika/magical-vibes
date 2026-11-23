@@ -653,13 +653,6 @@ public class BlockLegalityService {
                 unblockable = true;
                 unblockableForOtherReason = true;
             }
-            if (restriction.unblockableIfControllerCastHistoricSpellThisTurn()) {
-                UUID controllerId = gameQueryService.findPermanentController(gameData, attacker.getId());
-                if (controllerId != null && gameQueryService.playerCastHistoricSpellThisTurn(gameData, controllerId)) {
-                    unblockable = true;
-                    unblockableForOtherReason = true;
-                }
-            }
             if (restriction.unblockableWhileAttackingAlone() && isAttackingAlone(gameData, attacker)) {
                 unblockable = true;
                 unblockableForOtherReason = true;

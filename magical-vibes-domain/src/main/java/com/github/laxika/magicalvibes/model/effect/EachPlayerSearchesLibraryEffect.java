@@ -19,10 +19,13 @@ import java.util.Objects;
  * to shuffle their library may choose not to search", Boldwyr Heavyweights' ruling). A search for cards with a stated
  * quality that puts them into a hand reveals them; a search for any card doesn't (Noble Benefactor).
  *
+ * <p>{@code TOP_OF_LIBRARY} is "searches their library for a card, then shuffles and puts that card on top" (Scheming
+ * Symmetry, Varragoth): each of them in turn searches for any one card, which nobody else sees.
+ *
  * @param players     who searches; only {@code targetPlayer()} declares the (benign) player targets
  * @param filter      which cards may be found; {@link CardTruePredicate} for any card
  * @param count       up to how many, for each searcher
- * @param destination {@code BATTLEFIELD}, {@code BATTLEFIELD_TAPPED} or {@code HAND}
+ * @param destination {@code BATTLEFIELD}, {@code BATTLEFIELD_TAPPED}, {@code HAND} or {@code TOP_OF_LIBRARY}
  * @param optional    "may search"
  */
 public record EachPlayerSearchesLibraryEffect(PlayerSubject players, CardPredicate filter, DynamicAmount count,
@@ -35,8 +38,13 @@ public record EachPlayerSearchesLibraryEffect(PlayerSubject players, CardPredica
         Objects.requireNonNull(count, "count");
         if (destination != LibrarySearchDestination.BATTLEFIELD
                 && destination != LibrarySearchDestination.BATTLEFIELD_TAPPED
-                && destination != LibrarySearchDestination.HAND) {
+                && destination != LibrarySearchDestination.HAND
+                && destination != LibrarySearchDestination.TOP_OF_LIBRARY) {
             throw new IllegalArgumentException("No search of each player's library puts cards into " + destination);
+        }
+        if (destination == LibrarySearchDestination.TOP_OF_LIBRARY
+                && (!(filter instanceof CardTruePredicate) || !new Fixed(1).equals(count) || optional)) {
+            throw new IllegalArgumentException("A search to the top of the library is a must, for any one card");
         }
     }
 
@@ -50,6 +58,12 @@ public record EachPlayerSearchesLibraryEffect(PlayerSubject players, CardPredica
     public static EachPlayerSearchesLibraryEffect maySearch(PlayerSubject players, CardPredicate filter,
                                                             LibrarySearchDestination destination) {
         return maySearch(players, filter, new Fixed(1), destination);
+    }
+
+    /** "[Players] each search their library for a card, then shuffle and put that card on top." */
+    public static EachPlayerSearchesLibraryEffect cardToTop(PlayerSubject players) {
+        return new EachPlayerSearchesLibraryEffect(players, new CardTruePredicate(), new Fixed(1),
+                LibrarySearchDestination.TOP_OF_LIBRARY, false);
     }
 
     /** "[Players] search their libraries for up to [count] …": the search isn't a choice, finding cards still is. */

@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.SetSelfBasePowerToughnessIndefinitelyEffect;
+import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfCantBeBlockedIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.effect.SetSelfColorIndefinitelyEffect;
 import com.github.laxika.magicalvibes.model.condition.NotCondition;
@@ -30,7 +30,7 @@ public class SurgeEngine extends Card {
         addActivatedAbility(new ActivatedAbility(false, "{2}{U}",
                 List.of(
                         new SetSelfColorIndefinitelyEffect(CardColor.BLUE),
-                        new SetSelfBasePowerToughnessIndefinitelyEffect(5, 4)),
+                        new SetBasePowerToughnessEffect(5, 4, Subjects.source(), Duration.PERMANENT)),
                 "{2}{U}: This creature becomes blue and has base power and toughness 5/4. Activate only if this creature doesn't have defender.")
                 .withActivationCondition(new NotCondition(new SelfHasKeyword(Keyword.DEFENDER)),
                         "This creature must not have defender"));

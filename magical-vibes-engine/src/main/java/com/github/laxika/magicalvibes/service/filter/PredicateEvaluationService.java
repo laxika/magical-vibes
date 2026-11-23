@@ -712,8 +712,8 @@ public class PredicateEvaluationService {
             case CardHasTypeChosenThisResolutionPredicate ignored -> {
                 StackEntry resolving = resolving(gameData);
                 CardSubtype chosen = resolving == null ? null : resolving.getChosenCreatureType();
-                yield chosen != null && (gameQueryService.cardHasSubtype(card, chosen, gameData, cardOwnerId)
-                        || card.hasKeyword(Keyword.CHANGELING));
+                // cardHasSubtype counts changeling, and a Conspiracy-style type override over it (CR 613.3).
+                yield chosen != null && gameQueryService.cardHasSubtype(card, chosen, gameData, cardOwnerId);
             }
             case CardHasSourceChosenSubtypePredicate p -> {
                 if (gameData == null || sourceCardId == null) {

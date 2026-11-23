@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold run 1 (2026-11-23): `dead`, `p-cost`, `p-lib`: 10 dead, 9 absorbed, 2 re-batched into `targets-x`, 7 `blocked-other`. Fold run 2 (2026-11-23): `p-dmg`: 14 absorbed, 9 split, 4 unique, 5 `blocked-other`. Fold run 3 (2026-11-23): `p-perm`, `sac-singles`, `destroy-singles`: 10 absorbed, 9 split, 1 survivor, 6 `blocked-other`, 3 re-batched. Next: fold run 4. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold run 1 (2026-11-23): `dead`, `p-cost`, `p-lib`: 10 dead, 9 absorbed, 2 re-batched into `targets-x`, 7 `blocked-other`. Fold run 2 (2026-11-23): `p-dmg`: 14 absorbed, 9 split, 4 unique, 5 `blocked-other`. Fold run 3 (2026-11-23): `p-perm`, `sac-singles`, `destroy-singles`: 10 absorbed, 9 split, 1 survivor, 6 `blocked-other`, 3 re-batched. Fold run 4 (2026-11-23): `gc-singles`, `search-singles`, `cant-singles`, `shuffle-params`, `copy-params`, `base-pt`, `seek-params`: 17 absorbed, 3 split, 8 `blocked-other`. Next: fold run 5. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,984 / 3,246 (fold run 3; 4,003 / 3,263 after fold run 2, 4,025 / 3,286 after fold run 1, 4,044 / 3,299 before) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,964 / 3,227 (fold run 4; 3,984 / 3,246 after fold run 3; 4,003 / 3,263 after fold run 2, 4,025 / 3,286 after fold run 1, 4,044 / 3,299 before) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,9 +64,9 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,024 rows over 4,404 classes, the consolidation's 102, defect run
-D10's 73 and fold runs 1, 2 and 3's 28, 32 and 29 included. Latest verdict per class: `step-9` 1,238, unique 1,165, absorbed 539, split 472,
-blocked-other 433, survivor 260, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,238 `step-9` rows for fold runs after fold run 3 (1,264 after fold run 2, 1,322 before fold run 1); 5 rows on the owner's open
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,052 rows over 4,404 classes, the consolidation's 102, defect run
+D10's 73 and fold runs 1 to 4's 28, 32, 29 and 28 included. Latest verdict per class: `step-9` 1,210, unique 1,165, absorbed 556, split 475,
+blocked-other 441, survivor 260, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,210 `step-9` rows for fold runs after fold run 4 (1,238 after fold run 3, 1,264 after fold run 2, 1,322 before fold run 1); 5 rows on the owner's open
 questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
@@ -459,6 +459,12 @@ Step and choice records:
   chosen-value step + `DestroyAllPermanentsEffect` with `PermanentHasTypeChosenThisResolutionPredicate` /
   `PermanentHasChosenSpellColorPredicate`; "tokens created with this" is `PermanentCreatedBySourcePredicate`; "up to one [filter]
   attached to that creature" is `ChoosePermanentsEffect.upTo(1, attachmentsOf(target(), filter))` + the verb over `thisWay(CHOOSE)`.
+- Copy, search, seek, base P/T (fold run 4): `SetBasePowerToughnessEffect` over `source()` + `Duration.PERMANENT` ("has base P/T X/Y"),
+  over a narrowed set (each unblocked creature), or over a one-by-one subject (`except(triggeringAttackers(), source())`);
+  `BecomeCopyOfSubjectEffect.of(target())` declares a benign permanent target and copies `PermanentCopierService.copiableCard`;
+  `EachPlayerSearchesLibraryEffect.cardToTop(players)` (`TOP_OF_LIBRARY`); `SearchTargetLibraryEffect` with `CAST_WITHOUT_PAYING`;
+  `SeekLibraryEffect` to the battlefield passes through the hand (a library-entry ban doesn't apply) and runs a land's enter abilities;
+  "can't be blocked if [condition]" on a creature is a static `ConditionalEffect(condition, GrantEffectEffect(CantBeBlockedEffect, source()))`.
 
 Permissions, restrictions and grants:
 
@@ -1050,6 +1056,69 @@ back is sacrificed (CR 400.7).
 
 **For the next run.** Fold run 4. Several singles notes name a head whose option exists only for "exactly one" (`oneForEach`) or only
 at cast (`ChooseOneEffect`); read the head's constructor guards before taking the note's composition.
+
+### Step 9, fold run 4 (2026-11-23)
+
+Fold run 4 of the Fold queue: batches `gc-singles`, `search-singles`, `cant-singles`, `shuffle-params`, `copy-params`, `base-pt`,
+`seek-params` (28 rows) and the one "Fold:" defect line (copy-params, Unstable Shapeshifter). Ratchet 3,984 / 3,246 → 3,964 / 3,227
+(20 records, 19 handlers; Relic Runner's record had none). Ledger: 28 rows (absorbed 17, split 3, `blocked-other` 8). 25 card files
+rewritten (Valki's rewrite reverted), Oracle text checked with `get_card` for all 25 and 7 of the 8 left cards (Squidnapper has no
+Scryfall entry, MB1 29); rulings for Tevesh Szat and Spirited Simulacrum. CR 111.7, 509.1h, 603.4, 607.2a, 608.2b, 608.2c, 608.2d, 608.2h, 611.2c,
+613.3, 701.23a, 702.16b, 702.73a, 707.2, 708.2a, 903.3 checked with `get_rule`.
+
+| Batch | Result |
+|---|---|
+| `gc-singles` (6) | Tevesh Szat split (control of the commanders, then `PutCardsOntoBattlefieldEffect` over every command zone's commanders), Fractured Loyalty (`gainedBy(controllerOf(triggeringSpell()))` over the triggering permanent, not `attached()`: "that creature" is the one that became the target). Left: Preacher, Squidnapper, Aura Graft, Peer Pressure (each a one-card part; ledger notes) |
+| `search-singles` (5) | all folded: the Recruiters onto `SearchLibraryForCardsToTopEffect` (it already records the search and honours Aven Mindcensor), Scheming Symmetry and Varragoth onto `EachPlayerSearchesLibraryEffect.cardToTop`, Remembrance onto the same-name predicate, Vivien's then-step onto `SearchLibraryEffect` with an exact `SacrificedPermanentManaValue` bound, Knowledge Exploitation onto `SearchTargetLibraryEffect` |
+| `cant-singles` (2) | Relic Runner folded (Jace's Sentinel's shape; the facet and its three readers deleted). Kraken left: no strict "power less than a count" predicate |
+| `shuffle-params` (4) | all folded: Psychic Spiral and Elvish Soultiller split onto existing steps, Zoyowa's Justice onto the then-effect with `TargetManaValue` (last known, face down 0), Jace's −12 onto `handsOf` |
+| `copy-params` (4) | Unstable Shapeshifter and The Mycosynth Gardens folded. Left: Deepfathom Echo, Valki |
+| `base-pt` (4) | all folded onto `SetBasePowerToughnessEffect` / `SetBasePowerToughnessToAmountEffect` |
+| `seek-params` (3) | Spirited Simulacrum, Worldweave, Wandering Treefolk folded onto `SeekLibraryEffect`. Left: Diviner of Fates |
+
+**Where the triage was wrong.** Valki's composition (`ChooseCardEffect` over `exiledWithSource`) would let a Valki ability gained by
+Patchwork Crawler copy the Crawler's own exiles (CR 607.2a): `PatchworkCrawlerTest` failed, the fold was reverted. Deepfathom's
+`ChoosePermanentsEffect` would record the copied creature as the source's chosen permanent. Diviner's `triggeringCards()` loses a discarded
+card exiled instead (Rest in Peace), where the type is read last known (CR 608.2h). Fractured Loyalty's `attached()` would follow a moved
+Aura. The Recruiters' caution (no search record, no Mindcensor) was stale. Creepy Puppeteer's `except(triggeringAttackers(), source())` is no
+set (`isSet()` false), so the survivor's handler gained the one-by-one path rather than the set path.
+
+**Shared pieces widened** (Standing knowledge): `SetBasePowerToughnessEffectHandler` resolves a subject that names permanents one by one
+(no card used that path before; the set path's log no longer says "other"); `BecomeCopyOfSubjectEffect` declares `target()` and copies
+copiable values; `EachPlayerSearchesLibraryEffect` `TOP_OF_LIBRARY` (any one card, a must, guarded in the constructor);
+`SearchTargetLibraryEffect` `CAST_WITHOUT_PAYING`; `SeekLibraryEffectHandler`'s hand-entry check and land enter processing.
+
+**Behaviour changes.**
+- Seek to the battlefield: the entry check is the hand's, as the survivor's own comment and the "seek ..., put one of them onto the
+  battlefield" wording (Song of Seasons) say, so Grafdigger's Cage doesn't stop a sought creature (Kav Landseeker, Kardum, Spawning Pod and the
+  other survivor cards too); a sought land's enter abilities run: `WorldweaveTest`/`SpiritedSimulacrumTest` Cage cases (fail on the old
+  survivor by reading), new `SpiritedSimulacrumTest.soughtLandsEnterAbilityTriggers` (Blossoming Sands).
+- `CardHasTypeChosenThisResolutionPredicate` doesn't count a changeling whose types Conspiracy replaced (CR 613.3, 702.73a):
+  `ElvishSoultillerTest`'s Conspiracy case failed on the survivor; Bloodline Bidding, Bloodline Shaman, Haunting Voyage, Kindred Summons,
+  Riptide Shapeshifter change the same way.
+- Unstable Shapeshifter copies a face-down creature's subtypes and ward (CR 707.2, 708.2a): new `copiesACloakedCreaturesWard`; the survivor
+  copies `copiableCard` (bestowed, Licid and text-borrowed permanents too) for Identity Thief and Mycosynth Gardens as well.
+- Tevesh Szat's −10 moves only commanders out of the command zones (the text), through the entry batch: new
+  `minusTenLeavesNoncommanderCardsInTheCommandZone`; `minusTenTakesAndReturnsCommanders` now registers its command-zone card as a commander
+  (its setup made a non-commander card the "commander").
+- Knowledge Exploitation shuffles an empty library too; Wandering Treefolk raises the sought event; Remembrance finds nothing for a face-down
+  creature (no name, CR 708.2a); Mycosynth Gardens and the base-P/T cards log the survivors' lines; AI only: Storvald's two modes now carry
+  `SetBasePowerToughnessEffect`'s polarity (7/7 beneficial, 1/1 harmful), Fractured Loyalty is no longer seen as the Aura controller's steal.
+
+**Tests changed.** `UnstableShapeshifterTest` (a face-down copy's name is `""`, the engine's nameless convention, not `null`), `TeveshSzatDoomOfFoolsTest`
+(setup), `TargetPolarityGuardTest` (Zoyowa's survivor record). New: the three cases above.
+
+**Tests run.** 185 classes: every test class naming a rewritten card (`git grep -lwF 'X.class'`), the survivors' and chosen-type predicate's
+cards, the AI combat and polarity tests, and the application combat, block, library-choice, interaction, layer, predicate, subject and
+ratchet tests: 328 XML files (172 card and AI, 156 application, nested classes counted), 2,618 cases, 0 failures. The first
+run's application JVM died of a SIGSEGV in the garbage collector (hs_err removed); the rerun, after the ratchet change, passed. No deleted handler asked death replacements first.
+
+**Seen, not changed** (Defect queue groups 5 and 9): `ExiledWithSource` ignores ability links; `ChoosePermanentsEffect`'s kept chosen
+permanent; `triggeringCards()` loses a moved discarded card; seek enter processing skips noncreature, nonland permanents; the shuffle
+then-effect waits on the removal's success.
+
+**For the next run.** Fold run 5. Before folding onto a card subject, check what it drops: a stay check or an ability link the old
+handler didn't have can narrow a card, and a gained ability (Patchwork Crawler, Dark Impostor) is where it shows.
 
 ## Prompt
 

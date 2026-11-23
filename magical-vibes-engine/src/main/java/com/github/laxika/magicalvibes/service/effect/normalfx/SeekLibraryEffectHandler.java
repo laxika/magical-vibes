@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ExileAccessScope;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.GameLog;
@@ -93,9 +94,11 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                         && (manaValueBound == null || (seek.manaValueBound().exact()
                         ? card.getManaValue() == manaValueBound
                         : card.getManaValue() <= manaValueBound))
+                        // A sought card is put into the hand, then onto the battlefield from there: a "can't enter
+                        // from libraries" rule (Grafdigger's Cage) doesn't stop it.
                         && (!entersBattlefield
                         || !gameQueryService.isCardBlockedFromEnteringFromZone(
-                                gameData, card, Zone.LIBRARY)))
+                                gameData, card, Zone.HAND)))
                 .toList());
 
         int cardsToSeek = Math.min(count, matchingCards.size());
@@ -132,6 +135,9 @@ public class SeekLibraryEffectHandler implements NormalEffectHandlerBean {
                 }
                 if (seek.battlefieldCloaked()) {
                     battlefieldEntryService.processFaceDownCreatureETBTriggers(gameData, controllerId, chosen);
+                } else if (chosen.hasType(CardType.LAND)) {
+                    // A land's as-enters choices and enter abilities (Dryad Arbor's included).
+                    battlefieldEntryService.processLandETBEffects(gameData, controllerId, chosen);
                 } else if (gameQueryService.isCreature(gameData, permanent)) {
                     simultaneousCreatureEntries.add(chosen);
                 }

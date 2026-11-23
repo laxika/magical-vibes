@@ -6,14 +6,17 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.SacrificedPermanentManaValue;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsIntoHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
-import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCreatureWithOneMoreManaValueThanSacrificedPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.ManaValueBound;
+import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -31,7 +34,9 @@ public class VivienOnTheHunt extends Card {
                 List.of(new MayEffect(
                         new SacrificePermanentThenEffect(
                                 new PermanentIsCreaturePredicate(),
-                                new SearchLibraryForCreatureWithOneMoreManaValueThanSacrificedPermanentEffect(),
+                                new SearchLibraryEffect(new CardTypePredicate(CardType.CREATURE),
+                                        LibrarySearchDestination.BATTLEFIELD,
+                                        new ManaValueBound(new SacrificedPermanentManaValue(), true, 1)),
                                 "a creature",
                                 false,
                                 false),

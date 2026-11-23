@@ -6,7 +6,6 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BlockabilityRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfAttackingAloneEffect;
-import com.github.laxika.magicalvibes.model.effect.CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatAttackCountRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.CombatCreatureLimitEffect;
@@ -209,15 +208,6 @@ public final class CombatHelper {
             defenderId = defenderControllerId(gameData, defenderBattlefield);
         }
         return defenderId != null && gameData.playerRadCounters.getOrDefault(defenderId, 0) > 0;
-    }
-
-    public static boolean isCantBeBlockedDueToHistoricCast(GameQueryService gameQueryService,
-                                                     GameData gameData, Permanent attacker) {
-        boolean hasEffect = gameQueryService.getActiveStaticEffects(gameData, attacker).stream()
-                .anyMatch(CantBeBlockedIfControllerCastHistoricSpellThisTurnEffect.class::isInstance);
-        if (!hasEffect) return false;
-        UUID controllerId = gameData.findControllerOf(attacker);
-        return controllerId != null && gameQueryService.playerCastHistoricSpellThisTurn(gameData, controllerId);
     }
 
     public static boolean isCantBeBlockedDueToAttackingAlone(GameQueryService gameQueryService,
