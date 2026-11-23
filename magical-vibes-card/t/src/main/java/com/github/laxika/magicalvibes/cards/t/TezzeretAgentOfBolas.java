@@ -1,16 +1,21 @@
 package com.github.laxika.magicalvibes.cards.t;
 
+import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DrainLifePerControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
-import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
@@ -39,9 +44,12 @@ public class TezzeretAgentOfBolas extends Card {
         ));
 
         // −4: Target player loses X life and you gain X life, where X is twice the number of artifacts you control.
+        DynamicAmount twiceArtifacts = new Scaled(
+                new PermanentCount(new PermanentIsArtifactPredicate(), CountScope.CONTROLLER), 2);
         addActivatedAbility(new ActivatedAbility(
                 -4,
-                List.of(new DrainLifePerControlledPermanentEffect(new PermanentIsArtifactPredicate(), 2)),
+                List.of(new LoseLifeEffect(twiceArtifacts, Subjects.targetPlayer()),
+                        new GainLifeEffect(twiceArtifacts, Subjects.you())),
                 "\u22124: Target player loses X life and you gain X life, where X is twice the number of artifacts you control."
         ));
     }

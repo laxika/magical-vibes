@@ -25,7 +25,6 @@ import com.github.laxika.magicalvibes.model.effect.BoostByBushidoEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostByAttackCountEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostBySharedCreatureTypeEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostEquippedCreatureOfEnchantedEquipmentEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureByColorCountEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
@@ -579,7 +578,6 @@ public final class LayerClassifier {
         map.put(BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostOwnCreaturesByManaSymbolEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostOtherMulticoloredCreaturesByColorCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
-        map.put(BoostEnchantedCreatureByColorCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostNonHumanCreaturesByCreatureTypeCountEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesOfChosenColorEffect.class, fixed(Layer.L7C_MODIFY_PT));
         map.put(BoostCreaturesOfChosenPlayerModeEffect.class,

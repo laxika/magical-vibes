@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.ai;
 
 import com.github.laxika.magicalvibes.model.StaticAbility;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
 import com.github.laxika.magicalvibes.model.effect.ExileFaceDownPileEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantTargetingRestrictionToTargetUntilEndOfTurnEffect;
@@ -68,7 +70,6 @@ import com.github.laxika.magicalvibes.model.effect.TargetDealsPowerDamageToTarge
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
 import com.github.laxika.magicalvibes.model.effect.TributeNotPaidEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerChosenTypeCountEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
@@ -446,11 +447,13 @@ public class TargetPolarityClassifier {
         }
 
         // Targeted P/T boosts are sign-aware: any negative component makes the shape a
-        // debuff. Dynamic amounts evaluate in estimation context, matching SpellEvaluator.
+        // debuff. Dynamic amounts evaluate in estimation context, matching SpellEvaluator; a
+        // "-1/-1 for each ..." amount is a debuff even when it counts nothing yet.
         if (effect instanceof CreatureBoostEffect boost) {
             AmountContext ctx = AmountContext.forEstimation(aiPlayerId);
             boolean negative = amountEvaluationService.evaluate(gameData, boost.powerBoost(), ctx) < 0
-                    || amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx) < 0;
+                    || amountEvaluationService.evaluate(gameData, boost.toughnessBoost(), ctx) < 0
+                    || negativePerCount(boost.powerBoost()) || negativePerCount(boost.toughnessBoost());
             return negative ? TargetPolarity.HARMFUL : TargetPolarity.BENEFICIAL;
         }
         if (effect instanceof PerpetuallyBoostTargetCreatureEffect boost) {
@@ -500,13 +503,12 @@ public class TargetPolarityClassifier {
                     : TargetPolarity.BENEFICIAL;
         }
 
-        if (effect instanceof BoostTargetCreaturePerChosenTypeCountEffect scaled) {
-            return scaled.powerPer() < 0 || scaled.toughnessPer() < 0
-                    ? TargetPolarity.HARMFUL
-                    : TargetPolarity.BENEFICIAL;
-        }
-
         return FIXED_BY_CLASS_NAME.get(effect.getClass().getSimpleName());
+    }
+
+    /** "-1/-1 for each [counted thing]": a count scaled by a negative factor. */
+    private static boolean negativePerCount(DynamicAmount amount) {
+        return amount instanceof Scaled scaled && scaled.factor() < 0;
     }
 
     /**
@@ -600,12 +602,9 @@ public class TargetPolarityClassifier {
             entry("WintersChillEffect", TargetPolarity.HARMFUL_REMOVAL),
 
             // The target (or a permanent tied to it) takes damage.
-            entry("DealDamageEqualToChosenTypeCountEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("DealDamageToOtherCreaturesControlledByTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToEachTargetEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetCreaturesThenCreateTokensEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetAndTheirCreaturesEffect", TargetPolarity.HARMFUL_DAMAGE),
-            entry("DealDamageToTargetControllerIfTargetHasKeywordEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDamageToTargetPlayerOrPlaneswalkerEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("DealDividedDamageEffect", TargetPolarity.HARMFUL_DAMAGE),
             entry("FlipUntilLoseOrStopEffect", TargetPolarity.HARMFUL_DAMAGE),
@@ -684,7 +683,6 @@ public class TargetPolarityClassifier {
             entry("AttachTargetEquipmentsToTargetCreatureThenEffect", TargetPolarity.BENEFICIAL),
             entry("AttachTargetToSourcePermanentEffect", TargetPolarity.BENEFICIAL),
             entry("AttachTargetAuraOrEquipmentToTargetCreatureEffect", TargetPolarity.BENEFICIAL),
-            entry("PowerToughnessBoostEffect", TargetPolarity.BENEFICIAL),
             entry("DestroyCreaturesBlockedByTargetWallThenReturnFromGraveyardEffect", TargetPolarity.BENEFICIAL),
             entry("PreventAllDamageToTargetFromColorlessSourcesEffect", TargetPolarity.BENEFICIAL),
             entry("DoubleCountersOnTargetPermanentEffect", TargetPolarity.BENEFICIAL),

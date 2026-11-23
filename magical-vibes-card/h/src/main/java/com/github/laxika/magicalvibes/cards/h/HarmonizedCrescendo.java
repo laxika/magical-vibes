@@ -2,7 +2,11 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DrawCardPerChosenTypeCountEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeAtResolutionEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasTypeChosenThisResolutionPredicate;
 
 @CardRegistration(set = "ECL", collectorNumber = "54")
 @CardRegistration(set = "ECL", collectorNumber = "357")
@@ -12,6 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardPerChosenTypeCountEff
 public class HarmonizedCrescendo extends Card {
 
     public HarmonizedCrescendo() {
-        addSpellEffect(new DrawCardPerChosenTypeCountEffect());
+        addSpellEffect(new ChooseCreatureTypeAtResolutionEffect());
+        addSpellEffect(new DrawCardEffect(new PermanentCount(new PermanentHasTypeChosenThisResolutionPredicate(), CountScope.CONTROLLER)));
     }
 }

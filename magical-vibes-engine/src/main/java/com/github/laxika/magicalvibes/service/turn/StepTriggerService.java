@@ -978,7 +978,8 @@ public class StepTriggerService {
             // "At the beginning of the monarch's end step, that player draws a card" (CR 726.2).
             UUID monarchId = gameData.monarchPlayerId;
             triggeredAbilityStackService.putInherent(gameData, monarchId, "The monarch draws a card",
-                    List.of(new com.github.laxika.magicalvibes.model.effect.DrawCardForMonarchEndStepEffect()),
+                    List.of(new com.github.laxika.magicalvibes.model.effect.DrawCardEffect(1,
+                            com.github.laxika.magicalvibes.model.effect.Subjects.triggeringPlayer())),
                     entry -> {
                         entry.setTargetId(monarchId);
                         entry.setNonTargeting(true);

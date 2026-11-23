@@ -2,7 +2,9 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostEnchantedCreatureByColorCountEffect;
+import com.github.laxika.magicalvibes.model.amount.AttachedPermanentColorCount;
+import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "DIS", collectorNumber = "4")
@@ -10,6 +12,7 @@ public class BlessingOfTheNephilim extends Card {
 
     public BlessingOfTheNephilim() {
         target(TargetFilters.creature());
-        addStaticEffect(new BoostEnchantedCreatureByColorCountEffect(1, 1));
+        addStaticEffect(new AttachedBoostEffect(
+                new AttachedPermanentColorCount(), new AttachedPermanentColorCount(), Subjects.attachedCreature()));
     }
 }

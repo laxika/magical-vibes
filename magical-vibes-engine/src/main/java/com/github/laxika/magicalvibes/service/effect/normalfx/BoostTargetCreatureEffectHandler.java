@@ -103,17 +103,18 @@ public class BoostTargetCreatureEffectHandler implements NormalEffectHandlerBean
     private void applyBoost(GameData gameData, StackEntry entry, Permanent target,
                             int powerBoost, int toughnessBoost, Duration duration) {
         // A layer-7c floating effect on the target with the stated duration (CR 613.4c, 611.2a): until end of turn,
-        // until end of combat, or until the ability controller's next turn.
+        // until end of combat, until the ability controller's next turn, or, with no stated duration, indefinitely.
         gameData.addPowerToughnessBoost(FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(),
                 entry.getControllerId(), target.getId(), powerBoost, toughnessBoost,
                 Duration.UNTIL_YOUR_NEXT_TURN.equals(duration) || Duration.UNTIL_END_OF_COMBAT.equals(duration)
+                        || Duration.PERMANENT.equals(duration)
                         ? duration : Duration.UNTIL_END_OF_TURN);
 
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())
                 .text(String.format(" gets %+d/%+d %s.", powerBoost, toughnessBoost,
-                        Duration.UNTIL_YOUR_NEXT_TURN.equals(duration)
-                                ? "until your next turn" : "until end of turn"))
+                        Duration.UNTIL_YOUR_NEXT_TURN.equals(duration) ? "until your next turn"
+                                : Duration.PERMANENT.equals(duration) ? "indefinitely" : "until end of turn"))
                 .build());
 
         log.info("Game {} - {} gets {}/{}", gameData.id, target.getCard().getName(), powerBoost, toughnessBoost);

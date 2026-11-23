@@ -7,9 +7,13 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.condition.AllConditions;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
+import com.github.laxika.magicalvibes.model.condition.NotCondition;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.RollD6Effect;
-import com.github.laxika.magicalvibes.model.effect.WinGameIfEventValueEqualsEffect;
+import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 
 import java.util.Arrays;
@@ -40,7 +44,8 @@ public class LuckBobblehead extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{1}",
-                List.of(roll, new WinGameIfEventValueEqualsEffect(7)),
+                List.of(roll, new ConditionalEffect(new AllConditions(List.of(new EventValueAtLeast(7),
+                        new NotCondition(new EventValueAtLeast(8)))), new WinGameEffect())),
                 "{1}, {T}: Roll X six-sided dice, where X is the number of Bobbleheads you control. "
                         + "Create a tapped Treasure token for each even result. If you rolled 6 exactly "
                         + "seven times, you win the game."

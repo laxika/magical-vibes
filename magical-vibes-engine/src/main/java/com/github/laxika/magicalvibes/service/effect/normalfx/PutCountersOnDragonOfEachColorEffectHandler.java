@@ -4,10 +4,12 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.StackEntry;
+import com.github.laxika.magicalvibes.model.condition.EventValueAtLeast;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnDragonOfEachColorEffect;
-import com.github.laxika.magicalvibes.model.effect.WinGameIfEventValueAtLeastEffect;
+import com.github.laxika.magicalvibes.model.effect.WinGameEffect;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
@@ -39,7 +41,7 @@ public class PutCountersOnDragonOfEachColorEffectHandler implements NormalEffect
                             new PermanentColorInPredicate(Set.of(color)))),
                     true));
         }
-        effects.add(new WinGameIfEventValueAtLeastEffect(CardColor.values().length));
+        effects.add(new ConditionalEffect(new EventValueAtLeast(CardColor.values().length), new WinGameEffect()));
 
         entry.setEventValue(0);
         int effectIndex = entry.getEffectsToResolve().indexOf(effect);

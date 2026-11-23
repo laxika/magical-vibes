@@ -4,11 +4,13 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToEachMatchingPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.DealDamageToEachPlayerControllingMatchingPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.DealDamageToPlayersEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPermanentScope;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentColorInPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PlayerControlsPermanentPredicate;
 
 import java.util.List;
 import java.util.Set;
@@ -25,7 +27,8 @@ public class Disorder extends Card {
 
         // Damage the controllers first so a white creature dying to the mass damage does not
         // spare its controller — the whole spell resolves simultaneously.
-        addSpellEffect(new DealDamageToEachPlayerControllingMatchingPermanentEffect(2, whiteCreature));
+        addSpellEffect(new DealDamageToPlayersEffect(2,
+                Subjects.matching(Subjects.eachPlayer(), new PlayerControlsPermanentPredicate(whiteCreature))));
         addSpellEffect(new DealDamageToEachMatchingPermanentEffect(
                 2, whiteCreature, EachPermanentScope.ALL_PLAYERS));
     }

@@ -5,10 +5,16 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawOnCreatureEntersThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterGlobalTriggeredAbilityEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 import java.util.Set;
@@ -17,7 +23,9 @@ import java.util.Set;
 public class BeckCall extends Card {
 
     public BeckCall() {
-        CardEffect beck = new DrawOnCreatureEntersThisTurnEffect();
+        CardEffect beck = new RegisterGlobalTriggeredAbilityEffect(new TriggeredAbility(
+                Triggers.enters(new PermanentIsCreaturePredicate(), ObjectRelation.ANY),
+                new MayEffect(new DrawCardEffect(), "Draw a card?")));
         CardEffect call = new CreateTokenEffect(
                 4, "Bird", 1, 1, CardColor.WHITE,
                 List.of(CardSubtype.BIRD), Set.of(Keyword.FLYING), Set.of());

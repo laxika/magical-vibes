@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ActivePlayerIsMonarch;
 import com.github.laxika.magicalvibes.model.condition.NoMonarch;
 import com.github.laxika.magicalvibes.model.effect.BecomeMonarchEffect;
-import com.github.laxika.magicalvibes.model.effect.DrawCardForMonarchEndStepEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCommanderPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -27,6 +28,6 @@ public class ArchivistOfGondor extends Card {
 
         addTrigger(Triggers.endStep(ActivePlayer.ANY),
                 TriggerOptions.DEFAULT.withEventCondition(new ActivePlayerIsMonarch()),
-                new DrawCardForMonarchEndStepEffect());
+                new DrawCardEffect(1, Subjects.triggeringPlayer()));
     }
 }

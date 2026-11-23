@@ -108,6 +108,17 @@ class TargetPolarityGuardTest {
     }
 
     @Test
+    @DisplayName("A -1/-1 for each counted permanent is a debuff even while it counts nothing")
+    void negativePerCountBoostIsHarmful() {
+        GameTestHarness harness = new GameTestHarness();
+        TargetPolarityClassifier classifier = createClassifier(harness);
+
+        assertThat(classifier.classifyCard(harness.getGameData(),
+                new com.github.laxika.magicalvibes.cards.p.PacksDisdain(), harness.getPlayer2().getId()))
+                .isEqualTo(TargetPolarity.HARMFUL);
+    }
+
+    @Test
     void damageThenTokenCreationTargetsOpposingCreatures() {
         GameTestHarness harness = new GameTestHarness();
         TargetPolarityClassifier classifier = createClassifier(harness);

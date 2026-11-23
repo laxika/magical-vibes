@@ -3,9 +3,10 @@ package com.github.laxika.magicalvibes.cards.s;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DealDamageToAnyTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.DiscardIfPlayerDealtDamageThisWayEffect;
+import com.github.laxika.magicalvibes.model.effect.DiscardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -17,6 +18,6 @@ public class SonicShrieker extends Card {
                 SequenceEffect.of(
                         new DealDamageToAnyTargetEffect(2),
                         new GainLifeEffect(2),
-                        new DiscardIfPlayerDealtDamageThisWayEffect()));
+                        new DiscardEffect(1, Subjects.playersDealtDamageThisResolution(), false)));
     }
 }

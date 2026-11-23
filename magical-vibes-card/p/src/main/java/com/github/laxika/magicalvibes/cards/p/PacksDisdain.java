@@ -2,13 +2,23 @@ package com.github.laxika.magicalvibes.cards.p;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.BoostTargetCreaturePerChosenTypeCountEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.amount.Scaled;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeAtResolutionEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasTypeChosenThisResolutionPredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 @CardRegistration(set = "MOR", collectorNumber = "73")
 public class PacksDisdain extends Card {
 
     public PacksDisdain() {
-        target(TargetFilters.creature()).addSpellEffect(new BoostTargetCreaturePerChosenTypeCountEffect(-1, -1));
+        addSpellEffect(new ChooseCreatureTypeAtResolutionEffect());
+        DynamicAmount minusOnePerPermanent = new Scaled(
+                new PermanentCount(new PermanentHasTypeChosenThisResolutionPredicate(), CountScope.CONTROLLER), -1);
+        target(TargetFilters.creature())
+                .addSpellEffect(new BoostTargetCreatureEffect(minusOnePerPermanent, minusOnePerPermanent));
     }
 }

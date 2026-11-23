@@ -8,14 +8,14 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.AddCardTypeToTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessIndefinitelyEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LockTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
 import java.util.List;
-import java.util.Set;
 
 @CardRegistration(set = "M13", collectorNumber = "118")
 public class XathridGorgon extends Card {
@@ -29,7 +29,7 @@ public class XathridGorgon extends Card {
                 "{2}{B}",
                 List.of(
                         new PutCounterOnTargetPermanentEffect(CounterType.PETRIFICATION, 1),
-                        new PowerToughnessBoostEffect(0, 0, Set.of(Keyword.DEFENDER)),
+                        new GrantKeywordEffect(Keyword.DEFENDER, Subjects.target(), Duration.PERMANENT),
                         new AddCardTypeToTargetPermanentEffect(CardType.ARTIFACT, true),
                         new BecomeColorlessIndefinitelyEffect(true),
                         new LockTargetPermanentEffect(false, false, true, Duration.PERMANENT)

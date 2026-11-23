@@ -19,7 +19,9 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  *   <li>{@link Subjects#attached()}: an Aura's "deals 2 damage to enchanted creature" (Fatal Attraction, Tilonalli's
  *       Crown), the creature it enchants as the ability resolves;</li>
  *   <li>{@link Subjects#attachedAtTrigger()}: an Aura's "deals that much damage to that creature" after "whenever
- *       enchanted creature deals damage" (Guilty Conscience), the creature it enchanted as the ability triggered.</li>
+ *       enchanted creature deals damage" (Guilty Conscience), the creature it enchanted as the ability triggered;</li>
+ *   <li>{@link Subjects#thisWay}: "deals 2 damage to [the creature chosen]" after a
+ *       {@code ChoosePermanentsEffect} step (Wicked Guardian), each creature that step named, as it is now.</li>
  * </ul>
  * The two Aura subjects have the Aura, as it is or last existed, deal the damage.
  *
@@ -43,7 +45,8 @@ public record DealDamageToTargetCreatureEffect(DynamicAmount damage, boolean unp
         if (!subject.equals(Subjects.target())) {
             if (!(subject instanceof PermanentSubject.Source || subject instanceof PermanentSubject.Triggering
                     || subject instanceof PermanentSubject.Attached
-                    || subject instanceof PermanentSubject.AttachedAtTrigger)) {
+                    || subject instanceof PermanentSubject.AttachedAtTrigger
+                    || subject instanceof PermanentSubject.ThisWay)) {
                 throw new IllegalArgumentException("Unsupported damage subject: " + subject);
             }
             if (unpreventable || targetPredicate != null || damageSource != DamageSource.ABILITY_SOURCE) {

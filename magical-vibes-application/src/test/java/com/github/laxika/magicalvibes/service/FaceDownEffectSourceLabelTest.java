@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.PowerToughnessBoostEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
@@ -60,7 +60,7 @@ class FaceDownEffectSourceLabelTest extends BaseCardTest {
     }
 
     private void resolveBoostFrom(Permanent source, Permanent target) {
-        List<CardEffect> effects = new ArrayList<>(List.of(new PowerToughnessBoostEffect(1, 1)));
+        List<CardEffect> effects = new ArrayList<>(List.of(new BoostTargetCreatureEffect(1, 1)));
         gd.stack.add(new StackEntry(StackEntryType.ACTIVATED_ABILITY, source.getCard(), player1.getId(),
                 "ability", effects, target.getId(), source.getId()));
         harness.clearMessages();

@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold run 1 (2026-11-23): `dead`, `p-cost`, `p-lib`: 10 dead, 9 absorbed, 2 re-batched into `targets-x`, 7 `blocked-other`. Next: fold run 2 (`p-dmg`). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold run 1 (2026-11-23): `dead`, `p-cost`, `p-lib`: 10 dead, 9 absorbed, 2 re-batched into `targets-x`, 7 `blocked-other`. Fold run 2 (2026-11-23): `p-dmg`: 14 absorbed, 9 split, 4 unique, 5 `blocked-other`. Next: fold run 3. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 4,025 / 3,286 (fold run 1; 4,044 / 3,299 before) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 4,003 / 3,263 (fold run 2; 4,025 / 3,286 after fold run 1, 4,044 / 3,299 before) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,9 +64,9 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 4,963 rows over 4,404 classes, the consolidation's 102, defect run
-D10's 73 and fold run 1's 28 included. Latest verdict per class: `step-9` 1,296, unique 1,161, absorbed 515, split 454, blocked-other 422,
-survivor 259, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,296 `step-9` rows for fold runs after fold run 1 (1,322 before); 5 rows on the owner's open
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 4,995 rows over 4,404 classes, the consolidation's 102, defect run
+D10's 73, fold run 1's 28 and fold run 2's 32 included. Latest verdict per class: `step-9` 1,264, unique 1,165, absorbed 529, split 463,
+blocked-other 427, survivor 259, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,264 `step-9` rows for fold runs after fold run 2 (1,322 before fold run 1); 5 rows on the owner's open
 questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
@@ -446,6 +446,11 @@ Step and choice records:
   resolves ("X ... as this ability resolves"), any other amount at cast (affinity); `ReduceActivationCostEffect` /
   `IncreaseActivationCostEffect` take any `DynamicAmount` (`CountersOnSource` for "for each counter"); a turn-limited static
   cost change is `ConditionalEffect(ControllerTurn(), …)`; `IntensifySourceCardEffect` takes a `DynamicAmount`.
+- Damage, boost, draw (fold run 2): `BoostTargetCreatureEffect(createdThisResolution(), …)` ("that creature gets +N/+M" after a
+  token step) and `Duration.PERMANENT` (no stated duration, CR 611.2a); `DealDamageToTargetCreatureEffect(thisWay(kind), n)` (the
+  creature a `ChoosePermanentsEffect` chose); "choose a creature type, [verb] for each permanent of it you control" is
+  `ChooseCreatureTypeAtResolutionEffect` + the verb over `PermanentCount(PermanentHasTypeChosenThisResolutionPredicate, CONTROLLER)`;
+  `TargetPolarityClassifier` reads a negatively `Scaled` boost as a debuff.
 
 Permissions, restrictions and grants:
 
@@ -930,6 +935,56 @@ id); `CastingCostServiceTest`'s two Damping Sphere cases build the survivor; `Co
 
 **For the next run.** Fold run 2 (`p-dmg`). Several `p-…` notes name a head that needs a component or a reader change; check each
 against the survivor's readers first, as this run's seven `blocked-other` rows show.
+
+### Step 9, fold run 2 (2026-11-23)
+
+Fold run 2 of the Fold queue: batch `p-dmg` (32 rows) and its one "Fold:" defect line (Wicked Guardian). Ratchet 4,025 / 3,286 →
+4,003 / 3,263 (22 records; 23 handlers, `PowerToughnessBoostEffectHandler` included). Ledger: 32 rows appended (absorbed 14, split 9,
+unique 4, blocked-other 5). 28 card files rewritten, Oracle text checked with `get_card` for all 28 and for the 4 left cards
+(Malignant Growth, Medomai's Prophecy, Psychic Transfer, Mage Slayer); rulings for Wicked Guardian. CR 603.7b, 608.2d, 608.2h, 611.2a,
+613.4c, 614.6, 701.12a checked with `get_rule`.
+
+| Group | Result |
+|---|---|
+| chosen type (4) | Distant Melody, Harmonized Crescendo, Pack's Disdain, Roar of the Crowd, Coordinated Barrage: `ChooseCreatureTypeAtResolutionEffect` + the verb over `PermanentCount(PermanentHasTypeChosenThisResolutionPredicate, CONTROLLER)`; Crippling Fear left (`blocked-other`: `BoostAllCreaturesEffect` is no `BoardWipeEffect`) |
+| draw (8) | Archivist of Gondor and the monarch's draw (`triggeringPlayer()`), Bebop (noted X), Sudden Salvation, Anticausal Vestige (draw, then the may-put), Beck (`RegisterGlobalTriggeredAbilityEffect`), Loran (`allOf(you(), targetPlayerDeclaredElsewhere())`); Black Panther / Farideh left (`blocked-other`: the AI's `CardDrawingEffect` view of Black Panther's ability), Malignant Growth left (`blocked-other`: replaced draws) |
+| damage (9) | Wicked Guardian, Disorder, Flames of the Raze-Boar, Burn the Impure, Aether Charge, Lavabelly Sliver, Sonic Shrieker, Firesong and Sunspeaker (onto `DealDamageToAnyTargetEffect` + a creature-or-player filter); left: Comet's resolution-time choice (`unique`), Mage Slayer and Play with Fire (one-card parameters) |
+| life, win, boost (11) | Foul-Tongue Shriek, Tezzeret, Nihiloor, Long Rest, Luck Bobblehead, Call the Spirit Dragons' engine step, Blessing of the Nephilim, Elemental Appeal, Riding the Dilu Horse and Xathrid Gorgon (`PowerToughnessBoostEffect` stays as the boost payload); left: Psychic Transfer and its exchange survivor (`unique`), Medomai's Prophecy (`blocked-other`: the name must be fixed as chapter III resolves) |
+
+**Where the triage was wrong.** Pack's Disdain's note would have flipped its AI target to BENEFICIAL (a count of 0 evaluates to 0):
+`TargetPolarityClassifier` now reads a negatively `Scaled` amount as a debuff (`TargetPolarityGuardTest.negativePerCountBoostIsHarmful`;
+it would fail without the change by reading, not run so). Medomai's note would read the Saga's name at cast time, not as chapter III resolves. Malignant Growth's
+"cards they drew this way" is not `AmountThisWay(DRAW)` while a replaced draw records nothing. Two notes kept AI views a wrapper hides.
+
+**Shared pieces widened** (each used by the cards above and open to the next): `BoostTargetCreatureEffect` takes
+`createdThisResolution()` and keeps `Duration.PERMANENT` (logged "indefinitely"); `DealDamageToTargetCreatureEffect` takes
+`thisWay(kind)` (each creature the step named, the targeted-creature prevention check).
+
+**Behaviour changes.**
+- Wicked Guardian: no draw when no other creature was chosen ("If you do"; its ruling: prevented damage still draws), a lone other
+  creature is chosen unasked (CR 608.2d): `WickedGuardianTest.acceptingWithNoOtherCreatureDoesNotDraw` (fails on the old code by
+  reading: the old sequence drew after an empty choice; not run on it).
+- Aether Charge's Beast deals the damage through `DamageSupport.entryDealtByTriggeringPermanent` (its carrier entry, CR 608.2h).
+- Logs: the survivors' lines (Elemental Appeal's per-creature line, Beck's registration line, an unmet top-level `ConditionalEffect`'s
+  "does nothing" line for Long Rest, Burn the Impure, Call the Spirit Dragons; Anticausal Vestige's prompt names no number).
+- AI only: Pack's Disdain-shaped boosts (and Induce Despair, Flunk, Escaped Experiment) are HARMFUL at a count of 0; Disorder, Roar of
+  the Crowd and Loran now carry the survivors' damage and draw capability interfaces.
+
+**Tests changed.** `WickedGuardianTest`: the prompt test adds a second creature; three tests no longer answer a one-creature prompt
+(CR 608.2d); display names added; one new case. `TargetPolarityGuardTest`: one new case.
+`DealDamageToTargetControllerIfTargetHasKeywordEffectHandlerTest` deleted with its handler (`BurnTheImpureTest` covers the card).
+
+**Tests run.** 51 test classes that name a rewritten card (`git grep -lwF 'X.class'`), 18 survivor and neighbour classes, 28
+`Mastery|DeathReplacement` classes (the deleted drain handler asked death replacements first), `TargetPolarityGuardTest`,
+`EffectCountRatchetTest`, `DealDamageToTargetCreatureEffectHandlerTest`, `LayerClassifierTest`, `StepTriggerServiceTest`: 117 XML
+files, 1,195 cases, 0 failures.
+
+**Seen, not changed** (Defect queue): Disorder's damage is two events (group 3); `DrawCardEffectHandler` records no cards for a replaced
+draw (group 4); `DealDamageToTargetCreatureOrPlayerEffect`'s targeted form is dead (group 9). Re-triage: Luminescent Rain's
+`GainLifePerChosenTypeCountEffect` now folds as its chosen-type siblings did.
+
+**For the next run.** Fold run 3. Before a `p-…` note's fold, check every AI reader of the absorbed record's capability interfaces and
+what a dynamic amount evaluates to in the AI's estimation context: a count over a resolution choice is 0 there.
 
 ## Prompt
 

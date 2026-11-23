@@ -20,9 +20,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * <p>{@code targetGroup} is an activated-ability target-group index, or {@code -1} when the
  * effect uses the card's target binding or the entry's ordinary target list.
  *
- * <p>{@code duration} is {@link Duration#END_OF_TURN} for the overwhelming majority of pumps;
- * {@link Duration#UNTIL_YOUR_NEXT_TURN} routes the modifier into the permanent's
- * until-next-turn bucket instead, so it survives end-of-turn cleanup (Jace, Telepath Unbound's +1).
+ * <p>{@code duration} is {@link Duration#UNTIL_END_OF_TURN} for the overwhelming majority of pumps;
+ * {@link Duration#UNTIL_YOUR_NEXT_TURN} lasts until its controller's next turn (Jace, Telepath Unbound's +1),
+ * {@link Duration#UNTIL_END_OF_COMBAT} until end of combat, and {@link Duration#PERMANENT} is a boost with no stated
+ * duration, which lasts indefinitely (CR 611.2a; Riding the Dilu Horse).
  *
  * <p>On a block trigger whose card declares no target for it ("whenever this creature blocks …,
  * that creature gets +1/+1") the boosted creature is the creature on the other side of the block,
@@ -32,7 +33,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
  * other creatures boosts every creature it names as the effect resolves, the set fixed then (CR 611.2c): "target
  * creature and all other creatures with the same name as that creature get +2/+2" is
  * {@code allOf(target(), otherCreaturesSharing(target(), NAME))}, "target creature and each other creature that shares
- * a color with it" is {@code withCreaturesSharingAColor(target())}. Only the target is targeted.
+ * a color with it" is {@code withCreaturesSharingAColor(target())}. Only the target is targeted. "That creature gets
+ * +7/+0" after a token is created is {@link Subjects#createdThisResolution()} (Elemental Appeal).
  */
 public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount toughnessBoost,
                                         PermanentPredicate filter,
@@ -48,9 +50,10 @@ public record BoostTargetCreatureEffect(DynamicAmount powerBoost, DynamicAmount 
         subject = subject == null ? Subjects.target() : subject;
         if (!subject.declaresTarget() && !(subject instanceof PermanentSubject.ThisWay)
                 && !(subject instanceof PermanentSubject.Except)
+                && !(subject instanceof PermanentSubject.CreatedThisResolution)
                 && !(subject instanceof PermanentSubject.AttachedAndSharingCreatureType)) {
-            throw new IllegalArgumentException("BoostTargetCreatureEffect boosts its target or what a choice named "
-                    + "or left; another non-targeting subject is BoostSelfEffect: " + subject);
+            throw new IllegalArgumentException("BoostTargetCreatureEffect boosts its target or what a choice named, "
+                    + "left or created; another non-targeting subject is BoostSelfEffect: " + subject);
         }
     }
 

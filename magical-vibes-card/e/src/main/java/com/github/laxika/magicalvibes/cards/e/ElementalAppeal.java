@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.condition.Kicked;
-import com.github.laxika.magicalvibes.model.effect.BoostCreatedTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.KickerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 
 import java.util.List;
 import java.util.Set;
@@ -40,6 +41,7 @@ public class ElementalAppeal extends Card {
                 false,
                 0,
                 Set.of()));
-        addSpellEffect(new ConditionalEffect(new Kicked(), new BoostCreatedTokensEffect(7, 0)));
+        addSpellEffect(new ConditionalEffect(new Kicked(),
+                new BoostTargetCreatureEffect(Subjects.createdThisResolution(), 7, 0)));
     }
 }

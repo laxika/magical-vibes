@@ -2,7 +2,11 @@ package com.github.laxika.magicalvibes.cards.d;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DrawCardPerChosenTypeCountEffect;
+import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.PermanentCount;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeAtResolutionEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasTypeChosenThisResolutionPredicate;
 
 @CardRegistration(set = "MOR", collectorNumber = "32")
 @CardRegistration(set = "H09", collectorNumber = "27")
@@ -21,6 +25,7 @@ import com.github.laxika.magicalvibes.model.effect.DrawCardPerChosenTypeCountEff
 public class DistantMelody extends Card {
 
     public DistantMelody() {
-        addSpellEffect(new DrawCardPerChosenTypeCountEffect());
+        addSpellEffect(new ChooseCreatureTypeAtResolutionEffect());
+        addSpellEffect(new DrawCardEffect(new PermanentCount(new PermanentHasTypeChosenThisResolutionPredicate(), CountScope.CONTROLLER)));
     }
 }

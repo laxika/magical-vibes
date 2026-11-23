@@ -36,7 +36,8 @@ import org.springframework.stereotype.Component;
  * (its multi-target loop, unpreventable damage, excess-damage tracking). Any other subject names one permanent through
  * {@link SubjectResolutionService}, and each keeps the prevention it always had: {@code source()} through the
  * any-target path, {@code triggering()} with the targeted-creature prevention check and its log line, the Aura
- * subjects with the Aura, as it is or last existed, as the damage's source and only the damage pipeline's prevention.
+ * subjects with the Aura, as it is or last existed, as the damage's source and only the damage pipeline's prevention;
+ * {@code thisWay(kind)} names each permanent the step recorded, with the targeted-creature prevention check.
  */
 @Component
 @RequiredArgsConstructor
@@ -77,6 +78,10 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
             }
             case PermanentSubject.AttachedAtTrigger ignored -> {
                 damageAuraHost(gameData, entry, e);
+                return;
+            }
+            case PermanentSubject.ThisWay ignored -> {
+                damageNamedThisWay(gameData, entry, e);
                 return;
             }
             default -> {
@@ -202,6 +207,25 @@ public class DealDamageToTargetCreatureEffectHandler implements NormalEffectHand
         gameLogService.append(gameData, GameLog.builder().card(entry.getCard()).text(" deals " + damage + " damage to ")
                 .card(triggering.getCard()).text(".").build());
         damageSupport.dealCreatureDamage(gameData, entry, triggering, damage);
+    }
+
+    /**
+     * "Deals 2 damage to [the creature chosen]": each permanent an earlier step of this resolution named, as it is now,
+     * if it is still a creature; protection from the source and "prevent all damage this would deal" apply as to a
+     * targeted creature.
+     */
+    private void damageNamedThisWay(GameData gameData, StackEntry entry, DealDamageToTargetCreatureEffect e) {
+        Permanent source = entry.getSourcePermanentId() == null
+                ? null : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
+        int damage = amountEvaluationService.evaluate(gameData, e.damage(),
+                AmountContext.forStackEntry(entry, source));
+        for (Permanent creature : subjectResolutionService.permanents(gameData, entry, e, e.subject())) {
+            if (!gameQueryService.isCreature(gameData, creature)
+                    || damageSupport.isDamagePreventedForCreature(gameData, entry, creature)) {
+                continue;
+            }
+            damageSupport.dealCreatureDamage(gameData, entry, creature, damage);
+        }
     }
 
     /**

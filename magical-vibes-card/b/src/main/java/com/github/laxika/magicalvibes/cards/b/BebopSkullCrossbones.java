@@ -4,9 +4,14 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.MayChoicePlayer;
-import com.github.laxika.magicalvibes.model.effect.DrawAndLoseLifePerCounterOnSourceEffect;
+import com.github.laxika.magicalvibes.model.amount.AmountThisWay;
+import com.github.laxika.magicalvibes.model.amount.TotalCountersOnSource;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
+import com.github.laxika.magicalvibes.model.effect.NoteAmountEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchTargetLibraryEffect;
+import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardNamedPredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
@@ -38,7 +43,10 @@ public class BebopSkullCrossbones extends Card {
         ));
 
         addTrigger(Triggers.dealsCombatDamageToPlayer(), new MayEffect(
-                new DrawAndLoseLifePerCounterOnSourceEffect(),
+                SequenceEffect.of(
+                        new NoteAmountEffect(new TotalCountersOnSource()),
+                        new DrawCardEffect(AmountThisWay.noted()),
+                        new LoseLifeEffect(AmountThisWay.noted(), Subjects.you())),
                 "Draw cards equal to the number of counters on Bebop?"));
     }
 }

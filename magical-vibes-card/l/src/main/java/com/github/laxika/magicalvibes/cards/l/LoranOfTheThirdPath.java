@@ -4,7 +4,8 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.YouAndTargetPlayerEachDrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
@@ -37,7 +38,8 @@ public class LoranOfTheThirdPath extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new YouAndTargetPlayerEachDrawCardEffect(1)),
+                List.of(new DrawCardEffect(1,
+                        Subjects.allOf(Subjects.you(), Subjects.targetPlayerDeclaredElsewhere()))),
                 "{T}: You and target opponent each draw a card.",
                 new PlayerPredicateTargetFilter(
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),

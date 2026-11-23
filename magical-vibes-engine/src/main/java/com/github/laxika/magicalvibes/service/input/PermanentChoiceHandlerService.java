@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningE
 import com.github.laxika.magicalvibes.service.effect.normalfx.BoostEquippedCreatureUntilEndOfTurnEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ExploreEachControlledCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChangeTargetOfTargetSpellToSourceEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.DealDamageToChosenCreatureEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveCounterFromControlledCreatureThenDrawEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TurnOwnCreatureFaceUpEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TargetOpponentChoosesPlayerForRestrictionEffectHandler;
@@ -122,7 +121,6 @@ public class PermanentChoiceHandlerService {
     private final TurnOwnCreatureFaceUpEffectHandler turnOwnCreatureFaceUpEffectHandler;
     private final RemoveCounterFromControlledCreatureThenDrawEffectHandler
             removeCounterFromControlledCreatureThenDrawEffectHandler;
-    private final DealDamageToChosenCreatureEffectHandler dealDamageToChosenCreatureEffectHandler;
     private final ChangeTargetOfTargetSpellToSourceEffectHandler changeTargetOfTargetSpellToSourceEffectHandler;
     private final ExploreEachControlledCreatureEffectHandler exploreEachControlledCreatureEffectHandler;
     private final BoostEquippedCreatureUntilEndOfTurnEffectHandler boostEquippedCreatureUntilEndOfTurnEffectHandler;
@@ -831,9 +829,6 @@ public class PermanentChoiceHandlerService {
         } else if (context instanceof PermanentChoiceContext.RemoveCounterFromControlledCreatureThenDraw removeCounter) {
             removeCounterFromControlledCreatureThenDrawEffectHandler.completeChoice(
                     gameData, permanentId, removeCounter);
-            inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-        } else if (context instanceof PermanentChoiceContext.DealDamageToChosenCreature damageChoice) {
-            dealDamageToChosenCreatureEffectHandler.completeChoice(gameData, permanentId, damageChoice);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.BoostEquippedOrMatchingCreatureChoice boostChoice) {
             boostEquippedCreatureUntilEndOfTurnEffectHandler.completeChoice(gameData, permanentId, boostChoice);
