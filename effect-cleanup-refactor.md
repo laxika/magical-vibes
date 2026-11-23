@@ -24,7 +24,7 @@ bottom.
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,533 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts; triage run 2 gave Search and Cant (79 rare) theirs; triage run 3 gave Sacrifice and Destroy (75 rare) theirs (201 `step-9` rows wait for fold runs). Defect run 1 fixed most of the defects the triage runs saw (its Findings). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; the next families with no owner's question are Look (37 rare), Remove (34), Gain (32) and Add (32). |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,462 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts; triage run 2 gave Search and Cant (79 rare) theirs; triage run 3 gave Sacrifice and Destroy (75 rare) theirs; triage run 4 gave Look and Remove (71 rare) theirs (253 `step-9` rows wait for fold runs). Defect run 1 fixed most of the defects the triage runs saw (its Findings). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; the next families with no owner's question are Add (32 rare), Gain (32), Become (30) and Draw (28). |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -282,6 +282,7 @@ Each run ends with its family row in Findings: audited, absorbed, split, blocked
 | Pay, Reduce (+ 32 stale step-4/5 rows) | T1 | triaged, no code changed: 112 rows (`step-9` 88, `blocked-other` 7, `unique` 17); fold batches in T1's Findings |
 | Search, Cant | T2 | triaged, no code changed: 79 rows (`step-9` 52, `blocked-other` 1, `unique` 26); fold batches in T2's Findings, among them a SEARCH step kind |
 | Sacrifice, Destroy | T3 | triaged, no code changed: 75 rows (`step-9` 54, `blocked-other` 10, `blocked-player-loop` 1, `unique` 10); fold batches in T3's Findings, among them a delayed ability about the entry's target |
+| Look, Remove | T4 | triaged, no code changed: 71 rows (`step-9` 53, `unique` 18); fold batches in T4's Findings, among them one store for counters on exiled cards and a player-counter removal |
 
 Cross-cutting results of those runs, now conventions or shared pieces (Standing knowledge): the face-down hiding rules; stay checks
 (CR 400.7, 603.7c) on every return and delayed return; what a put step moves enters through the entry batch (as-enters and Aura host
@@ -1176,6 +1177,98 @@ illegal or impossible option).
 cases in 29 card test classes. No assertion was loosened.
 
 **For the next run.** Fold runs as triage run 3 recommends; Fatal Lore and Giant Albatross need the pieces named in the open defects.
+
+### Step 9, triage run 4 (2026-11-23)
+
+Verdicts only: no Java, test or agent-docs file changed; the ratchet did not move (4,045 / 3,300). 71 ledger rows appended (step 9,
+notes `triage 4: …`): the whole of Look (37 rare) and Remove (34 rare). Every record was read with its `normalfx` / `mayfx` / `entryfx`
+handler to the end and the card classes that use it; for the records with no handler, their readers: the two controlled-counters cost
+handlers (`RemoveCounterFromCreatureCostHandler`, `RemoveCounterFromControlledPermanentsCostHandler`) and their `AbilityActivationService`
+branches, Rift Elemental's cost branches, `AsEntersInteractionService`'s Sin prompt (its completion was not read),
+`GameQueryService.mayLookAtOpposingFaceDownCreatures`, and the may-completions in `MayMiscHandlerService` that the top-card records call.
+`LookAtTopCardsEffectHandler` was read up to its dispatch and its may-put-onto-battlefield path, not whole. Oracle text checked with
+`get_card` for every `unique` card (Ziatora's Envoy, Bison Whistle, Omnath, Locus of All, Make Your Own Luck, Zimone's Experiment, Choco,
+Seeker of Paradise, Stroke of Luck, Orcish Librarian, Priest of Possibility, Susan Foreman, Diabolic Servitude, Tyrannical Pitlord, Pass the
+Torch, Racketeer Boss, Hammerheim, Hierophant Bio-Titan, Rift Elemental, Freyalise's Winds, Cyclopean Tomb, Pyramids) and for Moment of
+Truth, Telling Time, Sorin the Mirthless, Amareth, the Lustrous, Wakanda Forever!, Break Out, Moxite Refinery, Mutated Cultist, Eventide's
+Shadow and Cosmic Cube; the other cards were judged from their card classes and the records' Javadoc. No rulings were needed. CR 113.7a,
+611.2b, 702.62a, 702.63a, 702.73a and 707.10 checked with `get_rule` (2026-11-23).
+
+| Family | Triaged | `step-9` | `unique` | Left unaudited |
+|---|---|---|---|---|
+| Look | 37 rare | 27 | 10 | 0 rare, 7 in all |
+| Remove | 34 rare | 26 | 8 | 0 rare, 12 in all |
+
+All families: 1,462 rare records without a row (before: 1,533). `step-9` rows waiting for fold runs: 253 (latest verdict per class).
+
+**Counters on exiled cards.** Each kind of counter on a card in exile has its own `GameData` store and its own removal record: time
+(`exiledCardTimeCounters`, and `suspendedSpellExiles` for a suspended spell), hit, scream, delay, refine and egg. Six records here
+(Mari's hit, All Hallows' Eve's scream, and the engine-built suspend, delay, refine and egg removals) and the unaudited
+`RemoveTimeCounterFromExiledCardEffect` (3 cards) are one verb over a card subject; what differs is the last-counter payload, which is the
+card's own ability (suspend's cast, CR 702.62a; Uvilda's cast; the egg return; Ertai's Meddling's put-back as a copy, CR 707.10). The fold
+needs one counter store on the exiled card keyed by kind (copied for simulations) and a removal step recording REMOVE_COUNTERS. That is
+larger than a parameter: the fold run should say whether the store change is in scope, and give the batch `blocked-other` if not.
+
+**Fold batches** (survivor or shared component → records, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| top-card look by player | `LookAtTopCardsOfTargetLibraryEffect(1, LOOK_ONLY)` with a `PlayerSubject` (`targetPlayer()` default, `you()`, `eachPlayer()`) | Plane-Merge Elf, Medomai's Prophecy and Case the Joint (the last two are the same record twice); Spy Network's top-card part: 3 (3) |
+| face-down look | `LookAtFaceDownCreatureEffect` with a `PermanentSubject` (`target()` default) | Revealing Wind (face-down attackers and blockers), Spy Network (split: `LookAtHandEffect` + the top-card look + this over the face-down creatures the target player controls): 2 (2) |
+| look, may reveal, then | Plane-Merge Elf's composition: the top-card look + `MayEffect(RevealTopCardOfLibraryEffect(you()))` + `ConditionalEffect(HappenedThisWay.toACard(REVEAL, filter), X)` | Quest for Ula's Temple (quest counter), Runo Stromkirk and Delver of Secrets (`TransformSelfEffect`, which keeps the prevention check and the Olag transform-back): 3 (3) |
+| may reveal to hand | `LookAtTopCardMayRevealMatchingToHandEffect` | Bucolic Ranch + Cabaretti Ascendancy (a may-bottom otherwise destination), Amareth (triage 2's same-quality predicate over `triggering()`), Sorin the Mirthless (the survivor records REVEAL; a loss of the revealed card's mana value, keeping the Mastery ask-first): 3 (4) |
+| top card onto the battlefield | `LookAtTopCardMayPutMatchingOntoBattlefieldEffect` with an otherwise destination (stay, hand, may bottom) and an effect-if-not-put (as `LookAtTopCardsEffect.effectIfNoCardChosen`); its match passes the source and its snapshot | Believe (hand), Lantern of Revealing (may bottom), Rulik Mons (Goblin token), Nissa, Steward of Elements (`CardManaValueAtMostSourceCountersPredicate`); the unaudited `LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect` (5) is the same record: 4 (4) |
+| look and cast | `LookAtTopCardsAndMayCastEffect` (Velomachus Lorehold, survivor) with a `DynamicAmount` count and `CardManaValueAtMostAmountPredicate` | Cosmic Cube + Perception Bobblehead (one record); the unaudited `LookAtTopCardsMayCastExiledNonlandCardEffect` (3) could join with an exile-first destination: 1 (2) |
+| three-way split | `LookAtTopCardsHandTopBottomEffect` (Telling Time, Moment of Truth, survivor) with an exile-playable-this-turn second destination | Expressive Iteration: 1 (1) |
+| look at the top N | `LookAtTopCardsEffect` | Call to the Kindred and Conjurer's Mantle (triage 2's same-quality predicate: shares a creature type with `attached()`), Break Out (its selected-card follow-up, `MayPutSelectedCardOntoBattlefieldEffect(2)`), For the Ancestors (split: `ChooseCreatureTypeAtResolutionEffect` + `CardHasTypeChosenThisResolutionPredicate`, changelings kept, CR 702.73a): 4 (4) |
+| two bounded picks | `LookAtTopCardsRevealTwoTypesToHandThenRestEffect` | Wakanda Forever! (permanent to the battlefield with an indestructible counter, permanent to hand, rest to the graveyard; the entry replacement would have this one user in that survivor): 1 (1) |
+| hand choice, then draw | `ChooseCardsFromTargetHandEffect` (up to one) + `ConditionalEffect` on its step + `DrawCardEffect` over `targetPlayer()` | Oildeep Gearhulk (discard), Vendilion Clique (nonland, revealed, library bottom): 2 (2) |
+| controlled-counters cost | `RemoveOneOrMoreCountersFromControlledPermanentsCost` (Jetfire, Moxite Refinery, survivor) with `allowsZero` and a from-one-permanent option; cost-shape | `RemoveOneOrMoreCountersFromControlledCreaturesCost` (Ooze Flux, Retribution of the Ancients): 1 (2) |
+| chosen counters | `RemoveChosenCountersFromTargetPermanentEffect` (4, unaudited) recording REMOVE_COUNTERS as its choice ends, with a player target and a `source()` subject | Heartless Act + Price of Betrayal (one record), Rhys the Evermore (any number), Hex Parasite (+ `BoostSelfEffect(AmountThisWay(REMOVE_COUNTERS), 0)`), Tetravus (+ `CreateTokenEffect(AmountThisWay(REMOVE_COUNTERS))` created with the source): 4 (5) |
+| player counters | a shared removal of a player's counters (one kind or all) over a `PlayerSubject`, recording REMOVE_COUNTERS | Survivor's Med Kit (rad), Leeches (poison, then damage `AmountThisWay`), Suncleanser's opponent mode (all kinds; its lock a `GrantStaticEffectToPlayerEffect` with `WHILE_SOURCE_REMAINS`), Mutated Cultist (permanent or opponent): 4 (4) |
+| all counters | `RemoveAllCountersFromTargetPermanentEffect` | Suncleanser's creature mode (+ triage 2's `CantHaveCountersEffect` granted `WHILE_SOURCE_REMAINS`, CR 611.2b), Aether Snap (`allPermanents()`, one action, last-counter notifications kept): 2 (2) |
+| counters from among permanents | `RemoveUpToCountersFromAllPermanentsEffect` (Sensational Spider-Man, survivor) recording REMOVE_COUNTERS | Eventide's Shadow (any kind, no bound); 5f's unique `RemoveCounterFromChosenPermanentsEffect` could join: 1 (1) |
+| as-enters counter removal | `RemoveAllCountersFromChosenPermanentsThenEnterWithCountersEffect` (Sin, survivor) with an all-matching option | Thief of Blood: 1 (1) |
+| lose protection | `RemoveAllProtectionUntilEndOfTurnEffect` (Shay Cormac, survivor) with a from-colour option | Cephalid Snitch: 1 (1) |
+| exiled-card counters | one store and one removal (above) | Mari, All Hallows' Eve, and the engine-built suspend, delay (Ertai's Meddling), refine (Uvilda) and egg (Darigaaz) records: 6 (2 + engine-built) |
+| Remove splits | existing records | Decimator Beetle (a one-counter removal over `target(0)` + `PutCounterOnTargetPermanentEffect` over `target(1)`, as Raubahn's two-group attack trigger; `AttackCounterMoveEffect` and its pipeline branches go), Vhal's specialized face (`RemoveAllCountersEffect(STUDY, source())` + `QueueReflexiveAbilityEffect`, as run 21's split): 2 (1 + engine-built) |
+| Look single | existing record | Lumbering Laundry (`GrantStaticEffectToPlayerEffect.untilEndOfTurn(new LookAtFaceDownCreaturesEffect())`, its reader asking for the player's floating effect): 1 (1) |
+
+Unique (18): Look: Ziatora's Envoy (a land play or a free cast from the top, else to hand), Bison Whistle (a type ladder over one card),
+Omnath, Locus of All (mana from the revealed card's colours), Make Your Own Luck (plot), Zimone's Experiment (destinations split by type),
+Choco (two ordered picks), Stroke of Luck (the same-name set), Orcish Librarian (a random exile among looked-at cards), Priest of
+Possibility (a keyword census), Susan Foreman (the planar deck). Remove: Diabolic Servitude + Tyrannical Pitlord (the linked permanent and
+its mutual-bond bookkeeping, already one record), Pass the Torch + Racketeer Boss (a perpetual ability that removes itself, already one
+record), Hammerheim (landwalk kinds modelled as predicates), Hierophant Bio-Titan (a cost that reduces per counter removed), Rift
+Elemental (a cost from a permanent or a suspended card), Freyalise's Winds (an untap-step replacement), Cyclopean Tomb (its tracked
+lands), Pyramids (a damage-removal destruction replacement that isn't regeneration).
+
+**Seen, not changed** (confirmed by reading, not run):
+
+- Moxite Refinery: "Remove X counters from an artifact or creature you control" takes them from one permanent, but
+  `RemoveCounterFromControlledPermanentsCostHandler` lets X be split across several; X = 0 is refused (the cost can be paid with zero);
+  its two modes target only an artifact or creature you control, where the Oracle text says "target artifact" and "target creature";
+  with `CounterType.ANY` the handler picks which kinds to remove in enum order, not the player. Sure of the code; fairly sure of the reading.
+- Make Your Own Luck puts all three looked-at cards into hand, then plots the chosen one from hand; the text exiles it from among the
+  looked-at cards and puts only the rest into hand. Sure of the code; low impact (a put-into-hand trigger would see it).
+- Thief of Blood's entry handler removes counters with `setCounterCount` and sends no last-counter-removed notification, which Aether Snap's
+  handler sends, so a vanishing permanent losing its last time counter this way isn't sacrificed (CR 702.63a). Sure of the code; whether
+  another hook catches it wasn't traced.
+- Hammerheim ends the target's floating predicate-landwalk grants outright (`endFloatingEffectsOnPermanent`) instead of suppressing them
+  until end of turn, so a grant lasting longer is lost. Sure of the code; rare.
+- Runo Stromkirk transforms without `isTransformPrevented`, which Delver of Secrets and `TransformSelfEffect` check. Sure of the code; low
+  impact.
+
+**For the next run.**
+
+- Triage run 5: Add (32 rare), Gain (32), then Become (30) and Draw (28); Double (27), Set (27), Copy (26) and Seek (26) next. Conjure (39)
+  and Perpetually (30) still wait for the owner.
+- Fold runs: the cheapest batches here need only existing records: the top-card look by player (3 records), the face-down look subject,
+  the look-may-reveal compositions (3), the top-card battlefield record's otherwise destination (4 + the 5-card duplicate), lose protection,
+  the as-enters counter removal, and Lumbering Laundry. The chosen-counters and player-counters batches need REMOVE_COUNTERS recorded by a
+  prompted removal; the exiled-card counter batch needs the store decision above.
+- The unaudited 3+-card records these batches touch: `LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect` (5),
+  `LookAtTopCardsMayCastExiledNonlandCardEffect` (3), `RemoveChosenCountersFromTargetPermanentEffect` (4), `RemoveTimeCounterFromExiledCardEffect` (3).
 
 ## Prompt
 
