@@ -2525,6 +2525,154 @@ Narod, Maestros' Totally Safe Hideout, Boulder Jockey and Truth or Dare are play
 - Triage 1's `GoadSourceCreatureWhileControllerControlsItEffect` mention in the static-goad batch.
 - 5m's can't-be-countered trio.
 
+### Step 9, parallel triage chunk 09 (2026-11-23)
+
+Verdicts only. No repo file changed and the ratchet did not move. The chunk has 84 ledger rows (notes start `triage P09: …`), read against `546a19ede6`.
+
+What was read:
+- Every record and every handler to its end. Where a record has no handler, its readers were read instead: `CastingCostService` (free equip, free power-up, floating attack taxes), `AbilityActivationService` (the two cycling reads), `DrawService` (Reed Richards), `CastingPermissionService` (Wardscale Dragon, Phyrexian Censor, the spell limit), `GameQueryService` (prevention, damage replacement, counter, supertype and own-effects readers), `LayerSystemService` (land types), `AdditionalSpellCostService` (escalate), `CombatDamageService`, `ActionEvents.completeDungeonRoomIfReady`, `BattlefieldPlacementService` (enter-tapped floats), `PredicateEvaluationService` (the chosen-name and shared-creature-type predicates) and `AttackLegalityService`.
+- Every card class that uses a record in the chunk.
+- Oracle text with `get_card` for every `unique` and `blocked-*` card, and for most `step-9` cards.
+- Stack of Paperwork, A Good Thing, Map to Lorthos's Temple and Halving Season were read from `card-data-cache`, because they are MB1/MB2 playtest cards that Scryfall doesn't have.
+- Rulings: Portal Mage, Karn, Scion of Urza, Transmute Artifact.
+- CR numbers checked with `get_rule`: 101.4, 400.7, 603.7d, 603.10a, 612.2, 613.1d, 616.1, 702.42a, 702.120a, 708.2a.
+
+| Family | Triaged | `step-9` | `blocked-other` | `blocked-player-loop` | `blocked-step-model` | `unique` |
+|---|---|---|---|---|---|---|
+| Chosen | 3 | 3 | 0 | 0 | 0 | 0 |
+| Combat | 3 | 1 | 0 | 0 | 0 | 2 |
+| Complete | 3 | 0 | 0 | 0 | 1 | 2 |
+| Defending | 3 | 3 | 0 | 0 | 0 | 0 |
+| Drain | 3 | 3 | 0 | 0 | 0 | 0 |
+| Escalate | 3 | 3 | 0 | 0 | 0 | 0 |
+| First | 3 | 2 | 0 | 0 | 0 | 1 |
+| Free | 3 | 3 | 0 | 0 | 0 | 0 |
+| Global | 3 | 3 | 0 | 0 | 0 | 0 |
+| Halve | 3 | 2 | 0 | 0 | 0 | 1 |
+| Karn | 3 | 2 | 0 | 0 | 0 | 1 |
+| Lands | 3 | 3 | 0 | 0 | 0 | 0 |
+| Limit | 3 | 3 | 0 | 0 | 0 | 0 |
+| Lose | 3 | 1 | 0 | 0 | 0 | 2 |
+| Mana | 3 | 2 | 0 | 0 | 0 | 1 |
+| Morphic | 3 | 0 | 0 | 3 | 0 | 0 |
+| Multiply | 3 | 3 | 0 | 0 | 0 | 0 |
+| Nihiloor | 3 | 1 | 2 | 0 | 0 | 0 |
+| Own | 3 | 2 | 0 | 0 | 0 | 1 |
+| Permanents | 3 | 2 | 0 | 0 | 0 | 1 |
+| Perpetual | 3 | 0 | 3 | 0 | 0 | 0 |
+| Power | 3 | 2 | 0 | 0 | 0 | 1 |
+| Psychic | 3 | 1 | 0 | 0 | 0 | 2 |
+| Record | 3 | 3 | 0 | 0 | 0 | 0 |
+| Reselect | 3 | 2 | 0 | 0 | 0 | 1 |
+| Returned | 3 | 3 | 0 | 0 | 0 | 0 |
+| The | 3 | 2 | 0 | 0 | 0 | 1 |
+| Transmute | 3 | 3 | 0 | 0 | 0 | 0 |
+| All | 84 | 58 | 5 | 3 | 1 | 17 |
+
+**Fold batches** (survivor or component → records, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| each-creature bite | `TargetCreatureDealsPowerDamageToEachOtherCreatureEffect` (4 cards, unaudited) gains a dealer `PermanentSubject` and a recipient filter | Widespread Brutality (the amassed Army, read from the amass step's chosen permanent), Too Greedily, Too Deep (`thisWay(RETURN)`): 2 (2) |
+| chosen dealer | `ChoosePermanentsEffect` + `TargetDealsPowerDamageToTargetEffect(thisWay(CHOOSE), target())`; the survivor needs that dealer shape | Crush Underfoot: 1 (1) |
+| can't-be-prevented | `DamageCantBePreventedEffect` (4, unaudited) with a damage scope (all / combat / combat by your creatures) | Frenzied Baloth; `ControlledCreaturesCombatDamageCantBePreventedEffect` (2, unaudited) joins: 1 (1) |
+| Medomai, by parameters | `ConditionalEffect(NotCondition(ControllerCastSpellThisTurn(chosen name)), RegisterDelayedControllerSpellCastTriggerEffect.nextThisTurn(...))` | Medomai's Prophecy: 1 (1) |
+| static cast restriction (P03) | `OpponentsCantCastSpellsMatchingPredicateEffect` with a static "player the source attacks" subject (used by this card only: weigh it) | Wardscale Dragon: 1 (1) |
+| defending-player choices | `ChoosePermanentsEffect.chosenBy(defendingPlayer())` + `MustBlockTriggeringAttackerEffect` with a blocker subject; + `ExileTargetPermanentEffect(thisWay(CHOOSE))` for P02's opponent-chosen batch | Crashing Boars, Bane of Bala Ged: 2 (2) |
+| land-mana drain | `DrainTargetPlayersLandManaEffect` (survivor) with a `PlayerSubject`; its handler already runs the delayed-{C} branch | Drain Power, Pygmy Hippo: 2 (2) |
+| drain, by parameters | `LoseLifeEffect` (`controllerGainsLifeLost`; for Tezzeret, `Scaled` + `GainLifeEffect`) | Foul-Tongue Shriek, Tezzeret, Agent of Bolas: 1 (2) |
+| modal additional cost | `EscalateManaCost` (31, unaudited) with a per-mode cost and an escalate / entwine kind (`EntwineManaCost`, 5, joins); cost-shape | Collective Brutality, Betrayal of Flesh + Solar Tide (Entwine cards on the escalate record), Collective Effort: 3 (4) |
+| free ability cost | a new "pay {0} rather than the [equip / power-up / cycling] cost" static with first-each-turn and your-turn options and a `Condition`; cost-shape | Bruenor, Kíli, Advancing the Spirit, Gavi, New Perspectives: 5 (5) |
+| floated taxes | `RequirePaymentToAttackEffect` (12) / `RequirePaymentToBlockEffect` floated with a `Duration`, plus a life kind; the Require*ThisTurn / UntilNextTurn makers fold onto `GrantStaticEffectToPlayerEffect`; cost-shape | the three Global* records: 3 (engine-built) |
+| counter placement (T5/T6) | triage 5's counter-placement survivor with a halving operation, for counters an opponent puts | Halving Season + Vorinclex: 1 (2) |
+| token count | `MultiplyTokenCreationEffect` (12) with a halving operation and an opponents'-tokens scope | Halving Season: 1 (1) |
+| Karn's silver counters | the reveal / opponent-choose / hand / exile-with-counter steps; `ChooseCardEffect` over `exiledCards(silver)` + `PutCardsIntoHandEffect`; the silver store joins T4's store for counters on exiled cards | Karn, Scion of Urza: 2 (1) |
+| land types | `GrantBasicLandTypeToTargetEffect` (26, unaudited) with a `PermanentSubject` | Vision Charm (needs a land-type choice made at resolution; weigh it), Elsewhere Flask + Terraformer, Energybending: 3 (4) |
+| static land-type setter | `NonbasicLandsBecomeTypeEffect` (4) with a land predicate; `ControlledLandsBecomeTypeEffect` and `BasicLandsOfChosenTypesBecomeTypeEffect` join | Conversion + Glaciers: 1 (2) |
+| land mana colour | `AllLandsProduceChosenColorUntilEndOfTurnEffect` with a land filter and a fixed colour | Chaos Moon: 1 (1) |
+| spell limits | `LimitSpellsPerTurnEffect` (11): by parameters for Phyrexian Censor; floated with an amount fixed at resolution for Irencrag Feat | 2 (2) |
+| player-floated statics (P06) | `GrantStaticEffectToPlayerEffect` with `MaximumCombatCreaturesEffect` / `EnterPermanentsOfTypesTappedEffect.matching` | Mirri, Due Respect + Nahiri's Lithoforming: 2 (3) |
+| type removal | `LoseAllLandTypesEffect` (4) widened to subtypes and a supertype, floated with a `Duration` | Haunted Plate Mail + Werewolf Pack Leader, Melting + Aeve: 2 (4) |
+| mana rider | `ManaCopyRiderEffect` (survivor); Primal Wellspring's `INSTANT_SORCERY_COPY` restriction moves to it; P06's haste rider joins | Pyromancer's Goggles + Sunken Palace: 1 (2) |
+| by parameters | `AwardManaEffect(PermanentCount(shares a creature type with triggering))`; `GainLifeEffect` + `LoseLifeEffect(ownerOf(triggering()))` | Mana Echoes, Nihiloor's attack trigger: 2 (2) |
+| floated doublers (T6) | triage 6's doublers with a multiplier, floated | Jeska, Isengard Unleashed, Goblin Goliath: 3 (3) |
+| crew power | `PowerBoostForCrewAndSaddleEffect` (20) with a set of cost kinds; the two use-toughness records join | Stoic Star-Captain: 1 (1) |
+| indefinite boost | card uses move to `BoostTargetCreatureEffect` + `GrantKeywordEffect` with `PERMANENT`; the record stays as the boost payload | Riding the Dilu Horse, Xathrid Gorgon: 1 (2) |
+| life exchange | `ConditionalEffect(life difference ≤ 5, ExchangeControllerAndTargetPlayerLifeTotalsEffect)` | Psychic Transfer: 1 (1) |
+| step-result reads | `HappenedThisWay.toACard(DISCARD / RETURN, …)`, `NoteAmountEffect(TargetSpellManaValue)` | Reckless Handling, Cemetery Recruitment + Jared, Hurl into History + Overwhelming Intellect: 3 (5) |
+| reselect | `ReselectAttackingCreatureAttackTargetEffect` with a subject and the reselection query | Portal Mage + Capricopian, Misleading Signpost: 2 (3) |
+| returned-permanent reflexive | `ConditionalEffect(returned(), QueueReflexiveAbilityEffect` about `thisWay(RETURN))` | Back for More, Jailbreak: 2 (2) |
+| The Master split | exile + `ChoosePlayerEffect` + `TargetPlayerChoosesOneEffect.villainousChoiceFacedBy` | The Master, Gallifrey's End: 1 (1) |
+| guess | `MasterOfPredicamentsEffect` (unaudited) with a threshold amount, a guesser and an "if you don't cast" step | The Seventh Doctor: 1 (1) |
+| SEARCH step (T2) | sacrifice + `SearchLibraryEffect` recording SEARCH + mana-value branch + `MayPayManaEffect(X)`; cost-shape | Transmute Artifact: 3 (1) |
+
+**Blocked (9):**
+- Morphic: `MorphicTideEffect` and its two continuations are `blocked-player-loop`. Every player shuffles, reveals "that many" and puts the revealed cards in type batches all at once. Glimpse of Tomorrow alone could be split with existing steps.
+- Nihiloor's enter trigger and its engine-built tap-and-steal record are `blocked-other`: they need one reflexive ability per opponent, naming each player.
+- Perpetual's 3 records are `blocked-other`: they make perpetual changes to cards in a hand or library, which waits on the owner's hidden-zone logging question.
+- `CompleteAmassGoblinsEffect` is `blocked-step-model`: it is the amass continuation after token creation pauses for a choice.
+
+**Unique (17):**
+- Combat: Stack of Paperwork's rule and its engine-built stack object.
+- Complete: Map to Lorthos's Temple's checklist, the dungeon-completion marker.
+- First: Reed Richards.
+- Halve: Ghosts of the Innocent.
+- Karn: Karn Liberated.
+- Lose: Soulgorger Orgg, Great Fang Chroniclers.
+- Mana: Mana Clash.
+- Own: A Good Thing.
+- Permanents: Disciple of Caelus Nin.
+- Power: Kang the Conqueror's power-up marker.
+- Psychic: Psychic Battle and its retarget answer.
+- Reselect: Grip of Chaos.
+- The: The Valeyard.
+
+**Seen, not changed** (confirmed by reading, not run):
+- Portal Mage and Capricopian: `ReselectAttackingCreatureAttackTargetEffectHandler` offers `getValidAttackTargetIds`, so a planeswalker that can't be attacked is left out. Portal Mage's ruling says reselecting ignores all restrictions, and Misleading Signpost's handler uses `getValidReselectionTargetIds`. Sure; low impact.
+- Mirri, Weatherlight Duelist: only the defending player is limited, but the Oracle text says "each opponent". Sure; multiplayer only.
+- Karn, Scion of Urza +1 hands the choice to the first other seat. Wardscale Dragon's defender falls back to the first other seat when no attack target is recorded. Sure; multiplayer only.
+- `TextChangeTransformer` has no `LandsOfSubtypeBecomeTypeEffect` case, so a land-type text change (CR 612.2) doesn't rewrite Conversion or Glaciers. Blood Moon's record is rewritten. Sure; low impact.
+- Bane of Bala Ged exiles the chosen permanents one at a time rather than together (CR 603.10a look-back). Fairly sure; low impact.
+- Glimpse of Tomorrow and Morphic Tide put each Aura onto the battlefield in its own continuation, after the earlier batch's enter processing, instead of as one batch. Medium sureness; low impact.
+- Jailbreak's "when that permanent enters" record takes the returned permanent as its source, where CR 603.7d makes the spell the source. No visible effect was found. Not verified.
+- Notes, not defects:
+  - Betrayal of Flesh and Solar Tide have Entwine but use `EscalateSacrificeCost`. With two modes the payment is the same (CR 702.42a vs 702.120a).
+  - `ManaCopyRider.INSTANT_OR_SORCERY_SPELL` is set by no card.
+
+**Anything left.** No record in this chunk is without a row. The batches reach records outside the chunk:
+- **Rows to re-triage:**
+  - Ethersworn Canonist's `CantCastAdditionalNonartifactSpellsEffect` (triage 2, `unique`) belongs with `LimitSpellsPerTurnEffect`.
+  - The "not fused" step-8 `unique` rows of `PowerBoostForCrewAndSaddleEffect`, `UseToughnessForCrewAndSaddleEffect` and `ExchangeControllerAndTargetPlayerLifeTotalsEffect` are now batch survivors or members.
+- **Unaudited records the batches touch:**
+  - `TargetCreatureDealsPowerDamageToEachOtherCreatureEffect` (4)
+  - `DamageCantBePreventedEffect` (4)
+  - `ControlledCreaturesCombatDamageCantBePreventedEffect` (2)
+  - `MustBlockTriggeringAttackerEffect` (2)
+  - `EscalateManaCost` (31)
+  - `EntwineManaCost` (5)
+  - `RequirePaymentToAttackEffect` (12)
+  - `RequirePaymentToBlockEffect` and the five Require*Turn makers
+  - `MultiplyTokenCreationEffect` (12)
+  - `GrantBasicLandTypeToTargetEffect` (26)
+  - `NonbasicLandsBecomeTypeEffect` (4)
+  - `ControlledLandsBecomeTypeEffect`
+  - `BasicLandsOfChosenTypesBecomeTypeEffect`
+  - `AllLandsProduceChosenColorUntilEndOfTurnEffect`
+  - `LimitSpellsPerTurnEffect` (11)
+  - `MaximumCombatCreaturesEffect` (8)
+  - `EnterPermanentsOfTypesTappedEffect` (23)
+  - `LoseAllLandTypesEffect` (4)
+  - `UseToughnessForStationEffect`
+  - `MasterOfPredicamentsEffect`
+  - `AddOnePlusOneCountersEffect` (5)
+
+Suggested fold order:
+1. The by-parameter rows: Foul-Tongue Shriek and Tezzeret, Phyrexian Censor, Mana Echoes, Nihiloor's attack, Reckless Handling, Medomai's Prophecy.
+2. The reselect pair, which also fixes Portal Mage's restriction defect.
+3. The free-ability-cost batch.
+4. The land-type batch.
+5. The modal additional-cost batch, together with step 10's cost-pair weighing.
+
 ## Prompt
 
 Replace `<N>` with the step number. For step 9, add the run kind and its scope (`step 9, triage run: Destroy, Search`;
