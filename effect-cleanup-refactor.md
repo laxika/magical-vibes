@@ -3119,6 +3119,126 @@ Each note names the fold to take once the question is decided. Records whose car
 
 For the next run: build `StepKind.CONJURE` with the random-spellbook exile step (Rekindling, Flameweaver, Darigaaz). Then fold the duplicate-destination pair together with the graveyard-ability store merge (Fallaji, Gyox, Sibsig's Artisan, Chitinous Crawler, Smog Smasher, the two 5m rows).
 
+### Step 9, parallel triage chunk 13 (2026-11-23)
+
+Verdicts only. No repo file changed and the ratchet did not move. The chunk has 85 ledger rows (notes start `triage P13: …`), read against `7fd81e1c03`.
+
+What was read:
+- Every record and every handler to its end. Where a record has no handler, its readers were read instead:
+  - `DamagePreventionService.applyDamageHealingReplacement` (Wolverine)
+  - `LayerSystemService` (Volrath's Shapeshifter)
+  - `Card.hasAllCardNames`
+  - `DrawService` (`findDrawSkipSource`, `isDrawSkipped`, the empty-library replacements)
+  - `MayMiscHandlerService` (the draw-replacement kinds)
+  - `CoinFlipService` (Krark's Thumb)
+  - `LifeSupport` (Lich's Duel Mastery)
+  - `GameQueryService` (Johan, Melira, Soul-Scar Mage, Ojer Axonil, Pale Moon, Peace Talks)
+  - `CastingPermissionService.hasLukkaExilePermission`
+  - `EsixTokenReplacementSupport` and `CreateTokenEffectHandler` (Mirrormind Crown, Moonlit Meditation)
+  - `JinnieFayTokenReplacements`
+  - `CloneService` (Mimeoplasm)
+  - `AmountEvaluationService` and `ConditionEvaluationService` (Pinkie Pie, `NthAbilityResolutionThisTurn`)
+  - `GameData`'s permission stores (Lukka, outside-the-game, phasing)
+  - `LifeBidAuctionSupport`, `MagmasaurUpkeepSupport`, `JuxtaposeSupport`
+  - `SpellCastingService`'s Misfortune and Fatal Lore prompt
+- Every card class that uses a record in the chunk.
+- Oracle text with `get_card` for the `unique` and `blocked-*` cards where the class left any doubt, and for the `step-9` cards whose handler does more than its name says. Checked: The Mind Stone, Wolverine, Head Games, The Hourglass Coven, Hostile Negotiations, Hunted by The Family, Illicit Auction, Infernal Offering, Illusionist's Gambit, Improvisation Capstone, Inventory Management, Quickbeast Amulet, Johan, Jeweled Bird, Kaya, Highway Reaver, Melira, Mind Spike, Memories Returning, Mob Verdict, Model of Unity, Pinkie Pie, Mirrormind Crown, Moonlit Meditation.
+- Immersturm Battlefield (MB2 playtest) is not in Scryfall; it was judged from its card class.
+- No CR number is cited in a new note beyond those already in the code's Javadoc.
+
+| Families (one or two records each) | Triaged | `step-9` | `blocked-other` | `blocked-player-loop` | `unique` |
+|---|---|---|---|---|---|
+| H: Harness, Has, Have, Hazorets, Head, Heal, Hold, Host, Hostile, Hunted | 10 | 3 | 1 | 0 | 6 |
+| I: Illicit, Illusionists, Imprint, Improvisation, Infernal, Inner, Intensify, Intuition, Inventory, Investigate, Island | 11 | 8 | 1 | 0 | 2 |
+| J: Jeweled, Jinnie, Johan, Juxtapose | 4 | 0 | 0 | 0 | 4 |
+| K: Kaya, Killing, Kiora, Knowledge, Krarks, Kroxa | 6 | 3 | 1 | 0 | 2 |
+| L: Liars, Lich, Licid, LimDuls, Living, Lock, Loses, Lukka | 8 | 3 | 0 | 0 | 5 |
+| M: Madcap through Murmurs | 24 | 14 | 1 | 1 | 8 |
+| N: Naked, Natural, Necropotence, Ninjutsu, Nonbasic, Noncombat | 6 | 3 | 0 | 1 | 2 |
+| O: Obstinate, Ojer, Omen, Open, Opposition, Order, Outside | 7 | 2 | 1 | 1 | 3 |
+| P: Pack, Pains, Parallel, Parley, Party, Peace, Phabine, Phase, Phased | 9 | 3 | 2 | 0 | 4 |
+| All | 85 | 39 | 7 | 3 | 36 |
+
+**Fold batches** (survivor or component → records, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| life-bid auction | one life-auction step that records the high bidder (`playersThisWay`) and the bid (`AmountThisWay`), then `LoseLifeEffect` + `GainControlOfTargetEffect.gainedBy` / a counter on winning / `DrawCardEffect(4)`; the three bid prompts become one and the `AsksDeathReplacementsFirst` asks are kept | Illicit Auction, Mages' Contest, Pain's Reward: 3 (3) |
+| exile-and-cast, by parameters | `ShuffleLibraryEffect` + `ExileTopCardsAndMayCastSpellsEffect(4, Fixed(5), null, MAX, false)` | Hazoret's Undying Fury: 1 (1) |
+| free-cast choice (P01) | `ExileCardsFromTopUntilEffect` with a total-mana-value stop + P01's cast-now survivor over `cardsThisWay(EXILE)` | Improvisation Capstone: 1 (1) |
+| drafted-cards step | `DraftCardFromSpellbookEffect` records the drafted card + `PutCardsOntoBattlefieldEffect(cardsThisWay(...))`; the `heldSpellbookCards` store goes | Hourglass Coven's hold: 1 (1), plus two re-triage rows |
+| Head Games split | `PutCardsIntoLibraryEffect.onTop(cardsInHand(targetPlayer()))` + `SearchTargetLibraryEffect(AmountThisWay(PUT_INTO_LIBRARY), HAND)` with a no-reveal HAND option | 1 (1) |
+| imprint split | `ExileGraveyardCardsEffect.cards(triggeringCards).imprintingOnSource()` + a gated put-into-graveyard step for the other exiled cards | Mimic Vat: 1 (1) |
+| Infernal Offering split | `ChoosePlayerEffect` + `SacrificePermanentsEffect` by you and `playersThisWay(CHOOSE)` (needs a player union) + `DrawCardEffect(2, playersThisWay(SACRIFICE))`, then the graveyard returns | 1 (1) |
+| by parameters | `ConditionalEffect(NthAbilityResolutionThisTurn(3), GrantKeywordEffect(...))`; `IntensifySourceCardEffect` (8 cards) with a `DynamicAmount` | Inner-Flame Igniter, Quickbeast Amulet: 2 (2) |
+| opponent-chosen card (P02) | reveal / search step + `ChooseCardEffect` chosen by an opponent + hand / graveyard movers | Intuition, Murmurs from Beyond: 2 (2); Gifts Ungiven and Burning-Rune Demon (unaudited) join |
+| target-players creature count | `CreateTokenEffect` with `PermanentCount` over a count scope that sums every target player | Officious Interrogation: 1 (1); Call the Coppercoats re-triage |
+| copier (T6) | `ChooseCardEffect.upTo(triggeringCards)` + `BecomeCopyOfSubjectEffect` until end of turn, except flying | Kaya, Spirits' Justice: 1 (1) |
+| look-and-cast (T4) | `LookAtTopCardsAndMayCastEffect` with a dynamic count and a mana-value-less-than predicate | Kiora, Sovereign of the Deep: 1 (1); Sunbird's Invocation (unaudited) joins |
+| Kroxa split | `DiscardEffect(1, eachOpponent())` + `LoseLifeEffect(3)` over the opponents not among `playersThisWay(DISCARD, nonland)` | 1 (1) |
+| loses all abilities | `LosesAllAbilitiesEffect` with an except-mana-abilities option; the two staticfx handlers merge | Blood Sun, Town-Razer Tyrant: 1 (2) |
+| Lukka permission | `ExileTopCardMayPlayThisTurnEffect(3).until(PERMANENT).mayOnlyCast(creature).playableOnlyIf(controls a Lukka planeswalker)` | `LukkaExileCastPermissionEffect`: 1 (engine-built); its maker re-triaged |
+| reveal-until split | `RevealCardsFromTopUntilEffect` + put through the entry batch + random bottom + `DealDamageToPlayersEffect(AmountThisWay(REVEAL))` | Madcap Experiment: 1 (1) |
+| may-remove-or-penalty, cost-shape | `MayEffect(RemoveCounterFromSourceEffect, penalty: note, sacrifice, MassDamageEffect(noted))`; `MayEffect` must skip the prompt when nothing can be removed | Magmasaur: 1 (1) |
+| manifest from hand (P08) | P08's manifest put marks the permanent manifested itself | `MarkChosenPermanentAsManifestedEffect`: 1 (engine-built) |
+| each-creature bite (P09) | `TargetCreatureDealsPowerDamageToEachOtherCreatureEffect` with a recipient filter + a multi-dealer bite back | Alpha Brawl: 1 (1) |
+| free ability cost (P09), cost-shape | the pay-{0} static with an unearth kind and a max-speed `Condition` | Highway Reaver: 1 (1) |
+| dead | delete, with its `CloneService` branch and mayfx handler | `MimeoplasmCopyOnEnterEffect`: 1 (0) |
+| splits | Mind Spike (`RevealCardsFromHandEffect` + `DiscardCardsEffect` + lose 2 + `NotCondition(REVEAL)` draw); Mirror of Fate (`ChooseCardEffect.upTo(7, exiledCards)` + exile the library + `PutCardsIntoLibraryEffect.onTop`); Necropotence (face-down exile + `RegisterDelayedStepTriggerEffect.aboutCardAtNext`) | 3 (3) |
+| opponent-chosen mode | `ChooseOneEffect` with an opponent chooser at cast | Misfortune: 1 (1); `FatalLoreEffect` (unaudited) joins |
+| mana twist | one basic-land mana-twist static with a land-type → colour map | Naked Singularity: 1 (1); Reality Twist (unaudited) joins |
+| land mana colour (P09) | `AllLandsProduceChosenColorUntilEndOfTurnEffect` with a land filter and a fixed colour | Pale Moon: 1 (1) |
+| land-or-cast | exile the top card + one "land onto the battlefield, else cast it free if able" step over a `CardSubject` | Omen Machine: 1 (1); Wild Evocation (run 13 unique) re-triage |
+| graveyard batch | `ChooseCardEffect.upTo(2, cardsInGraveyards)` + `PutCardsOntoBattlefieldEffect`; the Open/Close batch records go | Liliana, the Necromancer: 1 (1) |
+| parley | `ParleyEffect` (3 cards, unaudited): Storm Fleet Negotiator by parameters; Phabine as a REVEAL step + matching amounts | 2 (2) |
+| skip draw | one skip-draw static with a `PlayerSubject` and a `Condition` | Living Conundrum: 1 (1); Possessed Portal (unaudited) joins |
+| guess (P09) | `MasterOfPredicamentsEffect` survivor | 1 (1), with The Seventh Doctor |
+| attached-copy token replacement | one "first token creation each turn may become copies of the attached permanent" marker over `attached()` | Mirrormind Crown, Moonlit Meditation: 2 (2) |
+
+**Blocked (10):**
+- `blocked-other`, may-replace-draw payloads: Island Sanctuary, Obstinate Familiar, Parallel Thoughts. They are dispatched by `DrawReplacementKind` in `MayMiscHandlerService`, and one record for them needs an effect payload run inside a draw (the plan's next-draw replacement payload blocker; Fasting, Abundance, Zur's Weirding and Archmage Ascension share it).
+- `blocked-other`, Killing Wave: a per-creature ransom. It waits for step 10's option C with Giant Albatross, Essence Vortex, Erosion and Cleansing.
+- `blocked-other`, Hunted by The Family: needs a per-target villainous choice (kin of Kaboom!'s per-target repeat).
+- `blocked-other`, Mug: needs one this-turn cast permission over milled cards in either zone, with one limit across both.
+- `blocked-other`, Master of the Wild Hunt: there is no TAP step kind for "tapped this way" (Nihiloor's kin), and no damage step takes the divided return damage.
+- `blocked-player-loop`: Manifold Insights, Natural Balance, Order of Succession.
+
+**Unique (36):**
+- Harness, Omnipresent Impostor, Volrath's Shapeshifter, Wolverine, Immersturm Battlefield, Hostile Negotiations
+- Illusionist's Gambit, Inventory Management, Jeweled Bird, Jinnie Fay, Johan, Juxtapose
+- Knowledge Pool, Krark's Thumb, Liar's Pendulum, Lich's Duel Mastery, Licid end, Lim-Dûl's Vault
+- Room door lock, madness trigger, Maro's Gone Nuts, Melira, Memories Returning, Trinisphere
+- Mob Verdict, Model of Unity, Motivate, Ninjutsu, Soul-Scar Mage, Ojer Axonil
+- Opposition Agent, outside-the-game permission store, Pinkie Pie, Peace Talks, Pandorica phase-in, phased-out hold
+
+**Seen, not changed** (confirmed by reading, not run):
+- Madcap Experiment puts the found artifact directly (`putPermanentOntoBattlefield`), outside the entry batch: Phyrexian Metamorph's copy choice and an artifact Aura's host are never asked (CR 303.4f). Fairly sure; uncommon.
+- Kaya, Spirits' Justice's target spec is "token" with no "you control"; the Oracle text says "target token you control". Fairly sure.
+- Misfortune's second mode puts -1/-1 counters on every opponent's creatures and damages each opponent, where the Oracle text says "that player". Sure; multiplayer only.
+- `CastingPermissionService.hasLukkaExilePermission` asks for a planeswalker whose card name starts with "Lukka,", not one with the Lukka planeswalker subtype, and reads the card's printed type. Sure; low impact.
+- These are read with `getCard().getStaticEffects()` and no lost-abilities or face-down check (CR 613.1f, 708.2a): Mirrormind Crown and Moonlit Meditation (Esix asks), Pinkie Pie's party rule, and Living Conundrum and Possessed Portal's skip-draw readers. Sure of the code; low impact.
+- Mug's graveyard permission and exile permission group don't share "a spell", so one spell can be cast from each zone. Sure; rare.
+- Hostile Negotiations, Memories Returning and Murmurs from Beyond pick the opponent by seat or ask the controller; Hostile Negotiations always takes the first other seat. Sure; multiplayer only.
+- Hazoret's Undying Fury's `isCastableSpell` leaves out battles and Adventure halves. Sure; low impact.
+- Unverified:
+  - The Parley handlers and Officious Interrogation `return` once token creation pauses for a replacement offer, which may drop the draws, the boost or the remaining Clues.
+  - Omen Machine builds its own stack entry and checks additional costs without paying them.
+- Note: `PackHuntEffect`'s Javadoc says the damage back is divided evenly; the handler asks the target's controller, as the Oracle text says.
+
+**Anything left.** No record in this chunk is without a row.
+- **Rows to re-triage:**
+  - `PutHeldSpellbookCardsOntoBattlefieldEffect` (run 12 unique) and `DraftTwiceFromSpellbookEffect` (P08 blocked-other): the drafted-cards step batch.
+  - `CreateTokensForEachTargetPlayerCreatureEffect` (run 19 blocked-other): a count scope is not a subject inside `DynamicAmount`.
+  - `ExileTopCardsWithLukkaPermissionEffect` (run 4 unique): `playableOnlyIf` exists since run 12.
+  - `RevealRandomHandCardAndPlayEffect` (run 13 unique): the land-or-cast batch with Omen Machine.
+- **Unaudited records the batches touch:** `GiftsUngivenEffect` (3), `BurningRuneDemonEffect`, `SunbirdsInvocationRevealAndCastEffect`, `FatalLoreEffect`, `RealityTwistManaEffect`, `PossessedPortalDrawReplacementEffect`, `ParleyEffect` (3), `CloseGraveyardReturnBatchEffect`, `IntensifySourceCardEffect` (8), `FastingEffect`, `LibraryNinjutsuEffect`, `AllLandsProduceChosenColorUntilEndOfTurnEffect`.
+- **Suggested fold order:**
+  1. The by-parameter rows: Hazoret, Inner-Flame Igniter, Quickbeast Amulet, Storm Fleet Negotiator, Pale Moon. Then the Mimeoplasm delete.
+  2. The life-bid batch.
+  3. The attached-copy token pair, adding their lost-abilities check.
+  4. The splits that also fix a defect: Madcap Experiment (entry batch), Kaya (target spec), Misfortune (with Fatal Lore).
+  5. The P02, P08 and P09 joins with their batches.
+
 ## Prompt
 
 Replace `<N>` with the step number. For step 9, add the run kind and its scope (`step 9, triage run: Destroy, Search`;
