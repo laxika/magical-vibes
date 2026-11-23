@@ -24,7 +24,7 @@ bottom.
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,398 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts; triage run 2 gave Search and Cant (79 rare) theirs; triage run 3 gave Sacrifice and Destroy (75 rare) theirs; triage run 4 gave Look and Remove (71 rare) theirs; triage run 5 gave Add and Gain (64 rare) theirs (302 `step-9` rows wait for fold runs). Defect runs 1 and 2 fixed most of the defects the triage runs saw (their Findings). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; the next families with no owner's question are Become (30 rare), Draw (28), Set (27) and Double (27). |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,313 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts; triage run 2 gave Search and Cant (79 rare) theirs; triage run 3 gave Sacrifice and Destroy (75 rare) theirs; triage run 4 gave Look and Remove (71 rare) theirs; triage run 5 gave Add and Gain (64 rare) theirs; triage run 6 gave Become, Draw and Double (85 rare) theirs (365 `step-9` rows wait for fold runs). Defect runs 1 and 2 fixed most of the defects the triage runs saw (their Findings). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; the next families with no owner's question are Set (27 rare), Seek (26), Copy (26), Deal (25), Cast (25) and Allow (25). |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -284,6 +284,7 @@ Each run ends with its family row in Findings: audited, absorbed, split, blocked
 | Sacrifice, Destroy | T3 | triaged, no code changed: 75 rows (`step-9` 54, `blocked-other` 10, `blocked-player-loop` 1, `unique` 10); fold batches in T3's Findings, among them a delayed ability about the entry's target |
 | Look, Remove | T4 | triaged, no code changed: 71 rows (`step-9` 53, `unique` 18); fold batches in T4's Findings, among them one store for counters on exiled cards and a player-counter removal |
 | Add, Gain | T5 | triaged, no code changed: 64 rows (`step-9` 49, `blocked-other` 3, `unique` 12); fold batches in T5's Findings, among them one counter-placement replacement, one token addition, the ability borrowers over permanent and static card subjects |
+| Become, Draw, Double | T6 | triaged, no code changed: 85 rows (`step-9` 63, `blocked-other` 6, `unique` 16); fold batches in T6's Findings, among them a copier subject and copy exceptions on `BecomeCopyOfSubjectEffect`, the draw-then-discard reads of the DISCARD step, the source, recipient and floated damage doublers, the counter doublers onto triage 5's counter-placement batch |
 
 Cross-cutting results of those runs, now conventions or shared pieces (Standing knowledge): the face-down hiding rules; stay checks
 (CR 400.7, 603.7c) on every return and delayed return; what a put step moves enters through the entry batch (as-enters and Aura host
@@ -1455,6 +1456,111 @@ baselines. New cases in 12 card test classes. No assertion was loosened.
 
 **For the next run.** Fold runs as triage runs 3 to 5 recommend. Giant Albatross and Last Light of Durin's Day each need a piece named in
 the open defects; Rakdos Charm waits with the bite's simultaneous damage.
+
+### Step 9, triage run 6 (2026-11-23)
+
+Verdicts only: no Java, test or agent-docs file changed; the ratchet did not move. 85 ledger rows appended (step 9, notes
+`triage 6: …`): the whole of Become (30 rare), Draw (28 rare) and Double (27 rare). Every record was read with its handler to the
+end and the card classes that use it; for the records with no handler, their readers: `GameQueryService`'s controller, source,
+permanent, recipient and combat damage multipliers and its counter-replacement branches, `DrawService`'s position and doubling
+scans, `StepTriggerService` (the monarch draw, the emblem draw), `ExploreEffectHandler`, the three connive handlers,
+`LibraryChoiceHandlerService`'s search-to-graveyard copy, `GraveyardChoiceHandlerService`'s two copy completions, the two copy
+mayfx handlers, `PermanentCopierService` and `LayerSystemService`'s Soul Sculptor branches. Oracle text checked with `get_card` for
+every `unique` and `blocked-*` card (Opal Acrolith, Hidden Stag, Grist, Necromancy, Zygon Infiltrator, The Irencrag, Impatient
+Iguana (`CMB1`), Leader, Super-Genius, Teferi, Who Slows the Sunset, Stinging Study, Rowdy Crew, Sigarda's Splendor, Indulgent
+Tormentor, Divine Intervention, Mathemagics, Psychic Vortex, Bitter Feud, Topography Tracker, Doubling Cube, Bruvac, Bloodletter
+of Aclazotz, Tekuthal, Unbound Flourishing) and for Mimeoplasm, Revered One, Taskmaster, Vesuvan Drifter, Sudden Salvation, Jon
+Irenicus, Malignant Growth, Lightning, Army of One and Goldnight Castigator; the others were judged from their card classes.
+Rulings read: Lazav, Dimir Mastermind; Curie, Emergent Intelligence. CR 205.1a, 205.1b, 406.3, 608.2h, 616.1, 707.2, 707.9b,
+707.10 and 708.2a checked with `get_rule` (2026-11-23).
+
+| Family | Triaged | `step-9` | `blocked-other` | `unique` | Left unaudited |
+|---|---|---|---|---|---|
+| Become | 30 rare | 24 | 3 | 3 | 0 rare, 13 in all |
+| Draw | 28 rare | 19 | 3 | 6 | 0 rare, 0 in all |
+| Double | 27 rare | 20 | 0 | 7 | 0 rare, 6 in all |
+
+All families: 1,313 rare records without a row (before: 1,398). `step-9` rows waiting for fold runs: 365 (latest verdict per
+class).
+
+**The copy batches.** Eighteen Become records are copies, each with its own handler around `PermanentCopierService`. They fold onto
+run 8's `BecomeCopyOfSubjectEffect` with four additions, each used by three or more records: a **copier `PermanentSubject`**
+(default `source()`; run 38's lead), the **copy exceptions** as one component (name, P/T, added or replaced types, subtypes,
+supertypes and keywords, an added ability; CR 707.9b; `BecomeCopyOfTargetCreatureUntilEndOfTurnEffect` and
+`BecomeCopyOfTargetPermanentUntilYourNextTurnEffect` already carry them field by field), **targeting card subjects** (the record
+refuses a card subject that declares a target today) and the durations `UNTIL_YOUR_NEXT_TURN`. Its permanent path must read
+`copiableCard` (it reads `getCard()`), and a card subject must be able to read a card as it last existed in its zone (Lazav, Dimir
+Mastermind's ruling).
+
+**Fold batches** (survivor or shared component → records, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| copy, by parameters | `BecomeCopyOfSubjectEffect` as it is | Unstable Shapeshifter (`triggering()`, keeping this ability), Deepfathom Echo (`ChoosePermanentsEffect` + `thisWay(CHOOSE)`), Valki (`ChooseCardEffect` over `exiledWithSource()`), The Mycosynth Gardens (`target()`, once the target is declared and `copiableCard` read): 4 (4) |
+| copy exceptions + card targets | `BecomeCopyOfSubjectEffect` + the copy-exceptions component | Lazav the Multifarious + Likeness Looter (one record), Mimeoplasm, Lazav Dimir Mastermind, Taskmaster, Vesuvan Drifter (`cardsThisWay(REVEAL, creature)`), the engine-built `BecomeCopyOfCardUntilEndOfTurnEffect` (its makers: the unaudited exiled-with-source head, Nascent Metamorph's blocked row, Spirit of Resilience, a token copy): 6 (6) |
+| copier subject | `BecomeCopyOfSubjectEffect` + a copier `PermanentSubject` | Permeating Mass + The Flood of Mars (one record), The Animus, The Myriad Pools; with run 38's Reflection Net row and the three attached-copier records: 3 (4) |
+| cost-paid copy | a permanent subject naming the permanent paid as the cost, as it last existed | Curie (+ an added ability), The Ever-Changing 'Dane (keeps its no-duplicate rule): 2 (2) |
+| copy, with their makers | triage 2's SEARCH batch; Spirit of Resilience's split | `BecomeCopyOfCardInGraveyardUntilEndOfTurnEffect` (Scion), `BecomeCopyOfOneOfCardsUntilEndOfTurnEffect`: 2 (engine-built) |
+| resolution colour | `BecomeChosenColorsUntilEndOfTurnEffect` (5 cards) with a `PermanentSubject`, a `Duration` and a colour spec (chosen, fixed, colorless) | Prismatic Lace + Shyft (one record), Xathrid Gorgon, Scrapbasket; the unaudited `BecomeColorlessUntilEndOfTurnEffect` (5) and Dream Coat's record join: 3 (4) |
+| static chosen colour | `BecomeColorlessEffect` (9 cards) with a colour component | Alloy Golem + Puca's Eye (one record); Shimmerwilds Growth's and Shifting Sky's unaudited records join: 1 (2) |
+| chosen-colour grants | `ChooseColorAtResolutionEffect` + grants reading the resolution's colour + `ClearChosenColorEffect` | Mondo Gecko; 8.29's blocked Skrelv / Sungold Sentinel row: 1 (1) |
+| Become, single | existing records | Soul Sculptor (`SetCardTypesEffect` + `LosesAllAbilitiesEffect` until a creature spell is cast), Angel of Eternal Dawn (`BecomeNightEffect` with a day / night component): 2 (2) |
+| draw then discard | `DrawCardEffect` + `DiscardEffect` (an earlier step) + DISCARD reads | Civilized Scholar (`HappenedThisWay.toACard(DISCARD, creature)`), Spellbound Dragon (a discarded mana value read), Occult Epiphany (`cardsThisWay(DISCARD)`), Your Nightmares Are Delicious (once the discard-down records DISCARD); two `GameData` pending fields and the inline follow-up go: 4 (4) |
+| sacrificed-permanent condition | `SacrificedCardMatches` also taking a `PermanentPredicate` judged on the sacrificed snapshot | Splitting the Powerstone (as it is), Agency Coroner (suspected), Tevesh Szat, Doom of Fools (commander): 3 (3) |
+| library-position draw | `DrawFromBottomOfLibraryEffect` with a position | Lantern of Undersight + River Song (one record), Heart of a Duelist: 2 (3) |
+| Draw, by parameters | existing records | Distant Melody + Harmonized Crescendo (`ChooseCreatureTypeAtResolutionEffect` + a count), Black Panther + Farideh (`EventValueAtLeast`), Archivist of Gondor and the monarch draw (`activePlayer()` / `you()`), Bebop (`NoteAmountEffect` + draw + loss), Sudden Salvation, Anticausal Vestige (`CardManaValueAtMostControlledLandsPredicate`), Beck (`RegisterGlobalTriggeredAbilityEffect` this turn), Malignant Growth (`AmountThisWay(DRAW)` damage): 8 (10) |
+| Draw, with a new part | an otherwise branch judged once; a target payer on `MayPayLifeEffect` (cost-shape) | Jon Irenicus, Wyll's black specialization: 2 (2) |
+| source doublers | `DoubleDamageFromCreaturesEffect` with a source filter judged on permanents and spells, "any source", and a combat-to-players option | Calamity Bearer + Trance Kuja (one record), Collective Inferno, Obosh, Charging Tuskodon; Neriv and Uncivil Unrest by parameters today: 6 (7) |
+| recipient doublers | `DoubleDamageToOpponentsAndTheirPermanentsEffect` with a recipient permanent subject and `you()` | Goldnight Castigator, Lightning (floated); the blocked `DoubleDamageToOpponentsEffect` and `DoubleDamageToEnchantedPlayerEffect` rows: 2 (2) |
+| floated doublers | the static doublers floated with a `Duration`, one floating read in `GameQueryService` | Insult + Quest for Pure Flame (one record), Overblaze, Blind Fury (with Lightning above): 3 (4) |
+| counter doublers | triage 5's counter-placement survivor with a doubling operation | Vorinclex + Innkeeper's Talent (one record), Loading Zone, Selesnya Loft Gardens, Doubling Season, Aether Refinery (player side): 5 (6) |
+| counters on a set | `DoubleCountersOnTargetPermanentEffect` with `controlledBy(...)` | Ultimate Spider-Man; the blocked `DoublePlusOneCountersOnControlledCreaturesEffect` row: 1 (1) |
+| power doublers | `DoubleTargetCreaturePowerEffect` (5 cards) with a `PermanentSubject` | Double Trouble + Thrakkus (one record), God-Eternal Rhonas: 2 (3) |
+| draw doublers | `DoubleDrawReplacementEffect` with an except-the-first-draw-step-draw flag | Thought Reflection + Vnwxt; the unaudited `DoubleDrawExceptFirstDrawStepDrawEffect` (3): 1 (2) |
+
+Blocked (6): Opal Acrolith + Hidden Stag (`BecomeEnchantmentEffect`: the undo of `BecomeCreatureEffect`'s card swap; a layered type
+set folds it only once that animation is a timestamped floating effect), Grist (an out-of-battlefield characteristic, run 18's
+redesign), Zygon Infiltrator (a duration anchored on the copied target, one card), Rowdy Crew (a shared-card-type read of the
+discard, one card), Indulgent Tormentor (a two-payment punisher, step 10), `DrawCardsCost` (Psychic Vortex's cumulative upkeep
+cost, step 10).
+
+Unique (16): Become: Necromancy, The Irencrag, Impatient Iguana. Draw: Leader, Super-Genius (the connive replacement), Teferi's
+emblem draw, Stinging Study (a commander choice across zones), Sigarda's Splendor (a note kept across turns), Divine Intervention,
+Mathemagics (2^X). Double: Topography Tracker, Doubling Cube, Bitter Feud, Bruvac, Bloodletter of Aclazotz, Tekuthal, Unbound
+Flourishing (each the only implementer of its replacement or the only reader of its object).
+
+**Seen, not changed** (confirmed by reading, not run):
+
+- `BecomeEnchantmentEffect` sets the permanent's card back to `getOriginalCard()`, which `CloneService`'s `applyCloneCopy` leaves as
+  the copier's own card: a Clone copying Opal Acrolith that activates "{0}: becomes an enchantment" becomes a Clone again (a 0/0) and
+  any later copy effect is dropped. Sure of the code; fairly sure of the consequence.
+- Taskmaster, Mercenary Mimic copies a face-down target creature's card (`targetPermanent.getCard()`), not its face-down copiable
+  values, and names the card in its log (`publicName` of a card) (CR 707.2, 708.2a). Sure of the code.
+- `BecomeCopyOfEnteringCreatureEffect` (Unstable Shapeshifter) copies a face-down entering creature as a nameless 2/2 without the
+  face-down subtypes and ward `faceDownCopiableCard` gives, and reads a face-up one's `getCard()`, not `copiableCard`;
+  `BecomeCopyOfSubjectEffect`'s permanent path reads `getCard()` too (an animated or bestowed copied permanent). Sure of the code; the
+  consequence for an animated land copied by Identity Thief wasn't traced.
+- `DrawService` reads Heart of a Duelist's and the draw-from-bottom replacements from printed static effects: a face-down one still
+  applies (CR 708.2a), the any-position scan has no lost-abilities check, and when both apply the engine always takes "any
+  position" first where the drawing player chooses (CR 616.1). Sure of the code; low impact.
+- Blind Fury's doubling skips Maro's Gone Nuts' factor, which every other doubler applies. Sure of the code; playtest card only.
+- `BecomeCopyOfCardUntilEndOfTurnChoiceHandler`'s question path (`ofQuestionCard()`) has no maker. Dead code.
+- The Mycosynth Gardens and Valki log nothing when they become a copy. Low impact.
+
+**For the next run.**
+
+- Triage run 7: Set (27 rare), Seek (26), Copy (26); then Deal (25), Cast (25), Allow (25), Boost (23). Conjure (39) and
+  Perpetually (30) still wait for the owner. Copy's records should be judged against this run's copy batches (the copier subject and
+  the copy exceptions on `BecomeCopyOfSubjectEffect`).
+- Stale rows found: `PutCounterThenMayBecomeCopyOfCardsEffect` (5e, "fused (step 8)") and `EachOpponentDiscardsDownToHandSizeEffect`
+  (4e, "fused … step 8") block two of this run's folds; re-triage them with their batches.
+- Fold runs: the cheapest batches here need only existing records: copy by parameters, Soul Sculptor, Angel of Eternal Dawn, Draw by
+  parameters, Neriv and Uncivil Unrest, the draw-then-discard splits whose discard already records DISCARD. The copy batches need the
+  four `BecomeCopyOfSubjectEffect` additions first; the doublers each rewrite one `GameQueryService` reader.
+- The unaudited 3+-card records these batches touch: `BecomeChosenColorsUntilEndOfTurnEffect` (5), `BecomeColorlessUntilEndOfTurnEffect`
+  (5), `BecomeColorlessEffect` (9), `BecomeCopyOfExiledCreatureWithSourceUntilEndOfTurnEffect` (3),
+  `BecomeCopyOfTargetPermanentUntilYourNextTurnEffect` (3), `BecomeNightEffect` (3), `DoubleTargetCreaturePowerEffect` (5),
+  `DoubleControllerDamageEffect` (4), `DoubleDamageEffect` (3), `DoubleDrawExceptFirstDrawStepDrawEffect` (3).
 
 ## Prompt
 
