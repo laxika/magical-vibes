@@ -3239,6 +3239,125 @@ What was read:
   4. The splits that also fix a defect: Madcap Experiment (entry batch), Kaya (target spec), Misfortune (with Fatal Lore).
   5. The P02, P08 and P09 joins with their batches.
 
+### Step 9, parallel triage chunk 14 (2026-11-23)
+
+This run gave verdicts only. No repo file changed, the plan and ledger were read at `c2514dd407`, and the ratchet did not move. The 85 ledger rows (notes `triage P14: …`) are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/ptriage/out-14/ledger-rows.csv.
+
+**What was read**
+- Every record, its handler read to the end, and every card class that uses it.
+- For marker records with no handler, their readers:
+  - `DrawService`: the skip, counter, reveal-creatures, look-at-top, Uba Mask and Quantum Riddler sources.
+  - `GameQueryService`: Rain of Gore, radiation, FIFO stack, stun lock, token protection, `isRingBearer`, `hasSuspectedAbilities`.
+  - `CastingPermissionService`, `PlanechaseService`, `UntapStepService`, `LayerSystemService`, `GameData` (Sen Triplets, Brynhildr, text changes), `PermanentCopierService`, `PermanentRemovalService`.
+- Siblings compared:
+  - `RevealTopCardsAndSeparateEffect`, `GrantStaticEffectToPlayerEffect`, `RepeatEffect`, `VotingSupport`, `RingTemptsYouEffect`, `PersistReturnEffect`.
+  - `BecomeDayEffect`, `BecomeNightEffect`, `LookAtTopCardsAndMayCastEffect`, `ChooseCardEffect`, `ChooseCardsFromTargetHandEffect`.
+  - `OpponentLifeGainBecomesLifeLossEffect`, `SuspectEffect`, `EachPlayerChoosesLandAndPutCounterEffect`.
+- Oracle text: checked with `get_card` for every unique and blocked card and most step-9 cards. The MB1/MB2 playtest cards (Pokey, Red Herring, Do Over, Runed Terror, Queue of Beetles) are in no feed, so their class Oracle was used.
+- Rulings: Phyrexian Portal, Selective Adaptation.
+- Rules checked with `get_rule`: CR 101.4, 118.12a, 400.7, 406.3, 608.2h, 613.1f, 614.1a, 616.1, 701.30c, 701.38a, 701.54, 701.54a, 701.54c, 701.60c, 702.93a, 702.149a, 702.174a, 709.3a, 727.2.
+
+| Families | Triaged | step-9 | unique | blocked-player-loop |
+|---|---|---|---|---|
+| P (Phyrexian … Prisoners) | 12 | 7 | 5 | 0 |
+| Q–R (Quantum … Runed) | 20 | 5 | 14 | 1 |
+| S (Sages … Sylvan) | 27 | 6 | 20 | 1 |
+| T–U (Take … Undying) | 26 | 15 | 11 | 0 |
+| All (85 one-record families) | 85 | 33 | 50 | 2 |
+
+**Fold batches** (records / cards)
+- **two-option vote** (P10's new `VoteEffect`, survivor named on `VoteForDenialOrDuplicationEffect`). 3 / 3.
+  - Plea for Power: extra turn / draw three.
+  - Tyrant's Choice: `SacrificePermanentsEffect(…eachOpponent()).withSimultaneousChoices()` / `LoseLifeEffect(4, eachOpponent())`.
+  - Sail into the West: graveyard return + `ExileSpellEffect` / `EachPlayerMayDiscardHandThenDrawEffect(7)`.
+  - The unaudited `GaladrielElvenQueenEffect` has the same shape.
+- **council's dilemma** — `VoteEffect` with a per-option vote count the payloads read (both options apply), plus a secret-vote option. 3 / 3.
+  - Selvala's Stampede.
+  - Travel Through Caradhras: `RepeatEffect` per vote.
+  - Truth or Consequences: secret; its `GameData` `TruthOrConsequencesState` and `XValueChoice` prompt go.
+  - Unaudited joins: `CouncilDilemmaEffect` (Tivit), `ExpropriateEffect`, `FatefulTempestEffect`; secret: `MobVerdictEffect`, `CirdanTheShipwrightEffect`, `ElrondOfTheWhiteCouncilEffect`.
+- **exile-until-relative** — `ExileCardsFromTopUntilEffect` gains a source link and a filter relative to the spell (shares a card type / different name, as the spell last existed on the stack), then `MayCastExiledCardThenBottomRestEffect`. 2 / 2.
+  - Possibility Storm, Tibalt's Trickery.
+  - Each blocker now has three users, so re-triage run 20's Reweave row (`SacrificeTargetThenRevealUntilTypeToBattlefieldEffect`) and run 3's Krang & Shredder row (`ExileTopUntilNonlandOfEachOpponentWithSourceEffect`).
+- **ante exchange** (cost-shape) — one exchange-ownership step (`cardOwnerOverrides`, the source from anywhere into that player's graveyard) behind the payer's may: pay 10 life, or `AnteTopCardEffect`. 2 / 2: Tempest Efreet, Timmerian Fiends.
+- **look-at-top draw replacement** — the interface `LookAtTopCardsChooseOneToHandDrawReplacementEffect` becomes one record (count, rest to bottom or graveyard). 2 / 2: Tomorrow, Azami's Familiar; Underrealm Lich.
+- **repeat** — survivor `RepeatEffect` (Progenitor Exarch) takes `PopulateNTimesEffect` (Full Flowering); the handlers are identical. 2 / 2.
+- **Ring** — `TemptTheRingEffect` is absorbed by `RingTemptsYouEffect` (5 cards). 1 / 1.
+  - Store merge: `GameData.ringStates` with `ringLevels` + `ringBearerIds`.
+- **dead** — 2 / 0.
+  - `SelfBecomesCreatureOutsideBattlefieldEffect`: nothing constructs it.
+  - `SuspectedEffect`: goes with P08's suspect batch. Its float duplicates `hasSuspectedAbilities`. P08 said nothing reads it, but `LayerSystemService` does.
+- **pairs with records in other chunks** — 5 / 4.
+  - Possessed Portal + `LivingConundrumDrawReplacementEffect`: one skip-draw static.
+  - Reality Twist + `NakedSingularityManaEffect`: one land-to-colour map.
+  - The Celestus: `BecomeNightEffect` gains day / night / toggle, absorbing `BecomeDayEffect`.
+  - Rain of Gore → `OpponentLifeGainBecomesLifeLossEffect` (P02 unique) with a gaining-player scope. Weigh.
+  - Undying + `PersistReturnEffect` (engine-built): one record with a counter type.
+- **joins to earlier batches** — 4 / 4.
+  - Spark Rupture → P07's mana-value animation batch, P/T from loyalty counters.
+  - Fixed Point in Time → `GrantStaticEffectToPlayerEffect.untilYourNextTurn`.
+  - Sunbird's Invocation → triage 4's `LookAtTopCardsAndMayCastEffect`.
+  - Phyrexian Portal → `RevealTopCardsAndSeparateEffect` (`SEARCH_ONE_TO_HAND`, targeted separator) inside a library-size condition.
+- **splits and single folds** — 7 / 7.
+  - Rashmi, Eternities Crafter; Risky Move; Specter's Shriek; Turf War.
+  - Thran Tome (weigh): no put-into-graveyard mover over a card subject exists yet.
+  - Turnabout (weigh): six-option `ChooseOneEffect`.
+  - Fractured Loyalty (weigh): `gainedBy` the triggering object's controller.
+
+**Blocked (2, player loop)**
+- Rebirth: each player may ante, then each who did has 20 life. The handler antes before the next player decides.
+- Seize the Spotlight: its own loop is correct, but `villainousChoiceFacedBy` faces one player at a time, so it can't take it.
+
+**Unique (50)**
+- Engine-built:
+  - clash placement
+  - primeval counter
+  - Brynhildr's lore-renewed permission
+  - resolved copy payload
+  - spell colour float
+  - state-trigger form
+  - text-change payload
+  - training
+- MB1/MB2 playtest: Pokey, Red Herring, Do Over, Runed Terror, Queue of Beetles.
+- Already one record for two cards: Animate Dead / Dance of the Dead.
+- Card mechanics no other record shares:
+  - Fblthp's plot permission, Prisoner's Dilemma, Quantum Riddler, Strong's radiation, Raging River, Raiding Party
+  - Reckless Endeavor, Fossil Find, Rainbow Dash, Teyo, Sages of the Anima, Scrambleverse, Scroll Rack, Scythe Specter
+  - Season of the Witch, Selective Adaptation (two CHOOSE results needed at once), Sen Triplets, Serum Powder, Kasmina, Snowblind
+  - Signal the Clans, Spellweaver Volute, Storage Matrix, Stronghold Gambit, Pursuit of Knowledge, Fear of Sleep Paralysis
+  - Sylvan Library, Seasoned Dungeoneer's initiative, Threats Undetected, Timesifter, The Toymaker's Trap, Trade Secrets
+  - The Master, Multiplied; Turtles Forever; Uba Mask; Ugin's Nexus
+
+**Seen, not changed** (confirmed by reading, not run)
+- **The Ring is stored twice.** `TemptTheRingEffectHandler` writes `ringStates`; `RingTemptsYouEffectHandler` writes `ringLevels` / `ringBearerIds`. When Slip On the Ring tempts you:
+  - it raises no `temptedByRing` event and logs nothing;
+  - its level isn't read by `ControllerRingLevelAtLeast`;
+  - its bearer isn't read by `SourceIsRingBearer` or `PutCounterOnRingBearerEffect`;
+  - `isRingBearer` reads both stores, so a player can have two Ring-bearers.
+  - CR 701.54a, 701.54c. Sure.
+- **`RingTemptsYouEffect`'s bearer is never cleared on a control change.** Only `ringStates` is reset in `CreatureControlService.moveControl`, so a creature is the Ring-bearer again once control comes back (CR 701.54a). Sure of the code.
+- **Undying has no graveyard-stay check.** `UndyingReturnEffectHandler` lacks persist's `sourceCardGraveyardEntryVersion` check (CR 400.7), and uses `doublePlusOnePlusOneCounters` where persist uses `replaceCounters`. Sure of the code; the counter difference may not matter.
+- **Missing lost-abilities checks** (CR 613.1f):
+  - `DrawService.findDrawSkipSource` / `isDrawSkipped` (Possessed Portal) and `findCounterDrawReplacementSource` (Pursuit of Knowledge) have none. Sure.
+  - Uba Mask's reader asks only the floating `losesAllAbilitiesByEffect`. Sure, low impact.
+- **Turf War's ETB doesn't target.** `EachPlayerChoosesLandAndPutCounterEffect` has the controller choose as it resolves; the Oracle says "target land", so hexproof, shroud, protection and ward are skipped. Sure of the code.
+- **"An opponent chooses" takes the first opponent.** Threats Undetected and Turtles Forever use the first opponent in seat order. Fairly sure; correct with two players.
+- **Fear of Sleep Paralysis' lock is too narrow.** It is consulted only by the untap replacement (`cantBecomeUntapped`), not by other stun-counter removals. Fairly sure, low impact.
+- **Spark Rupture reads the printed type.** Its handler judges `getCard().hasType(PLANESWALKER)`. Low impact.
+
+**Left**
+- Nothing in the chunk.
+- Unaudited records these batches touch: `LivingConundrumDrawReplacementEffect`, `NakedSingularityManaEffect`, `BecomeDayEffect`, `BecomeNightEffect` (3 cards), `PersistReturnEffect`, `RingTemptsYouEffect` (5), `CouncilDilemmaEffect`, `ExpropriateEffect`, `FatefulTempestEffect`, `MobVerdictEffect`, `CirdanTheShipwrightEffect`, `ElrondOfTheWhiteCouncilEffect`, `GaladrielElvenQueenEffect`.
+- Rows to re-triage with their batches: run 20's Reweave row, run 3's Krang & Shredder row, and P02's `OpponentLifeGainBecomesLifeLossEffect`.
+- Suggested fold-run order:
+  1. The dead pair.
+  2. The by-parameter folds.
+  3. The Ring merge, with tests for the two Ring defects.
+  4. Undying with persist.
+  5. The two vote batches, together with chunks 10 and 12.
+  6. Exile-until-relative.
+  7. Ante exchange, with step 10.
+
 ## Prompt
 
 Replace `<N>` with the step number. For step 9, add the run kind and its scope (`step 9, triage run: Destroy, Search`;
