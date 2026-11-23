@@ -11,6 +11,9 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.s.Shock;
+import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import java.util.List;
 import java.util.UUID;
@@ -189,5 +192,25 @@ class WordOfCommandTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Fountain of Youth");
         harness.assertOnBattlefield(player1, "Angelic Chorus");
         assertThat(gd.mindControlledPlayerId()).isNull();
+    }
+
+    @Test
+    @CardUsed({TeferiTimeRaveler.class, Shock.class})
+    @DisplayName("Under its caster's Teferi, Time Raveler the chosen spell can't be cast, and it stays in its owner's hand")
+    void teferiStopsTheChosenCardBeingCast() {
+        harness.addToBattlefieldAndReturn(player1, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        Shock shock = new Shock();
+        harness.setHand(player1, List.of(new WordOfCommand()));
+        harness.setHand(player2, List.of(shock));
+        harness.addMana(player1, ManaColor.BLACK, 2);
+        harness.addMana(player2, ManaColor.RED, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+        harness.handleCardChosen(player1, 0);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == shock);
+        assertThat(gd.playerHands.get(player2.getId())).contains(shock);
     }
 }

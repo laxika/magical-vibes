@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -155,5 +157,22 @@ class GeodeGolemTest extends BaseCardTest {
     private void resolveCombatAndTrigger() {
         resolveCombat();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @CardUsed({TeferiTimeRaveler.class})
+    @DisplayName("An opponent's Teferi, Time Raveler stops the cast, and the commander stays in the command zone")
+    void opponentsTeferiStopsTheCast() {
+        harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        addAttackingGeodeGolem();
+        Card commander = putCommanderInCommandZone();
+
+        resolveCombatAndTrigger();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(commander.getId()));
+        assertThat(gd.playerCommandZones.get(player1.getId())).extracting(Card::getId)
+                .containsExactly(commander.getId());
+        assertThat(gd.commanderTaxByCardId).containsEntry(commander.getId(), 0);
     }
 }

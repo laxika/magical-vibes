@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
 
 import java.util.List;
 
@@ -240,5 +241,26 @@ class BonfireOfTheDamnedTest extends BaseCardTest {
         harness.assertInGraveyard(player2, "Grizzly Bears");
         harness.assertInGraveyard(player1, "Bonfire of the Damned");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
+    }
+
+    @Test
+    @CardUsed({TeferiTimeRaveler.class})
+    @DisplayName("An opponent's Teferi, Time Raveler stops the miracle cast, and the card stays in hand")
+    void opponentsTeferiStopsTheMiracleCast() {
+        harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        harness.setLibrary(player1, List.of(new BonfireOfTheDamned()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.inMutationScope(() -> harness.getDrawService().resolveDrawCard(gd, player1.getId()));
+        harness.inMutationScope(() -> harness.getPlayerInputService().processNextMayAbility(gd));
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).isEmpty();
+        harness.assertInHand(player1, "Bonfire of the Damned");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(4);
     }
 }

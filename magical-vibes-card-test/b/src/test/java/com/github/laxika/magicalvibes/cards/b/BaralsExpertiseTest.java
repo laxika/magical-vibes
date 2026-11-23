@@ -13,6 +13,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import java.util.List;
 import java.util.UUID;
@@ -220,5 +222,20 @@ class BaralsExpertiseTest extends BaseCardTest {
     private void addMana() {
         harness.addMana(player1, ManaColor.BLUE, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
+    }
+
+    @Test
+    @CardUsed({TeferiTimeRaveler.class})
+    @DisplayName("An opponent's Teferi, Time Raveler stops the free cast, and the spell stays in hand")
+    void opponentsTeferiStopsTheFreeCast() {
+        harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        GrizzlyBears bears = new GrizzlyBears();
+        castExpertise(List.of(new BaralsExpertise(), bears), List.of());
+
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(bears.getId()));
+        assertThat(gd.playerHands.get(player1.getId())).anyMatch(card -> card.getId().equals(bears.getId()));
+        harness.assertInGraveyard(player1, "Baral's Expertise");
     }
 }

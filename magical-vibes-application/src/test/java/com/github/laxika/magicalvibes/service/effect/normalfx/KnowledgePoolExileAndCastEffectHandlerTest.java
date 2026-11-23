@@ -6,6 +6,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.GameLogEntry;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 
@@ -55,6 +56,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -76,6 +78,7 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
     @Mock private PredicateEvaluationService predicateEvaluationService;
     @Mock private TargetLegalityService targetLegalityService;
     @Mock private ValidTargetService validTargetService;
+    @Mock private CastingPermissionService castingPermissionService;
     @InjectMocks
     private ExileSupport exileSupport;
     private GameData gd;
@@ -105,6 +108,8 @@ class KnowledgePoolExileAndCastEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         ReflectionTestUtils.setField(exileSupport, "exileCastTargetSupport", new ExileCastTargetSupport(
                 gameQueryService, predicateEvaluationService, targetLegalityService, validTargetService));
+        ReflectionTestUtils.setField(exileSupport, "castingPermissionService", castingPermissionService);
+        lenient().when(castingPermissionService.mayBeginCastDuringResolution(any(), any(), any())).thenReturn(true);
         InteractionHandlerRegistry registry = new InteractionHandlerRegistry(
                 () -> mock(com.github.laxika.magicalvibes.service.event.GameMutationCoordinator.class));
         registry.register(new KnowledgePoolCastChoiceInteractionHandler(exileSupport));

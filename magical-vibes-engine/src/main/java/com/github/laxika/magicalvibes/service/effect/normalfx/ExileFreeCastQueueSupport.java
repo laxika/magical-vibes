@@ -228,7 +228,7 @@ public class ExileFreeCastQueueSupport {
      */
     public boolean castableFromExile(GameData gameData, UUID playerId, Card card) {
         return !card.isCastOnlyFromGraveyard()
-                && castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)
+                && castingPermissionService.canCastDuringResolution(gameData, playerId, card)
                 && castingPermissionService.canCastWithSpellTimingRestriction(gameData, playerId, card);
     }
 

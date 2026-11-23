@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
 
 import java.util.List;
 
@@ -262,5 +263,26 @@ class ChandraTorchOfDefianceTest extends BaseCardTest {
         harness.forceActivePlayer(player);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         return permanent;
+    }
+
+    @Test
+    @CardUsed({TeferiTimeRaveler.class})
+    @DisplayName("Under an opponent's Teferi, Time Raveler the first +1 can't cast the exiled card and deals damage")
+    void opponentsTeferiStopsTheFirstPlusOneCast() {
+        addReadyChandra(player1, 4);
+        harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        Card creature = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(creature));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        int lifeBefore = gd.playerLifeTotals.get(player2.getId());
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.getPlayerExiledCards(player1.getId())).contains(creature);
+        assertThat(gd.playerLifeTotals.get(player2.getId())).isEqualTo(lifeBefore - 2);
+        assertThat(gd.playerManaPools.get(player1.getId()).get(ManaColor.GREEN)).isEqualTo(2);
     }
 }

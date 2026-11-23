@@ -94,7 +94,7 @@ public class OmenMachineDrawStepEffectHandler implements NormalEffectHandlerBean
             }
         } else {
             // Non-land — cast without paying mana cost if able
-            if (!castingPermissionService.isSpellCastingAllowed(gameData, targetPlayerId, topCard)
+            if (!castingPermissionService.canCastDuringResolution(gameData, targetPlayerId, topCard)
                     || castingCostService.getCastCostModifier(gameData, targetPlayerId, topCard) > 0
                     || !castingCostService.canPayAdditionalSpellCosts(gameData, targetPlayerId, topCard)) {
                 gameLogService.append(gameData, GameLog.cardThen(topCard, " can't be cast and remains in exile."));

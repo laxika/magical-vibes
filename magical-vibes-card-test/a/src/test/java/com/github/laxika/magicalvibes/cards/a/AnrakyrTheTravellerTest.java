@@ -12,6 +12,8 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
 
 import java.util.List;
 
@@ -239,5 +241,24 @@ class AnrakyrTheTravellerTest extends BaseCardTest {
 
     private void addReadyAnrakyr() {
         addCreatureReady(player1, new AnrakyrTheTraveller());
+    }
+
+    @Test
+    @CardUsed({TeferiTimeRaveler.class})
+    @DisplayName("An opponent's Teferi, Time Raveler stops the cast, so no life is paid and the artifact stays in hand")
+    void opponentsTeferiStopsTheCast() {
+        harness.setLife(player1, 10);
+        MindStone mindStone = new MindStone();
+        harness.setHand(player1, List.of(mindStone));
+        harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        addReadyAnrakyr();
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(mindStone.getId()));
+        assertThat(gd.getLife(player1.getId())).isEqualTo(10);
+        assertThat(gd.playerHands.get(player1.getId())).contains(mindStone);
     }
 }

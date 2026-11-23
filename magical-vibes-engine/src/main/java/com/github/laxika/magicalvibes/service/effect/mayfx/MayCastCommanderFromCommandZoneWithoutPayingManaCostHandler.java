@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayCastCommanderFromCommandZoneWithoutPayingManaCostEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.input.InputCompletionService;
 import com.github.laxika.magicalvibes.service.input.MayCastHandlerService;
 import com.github.laxika.magicalvibes.service.spell.SpellCastingService;
@@ -29,6 +30,7 @@ public class MayCastCommanderFromCommandZoneWithoutPayingManaCostHandler impleme
     private final InputCompletionService inputCompletionService;
     private final SpellCastingService spellCastingService;
     private final GameQueryService gameQueryService;
+    private final CastingPermissionService castingPermissionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -57,6 +59,13 @@ public class MayCastCommanderFromCommandZoneWithoutPayingManaCostHandler impleme
                 || !gameQueryService.canCastSpellFromZone(gameData, card, Zone.COMMAND, player.getId())) {
             gameLogService.append(gameData, GameLog.cardThen(card,
                     " can't be cast from the command zone."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        // CR 608.2g, CR 601.3: a cast during this resolution is stopped by any "can't cast" that applies.
+        if (!castingPermissionService.canCastDuringResolution(gameData, player.getId(), card)) {
+            gameLogService.append(gameData, GameLog.cardThen(card,
+                    " can't be cast right now and stays in the command zone."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

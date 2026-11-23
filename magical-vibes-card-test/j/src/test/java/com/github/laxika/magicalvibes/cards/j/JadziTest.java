@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 
 import java.util.List;
 
@@ -262,5 +263,25 @@ class JadziTest extends BaseCardTest {
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerDecks.get(player1.getId())).isEmpty();
         harness.assertOnBattlefield(player1, "Jadzi, Oracle of Arcavios");
+    }
+
+    @Test
+    @CardUsed({RuleOfLaw.class})
+    @DisplayName("Under Rule of Law the revealed nonland card can't be cast after the instant, and it stays on top")
+    void ruleOfLawStopsTheCastAndTheCardStaysOnTop() {
+        addCreatureReady(player1, new Jadzi());
+        harness.addToBattlefield(player2, new RuleOfLaw());
+        Card topCard = new GrizzlyBears();
+        harness.setLibrary(player1, List.of(topCard, new Forest()));
+        harness.setHand(player1, List.of(new Shock()));
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        harness.castAndResolveInstant(player1, 0, player2.getId());
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == topCard);
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(topCard);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(1);
     }
 }

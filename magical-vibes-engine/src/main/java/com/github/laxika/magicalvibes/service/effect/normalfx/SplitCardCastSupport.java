@@ -335,6 +335,10 @@ public class SplitCardCastSupport {
             if (prepared.card().getManaValue() > cast.maxManaValue()) {
                 return false;
             }
+            // CR 608.2g, CR 601.3: a cast during a resolution is stopped by a "can't" that applies to the half cast.
+            if (!castingPermissionService.canCastDuringResolution(gameData, cast.controllerId(), prepared.card())) {
+                return false;
+            }
             if (cast.payManaCost() && !canPayCost(gameData, cast, prepared.card())) {
                 return false;
             }

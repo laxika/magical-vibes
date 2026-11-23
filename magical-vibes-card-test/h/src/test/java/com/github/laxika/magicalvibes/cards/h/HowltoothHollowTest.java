@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 
 import java.util.List;
 
@@ -275,5 +276,30 @@ class HowltoothHollowTest extends BaseCardTest {
 
         assertThat(harness.getGameData().findExiledCard(inversion.getId())).isNotNull();
         assertThat(harness.getGameData().getImprintedCard(hollow.getCard())).isSameAs(inversion);
+    }
+
+    @Test
+    @CardUsed({RuleOfLaw.class})
+    @DisplayName("Rule of Law after a spell this turn stops the cast, and the card stays exiled with the Hollow")
+    void ruleOfLawStopsTheCast() {
+        GrizzlyBears bears = new GrizzlyBears();
+        Permanent hollow = addHollowWithImprint(bears);
+        harness.addToBattlefield(player2, new RuleOfLaw());
+        harness.setHand(player1, List.of(new Shock()));
+        harness.setHand(player2, List.of());
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.forceActivePlayer(player1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        GameData gd = harness.getGameData();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.findExiledCard(bears.getId())).isNotNull();
+        assertThat(gd.getImprintedCard(hollow.getCard())).isSameAs(bears);
     }
 }

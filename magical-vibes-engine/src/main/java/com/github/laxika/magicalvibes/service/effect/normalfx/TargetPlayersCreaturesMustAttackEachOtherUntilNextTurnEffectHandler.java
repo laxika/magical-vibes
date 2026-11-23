@@ -1,26 +1,29 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.CreaturesMustAttackTargetPlayerUntilNextTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.MatchingCreaturesMustAttackEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayersCreaturesMustAttackEachOtherUntilNextTurnEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentControlledByPlayerPredicate;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
-import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * The Brothers' War chapter II: "Until your next turn, each creature they control attacks the other chosen player
+ * each combat if able." The requirement doesn't change characteristics or control, so it modifies the rules of the
+ * game and binds every creature each chosen player controls while it lasts, one they gain or that enters later too
+ * (CR 611.2c): one floating {@link MatchingCreaturesMustAttackEffect} per chosen player, read by the attack rules.
+ */
 @Component
 @RequiredArgsConstructor
 public class TargetPlayersCreaturesMustAttackEachOtherUntilNextTurnEffectHandler
         implements NormalEffectHandlerBean {
-
-    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -47,26 +50,16 @@ public class TargetPlayersCreaturesMustAttackEachOtherUntilNextTurnEffectHandler
             return;
         }
 
-        addAttackRequirements(gameData, entry, firstPlayer, secondPlayer);
-        addAttackRequirements(gameData, entry, secondPlayer, firstPlayer);
+        addAttackRequirement(gameData, entry, firstPlayer, secondPlayer);
+        addAttackRequirement(gameData, entry, secondPlayer, firstPlayer);
     }
 
-    private void addAttackRequirements(GameData gameData, StackEntry entry,
-                                       UUID creatureControllerId, UUID requiredAttackTargetId) {
-        List<Permanent> battlefield = gameData.playerBattlefields.get(creatureControllerId);
-        if (battlefield == null) {
-            return;
-        }
-
-        for (Permanent permanent : battlefield) {
-            if (!gameQueryService.isCreature(gameData, permanent)) {
-                continue;
-            }
-            gameData.addFloatingEffect(new FloatingContinuousEffect(
-                    UUID.randomUUID(), entry.getCard().getName(), entry.getSourcePermanentId(),
-                    entry.getControllerId(),
-                    new CreaturesMustAttackTargetPlayerUntilNextTurnEffect(requiredAttackTargetId),
-                    permanent.getId(), null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
-        }
+    private static void addAttackRequirement(GameData gameData, StackEntry entry,
+                                             UUID creatureControllerId, UUID requiredAttackTargetId) {
+        gameData.addFloatingEffect(FloatingContinuousEffect.onPlayer(entry.getCard().getName(),
+                entry.getSourcePermanentId(), entry.getControllerId(),
+                new MatchingCreaturesMustAttackEffect(
+                        new PermanentControlledByPlayerPredicate(creatureControllerId), requiredAttackTargetId),
+                creatureControllerId, Duration.UNTIL_YOUR_NEXT_TURN));
     }
 }

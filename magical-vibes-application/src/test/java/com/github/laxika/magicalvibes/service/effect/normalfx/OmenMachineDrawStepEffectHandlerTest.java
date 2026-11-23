@@ -91,7 +91,7 @@ class OmenMachineDrawStepEffectHandlerTest {
         gd.playerDecks.put(player2Id, Collections.synchronizedList(new ArrayList<>()));
         omenMachineDrawStepHandler = new OmenMachineDrawStepEffectHandler(exileSupport, gameQueryService, predicateEvaluationService, gameLogService, battlefieldEntryService, exileService, playerInputService, spellEvents,
                 castingPermissionService, castingCostService, exileCastTargetSupport);
-        lenient().when(castingPermissionService.isSpellCastingAllowed(any(), any(), any())).thenReturn(true);
+        lenient().when(castingPermissionService.canCastDuringResolution(any(), any(), any())).thenReturn(true);
         lenient().when(castingCostService.canPayAdditionalSpellCosts(any(), any(), any())).thenReturn(true);
 
     }

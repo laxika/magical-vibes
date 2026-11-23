@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.g.GrandAbolisher;
 
 import java.util.List;
 import java.util.Map;
@@ -138,5 +139,25 @@ class ArrogantWurmTest extends BaseCardTest {
         harness.assertLife(player2, 17);
         harness.assertNotOnBattlefield(player2, "Aven Trooper");
         harness.assertOnBattlefield(player1, "Arrogant Wurm");
+    }
+
+    @Test
+    @CardUsed({GrandAbolisher.class})
+    @DisplayName("During the turn of an opponent with Grand Abolisher the madness cast is stopped and the Wurm goes to the graveyard")
+    void grandAbolisherStopsTheMadnessCast() {
+        harness.addToBattlefield(player2, new GrandAbolisher());
+        ArrogantWurm wurm = discardViaUnhinge();
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(wurm.getId()));
+        assertThat(gd.getPlayerExiledCards(player1.getId()))
+                .noneMatch(card -> card.getId().equals(wurm.getId()));
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .anyMatch(card -> card.getId().equals(wurm.getId()));
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(3);
     }
 }

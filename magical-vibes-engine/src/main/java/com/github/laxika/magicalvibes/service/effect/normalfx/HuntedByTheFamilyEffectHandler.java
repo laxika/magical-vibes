@@ -13,12 +13,12 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.HuntedByTheFamilyEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.effect.LosesAllAbilitiesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetPermanentBecomesSubtypeEffect;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.interaction.InteractionHandlerRegistry;
 import lombok.RequiredArgsConstructor;
@@ -37,7 +37,7 @@ public class HuntedByTheFamilyEffectHandler implements NormalEffectHandlerBean {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final SetCardTypesEffectHandler setCardTypesEffectHandler;
     private final SetTargetColorEffectHandler setTargetColorEffectHandler;
-    private final TargetPermanentBecomesSubtypeEffectHandler subtypeEffectHandler;
+    private final GrantSubtypeEffectResolutionHandler subtypeEffectHandler;
     private final SetBasePowerToughnessEffectHandler setBasePowerToughnessEffectHandler;
     private final LosesAllAbilitiesEffectHandler losesAllAbilitiesEffectHandler;
     private final CreateTokenCopyOfTargetPermanentEffectHandler tokenCopyEffectHandler;
@@ -118,7 +118,7 @@ public class HuntedByTheFamilyEffectHandler implements NormalEffectHandlerBean {
                         Duration.PERMANENT));
         setTargetColorEffectHandler.resolve(gameData, targetEntry, new SetTargetColorEffect(CardColor.WHITE));
         subtypeEffectHandler.resolve(gameData, targetEntry,
-                new TargetPermanentBecomesSubtypeEffect(CardSubtype.HUMAN));
+                new GrantSubtypeEffect(CardSubtype.HUMAN, Subjects.target(), true));
         setBasePowerToughnessEffectHandler.resolve(gameData, targetEntry,
                 new SetBasePowerToughnessEffect(1, 1, Subjects.target(),
                         Duration.PERMANENT));

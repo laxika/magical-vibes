@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import java.util.UUID;
 import java.util.List;
@@ -390,5 +392,23 @@ class OmenMachineTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Angelic Chorus");
         harness.assertOnBattlefield(player2, "Fountain of Youth");
+    }
+
+    @Test
+    @CardUsed({TeferiTimeRaveler.class})
+    @DisplayName("An opponent's Teferi, Time Raveler means the exiled spell can't be cast, and it remains in exile")
+    void opponentsTeferiStopsTheCast() {
+        harness.addToBattlefield(player1, new OmenMachine());
+        harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Card pyroclasm = new Pyroclasm();
+        gd.playerDecks.get(player1.getId()).addFirst(pyroclasm);
+
+        advanceToDraw(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).noneMatch(se -> se.getCard() == pyroclasm);
+        assertThat(gd.findExiledCard(pyroclasm.getId())).isNotNull();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }

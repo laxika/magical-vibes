@@ -22,6 +22,7 @@ import com.github.laxika.magicalvibes.model.effect.KnowledgePoolExileAndCastEffe
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 
 import java.util.List;
 import java.util.UUID;
@@ -527,5 +528,25 @@ class KnowledgePoolTest extends BaseCardTest {
         for (Card card : poolCards) {
             gd.addToExile(player1.getId(), card, kpPermId);
         }
+    }
+
+    @Test
+    @CardUsed({RuleOfLaw.class})
+    @DisplayName("Under Rule of Law the card from the pool can't be cast after the spell from hand, and it stays in the pool")
+    void ruleOfLawStopsTheCastFromThePool() {
+        Card bears = new GrizzlyBears();
+        setupKnowledgePoolManually(List.of(bears));
+        harness.addToBattlefield(player2, new RuleOfLaw());
+        UUID kpPermId = harness.getPermanentId(player1, "Knowledge Pool");
+
+        harness.setHand(player1, List.of(new CounselOfTheSoratami()));
+        harness.addMana(player1, ManaColor.BLUE, 3);
+        harness.castSorcery(player1, 0, 0);
+        harness.passBothPriorities();
+        harness.handleMultipleCardsChosen(player1, List.of(bears.getId()));
+
+        assertThat(gd.stack).noneMatch(se -> se.getCard().getId().equals(bears.getId()));
+        assertThat(gd.getCardsExiledByPermanent(kpPermId)).anyMatch(c -> c.getId().equals(bears.getId()));
+        assertThat(gd.findExiledCard(bears.getId())).isNotNull();
     }
 }

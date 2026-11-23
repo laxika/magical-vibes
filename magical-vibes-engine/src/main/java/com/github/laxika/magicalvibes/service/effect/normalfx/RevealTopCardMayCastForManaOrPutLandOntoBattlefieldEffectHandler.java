@@ -14,6 +14,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.effect.cost.AdditionalSpellCostService;
 import com.github.laxika.magicalvibes.service.battlefield.BattlefieldEntryService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -30,6 +31,7 @@ public class RevealTopCardMayCastForManaOrPutLandOntoBattlefieldEffectHandler
     private final GameLogService gameLogService;
     private final BattlefieldEntryService battlefieldEntryService;
     private final AdditionalSpellCostService additionalSpellCostService;
+    private final CastingPermissionService castingPermissionService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -59,7 +61,9 @@ public class RevealTopCardMayCastForManaOrPutLandOntoBattlefieldEffectHandler
             return;
         }
 
-        if (!additionalSpellCostService.satisfiableWithoutManaCost(gameData, controllerId, topCard)) {
+        // CR 608.2g, CR 601.3: a "can't cast" that applies stops the cast, and the card stays where it is.
+        if (!additionalSpellCostService.satisfiableWithoutManaCost(gameData, controllerId, topCard)
+                || !castingPermissionService.canCastDuringResolution(gameData, controllerId, topCard)) {
             gameLogService.append(gameData, GameLog.cardThen(topCard,
                     " cannot be cast and stays on top of the library."));
             return;

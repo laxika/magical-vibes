@@ -11,6 +11,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
 
 import java.util.List;
 
@@ -293,5 +294,25 @@ class ConduitOfWorldsTest extends BaseCardTest {
         harness.forceActivePlayer(player1);
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
         harness.clearPriorityPassed();
+    }
+
+    @Test
+    @CardUsed({TeferiTimeRaveler.class})
+    @DisplayName("An opponent's Teferi, Time Raveler stops the cast during resolution, and the card stays in the graveyard")
+    void opponentsTeferiStopsTheCast() {
+        harness.addToBattlefield(player1, new ConduitOfWorlds());
+        harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        Cankerbloom bears = new Cankerbloom();
+        harness.setGraveyard(player1, List.of(bears));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        prepareMainPhase();
+
+        harness.activateAbilityWithGraveyardTargets(player1, 0, 0, List.of(bears.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player1, "Cankerbloom");
+        assertThat(gd.getSpellsCastThisTurnCount(player1.getId())).isZero();
     }
 }

@@ -127,6 +127,7 @@ class MayCastHandlerServiceTest {
         lenient().when(additionalSpellCostService.satisfiable(any(), any(), any())).thenReturn(true);
         lenient().when(additionalSpellCostService.satisfiableForGraveyardCast(any(), any(), any())).thenReturn(true);
         lenient().when(additionalSpellCostService.satisfiableWithoutManaCost(any(), any(), any())).thenReturn(true);
+        lenient().when(castingPermissionService.mayBeginCastDuringResolution(any(), any(), any())).thenReturn(true);
         lenient().when(validTargetService.computeValidTargetsForSpell(any(), any(), any(), any(), any(), any()))
                 .thenAnswer(inv -> everyPermanentAndPlayerLegal());
     }

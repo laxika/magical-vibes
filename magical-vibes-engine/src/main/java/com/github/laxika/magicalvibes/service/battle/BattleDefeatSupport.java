@@ -16,6 +16,7 @@ import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.effect.BattleDefeatedExileAndCastTransformedEffect;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
@@ -48,17 +49,20 @@ public class BattleDefeatSupport {
     private final PermanentRemovalService permanentRemovalService;
     private final SpellEvents spellEvents;
     private final TriggeredAbilityStackService triggeredAbilityStackService;
+    private final CastingPermissionService castingPermissionService;
 
     public BattleDefeatSupport(GameQueryService gameQueryService,
                                GameLogService gameLogService,
                                PermanentRemovalService permanentRemovalService,
                                @Lazy SpellEvents spellEvents,
-                               @Lazy TriggeredAbilityStackService triggeredAbilityStackService) {
+                               @Lazy TriggeredAbilityStackService triggeredAbilityStackService,
+                               @Lazy CastingPermissionService castingPermissionService) {
         this.gameQueryService = gameQueryService;
         this.gameLogService = gameLogService;
         this.permanentRemovalService = permanentRemovalService;
         this.spellEvents = spellEvents;
         this.triggeredAbilityStackService = triggeredAbilityStackService;
+        this.castingPermissionService = castingPermissionService;
     }
     /**
      * Call after defense counters change. If the battle has ≤0 defense and is a Siege (or has a
@@ -144,7 +148,8 @@ public class BattleDefeatSupport {
 
     /**
      * Casts a defeated battle that is still in exile, transformed and without paying its mana cost.
-     * Called when the controller accepts the optional cast (CR 310.12b).
+     * Called when the controller accepts the optional cast (CR 310.12b). A "can't cast" that applies to the
+     * transformed spell stops the cast (CR 608.2g, CR 601.3), and the card stays in exile.
      */
     public void castExiledBattleTransformed(GameData gameData, UUID controllerId, Card frontCard) {
         if (gameData.findExiledCard(frontCard.getId()) == null) {
@@ -152,6 +157,16 @@ public class BattleDefeatSupport {
         }
         Card backFace = frontCard.getBackFaceCard();
         UUID ownerId = frontCard.getOwnerId() != null ? frontCard.getOwnerId() : controllerId;
+        Card castCharacteristics = frontCard;
+        if (backFace != null) {
+            castCharacteristics = frontCard.createRuntimeCopyWithFace(backFace);
+            castCharacteristics.freeze();
+        }
+        if (!castingPermissionService.canCastDuringResolution(gameData, controllerId, castCharacteristics)) {
+            gameLogService.append(gameData, GameLog.cardThen(backFace != null ? backFace : frontCard,
+                    " can't be cast right now and stays exiled."));
+            return;
+        }
 
         gameData.removeFromExile(frontCard.getId());
 
@@ -165,11 +180,6 @@ public class BattleDefeatSupport {
         spell.setCastTransformed(true);
         spell.setOwnerIdOverride(ownerId.equals(controllerId) ? null : ownerId);
         gameData.stack.add(spell);
-        Card castCharacteristics = frontCard;
-        if (backFace != null) {
-            castCharacteristics = frontCard.createRuntimeCopyWithFace(backFace);
-            castCharacteristics.freeze();
-        }
         gameData.recordSpellCast(controllerId, castCharacteristics);
         gameData.priorityPassedBy.clear();
 

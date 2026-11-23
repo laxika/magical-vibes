@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 40: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May and Register closed (May's 11 cost combinators listed for step 10; Register's until-next-turn record folded on a `Duration` in run 38, the end-of-next-turn one kept, the survivor renamed `RegisterGlobalTriggeredAbilityEffect` in run 39); 1,771 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Target open (4 rare; the player restrictions folded into `PlayerRestrictionEffect` in run 39; run 40 routed the library-top and library-search casts through the shared cast check, resolution casts still to do)) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 41: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target closed (May's 11 cost combinators listed for step 10; Register's until-next-turn record folded on a `Duration` in run 38, the end-of-next-turn one kept, the survivor renamed `RegisterGlobalTriggeredAbilityEffect` in run 39; Target's player restrictions folded into `PlayerRestrictionEffect` in run 39, every resolution cast routed through the shared cast check in run 41 but Scrycast); 1,767 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Destroy next (37 rare)) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -646,6 +646,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 38 | The owner-approved 3+-card folds (the three-card bite, the six-card control gift, the six-card delayed sacrifice, the `RegisterGlobalTriggeredAbility…` durations), then Target's rare records | Target open (11 rows: 4 absorbed (3 to 6 cards each), 4 survivors, 2 unique, the end-of-next-turn row re-noted; 4 records and 4 handlers deleted; 19 card files rewritten; `RegisterDelayedEventTriggerEffect.whenLeavesThisTurn` (`PERMANENT_LEAVES`), `RegisterGlobalTriggeredAbilityUntilEndOfTurnEffect.untilYourNextTurn`; the control gifts no longer scored by the AI as steals; the player restrictions, must-attack, copy, villainous-choice and discard-then-draw records read and left with a design note; 15 rare Target records left) |
 | 39 | The `RegisterGlobalTriggeredAbility…` rename, the player-restriction record (the five Target restrictions and the static `PlayerCantCastSpellsEffect` family), then run 38's other Target leads | Target open (13 rows: 10 absorbed (1 to 6 cards each), 2 survivors (new), 1 blocked-other; 10 records and 9 handlers deleted, 2 records and 1 handler added; 24 card files rewritten and 60 renamed; `PlayerRestrictionEffect`, `PlayerRestriction`, `GameData.restrictionsOnPlayer`; Orim's Chant, Oriss and Xanathar stop suspend (ruling), a silenced player can't cast from a library top or graveyard; Genesis of the Daleks, Hollow Marauder, the must-attack payloads, Transcantation and Reflection Net not reached; 11 rare Target records left) |
 | 40 | Run 39's casting-path defect (one player-level cast check), then run 39's Target leads (Genesis of the Daleks, Hollow Marauder, the must-attack payloads, Transcantation, Reflection Net, the `GrantStaticEffectToPlayer…` durations) | Target open (13 rows: 5 absorbed (1 to 5 cards each), 2 survivors (one new), 5 unique, 1 blocked-other; 5 records and 5 handlers deleted, 1 record, 1 handler and 1 amount added; 12 card files rewritten; the library-top and library-search casts ask `isSpellCastingAllowed` (Grand Abolisher, Rule of Law), "can't cast additional spells" is `castingSpells()` (Conduit of Worlds stops suspend), the `EVERY_SPELL_TYPE` workaround gone; `CreatureSubtypeDeathPowerThisTurn`, `MatchingCreaturesMustAttackThisTurnEffect.controlledBy`, `GrantStaticEffectToPlayerEffect`; about 20 resolution-cast sites still skip the shared check; 4 rare Target records left) |
+| 41 | The casts during a resolution through the shared cast check, run 40's two small defects, Target's last rare records | done, Target closed (4 rows: 1 absorbed, 1 split, 1 unique, 1 blocked-other; 2 records and 2 handlers deleted; 3 card files rewritten; `CastingPermissionService.canCastDuringResolution(…, card)` and `mayBeginCastDuringResolution`, asked by every resolution-cast flow but Scrycast and by each split half; The Brothers' War chapter II binds creatures its players control later (CR 611.2c); Celestine Reef not a defect; 0 rare Target records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -10385,6 +10386,149 @@ named by any source (grepped). Not run: the full suites, the AI fuzz and stress 
   `TargetPlayerChoosesCardFromControllerHandToDiscardEffect` (Rakdos Augermage), `TargetPlayerDrawsAndLosesLifePerChosenTypeEffect` (Pact of
   the Serpent: a chosen-type step and an amount over the target's creatures of that type may split it).
 - The casts during a resolution through the shared check, one flow per change with a test each (the list above).
+- Still the owner's: the gift opponent (CR 702.174a, missing-features entry 80), the hidden-zone conjure and perpetual logging, the perpetual
+  "it" (CR 400.7).
+
+### Step 9, run 41 (2026-11-23, Target closed)
+
+Run 40's resolution casts first, then its two small defects, then Target's four rare records. Ratchet 4,048 / 3,302 → 4,046 / 3,300
+records / handlers (2 records and 2 handlers deleted; nothing added). 3 card files rewritten (Oko, Thief of Crowns; Vronos, Masked
+Inquisitor; Pact of the Serpent). Oracle text checked with `get_card` for those three, Hunted by The Family (its handler changed) and The
+Brothers' War; rulings with `get_rulings` for Grand Abolisher, Rule of Law, Ethersworn Canonist, Teferi, Time Raveler, Knowledge Pool and
+The Brothers' War. CR 101.2, 205.1b, 400.7, 601.2, 601.3, 608.2g, 608.2h, 608.2n, 611.2c, 702.35a, 702.61a, 702.61b, 702.94a, 702.174a and
+709.3a checked with `get_rule` (2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Target | 4 rare records | 1 | 1 | 0 | 1 (a choice between two costs, a step-10 cost combinator) | 1 | 0 rare, 8 in all (3 to 8 cards each) |
+
+All families: 1,767 rare records without a row (run 40: 1,771). Perpetually 30 rare and Conjure 39 rare, unchanged. Rare records touched
+this run: Target 4 (Oko and Vronos's subtype record, Emberwilde Djinn, Rakdos Augermage, Pact of the Serpent); 4 in all.
+
+**The casts during a resolution.** A cast during a resolution follows the casting steps (CR 608.2g), which a player may begin only when
+nothing prohibits it (CR 601.2, 601.3), so every "can't" applies to it, not just the player locks. `CastingPermissionService` gained
+`canCastDuringResolution(gameData, player, card)` (every check of `isSpellCastingAllowed`: spell limits, type and name restrictions,
+Ethersworn Canonist, split second (CR 702.61a), plus the player and timing locks of the player overload: Silence, Grand Abolisher, Teferi,
+Time Raveler) and `mayBeginCastDuringResolution` for a card offered as a whole (a land is played, not cast; a split card is judged half by
+half, CR 709.3a). Each flow asks it before anything moves and, refused, ends the way it ends when the player declines (the card stays where
+the Oracle text leaves an uncast card). The flows, one by one, each with a failing-first test:
+
+| Flow | Where | Refused, the card | Test (restriction) |
+|---|---|---|---|
+| cast the library top for free (Galvanoth) | `handleCastFromLibraryChoice` | stays on top | `GalvanothTest` (Teferi) |
+| play the revealed top card (Djinn of Wishes, Leaf-Crowned Elder, Ziatora's Envoy, Quicksilver Sea, Descendants' Path) | `cannotPlayFromLibrary` | goes where a declined card goes | `DjinnOfWishesTest` (Teferi) |
+| the revealed and ripple casts (Talent of the Telepath, ripple) | `hasLegalFreeCastTarget` | goes where an uncast card goes | `TalentOfTheTelepathTest` (Rule of Law) |
+| the instant-or-sorcery graveyard casts (Dreadhorde Arcanist, Thunderblade Charge, Chandra's) | `handleCastFromGraveyardChoice` | stays in the graveyard | `DreadhordeArcanistTest` (Teferi) |
+| `CastCardFromGraveyardEffect` (Spectral Arcanist, Diviner of Mist, Sword of Once and Future …) | `handleCastCardFromGraveyardChoice` | stays in the graveyard | `SpectralArcanistTest` (Rule of Law) |
+| Conduit of Worlds | `handleCastCardFromGraveyardIfNoSpellThisTurnChoice` | stays in the graveyard | `ConduitOfWorldsTest` (Teferi) |
+| play from a graveyard (Horde of Notions, Vadrok, Victor, opponent graveyards) | `handlePlayFromGraveyardChoice` | stays in the graveyard | `HordeOfNotionsTest` (Teferi) |
+| exile free casts (Hideaway, cascade-style, suspend; `ExileFreeCastSupport`, which asked only the player locks) | `castSelectedFace` | stays exiled | `HowltoothHollowTest` (Rule of Law) |
+| miracle (asked only the spell limit) | `handleMayCastForMiracleCost` | stays in hand | `BonfireOfTheDamnedTest` (Teferi) |
+| madness | `handleMayCastForMadnessCost` | goes to the graveyard (CR 702.35a) | `ArrogantWurmTest` (Grand Abolisher) |
+| from outside the game for free (Spawnsire, the sideboard casts; asked only the spell limit) | `handleCastFromOutsideGameChoice` | stays outside the game | `SpawnsireOfUlamogTest` (Teferi) |
+| an artifact for life (Anrakyr) | its accept handler | stays; no life paid | `AnrakyrTheTravellerTest` (Teferi) |
+| the hand free casts and the suspend-cost cast (asked `isSpellCastingAllowed` only) | `handleMayCastFromHandWithoutPaying`, `handleMayCastSpellWithSuspendCost` | stays in hand ("if you don't" queued) | `BaralsExpertiseTest`, `TheFaceOfBoeTest` (Teferi) |
+| the commander for free (Geode Golem) | its may handler | stays in the command zone | `GeodeGolemTest` (Teferi) |
+| Word of Command's chosen card | `handleWordOfCommandPlay` | stays in hand | `WordOfCommandTest` (Teferi) |
+| Jadzi's top card for {1} | `RevealTopCardMayCastForManaOrPutLandOntoBattlefieldEffectHandler` (before the pay offer) | stays on top | `JadziTest` (Rule of Law) |
+| Knowledge Pool | `ExileSupport.handleKnowledgePoolCastChoice` | stays exiled with it | `KnowledgePoolTest` (Rule of Law) |
+| Omen Machine (asked `isSpellCastingAllowed` only) | its handler | stays exiled | `OmenMachineTest` (Teferi) |
+| Wild Evocation, Sunbird's Invocation and the search casts (`canCastWithoutPaying`, `isSpellCastingAllowed` only) | `LibraryChoiceHandlerService` | as each effect leaves an uncast card | `WildEvocationTest` (Teferi) |
+| the exile casts of the queue, Chandra, Torch of Defiance, Vaan, the copy casts (`castableFromExile`, `isSpellCastingAllowed` only) | `ExileFreeCastQueueSupport` | as each effect leaves it | `ChandraTorchOfDefianceTest` (Teferi) |
+| Paradigm (asked only the spell limit) | `ParadigmCastSupport` | stays exiled | `DecorumDissertationTest` (Teferi) |
+| a defeated Siege's transformed cast | `BattleDefeatSupport.castExiledBattleTransformed` | stays exiled | `InvasionOfAmonkhetTest` (Teferi) |
+| from outside the game for its normal cost (Your Wish Is My Command) | `OutsideGameNormalCostCastSupport` | stays outside the game | `YourWishIsMyCommandTest` (Teferi) |
+| every split card these flows offer | `SplitCardCastSupport.isCastableMode`, per half | no half offered; the flow's "no half" ending | `GalvanothTest` (Rule of Law) |
+
+`PermanentChoiceSpellHandlerService`'s target continuations and `GraveyardChoiceHandlerService`'s graveyard-target continuation are reached
+only from a flow that has asked by then (nothing changes while a target is chosen), so they need no check of their own.
+`SpellCastingService.playCardFromExileInternal` asks the card overload for a resolution cast too; its callers already ask
+`castableFromExile`, so it changes nothing observable. Not routed: Scrycast (Biting Remark), see below. A `casting-stack.md` entry says so.
+
+Failing first: the 25 new flow tests were run with both new methods stubbed to `true` (each test uses a restriction the flow's old partial
+check didn't see, so the stub reproduces the old behaviour for it): 24 classes, 303 cases, 29 failures (the 25 new tests at their "not
+cast" assertion, plus four older tests of the partial checks the stub also removed). With the methods: 24 classes, 303 cases, 0 failures
+after three test-only fixes (a planeswalker added with no loyalty died to state-based actions; two typed prompt assertions; Geode Golem's
+commander tax entry is 0, not absent).
+
+**Run 40's two small defects.**
+
+- The Brothers' War chapter II, a defect: "each creature they control attacks the other chosen player each combat if able" changes no
+  characteristic and no control, so it modifies the rules of the game and binds creatures the chosen players control later (CR 611.2c);
+  the handler put a per-creature effect on each creature present at resolution. It now floats one `MatchingCreaturesMustAttackEffect`
+  (controlled by that player, the other player required) per chosen player until your next turn, as Taunt does:
+  `TheBrothersWarTest.chapterIIBindsCreaturesThatArriveLater` (failed with the old handler, put back in the file for that one Gradle run
+  from a scratch copy, then replaced).
+- Celestine Reef, not a defect: `CantLoseGameEffect()` defaults `opponentsCantWin` to true, and `GameQueryService.opponentPreventsWinningGame`
+  reads it from the floating effect `GrantStaticEffectToPlayerEffect.untilPlaneswalk` puts on the player;
+  `CelestineReefTest.chaosPreventsOpponentWinUntilPlaneswalk` covers it (passed).
+
+**Target's last rare records, and why each fold makes sense or was left.**
+
+- **`TargetPermanentBecomesSubtypeEffect` → `GrantSubtypeEffect(subtype, Subjects.target(), true)`** (Oko's +1, Vronos's −7, Hunted by The
+  Family's engine call). The old handler floated exactly that record on the target, `PERMANENT`, overriding the creature types (CR 205.1b:
+  "becomes a 9/9 Construct artifact creature" keeps the other types and replaces creature types); the survivor's handler resolves the same
+  target through the resolver and stores the same floating effect, with the same benign permanent spec. No AI reader. The old "X becomes an
+  Elk." log line is gone (no test asserted it; it read "an Construct").
+- **`TargetPlayerDrawsAndLosesLifePerChosenTypeEffect` (Pact of the Serpent) split** into `ChooseCreatureTypeAtResolutionEffect`,
+  `NoteAmountEffect(PermanentCount(creature of the type chosen this resolution, TARGET_PLAYER))`, `DrawCardEffect(noted,
+  targetPlayerDeclaredElsewhere())` and `LoseLifeEffect(noted, targetPlayer())` (harmful player target, as before). X is counted once,
+  before the draw (CR 608.2h), and the life loss is a step after the draw, so Alms Collector and Underrealm Lich behave as before
+  (`PactOfTheSerpentTest`'s ten cases unchanged, pass).
+- **Blocked-other: `TargetPlayerMayPayManaOrLifeEffect`** (Emberwilde Djinn): "that player may pay {R}{R} or 2 life" is a choice between
+  two costs paid by the triggering player, one of the cost combinators beside `MayEffect` step 10 folds (sign-off needed).
+- **Unique: `TargetPlayerChoosesCardFromControllerHandToDiscardEffect`** (Rakdos Augermage): the target opponent picks the controller's
+  discard from the controller's revealed hand; `ChooseCardEffect` would need a chooser choosing against the cards' owner (its prompt and
+  AI answer serve the chooser), a parameter only this card would set.
+
+**Behaviour changes.**
+
+1. Every flow in the table: a cast during a resolution is refused under any "can't" that applies (CR 601.3, 608.2g); before, most flows
+   asked nothing, some only the spell limit, the player locks or `isSpellCastingAllowed` without Teferi's lock. 25 new tests.
+2. A split card offered by these flows offers only the halves that may be cast now (CR 709.3a); the hand free cast judges a split card's
+   halves instead of the whole card.
+3. The Brothers' War chapter II binds creatures that arrive later (CR 611.2c). 1 new test.
+4. Log lines: the refusal lines are new ("… can't be cast right now …"); the miracle, Paradigm and outside-game spell-limit lines are
+   replaced by them; Oko's, Vronos's and Hunted by The Family's "becomes an [subtype]." line is gone. No test asserted any.
+
+**What a player sees.** The same prompts: an offer is still made, and accepting a prohibited cast is refused with a public log line naming
+the card the offer named. No prompt or log names a hidden card.
+
+**Seen, not changed.**
+
+- Scrycast (Biting Remark): the scry prompt offers the Scrycast card and `ScryInteractionHandler` casts it without the shared check; refusing
+  it needs the projection, the AI (`ScryAiStrategy` always picks it) and the answer's validation together. Not routed.
+- Knowledge Pool doesn't check the chosen card's own "cast only during …" restriction (its ruling: "Other restrictions, such as Spinal
+  Embrace's … are not ignored").
+- `SplitCardCastSupport.beginFromExile` still asks `isSpellCastingAllowed` on the whole split card before judging the halves (CR 709.3a).
+- An activated or triggered ability is removed from the stack before it resolves (`StackResolutionService`), while CR 608.2n removes it as
+  the final part of its resolution; a "sorcery timing" read during an ability's resolution sees an empty stack (read, not tested).
+- The offers themselves (the may prompts) don't ask the shared check, so a prohibited cast is offered and then refused.
+
+**Tests edited.** `OmenMachineDrawStepEffectHandlerTest` stubs `canCastDuringResolution(…, card)` (the method its handler now asks) instead
+of `isSpellCastingAllowed`; `MayCastHandlerServiceTest` stubs `mayBeginCastDuringResolution` to true in its set-up (its mocked permission
+service answered false, which refused three casts); `EffectCountRatchetTest`'s baselines. New cases in the 24 flow test classes and
+`TheBrothersWarTest`. No assertion was loosened or flipped.
+
+**Tests run.** Counted from the XML by file name and timestamp. The flow run: 580 card test classes (every test class of a card using the
+cast effects of the touched flows, 302 from `--tests-for` over 85 effect classes, plus every class naming miracle, madness, suspend, cascade,
+Knowledge Pool, Scrycast, Paradigm, Hideaway, Teferi, Time Raveler, Rule of Law, Grand Abolisher or a split card) and
+`CastingPermissionServiceTest`, `LibraryChoiceHandlerServiceTest`, `MayCastHandlerServiceTest`, `SpellCastingServiceTest`,
+`OmenMachineDrawStepEffectHandlerTest`, `EffectCountRatchetTest`: 611 XML files, 5,624 cases, 3 failures (`MayCastHandlerServiceTest`'s mock,
+above; rerun: 14 cases, 0 failures). The fold run: the 10 classes referencing Oko, Vronos, Pact of the Serpent, Hunted by The Family, The
+Brothers' War and Celestine Reef, `CardEffectTargetingConsistencyTest`, `EffectCountRatchetTest` at 4,046 / 3,300 and the AI's
+`TargetPolarityGuardTest`: 13 XML files, 91 cases, 0 failures; then `JadziTest`, `JadziStewardOfFateOraclesGiftTest` and
+`CastingPermissionServiceTest` on the final sources: 8 XML files, 67 cases, 0 failures; `ArrogantWurmTest` after the madness refusal's
+own log line: 8 cases, 0 failures. No deleted handler was `AsksDeathReplacementsFirst`
+or called `LifeSupport.askBefore*`. Compiled: domain, engine (and its test fixtures), AI, the application test sources, card modules o, p,
+v, shared and the card-test modules a, b, c, d, g, h, i, j, k, o, p, s, t, v, w, y and those the runs reached. No deleted type is named by
+any source (grepped). Not run: the full suites, the AI fuzz and stress tests, the frontend. Not verified: more than two players.
+
+**For the next run (run 42: Destroy's rare records).**
+
+- Target is closed; the next family in the plan's order with rare records and no owner's question is Destroy (37 rare).
+- The resolution-cast leftovers above: Scrycast's prompt, AI and answer; Knowledge Pool's "cast only during" check; `beginFromExile`'s
+  whole-card check.
 - Still the owner's: the gift opponent (CR 702.174a, missing-features entry 80), the hidden-zone conjure and perpetual logging, the perpetual
   "it" (CR 400.7).
 

@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantEffectToTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.PhaseOutEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEndStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnToHandEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPermanentBecomesSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsArtifactPredicate;
@@ -87,7 +87,7 @@ public class VronosMaskedInquisitor extends Card {
                                 Duration.PERMANENT,
                                 false
                         ),
-                        new TargetPermanentBecomesSubtypeEffect(CardSubtype.CONSTRUCT)
+                        new GrantSubtypeEffect(CardSubtype.CONSTRUCT, Subjects.target(), true)
                 ),
                 "−7: Target artifact you control becomes a 9/9 Construct artifact creature and gains vigilance, indestructible, and \"This creature can't be blocked.\"",
                 artifactYouControl

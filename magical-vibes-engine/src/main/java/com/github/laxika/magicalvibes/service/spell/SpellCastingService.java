@@ -12557,8 +12557,9 @@ public class SpellCastingService {
                 && !gameQueryService.canCastSpellFromZone(gameData, card, Zone.EXILE, playerId)) {
             throw new IllegalStateException("Card can't be cast from exile");
         }
-        if (!card.hasType(CardType.LAND)
-                && !castingPermissionService.isSpellCastingAllowed(gameData, playerId, card)) {
+        if (!card.hasType(CardType.LAND) && !(resolutionCast
+                ? castingPermissionService.canCastDuringResolution(gameData, playerId, card)
+                : castingPermissionService.isSpellCastingAllowed(gameData, playerId, card))) {
             throw new IllegalStateException("Card is not playable");
         }
         if (!card.hasType(CardType.LAND)

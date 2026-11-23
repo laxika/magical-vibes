@@ -8,12 +8,16 @@ import com.github.laxika.magicalvibes.cards.k.KuldothaRebirth;
 import com.github.laxika.magicalvibes.cards.p.Pyroclasm;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.cards.s.Slagstorm;
+import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
+import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.cards.w.WearTear;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.event.GameEventEnvelope;
 import com.github.laxika.magicalvibes.model.event.GameEventFact;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.CounterType;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -362,5 +366,49 @@ class GalvanothTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.ColorChoice.class).options())
                 .containsExactly("Wear — Destroy target artifact");
+    }
+
+    @Test
+    @CardUsed({TeferiTimeRaveler.class})
+    @DisplayName("An opponent's Teferi, Time Raveler stops the cast, and the card stays on top of the library")
+    void opponentsTeferiStopsTheCast() {
+        harness.addToBattlefield(player1, new Galvanoth());
+        harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Card pyroclasm = new Pyroclasm();
+        gd.playerDecks.get(player1.getId()).addFirst(pyroclasm);
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(pyroclasm.getId()));
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(pyroclasm);
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
+    }
+
+    @Test
+    @CardUsed({RuleOfLaw.class, WearTear.class, AngelicChorus.class})
+    @DisplayName("Rule of Law after a spell this turn stops each half of a split card, which stays on top of the library")
+    void ruleOfLawStopsEachHalfOfASplitCard() {
+        harness.addToBattlefield(player1, new Galvanoth());
+        harness.addToBattlefield(player1, new RuleOfLaw());
+        harness.addToBattlefield(player2, new AngelicChorus());
+        WearTear wearTear = new WearTear();
+        gd.playerDecks.get(player1.getId()).addFirst(wearTear);
+        harness.setHand(player1, List.of(new Shock()));
+
+        advanceToUpkeep(player1);
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.castInstant(player1, 0, player2.getId());
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(wearTear.getId()));
+        assertThat(gd.playerDecks.get(player1.getId()).getFirst()).isSameAs(wearTear);
     }
 }

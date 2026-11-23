@@ -15,6 +15,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -271,5 +272,22 @@ class TalentOfTheTelepathTest extends BaseCardTest {
 
         assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(wearTear.getId()));
         assertThat(gd.playerGraveyards.get(player2.getId())).contains(wearTear).hasSize(7);
+    }
+
+    @Test
+    @CardUsed({RuleOfLaw.class})
+    @DisplayName("Under Rule of Law the revealed spell can't be cast after Talent itself, and it goes to the graveyard")
+    void ruleOfLawStopsTheFreeCast() {
+        harness.addToBattlefield(player1, new RuleOfLaw());
+        harness.setLibrary(player2, topSeven(new CounselOfTheSoratami()));
+
+        castTalentTargetingOpponent();
+        int handBefore = gd.playerHands.get(player1.getId()).size();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        harness.assertInGraveyard(player2, "Counsel of the Soratami");
+        assertThat(gd.playerGraveyards.get(player2.getId())).hasSize(7);
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handBefore);
     }
 }

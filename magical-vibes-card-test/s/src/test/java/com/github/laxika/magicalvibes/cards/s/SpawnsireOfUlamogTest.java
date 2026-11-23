@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -183,5 +185,25 @@ class SpawnsireOfUlamogTest extends BaseCardTest {
         assertThat(gd.playerSideboards.get(player1.getId())).containsExactly(hand);
         assertThat(gd.stack).noneMatch(entry -> entry.getCard() == hand);
         harness.assertNotOnBattlefield(player1, "Hand of Emrakul");
+    }
+
+    @Test
+    @CardUsed({TeferiTimeRaveler.class})
+    @DisplayName("An opponent's Teferi, Time Raveler stops each free cast, and the Eldrazi stay outside the game")
+    void opponentsTeferiStopsTheOutsideGameCasts() {
+        harness.addToBattlefield(player1, new SpawnsireOfUlamog());
+        harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        HandOfEmrakul hand = new HandOfEmrakul();
+        PathrazerOfUlamog pathrazer = new PathrazerOfUlamog();
+        gd.playerSideboards.put(player1.getId(), new ArrayList<>(List.of(hand, pathrazer)));
+        harness.addMana(player1, ManaColor.COLORLESS, 20);
+
+        harness.activateAbility(player1, 0, 1, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerSideboards.get(player1.getId())).containsExactlyInAnyOrder(hand, pathrazer);
     }
 }

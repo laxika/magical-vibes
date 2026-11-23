@@ -14,6 +14,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import java.util.List;
 
@@ -190,5 +192,23 @@ class HordeOfNotionsTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.handlePermanentChosen(player1, target.getId()))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @CardUsed({TeferiTimeRaveler.class})
+    @DisplayName("An opponent's Teferi, Time Raveler stops the cast, and the Elemental stays in the graveyard")
+    void opponentsTeferiStopsTheCast() {
+        addReadyHorde();
+        harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        Smokebraider elemental = new Smokebraider();
+        harness.setGraveyard(player1, List.of(elemental));
+        addWubrg(1);
+
+        harness.activateAbility(player1, 0, 0, null, elemental.getId(), Zone.GRAVEYARD);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).noneMatch(e -> e.getCard() == elemental);
+        assertThat(gd.playerGraveyards.get(player1.getId())).containsExactly(elemental);
     }
 }

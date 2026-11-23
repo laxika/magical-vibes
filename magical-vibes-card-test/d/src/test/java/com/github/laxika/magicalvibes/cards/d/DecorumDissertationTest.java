@@ -6,6 +6,9 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import java.util.List;
 import java.util.UUID;
@@ -122,5 +125,24 @@ class DecorumDissertationTest extends BaseCardTest {
         harness.addMana(player1, ManaColor.BLACK, 2);
         harness.addMana(player1, ManaColor.COLORLESS, 3);
         harness.castAndResolveSorcery(player1, 0, targetPlayerId);
+    }
+
+    @Test
+    @CardUsed({TeferiTimeRaveler.class})
+    @DisplayName("An opponent's Teferi, Time Raveler stops the paradigm copy being cast, and the original stays exiled")
+    void opponentsTeferiStopsTheParadigmCopy() {
+        castDecorumDissertationTargeting(player2.getId());
+        harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        int opponentHandBefore = gd.playerHands.get(player2.getId()).size();
+
+        advanceToFirstMainPhase();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class)).isNull();
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.playerHands.get(player2.getId())).hasSize(opponentHandBefore);
+        assertThat(gd.exiledCards.stream()
+                .filter(e -> e.card() instanceof DecorumDissertation)).hasSize(1);
     }
 }

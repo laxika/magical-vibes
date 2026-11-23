@@ -15,6 +15,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import java.util.List;
 
@@ -186,4 +188,24 @@ class DreadhordeArcanistTest extends BaseCardTest {
         return arcanist;
     }
 
+    @Test
+    @CardUsed({TeferiTimeRaveler.class})
+    @DisplayName("An opponent's Teferi, Time Raveler stops the cast, and the card stays in the graveyard")
+    void opponentsTeferiStopsTheCast() {
+        Permanent arcanist = addReadyArcanist();
+        harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        CounselOfTheSoratami counsel = new CounselOfTheSoratami();
+        PermanentGrants.setPowerBoost(gd, arcanist, 2);
+        int handSizeBefore = gd.playerHands.get(player1.getId()).size();
+        harness.setGraveyard(player1, List.of(counsel));
+
+        declareAttackers(List.of(0));
+        harness.handleMultipleCardsChosen(player1, List.of(counsel.getId()));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(counsel.getId()));
+        harness.assertInGraveyard(player1, "Counsel of the Soratami");
+        assertThat(gd.playerHands.get(player1.getId())).hasSize(handSizeBefore);
+    }
 }

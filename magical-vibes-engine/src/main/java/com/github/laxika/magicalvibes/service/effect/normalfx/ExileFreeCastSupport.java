@@ -226,7 +226,7 @@ public class ExileFreeCastSupport {
             spellCastingService.prepareModalSpellCast(gameData, playerId, card, chosenEffects, face - 2);
         }
         boolean exileInsteadOfGraveyard = gameData.exilesInsteadOfGraveyard(exileCardId);
-        if (!castingPermissionService.canCastDuringResolution(gameData, playerId)) {
+        if (!castingPermissionService.canCastDuringResolution(gameData, playerId, card)) {
             if (returnToHandIfUnable) returnExiledCardToHand(gameData, exileCardId);
             if (completeInput) inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;

@@ -24,6 +24,7 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.battlefield.PendingExileReturns;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.battlefield.PermanentRemovalService;
@@ -64,6 +65,9 @@ public class ExileSupport {
     @org.springframework.beans.factory.annotation.Autowired
     @Lazy
     private ExileFreeCastSupport exileFreeCastSupport;
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private CastingPermissionService castingPermissionService;
 
     // @Lazy mirrors ExileFreeCastSupport: breaks the cycle back through the input services.
     public ExileSupport(GameQueryService gameQueryService,
@@ -349,6 +353,14 @@ public class ExileSupport {
         if (chosenCard.isCastOnlyFromGraveyard()) {
             gameLogService.append(gameData, GameLog.cardThen(chosenCard,
                     " cannot be cast from exile and stays exiled."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        // CR 608.2g, CR 601.3: a "can't cast" that applies (Rule of Law after the spell that triggered this) stops the
+        // cast; nothing moves the card, so it stays exiled with Knowledge Pool.
+        if (!castingPermissionService.mayBeginCastDuringResolution(gameData, playerId, chosenCard)) {
+            gameLogService.append(gameData, GameLog.cardThen(chosenCard,
+                    " can't be cast right now (Knowledge Pool) and stays exiled."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

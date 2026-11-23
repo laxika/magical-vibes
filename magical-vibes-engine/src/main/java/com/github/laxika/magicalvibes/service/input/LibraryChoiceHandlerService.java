@@ -5625,7 +5625,7 @@ public class LibraryChoiceHandlerService {
     private boolean canCastWithoutPaying(GameData gameData, UUID controllerId, Card card, int spellManaValueLimit,
                                          Zone sourceZone) {
         if (!gameQueryService.canCastSpellFromZone(gameData, card, sourceZone, controllerId)) return false;
-        if (!castingPermissionService.isSpellCastingAllowed(gameData, controllerId, card)) return false;
+        if (!castingPermissionService.canCastDuringResolution(gameData, controllerId, card)) return false;
         if (!castingPermissionService.canCastWithSpellTimingRestriction(gameData, controllerId, card)) return false;
         if (!castingCostService.canPayAdditionalSpellCosts(gameData, controllerId, card)) {
             return false;

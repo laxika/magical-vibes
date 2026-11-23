@@ -21,6 +21,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
 
 @CardUsed({DjinnOfWishes.class, GrizzlyBears.class, Pyroclasm.class, Shock.class, Forest.class,
         DemonOfCatastrophes.class, HaakonStromgaldScourge.class, KalonianBehemoth.class})
@@ -370,5 +371,27 @@ class DjinnOfWishesTest extends BaseCardTest {
         assertThat(offeredTargets).doesNotContain(behemothId);
         harness.assertNotOnBattlefield(player2, "Grizzly Bears");
         harness.assertOnBattlefield(player2, "Kalonian Behemoth");
+    }
+
+    @Test
+    @CardUsed({TeferiTimeRaveler.class})
+    @DisplayName("An opponent's Teferi, Time Raveler stops the cast, so the revealed card is exiled")
+    void opponentsTeferiStopsTheCastAndTheCardIsExiled() {
+        addDjinnToBattlefield();
+        harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        harness.addToBattlefield(player2, new GrizzlyBears());
+        Card pyroclasm = new Pyroclasm();
+        gd.playerDecks.get(player1.getId()).addFirst(pyroclasm);
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.PRECOMBAT_MAIN);
+        addDjinnMana();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard().getId().equals(pyroclasm.getId()));
+        assertThat(gd.findExiledCard(pyroclasm.getId())).isNotNull();
+        harness.assertOnBattlefield(player2, "Grizzly Bears");
     }
 }

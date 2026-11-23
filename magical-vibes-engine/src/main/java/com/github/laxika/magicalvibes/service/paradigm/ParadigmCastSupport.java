@@ -68,10 +68,10 @@ public class ParadigmCastSupport {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
-        if (castingPermissionService.isSpellLimitReached(gameData, playerId, card)) {
-            gameLogService.append(gameData, GameLog.cardThen(card,
-                    " can't be cast: the spell limit for this turn has been reached."));
-            log.info("Game {} - paradigm copy of {} blocked by spell limit", gameData.id, card.getName());
+        // CR 608.2g, CR 601.3: casting the copy is casting a spell, which any "can't cast" that applies stops.
+        if (!castingPermissionService.canCastDuringResolution(gameData, playerId, card)) {
+            gameLogService.append(gameData, GameLog.cardThen(card, " can't be cast right now."));
+            log.info("Game {} - paradigm copy of {} is prohibited", gameData.id, card.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

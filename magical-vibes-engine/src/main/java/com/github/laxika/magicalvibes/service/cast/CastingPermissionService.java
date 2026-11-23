@@ -107,6 +107,7 @@ import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.ConditionContext;
 import com.github.laxika.magicalvibes.service.effect.ConditionEvaluationService;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
+import com.github.laxika.magicalvibes.service.effect.normalfx.SplitCardCastSupport;
 import com.github.laxika.magicalvibes.service.effect.staticfx.StaticEffectConditionResolver;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import java.util.ArrayList;
@@ -287,7 +288,7 @@ public class CastingPermissionService {
      * This is the one player-level check of the casting paths: the hand, command zone, graveyard, exile, library-top and
      * library-search paths ask it through {@link #isSpellCastingAllowed} or their playability context, suspend asks it
      * directly (CR 702.62a: "if you could begin to cast this card"), and a cast during a resolution asks it through
-     * {@link #isSpellCastingAllowed} or {@link #canCastDuringResolution} (not every such cast does yet).
+     * {@link #canCastDuringResolution(GameData, UUID, Card)}.
      */
     public boolean isPlayerPreventedFromCasting(GameData gameData, UUID playerId) {
         if (gameData.hasFloatingEffectOnPlayer(playerId, SenTripletsUpkeepEffect.class)) return true;
@@ -1221,6 +1222,33 @@ public class CastingPermissionService {
         return !isPlayerPreventedFromCasting(gameData, playerId)
                 && !isSorcerySpeedOnlyForPlayer(gameData, playerId)
                 && !gameQueryService.isLockedOutByOpponentsSorceryTimingRestriction(gameData, playerId);
+    }
+
+    /**
+     * Whether {@code playerId} may begin to cast {@code card} while another spell or ability resolves. Such a cast
+     * follows the casting steps (CR 608.2g), which a player may begin only when no rule or effect prohibits it
+     * (CR 601.3), so it asks every check of {@link #isSpellCastingAllowed} (Rule of Law, Ethersworn Canonist, a type
+     * or name restriction, split second) as well as the player and timing locks of
+     * {@link #canCastDuringResolution(GameData, UUID)}. The effect's permission replaces only the card's own timing.
+     * A cast during a resolution asks this before anything moves, for each half of a split card as it is offered (the
+     * Scrycast cast chosen in a scry answer does not yet).
+     */
+    public boolean canCastDuringResolution(GameData gameData, UUID playerId, Card card) {
+        return canCastDuringResolution(gameData, playerId) && isSpellCastingAllowed(gameData, playerId, card);
+    }
+
+    /**
+     * {@link #canCastDuringResolution(GameData, UUID, Card)} for a card offered as a whole, before a half or a land
+     * play is chosen: a land is played, not cast, and the halves of a split card are each judged as they are offered
+     * (CR 709.3a, {@code SplitCardCastSupport}), so only the player-level checks apply to the whole split card.
+     */
+    public boolean mayBeginCastDuringResolution(GameData gameData, UUID playerId, Card card) {
+        if (card.hasType(CardType.LAND)) {
+            return true;
+        }
+        return SplitCardCastSupport.isSplitCard(card)
+                ? canCastDuringResolution(gameData, playerId)
+                : canCastDuringResolution(gameData, playerId, card);
     }
 
     private boolean hasTopLibraryFlashGrant(GameData gameData, UUID playerId, Card card) {

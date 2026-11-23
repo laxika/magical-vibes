@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.r.RuleOfLaw;
 
 import java.util.List;
 
@@ -61,5 +62,27 @@ class SpectralArcanistTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertInGraveyard(player1, "Divination");
+    }
+
+    @Test
+    @CardUsed({RuleOfLaw.class})
+    @DisplayName("Under Rule of Law the graveyard spell can't be cast after Spectral Arcanist itself, and stays there")
+    void ruleOfLawStopsTheFreeCast() {
+        var spirit = harness.addToBattlefieldAndReturn(player1, new LanternSpirit());
+        spirit.tap();
+        harness.addToBattlefield(player2, new RuleOfLaw());
+        harness.setGraveyard(player1, List.of(new Vitalize()));
+        harness.setHand(player1, List.of(new SpectralArcanist()));
+        harness.addMana(player1, ManaColor.BLUE, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(spirit.isTapped()).isTrue();
+        harness.assertInGraveyard(player1, "Vitalize");
     }
 }

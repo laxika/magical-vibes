@@ -16,7 +16,7 @@ import com.github.laxika.magicalvibes.model.effect.SetBasePowerToughnessEffect;
 import com.github.laxika.magicalvibes.model.effect.SetCardTypesEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetColorEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
-import com.github.laxika.magicalvibes.model.effect.TargetPermanentBecomesSubtypeEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantSubtypeEffect;
 import com.github.laxika.magicalvibes.model.filter.ControlledPermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -55,7 +55,7 @@ public class OkoThiefOfCrowns extends Card {
                 List.of(
                         new SetCardTypesEffect(Set.of(CardType.CREATURE), Subjects.target()),
                         new SetTargetColorEffect(CardColor.GREEN),
-                        new TargetPermanentBecomesSubtypeEffect(CardSubtype.ELK),
+                        new GrantSubtypeEffect(CardSubtype.ELK, Subjects.target(), true),
                         new LosesAllAbilitiesEffect(Subjects.target(), Duration.PERMANENT),
                         new SetBasePowerToughnessEffect(3, 3, Subjects.target(), Duration.PERMANENT)
                 ),

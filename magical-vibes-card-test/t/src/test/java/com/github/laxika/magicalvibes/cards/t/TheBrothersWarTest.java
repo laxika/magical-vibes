@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
 
 import java.util.List;
 
@@ -93,5 +94,24 @@ class TheBrothersWarTest extends BaseCardTest {
         harness.forceStep(TurnStep.DRAW);
         harness.clearPriorityPassed();
         harness.passBothPriorities();
+    }
+
+    @Test
+    @DisplayName("Chapter II binds creatures the chosen players control later too, each to attack the other chosen player")
+    void chapterIIBindsCreaturesThatArriveLater() {
+        Permanent earlyBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        addSagaWithLore(1);
+
+        triggerChapter();
+        harness.handleMultiplePermanentsChosen(player1, List.of(player1.getId(), player2.getId()));
+        harness.passBothPriorities();
+        Permanent lateBears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent ownBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        assertThat(als.getMustAttackRequirementCount(gd, earlyBears)).isPositive();
+        assertThat(als.getRequiredAttackTargetIds(gd, earlyBears)).containsExactly(player1.getId());
+        assertThat(als.getMustAttackRequirementCount(gd, lateBears)).isPositive();
+        assertThat(als.getRequiredAttackTargetIds(gd, lateBears)).containsExactly(player1.getId());
+        assertThat(als.getRequiredAttackTargetIds(gd, ownBears)).containsExactly(player2.getId());
     }
 }

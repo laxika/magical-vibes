@@ -23,6 +23,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
+import com.github.laxika.magicalvibes.model.CounterType;
 
 import java.util.List;
 import java.util.UUID;
@@ -383,5 +385,21 @@ class WildEvocationTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player2, "Fountain of Youth");
         harness.assertNotOnBattlefield(player2, "Angelic Chorus");
+    }
+
+    @Test
+    @CardUsed({TeferiTimeRaveler.class})
+    @DisplayName("An opponent's Teferi, Time Raveler means the revealed spell can't be cast, and it stays in hand")
+    void opponentsTeferiStopsTheCast() {
+        harness.addToBattlefield(player1, new WildEvocation());
+        harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        Card bear = new RuneclawBear();
+        harness.setHand(player1, List.of(bear));
+
+        advanceToUpkeep(player1);
+        harness.passBothPriorities();
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == bear);
+        assertThat(gd.playerHands.get(player1.getId())).containsExactly(bear);
     }
 }

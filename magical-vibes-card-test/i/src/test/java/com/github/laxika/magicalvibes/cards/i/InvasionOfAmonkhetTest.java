@@ -16,6 +16,8 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.DisplayName;
+import com.github.laxika.magicalvibes.cards.t.TeferiTimeRaveler;
 
 import java.util.List;
 
@@ -172,5 +174,23 @@ class InvasionOfAmonkhetTest extends BaseCardTest {
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player1, true);
         harness.passBothPriorities();
+    }
+
+    @Test
+    @CardUsed({TeferiTimeRaveler.class})
+    @DisplayName("An opponent's Teferi, Time Raveler stops the transformed cast of the defeated battle, which stays exiled")
+    void opponentsTeferiStopsTheTransformedCast() {
+        harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        Permanent battle = addBattleWithNoDefenseCounters();
+        Card battleCard = battle.getCard();
+
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(BattleDefeatSupport.class)
+                .checkAfterDefenseRemoved(gd, battle));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).isEmpty();
+        assertThat(gd.findExiledCard(battleCard.getId())).isNotNull();
+        assertThat(gd.playerBattlefields.get(player1.getId())).noneMatch(Permanent::isTransformed);
     }
 }

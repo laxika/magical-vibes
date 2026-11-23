@@ -245,4 +245,25 @@ class TheFaceOfBoeTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).contains(spell);
         assertThat(gd.stack).noneMatch(entry -> entry.getCard() == spell);
     }
+
+    @Test
+    @CardUsed({TeferiTimeRaveler.class})
+    @DisplayName("An opponent's Teferi, Time Raveler stops the suspend-cost cast, and the card and mana are untouched")
+    void opponentsTeferiStopsTheCast() {
+        addCreatureReady(player1, new TheFaceOfBoe());
+        harness.addToBattlefieldAndReturn(player2, new TeferiTimeRaveler()).setCounterCount(CounterType.LOYALTY, 4);
+        ProfaneTutor tutor = new ProfaneTutor();
+        harness.setHand(player1, List.of(tutor));
+        harness.addMana(player1, ManaColor.BLACK, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.forceActivePlayer(player1);
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.stack).noneMatch(entry -> entry.getCard() == tutor);
+        assertThat(gd.playerHands.get(player1.getId())).contains(tutor);
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(2);
+    }
 }

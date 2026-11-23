@@ -14,10 +14,10 @@ Cast and land-play code reads its card through `GameData.castingSourceCards`, ne
 Owner: `SpellCastingService` (`playFromHandOf`), `StackResolutionService.keepWithNonOwnerController`.
 Why: the card goes to its owner's zones while the permanent stays with its controller.
 
-### A casting path asks the player-level "can't cast spells" check (CR 101.2, 601.3)
-A casting path, suspend included, asks `CastingPermissionService.isPlayerPreventedFromCasting` (through `isSpellCastingAllowed` where it has the card, `canCastDuringResolution` for a cast during a resolution); a "can't cast spells" restriction is never written as a type set.
+### Every cast asks the shared "can't" checks (CR 101.2, 601.3, 608.2g)
+A casting path asks `isSpellCastingAllowed` (suspend: `isPlayerPreventedFromCasting`); a cast during a resolution asks `canCastDuringResolution(gameData, player, card)` before anything moves (`mayBeginCastDuringResolution` for a whole card offered before a land play or a split half is chosen; `SplitCardCastSupport` judges each half). A "can't cast spells" restriction is never a type set.
 Owner: `CastingPermissionService`.
-Why: the library-top path asked only the type set, so Grand Abolisher and Rule of Law didn't stop a cast from there.
+Why: resolution casts skipped Rule of Law, Grand Abolisher and Teferi, Time Raveler; each flow refused alone ends as its decline does.
 
 ### A library-top permission covers its own library
 An own-library permission never authorizes another library's top card; a request naming a library (`libraryOwnerId`) must name an open one.

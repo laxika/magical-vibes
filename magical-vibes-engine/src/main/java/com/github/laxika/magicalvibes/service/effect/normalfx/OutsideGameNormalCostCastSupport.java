@@ -49,6 +49,9 @@ public class OutsideGameNormalCostCastSupport {
     private final InteractionHandlerRegistry interactionHandlerRegistry;
     private final PotentialManaService potentialManaService;
     private final CastingCostService castingCostService;
+    @org.springframework.beans.factory.annotation.Autowired
+    @Lazy
+    private com.github.laxika.magicalvibes.service.cast.CastingPermissionService castingPermissionService;
 
     public OutsideGameNormalCostCastSupport(GameLogService gameLogService,
                                             @Lazy PlayerInputService playerInputService,
@@ -86,6 +89,13 @@ public class OutsideGameNormalCostCastSupport {
                 .findFirst()
                 .orElse(null);
         if (card == null) {
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        // CR 608.2g, CR 601.3: a "can't cast" that applies stops the cast, and the card stays outside the game.
+        if (!castingPermissionService.mayBeginCastDuringResolution(gameData, player.getId(), card)) {
+            gameLogService.append(gameData, GameLog.cardThen(card,
+                    " can't be cast right now and stays outside the game."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }

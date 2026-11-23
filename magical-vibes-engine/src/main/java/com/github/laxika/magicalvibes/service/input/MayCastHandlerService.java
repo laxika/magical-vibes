@@ -191,6 +191,12 @@ public class MayCastHandlerService {
                 }
                 return;
             }
+            if (resolutionCastProhibited(gameData, playerId, card)) {
+                gameLogService.append(gameData, GameLog.cardThen(card, " can't be cast right now and stays in hand."));
+                gameData.wordOfCommandCastingCard = false;
+                inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                return;
+            }
             if (SplitCardCastSupport.isSplitCard(card)) {
                 if (!splitCardCastSupport.begin(gameData, new SplitCardCast(playerId, card, Zone.HAND, cardIndex,
                         playerId, false, Integer.MAX_VALUE, null, null)
@@ -240,6 +246,14 @@ public class MayCastHandlerService {
         return -1;
     }
 
+    /**
+     * Whether something prohibits {@code playerId} from casting {@code card} during this resolution (CR 608.2g: the
+     * cast follows the casting steps, which a "can't" stops, CR 601.3).
+     */
+    private boolean resolutionCastProhibited(GameData gameData, UUID playerId, Card card) {
+        return !castingPermissionService.mayBeginCastDuringResolution(gameData, playerId, card);
+    }
+
     private static boolean permanentSpell(Card card) {
         return card.hasType(CardType.CREATURE) || card.hasType(CardType.ARTIFACT)
                 || card.hasType(CardType.ENCHANTMENT) || card.hasType(CardType.PLANESWALKER)
@@ -279,6 +293,12 @@ public class MayCastHandlerService {
                 if (cardToCast.isCastOnlyFromGraveyard()) {
                     gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                             " cannot be cast from the library."));
+                    inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+                    return;
+                }
+                if (resolutionCastProhibited(gameData, player.getId(), cardToCast)) {
+                    gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                            " can't be cast right now and stays on top of the library."));
                     inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
                     return;
                 }
@@ -433,7 +453,7 @@ public class MayCastHandlerService {
         return card.isCastOnlyFromGraveyard()
                 || !card.hasType(CardType.LAND)
                 && (!gameQueryService.canCastSpellFromZone(gameData, card, Zone.LIBRARY, playerId)
-                || castingPermissionService.isSpellLimitReached(gameData, playerId, card)
+                || resolutionCastProhibited(gameData, playerId, card)
                 || !additionalSpellCostService.satisfiableWithoutManaCost(gameData, playerId, card));
     }
 
@@ -633,12 +653,15 @@ public class MayCastHandlerService {
     }
 
     /**
-     * Whether {@code card} can legally be cast without paying its mana cost right now: its required
-     * creature sacrifice (an additional cost, not waived by a free cast) must be payable, and a
-     * targeted non-split spell needs at least one legal target (CR 601.2c). Split cards are left to
-     * their own half-selection flow and are reported as castable.
+     * Whether {@code card} can legally be cast without paying its mana cost right now: nothing prohibits the cast
+     * (CR 601.3), its required creature sacrifice (an additional cost, not waived by a free cast) must be payable,
+     * and a targeted non-split spell needs at least one legal target (CR 601.2c). Split cards are left to their own
+     * half-selection flow and are reported as castable when the player may cast spells.
      */
     public boolean hasLegalFreeCastTarget(GameData gameData, Player player, Card card) {
+        if (resolutionCastProhibited(gameData, player.getId(), card)) {
+            return false;
+        }
         if (SplitCardCastSupport.isSplitCard(card)) {
             return true;
         }
@@ -964,6 +987,11 @@ public class MayCastHandlerService {
             accepted = false;
         }
 
+        if (accepted && resolutionCastProhibited(gameData, player.getId(), cardToCast)) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast, " can't be cast right now."));
+            accepted = false;
+        }
+
         if (accepted) {
             // Verify the card is still in a graveyard matching the scope
             Card graveyardCard = gameQueryService.findCardInGraveyardById(gameData, cardToCast.getId());
@@ -1180,6 +1208,12 @@ public class MayCastHandlerService {
         if (!additionalSpellCostService.satisfiableForGraveyardCast(gameData, player.getId(), spellCard)) {
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                     " can't be cast because its additional costs can't be paid."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (resolutionCastProhibited(gameData, player.getId(), spellCard)) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " can't be cast right now and remains in the graveyard."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -1405,6 +1439,12 @@ public class MayCastHandlerService {
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
+        if (resolutionCastProhibited(gameData, player.getId(), cardToCast)) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " can't be cast right now and remains in the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
 
         if (SplitCardCastSupport.isSplitCard(cardToCast)) {
             if (splitCardCastSupport.begin(gameData, new SplitCardCast(player.getId(), cardToCast,
@@ -1552,6 +1592,13 @@ public class MayCastHandlerService {
                 && !gameQueryService.canCastSpellFromZone(gameData, cardToPlay, Zone.GRAVEYARD, player.getId())) {
             
             gameLogService.append(gameData, GameLog.cardThen(cardToPlay, " can't be cast from the graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
+        if (resolutionCastProhibited(gameData, player.getId(), cardToPlay)) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToPlay,
+                    " can't be cast right now and remains in the graveyard."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -1816,10 +1863,10 @@ public class MayCastHandlerService {
             return;
         }
 
-        if (castingPermissionService.isSpellLimitReached(gameData, player.getId(), cardToCast)) {
+        if (resolutionCastProhibited(gameData, player.getId(), cardToCast)) {
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
-                    " can't be cast: the spell limit for this turn has been reached."));
-            log.info("Game {} - miracle cast of {} blocked by spell limit", gameData.id, cardToCast.getName());
+                    " can't be cast right now and remains in hand."));
+            log.info("Game {} - miracle cast of {} is prohibited", gameData.id, cardToCast.getName());
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -2056,6 +2103,16 @@ public class MayCastHandlerService {
             return;
         }
 
+        // CR 702.35a: "If that player doesn't [cast it], they put this card into their graveyard."
+        if (resolutionCastProhibited(gameData, player.getId(), cardToCast)) {
+            gameData.removeFromExile(cardToCast.getId());
+            graveyardService.addCardToGraveyard(gameData, player.getId(), cardToCast);
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast,
+                    " can't be cast right now and is put into its owner's graveyard."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+
         String costStr = ability.manaCost();
         if (costStr == null) {
             log.warn("Game {} - madness cast of {} has no cost on pending ability", gameData.id, cardToCast.getName());
@@ -2284,9 +2341,9 @@ public class MayCastHandlerService {
         }
 
         List<Card> sideboard = com.github.laxika.magicalvibes.service.OutsideGameCards.view(gameData, sideboardOwnerId);
-        if (castingPermissionService.isSpellLimitReached(gameData, player.getId(), cardToCast)) {
+        if (resolutionCastProhibited(gameData, player.getId(), cardToCast)) {
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
-                    " cannot be cast because no more spells can be cast this turn."));
+                    " can't be cast right now and stays outside the game."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -2520,7 +2577,7 @@ public class MayCastHandlerService {
             return;
         }
 
-        if (!castingPermissionService.isSpellCastingAllowed(gameData, player.getId(), cardToCast)) {
+        if (resolutionCastProhibited(gameData, player.getId(), cardToCast)) {
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                     " can't be cast right now and remains in hand."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
@@ -2572,6 +2629,11 @@ public class MayCastHandlerService {
         if (!accepted) {
             gameLogService.append(gameData, GameLog.textCardText(
                     player.getUsername() + " declines to cast ", cardToCast, "."));
+            inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
+            return;
+        }
+        if (resolutionCastProhibited(gameData, player.getId(), cardToCast)) {
+            gameLogService.append(gameData, GameLog.cardThen(cardToCast, " can't be cast right now."));
             inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
             return;
         }
@@ -2771,7 +2833,7 @@ public class MayCastHandlerService {
             return;
         }
 
-        if (!castingPermissionService.isSpellCastingAllowed(gameData, player.getId(), cardToCast)) {
+        if (resolutionCastProhibited(gameData, player.getId(), cardToCast)) {
             queueDeclineEffect(gameData, ability);
             gameLogService.append(gameData, GameLog.cardThen(cardToCast,
                     " can't be cast right now and remains in hand."));
