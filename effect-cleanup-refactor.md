@@ -2887,6 +2887,90 @@ Oracle text was checked with `get_card` for every `unique` and `blocked-*` card.
 
 Cheapest fold-run starts, by parameters or a subject only: the suppression, unsuspect and tap-flip pairs; Loran; Aetherworks Marvel; Minamo; Doorkeeper Thrull; Gerrard's Hourglass Pendant.
 
+### Step 9, parallel triage chunk 12 (2026-11-23)
+
+Verdicts only: no repo file was changed and the ratchet did not move. 85 ledger rows (notes `triage P12: …`) cover the chunk's rare records from `CoercivePortalEffect` to `GuildFeudEffect`. Nearly every first word is a one-record family, so they are counted by first letter.
+
+Every record was read with its handler to the end, plus the cards that use it. For records with no handler of their own, these readers were read:
+- `GameQueryService`: the counter locks, the token and creature control replacements.
+- `CastingPermissionService` (Damping Engine), `DrawService` (Blood Scrivener) and `CombatDamageService` (Defensive Formation).
+- `PlayerDamageFinalReplacements` and `DamageSupport` (Crumbling Sanctuary, Dralnu).
+- `CoinFlipService` (Edgar) and `DamagePreventionService` (Judgment of Alexander).
+- `MayPenaltyChoiceHandlerService` (Combustible Gearhulk, Covenant of Minds), `MayCastHandlerService`'s free-cast clearing, `ChoiceHandlerService` (Dismantle) and `MayMiscHandlerService` (Gemstone Caverns).
+- `KeywordTriggers.EVOLVE`, and `GameData`'s untap-skip and declaration-replacement stores.
+
+Oracle text was checked with `get_card` for:
+- Underbridge Warlock, Combustible Gearhulk, Willie Lumpkin, Cultural Exchange, Danse Macabre, Damping Engine.
+- Discord, Disorienting Choice, Emergent Ultimatum, Great Intelligence's Plan, Expert-Level Safe.
+- Gandalf, Westward Voyager; Rainbow Dash; Fatal Lore; Balduvian Warlord.
+
+Rulings were read for Ezuri's Predation, Dawnbreak Reclaimer and Jaya Ballard. These CR rules were checked with the rules MCP (2026-11-23): 101.4, 104.4a, 118.9a, 400.7, 406.3, 603.12, 608.2d, 608.2h, 613.1f, 616.1, 700.2e, 701.29a, 701.43b, 701.44c, 701.44d, 702.16b, 702.34a, 702.100a, 702.100b, 702.174a and 708.4.
+
+| Letter | Triaged | `step-9` | `blocked-other` | `blocked-player-loop` | `unique` |
+|---|---|---|---|---|---|
+| C | 15 | 8 | 1 | 0 | 6 |
+| D | 22 | 9 | 0 | 1 | 12 |
+| E | 25 | 12 | 1 | 2 | 10 |
+| F | 10 | 4 | 0 | 0 | 6 |
+| G | 13 | 8 | 1 | 0 | 4 |
+| All | 85 | 41 | 3 | 3 | 38 |
+
+**Fold batches** (survivor or shared component → records of this chunk, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| vote | A new two-option vote step (`VotingSupport` order, `MayVoteAdditionalTimeEffect` honoured, a secret option) recording a new `StepKind.VOTE` (votes per option). Read by a "more votes for X" condition, `AmountThisWay(VOTE)` per option, `playersThisWay(VOTE)` of an option, and the triggering-vote readers. | Coercive Portal, Tivit, Elrond, Erestor, Expropriate, Fateful Tempest, Galadriel, Magister of Worth: 8 (8). Unaudited joiners: `PleaForPowerEffect`, `TyrantsChoiceEffect`, `VoteForDenialOrDuplicationEffect`, `VoteForInnocentOrGuiltyEffect`, `SailIntoTheWestEffect`, `WillOfThePlaneswalkersEffect`, `SelvalasStampedeEffect`, `TravelThroughCaradhrasEffect`, `ModelOfUnityEffect` |
+| opponent punisher | `MayEffect` with another player as chooser (`TARGET_PLAYER`), its else branch composed from steps (`AmountThisWay.milledManaValue`, `RevealTopCardOfLibraryEffect.topCards`). | Combustible Gearhulk, Covenant of Minds, Willie Lumpkin: 3 (3) |
+| rest of a chosen set | A `CardSubject` "except" (the cards of one step but not another's choice) after a `ChooseCardEffect` made by an opponent or by you. | Deliver Unto Evil, Dubious Challenge, Emergent Ultimatum, Genesis Wave: 4 (4). Ecological Appreciation joins once a library-and-graveyard search exists |
+| entry controller | `GatherSpecimensEffect` (survivor) + an object filter (token created / creature entering) | Gather Specimens, Crafty Cutpurse: 2 (2) |
+| villainous choice (run 9) | `TargetPlayerChoosesOneEffect.villainousChoiceFacedBy` / `forTargetedPlayerVillainousChoice` | Ensnared by the Mara, Great Intelligence's Plan: 2 (2) |
+| SEARCH step (triage 2) | The search's exile step + an any-opponent may | Distant Memories: 1 (1), with P02's `OpponentMayReturnExiledCardOrDrawEffect` |
+| same-name search | One "for each permanent of a set, search for a card with the same name" record over a `PermanentSubject` and a library owner | Dichotomancy: 1 (1). Re-triage triage 2's blocked Doubling Chant and Clarion Ultimatum with it (now three classes) |
+| piles (P08) | The separate-into-piles step over a card set | Death or Glory: 1 (1) |
+| next-spell rider (P05) | `EmpowerNextCreatureSpellThisTurnEffect` as survivor + a `CardPredicate` | Insist, Savage Summoning: 1 (2) |
+| timing permission (P05) | One `ActivatedAbilityTimingEffect` with an ability filter | Leonin Shikari: 1 (1) |
+| keyword costs (triage 1) | One keyword-cost change (foretell, a special action) | Cosmos Charger: 1 (1). Its any-turn flag is weighed by the fold run |
+| damage dealer | `DealDamageToTargetPlayerOrPlaneswalkerEffect.byTriggeringCreature` / the plain source form | Aether Charge, Lavabelly Sliver: 1 (2) |
+| set-dealer bite | `TargetDealsPowerDamageToTargetEffect` + a set dealer and a non-target recipient | Judgment of Alexander's engine-built record: 1 (0). 5m's blocked `ControlledCreaturesDealPowerDamageToTargetEffect` (Moonlight Hunt) is the other user |
+| singles | Existing heads | Counterlash (`CounterSpellEffect` + `MayCastAnySpellFromHandWithoutPayingManaCostEffect` with a shares-a-type-with-the-target predicate); Creeping Dread (`DiscardEffect(eachPlayer())` + `LoseLifeEffect` over a filtered `playersThisWay(DISCARD)`); Danse Macabre (sacrifice + `RollD20Effect.withAddedAmount(sacrificedToughness)` + choose/put); Delaying Shield (`RemoveAllCountersEffect` + `RepeatEffect` of `ForcedCostOrElseEffect`, cost-shape); Dismantle (`NoteAmountEffect` + destroy + a counter-kind choice); Earth Rumble (earthbend + `QueueReflexiveAbilityEffect` fight); Jaya's emblem (`CastSpellsFromGraveyardEffect` + exile instead); Triskaidekaphobia (`ControllerLosesGameEffect` + life, after the CR 104.4a draw); Hakbal (`ExploreEffect` over a set, CR 701.44d); False Orders (`BalduvianWarlordEffect` with an optional reblock); Fateseal (`ScryEffect`, no scry triggers, the controller decides, log kept); Gandalf (reveal + conditional copy / else draw); Gargantuan Gorilla (8.20's may-sacrifice pattern, cost-shape); Guided Passage (`ChooseCardEffect.oneOfEach` chosen by an opponent): 14 (14) |
+
+**Blocked (6):**
+- Ezuri's Predation, `blocked-other`. It needs 5m's fighter-subject fight path plus a pairing the controller chooses (both rulings).
+- Ecological Appreciation, `blocked-other`. It needs a library-and-graveyard search step; Doomsday holds the only other such pool.
+- Grizzled Huntmaster, `blocked-other`. It conjures into a hand, which is the owner's hidden-zone logging question.
+- Disorienting Choice, Eumidian Wastewaker and Explosion of Riches, `blocked-player-loop`. In each, every player chooses and then all act.
+
+**Unique (38):**
+- Engine-internal or keyword payloads: `ContinueAfterDepartureEffect`, `DepartPermanentsEffect`, `DoesntUntapDuringNextUntapStepsEffect`, `DeclarationReplacementEffect`, `EvolveEffect`.
+- Already one record for their cards: Forgotten Lore + Shrouded Lore, Defensive Formation.
+- Static rules and replacements: Solemnity, Crumbling Sanctuary, Dralnu, Blood Scrivener, Damping Engine, Edgar, Fasting, Firestorm Phoenix, Gemstone Caverns, Esix, Guardian Angel.
+- Card-specific loops and choices: Dance with Calamity, Forbidden Ritual, Doomsday, Cultural Exchange, Dawnbreak Reclaimer, Guild Feud, Expert-Level Safe, Grave Endeavor, Equipoise, Fatal Lore, Mandate of Peace, Discord, Underbridge Warlock's boon use-up, Druid of the Emerald Grove's d20 payload.
+- Joke and playtest cards: Rainbow Dash, Duelists' Convocation International, Don't Worry About It, Arcanum Things, Ruff, Throat Wolf.
+
+**Seen, not changed** (confirmed by reading the code, not run):
+- **Jaya Ballard's emblem.** `EmblemGrantsFlashbackEffect` grants flashback, which is an alternative cost (CR 702.34a), so no other alternative cost can be combined with it (CR 118.9a). The text is a permission to cast for the mana cost. Fairly sure of the rule; I did not trace how `FlashbackCast` interacts with the other alternative costs.
+- **Expert-Level Safe.** On a mismatch it uses `new ExileTopCardsToSourceEffect(1, true)`, whose `mayLookAtFaceDownCards` defaults to true, so its controller may look at that face-down card (CR 406.3). The enter trigger uses `faceDownWithoutLookPermission`. Sure.
+- **Ezuri's Predation.** It pairs tokens with creatures by battlefield order and fights one at a time. The rulings say you choose the pairs and the fights happen at the same time. Sure.
+- **Lost-abilities check missing.** `PlayerDamageFinalReplacements.printedOnBattlefield` (Crumbling Sanctuary, Nefarious Lich, Immortal Coil) and `DamageSupport.applyCrumblingSanctuaryReplacement` have no lost-abilities check (CR 613.1f). Sure.
+- **Each player acts at their own answer (CR 101.4).** Disorienting Choice exiles at each controller's answer, and Eumidian Wastewaker sacrifices or discards at each answer. Sure.
+- **Eumidian Wastewaker's land count.** A land counts as put into a graveyard when the permanent is gone, so a land token or a land exiled by a replacement counts. Fairly sure.
+- **Hakbal of the Surging Soul.** A Merfolk that left the battlefield before its turn doesn't explore (CR 701.44c says it should). Fairly sure.
+- **Triskaidekaphobia.** When some but not all players lose, the handler declares the first survivor the winner. Multiplayer only; sure.
+- **Covenant of Minds.** The may handler takes the first seat that isn't the opponent as the controller. Multiplayer only; sure.
+- **"An opponent" not chosen by the controller.** Death or Glory and Ecological Appreciation take the first other seat; Deliver Unto Evil and Fateseal use `getOpponentId`. The controller should choose which opponent (CR 700.2e for a mode; the same reading for the others). Multiplayer only; sure.
+- **Judgment of Alexander.** Its commanders' damage is dealt one dealer at a time, the same open defect as the bite's. Sure.
+- **Delaying Shield.** It removes delay counters with `setCounterCount`, outside the removal path, so no counter-removed events are sent. Sure; low impact.
+- **Dismantle.** Its counter total skips SILVER counters. The reason is unknown.
+- **Great Intelligence's Plan.** The handler skips the villainous choice when neither option can do anything. I did not check whether the player still faces it (The Valeyard). Low confidence.
+
+**Left.**
+- Three uniques (P07's Malik, Cultural Exchange, Dawnbreak Reclaimer) and Guild Feud's two puts all need two results of one step kind in a single resolution. If a fold run adds a CHOOSE slot, re-triage them.
+- Dance with Calamity and Forbidden Ritual are the only repeat-while-you-choose records.
+- Re-triage triage 2's Doubling Chant and Clarion Ultimatum rows with the same-name batch.
+- `ResetCoolnessEffect` (unaudited) goes with Coolness's unique row.
+
+For the next run: the vote step is the largest batch. Build it once, then fold the 8 records here and the unaudited vote records in other chunks.
+
 ## Prompt
 
 Replace `<N>` with the step number. For step 9, add the run kind and its scope (`step 9, triage run: Destroy, Search`;
