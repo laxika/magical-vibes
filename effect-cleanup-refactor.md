@@ -24,7 +24,7 @@ bottom.
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,462 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts; triage run 2 gave Search and Cant (79 rare) theirs; triage run 3 gave Sacrifice and Destroy (75 rare) theirs; triage run 4 gave Look and Remove (71 rare) theirs (253 `step-9` rows wait for fold runs). Defect run 1 fixed most of the defects the triage runs saw (its Findings). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; the next families with no owner's question are Add (32 rare), Gain (32), Become (30) and Draw (28). |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,398 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts; triage run 2 gave Search and Cant (79 rare) theirs; triage run 3 gave Sacrifice and Destroy (75 rare) theirs; triage run 4 gave Look and Remove (71 rare) theirs; triage run 5 gave Add and Gain (64 rare) theirs (302 `step-9` rows wait for fold runs). Defect run 1 fixed most of the defects the triage runs saw (its Findings). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; the next families with no owner's question are Become (30 rare), Draw (28), Set (27) and Double (27). |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -283,6 +283,7 @@ Each run ends with its family row in Findings: audited, absorbed, split, blocked
 | Search, Cant | T2 | triaged, no code changed: 79 rows (`step-9` 52, `blocked-other` 1, `unique` 26); fold batches in T2's Findings, among them a SEARCH step kind |
 | Sacrifice, Destroy | T3 | triaged, no code changed: 75 rows (`step-9` 54, `blocked-other` 10, `blocked-player-loop` 1, `unique` 10); fold batches in T3's Findings, among them a delayed ability about the entry's target |
 | Look, Remove | T4 | triaged, no code changed: 71 rows (`step-9` 53, `unique` 18); fold batches in T4's Findings, among them one store for counters on exiled cards and a player-counter removal |
+| Add, Gain | T5 | triaged, no code changed: 64 rows (`step-9` 49, `blocked-other` 3, `unique` 12); fold batches in T5's Findings, among them one counter-placement replacement, one token addition, the ability borrowers over permanent and static card subjects |
 
 Cross-cutting results of those runs, now conventions or shared pieces (Standing knowledge): the face-down hiding rules; stay checks
 (CR 400.7, 603.7c) on every return and delayed return; what a put step moves enters through the entry batch (as-enters and Aura host
@@ -1269,6 +1270,109 @@ lands), Pyramids (a damage-removal destruction replacement that isn't regenerati
   prompted removal; the exiled-card counter batch needs the store decision above.
 - The unaudited 3+-card records these batches touch: `LookAtTopCardMayPutMatchingOntoBattlefieldElseToHandEffect` (5),
   `LookAtTopCardsMayCastExiledNonlandCardEffect` (3), `RemoveChosenCountersFromTargetPermanentEffect` (4), `RemoveTimeCounterFromExiledCardEffect` (3).
+
+### Step 9, triage run 5 (2026-11-23)
+
+Verdicts only: no Java, test or agent-docs file changed; the ratchet did not move. 64 ledger rows appended (step 9, notes
+`triage 5: …`): the whole of Add (32 rare) and Gain (32 rare); no third family was started, since the brief named these two. Every
+record was read with its handler to the end and the card classes that use it; for the records with no handler, their readers:
+`GameQueryService`'s counter-replacement paths (`replaceCounters`, `collectCounterReplacements`, the entering, planar and player-counter
+paths), `TokenAdditionReplacements`, `TokenCreationReplacements` (its apply step), `TokenCreationReplacementSupport`'s per-kind counts and
+blueprints, `PermanentControlSupport.createTokens` up to the Food additions, `ActivatedAbilityExecutionService`'s noted-mana methods,
+`CastingCostService.getActivatedAbilityAdditionalCosts`, `CreatureControlService.expireStaleControlEffects`, `TargetLegalityService`'s
+Preacher branch, `GainControlOfTargetEffectHandler` and `PayPerCounterOrElseEffectHandler`. `GainControlOfPermanentsCost`'s branches in
+`ForcedCostOrElseEffectHandler`, `DestructionSupport` and `MayPenaltyChoiceHandlerService` were located, not read. Oracle text checked with
+`get_card` for every `unique` and `blocked-*` card (Snowfall, Sasaya's Essence, Elemental Resonance, Charmed Pendant, Thran Portal,
+Brutal Suppression, Jeweled Amulet, Ice Cauldron, Zabaz, Aminatou, Commandeer, Aethersnatch, Garland, Quicksilver Elemental, Midnight
+Crusader Shuttle, Chef's Kiss, Eriette, Herald of Leshrac) and for the counter-replacement cards, Xorn, Jolene, Tippy-Toe, Bilbo, Case of
+the Pilfered Proof, Ultima, Caged Sun, Gauntlet of Power, The Caves of Androzani, Ichormoon Gauntlet, Shield Broker, Kaya, Ghost Haunter
+and Squidnapper (both `CMB1`), Preacher, Aura Graft, Tevesh Szat, Peer Pressure, Urborg Scavengers, Wretched Bonemass, Eater of Virtue,
+Cairn Wanderer, Koh, Idris, Rex, Mairsil, Thranduil, Manascape Refractor and Scheming Fence; the others were judged from their card
+classes. Rulings read: Charmed Pendant. CR 305.6, 611.2b, 611.2c, 613.1f, 702.26d, 702.26f and 708.2a checked with `get_rule` (2026-11-23).
+
+| Family | Triaged | `step-9` | `blocked-other` | `unique` | Left unaudited |
+|---|---|---|---|---|---|
+| Add | 32 rare | 25 | 1 | 6 | 0 rare, 8 in all |
+| Gain | 32 rare | 24 | 2 | 6 | 0 rare, 2 in all |
+
+All families: 1,398 rare records without a row (before: 1,462). `step-9` rows waiting for fold runs: 302 (latest verdict per class).
+
+**Two static card-subject batches.** Ten records give their permanent the activated (and for Idris and Koh, triggered) abilities or the
+keywords of cards in a graveyard, on top of a library or in exile. Each walks its zone itself. They fold onto the two exiled-card
+records with a `CardSubject`, but no `CardSubject` variant is static today (`SUBJECTS_REFERENCE.md`): the fold run first needs the
+resolver's static entry to name card sets (`cardsInGraveyards`, `cardsInYourGraveyard`, a top-of-library card, `exiledWithSource`,
+`exiledCards` with a counter filter), judged per layered pass like the permanent sets. Rex's brain and Mairsil's cage stores (and
+Rayami's blood store, read by the keyword survivor) belong with triage 4's one store for counters on exiled cards.
+
+**Fold batches** (survivor or shared component → records, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| counter-placement replacement | `AddOnePlusOneCountersEffect` (Hardened Scales, 5 cards, unaudited) with a counter kind (any, +1/+1), an affected `PermanentPredicate` judged against the source and a placed-by-you flag; `GameQueryService`'s `appliesGlobally` / `instanceof` branches become the predicate read | Pir + Doc Samson (one record), Solid Ground + Kami of Whispered Hopes (one record), Winding Constrictor (two records: permanents, and the player side, which joins only with the Double family's player-counter records), Ozolith, Caradora, Benevolent Hydra, Mowu (keeps its entering branch): 8 (9) |
+| token addition | `AddTokenCreationEffect` (Xorn, Jolene; survivor) with an added blueprint, an event filter and a count (one, that many, one per matching token); the `Addition` enum, the fixed-order counts and the per-kind helpers collapse | Case of the Pilfered Proof (`ConditionalEffect(SourceIsSolved)`), Tippy-Toe, Quina, Worldwalker Helm, Donatello, Queen Allenal, Chatterfang, Stridehangar Automaton, Bilbo; the unaudited Academy Manufactor could join: 10 (11) |
+| produced-type mana | `AddManaOfTypeProducedByTappedPermanentEffect` (4 cards, unaudited) with a required colour (fixed or the source's chosen colour) and a recipient `PlayerSubject` | Ultima (`COLORLESS`, Forsaken Monument's shape), Caged Sun + Gauntlet of Power (one record); the three fallbacks for a tap that reported no produced type must become one: 2 (3) |
+| persistent mana | `AwardManaOfColorsEffect` with a "you don't lose this mana until end of turn" option, with the unaudited `AwardPersistentManaEffect` (19) and `AwardPersistentAnyColorManaEffect` (3) | Grand Warlord Radha (`XValue`, the trigger-time attacker count): 1 (1) |
+| counter-kind choice | `AddAnotherCounterOfChosenTypeToTargetEffect` (Ichormoon Gauntlet, Animation Module; survivor) with a `PermanentSubject` and the prompt's optional flag | The Caves of Androzani: 2 (3) |
+| Add splits | existing records | Primordial Ooze (`PutCountersOnSelfEffect` + `PayPerCounterOrElseEffect`; cost-shape), Consuming Ferocity (a counter on `attached()` + `ConditionalEffect(EnchantedPermanentMatches(...))` over triage 1's dealer batch + destroy without regeneration): 2 (2) |
+| permanent-ability borrowers | `GainActivatedAbilitiesOfOwnCreaturesEffect` (Robaran Mercenaries, Marvin; survivor) with a static `PermanentSubject`, an ability filter (all, non-loyalty, loyalty only) and one read of a permanent's current activated abilities (five drifting copies today) | Drana and Linvala, Manascape Refractor (keeps CR 305.6), Experiment Kraj, Scheming Fence, Nicol Bolas, Dragon-God: 6 (7) |
+| card-ability borrowers | `GainActivatedAbilitiesOfExiledCardsEffect` (5 cards, unaudited) with a static `CardSubject` and a triggered-too option | Necrotic Ooze + Mirran Safehouse, Trazyn + Thranduil, Skill Borrower + Conspicuous Snoop (one record each), Rex, Mairsil, Idris, Koh (a last-chosen card subject; stays if it isn't added): 7 (10) |
+| card-keyword borrowers | `GainKeywordsOfCreatureCardsExiledWithSourceEffect` (3 cards, unaudited) with a static `CardSubject` and a recipient `PermanentSubject` | Urborg Scavengers + Wretched Bonemass (one record), Eater of Virtue, Cairn Wanderer; the four hexproof and protection copies differ and must become one rule: 3 (4) |
+| maintained-predicate control | `GainControlOfTargetEffect`'s `maintainTargetPredicate` (Old Man of the Sea), Old Man's "a noncreature still holds" special case moved into its predicate | Shield Broker (has a shield counter), Kaya, Ghost Haunter's emblem (is haunted; replaces `KayaHauntedCreatureTargetValidators`' check): 2 (2) |
+| Gain control, single | existing records | Preacher (`GainControlOfTargetEffect.opponentChosenTarget(WHILE_SOURCE_REMAINS_TAPPED)`, Evangelize's form), Squidnapper (split: control + the granted ransom ability, both until it leaves), Aura Graft (split: control + the attach-to-another-permanent step of the two unaudited `AttachTargetAuraToAnotherPermanent*` records), Tevesh Szat (split: control of all commanders + a put over every command zone through the entry batch), Peer Pressure (split: `ChooseCreatureTypeAtResolutionEffect` + a filtered `ControllerControlsMorePermanentsThanEachOtherPlayer` + control): 5 (5) |
+| delayed about a permanent | triage 3's batch (`RegisterDelayedStepTriggerEffect.aboutAtNext`) | Tolarian Entrancer (end of combat, the blocker): 1 (1) |
+
+Blocked (3): Zabaz (`AddOnePlusOneCountersToModularAbilityEffect`: a modular-only placement condition, one card), Eriette
+(`GainControlOfAuraAttachedPermanentEffect`: a duration tracking the triggering Aura, not the source) and `GainControlOfPermanentsCost`
+(engine-built for Herald of Leshrac's cumulative upkeep: a cost-combinator head for step 10).
+
+Unique (12): Add: Snowfall (snow-scaled, cumulative-upkeep-only mana), Sasaya's Essence (a same-name land count, one type choice per
+mana), Elemental Resonance + Charmed Pendant (mana from a mana cost, already one record), Thran Portal + Brutal Suppression (already the
+one non-mana additional activation cost record), Jeweled Amulet and Ice Cauldron (the noted-mana pair; a merge needs a one-card
+restriction). Gain: Aminatou (a control rotation around the table), Commandeer + Aethersnatch (already the one spell-control record),
+Garland (control while a recorded player is the monarch), Quicksilver Elemental (a one-shot borrow of a target's abilities, CR 611.2c),
+Midnight Crusader Shuttle (a stolen creature put into the attack), Chef's Kiss (random retargeting of a stolen spell and its copy).
+
+**Seen, not changed** (confirmed by reading, not run):
+
+- Eriette, the Beguiler keeps control with `Duration.WHILE_ATTACHED`, which phasing out doesn't end; a resolution's "for as long as
+  that Aura is attached to it" ends when the permanent phases out (CR 702.26f; `REMAINS_ATTACHED` is that form). Sure of the code; fairly
+  sure of the reading.
+- Squidnapper: "until Squidnapper leaves the battlefield" is `WHILE_SOURCE_REMAINS`, which ends as Squidnapper phases out; phasing isn't
+  leaving (CR 702.26d), so `UNTIL_SOURCE_LEAVES`. The ransom is payable by the creature's owner, where the text says "that player".
+  Sure of the code; rare.
+- Scheming Fence reads the chosen permanent's card abilities with no face-down check, so a face-down chosen permanent gives its hidden
+  abilities (CR 708.2a); the other borrowers check. Sure of the code; whether its as-enters choice offers a face-down permanent wasn't
+  traced.
+- The ability borrowers drift: Nicol Bolas, Dragon-God reads printed loyalty abilities only (no granted ones) and asks only the floating
+  `losesAllAbilitiesByEffect`; Robaran / Marvin, Experiment Kraj and Scheming Fence don't ask `hasLostPrintedAbilities`, Drana and Linvala's
+  does; Trazyn and Thranduil don't ask `graveyardCardsHaveLostAllAbilities`, Necrotic Ooze's does. Sure of the code.
+- The ordered token-addition path (`TokenAdditionReplacements.instances`) and Bilbo's fixed count read printed static effects and ask
+  only the floating "loses all abilities", so a static ability-removing effect (Humility on Chatterfang) leaves the addition working
+  (CR 613.1f). Sure of the code; fairly sure of the consequence.
+- Charmed Pendant offers a monocoloured hybrid symbol's generic half ({2/W} as {C}{C}); its ruling gives one mana of a colour per
+  symbol. Sure of the code; low impact.
+- Animation Module offers a player's poison and energy counters only, not experience, rad or other player counters. Sure of the code;
+  low impact.
+- Tolarian Entrancer's record declares a harmful permanent target its text doesn't have (Basalt Golem's kind). Sure of the record; the
+  consequence for a blocker with protection wasn't traced.
+- Thran Portal's "mana abilities of this land cost an additional 1 life" applies to all its activated abilities, granted non-mana ones too.
+  Sure of the code; low impact.
+- Tevesh Szat's -10 puts the commanders from the command zones with `putPermanentOntoBattlefield`, not through the entry batch (no
+  as-enters choices), and marks battlefield permanents commanders by card id as it resolves. Sure of the code; low impact.
+
+**For the next run.**
+
+- Triage run 6: Become (30 rare), Draw (28), then Set (27) and Double (27); Seek (26), Copy (26), Deal (25), Cast (25) and Allow (25) next.
+  Conjure (39) and Perpetually (30) still wait for the owner. Double's counter-replacement records (`DoubleCountersOn*`,
+  `HalveCountersPutByOpponentsEffect`'s kin) should be judged against this run's counter-placement batch (a doubling operation on the same
+  survivor would also take Winding Constrictor's player record).
+- Fold runs: the cheapest batches here need only existing records: the maintained-predicate control pair, Preacher, Tolarian Entrancer
+  (with triage 3's delayed batch), the counter-kind choice, Peer Pressure and Consuming Ferocity. The two card-subject batches need the
+  static card subjects first; the counter-placement and token-addition batches each rewrite one `GameQueryService` / token reader path.
+- The unaudited 3+-card records these batches touch: `AddOnePlusOneCountersEffect` (5), `AddManaOfTypeProducedByTappedPermanentEffect` (4),
+  `AddOneOfEachManaTypeProducedByLandEffect` (17, the same "one mana of a type it produced" with another fallback), `AwardPersistentManaEffect`
+  (19), `AwardPersistentAnyColorManaEffect` (3), `GainActivatedAbilitiesOfExiledCardsEffect` (5), `GainKeywordsOfCreatureCardsExiledWithSourceEffect`
+  (3), `AttachTargetAuraToAnotherPermanentOfSameTypeEffect` (3).
 
 ## Prompt
 
