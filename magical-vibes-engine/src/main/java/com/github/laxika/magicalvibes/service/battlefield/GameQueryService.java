@@ -328,7 +328,6 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
-import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSupertypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
@@ -8792,7 +8791,6 @@ public class GameQueryService {
                 || hasProtectionFromSourceCardTypes(gameData, target, source)
                 || hasProtectionFromSourceSubtypes(gameData, target, source)
                 || hasProtectionFromModifiedCreatures(gameData, target, source)
-                || hasProtectionFromPermanentsWithCounters(gameData, target, source)
                 || hasProtectionFromNonSubtypeCreatures(gameData, target, source)
                 || hasProtectionFromSourceManaValue(gameData, target, source.getCard())
                 || hasProtectionFromMatchingPermanent(gameData, target, source);
@@ -8922,14 +8920,7 @@ public class GameQueryService {
                 || hasProtectionFromSourceSubtypes(gameData, target, sourceCard)
                 || hasProtectionFromNonSubtypeCreatures(gameData, target, sourceCard)
                 || hasProtectionFromSourceManaValue(gameData, target, sourceCard)
-                || hasProtectionFromSourceCardPermanentWithCounters(gameData, target, sourceCard)
                 || hasProtectionFromMatchingPermanent(gameData, target, findPermanentByCardId(gameData, sourceCard.getId()));
-    }
-
-    private boolean hasProtectionFromSourceCardPermanentWithCounters(GameData gameData, Permanent target,
-                                                                     Card sourceCard) {
-        Permanent sourcePermanent = findPermanentByCardId(gameData, sourceCard.getId());
-        return sourcePermanent != null && hasProtectionFromPermanentsWithCounters(gameData, target, sourcePermanent);
     }
 
     public boolean hasProtectionFromSource(GameData gameData, Permanent target, Card sourceCard) {
@@ -8960,7 +8951,6 @@ public class GameQueryService {
                 || hasProtectionFromSourceSubtypes(gameData, target, sourceCard)
                 || hasProtectionFromNonSubtypeCreatures(gameData, target, sourceCard)
                 || hasProtectionFromSourceManaValue(gameData, target, sourceCard)
-                || hasProtectionFromSourceCardPermanentWithCounters(gameData, target, sourceCard)
                 || hasProtectionFromMatchingPermanent(gameData, target, findPermanentByCardId(gameData, sourceCard.getId()));
     }
 
@@ -10031,24 +10021,6 @@ public class GameQueryService {
             }
         }
         return false;
-    }
-
-    private boolean hasProtectionFromPermanentsWithCounters(GameData gameData, Permanent target,
-                                                             Permanent source) {
-        Set<CounterType> protectedCounterTypes = new HashSet<>();
-        collectProtectedCounterTypes(printedProtectionEffects(gameData, target), protectedCounterTypes);
-        collectProtectedCounterTypes(computeStaticBonus(gameData, target).grantedEffects(), protectedCounterTypes);
-        return protectedCounterTypes.stream().anyMatch(counterType ->
-                predicateEvaluationService.matchesPermanentPredicate(
-                        gameData, source, new PermanentHasCountersPredicate(counterType)));
-    }
-
-    private void collectProtectedCounterTypes(Iterable<CardEffect> effects, Set<CounterType> counterTypes) {
-        for (CardEffect effect : effects) {
-            if (effect instanceof ProtectionGrantingEffect protection) {
-                counterTypes.addAll(protection.protectionFromPermanentsWithCounters());
-            }
-        }
     }
 
     /**

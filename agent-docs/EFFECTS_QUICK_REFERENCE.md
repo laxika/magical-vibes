@@ -523,7 +523,6 @@
 - `GoadCreaturesTargetPlayerControlsUntilNextTurnEffect()` — targeted mass-goad effect: snapshots each creature controlled by the target player and stores one `affectedPermanentId` floating goad requirement for each until the effect controller's next turn. Used by Maestros Confluence. Also `(Subjects.triggeringPlayer())` is "goad each creature that player controls", untargeted (Marisi, Komainu Battle Armor).
 - `EachOpponentChoosesCreatureToTapAndGoadEffect()` - non-targeting spell effect: each opponent chooses one creature they control in APNAP order, then the chosen creatures are tapped and goaded until the spell controller's next turn. Used by Fell Beast's Shriek.
 - `ControllerHasAtLeastOpponents(minimum)` — condition true when the controller has at least that many opponents in the game; combine with `NotCondition` for multiplayer check lands such as Sea of Clouds.
-- `FlipCoinForTriggeringSpellAndCounterOnLossEffect()` - flip for the caster of the triggering spell; counter that spell if the caster loses (Mirrored Depths)
 - `RevealTopCardOfTargetPlayerMayCastFreeEffect()` - target player reveals their top card; the controller may cast it free if it is a nonland, while lands and declined cards remain on top (Mirrored Depths)
 - `RevealTopCardMayPlayFreeEffect` also accepts an optional `UUID libraryOwnerId` for casting from another player's library.
 - `RevealTopCardIfOddMayCastFreeElseDrawEffect()` - reveal the top card; cast it for free if it is a nonland card with odd mana value, otherwise draw it (Yennett, Cryptic Sovereign).
@@ -1688,9 +1687,7 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
 - `ConditionalManaEffect(Condition, ifMetColor, ifNotMetColor[, DynamicAmount])` — adds one of two
   fixed colors based on the condition at resolution while remaining a single mana ability; use for
   replacement-style mana text such as River of Tears
-- `ConditionalAnyColorManaEffect(Condition, ifMetAmount, ifNotMetAmount)` — adds any one color of
-  mana, choosing the amount from the condition at resolution while remaining a single mana ability
-  (Brood Astronomer, YEOE 18)
+- `AwardAnyColorManaEffect(DynamicAmount)` — "add N mana of any one color" with a counted or conditional N: `FixedIfCondition(condition, 3, 1)` (Brood Astronomer), `DistinctPowersAmongControlledCreatures()` (Selvala, Eager Trailblazer), `PermanentCount(creature + PermanentHasSourceChosenSubtypePredicate, CONTROLLER)` (Three Tree City)
 - `DamageDealingEffect` — deals a `DynamicAmount` to one target category; `damageAmount()`,
   `canDamageCreatures()`, `canDamagePlayers()`, and optional `triggeredTargetFilter()` for a
   target-selecting triggered ability with no cast-time target declaration. Impl `DealDamageToAnyTargetEffect`,
@@ -1803,7 +1800,7 @@ a code change. Branching on one of these interfaces is fine anywhere — it is t
 - `ProtectionGrantingEffect` — static "protection from …" facts read by the engine query layer
   (`GameQueryService`), not the AI: `protectionFromColors()` + `protectionScope()`
   (`PermanentSubject` null = self / `Subjects.attachedCreature()`), `protectionFromCardTypes()`,
-  `protectionFromModifiedCreatures()`, `protectionFromPermanentsWithCounters()`,
+  `protectionFromModifiedCreatures()`,
   `protectionFromColoredSpells()`,
   `protectionFromSubtypes()`, `protectionFromManaValueAtLeast()` (`OptionalInt`),
   `protectionFromManaValueParity()`, `protectionFromManaValuesOtherThanChosen()`,
@@ -2349,6 +2346,7 @@ Other wrappers:
 - `EscalateTapCost(PermanentPredicate)` — tap one untapped matching creature/permanent once per mode beyond the first; selections use `additionalCostSacrificePermanentIds`
 - `TieredManaCost(List<String>)` — mode-dependent additional mana costs for a choose-one spell; the selected suffix is folded into the spell's total mana payment while the card's printed mana cost remains unchanged; a graveyard cast (`CastCardFromGraveyardEffect`, Quistis Trepe) asks the mode (`ChoiceContext.GraveyardCastModeChoice`) and pays the tier even when the cast is free
 - `FlipCoinWinEffect(CardEffect win)` or `(CardEffect win, CardEffect lost)` — flip a coin; run `win` if won, `lost` if lost (`lost` optional, defaults to nothing). Bottle of Suleiman: `(CreateTokenEffect(5/5 Djinn), DealDamageToPlayersEffect(5, CONTROLLER))`. Delegates `targetSpec()` to whichever branch targets (`win` first, else `lost`), so a targeted branch works on a spell/activated ability — Goblin Lyre: `(DealDamageToTargetPlayerOrPlaneswalkerEffect(PermanentCount(IsCreature, CONTROLLER)), DealDamageToPlayersEffect(PermanentCount(IsCreature, TARGET_PLAYER), CONTROLLER))`
+- `FlipCoinWinEffect.forTriggeringSpellController(win, lost)` — "that player flips a coin" in a cast trigger: the triggering spell's caster (as the spell was cast) flips; "If the player loses the flip, counter that spell" is `(null, new CounterSpellEffect())` (Planar Chaos, Mirrored Depths)
 - `ChooseOneEffect(List<ChooseOneOption>)` — modal spell; `(options, n)` = choose exactly n; `ChooseOneEffect.oneOrMore(options)` = choose 1..N. `option.withManaCost("{2}{B}")` gives one mode its own **total** cost, replacing the card's printed cost when that mode is chosen — this is how a **split card with fuse** is modelled (Far // Away: a mode per half plus a fuse mode costing both halves combined; CR 709.3, CR 702.102c). Playability accepts the card when any mode's cost is affordable and the cast re-checks the mode actually chosen
 - `ChooseOneOption.onlyFromHand()` restricts a split-card mode such as fuse to hand casts. Exile free-cast choices omit that mode, and modal cast preparation checks the original card identity in the caster's hand. Older option constructors default to unrestricted modes.
 - `FlipCoinWinEffect(CardEffect win)` or `(CardEffect win, CardEffect lost)` — flip a coin; run `win` if won, `lost` if lost (`lost` optional, defaults to nothing). Bottle of Suleiman: `(CreateTokenEffect(5/5 Djinn), DealDamageToPlayersEffect(5, CONTROLLER))`. Delegates `targetSpec()` to whichever branch targets (`win` first, else `lost`), so a targeted branch works on a spell/activated ability — Goblin Lyre: `(DealDamageToTargetOpponentOrPlaneswalkerEffect(PermanentCount(IsCreature, CONTROLLER)), DealDamageToPlayersEffect(PermanentCount(IsCreature, TARGET_PLAYER), CONTROLLER))`
@@ -4788,8 +4786,7 @@ The `CONTROLLER` form of `GivePoisonCountersEffect` is also supported as a mana-
 - `ProtectionFromMonocoloredEffect()` — protection from sources with exactly one color (static)
 - `ProtectionFromModifiedCreaturesEffect()` — protection from modified creature permanents (static;
   a counter, attached Equipment, or a controller-controlled Aura; Louvaq, the Aberrant, MB1 #95)
-- `ProtectionFromPermanentsWithCountersEffect(CounterType)` — protection from battlefield permanents
-  carrying a counter of the specified type (static; Geyadrone Dihada, MH2 #199)
+- `ProtectionFromPermanentsMatchingEffect(PermanentPredicate)` — protection from battlefield permanents matching the predicate (Ronom Hulk, Tsabo Tavoc); "protection from permanents with [kind] counters on them" is `new PermanentHasCountersPredicate(kind)` (Geyadrone Dihada)
 - `GrantProtectionFromColorUntilEndOfTurnEffect(CardColor, Subjects.creaturesYouControl())` — fixed-color protection until end of turn for each creature controlled by the ability controller; use one conditional instance per printed condition (Dominaria's Judgment)
 - `ProtectionFromColoredSpellsEffect()` — protection from colored spells only (static)
 - `ProtectionFromSubtypesEffect(Set<CardSubtype>[, boolean creatureSourcesOnly])` — protection from subtypes (static); `creatureSourcesOnly=true` = "protection from [subtype] creatures" (source must also be a creature)
@@ -5338,7 +5335,7 @@ The `CONTROLLER` form of `GivePoisonCountersEffect` is also supported as a mana-
 - `AnimatePermanentsEffect(..., filter, cardTypeOverriding)` — when `cardTypeOverriding` is true, the affected permanents' card types are replaced by `grantedCardTypes` until end of turn; use for animations that remove another card type, such as Sarkhan, the Masterless
 
 - `AddCardTypeToOwnPermanentsUntilEndOfTurnEffect(CardType, PermanentPredicate)` — adds a card type until end of turn to matching permanents controlled by the effect's controller, preserving their existing characteristics (Push the Limit)
-- `AnimateChosenPermanentEffect(AnimatePermanentsEffect)` — permanently animates the permanent recorded by a preceding resolution-time chosen-permanent effect, without introducing a target
+- "Put counters on a [permanent] you control. It becomes a [P/T] creature" (Cosmium Confluence) — `ChoosePermanentsEffect.exactly(1, controlledBy(you(), filter), label)` + `PutCounterOnTargetPermanentEffect(thisWay(CHOOSE), type, n)` + `AnimatePermanentsEffect(..., thisWay(CHOOSE), Duration.PERMANENT, null)`, without introducing a target
 - `AnimateChosenOwnPermanentEffect(PermanentPredicate, AnimatePermanentsEffect)` — chooses one matching permanent you control during resolution, records it as the chosen permanent, and applies the supplied animation; unlike a spell target, the choice is non-targeting (Turbocharged Escape)
 - `AnimatePermanentsEffect(power, toughness, subtypes, keywords, color, cardTypes, PermanentSubject, Duration, filter)` (+ int-P/T sugar ctors) — one/many permanents become creatures. Scope SELF (manland/self, UEOT), TARGET (single, UEOT via Elvish Branchbender / UNTIL_CONTROLLERS_NEXT_UPKEEP via Xenic Poltergeist / PERMANENT via Tezzeret / WHILE_SOURCE_ON_BATTLEFIELD via Awakener Druid; **multi-target reads `targetIds` for "up to N target" abilities, both UEOT — Fendeep Summoner — and PERMANENT — Nissa, Sage Animist's −7**), Subjects.landsYouControl() (Sylvan Awakening), Subjects.landsTargetPlayerControls() (all lands controlled by the targeted player, UEOT — Jolrael, Empress of Beasts), Subjects.allLands() (every land on the battlefield, both players — Natural Affinity), Subjects.permanentsYouControl()+filter (The Antiquities War). Wire multi-target via the multi-target `ActivatedAbility` ctor (per-position filters, minTargets/maxTargets). P/T `DynamicAmount` (`XValue`/`CountersOnSource`/`TargetManaValue` — "P/T each equal to its mana value", Xenic Poltergeist); null P/T = printed. Use `withDynamicPowerToughness(...)` when an animation's base P/T must continuously track a dynamic amount, such as Svogthos's creature-card graveyard count. The animation flag alone grants creature-ness (no CREATURE cardType needed); for a noncreature artifact it becomes an artifact creature
 - `AnimatePermanentsEffect` with `WHILE_SOURCE_CONTROLLED` ("for as long as you control this Saga") creates source-linked floating effects for every chosen target; they end when the source leaves or changes controllers and do not resume (Welcome to . . .).

@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
-import com.github.laxika.magicalvibes.model.effect.AwardManaOfChosenColorEqualToDistinctCreaturePowersEffect;
+import com.github.laxika.magicalvibes.model.amount.DistinctPowersAmongControlledCreatures;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.BoostTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -26,7 +27,7 @@ public class SelvalaEagerTrailblazer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new AwardManaOfChosenColorEqualToDistinctCreaturePowersEffect()),
+                List.of(new AwardAnyColorManaEffect(new DistinctPowersAmongControlledCreatures())),
                 "{T}: Choose a color. Add one mana of that color for each different power among creatures you control."
         ));
     }

@@ -529,7 +529,7 @@ public class AnimationSupport {
         }
     }
 
-    public void animateChosen(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
+    private void animateChosen(GameData gameData, StackEntry entry, AnimatePermanentsEffect effect) {
         if (entry.getChosenPermanentId() == null) {
             return;
         }

@@ -13,7 +13,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.ProtectionFromPermanentsWithCountersEffect;
+import com.github.laxika.magicalvibes.model.effect.ProtectionFromPermanentsMatchingEffect;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
@@ -33,7 +33,7 @@ import java.util.List;
 public class GeyadroneDihada extends Card {
 
     public GeyadroneDihada() {
-        addStaticEffect(new ProtectionFromPermanentsWithCountersEffect(CounterType.CORRUPTION));
+        addStaticEffect(new ProtectionFromPermanentsMatchingEffect(new PermanentHasCountersPredicate(CounterType.CORRUPTION)));
 
         PermanentPredicate creatureOrPlaneswalker = new PermanentAnyOfPredicate(List.of(
                 new PermanentIsCreaturePredicate(), new PermanentIsPlaneswalkerPredicate()));

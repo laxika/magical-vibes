@@ -18,7 +18,8 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanent;
-import com.github.laxika.magicalvibes.model.effect.ConditionalAnyColorManaEffect;
+import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
+import com.github.laxika.magicalvibes.model.effect.AwardAnyColorManaEffect;
 import com.github.laxika.magicalvibes.model.effect.DraftFromSpellbookEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
@@ -48,11 +49,11 @@ public class BroodAstronomer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 null,
-                List.of(new ConditionalAnyColorManaEffect(
+                List.of(new AwardAnyColorManaEffect(new FixedIfCondition(
                         new ControlsPermanent(new PermanentAllOfPredicate(List.of(
                                 new PermanentHasSubtypePredicate(CardSubtype.PLANET),
                                 new PermanentCounterCountAtLeastPredicate(CounterType.CHARGE, 12)
-                        ))), 3, 1)),
+                        ))), 3, 1))),
                 "{T}: Add one mana of any color. If you control a Planet with twelve or more charge counters on it, add three mana of any one color instead."
         ));
     }

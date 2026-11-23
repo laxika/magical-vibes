@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.amount.DynamicAmount;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.amount.FixedIfCondition;
 import java.util.List;
 import java.util.Set;
 
@@ -377,12 +378,24 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
 
     /**
      * Only the unrestricted form counts as full colour coverage; every restriction pays into a
-     * bucket an ordinary cost cannot draw from. An X-scaled amount is excluded too — the estimator
-     * has no static quantity to model, which is what the pre-merge X variant reported.
+     * bucket an ordinary cost cannot draw from. An X-scaled or counted amount is excluded too — the
+     * estimator has no static quantity to model, which is what the pre-merge X variant reported. A
+     * {@link FixedIfCondition} amount ("add three mana of any one color instead" if a condition holds,
+     * Brood Astronomer, Ilysian Caryatid) is modelled by the quantity it always yields, the smaller of its two numbers,
+     * so the estimator never plans with mana the condition may not give.
      */
     @Override
     public boolean estimatedCountsAllColors() {
-        return restriction == ManaSpendRestriction.NONE && amount instanceof Fixed;
+        return restriction == ManaSpendRestriction.NONE && estimatedFlatAmount() >= 0;
+    }
+
+    /** The quantity the estimator models for a flat amount, or {@code -1} for an amount it doesn't model. */
+    private int estimatedFlatAmount() {
+        return switch (amount) {
+            case Fixed fixed -> fixed.value();
+            case FixedIfCondition conditional -> Math.min(conditional.amount(), conditional.otherwise());
+            default -> -1;
+        };
     }
 
     @Override
@@ -390,7 +403,7 @@ public record AwardAnyColorManaEffect(DynamicAmount amount,
         return switch (restriction) {
             case NONE, CHOSEN_COLORS, SPELL_ONLY, CREATURE_SPELL_ONLY, CREATURE_OR_ENCHANTMENT_SPELL_ONLY, SUBTYPE_CREATURE_SPELL,
                  CHOSEN_SUBTYPE_CREATURE, CHOSEN_SUBTYPE_SPELL, CHOSEN_SUBTYPE_CREATURE_UNCOUNTERABLE ->
-                    amount instanceof Fixed fixed ? fixed.value() : 0;
+                    Math.max(0, estimatedFlatAmount());
             case ABILITIES, IMPRINTED_CARD_COLORS, EXILED_CARD_COLORS, SOURCE_PERMANENT_COLORS,
                  LEGENDARY_SPELLS, LEGENDARY_SPELLS_UNCOUNTERABLE,
                  INSTANT_SORCERY_COPY, INSTANT_SORCERY_ONLY, ARTIFACT_SPELLS_OR_ABILITIES,

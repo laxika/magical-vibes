@@ -6,12 +6,17 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
-import com.github.laxika.magicalvibes.model.effect.AnimateChosenPermanentEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.amount.Fixed;
+import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.PutCounterOnChosenOwnPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -33,10 +38,13 @@ public class CosmiumConfluence extends Card {
                 new ChooseOneEffect.ChooseOneOption(
                         "Put three +1/+1 counters on a Cave you control. It becomes a 0/0 Elemental creature with haste. It's still a land.",
                         SequenceEffect.of(
-                                new PutCounterOnChosenOwnPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE, 3,
-                                        new PermanentHasSubtypePredicate(CardSubtype.CAVE)),
-                                new AnimateChosenPermanentEffect(0, 0, List.of(CardSubtype.ELEMENTAL),
-                                        Set.of(Keyword.HASTE)))),
+                                ChoosePermanentsEffect.exactly(1, Subjects.controlledBy(Subjects.you(),
+                                        new PermanentHasSubtypePredicate(CardSubtype.CAVE)), "a Cave you control"),
+                                new PutCounterOnTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE),
+                                        CounterType.PLUS_ONE_PLUS_ONE, 3),
+                                new AnimatePermanentsEffect(new Fixed(0), new Fixed(0), List.of(CardSubtype.ELEMENTAL),
+                                        Set.of(Keyword.HASTE), null, Set.of(), Subjects.thisWay(StepKind.CHOOSE),
+                                        Duration.PERMANENT, null))),
                 new ChooseOneEffect.ChooseOneOption(
                         "Destroy target enchantment.",
                         new DestroyTargetPermanentEffect(), TargetFilters.enchantment())

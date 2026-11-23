@@ -6,10 +6,12 @@ import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.ManaColor;
+import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -109,6 +111,7 @@ class CosmiumConfluenceTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each repeated Cave mode chooses among the Caves its controller controls")
     void repeatedAnimationsAllowChoosingDifferentCavesEachTime() {
         Permanent first = harness.addToBattlefieldAndReturn(player1, new HiddenNursery());
         Permanent second = harness.addToBattlefieldAndReturn(player1, new HiddenNursery());
@@ -117,9 +120,12 @@ class CosmiumConfluenceTest extends BaseCardTest {
         addMana();
 
         harness.castAndResolveSorcery(player1, 0, ChooseOneEffect.encodeRepeatedModeSelection(3, 1, 1, 1));
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
-        harness.handleMultiplePermanentsChosen(player1, List.of(second.getId()));
-        harness.handleMultiplePermanentsChosen(player1, List.of(first.getId()));
+        PendingInteraction.PermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class);
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(first.getId(), second.getId());
+        harness.handlePermanentChosen(player1, first.getId());
+        harness.handlePermanentChosen(player1, second.getId());
+        harness.handlePermanentChosen(player1, first.getId());
 
         assertThat(first.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(6);
         assertThat(second.getCounterCount(CounterType.PLUS_ONE_PLUS_ONE)).isEqualTo(3);

@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.s.SeizeTheSecrets;
 import com.github.laxika.magicalvibes.cards.e.EdgarKingOfFigaro;
+import com.github.laxika.magicalvibes.cards.k.KarplusanMinotaur;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
@@ -13,7 +14,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({BreechesTheBlastmaker.class, SeizeTheSecrets.class, BoomBox.class, EdgarKingOfFigaro.class})
+@CardUsed({BreechesTheBlastmaker.class, SeizeTheSecrets.class, BoomBox.class, EdgarKingOfFigaro.class,
+        KarplusanMinotaur.class})
 class BreechesTheBlastmakerTest extends BaseCardTest {
 
     @Test
@@ -151,6 +153,33 @@ class BreechesTheBlastmakerTest extends BaseCardTest {
                 .anySatisfy(permanent -> assertThat(permanent.getCard().isToken()).isTrue())
                 .anySatisfy(permanent -> assertThat(permanent.getCard().isToken()).isFalse());
     }
+    @Test
+    @DisplayName("Breeches's flip is won or lost: either result triggers Karplusan Minotaur")
+    void eitherFlipResultTriggersCoinFlipAbilities() {
+        addBreechesAndArtifact();
+        harness.addToBattlefield(player1, new KarplusanMinotaur());
+        castSeizeTheSecretsAndResolve();
+        harness.castFromHand(player1, new SeizeTheSecrets(), "{2}{U}");
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        boolean lostFlip = gameLogContains("loses the coin flip for Breeches, the Blastmaker");
+        assertThat(lostFlip || gameLogContains("wins the coin flip for Breeches, the Blastmaker")).isTrue();
+        for (int step = 0; step < 10 && (gd.interaction.isAwaitingInput() || !gd.stack.isEmpty()); step++) {
+            if (gd.interaction.activeInteraction() instanceof PendingInteraction.PermanentChoice choice) {
+                var chooser = choice.playerId().equals(player1.getId()) ? player1 : player2;
+                var other = chooser == player1 ? player2 : player1;
+                harness.handlePermanentChosen(chooser, other.getId());
+            } else {
+                resolveAllTriggers();
+            }
+        }
+
+        int breechesDamage = lostFlip ? 3 : 0;
+        int totalDamage = (20 - gd.getLife(player1.getId())) + (20 - gd.getLife(player2.getId()));
+        assertThat(totalDamage - breechesDamage).as("Karplusan Minotaur's 1 damage").isEqualTo(1);
+    }
+
     private Permanent addBreechesAndArtifact() {
         harness.addToBattlefield(player1, new BreechesTheBlastmaker());
         return harness.addToBattlefieldAndReturn(player1, new BoomBox());

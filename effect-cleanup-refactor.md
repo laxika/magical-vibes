@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold run 1 (2026-11-23): `dead`, `p-cost`, `p-lib`: 10 dead, 9 absorbed, 2 re-batched into `targets-x`, 7 `blocked-other`. Fold run 2 (2026-11-23): `p-dmg`: 14 absorbed, 9 split, 4 unique, 5 `blocked-other`. Fold run 3 (2026-11-23): `p-perm`, `sac-singles`, `destroy-singles`: 10 absorbed, 9 split, 1 survivor, 6 `blocked-other`, 3 re-batched. Fold run 4 (2026-11-23): `gc-singles`, `search-singles`, `cant-singles`, `shuffle-params`, `copy-params`, `base-pt`, `seek-params`: 17 absorbed, 3 split, 8 `blocked-other`. Fold run 5 (2026-11-23): `player-floated`, `life-lock`, `may-draw`, `random-player`, `exile-cast`, `lukka`, `look-top-n`: 9 absorbed, 6 split, 3 survivor, 7 `blocked-other`, 2 re-batched into `same-quality`. Fold run 6 (2026-11-23): `delayed-created`, `asenters-sac-all`, `random-pick`, `returned-animation`, `set-exchange`, `ignore-source`, part of `coin-params`: 6 absorbed, 5 split, 3 survivor, 2 `blocked-other`, Mondo Gecko re-noted as a C batch; `chosen-animation`, `any-colour`, `prot-perm`, `colour-grants` and two `coin-params` rows not taken (14 rows, queue notes). Next: the rest of fold run 6's rows, then fold run 7. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold run 1 (2026-11-23): `dead`, `p-cost`, `p-lib`: 10 dead, 9 absorbed, 2 re-batched into `targets-x`, 7 `blocked-other`. Fold run 2 (2026-11-23): `p-dmg`: 14 absorbed, 9 split, 4 unique, 5 `blocked-other`. Fold run 3 (2026-11-23): `p-perm`, `sac-singles`, `destroy-singles`: 10 absorbed, 9 split, 1 survivor, 6 `blocked-other`, 3 re-batched. Fold run 4 (2026-11-23): `gc-singles`, `search-singles`, `cant-singles`, `shuffle-params`, `copy-params`, `base-pt`, `seek-params`: 17 absorbed, 3 split, 8 `blocked-other`. Fold run 5 (2026-11-23): `player-floated`, `life-lock`, `may-draw`, `random-player`, `exile-cast`, `lukka`, `look-top-n`: 9 absorbed, 6 split, 3 survivor, 7 `blocked-other`, 2 re-batched into `same-quality`. Fold run 6 (2026-11-23): `delayed-created`, `asenters-sac-all`, `random-pick`, `returned-animation`, `set-exchange`, `ignore-source`, part of `coin-params`: 6 absorbed, 5 split, 3 survivor, 2 `blocked-other`, Mondo Gecko re-noted as a C batch; `chosen-animation`, `any-colour`, `prot-perm`, `colour-grants` and two `coin-params` rows not taken (14 rows, queue notes). Fold run 6b (2026-11-23): those rows: 7 absorbed, 3 survivor, 5 `blocked-other`, 1 unique; `colour-grants` (Mondo Gecko) still not taken (an engine step of its own). Next: fold run 7. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,940 / 3,201 (fold run 6; 3,951 / 3,211 after fold run 5; 3,964 / 3,227 after fold run 4; 3,984 / 3,246 after fold run 3; 4,003 / 3,263 after fold run 2, 4,025 / 3,286 after fold run 1, 4,044 / 3,299 before) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,933 / 3,196 (fold run 6b; 3,940 / 3,201 after fold run 6; 3,951 / 3,211 after fold run 5; 3,964 / 3,227 after fold run 4; 3,984 / 3,246 after fold run 3; 4,003 / 3,263 after fold run 2, 4,025 / 3,286 after fold run 1, 4,044 / 3,299 before) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -65,8 +65,8 @@ Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | a
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
 `scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,052 rows over 4,404 classes, the consolidation's 102, defect run
-D10's 73 and fold runs 1 to 6's 28, 32, 29, 28, 27 and 17 included (5,096 rows). Latest verdict per class: `step-9` 1,169, unique 1,165, absorbed 571, split 486,
-blocked-other 450, survivor 266, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,169 `step-9` rows for fold runs after fold run 6 (1,185 after fold run 5, 1,210 after fold run 4, 1,238 after fold run 3, 1,264 after fold run 2, 1,322 before fold run 1); 5 rows on the owner's open
+D10's 73 and fold runs 1 to 6b's 28, 32, 29, 28, 27, 17 and 16 included (5,112 rows over 4,405 classes). Latest verdict per class: `step-9` 1,155, unique 1,165, absorbed 578, split 486,
+blocked-other 455, survivor 269, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,155 `step-9` rows for fold runs after fold run 6b (1,169 after fold run 6, 1,185 after fold run 5, 1,210 after fold run 4, 1,238 after fold run 3, 1,264 after fold run 2, 1,322 before fold run 1); 5 rows on the owner's open
 questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
@@ -485,6 +485,13 @@ Step and choice records:
   `ReturnCardFromGraveyardEffect` records what it puts onto the battlefield as `returnedThisResolution()` too, so "it becomes ..." after a
   return is the verb over `returnedThisResolution()` (with `HappenedThisWay.toA(RETURN, filter)` for "if it's a [subtype]");
   `IgnoreSourceAuraEffectsUntilEndOfTurnEffect` is any "ignore this effect until end of turn" (Damping Engine too).
+- Chosen animations, flips, any-colour amounts, protection predicates (fold run 6b): "put counters on a [permanent] you control. It becomes
+  ..." is `ChoosePermanentsEffect.exactly(1, controlledBy(you(), filter), label)` + the counter and animation verbs over `thisWay(CHOOSE)`
+  (Cosmium Confluence); "that player flips a coin. If the player loses the flip, counter that spell" is
+  `FlipCoinWinEffect.forTriggeringSpellController(null, new CounterSpellEffect())`, "when you win / lose the flip, ..." is
+  `FlipCoinWinEffect` over `QueueReflexiveAbilityEffect` branches (Breeches); "add N mana of any one color" with a counted or conditional N is
+  `AwardAnyColorManaEffect(DynamicAmount)` (`DistinctPowersAmongControlledCreatures`, a `PermanentCount`, `FixedIfCondition`, whose estimate
+  is its smaller number); "protection from permanents with [kind] counters" is `ProtectionFromPermanentsMatchingEffect(PermanentHasCountersPredicate)`.
 
 Permissions, restrictions and grants:
 
@@ -1268,6 +1275,59 @@ change; the fold keeps the timing).
 **For the next run.** Finish fold run 6's 14 rows before fold run 7: Cosmium Confluence is ready (its test answers a multi-permanent prompt
 today, the survivor asks a single choice); for `any-colour` and `prot-perm` read every reader of the absorbed records' interface methods
 first (the queue rows list them).
+
+### Step 9, fold run 6b (2026-11-23)
+
+The 16 rows fold run 6 left (`chosen-animation`, `coin-params`' two, `any-colour`, `prot-perm`, `colour-grants`); no "Fold:" defect line named
+them. Ratchet 3,940 / 3,201 → 3,933 / 3,196 (7 records; 5 normal / static handlers, plus 2 manafx handlers the ratchet doesn't count).
+Ledger: 16 rows (absorbed 7, survivor 3, `blocked-other` 5, unique 1); Mondo Gecko's row stays `step-9`. 7 card files rewritten, Oracle text
+checked with `get_card` for all 7 and Turbocharged Escape; Louvaq from the cache text (no Scryfall entry); rulings for Breeches. CR 106.5,
+106.7, 603.12, 608.2d, 616.1, 700.9, 702.16b, 705.2 checked with `get_rule`.
+
+| Batch | Result |
+|---|---|
+| `chosen-animation` (2) | Cosmium Confluence: `ChoosePermanentsEffect.exactly(1, Caves you control)` + counters and animation over `thisWay(CHOOSE)`. Left: Turbocharged Escape (`blocked-other`: no card subject for a chosen permanent's card) |
+| `coin-params` (2) | Mirrored Depths (Planar Chaos' `forTriggeringSpellController(null, CounterSpellEffect)`), Breeches (`QueueReflexiveAbilityEffect` branches, CR 603.12) |
+| `any-colour` (5) | Selvala, Three Tree City, Brood Astronomer onto `AwardAnyColorManaEffect(DynamicAmount)`. Left: Corrupted Grafstone (a one-card restriction value), Wrath of Sod (the survivor's `SOURCE_PERMANENT_COLORS` has no current-colour potential-mana model and gives a colourless source mana under a land replacement, CR 106.5) |
+| `prot-perm` (5) | Geyadrone Dihada (`PermanentHasCountersPredicate`; `ProtectionGrantingEffect.protectionFromPermanentsWithCounters` and its readers gone). Left: Louvaq (`unique`: its playtest "modified" test), Ring-bearers (no predicate; wait for `ring`), non-subtype creatures (the survivor has no spell path) |
+| `colour-grants` (1) | not taken: a colour CHOOSE step read by the colour, hexproof and can't-be-blocked grants is an engine step of its own (queue row) |
+
+**Where the triage was wrong.** Mirrored Depths' "benign spell target" is the survivor's too (`CounterSpellEffect`'s spec), and its
+`CounterSpellingEffect` marker has no reader for a plane's trigger (`InstantCategoryClassifier` reads spell effects only). Three Tree City's
+and Selvala's records had no estimate facets, so the survivor changes no AI estimate for them; Brood Astronomer's did, hence the widening.
+
+**Shared pieces widened** (Standing knowledge): `AwardAnyColorManaEffect`'s `estimatedCountsAllColors` / `estimatedWildcardMana` model a
+`FixedIfCondition` amount by its smaller number; `ProtectionFromPermanentsMatchingEffect` takes the counter quality; agent-docs rows for both.
+
+**Behaviour changes.**
+- Breeches: a lost flip raises the coin-flip-lost event (CR 705.2; Karplusan Minotaur): new `BreechesTheBlastmakerTest.eitherFlipResultTriggersCoinFlipAbilities`
+  (fails on the old code whenever the flip is lost, by reading). A Pokey d20 heads now takes the win branch, as on every `FlipCoinWinEffect`
+  card (no test: the d20 is random); the reflexive entries read "'s reflexive ability".
+- Cosmium Confluence: the +1/+1 counters order counter replacements (CR 616.1, the survivor's); the Cave choice is the single-permanent
+  prompt naming "a Cave you control" (test asserts the offered Caves); log "chooses ...".
+- Three Tree City and Selvala: no colour prompt when the amount is 0; their mana is tagged by its source (cave, snow, artifact) as every
+  any-colour source's is; Three Tree City under a land-mana replacement produces its count, not 0; a land "could produce" reader now sees its five
+  colours (see Seen, not changed).
+- Geyadrone Dihada: the protection follows the survivor's guards (none while face down or after losing its abilities); no test (no effect
+  at hand makes a planeswalker lose abilities).
+- AI and potential mana only: Brood Astronomer is estimated at 1 mana of any colour (was 3, the condition's larger number); Ilysian Caryatid
+  is now estimated at 1 (was not modelled).
+
+**Tests changed.** `CosmiumConfluenceTest` (the Cave prompt is a single choice: `handlePermanentChosen`, offered Caves asserted, display name
+added); `ThreeTreeCityTest.producesNoManaWithoutMatchingCreatures` (no colour is asked for 0 mana; the no-mana assertion kept);
+`EffectCountRatchetTest` (baselines). New: the Breeches case.
+
+**Tests run.** 47 classes: every test class naming a rewritten card, Planar Chaos, Ilysian Caryatid, Katilda, Ronom Hulk, Tsabo Tavoc,
+Concerted Effort, Karplusan Minotaur, Louvaq, Lord of the Nazgûl (`git grep -lwF 'X.class'`, 36), and the application and AI tests naming
+`AwardAnyColorManaEffect`, `FlipCoinWinEffect` or the protection readers, `GameQueryServiceTest`, `LayerClassifierTest`,
+`GrantedAbilityViewFactoryTest`, `EffectCountRatchetTest`: 155 XML files, 1,026 cases, 1 failure (the Three Tree City case above), then
+`ThreeTreeCityTest` and `BreechesTheBlastmakerTest` (five runs, both flip results) passed. No deleted handler asked death replacements first.
+
+**Seen, not changed** (Defect queue group 9): `LandManaTypeSupport` / `ManaSourceColorSupport` give an any-colour ability every colour even
+at amount 0 (CR 106.7); Louvaq's "modified" is not CR 700.9's (unsure: the playtest reminder text).
+
+**For the next run.** Fold run 7. `colour-grants` wants its own run (a colour CHOOSE step with three readers); Wrath of Sod waits for a
+`SOURCE_PERMANENT_COLORS` potential-mana model.
 
 ## Prompt
 

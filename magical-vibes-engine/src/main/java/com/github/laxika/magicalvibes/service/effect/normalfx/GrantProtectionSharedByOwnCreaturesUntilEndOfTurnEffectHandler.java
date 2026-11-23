@@ -179,7 +179,6 @@ public class GrantProtectionSharedByOwnCreaturesUntilEndOfTurnEffectHandler impl
                 || !protection.protectionFromPlayers().isEmpty()
                 || protection.protectionFromRingBearers()
                 || protection.protectionFromModifiedCreatures()
-                || !protection.protectionFromPermanentsWithCounters().isEmpty()
                 || protection.protectionFromManaValueParity()
                 || !protection.protectionFromManaValuesOtherThanChosen().isEmpty()
                 || protection.protectsFromEverything()) {
