@@ -2160,6 +2160,147 @@ Suggested fold order:
 3. The leader-gains-control batch.
 4. The any-colour amount batch.
 
+### Step 9, parallel triage chunk 07 (2026-11-23)
+
+Only verdicts this time. No repo file changed; the plan and ledger were read at `4457b7d143`, and the ratchet did not move. The 83 ledger rows (notes `triage P07: …`) are in /tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/ptriage/out-07/ledger-rows.csv.
+
+**What was read**
+- Every record, its handler read to the end, and every card class that uses it.
+- For records with no handler, their readers:
+  - `CastingPermissionService`: any-mana cast, `isLandPlayRestricted`, the from-hand restrictions
+  - `GameQueryService`: the white-mana, any-colour and activated-ability spend reads, `damageCantBePreventedFromSource`, `getGlobalBlockManaTax`, `isCardNameUnchoosable`
+  - `SpellCastingService`'s {C} payment branch and `ManaPool`'s spend flags
+  - `LayerSystemService`'s layer-4 and 7b cases for March, Starfield and Opalescence
+  - `AttackLegalityService` and `CombatAttackService`'s requirement and permission reads
+  - `BlockLegalityService`'s blockability permissions and `CombatBlockService`'s must-be-blocked paths
+  - `CastingCostService.getPhyrexianAttackPaymentsPerCreature`
+  - `PlanechaseService.roll` and the D4, D12, D20 and `DiceRollService` roll services
+- Also read: `AnimationSupport`, the target-to-target counter head, `MatchingCreaturesMustAttackThisTurnEffect`, `ChooseRandomOpponentMustAttackThisCombatEffect`, `RandomPlayerThenFightsTargetCreatureEffectHandler` and `DoubleControllerDamageEffect`.
+- Oracle text: checked with `get_card` for every `unique` card and for most `step-9` cards. Microscope and Glimpse, the Unthinkable are MB2 playtest printings in no feed, so their class Oracle was used.
+- Rulings: Tempt with Glory, Vizier of the Menagerie, Brilliance Unleashed, The War in Heaven, Liliana, Death's Majesty.
+- Rules checked with `get_rule`: CR 106.1b, 107.4c, 122.5, 122.8, 400.7, 609.4b, 613.1f, 701.27a, 701.27c, 701.27d, 701.27e, 701.27g, 706.1, 706.2, 706.6, 708.2a, 712.10, 901.3a, 901.9.
+
+| Family | Triaged | step-9 | unique |
+|---|---|---|---|
+| Spend | 10 | 8 | 2 |
+| Animate | 9 | 8 | 1 |
+| Must | 9 | 4 | 5 |
+| Roll | 8 | 2 | 6 |
+| Move | 7 | 7 (1 dead) | 0 |
+| Require | 7 | 6 | 1 |
+| Source | 7 | 6 (1 dead) | 1 |
+| TemptingOffer | 7 | 7 | 0 |
+| Transform | 7 | 7 | 0 |
+| Can | 6 | 4 | 2 |
+| Controller | 6 | 4 | 2 |
+| All | 83 | 63 | 20 |
+
+**Fold batches** (records / cards)
+
+- **any-mana cast** — survivor: `SpendAnyManaTypeToCastEffect`, gaining a `CardPredicate` spell filter (types, subtypes, not owned by you) and an any-type / any-colour mode. 3 records / 4 cards.
+  - Vizier and Oath of Nissa (one record), Case File Auditor, Nathan Drake.
+  - The three `AnyManaTypeCastEffect` interface methods go.
+- **player spend** — survivor: `SpendManaAsAnyColorEffect`, gaining a from-colour set and an as-colour set. 3 records / 4 cards.
+  - Mycosynth Lattice and Chromatic Orrery (the survivor), Sunglasses of Urza, False Dawn.
+  - False Dawn is floated by chunk 01's `GrantStaticEffectToPlayerEffect.untilEndOfTurn`.
+  - Three `ManaPool` flags become one table. Sunglasses alone sets the red as-colour set: weigh it.
+- **activated-ability spend** — survivor: `SpendManaAsAnyColorForActivatedAbilitiesEffect`. 2 records / 2 cards.
+  - Quicksilver Elemental: blue only.
+  - Nathan Drake: permanents you control but don't own. The reader's creature gate must go for him.
+- **mana-value animation** — survivor: `AnimateNoncreatureArtifactsEffect`, with a subject and filter, a threshold, a skip-creatures option and a loses-all-abilities option. 3 records / 4 cards.
+  - March of the Machines and Titania's Song (the survivor), Starfield of Nyx, Opalescence.
+  - Three board id tables become one.
+- **returned animation** — by parameters: `AnimatePermanentsEffect` over `thisWay(RETURN[, filter])` with `PERMANENT`. 3 records / 3 cards.
+  - Brilliance Unleashed: judge the returned card's printed types.
+  - Tune Up, The War in Heaven.
+- **chosen-permanent animation** — 2 records / 2 cards.
+  - Cosmium Confluence: `AnimatePermanentsEffect` over `thisWay(PUT_COUNTERS)`, with triage 1's `PutCounterOnChosenOwnPermanentEffect` batch.
+  - Turbocharged Escape: `ChoosePermanentsEffect` plus `PerpetuallyGrantCardCharacteristicsEffect`. This is a battlefield permanent, so not an owner's question.
+- **counter move** — survivor: `MoveCounterFromSourceToTargetCreatureEffect`, gaining set from/to subjects, a chosen kind, any number per permanent and kind, and distribution. 5 records / 6 cards.
+  - Slippery Bogbonder, Agent's Toolkit, Aetherborn Marauder, Forgotten Ancient.
+  - Resourceful Defense goes onto the target-to-target head `MoveCounterFromTargetCreatureToTargetCreatureEffect`.
+  - Galloping Lizrog, which shares Aetherborn's record, is a removal: it splits onto triage 4's any-number removal plus `PutCountersOnSelfEffect`.
+  - 5m's blocked `MoveCountersFromSourceToTargetCreatureEffect` joins.
+- **floated tax** — survivor: `RequirePaymentToAttackThisTurnEffect`, gaining a kind (attack mana, attack life, block mana), protected players, a `Duration` and an amount locked at resolution. 5 records / 5 cards.
+  - War Tax, Forbidding Spirit, Summon: Yojimbo, Sivitri, War Cadence.
+  - The payloads become the static records floated.
+  - Archangel of Tithes' `RequirePaymentToBlockEffect` is the block-side static survivor.
+- **tempting offer** — a new `TemptingOfferEffect(payload)`: one opponent accept loop in turn order, then the payload for each acceptor and for you once per acceptor, as the C13 ruling says. 7 records / 8 cards.
+  - The seven mayfx halves go.
+  - The search and return payloads prompt, so the combinator resumes after them as Discovery's continuation does.
+- **transform subject** — survivor: `TransformSelfEffect`, whose subject guard widens to `thisWay(CHOOSE)`, `createdThisResolution()`, `granter()` and the put-permanent result. 7 records / 7 cards.
+  - Tovolar, Sunder the Gateway, High Marshal Arguel, Optimus Prime, Nick Fury.
+  - Blitzball and Soul Seizer split onto the transform plus chunk 02's attach verb.
+- **must-attack / block, by parameters** — 4 records / 6 cards.
+  - Taunt and Gideon Jura: `MatchingCreaturesMustAttackThisTurnEffect.controlledBy` with an attacked object and a `Duration`.
+  - Tolsimir and Fighter Class: `MustBlockSourceEffect(…, true, triggering())`.
+  - Slayer's Cleaver and Ace's Baseball Bat: `MustBeBlockedIfAbleEffect` with a blocker filter.
+  - Arcum's Whistle (cost-shape): `MayPayManaEffect` with its else-effects.
+- **Roll** — 2 records / 2 cards.
+  - Clown Car onto `RollD6Effect` by parameters.
+  - Berserker's Frenzy onto `RollD20Effect` with a two-dice keep-higher count. Only it sets the count: weigh it.
+- **Source** — 5 records / 7 cards.
+  - Thran Portal and Multiversal Passage: a chosen-land-type static over `source()` / `attached()`. The unaudited `EnchantedPermanentBecomesChosenTypeEffect` (2 cards) joins.
+  - Proteus Machine: `TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(source())` with `PERMANENT`.
+  - Malignus and Excruciator: `DamageCantBePreventedEffect` with a source subject. The unaudited `CombatDamageCantBePreventedEffect` joins.
+  - Scab-Clan Giant: chunk 01's random-target batch.
+  - Strax's engine-built fight record: `SourceFightsTargetCreatureEffect` with a target filter in a reflexive ability.
+- **Can** — 4 records / 4 cards.
+  - Street Savvy and Dragon Hunter onto `CanBlockCreaturesWithShadowEffect` with a mode and an attacker filter.
+  - Hei Bai's token, by parameters: `CanBeBlockedOnlyByFilterEffect` plus `CanBlockOnlyIfAttackerMatchesPredicateEffect`.
+  - Master of Cruelties: `CanOnlyAttackAloneEffect` with a subject. The unaudited `EnchantedCreatureCanOnlyAttackAloneEffect` joins.
+- **static player restriction** — survivor: `ControllerCantPlayLandsEffect` carrying a `PlayerRestriction`, which gains a from-hand zone. 3 records / 4 cards: Aggressive Mining, Rock Jockey, Experimental Frenzy (2 records).
+- **multiplier** — `DoubleControllerDamageEffect` (4 cards, unaudited) gains a multiplier. 1 record / 2 cards: Fiery Emancipation, City on Fire.
+- **other single folds** — 1 record / 1 card each.
+  - Phyrexian Splicer: `RemoveKeywordEffect` plus `GrantKeywordEffect` over target groups.
+- **dead** — delete. 2 records / 0 cards.
+  - `MoveAllCountersOfTypeFromTargetPermanentToTargetPermanentEffect`: only Black Panther imports it.
+  - `SourceMustAttackRandomOpponentThisCombatEffect`: only Ruhan imports it.
+
+**Unique (20)**
+- Spend: North Star, Celestial Dawn.
+- Animate: Microscope.
+- Must:
+  - Ekundu Cyclops, Galactus, Blaze of Glory.
+  - The engine-built payloads `MustAttackIfAbleEffect` and `MustAttackPlayerEffect` (Nahiri's).
+- Roll: Sword of Hours, Chaos Dragon, Neverwinter Hydra, Fractured Powerstone, Ichor Elixir, `RollWithAdvantageEffect` (Pixie Guide and Barbarian Class: already one record).
+- Require: Norn's Annex.
+- Source: Glimpse.
+- Can: Chaos Lord, Weathered Sentinels.
+- Controller: Malik, Call for Aid.
+
+**Seen, not changed** (confirmed by reading, not run)
+- **Dice advantage.** Pixie Guide and Barbarian Class (Oracle: "if you would roll one or more dice") are applied only by `D4RollService`, `D12RollService` and `D20RollService`. These roll through `DiceRollService`, which has no advantage: `RollD6Effect`, `RollD8Effect`, `RollD10Effect`, Clown Car, Neverwinter Hydra's d6s and Sword of Hours' d12 (`D12RollService` exists but isn't used there). Sure of the code.
+- **Any type vs any colour.** `SpellCastingService` (the {C} branch near line 14639) treats every any-mana permission as any colour when the cost has {C}. So "mana of any type" (Vizier, North Star) can't pay {C} with colored mana, though {C} is a mana type (CR 106.1b, 609.4b). The any-colour cards (Oath of Nissa, Case File Auditor, Nathan Drake) are paid right. Fairly sure, low impact. The any-mana cast fold must keep the two modes apart.
+- **Tempting offer timing.** The C13 ruling: all opponents decide, then the effect happens for the acceptors together, then for you. Tempt with Glory, Tempt with Bunnies, Tempt with Mayhem and Tempt with Immortality act as each opponent accepts. Sure of the code; low impact.
+- **Missing ability checks in combat readers.**
+  - `CombatAttackService.canOnlyAttackAlone` reads Master of Cruelties' printed statics with no lost-abilities or face-down check (CR 613.1f, 708.2a). Sure.
+  - Ekundu Cyclops' first reader (`CombatAttackService` ~line 419) lacks the lost-abilities check its validator (~line 1736) has. Sure.
+- **Two-player assumptions.**
+  - Galactus: on a tie for most life it forces the first opponent by seat, where the controller may pick any tied opponent.
+  - Norn's Annex's tax uses `getOpponentId` as the defender.
+  - Nahiri's `MustAttackPlayerEffect` count uses `getOpponentId`.
+  - All right with two players only. Sure of the code.
+- **White-mana readers.** Celestial Dawn and Sunglasses of Urza (`playerBattlefieldHasStaticEffect`) check only the floating `losesAllAbilitiesByEffect` (CR 613.1f). Sure, low impact.
+- **Face-down any-mana source.** `CastingPermissionService.canSpendAnyManaTypeFromBattlefield` doesn't skip face-down permanents, so a face-down Vizier still grants (CR 708.2a; kin of chunk 01's face-down permission defect). Fairly sure.
+- **Returned animations come too late.** The returned-permanent animations (Brilliance Unleashed, Tune Up, The War in Heaven) apply after the permanent entered, so "enters" triggers don't see it as an artifact or creature. No ruling settles whether the text applies as it enters. Unsure.
+- **Malik's choices aren't revealed.** Its handler logs neither chosen creature, though the Oracle says "those choices are revealed". Low impact.
+
+**Left**
+- Nothing in the chunk.
+- Unaudited records these batches touch: `EnchantedPermanentBecomesChosenTypeEffect` (2), `DamageCantBePreventedEffect` (4), `CombatDamageCantBePreventedEffect` (1), `EnchantedCreatureCanOnlyAttackAloneEffect` (1), `DoubleControllerDamageEffect` (4), `RandomPlayerThenFightsTargetCreatureEffect` (Strax), `PlayersCantPlayCardsFromHandUntilNextTurnEffect`.
+- Rows to re-triage with their batches:
+  - 5m's `MoveCountersFromSourceToTargetCreatureEffect` and `MoveCounterFromTargetCreatureToTargetCreatureEffect`
+  - 5m's `SourceFightsTargetCreatureEffect`
+- Suggested fold-run order:
+  1. Dead, by-parameter and single folds.
+  2. Transform subject.
+  3. Tempting offer.
+  4. Counter move.
+  5. Floated tax.
+  6. Spend batches.
+  7. Mana-value animation.
+
 ## Prompt
 
 Replace `<N>` with the step number. For step 9, add the run kind and its scope (`step 9, triage run: Destroy, Search`;
