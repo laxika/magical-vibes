@@ -44,7 +44,9 @@ public class SacrificeCreatureToCreateTokensEqualToToughnessEffectHandler implem
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent p : battlefield) {
+                // A creature that can't be sacrificed or can't be chosen isn't offered.
                 if (gameQueryService.isCreature(gameData, p)
+                        && !gameQueryService.cantBeChosenToSacrifice(gameData, p)
                         && predicateEvaluationService.matchesPermanentPredicate(gameData, p, e.filter())) {
                     validIds.add(p.getId());
                 }

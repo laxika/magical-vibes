@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MindStone;
 import com.github.laxika.magicalvibes.cards.o.Opt;
 import com.github.laxika.magicalvibes.cards.v.VenomLethalProtector;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -163,6 +165,25 @@ class EddieBrockTest extends BaseCardTest {
         if (choice != null) {
             assertThat(choice.validPermanentIds()).doesNotContain(alexios.getId());
         }
+    }
+
+    @Test
+    @DisplayName("A sacrificed face-down creature has mana value 0, so Venom draws nothing")
+    void sacrificedFaceDownCreatureHasManaValueZero() {
+        addBackReady(player1);
+        Permanent faceDown = addCreatureReady(player1, new GrizzlyBears());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setHand(player1, List.of(new MindStone()));
+        harness.setLibrary(player1, List.of(new Opt(), new Opt()));
+
+        declareAttackers(List.of(0));
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handleMayAbilityChosen(player1, true);
+
+        harness.assertInGraveyard(player1, "Grizzly Bears");
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
+        harness.assertNotOnBattlefield(player1, "Mind Stone");
     }
 
     @Test

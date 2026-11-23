@@ -36,7 +36,9 @@ public class ReduceCastCostForChosenSubtypeSpellsEffectHandler implements CostMo
         }
         var chosenSubtype = source.sourcePermanent().getChosenSubtype();
         var spell = context.spell();
-        if (chosenSubtype == null || !spell.hasType(CardType.CREATURE)) {
+        // CR 702.37c, 708.2a: a spell cast face down has no subtypes and no abilities (no changeling), so it is never
+        // of the chosen type.
+        if (chosenSubtype == null || context.castFaceDown() || !spell.hasType(CardType.CREATURE)) {
             return 0;
         }
         boolean hasChosenSubtype = spell.hasKeyword(Keyword.CHANGELING)

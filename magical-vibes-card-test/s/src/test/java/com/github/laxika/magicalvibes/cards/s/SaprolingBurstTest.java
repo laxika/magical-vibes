@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.b.BloodSpatterAnalysis;
 import com.github.laxika.magicalvibes.cards.f.FanaticalDevotion;
 import com.github.laxika.magicalvibes.cards.p.ParallaxDementia;
 import com.github.laxika.magicalvibes.model.CardColor;
@@ -17,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({SaprolingBurst.class, SealOfCleansing.class, FanaticalDevotion.class, ParallaxDementia.class})
+@CardUsed({SaprolingBurst.class, SealOfCleansing.class, FanaticalDevotion.class, ParallaxDementia.class,
+        BloodSpatterAnalysis.class})
 class SaprolingBurstTest extends BaseCardTest {
 
     @Test
@@ -111,6 +113,26 @@ class SaprolingBurstTest extends BaseCardTest {
 
         harness.assertNotOnBattlefield(player1, "Saproling Burst");
         assertThat(findPermanents(player1, "Saproling")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("The created tokens are destroyed at the same time, as one event")
+    void destroysCreatedTokensTogether() {
+        Permanent burst = addBurstWithFadeCounters(3);
+        harness.addToBattlefield(player1, new SealOfCleansing());
+        Permanent analysis = harness.addToBattlefieldAndReturn(player2, new BloodSpatterAnalysis());
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+        assertThat(findPermanents(player1, "Saproling")).hasSize(2);
+
+        harness.activateAbility(player1, 1, null, burst.getId());
+        resolveAllTriggers();
+
+        assertThat(findPermanents(player1, "Saproling")).isEmpty();
+        assertThat(analysis.getCounterCount(CounterType.BLOODSTAIN)).isOne();
     }
 
     @Test

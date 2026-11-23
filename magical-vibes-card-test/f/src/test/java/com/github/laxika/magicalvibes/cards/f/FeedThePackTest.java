@@ -7,6 +7,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import com.github.laxika.magicalvibes.model.effect.ControllerCantSacrificeTargetThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -14,6 +17,26 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({FeedThePack.class, GavonyIronwright.class})
 class FeedThePackTest extends BaseCardTest {
+
+    @Test
+    @DisplayName("A creature that can't be sacrificed is not offered")
+    void creatureThatCantBeSacrificedIsNotOffered() {
+        harness.addToBattlefield(player1, new FeedThePack());
+        Permanent protectedCreature = harness.addToBattlefieldAndReturn(player1, new GavonyIronwright());
+        Permanent other = harness.addToBattlefieldAndReturn(player1, new GavonyIronwright());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Test", null, player1.getId(),
+                new ControllerCantSacrificeTargetThisTurnEffect(), protectedCreature.getId(), Duration.UNTIL_END_OF_TURN));
+
+        harness.forceActivePlayer(player1);
+        harness.forceStep(TurnStep.POSTCOMBAT_MAIN);
+        harness.clearPriorityPassed();
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validPermanentIds())
+                .containsExactly(other.getId());
+    }
 
     @Test
     @DisplayName("Accepting and sacrificing a 1/4 creature creates four 2/2 Wolf tokens")

@@ -395,6 +395,8 @@ public class StackEntry {
     @Setter private Set<Keyword> triggeringPermanentKeywordsAtLeave;
     /** The permanent used to pay this spell's behold cost, when the choice was from the battlefield. */
     @Setter private UUID beholdPermanentId;
+    /** The hand card revealed to pay this spell's behold cost, when the choice was from a hand. */
+    @Setter private UUID beholdCardId;
     /** Whether this spell's optional reveal-a-card-from-hand additional cost was paid. */
     @Setter private boolean revealCardFromHandCostPaid;
     /** Whether this spell's optional casualty additional cost was paid. */
@@ -1435,6 +1437,7 @@ public class StackEntry {
         this.beholdCostPaid = source.beholdCostPaid;
         this.beholdPower = source.beholdPower;
         this.beholdPermanentId = source.beholdPermanentId;
+        this.beholdCardId = source.beholdCardId;
         this.revealCardFromHandCostPaid = source.revealCardFromHandCostPaid;
         this.casualtyCostPaid = source.casualtyCostPaid;
         this.waterbendCostPaid = source.waterbendCostPaid;
@@ -2160,6 +2163,7 @@ public class StackEntry {
         this.beholdCostPaid = false;
         this.beholdPower = 0;
         this.beholdPermanentId = null;
+        this.beholdCardId = null;
         this.revealCardFromHandCostPaid = false;
         this.casualtyCostPaid = false;
         this.waterbendCostPaid = false;

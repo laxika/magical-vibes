@@ -164,6 +164,20 @@ class SovereignsOfLostAlaraTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Mark of the Vampire")).isEmpty();
     }
 
+    @Test
+    @DisplayName("Searching with no Aura that could enchant the attacker still counts as a search")
+    void searchFindingNothingIsRecorded() {
+        harness.addToBattlefield(player1, new SovereignsOfLostAlara());
+        addCreatureReady(player1, new GrizzlyBears());
+        harness.setLibrary(player1, List.of(new CursedLand()));
+
+        declareAttackers(player1, List.of(1));
+        resolveUntilMayPrompt();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+    }
+
     private void resolveUntilMayPrompt() {
         resolveAllTriggers();
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MayAbilityChoice.class);

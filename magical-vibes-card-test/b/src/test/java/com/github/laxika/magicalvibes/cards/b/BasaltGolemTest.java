@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.b;
 
 import com.github.laxika.magicalvibes.cards.f.FeralShadow;
 import com.github.laxika.magicalvibes.cards.g.GiantMantis;
+import com.github.laxika.magicalvibes.cards.g.GladecoverScout;
 import com.github.laxika.magicalvibes.cards.i.ImprisonedInTheMoon;
 import com.github.laxika.magicalvibes.cards.p.PatagiaGolem;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -71,6 +72,22 @@ class BasaltGolemTest extends BaseCardTest {
                         && blocker.getId().equals(se.getTargetId()));
 
         harness.passBothPriorities();
+        assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
+                .anyMatch(a -> blocker.getId().equals(a.watchedPermanentId()));
+    }
+
+    @Test
+    @CardUsed(GladecoverScout.class)
+    @DisplayName("The trigger doesn't target, so a hexproof blocker is still scheduled for sacrifice")
+    void hexproofBlockerIsStillScheduled() {
+        Permanent golem = addCreatureReady(player1, new BasaltGolem());
+        golem.setAttacking(true);
+        Permanent blocker = addCreatureReady(player2, new GladecoverScout());
+
+        prepareDeclareBlockers();
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
         assertThat(gd.delayedStepAbilities(StepTrigger.Moment.END_OF_COMBAT))
                 .anyMatch(a -> blocker.getId().equals(a.watchedPermanentId()));
     }

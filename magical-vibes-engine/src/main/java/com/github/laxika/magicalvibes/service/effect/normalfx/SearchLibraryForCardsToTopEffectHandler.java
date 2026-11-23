@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -51,6 +52,8 @@ public class SearchLibraryForCardsToTopEffectHandler implements NormalEffectHand
         if (librarySearchSupport.isSearchPrevented(gameData, controllerId)) {
             return;
         }
+        // Searching is recorded whatever it finds, an empty library included (CR 701.23a).
+        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, controllerId);
 
         SearchLibraryForCardsToTopEffect searchEffect = (SearchLibraryForCardsToTopEffect) effect;
         CardPredicate filter = searchEffect.filter();
@@ -77,7 +80,9 @@ public class SearchLibraryForCardsToTopEffectHandler implements NormalEffectHand
             return;
         }
 
+        // An opponent's Aven Mindcensor limits the search to the top cards of the library.
         List<Card> matching = deck.stream()
+                .limit(librarySearchSupport.opponentSearchTopCardsLimit(gameData, controllerId))
                 .filter(card -> predicateEvaluationService.matchesCardPredicate(card, filter, null, gameData, controllerId))
                 .toList();
 

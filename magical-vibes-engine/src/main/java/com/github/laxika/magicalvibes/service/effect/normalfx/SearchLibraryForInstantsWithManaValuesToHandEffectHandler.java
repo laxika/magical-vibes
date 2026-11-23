@@ -2,14 +2,13 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchFollowUp;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForInstantsWithManaValuesToHandEffect;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import java.util.List;
 import java.util.UUID;
+import com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -26,8 +25,6 @@ import org.springframework.stereotype.Component;
 public class SearchLibraryForInstantsWithManaValuesToHandEffectHandler implements NormalEffectHandlerBean {
 
     private static final List<Integer> MANA_VALUES = List.of(3, 2, 1);
-
-    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
 
     @Override
@@ -44,11 +41,13 @@ public class SearchLibraryForInstantsWithManaValuesToHandEffectHandler implement
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(
-                    playerName + " searches their library but it is empty. Library is shuffled."));
+            librarySearchSupport.endSearchFindingNothing(gameData, controllerId, playerName + " searches their library but it is empty. Library is shuffled.");
             return;
         }
 
+        // One search, however many picks it takes (CR 701.23a): recorded here, before the first pick; the picks
+        // record nothing more.
+        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, controllerId);
         librarySearchSupport.startNextInstantManaValueToHandPick(gameData, controllerId,
                 LibrarySearchFollowUp.instantManaValueToHandPicks(MANA_VALUES));
     }

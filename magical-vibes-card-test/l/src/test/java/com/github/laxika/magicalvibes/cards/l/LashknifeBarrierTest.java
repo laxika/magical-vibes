@@ -2,10 +2,13 @@ package com.github.laxika.magicalvibes.cards.l;
 
 import com.github.laxika.magicalvibes.cards.a.AlphaKavu;
 import com.github.laxika.magicalvibes.cards.e.Excruciator;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.m.MagmaBurst;
+import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.s.SeaSnidd;
 import com.github.laxika.magicalvibes.cards.s.Singe;
 import com.github.laxika.magicalvibes.cards.s.SlingshotGoblin;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,11 +19,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @CardUsed({LashknifeBarrier.class, AlphaKavu.class, MagmaBurst.class, SeaSnidd.class,
-        Singe.class, SlingshotGoblin.class, Excruciator.class})
+        Singe.class, SlingshotGoblin.class, Excruciator.class, Opalescence.class, Humility.class})
 class LashknifeBarrierTest extends BaseCardTest {
 
     @Test
@@ -178,6 +182,38 @@ class LashknifeBarrierTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player1.getId())).contains(blocker);
         assertThat(blocker.getMarkedDamage()).isEqualTo(6);
+    }
+
+    @Test
+    @DisplayName("A face-down Lashknife Barrier has no abilities, so it reduces nothing")
+    void faceDownBarrierDoesNotReduce() {
+        Permanent barrier = harness.addToBattlefieldAndReturn(player1, new LashknifeBarrier());
+        barrier.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Permanent seaSnidd = addCreatureReady(player1, new SeaSnidd());
+
+        harness.setHand(player2, List.of(new MagmaBurst()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.addMana(player2, ManaColor.COLORLESS, 3);
+        harness.castAndResolveInstant(player2, 0, seaSnidd.getId());
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(seaSnidd);
+    }
+
+    @Test
+    @DisplayName("A Lashknife Barrier that lost its abilities reduces nothing")
+    void barrierWithoutAbilitiesDoesNotReduce() {
+        harness.addToBattlefield(player2, new Opalescence());
+        harness.addToBattlefield(player2, new Humility());
+        Permanent barrier = harness.addToBattlefieldAndReturn(player1, new LashknifeBarrier());
+        Permanent seaSnidd = addCreatureReady(player1, new SeaSnidd());
+        assertThat(gqs.hasLostAllAbilities(gd, barrier)).isTrue();
+
+        harness.setHand(player2, List.of(new Singe()));
+        harness.addMana(player2, ManaColor.RED, 1);
+        harness.castAndResolveInstant(player2, 0, seaSnidd.getId());
+
+        // Humility makes Sea Snidd a 1/1, so the unreduced damage kills it.
+        assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(seaSnidd);
     }
 
     private void addBarrier(Player player) {

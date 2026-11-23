@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -10,10 +9,8 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForAuraToBattlefieldAttachedToSourceOrHandEffect;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.aura.AuraAttachmentService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -29,7 +26,6 @@ public class SearchLibraryForAuraToBattlefieldAttachedToSourceOrHandEffectHandle
 
     private final GameQueryService gameQueryService;
     private final AuraAttachmentService auraAttachmentService;
-    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
 
     @Override
@@ -54,8 +50,8 @@ public class SearchLibraryForAuraToBattlefieldAttachedToSourceOrHandEffectHandle
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
         if (deck == null || deck.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(playerName
-                    + " searches their library but it is empty. Library is shuffled."));
+            librarySearchSupport.endSearchFindingNothing(gameData, controllerId, playerName
+                    + " searches their library but it is empty. Library is shuffled.");
             return;
         }
 
@@ -66,10 +62,9 @@ public class SearchLibraryForAuraToBattlefieldAttachedToSourceOrHandEffectHandle
                 .filter(card -> auraAttachmentService.canEnchant(gameData, card, controllerId, host))
                 .toList();
         if (matchingCards.isEmpty()) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            gameLogService.append(gameData, GameLog.text(playerName
+            librarySearchSupport.endSearchFindingNothing(gameData, controllerId, playerName
                     + " searches their library but finds no Aura that could enchant "
-                    + FaceDownVisibility.publicName(gameData, host) + ". Library is shuffled."));
+                    + FaceDownVisibility.publicName(gameData, host) + ". Library is shuffled.");
             log.info("Game {} - {} searches library, no eligible Aura cards found", gameData.id, playerName);
             return;
         }

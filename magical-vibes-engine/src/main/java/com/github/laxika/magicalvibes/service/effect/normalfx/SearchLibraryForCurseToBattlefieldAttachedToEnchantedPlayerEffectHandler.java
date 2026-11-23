@@ -3,14 +3,12 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffect;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -18,7 +16,6 @@ import java.util.Set;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import org.springframework.stereotype.Component;
 
@@ -28,7 +25,6 @@ import org.springframework.stereotype.Component;
 public class SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
 
     @Override
@@ -56,8 +52,8 @@ public class SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffectHa
         String playerName = gameData.playerIdToName.get(controllerId);
 
         if (deck == null || deck.isEmpty()) {
-            String logMsg = playerName + " searches their library but it is empty. Library is shuffled.";
-            gameLogService.append(gameData, GameLog.text(logMsg));
+            librarySearchSupport.endSearchFindingNothing(gameData, controllerId,
+                    playerName + " searches their library but it is empty. Library is shuffled.");
             return;
         }
 
@@ -76,9 +72,8 @@ public class SearchLibraryForCurseToBattlefieldAttachedToEnchantedPlayerEffectHa
                 .toList();
 
         if (matchingCards.isEmpty()) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            String logMsg = playerName + " searches their library but finds no eligible Curse cards. Library is shuffled.";
-            gameLogService.append(gameData, GameLog.text(logMsg));
+            librarySearchSupport.endSearchFindingNothing(gameData, controllerId,
+                    playerName + " searches their library but finds no eligible Curse cards. Library is shuffled.");
             log.info("Game {} - {} searches library, no eligible Curse cards found", gameData.id, playerName);
             return;
         }

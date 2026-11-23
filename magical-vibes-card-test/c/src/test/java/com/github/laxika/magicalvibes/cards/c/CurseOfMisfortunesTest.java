@@ -191,6 +191,17 @@ class CurseOfMisfortunesTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Searching an empty library still counts as a search")
+    void emptyLibrarySearchIsRecorded() {
+        placeCurseOnPlayer(player1, player2);
+        harness.setLibrary(player1, List.of());
+        advanceToControllerUpkeep();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+    }
+
     private Permanent placeCurseOnPlayer(Player controller, Player enchantedPlayer) {
         Permanent cursePerm = harness.addToBattlefieldAndReturn(controller, new CurseOfMisfortunes());
         cursePerm.setAttachedTo(enchantedPlayer.getId());

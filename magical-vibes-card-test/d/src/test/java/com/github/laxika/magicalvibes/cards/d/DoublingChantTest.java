@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.r.RuneclawBear;
 import com.github.laxika.magicalvibes.cards.g.GarruksCompanion;
 import com.github.laxika.magicalvibes.cards.p.PsychogenicProbe;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -148,6 +150,19 @@ class DoublingChantTest extends BaseCardTest {
         assertThat(named("Garruk's Companion")).isEmpty();
         assertThat(gd.playerDecks.get(player1.getId())).extracting(c -> c.getName())
                 .containsExactly("Garruk's Companion");
+    }
+
+    @Test
+    @DisplayName("A face-down creature has no name, so it offers no search")
+    void faceDownCreatureOffersNoSearch() {
+        Permanent faceDown = harness.addToBattlefieldAndReturn(player1, new RuneclawBear());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        setupLibrary();
+        castAndResolveChant();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        assertThat(named("Runeclaw Bear")).containsExactly(faceDown);
+        assertThat(gd.playerDecks.get(player1.getId())).hasSize(3);
     }
 
     private void setupLibrary() {

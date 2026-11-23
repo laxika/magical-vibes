@@ -445,7 +445,8 @@ public class LibrarySearchSupport {
      * your hand" pick from the follow-up's mana-value queue (Firemind's Foresight). Each queue entry
      * is one exact mana value, searched in order; values with no matching instant left in the library
      * are skipped without shuffling. When the queue is exhausted the library is shuffled once and
-     * false is returned; returns true if a search was begun.
+     * false is returned; returns true if a search was begun. The picks record no search: the effect records its one
+     * search before the first pick.
      */
     public boolean startNextInstantManaValueToHandPick(GameData gameData, UUID playerId,
                                                        LibrarySearchFollowUp followUp) {
@@ -467,18 +468,24 @@ public class LibrarySearchSupport {
             if (matches.isEmpty()) {
                 continue;
             }
-            sendLibrarySearchToPlayer(gameData, playerId,
-                    LibrarySearchParams.builder(playerId, new ArrayList<>(matches))
-                            .reveals(true)
-                            .canFailToFind(true)
-                            .destination(LibrarySearchDestination.HAND)
-                            .shuffleAfterSelection(false)
-                            .followUp(followUp.withRemainingInstantManaValueToHandPicks(remaining))
-                            .build(),
-                    "Search your library for an instant card with mana value " + manaValue
-                            + " to reveal and put into your hand.", true,
-                    playerName + " searches their library for an instant card with mana value "
-                            + manaValue + ".");
+            // Every pick is part of the one search its effect recorded before the first pick.
+            gameData.suppressNextLibrarySearchTriggers = true;
+            try {
+                sendLibrarySearchToPlayer(gameData, playerId,
+                        LibrarySearchParams.builder(playerId, new ArrayList<>(matches))
+                                .reveals(true)
+                                .canFailToFind(true)
+                                .destination(LibrarySearchDestination.HAND)
+                                .shuffleAfterSelection(false)
+                                .followUp(followUp.withRemainingInstantManaValueToHandPicks(remaining))
+                                .build(),
+                        "Search your library for an instant card with mana value " + manaValue
+                                + " to reveal and put into your hand.", true,
+                        playerName + " searches their library for an instant card with mana value "
+                                + manaValue + ".");
+            } finally {
+                gameData.suppressNextLibrarySearchTriggers = false;
+            }
             return true;
         }
 
@@ -638,6 +645,20 @@ public class LibrarySearchSupport {
 
         log.info("Game {} - {} searches their library ({} matches)", gameData.id, playerName, matchingCards.size());
         return true;
+    }
+
+    /**
+     * Ends a search of {@code playerId}'s own library that has nothing to offer: the library is empty, or no card in it
+     * matches. Looking through the library is still searching it (CR 701.23a), so the search is recorded and the
+     * "whenever a player searches" abilities trigger; the library is then shuffled (an empty one too) and
+     * {@code logMessage} is logged.
+     */
+    public void endSearchFindingNothing(GameData gameData, UUID playerId, String logMessage) {
+        LibrarySearchTriggerHelper.recordSearchAndQueueTriggers(gameData, playerId);
+        if (gameData.playerDecks.get(playerId) != null) {
+            LibraryShuffleHelper.shuffleLibrary(gameData, playerId);
+        }
+        gameLogService.append(gameData, GameLog.text(logMessage));
     }
 
     /**

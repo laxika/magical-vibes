@@ -41,8 +41,11 @@ public class SearchLibraryForCardWithSameNameAsAnotherCreatureYouControlEffectHa
         UUID sourcePermanentId = entry.getSourcePermanentId();
         List<CardPredicate> sameName = new ArrayList<>();
         for (Permanent permanent : gameData.playerBattlefields.getOrDefault(entry.getControllerId(), List.of())) {
-            if (!permanent.getId().equals(sourcePermanentId) && gameQueryService.isCreature(gameData, permanent)) {
-                sameName.add(new CardNamedPredicate(permanent.getCard().getName()));
+            // CR 201.2a, 708.2a: a face-down creature has no name, so no card has the same name as it.
+            String name = permanent.getId().equals(sourcePermanentId) || !gameQueryService.isCreature(gameData, permanent)
+                    ? null : gameQueryService.getEffectiveName(gameData, permanent);
+            if (name != null) {
+                sameName.add(new CardNamedPredicate(name));
             }
         }
 

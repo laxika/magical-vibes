@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.m.MeliraTheLivingCure;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -191,6 +193,25 @@ class KethekCrucibleGoliathTest extends BaseCardTest {
         assertThat(gd.stack).isEmpty();
         assertThat(gd.interaction.isAwaitingInput()).isFalse();
         assertThat(gd.playerGraveyards.get(player1.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A sacrificed face-down creature has mana value 0, so no creature has lesser mana value")
+    void sacrificedFaceDownCreatureHasManaValueZero() {
+        harness.addToBattlefield(player1, new KethekCrucibleGoliath());
+        Permanent faceDown = harness.addToBattlefieldAndReturn(player1, new AzureDrake());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        LlanowarElves elves = new LlanowarElves();
+        harness.setLibrary(player1, List.of(elves));
+
+        moveToEndStep();
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.passBothPriorities();
+
+        harness.assertInGraveyard(player1, "Azure Drake");
+        assertThat(gd.playerDecks.get(player1.getId())).containsExactly(elves);
+        harness.assertNotOnBattlefield(player1, "Llanowar Elves");
     }
 
     private void moveToEndStep() {

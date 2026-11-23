@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.i.InvokeTheDivine;
 import com.github.laxika.magicalvibes.cards.m.MaskwoodNexus;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -16,6 +17,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -90,6 +92,27 @@ class PyreOfHeroesTest extends BaseCardTest {
         assertThat(search.params().cards()).hasSize(1);
         harness.handleCardChosen(player1, 0);
         harness.assertOnBattlefield(player1, "Grizzly Bears");
+    }
+
+    @Test
+    @DisplayName("A sacrificed face-down creature has mana value 0, so the search is for mana value 1")
+    void sacrificedFaceDownCreatureHasManaValueZero() {
+        harness.addToBattlefield(player1, new PyreOfHeroes());
+        Permanent faceDown = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.addToBattlefield(player1, new MaskwoodNexus());
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+        harness.setLibrary(player1, List.of(new LlanowarElves(), new HillGiant()));
+
+        harness.activateAbility(player1, 0, null, null);
+        harness.passBothPriorities();
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards())
+                .hasSize(1)
+                .allMatch(card -> card.getName().equals("Llanowar Elves"));
     }
 
     @Test

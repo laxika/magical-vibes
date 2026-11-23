@@ -391,7 +391,7 @@ public class SpellCastingService {
 
     private record BeheldCardPayment(Card card, UUID ownerId) {}
 
-    private record BeholdPowerSnapshot(UUID permanentId, int power) {}
+    private record BeholdPowerSnapshot(UUID permanentId, UUID cardId, int power) {}
 
     // --- Helper methods ---
 
@@ -7739,6 +7739,7 @@ public class SpellCastingService {
                 if (beholdPowerSnapshot != null) {
                     gameData.stack.getLast().setBeholdPower(beholdPowerSnapshot.power());
                     gameData.stack.getLast().setBeholdPermanentId(beholdPowerSnapshot.permanentId());
+                    gameData.stack.getLast().setBeholdCardId(beholdPowerSnapshot.cardId());
                 }
                 gameData.stack.getLast().setRevealCardFromHandCostPaid(
                         isRevealCardFromHandCostPaid(additionalCosts, paymentCostSelection));
@@ -8006,7 +8007,7 @@ public class SpellCastingService {
         if (!permanentIds.isEmpty()) {
             Permanent permanent = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
             if (permanent != null) {
-                return new BeholdPowerSnapshot(permanent.getId(), Math.max(0,
+                return new BeholdPowerSnapshot(permanent.getId(), null, Math.max(0,
                         gameQueryService.getEffectivePower(gameData, permanent)));
             }
         }
@@ -8019,7 +8020,7 @@ public class SpellCastingService {
             List<Card> hand = gameData.playerHands.get(player.getId());
             if (hand != null && effectiveIndex >= 0 && effectiveIndex < hand.size()) {
                 Card beheldCard = hand.get(effectiveIndex);
-                return new BeholdPowerSnapshot(null,
+                return new BeholdPowerSnapshot(null, beheldCard.getId(),
                         beheldCard.getPower() == null ? 0 : Math.max(0, beheldCard.getPower()));
             }
         }

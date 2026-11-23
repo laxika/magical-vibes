@@ -24,7 +24,7 @@ bottom.
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,533 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts; triage run 2 gave Search and Cant (79 rare) theirs; triage run 3 gave Sacrifice and Destroy (75 rare) theirs (201 `step-9` rows wait for fold runs). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; the next families with no owner's question are Look (37 rare), Remove (34), Gain (32) and Add (32). |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,533 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts; triage run 2 gave Search and Cant (79 rare) theirs; triage run 3 gave Sacrifice and Destroy (75 rare) theirs (201 `step-9` rows wait for fold runs). Defect run 1 fixed most of the defects the triage runs saw (its Findings). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; the next families with no owner's question are Look (37 rare), Remove (34), Gain (32) and Add (32). |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -286,7 +286,7 @@ Each run ends with its family row in Findings: audited, absorbed, split, blocked
 Cross-cutting results of those runs, now conventions or shared pieces (Standing knowledge): the face-down hiding rules; stay checks
 (CR 400.7, 603.7c) on every return and delayed return; what a put step moves enters through the entry batch (as-enters and Aura host
 choices, a card that can't enter stays where it is, CR 101.2, 303.4f); choices drop a permanent that can't be chosen before counting
-(CR 115.10a); name prompts offer only names the chooser can know; every prevention sends the damage-prevented event; protection is
+(CR 608.2d); name prompts offer only names the chooser can know; every prevention sends the damage-prevented event; protection is
 checked at targeting for every target (CR 702.16b); one player-level cast check and the resolution-cast check (runs 40 and 41).
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
@@ -342,7 +342,10 @@ step 8's run N); its full text is in the git history named at the top.
 - An effect that cares about a spell's characteristics judges `CastingPermissionService.spellAsEffectsSeeIt(entry)` (a spell cast
   face down has only its face-down characteristics).
 - A face-down permanent's mana value is 0 and it has none of its card's abilities or perpetual changes (CR 708.2a): read the
-  permanent, not its card (runs 25, 29, 30, 35).
+  permanent, not its card (runs 25, 29, 30, 35). The reads: `GameQueryService.getPermanentManaValue` (a sacrificed permanent's
+  snapshot too), `getEffectiveName` (null while face down) / `permanentHasName`, `hasEffectiveCardType`, `activeStaticEffects`
+  for a static ability; a spell being cast face down has no subtypes or abilities (`CostModificationContext.castFaceDown`)
+  (defect run 1).
 - A hand choice is shown to its chooser alone and its log names no card; a prompt over exiled cards masks a face-down card from a
   player who may not look at it; a name prompt offers only the catalog's names and names of cards the chooser can know
   (`PlayerInputService.cardNamesOfferedTo`, checked by `ChoiceHandlerService.isCardNameAllowed`); the AI answers from what it can know
@@ -354,7 +357,7 @@ step 8's run N); its full text is in the git history named at the top.
   (CR 603.7c). Card subjects do this; a handler with its own lookup must too.
 - Permanents one instruction moves leave or enter as one event (CR 603.10a, 608.2e); several players choose in APNAP order, then act.
 - A choice with one possible answer is made unasked; a permanent that can't be chosen is neither offered, counted nor drawn at random
-  (CR 115.10a, 608.2d).
+  (CR 608.2d).
 - What a put step moves enters through the entry batch: as-enters, copy and Aura host choices are asked, and a card that can't enter
   stays where it is (CR 101.2, 303.4f, 303.4g); an instant or sorcery card is never put onto the battlefield face up (CR 400.4a).
 - A ward or ransom decline counters through `CounterSupport.counterSpell(gameData, counterControllerId, description, target)`, so
@@ -369,6 +372,8 @@ step 8's run N); its full text is in the git history named at the top.
 - A prevention prevents in the damage pools so the affected player orders it (CR 616.1), and every prevention sends the
   damage-prevented event (Selfless Squire; runs 22 to 24).
 - The log line of the survivor wins.
+- A search that finds nothing (an empty library, no match) is still a search (CR 701.23a): it is recorded, once per search however
+  many picks it takes (`LibrarySearchSupport.endSearchFindingNothing`; defect run 1).
 - A declined `MayEffect` runs no step and records nothing: an "if you do" after it would read an older step of that kind (step 7).
 - A new damage, discard or sacrifice primitive calls `recordStep(kind, NONE)` first: central hooks add results to the latest step of
   that kind (step 7).
@@ -644,6 +649,29 @@ Collected from every "Seen, not changed" list; items a later run fixed are dropp
   them (step 7). Unverified.
 - `DiscardCardThenEffect`'s reflexive cards inside a `MayEffect` are asked with no matching card (8.22). Unverified.
 - Soundwave's "from their graveyard" is the damaged player's; the opponent-graveyard scope admits any opponent's (8.24). Unverified.
+- Fatal Lore's destroy mode chooses its two creatures at resolution without targeting; its ruling has the caster choose targets
+  after the opponent's mode choice, as the spell is cast (CR 601.2c). Needs a target prompt after the opponent's answer, which
+  arrives after the spell is on the stack (triage 3, defect run 1). Code.
+- Giant Albatross destroys each creature right after its controller answers, before the next controller chooses (CR 101.4, 608.2e);
+  needs the unpaid creatures collected across the pay-life prompts (GameData state copied for simulations) and one
+  `DestructionSupport.destroyBatchWithOutcome` when the queue empties (triage 3, defect run 1). Code.
+- Last Light of Durin's Day with no Dragon in hand or library searches nothing, where the player may search and find nothing
+  (CR 701.23b); kin of the queue's may-searches above (triage 2, defect run 1). Code.
+- The pay-{X} handlers treat X = 0 as declining (Relentless Dead, Squealing Devil, Vigil for the Lost, Azor, Roalesk, Hollow
+  Specter, Depala) while Isareth and Fire Lord Sozin queue at 0; paying {0} is paying (CR 118.12) (triage 1). Code, low impact.
+- Rakdos Charm's third mode deals each creature's damage one at a time (kin of the bite's defect) (triage 1). Code.
+- Phyrexian Dreadnought offers permanents that can't be chosen to sacrifice (its as-enters prompt) (triage 3). Unverified.
+- `SearchTargetLibraryEffectHandler` matches its filter without game state (`matchesCardPredicate(card, filter, null)`); no card
+  found whose filter needs it (triage 2). Code.
+- Die Young declares a benign target for its -X/-X; only the AI reads the polarity (protection is checked for every target,
+  CR 702.16b) (triage 1). Code, AI only.
+- Enslave's owner is taken from `stolenCreatures`, else the controller, not from the card's owner (triage 1). Unverified.
+- A permanent spell's behold (the permanent-spell branch of `SpellCastingService.playCardInternalImpl`) records no beheld permanent
+  or card on its entry; only instants and sorceries do (defect run 1). Unverified whether a permanent card reads it.
+- When Aven Mindcensor leaves no match among the top cards, `sendLibrarySearchToPlayer` begins no prompt but its caller
+  (`startNextInstantManaValueToHandPick`, Firemind's Foresight) reports a begun pick, so the later picks may be dropped (defect
+  run 1). Unverified.
+- `TheDiningCarTest`'s four older test methods have no `@DisplayName` (defect run 1). Code.
 - Dead code: `MultiGraveyardChoice.reorderToLibraryTop` and its handler branch (run 12; the component is still there),
   `ExileFromHandChoice.untapPermanentId` (run 7), the multi-zone exile prompt's draw, token and set-code fields (run 16),
   `GraveyardReturnSupport`'s Javadoc blocks with no method (8.25). Unverified.
@@ -1098,6 +1126,56 @@ engine-built record for an opponent mode chooser at cast; Harsh Mercy (`blocked-
   existing pieces.
 - The unaudited 3+-card records these batches touch: `SacrificePermanentsAsEntersForCountersEffect` (5), `ExileTokensCreatedWithSourceEffect`
   (5); and run 20's `SacrificeUnlessReturnOwnPermanentTypeToHandEffect` row is stale.
+
+### Step 9, defect run 1 (2026-11-23)
+
+Fixes for the defects triage runs 1 to 3 saw, no folding. Ratchet 4,046 / 3,300 → 4,045 / 3,300 (one record went away:
+`CantCastSpellsWithSourceNameEffect`, Tidal Influence's; ledger row `absorbed`). One card file rewritten (Tidal Influence). Oracle text
+checked with `get_card` for Herald's Horn, Pattern Matcher, Doubling Chant, Eddie Brock // Venom, Kethek, Sheltered Valley, Pyre of Heroes,
+Vivien on the Hunt, Drake Familiar, Lashknife Barrier, Tidal Influence, The Dining Car, Territorial Strike, Giant Albatross and Fatal Lore;
+rulings with `get_rulings` for Herald's Horn, Tidal Influence, Territorial Strike (none) and Fatal Lore. CR 101.3, 101.4, 118.12, 119.4,
+201.2a, 400.7, 601.2c, 608.2b, 608.2e, 608.2h, 613.1f, 701.4a, 701.21a, 701.23a, 701.23b, 702.16b, 702.37c and 708.2a checked with
+`get_rule` (2026-11-23).
+
+| Defect | Verdict | Test (failed first?) |
+|---|---|---|
+| Herald's Horn reduced a creature spell cast face down (CR 702.37c, 708.2a) | fixed in `ReduceCastCostForChosenSubtypeSpellsEffectHandler` | `HeraldsHornTest.doesNotReduceFaceDownSpell` (yes) |
+| Pattern Matcher, Doubling Chant read a face-down creature's card name (CR 201.2a) | fixed: `getEffectiveName` (null face down) | `PatternMatcherTest`, `DoublingChantTest.faceDown…` (yes) |
+| Venom, Kethek, Pyre of Heroes, Vivien on the Hunt read the sacrificed card's mana value | fixed: `getPermanentManaValue` of the permanent or its snapshot | `EddieBrockTest`, `KethekCrucibleGoliathTest`, `PyreOfHeroesTest`, `VivienOnTheHuntTest` (yes) |
+| Sheltered Valley sacrificed a face-down permanent whose card is a Sheltered Valley | fixed: `permanentHasName` | `ShelteredValleyTest.faceDownCopySurvives` (yes) |
+| Drake Familiar offered permanents by the card's printed type | fixed: `hasEffectiveCardType` in the handler and `MayPenaltyChoiceHandlerService` | `DrakeFamiliarTest.faceDownEnchantmentCardIsNotAnEnchantment` (yes) |
+| Lashknife Barrier reduced while face down or without abilities (CR 613.1f) | fixed: `DamagePreventionService` reads `activeStaticEffects` | `LashknifeBarrierTest` face-down and Humility cases (yes, both) |
+| Tidal Influence's restriction was a static ability of the permanent | fixed: the card's cast condition; the record deleted | `TidalInfluenceTest.tidalInfluenceWithoutAbilitiesStillPreventsCasting` (yes) |
+| Eight search handlers recorded no search when nothing matched or the library was empty (CR 701.23a) | fixed: `LibrarySearchSupport.endSearchFindingNothing` (records, shuffles, logs) | Sovereigns, Auratouched Mage, Curse of Misfortunes, Bitterheart Witch, Guidelight Pathmaker, Archdruid's Charm, Firemind's Foresight (2), Myr Incubator (yes, all) |
+| Firemind's Foresight recorded one search per pick (Ob Nixilis, Unshackled triggered up to three times) | fixed: recorded once by the handler, the picks suppress theirs | `FiremindsForesightTest.threePicksAreOneSearch` (yes) |
+| `SearchTargetLibraryEffectHandler` recorded no own-library search that found nothing (found while fixing the above) | fixed | `QuietSpeculationTest.ownSearchFindingNothingIsRecorded` (yes) |
+| `SearchLibraryForCardsToTopEffectHandler` (Congregation at Dawn, Insidious Dreams, Scouting Trek) recorded no search and ignored Aven Mindcensor | fixed, as the Recruiters' handler | `CongregationAtDawnTest` (yes, both) |
+| Behemoth of Vault 0 paid energy past the setter | fixed: `setPlayerEnergyCounters` | `BehemothOfVault0Test.deathTriggerPaymentCountsAsEnergyPaidThisTurn` (yes) |
+| The Dining Car dropped unsacrificeable creatures before finding the least toughness (CR 101.3) | fixed | `TheDiningCarTest.leastToughnessCreatureThatCantBeSacrificedIsNotSkipped` (yes) |
+| Territorial Strike boosted the destroyed permanent, not the beheld Dragon | fixed: the entry records the beheld hand card (`StackEntry.beholdCardId`, new, copied); the boost goes to the beheld permanent or hand card while it is still there (CR 400.7), the hand card logged as the perpetual hand grants log | two new `TerritorialStrikeTest` cases (yes); the old case asserting the destroyed permanent's boost replaced (it contradicted the Oracle text) |
+| Saproling Burst, Tombstone Stairwell destroyed their tokens one at a time | fixed: `destroyBatchWithOutcome`, as `DestroyAllPermanentsEffectHandler` | `SaprolingBurstTest.destroysCreatedTokensTogether` (no: Blood Spatter Analysis's "one or more" triggered once either way; kept as a guard) |
+| Scapeshift, Feed the Pack offered permanents that can't be sacrificed | fixed: `cantBeChosenToSacrifice` | `ScapeshiftTest`, `FeedThePackTest` (yes, the handler edit undone for that run) |
+| Vizkopa Confessor without `AsksDeathReplacementsFirst` | not a defect: the handler has carried the mark since `c3adb102b7`, as `PayXLifeEffectHandler` | none |
+| Capricious Efreet, Wild Swing among targets on the battlefield | not a defect: `StackEntry.getTargetIds()` returns only targets still legal after the resolution check | none |
+| Wall of Dust, Basalt Golem "target" the other creature | not a defect: the entries are non-targeting, a hexproof creature is still affected; the harmful spec is read by the AI only | `WallOfDustTest`, `BasaltGolemTest` hexproof guards (passed) |
+| Fatal Lore, Giant Albatross, Last Light of Durin's Day, pay-{X} at 0, Rakdos Charm, Phyrexian Dreadnought, `SearchTargetLibraryEffectHandler`'s game state, Die Young | left: see "Open defects seen and not fixed" | none |
+
+**Behaviour changes.** Each row marked fixed above. Log lines: the empty-library searches of the eight handlers now shuffle (they logged
+"Library is shuffled." without shuffling); Territorial Strike logs "A card in X's hand perpetually gets +2/+2." or "[Dragon] perpetually
+gets +2/+2."; Doubling Chant with only face-down creatures no longer logs "controls no creatures". No test asserted a changed line.
+
+**What a player sees.** No new prompt. The Territorial Strike hand line names no card; the face-down reads hide nothing more than before.
+
+**Seen, not changed.** Added to "Open defects seen and not fixed": the triage leftovers above, the permanent-spell behold path that records
+no beheld object, the Mindcensor branch that may drop Firemind's Foresight's later picks, `TheDiningCarTest`'s missing display names.
+The Standing knowledge cites CR 115.10a for "a permanent that can't be chosen is neither offered, counted nor drawn"; 115.10a says that
+an affected object isn't a target, so that citation is wrong (the orchestrator changed both to CR 608.2d: a player can't choose an
+illegal or impossible option).
+
+**Tests edited.** `TerritorialStrikeTest`'s boost case (contradicted the Oracle text); `EffectCountRatchetTest`'s record baseline. New
+cases in 29 card test classes. No assertion was loosened.
+
+**For the next run.** Fold runs as triage run 3 recommends; Fatal Lore and Giant Albatross need the pieces named in the open defects.
 
 ## Prompt
 

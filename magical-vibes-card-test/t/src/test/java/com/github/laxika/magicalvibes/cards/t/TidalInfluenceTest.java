@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.f.FeralThallid;
+import com.github.laxika.magicalvibes.cards.h.Humility;
 import com.github.laxika.magicalvibes.cards.i.Ixidron;
 import com.github.laxika.magicalvibes.cards.o.Opalescence;
 import com.github.laxika.magicalvibes.cards.r.RiverMerfolk;
@@ -16,7 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({TidalInfluence.class, FeralThallid.class, RiverMerfolk.class, Opalescence.class, Ixidron.class})
+@CardUsed({TidalInfluence.class, FeralThallid.class, RiverMerfolk.class, Opalescence.class, Ixidron.class,
+        Humility.class})
 class TidalInfluenceTest extends BaseCardTest {
 
     @Test
@@ -38,6 +40,19 @@ class TidalInfluenceTest extends BaseCardTest {
     void cannotBeCastWhileTidalInfluenceIsOnBattlefield() {
         harness.addToBattlefield(player2, new TidalInfluence());
 
+        assertThatThrownBy(() -> harness.castFromHand(player1, new TidalInfluence(), "{2}{U}"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("not playable");
+    }
+
+    @Test
+    @DisplayName("A Tidal Influence that lost its abilities still prevents casting another copy")
+    void tidalInfluenceWithoutAbilitiesStillPreventsCasting() {
+        harness.addToBattlefield(player2, new Opalescence());
+        harness.addToBattlefield(player2, new Humility());
+        Permanent influence = harness.addToBattlefieldAndReturn(player2, new TidalInfluence());
+
+        assertThat(gqs.hasLostAllAbilities(gd, influence)).isTrue();
         assertThatThrownBy(() -> harness.castFromHand(player1, new TidalInfluence(), "{2}{U}"))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not playable");

@@ -71,7 +71,8 @@ public class SacrificeOtherCreatureThenRevealUntilLowerManaValueEffectHandler
 
     public void resolveAfterChoice(GameData gameData, StackEntry entry, Permanent creature,
                                    com.github.laxika.magicalvibes.model.filter.CardPredicate predicate) {
-        int maximumManaValue = creature.getCard().getManaValue() - 1;
+        // CR 708.2a: a face-down creature's mana value is 0.
+        int maximumManaValue = gameQueryService.getPermanentManaValue(creature) - 1;
         destructionSupport.sacrificeAndLog(gameData, creature, entry.getControllerId());
 
         revealHandler.resolve(gameData, entry,

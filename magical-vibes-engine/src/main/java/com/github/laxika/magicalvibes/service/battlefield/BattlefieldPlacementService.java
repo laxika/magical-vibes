@@ -1764,9 +1764,10 @@ public class BattlefieldPlacementService {
         if (!present) {
             return;
         }
+        // CR 201.2a, 708.2a: a face-down permanent has no name, so it is never named Sheltered Valley.
         String name = permanent.getCard().getName();
         List<Permanent> doomed = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
-                .filter(p -> name.equals(p.getCard().getName()))
+                .filter(p -> gameQueryService.permanentHasName(gameData, p, name))
                 .toList();
         if (doomed.isEmpty()) {
             return;

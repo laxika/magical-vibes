@@ -36,10 +36,11 @@ class TerritorialStrikeTest extends BaseCardTest {
     }
 
     @Test
-    @DisplayName("A beheld Dragon gives the destroyed permanent a perpetual +2/+2")
-    void beholdingDragonPerpetuallyBoostsDestroyedPermanent() {
+    @DisplayName("A Dragon beheld from hand perpetually gets +2/+2, not the destroyed permanent")
+    void beholdingDragonFromHandPerpetuallyBoostsTheDragon() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
-        harness.setHand(player1, List.of(new TerritorialStrike(), new ShivanDragon()));
+        ShivanDragon dragon = new ShivanDragon();
+        harness.setHand(player1, List.of(new TerritorialStrike(), dragon));
         addMana();
 
         harness.castInstantWithBehold(player1, 0, target.getId(), List.of(), List.of(1));
@@ -47,7 +48,27 @@ class TerritorialStrikeTest extends BaseCardTest {
 
         assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
         assertThat(gd.perpetualCardPowerToughnessModifiers)
-                .containsEntry(target.getCard().getId(), new CardPowerToughnessModifier(2, 2));
+                .containsEntry(dragon.getId(), new CardPowerToughnessModifier(2, 2))
+                .doesNotContainKey(target.getCard().getId());
+        assertThat(gameLogContains("A card in " + player1.getUsername() + "'s hand perpetually gets +2/+2."))
+                .isTrue();
+    }
+
+    @Test
+    @DisplayName("A Dragon beheld on the battlefield perpetually gets +2/+2")
+    void beholdingDragonOnBattlefieldPerpetuallyBoostsTheDragon() {
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        Permanent dragon = harness.addToBattlefieldAndReturn(player1, new ShivanDragon());
+        harness.setHand(player1, List.of(new TerritorialStrike()));
+        addMana();
+
+        harness.castInstantWithBehold(player1, 0, target.getId(), List.of(dragon.getId()), List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player2.getId())).doesNotContain(target);
+        assertThat(gqs.getEffectivePower(gd, dragon)).isEqualTo(7);
+        assertThat(gqs.getEffectiveToughness(gd, dragon)).isEqualTo(7);
+        assertThat(gd.perpetualCardPowerToughnessModifiers).doesNotContainKey(target.getCard().getId());
     }
 
     @Test

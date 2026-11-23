@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class EffectCountRatchetTest {
 
-    private static final int RECORD_BASELINE = 4046;
+    private static final int RECORD_BASELINE = 4045;
     private static final int HANDLER_BASELINE = 3300;
 
     private static final String EFFECT_PKG =

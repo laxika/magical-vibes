@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.k.KalitasTraitorOfGhet;
 import com.github.laxika.magicalvibes.cards.n.NecromancersMagemark;
 import com.github.laxika.magicalvibes.cards.p.PeelFromReality;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ChoiceContext;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,6 +30,19 @@ class DrakeFamiliarTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction()).isNull();
         harness.assertNotOnBattlefield(player1, "Drake Familiar");
         harness.assertInGraveyard(player1, "Drake Familiar");
+    }
+
+    @Test
+    @DisplayName("A face-down permanent is not an enchantment, so it can't be returned")
+    void faceDownEnchantmentCardIsNotAnEnchantment() {
+        Permanent faceDown = harness.addToBattlefieldAndReturn(player1, new DoublingSeason());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+
+        castDrakeFamiliar();
+
+        assertThat(gd.interaction.activeInteraction()).isNull();
+        harness.assertInGraveyard(player1, "Drake Familiar");
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(faceDown);
     }
 
     @Test

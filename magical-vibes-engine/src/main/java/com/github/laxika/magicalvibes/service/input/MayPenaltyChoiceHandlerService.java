@@ -1691,14 +1691,9 @@ public class MayPenaltyChoiceHandlerService {
         }
 
         if (accepted) {
-            List<Permanent> validPermanents = new ArrayList<>();
-            for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-                for (Permanent permanent : battlefield) {
-                    if (permanent.getCard().hasType(effect.permanentType())) {
-                        validPermanents.add(permanent);
-                    }
-                }
-            }
+            List<Permanent> validPermanents = com.github.laxika.magicalvibes.service.effect.normalfx
+                    .SacrificeUnlessReturnPermanentTypeToHandEffectHandler.findValidPermanents(
+                            gameData, gameQueryService, effect);
             if (!validPermanents.isEmpty()) {
                 gameData.interaction.setPermanentChoiceContext(
                         new PermanentChoiceContext.BouncePermanentOrSacrificeSelf(controllerId, sourceCard.getId()));

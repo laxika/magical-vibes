@@ -1119,19 +1119,14 @@ public class DamagePreventionService {
         UUID controllerId = gameQueryService.findPermanentController(gameData, creature.getId());
         if (controllerId == null || damage <= 0) return damage;
 
-        List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
-        if (battlefield == null) return damage;
-
+        // The active static abilities only: a face-down source or one that lost its abilities has none (CR 613.1f,
+        // 708.2a).
         long totalReduction = 0;
-        for (Permanent source : battlefield) {
-            for (CardEffect effect : source.getCard().getStaticEffects()) {
-                CardEffect resolved = staticEffectConditionResolver.resolve(
-                        gameData, source, controllerId, effect);
-                if (resolved instanceof ControlledCreaturesDamageReductionEffect reduction) {
-                    totalReduction += reduction.amount();
-                    if (totalReduction >= damage) return 0;
-                }
-            }
+        for (GameQueryService.ActiveStaticEffect<ControlledCreaturesDamageReductionEffect> active
+                : gameQueryService.activeStaticEffects(gameData, controllerId,
+                ControlledCreaturesDamageReductionEffect.class)) {
+            totalReduction += active.effect().amount();
+            if (totalReduction >= damage) return 0;
         }
         return (int) (damage - totalReduction);
     }

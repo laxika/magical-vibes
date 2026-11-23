@@ -47,7 +47,8 @@ public class SacrificeAnyNumberOfLandsAndSearchThatManyLandsToBattlefieldTappedE
         List<UUID> landIds = new ArrayList<>();
         if (battlefield != null) {
             for (Permanent perm : battlefield) {
-                if (gameQueryService.isLand(gameData, perm)) {
+                // A land that can't be sacrificed or can't be chosen isn't offered.
+                if (gameQueryService.isLand(gameData, perm) && !gameQueryService.cantBeChosenToSacrifice(gameData, perm)) {
                     landIds.add(perm.getId());
                 }
             }

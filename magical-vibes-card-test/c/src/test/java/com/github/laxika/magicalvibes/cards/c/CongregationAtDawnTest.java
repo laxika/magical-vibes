@@ -1,6 +1,8 @@
 package com.github.laxika.magicalvibes.cards.c;
 
+import com.github.laxika.magicalvibes.cards.a.AvenMindcensor;
 import com.github.laxika.magicalvibes.cards.b.BorosRecruit;
+import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
 import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.InteractionOptions;
@@ -16,7 +18,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({CongregationAtDawn.class, BorosRecruit.class, Forest.class})
+@CardUsed({CongregationAtDawn.class, BorosRecruit.class, Forest.class, ObNixilisUnshackled.class,
+        AvenMindcensor.class})
 class CongregationAtDawnTest extends BaseCardTest {
 
     @Test
@@ -159,6 +162,34 @@ class CongregationAtDawnTest extends BaseCardTest {
         assertThat(gd.playerGraveyards.get(player1.getId()))
                 .anyMatch(card -> card instanceof CongregationAtDawn);
     }
+    @Test
+    @DisplayName("The search is recorded, so an opponent's Ob Nixilis triggers")
+    void searchIsRecorded() {
+        harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        harness.setLibrary(player1, List.of(new Forest()));
+
+        cast();
+        resolveAllTriggers();
+
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+        harness.assertLife(player1, 10);
+    }
+
+    @Test
+    @DisplayName("An opponent's Aven Mindcensor limits the search to the top four cards")
+    void avenMindcensorLimitsTheSearch() {
+        harness.addToBattlefield(player2, new AvenMindcensor());
+        Card deep = new BorosRecruit();
+        Card top = new BorosRecruit();
+        harness.setLibrary(player1, List.of(top, new Forest(), new Forest(), new Forest(), deep));
+
+        cast();
+
+        PendingInteraction.SearchLibraryToTopChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.SearchLibraryToTopChoice.class);
+        assertThat(choice.pool()).containsExactly(top);
+    }
+
     private void cast() {
         harness.castFromHand(player1, new CongregationAtDawn(), "{G}{G}{W}");
         harness.passBothPriorities();

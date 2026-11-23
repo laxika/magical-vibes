@@ -114,6 +114,18 @@ class QuietSpeculationTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Quiet Speculation");
     }
 
+    @Test
+    @DisplayName("Searching your own library with no flashback card in it still counts as a search")
+    void ownSearchFindingNothingIsRecorded() {
+        harness.setLibrary(player1, List.of(new AvenFogbringer()));
+
+        castQuietSpeculation(player1.getId());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+    }
+
     private void castQuietSpeculation(java.util.UUID targetPlayerId) {
         harness.setHand(player1, List.of(new QuietSpeculation()));
         harness.addMana(player1, ManaColor.BLUE, 1);

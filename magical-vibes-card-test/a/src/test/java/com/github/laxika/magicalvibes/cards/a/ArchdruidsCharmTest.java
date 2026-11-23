@@ -224,6 +224,19 @@ class ArchdruidsCharmTest extends BaseCardTest {
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
     }
 
+    @Test
+    @DisplayName("Searching an empty library still counts as a search")
+    void emptyLibrarySearchIsRecorded() {
+        harness.setLibrary(player1, List.of());
+        harness.setHand(player1, List.of(new ArchdruidsCharm()));
+        addGreenMana();
+
+        harness.castModalInstant(player1, 0, 0, List.of());
+        harness.passBothPriorities();
+
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+    }
+
     private void addGreenMana() {
         harness.addMana(player1, ManaColor.GREEN, 3);
     }

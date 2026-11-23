@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.cards.l.LlanowarElves;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -51,6 +53,27 @@ class VivienOnTheHuntTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Grizzly Bears");
         harness.assertOnBattlefield(player1, "Benalish Knight");
         assertThat(gd.playerDecks.get(player1.getId())).containsExactlyInAnyOrder(tooSmall, tooLarge);
+    }
+
+    @Test
+    @DisplayName("+2 reads a sacrificed face-down creature's mana value as 0")
+    void plusTwoReadsFaceDownManaValueAsZero() {
+        addReadyVivien(3);
+        Permanent sacrificed = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        sacrificed.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        Card manaValueOne = new LlanowarElves();
+        Card manaValueThree = new BenalishKnight();
+        harness.setLibrary(player1, List.of(manaValueOne, manaValueThree));
+
+        harness.activateAbility(player1, 0, 0, null, null);
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+        harness.handlePermanentChosen(player1, sacrificed.getId());
+
+        PendingInteraction.LibrarySearch search =
+                gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class);
+        assertThat(search).isNotNull();
+        assertThat(search.params().cards()).containsExactly(manaValueOne);
     }
 
     @Test

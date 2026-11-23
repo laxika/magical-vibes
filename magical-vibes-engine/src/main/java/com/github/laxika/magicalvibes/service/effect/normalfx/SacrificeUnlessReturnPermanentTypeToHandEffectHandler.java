@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificeUnlessReturnPermanentTypeToHandEffect;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ public class SacrificeUnlessReturnPermanentTypeToHandEffectHandler implements No
 
     private final StepDepartureSupport stepDepartureSupport;
     private final GameLogService gameLogService;
+    private final GameQueryService gameQueryService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -37,7 +39,7 @@ public class SacrificeUnlessReturnPermanentTypeToHandEffectHandler implements No
         UUID controllerId = entry.getControllerId();
         Card sourceCard = entry.getCard();
         Permanent sourcePermanent = findSourcePermanent(gameData, controllerId, sourceCard);
-        List<Permanent> validPermanents = findValidPermanents(gameData, e, sourceCard);
+        List<Permanent> validPermanents = findValidPermanents(gameData, gameQueryService, e);
 
         if (validPermanents.isEmpty()) {
             if (sourcePermanent != null) {
@@ -70,13 +72,16 @@ public class SacrificeUnlessReturnPermanentTypeToHandEffectHandler implements No
                 .orElse(null);
     }
 
-    public static List<Permanent> findValidPermanents(GameData gameData,
-                                                       SacrificeUnlessReturnPermanentTypeToHandEffect effect,
-                                                       Card sourceCard) {
+    /**
+     * The permanents of the effect's type, judged by their current types (CR 613): a face-down permanent has only its
+     * face-down types (CR 708.2a), and a type an effect grants counts.
+     */
+    public static List<Permanent> findValidPermanents(GameData gameData, GameQueryService gameQueryService,
+                                                       SacrificeUnlessReturnPermanentTypeToHandEffect effect) {
         List<Permanent> validPermanents = new ArrayList<>();
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             for (Permanent permanent : battlefield) {
-                if (permanent.getCard().hasType(effect.permanentType())) {
+                if (gameQueryService.hasEffectiveCardType(gameData, permanent, effect.permanentType())) {
                     validPermanents.add(permanent);
                 }
             }

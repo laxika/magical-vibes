@@ -19,6 +19,9 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.FailOnLegacyDepartureFallback;
+import com.github.laxika.magicalvibes.model.effect.ControllerCantSacrificeTargetThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -316,6 +319,22 @@ class ScapeshiftTest extends BaseCardTest {
         harness.assertInGraveyard(player1, "Greenwood Sentinel");
         assertThat(landsOnBattlefield()).hasSize(2);
         assertThat(gd.interaction.activeInteraction()).isNull();
+    }
+
+    @Test
+    @DisplayName("A land that can't be sacrificed is not offered")
+    void landThatCantBeSacrificedIsNotOffered() {
+        List<Permanent> lands = setupLands(2);
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Test", null, player1.getId(),
+                new ControllerCantSacrificeTargetThisTurnEffect(), lands.getFirst().getId(), Duration.UNTIL_END_OF_TURN));
+        setupLibraryWithLands();
+        castScapeshift();
+
+        harness.passBothPriorities();
+
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.validIds()).containsExactly(lands.getLast().getId());
     }
 
     private void assertShuffleTrigger(Permanent trickster) {

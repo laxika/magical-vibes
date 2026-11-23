@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.c.Cancel;
 import com.github.laxika.magicalvibes.cards.e.EliteVanguard;
 import com.github.laxika.magicalvibes.cards.n.Negate;
+import com.github.laxika.magicalvibes.cards.o.ObNixilisUnshackled;
 import com.github.laxika.magicalvibes.cards.s.Shock;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -19,7 +20,8 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({FiremindsForesight.class, Cancel.class, Negate.class, Shock.class, EliteVanguard.class})
+@CardUsed({FiremindsForesight.class, Cancel.class, Negate.class, Shock.class, EliteVanguard.class,
+        ObNixilisUnshackled.class})
 class FiremindsForesightTest extends BaseCardTest {
 
     @Test
@@ -196,6 +198,44 @@ class FiremindsForesightTest extends BaseCardTest {
                 .anyMatch(e -> e.contains("reveals Shock"));
         assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)
                 .filter(e -> e.contains("shuffled"))).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("Searching an empty library still counts as a search")
+    void emptyLibrarySearchIsRecorded() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Searching with no instant of those mana values still counts as a search")
+    void searchFindingNothingIsRecorded() {
+        setupAndCast();
+        harness.setLibrary(player1, List.of(new EliteVanguard()));
+
+        harness.passBothPriorities();
+
+        assertThat(harness.getGameData().playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+    }
+
+    @Test
+    @DisplayName("Finding three instants is one search, so an opponent's Ob Nixilis triggers once")
+    void threePicksAreOneSearch() {
+        harness.addToBattlefield(player2, new ObNixilisUnshackled());
+        setupAndCast();
+        setupFullLibrary();
+
+        harness.passBothPriorities();
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        harness.handleCardChosen(player1, 0);
+        resolveAllTriggers();
+
+        harness.assertLife(player1, 10);
     }
 
     private void setupAndCast() {

@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.h;
 
+import com.github.laxika.magicalvibes.cards.a.AvenLiberator;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.w.WalkingCorpse;
 import com.github.laxika.magicalvibes.model.CardSubtype;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({HeraldsHorn.class, GrizzlyBears.class, WalkingCorpse.class})
+@CardUsed({HeraldsHorn.class, GrizzlyBears.class, WalkingCorpse.class, AvenLiberator.class})
 class HeraldsHornTest extends BaseCardTest {
 
     @Test
@@ -54,6 +55,18 @@ class HeraldsHornTest extends BaseCardTest {
 
         assertThatThrownBy(() -> harness.castCreature(player1, 0))
                 .isInstanceOf(IllegalStateException.class);
+    }
+
+    @Test
+    @DisplayName("A creature spell cast face down has no creature type, so it is not reduced")
+    void doesNotReduceFaceDownSpell() {
+        addHorn(CardSubtype.BIRD);
+        harness.setHand(player1, List.of(new AvenLiberator()));
+        harness.addMana(player1, ManaColor.COLORLESS, 2);
+
+        assertThatThrownBy(() -> harness.castCreatureWithMorph(player1, 0))
+                .isInstanceOf(IllegalStateException.class);
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

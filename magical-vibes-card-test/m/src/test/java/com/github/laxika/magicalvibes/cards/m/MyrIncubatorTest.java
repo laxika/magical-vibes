@@ -173,6 +173,15 @@ class MyrIncubatorTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Myr")).hasSize(1);
     }
 
+    @Test
+    @DisplayName("Searching with no artifact card in the library still counts as a search")
+    void searchFindingNothingIsRecorded() {
+        resolveActivation(List.of(new AuriokBladewarden()));
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+    }
+
     private void resolveActivation(List<com.github.laxika.magicalvibes.model.Card> library) {
         harness.setLibrary(player1, library);
         Permanent incubator = harness.addToBattlefieldAndReturn(player1, new MyrIncubator());

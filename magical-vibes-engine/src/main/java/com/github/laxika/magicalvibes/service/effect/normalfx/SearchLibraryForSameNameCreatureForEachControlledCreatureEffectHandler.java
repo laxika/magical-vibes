@@ -46,16 +46,22 @@ public class SearchLibraryForSameNameCreatureForEachControlledCreatureEffectHand
         String playerName = gameData.playerIdToName.get(controllerId);
 
         List<String> names = new ArrayList<>();
+        boolean controlsCreature = false;
         List<Permanent> battlefield = gameData.playerBattlefields.get(controllerId);
         if (battlefield != null) {
             for (Permanent permanent : battlefield) {
                 if (gameQueryService.isCreature(gameData, permanent)) {
-                    names.add(permanent.getCard().getName());
+                    controlsCreature = true;
+                    // CR 201.2a, 708.2a: a face-down creature has no name, so no card has the same name as it.
+                    String name = gameQueryService.getEffectiveName(gameData, permanent);
+                    if (name != null) {
+                        names.add(name);
+                    }
                 }
             }
         }
 
-        if (names.isEmpty()) {
+        if (!controlsCreature) {
             gameLogService.append(gameData, GameLog.text(playerName + " controls no creatures."));
             log.info("Game {} - {} controls no creatures for Doubling Chant", gameData.id, playerName);
         }

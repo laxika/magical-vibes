@@ -2,7 +2,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,12 +15,10 @@ import com.github.laxika.magicalvibes.model.filter.OwnedPermanentPredicateTarget
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.TargetFilter;
 import com.github.laxika.magicalvibes.service.FaceDownVisibility;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
 import com.github.laxika.magicalvibes.service.effect.AmountEvaluationService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -37,7 +34,6 @@ import org.springframework.stereotype.Component;
 public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHandler implements NormalEffectHandlerBean {
 
     private final GameQueryService gameQueryService;
-    private final GameLogService gameLogService;
     private final PredicateEvaluationService predicateEvaluationService;
     private final LibrarySearchSupport librarySearchSupport;
     private final AmountEvaluationService amountEvaluationService;
@@ -61,9 +57,8 @@ public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHand
         if (host == null && auraSearch.restrictToTriggeringAura()) {
             // The host left the battlefield, so no Aura can be put onto it; the search still ends in a shuffle.
             if (!librarySearchSupport.isSearchPrevented(gameData, controllerId)) {
-                LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-                gameLogService.append(gameData, GameLog.text(gameData.playerIdToName.get(controllerId)
-                        + " searches their library but there is nothing to attach an Aura to. Library is shuffled."));
+                librarySearchSupport.endSearchFindingNothing(gameData, controllerId, gameData.playerIdToName.get(controllerId)
+                        + " searches their library but there is nothing to attach an Aura to. Library is shuffled.");
             }
             return;
         }
@@ -82,7 +77,7 @@ public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHand
                 : Set.of();
 
         if (deck == null || deck.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but it is empty. Library is shuffled."));
+            librarySearchSupport.endSearchFindingNothing(gameData, controllerId, playerName + " searches their library but it is empty. Library is shuffled.");
             return;
         }
 
@@ -93,8 +88,7 @@ public class SearchLibraryForAuraToBattlefieldAttachedToTargetCreatureEffectHand
                 .toList();
 
         if (matchingCards.isEmpty()) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            gameLogService.append(gameData, GameLog.text(playerName + " searches their library but finds no Aura that could enchant " + FaceDownVisibility.publicName(gameData, host) + ". Library is shuffled."));
+            librarySearchSupport.endSearchFindingNothing(gameData, controllerId, playerName + " searches their library but finds no Aura that could enchant " + FaceDownVisibility.publicName(gameData, host) + ". Library is shuffled.");
             log.info("Game {} - {} searches library, no eligible Aura cards found", gameData.id, playerName);
             return;
         }

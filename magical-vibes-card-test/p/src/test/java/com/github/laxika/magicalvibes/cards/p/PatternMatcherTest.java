@@ -4,13 +4,17 @@ import com.github.laxika.magicalvibes.cards.f.Forest;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.HillGiant;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
+import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -98,6 +102,20 @@ class PatternMatcherTest extends BaseCardTest {
         harness.assertNotInHand(player1, "Pattern Matcher");
         assertThat(gd.playerDecks.get(player1.getId())).hasSize(2);
         assertThat(gameLogContains("Library is shuffled.")).isTrue();
+    }
+
+    @Test
+    @DisplayName("A face-down creature has no name, so no card shares a name with it")
+    void faceDownCreatureOffersNoName() {
+        Permanent faceDown = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        harness.setLibrary(player1, List.of(new GrizzlyBears(), new Forest()));
+
+        castPatternMatcher();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        harness.assertNotInHand(player1, "Grizzly Bears");
     }
 
     private void castPatternMatcher() {

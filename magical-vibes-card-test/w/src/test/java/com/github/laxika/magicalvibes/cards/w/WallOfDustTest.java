@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.cards.a.AnimateArtifact;
 import com.github.laxika.magicalvibes.cards.c.Conservator;
 import com.github.laxika.magicalvibes.cards.d.Disenchant;
+import com.github.laxika.magicalvibes.cards.g.GladecoverScout;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -74,6 +75,21 @@ class WallOfDustTest extends BaseCardTest {
                         && se.getTargetId().equals(attacker.getId()));
 
         harness.passBothPriorities();
+        assertThat(restrictionWaits(attacker)).isTrue();
+    }
+
+    @Test
+    @CardUsed(GladecoverScout.class)
+    @DisplayName("The trigger doesn't target, so a hexproof attacker is still flagged")
+    void hexproofAttackerIsStillFlagged() {
+        Permanent attacker = addCreatureReady(player1, new GladecoverScout());
+        attacker.setAttacking(true);
+        addCreatureReady(player2, new WallOfDust());
+
+        prepareDeclareBlockers(player1);
+        gs.declareBlockers(gd, player2, List.of(new BlockerAssignment(0, 0)));
+        harness.passBothPriorities();
+
         assertThat(restrictionWaits(attacker)).isTrue();
     }
 

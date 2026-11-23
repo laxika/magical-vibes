@@ -48,6 +48,20 @@ class BehemothOfVault0Test extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The energy paid for the death trigger counts as energy paid this turn")
+    void deathTriggerPaymentCountsAsEnergyPaidThisTurn() {
+        Permanent behemoth = castBehemoth();
+        Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
+        destroyBehemoth(behemoth);
+
+        harness.handlePermanentChosen(player1, target.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.energyCountersPaidOrLostThisTurn.get(player1.getId())).isEqualTo(2);
+    }
+
+    @Test
     @DisplayName("Declining the death trigger does not pay energy or destroy the target")
     void decliningDeathTriggerDoesNothing() {
         Permanent behemoth = castBehemoth();

@@ -78,10 +78,7 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
 
         List<Card> deck = gameData.playerDecks.get(targetPlayerId);
         if (deck == null || deck.isEmpty()) {
-            if (searcherId.equals(targetPlayerId)) {
-                com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper
-                        .recordSearchAndQueueTriggers(gameData, searcherId);
-            }
+            recordOwnLibrarySearch(gameData, searcherId, targetPlayerId);
             if (deck != null) LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             gameLogService.append(gameData, GameLog.text(searcherName + " searches " + targetName
                     + "'s library but it is empty. Library is shuffled."));
@@ -95,6 +92,7 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
                         .filter(card -> predicateEvaluationService.matchesCardPredicate(card, filter, null))
                         .toList());
         if (candidates.isEmpty()) {
+            recordOwnLibrarySearch(gameData, searcherId, targetPlayerId);
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             gameLogService.append(gameData, GameLog.text(searcherName + " searches " + targetName
                     + "'s library but finds no matching cards. Library is shuffled."));
@@ -106,6 +104,7 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
         if (count <= 0) {
             // "up to X" with X == 0 (e.g. Nightmare Incursion with no Swamps): nothing is found,
             // but the targeted player still shuffles.
+            recordOwnLibrarySearch(gameData, searcherId, targetPlayerId);
             LibraryShuffleHelper.shuffleLibrary(gameData, targetPlayerId);
             gameLogService.append(gameData, GameLog.text(searcherName + " searches " + targetName
                     + "'s library for no cards. Library is shuffled."));
@@ -135,6 +134,18 @@ public class SearchTargetLibraryEffectHandler implements NormalEffectHandlerBean
 
         log.info("Game {} - {} searching {}'s library for {} card(s) to {} ({} candidates)",
                 gameData.id, searcherName, targetName, count, e.destination(), candidates.size());
+    }
+
+    /**
+     * A search that finds nothing is still a search (CR 701.23a): a player searching their own library records it, so
+     * the "whenever a player searches their library" abilities trigger. A search with something to find records it as
+     * its prompt begins.
+     */
+    private static void recordOwnLibrarySearch(GameData gameData, UUID searcherId, UUID libraryOwnerId) {
+        if (searcherId.equals(libraryOwnerId)) {
+            com.github.laxika.magicalvibes.service.library.LibrarySearchTriggerHelper
+                    .recordSearchAndQueueTriggers(gameData, searcherId);
+        }
     }
 
     private static boolean grantsPlayPermission(LibrarySearchDestination destination) {

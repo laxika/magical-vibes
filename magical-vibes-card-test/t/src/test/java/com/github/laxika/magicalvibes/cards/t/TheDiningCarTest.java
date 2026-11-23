@@ -2,9 +2,12 @@ package com.github.laxika.magicalvibes.cards.t;
 
 import com.github.laxika.magicalvibes.cards.a.AirElemental;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
+import com.github.laxika.magicalvibes.model.effect.ControllerCantSacrificeTargetThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.planar.PlanechaseState;
 import com.github.laxika.magicalvibes.service.planar.PlanechaseService;
 import com.github.laxika.magicalvibes.service.turn.StepTriggerService;
@@ -12,6 +15,7 @@ import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
 import com.github.laxika.magicalvibes.testutil.GameTestEngineContext;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -80,6 +84,25 @@ class TheDiningCarTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(gd.playerBattlefields.get(player1.getId())).doesNotContain(first).contains(second);
+        assertThat(countPermanents(player1, "Clue")).isOne();
+    }
+
+    @Test
+    @DisplayName("When the creature with the least toughness can't be sacrificed, nothing is sacrificed")
+    void leastToughnessCreatureThatCantBeSacrificedIsNotSkipped() {
+        gd.planechase.faceUp.add(new com.github.laxika.magicalvibes.model.planar.PlanarObject(
+                new TheDiningCar(), gd.nextTimestamp()));
+        Permanent protectedBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent larger = harness.addToBattlefieldAndReturn(player1, new AirElemental());
+        gd.addFloatingEffect(FloatingContinuousEffect.onPermanent("Test", null, player1.getId(),
+                new ControllerCantSacrificeTargetThisTurnEffect(), protectedBears.getId(), Duration.UNTIL_END_OF_TURN));
+
+        harness.forceStep(TurnStep.UPKEEP);
+        harness.inMutationScope(() -> GameTestEngineContext.get().getBean(StepTriggerService.class)
+                .handleUpkeepTriggers(gd));
+        harness.passBothPriorities();
+
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(protectedBears, larger);
         assertThat(countPermanents(player1, "Clue")).isOne();
     }
 

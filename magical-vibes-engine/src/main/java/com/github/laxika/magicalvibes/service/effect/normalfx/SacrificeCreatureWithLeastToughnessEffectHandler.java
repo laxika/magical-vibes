@@ -35,18 +35,20 @@ public class SacrificeCreatureWithLeastToughnessEffectHandler implements NormalE
                 .getOrDefault(controllerId, List.of())
                 .stream()
                 .filter(permanent -> gameQueryService.isCreature(gameData, permanent))
-                .filter(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
                 .toList();
         if (creatures.isEmpty()) {
             return;
         }
 
+        // The least toughness is found among every creature you control; a creature with it that can't be sacrificed
+        // is not sacrificed, and no creature with more toughness is sacrificed instead (CR 101.3).
         int leastToughness = creatures.stream()
                 .mapToInt(permanent -> gameQueryService.getEffectiveToughness(gameData, permanent))
                 .min()
                 .orElseThrow();
         List<Permanent> tied = creatures.stream()
                 .filter(permanent -> gameQueryService.getEffectiveToughness(gameData, permanent) == leastToughness)
+                .filter(permanent -> !gameQueryService.cantBeSacrificed(gameData, permanent))
                 .filter(permanent -> !gameQueryService.cantBeChosen(gameData, permanent))
                 .toList();
 

@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.service.effect.normalfx;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.LibrarySearchDestination;
 import com.github.laxika.magicalvibes.model.LibrarySearchParams;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -13,9 +12,7 @@ import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardPredicateUtils;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
-import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
-import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -26,8 +23,6 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 public class SearchLibraryForCreatureOrLandToBattlefieldOrHandEffectHandler implements NormalEffectHandlerBean {
-
-    private final GameLogService gameLogService;
     private final LibrarySearchSupport librarySearchSupport;
     private final PredicateEvaluationService predicateEvaluationService;
 
@@ -44,8 +39,7 @@ public class SearchLibraryForCreatureOrLandToBattlefieldOrHandEffectHandler impl
         List<Card> deck = gameData.playerDecks.get(controllerId);
         String playerName = gameData.playerIdToName.get(controllerId);
         if (deck == null || deck.isEmpty()) {
-            gameLogService.append(gameData, GameLog.text(
-                    playerName + " searches their library but it is empty. Library is shuffled."));
+            librarySearchSupport.endSearchFindingNothing(gameData, controllerId, playerName + " searches their library but it is empty. Library is shuffled.");
             return;
         }
 
@@ -58,10 +52,9 @@ public class SearchLibraryForCreatureOrLandToBattlefieldOrHandEffectHandler impl
                         card, creatureOrLand, null, gameData, controllerId))
                 .toList();
         if (matchingCards.isEmpty()) {
-            LibraryShuffleHelper.shuffleLibrary(gameData, controllerId);
-            gameLogService.append(gameData, GameLog.text(playerName
+            librarySearchSupport.endSearchFindingNothing(gameData, controllerId, playerName
                     + " searches their library but finds no "
-                    + CardPredicateUtils.describeFilter(creatureOrLand) + ". Library is shuffled."));
+                    + CardPredicateUtils.describeFilter(creatureOrLand) + ". Library is shuffled.");
             return;
         }
 

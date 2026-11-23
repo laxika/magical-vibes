@@ -35,7 +35,8 @@ public class SearchLibraryForCreatureWithOneMoreManaValueThanSacrificedPermanent
             return;
         }
 
-        int requiredManaValue = sacrificed.getCard().getManaValue() + 1;
+        // The sacrificed creature as it last existed (CR 608.2h): a face-down one has mana value 0 (CR 708.2a).
+        int requiredManaValue = gameQueryService.getPermanentManaValue(sacrificed) + 1;
         librarySearchSupport.performLibrarySearch(
                 gameData,
                 controllerId,

@@ -130,6 +130,18 @@ class AuratouchedMageTest extends BaseCardTest {
                 .hasSize(2);
     }
 
+    @Test
+    @DisplayName("Searching an empty library still counts as a search")
+    void emptyLibrarySearchIsRecorded() {
+        castMage();
+        harness.setLibrary(player1, List.of());
+
+        harness.passBothPriorities();
+        harness.passBothPriorities();
+
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+    }
+
     private void castMage() {
         harness.setHand(player1, List.of(new AuratouchedMage()));
         harness.addMana(player1, com.github.laxika.magicalvibes.model.ManaColor.WHITE, 1);

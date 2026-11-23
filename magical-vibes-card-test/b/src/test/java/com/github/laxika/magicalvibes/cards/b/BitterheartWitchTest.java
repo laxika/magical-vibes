@@ -334,6 +334,21 @@ class BitterheartWitchTest extends BaseCardTest {
         harness.assertNotOnBattlefield(player1, "Curse of the Pierced Heart");
     }
 
+    @Test
+    @DisplayName("Searching an empty library still counts as a search")
+    void emptyLibrarySearchIsRecorded() {
+        harness.addToBattlefield(player1, new BitterheartWitch());
+        harness.setLibrary(player1, List.of());
+        setupCombatWhereWitchDies();
+
+        harness.passBothPriorities();
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.passBothPriorities();
+        harness.handleMayAbilityChosen(player1, true);
+
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+    }
+
     private void setupCombatWhereWitchDies() {
         Permanent witchPerm = findPermanent(player1, "Bitterheart Witch");
         witchPerm.setSummoningSick(false);

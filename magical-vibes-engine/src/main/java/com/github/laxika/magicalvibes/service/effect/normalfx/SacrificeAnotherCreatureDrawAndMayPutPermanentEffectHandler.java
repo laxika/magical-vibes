@@ -88,7 +88,8 @@ public class SacrificeAnotherCreatureDrawAndMayPutPermanentEffectHandler impleme
 
     private void resolveAfterChoice(GameData gameData, StackEntry entry, Permanent creature,
                                     SacrificeAnotherCreatureDrawAndMayPutPermanentEffect effect) {
-        int manaValue = creature.getCard().getManaValue();
+        // CR 708.2a: a face-down creature's mana value is 0.
+        int manaValue = gameQueryService.getPermanentManaValue(creature);
         destructionSupport.sacrificeAndLog(gameData, creature, entry.getControllerId());
 
         CardAllOfPredicate permanentFilter = new CardAllOfPredicate(List.of(

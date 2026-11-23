@@ -164,6 +164,18 @@ class GuidelightPathmakerTest extends BaseCardTest {
         assertThat(vehicle.isTapped()).isFalse();
     }
 
+    @Test
+    @DisplayName("Searching with no artifact card in the library still counts as a search")
+    void searchFindingNothingIsRecorded() {
+        setupAndCast();
+        setLibrary(new Island());
+
+        resolveMayAbility(true);
+
+        assertThat(gd.interaction.activeInteraction(PendingInteraction.LibrarySearch.class)).isNull();
+        assertThat(gd.playersWhoSearchedLibraryThisTurn).contains(player1.getId());
+    }
+
     private void setupAndCast() {
         harness.setHand(player1, List.of(new GuidelightPathmaker()));
         harness.addMana(player1, ManaColor.WHITE, 1);
