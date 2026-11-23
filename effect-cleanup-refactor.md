@@ -3041,6 +3041,84 @@ Oracle text was checked with `get_card` for Wave of Vitriol, Void, Villainous We
 
 Cheapest fold-run starts: Villainous Wealth (parameters only), `WheelOfMisfortuneEffect` (dead), Worlds Within Worlds and Void (existing steps), and the room-door pair.
 
+### Step 9, parallel triage chunk 16 (2026-11-23)
+
+Verdicts only: no repo file was changed and the ratchet did not move. 69 ledger rows (notes `triage P16: …`) cover the rare Conjure (39) and Perpetually (30) records.
+
+Every record was read with its handler to the end, plus the cards that use it. Oracle text was checked with `get_card` for all 75 cards. Readers and neighbours read for comparison: `ConjureCardToBattlefieldEffect`, `ConjureRandomCreatureWithManaValueEffect`, `ConjureCardNamedIntoHandEffect`, `ConjureCardNamedIntoLibraryEffect`, `ConjureCardIntoTopCardsOfLibraryEffect`, `ConjureRandomCardFromSpellbookToHandEffect`, `ConjureDuplicateOntoBattlefieldEffect`, `PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect`, `PerpetuallyGrantAbilitiesEffect`, `DraftCardFromSpellbookToExileEffect`, `Card.createConjuredCopy`, and the writers of `perpetualGraveyardAbilities` and `perpetualCardBasePowerToughness`. These CR rules were checked with the rules MCP (2026-11-23): 400.2, 400.7, 603.10a, 613.1f, 613.4b, 613.4c, 707.2, 708.2 and 708.2a.
+
+Following the brief, every record that conjures into or changes a card in a hand or library is `blocked-other` on the owner's hidden-zone logging question. This includes:
+- the cards of a revealed hand that stay in that hand (Boareskyr Tollkeeper, Wingbright Thief, Thought Partition);
+- the spellbook drafts into hand (Ominous Traveler, Hinterland Chef, the engine-built artifact-creature draft);
+- the every-zone walks (Tend to the Kiln, Scalar Scholar);
+- Lurker in the Deep's duplicates, which pass through the hand.
+
+Each note names the fold to take once the question is decided. Records whose cards stay in public zones were triaged normally.
+
+| Family | Triaged | `step-9` | `blocked-other` (hidden zone) | `blocked-other` (perpetual "it") | `unique` |
+|---|---|---|---|---|---|
+| Conjure | 39 | 7 | 30 | 1 | 1 |
+| Perpetually | 30 | 1 | 29 | 0 | 0 |
+| All | 69 | 8 | 59 | 1 | 1 |
+
+**Fold batches** (survivor or shared component → records of this chunk, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| random spellbook into exile | A new random-spellbook conjure step into exile (over printings, a `faceDown` option) recording a new `StepKind.CONJURE`. Then `AllowPlayCardsFromExileEffect(cardsThisWay(CONJURE))` with `.thisTurn().withoutPayingManaCost()` or `.untilEndOfYourNextTurn()`. Darigaaz also needs triage 4's one store for counters on exiled cards (egg counters) and the granted upkeep ability. | Limitless Rekindling, Dazzling Flameweaver, Darigaaz, Shivan Champion: 3 (3) |
+| spellbook to battlefield | `ConjureRandomCardFromSpellbookWithManaValueToBattlefieldEffect` (survivor; the mana value becomes an optional filter), plus a perpetual base-P/T step over `createdThisResolution()` that writes `perpetualCardBasePowerToughness` (layer 7b). The base-P/T step would also take `ConjureDuplicateOntoBattlefieldEffect.withBasePowerToughness` (Three Tree Battalion) and `PutRandomCreatureFromTargetOpponentLibraryOntoBattlefieldEffect`. | Brazen Boarding + Tajic (the survivor), Blood Age Muster: 2 (3) |
+| duplicate with a destination | `ConjureDuplicateOntoBattlefieldEffect`'s step (originals from `cardsToDuplicate`) with a destination (graveyard, exile), recording CONJURE. Then the perpetual verbs over `cardsThisWay(CONJURE)`. Gyox also needs a count (its only user; weigh it against `RepeatEffect`) and a shuffle into the library. Re-triage run 31's unique Chitinous Crawler and Smog Smasher rows with it. | Fallaji Antiquarian, Gyox: 2 (2) |
+| graveyard-ability store | `GameData.perpetualGraveyardAbilities` merged into `perpetualAbilityGrants` with a zone. Sibsig's Artisan then uses `PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect` (any `Ability`, a `PermanentSubject`). Joined by step 5m's blocked `PerpetuallyGrantGraveyardAbilityToTargetCardEffect` and `…ToSourceCardEffect`. | Sibsig's Artisan (+ Fallaji): 1 (1) |
+
+**Waiting on the owner's questions: fold leads to take once they are decided** (all hidden-zone except Mephidross Slime):
+- **Duplicates into hand.** Survivor `ConjureDuplicateOfTargetCreatureIntoHandEffect` over a subject read by `cardsToDuplicate`, a recipient, and the any-colour grant as a separate step. 15 records:
+  - `ConjureDuplicateOfCardIntoHandEffect` (engine-built);
+  - Kithkin Brinefarer and Veteran Ghoulcaller (handlers identical line for line);
+  - Vodalian Tide Mage, Semblance Scanner, Gutmorn, Vesuvan Mist and Warzone Duplicator, Bind to Secrecy;
+  - Sinister Reflections and Ulder (the survivor), Viconia, Agent of Raffine, Futurist Spellthief, Ace Flockbringer, Lurker in the Deep, Snowborn Simulacra;
+  - Undercity Plunder and Clone Crafter / Lae'zel, which first pick a card at random with `ChooseCardEffect.atRandom`.
+- **Duplicates into the library.** Goblin Morale Sergeant, Sheoldred's Assimilator, Pampered Loamfrill.
+- **Conjures into hand onto the existing heads.**
+  - Mothlight Processionist onto `ConjureCardNamedIntoHandEffect(…, discardAtNextEndStep)`, by parameters.
+  - Juggernaut Peddler: a printing and a recipient.
+  - Swine Rebellion: a count on `ConjureCardFromSpellbookToHandEffect`.
+  - Goblin Influx Array and Skywriter Djinn onto `ConjureRandomCardFromSpellbookToHandEffect(printings)`.
+- **Conjures into the library onto the existing heads.**
+  - Indris onto `ConjureCardNamedIntoLibraryEffect`.
+  - Sanguine Soothsayer, Calim and Sandcloud Harbinger onto `ConjureCardIntoTopCardsOfLibraryEffect`, given a printing.
+  - Oracle of the Alpha onto `ConjureSpellbookIntoLibraryEffect`.
+- **Perpetual hand and library changes** onto `PerpetuallyBoostCardEffect`, `PerpetuallyGrantAbilitiesEffect`, `PerpetuallyChangeCastCostEffect` and `PerpetuallyGrantCardCharacteristicsEffect`:
+  - with `ChooseCardEffect.atRandom` for the random ones (Golden Sidekick, Skullpiercer Gnat, Wagon Wrecker, Foundry Beetle, Ambassador of Evendo, Hydroponics Architect);
+  - with a topmost-matching library card subject (Dalkovan Outrider, Thorna and Twigtooth, Vigorous Farming, Improvising Aerialist);
+  - with a cards-you-own subject (Tend to the Kiln, Scalar Scholar).
+- **Store merges they need:**
+  - the two perpetual P/T stores (`perpetualPowerToughnessModifiers`, `perpetualCardPowerToughnessModifiers`);
+  - the three cost stores (`perpetualGenericCastCostIncreases`, `perpetualCardCastCostReductions`, and statics on exchanged cards);
+  - the any-colour set and the printed `PerpetualAnyManaTypeToCastSelfEffect`;
+  - `perpetualEnterTappedCardIds`, `perpetualEvokeAlternateCasts`.
+- **Mephidross Slime** (perpetual "it"): `ConjureCardToGraveyardEffect`, then a perpetual doubling of the conjured card and the triggering card, then a shuffled `PutCardsIntoLibraryEffect`.
+
+**Unique (1):** Ornate Imitations. It conjures one random creature for each mana value from 1 to X as one event. The mana-value head conjures one card of one mana value, and a range would be this card's only component.
+
+**Seen, not changed** (confirmed by reading the code, not run):
+- **Limitless Rekindling.** Its pool is seven YECL printings (the Alchemy cards, Thoughtweft's Call among them). The text says "a random instant or sorcery card from the Lorwyn Eclipsed expansion". Sure of the code; fairly sure of the reading.
+- **Goblin Influx Array.** Reckless Ringleader is a blank `new Card()`, so the card has no enter ability. No spellbook card is marked conjured. All 15 are built by hand with their metadata set in code. Sure.
+- **Hand-built spellbooks.** Darigaaz, Skywriter Djinn and Oracle of the Alpha build their cards by hand (metadata and abilities in code, no printing identity). Juggernaut Peddler, Calim and Mephidross Slime use a constructor or a `Supplier`. These extend the open defect about cards with no printing identity. Sure.
+- **Hydroponics Architect.** Its log names the random card picked from the library to every player, and the library is a hidden zone (CR 400.2). Sure.
+- **Dalkovan Outrider, Thorna and Twigtooth.** The perpetual +X/+X is a static "+X/+X" ability on an exchanged card, so "loses all abilities" removes it (CR 613.1f). It should be a layer-7c modification (CR 613.4c), as run 28 made it for Leaf-Leap Guide. Sure.
+- **Golden Sidekick and Blood Age Muster.** The perpetual P/T is written into an exchanged card's printed P/T (copiable, layer 1). Wildgrove Summoner does the same for types, P/T and keywords. Fairly sure this is the wrong layer; run 29 accepted the same for its unique rows.
+- **Face-down duplicates.** Vodalian Tide Mage, Sinister Reflections, Ulder Ravengard, Snowborn Simulacra and Fallaji Antiquarian duplicate a face-down permanent's hidden card instead of `PermanentCopierService.cardToCopy` (CR 708.2a). Futurist Spellthief and Absorb Energy read a face-down spell's card instead of `spellAsEffectsSeeIt` (CR 708.2). Sure from the code.
+- **Gyox.** It conjures straight into the library; its text conjures into exile, changes the cards there, then shuffles. Sure; low impact.
+- **Mephidross Slime.** It doubles the dying card by its id in any zone; only the shuffle checks that the card is still in the graveyard (CR 400.7).
+- **Second person in a shared log.** Vodalian Tide Mage, Vesuvan Mist, Warzone Duplicator, Bind to Secrecy, Futurist Spellthief, Goblin Morale Sergeant, Sheoldred's Assimilator, Pampered Loamfrill and Fallaji log "your hand / library / graveyard" (kin of Chitinous Crawler's). Sure.
+- **Putrefying Rotboar.** It never freezes its exchanged cards. Low.
+
+**Left.** Nothing in the chunk is unaudited.
+- The 59 hidden-zone rows and Mephidross Slime wait on the owner's decisions.
+- `StepKind.CONJURE` is the shared part most of them need afterwards. The three exile conjures and the duplicate-destination pair can build it now.
+
+For the next run: build `StepKind.CONJURE` with the random-spellbook exile step (Rekindling, Flameweaver, Darigaaz). Then fold the duplicate-destination pair together with the graveyard-ability store merge (Fallaji, Gyox, Sibsig's Artisan, Chitinous Crawler, Smog Smasher, the two 5m rows).
+
 ## Prompt
 
 Replace `<N>` with the step number. For step 9, add the run kind and its scope (`step 9, triage run: Destroy, Search`;
