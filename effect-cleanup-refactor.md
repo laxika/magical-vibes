@@ -517,7 +517,8 @@ records (run 38).
   unless" record, ward {N} included). The owner hasn't confirmed either; ask before step 10 builds option C.
 - **Hidden-zone logging**: what a perpetual change or a conjure to a card in a hand or library logs (one line per card, per zone, or
   none). The perpetual `CardSubject` survivors already log one line per hidden card, telling opponents how many cards of a hand set
-  changed (runs 7, 10, 15). Holds Perpetually's hand and library records and Conjure's hand and library conjures. Close to the
+  changed (runs 7, 10, 15). Holds Perpetually's hand and library records and Conjure's hand and library conjures. Spellbook drafts into a hand belong to
+  it too: `DraftCardIntoHandEffect` logs the drafted card's name to every player (parallel triage chunk 08). Close to the
   masked-prompt question: opponents may learn from a hand put whether a prompt was opened (run 27).
 - **The perpetual "it"** (CR 400.7): whether a perpetual change follows a card that changed zones before the grant resolved. Holds
   `PerpetuallyGrantAbilityToTriggeringCardEffect` (the triggering card anywhere; Forgeborn Phoenix), `PerpetuallyBoostTriggeringCardEffect`
@@ -2391,6 +2392,138 @@ Rulings were read for Make an Example, Seeker of Slaanesh, Hinata and Master Bio
 - Unique rows that now gain a second user: `CantSearchLibrariesEffect` and `CantBeTurnedFaceUpEffect` (triage 2), `OpponentsMustAttackControllerEffect` (5m).
 
 Cheapest fold-run starts, by parameters only: Chromatic Armor / Skeleton Scavengers, Damping Sphere, Elspeth Conquers Death / Tax Collector, Iona, riot, Celestial Dawn's lands, The Wandering Minstrel.
+
+### Step 9, parallel triage chunk 08 (2026-11-23)
+
+Verdicts only: no repo file was changed and the ratchet did not move. 84 ledger rows (notes `triage P08: …`) cover the chunk's rare records in Goad (6), Other (6), Play (6), Turn (6), Assign (5), Draft (5), Land (5), Random (5), Spells (5), Manifest (4), Modify (4), Note (4), Only (4), Resolve (4), Separate (4), Suspect (4), Unattach (4) and Adjust (3).
+
+Every record was read with its handler to the end, plus the card classes that use it. For records with no handler, these readers were read:
+- `AttackLegalityService`: the goading player, the only-attackers switch, the other-creatures lock.
+- `CombatAttackService`'s conditional attack validators.
+- `CastingPermissionService`: the chosen-name and name-restriction readers, the top-library and graveyard permissions.
+- `GameActionAvailabilityService`'s graveyard play checks.
+- `GameQueryService`: can't be countered, combat damage assignment, land-mana colour.
+- `TurnScopedLandManaReplacements`, `TurnFaceUpCopyService`, `AsEntersInteractionService` (Ixidron), `EtbTriggerService` (spellbook drafts).
+- `GameViewProjectionFactory`'s hand reveals.
+- `MultiPermanentChoiceHandlerService`'s goad branch, `StandOrFallSupport`, `SchemeAbandonSupport` and `GameData.abandonScheme`.
+
+Oracle text was checked with `get_card` for every `unique` and `blocked-*` card, and for many `step-9` cards:
+- Kaima, Vislor Turlough, The War Games, Life of the Party, Rendmaw, Hot Pursuit.
+- Brudiclad, Intimidation Bolt, Viashino Bey, Deceiver of Form, Shaman's Trance, Coram, The Fourth Doctor, Victor Timely, Horde of Notions.
+- Dark Wings Bring Your Downfall, Gift of Doom, Vesuvan Shapeshifter, Ixidron, Showstopping Surprise, Etrata.
+- Butcher Orgg, Cunning Giant, Laccolith Rig, Cloak of Confusion.
+- Protean War Engine, Slimefoot, Relics of the Rubblebelt, Land Equilibrium.
+- Witch Hunt, Wildfire Devils, Strax, Furnace Layer, Spider-Punk.
+- Wickerwing Effigy, Sigarda's Splendor, Favored Enemy, Bell Borca, Jeweled Amulet, Ice Cauldron.
+- Fight or Flight, Stand or Fall, Do or Die, Bumi.
+- Snarlfang Vermin, Frantic Scapegoat, J. Jonah Jameson, Captain America.
+- Talon Gates, Valgavoth's Onslaught, Write into Being, Jhoira's Timebug.
+
+Narod, Maestros' Totally Safe Hideout, Boulder Jockey and Truth or Dare are playtest printings Scryfall doesn't list, so they were judged from their classes. Rulings read: Kaima. CR 400.7, 508.1d, 611.2c, 701.15a–d and 701.33b were checked with the rules MCP (2026-11-23).
+
+| Family | Triaged | `step-9` | `blocked-other` | `unique` |
+|---|---|---|---|---|
+| Goad | 6 | 6 (1 `dead: delete`) | 0 | 0 |
+| Other | 6 | 6 | 0 | 0 |
+| Play | 6 | 4 | 0 | 2 |
+| Turn | 6 | 2 | 1 | 3 |
+| Assign | 5 | 2 | 0 | 3 |
+| Draft | 5 | 3 | 1 | 1 |
+| Land | 5 | 2 | 1 | 2 |
+| Random | 5 | 5 | 0 | 0 |
+| Spells | 5 | 2 | 0 | 3 |
+| Manifest | 4 | 4 | 0 | 0 |
+| Modify | 4 | 3 | 0 | 1 |
+| Note | 4 | 0 | 0 | 4 |
+| Only | 4 | 3 | 0 | 1 |
+| Resolve | 4 | 0 | 3 | 1 |
+| Separate | 4 | 4 | 0 | 0 |
+| Suspect | 4 | 3 | 1 | 0 |
+| Unattach | 4 | 3 | 0 | 1 |
+| Adjust | 3 | 3 | 0 | 0 |
+| All | 84 | 55 | 7 | 22 |
+
+**Dead:** `GoadChosenCreatureDamagedPlayerControlsEffect`. No card names it, so its handler never runs, and the `GoadDamagedPlayerControls` choice context it begins is never made. Delete the record, its handler, that context and `MultiPermanentChoiceHandlerService.handleGoadDamagedPlayerControls`. Grenzo, Havoc Raiser uses `GoadTargetCreatureUntilNextTurnEffect`.
+
+**Fold batches** (survivor or shared component → records of this chunk, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| goad duration | `GoadTargetCreatureUntilNextTurnEffect` + a `Duration` component (`PERMANENT`, `WHILE_SOURCE_REMAINS`, "while its current controller controls it") + subjects `createdThisResolution()`, `source()`, `controlledBy(...)` + a new `StepKind.GOAD` (Kaima's "for each creature goaded this way") | Life of the Party + Rendmaw (one record), The War Games, Hot Pursuit, Kaima, Vislor Turlough: 5 (6). Vislor supersedes triage 1's static-goad note: its goad is made by a resolution |
+| copier subject (triage 6) | `BecomeCopyOfSubjectEffect` + a copier subject | Deceiver of Form (revealed card, until end of turn), Brudiclad (chosen token, no duration), Infinite Reflection (`attached()`): 3 (3) |
+| can't-attack set | `CantAttackThisTurnEffect` over `except(controlledBy(eachPlayer(), creature), target())` as a rule (CR 611.2c) | Intimidation Bolt: 1 (1). Chunk 06's `CreaturesCantAttackThisTurnEffect` joins |
+| conditional attack requirement | `MustAttackIfAnotherCreatureAttacksEffect` (chunk 07) with a trigger set and a required set (CR 508.1d) | Viashino Bey: 1 (1). Chunk 06's Magnetic Web joins |
+| from-zone restriction | `PlayerRestrictionEffect` + a from-zone `PlayerRestriction` | Shaman's Trance: 1 (1). Chunk 05's Avatar's Wrath joins |
+| graveyard-permission statics (triage P01) | `CastSpellFromGraveyardOncePerYourTurnEffect` + `PlayLandsFromGraveyardEffect`, each taking the existing graveyard scope as a component | Coram: 1 (1) |
+| graveyard cast-now (triage P01) | `CastCardFromGraveyardEffect` over `targetCard(...)`, free, land play, exile instead | Horde of Notions + Victor Timely (one record): 1 (2) |
+| hand reveal | `PlayWithHandsRevealedEffect` + a `PlayerSubject`; floated through `GrantStaticEffectToPlayerEffect` | Enduring Renewal, Truth or Dare: 2 (2). Chunk 05's Stromgald Spy joins |
+| scheme abandon | `SacrificeSelfEffect`'s scheme branch (`SchemeAbandonSupport`) | Dark Wings Bring Your Downfall: 1 (1) |
+| turn face up | `TurnSourceFaceUpEffect` with `target()` on one path that checks prevention | Showstopping Surprise: 1 (1). Unblocks 5m's `TurnTargetCreatureFaceUpEffect` (3) and `TurnTargetFaceUpEffect` (2) |
+| assign no combat damage | `AssignNoCombatDamageEffect` + a `PermanentSubject` replacing its flags | Laccolith Rig, Cloak of Confusion (split with `DiscardEffect` at random): 2 (2) |
+| spellbook drafts | `DraftCardFromSpellbookEffect` / `DraftCardFromSpellbookToExileEffect`, by parameters | Raddic + Recruit Instructor (one record), Slimefoot, Protean War Engine: 3 (4) |
+| land mana (triage P04) | `ReplaceLandManaWithColorEffect`, floated | Deep Water, Harvest Mage: 2 (2) |
+| choose one at random | `ChooseOneAtRandomEffect` (run 17 unique) | Cult of Skaro + Typhoid Mary (one record): 1 (2) |
+| random target | a "chosen at random" option on the target spec, replacing each record's `targetChosenAtRandom()` | Witch Hunt (`GainControlOfTargetEffect.gainedBy`), Furnace Layer (`DiscardCardThenEffect`): 2 (2). The unaudited `DealDamageToRandomOpponentEffect`, `SourceFightsRandomOpponentCreatureEffect` and `DealDamageToRandomAnyTargetEffect` join |
+| random player | `ChoosePlayerAtRandomEffect` + `playersThisWay(CHOOSE)` | Wildfire Devils (+ triage 7's `CopyImprintedCardAndMayCastCopyEffect.of`), Strax (reflexive fight): 2 (2) |
+| chosen-name prohibition | `SpellsWithChosenNameCantBeCastEffect` (6 cards), reading every chosen name, + `landsToo` | Null Chamber: 1 (1) |
+| can't be countered | `SpellsCantBeCounteredEffect` (survivor) + a `PlayerSubject` | Lier + Root Sliver (one record): 1 (2). With 5m's step-9 trio |
+| manifest from another library | `ManifestTopCardEffect` + a library-owner subject | Orochi Soul-Reaver + Thieving Amalgam (one record): 1 (2). Re-triage 5m's unique `CloakTopCardOfDamagedPlayerLibraryEffect` with it |
+| manifest from hand | `ChooseCardEffect` + `PutCardsOntoBattlefieldEffect` face down as a manifest | Scroll of Fate: 1 (1) |
+| repeated manifest dread | `RepeatEffect(X, ManifestDreadEffect)`, with that record recording MANIFEST, + counters on `thisWay(MANIFEST)` | Valgavoth's Onslaught: 1 (1) |
+| three-way split (triage 4) | `LookAtTopCardsHandTopBottomEffect` + a manifest destination | Write into Being: 1 (1) |
+| matching-spell predicates (triage 1) | `ReduceCastCostForMatchingSpellsEffect` / the increase head + a drawn-this-turn predicate | Captain Eberhart: 1 (1) |
+| keyword costs (triage 1) | flashback and morph cost changes | Catalyst Stone, Exiled Doomsayer: 2 (2) |
+| only attackers | `OnlyMatchingCreaturesCanAttackThisCombatEffect` (engine-built survivor) + a `Duration` | Bumi, en-Vec's engine-built record, the survivor itself: 3 (1). Re-triage 5m's `OnlySource…` and `OnlyTarget…` uniques with it |
+| piles | a new "separate [set] into two piles, [player] chooses one" step recording CHOOSE, then the disposition over `thisWay(CHOOSE)` | Fight or Flight, Stand or Fall, Do or Die, Liliana of the Veil: 4 (4). Step 8's blocked `ExileTargetGraveyardCardsAndSeparateIntoPilesEffect` is kin (card piles) |
+| suspect | `SuspectEffect` | J. Jonah Jameson (`target()`), Presumed Dead + It Doesn't Add Up (`returnedThisResolution()`), Snarlfang Vermin (+ `PerpetuallyGrantAbilitiesEffect`): 3 (4) |
+| unattach | `UnattachEquipmentFromTargetPermanentsEffect` (survivor) + an Equipment subject | Disarm + Fulgent Distraction, Carry Away + Tamiyo's Compleation, the engine-built remembered unattach: 3 (4) |
+| counter adjust | `AdjustEachCounterKindOnTargetEffect` (survivor) + a one-chosen-kind option + a suspended-card target | Dramatist's Puppet + Quarry Hauler, Clockspinning + Jhoira's Timebug: 2 (4) |
+| exiled-card counters (triage 4) | the one counter store and its removal step | Dust of Moments + Talon Gates (one record): 1 (2) |
+
+**Blocked (7):**
+- Etrata's granted ability (`TurnSourceFaceUpOrExileAndMayCastEffect`), `blocked-other`. "If you can't" needs a turn-face-up step result and the one turn-face-up path.
+- Relics of the Rubblebelt, `blocked-other`. No step records the drafted cards.
+- Boulder Jockey's `LandDropCost`, `blocked-other`. Step 10's cost-combinator merge, with `MayPayLandDropEffect`.
+- `ResolveDelayedPermanentActionEffect` and `ResolvePendingExileReturnEffect`, `blocked-other`. They wait for the delayed-mechanism unification onto `RegisterDelayed*`.
+- `ResolveRiderForPlayerEffect`, `blocked-other`. It goes when `DestroyTargetPermanentThenEffect`'s 14 cards and Pain's Reward split.
+- Frantic Scapegoat, `blocked-other`. No verb removes the suspected designation.
+
+**Unique (22):**
+- Word of Command's marker.
+- The Fourth Doctor: one shared land-or-cast use per turn.
+- Gift of Doom, Vesuvan Shapeshifter, Ixidron.
+- Butcher Orgg, Cunning Giant, Narod.
+- `DraftCardIntoHandEffect`: the hand twin of run 30's `ConjureCardOntoBattlefieldEffect`.
+- Land casualty, Land Equilibrium.
+- Spider-Punk's abilities half, City in a Bottle, Cornered Market: the last two already share `CardNameRestrictionEffect`.
+- Wickerwing Effigy.
+- Sigarda's Splendor, Jeweled Amulet / Ice Cauldron (already one record), Bell Borca, Favored Enemy.
+- Stand or Fall's block-side payload, the rad-counter trigger, Captain America's unattach cost.
+
+**Seen, not changed** (confirmed by reading the code, not run):
+
+- **Dark Wings Bring Your Downfall.** "Abandon this scheme" is `TurnFaceDownCommandZoneCardEffect`, which only adds the card to `faceDownCommandZoneCards`. It never puts the scheme on the bottom of its owner's scheme deck (CR 701.33b) and logs nothing. `SacrificeSelfEffect`'s scheme branch (`SchemeAbandonSupport`) does both. Sure of the code; Archenemy only.
+- **`DraftCardIntoHandEffect`** logs "drafts <name> into their hand" to every player, although the card goes to a hidden hand. Sure of the code. Whether a draft is hidden is next to the owner's hidden-zone logging question.
+- **Stand or Fall.** It serves only `getOpponentId` where the text says "for each defending player". `OnlyChosenCreaturesCanBlockEffect` is floated on every player, so several piles would bar each other's creatures. Sure of the code; multiplayer only.
+- **Wickerwing Effigy.** "It becomes a black Bird … base 1/1" is stored as on-entry fields, so the spell on the stack keeps its colours and types. Only target legality reads the added colour. Fairly sure; low impact.
+- **Favored Enemy.** It reads the first opponent's library, with no choice of "an opponent". Sure; multiplayer only.
+- **`DraftCardFromSpellbookToHandEffectHandler`** throws on an unknown set or unimplemented printing, where the survivor omits it. Sure of the code; I did not check whether Raddic's or Recruit Instructor's printings are all implemented.
+- **`GameData.notedMana`** (Ice Cauldron, Jeweled Amulet) is keyed by card id, so a note survives a zone change (CR 400.7). Sure; low impact, because a charge counter is needed to read it.
+- **Snarlfang Vermin.** "That creature" is declared as a benign creature target spec. Whether the trigger door checks hexproof or protection on it was not traced. Low confidence.
+- **Laccolith Rig.** Its assign-none step reads the Aura's current attachment, while its damage step reads `attachedAtTrigger()`. Low impact.
+- **Disarm's handler** fires `EquipmentUnattached` before unattaching, reads printed subtypes, and reads all the entry's targets. Low impact.
+- **Kaima.** It counts creatures you had already goaded as "goaded this way", although CR 701.15d says goading again has no effect. Unsure of the reading.
+- **Vislor Turlough.** Its goad is not gated on "if you do". Practically unreachable.
+- **Protean War Engine's handler** builds its spellbook by hand, setting names, costs and text in engine code, with Steel-Plume Marshal's ability written inline. Not a rules defect.
+- **`SuspectTargetCreatureEffect`** adds a `SuspectedEffect` floating effect that nothing reads.
+
+**Left.** Nothing in chunk 08. Re-triage these rows when their batch is folded:
+- `TurnTargetCreatureFaceUpEffect`, `TurnTargetFaceUpEffect` (5m blocked).
+- `CloakTopCardOfDamagedPlayerLibraryEffect` (5m unique).
+- `OnlySourceCreatureCanAttackThisCombatEffect`, `OnlyTargetCreaturesCanAttackThisCombatEffect` (5m unique).
+- `ChooseOneAtRandomEffect` (run 17 unique).
+- Triage 1's `GoadSourceCreatureWhileControllerControlsItEffect` mention in the static-goad batch.
+- 5m's can't-be-countered trio.
 
 ## Prompt
 
