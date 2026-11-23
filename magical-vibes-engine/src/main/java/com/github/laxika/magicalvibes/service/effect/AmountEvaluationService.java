@@ -260,6 +260,7 @@ import com.github.laxika.magicalvibes.model.amount.TargetPlayerLifeTotal;
 import com.github.laxika.magicalvibes.model.amount.TargetPlayerPoisonCounters;
 import com.github.laxika.magicalvibes.model.amount.TargetPower;
 import com.github.laxika.magicalvibes.model.amount.TargetPowerPlusToughness;
+import com.github.laxika.magicalvibes.model.amount.TargetSpellManaSpent;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellManaValue;
 import com.github.laxika.magicalvibes.model.amount.TargetSpellPower;
 import com.github.laxika.magicalvibes.model.amount.TargetToughness;
@@ -1099,6 +1100,8 @@ public class AmountEvaluationService {
                     enchantedPermanentPower(gameData, ctx, power.allowNegative());
             case TargetSpellManaValue ignored ->
                     targetSpellManaValue(gameData, ctx);
+            case TargetSpellManaSpent ignored ->
+                    targetSpellManaSpent(gameData, ctx);
             case TargetSpellPower ignored ->
                     targetSpellPower(gameData, ctx);
             case TriggeringSpellColorCount ignored ->
@@ -1811,6 +1814,19 @@ public class AmountEvaluationService {
         // The triggering spell left the stack: its mana value as it last existed there (CR 608.2h).
         StackEntry triggeringSpell = ctx.stackEntry().getTriggeringSpellSnapshot();
         return triggeringSpell != null ? spellManaValue(triggeringSpell) : ctx.stackEntry().getEventValue();
+    }
+
+    /** The mana spent to cast the targeted spell, still on the stack; 0 once it has left, or for a copy that wasn't cast. */
+    private static int targetSpellManaSpent(GameData gameData, AmountContext ctx) {
+        if (ctx.targetPermanentId() == null) {
+            return 0;
+        }
+        for (StackEntry se : gameData.stack) {
+            if (se.getTargetableId().equals(ctx.targetPermanentId())) {
+                return Math.max(0, se.manaSpentToCastThisSpell());
+            }
+        }
+        return 0;
     }
 
     /** The mana value of {@code spell} on the stack: its card's, with the chosen X (CR 202.3e); 0 cast face down. */

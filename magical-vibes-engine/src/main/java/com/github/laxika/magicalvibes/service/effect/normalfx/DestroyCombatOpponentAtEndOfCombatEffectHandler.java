@@ -14,8 +14,10 @@ import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.EventStat;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedCountersOnTriggeringPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ThenEffectRecipient;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -61,7 +63,8 @@ public class DestroyCombatOpponentAtEndOfCombatEffectHandler implements NormalEf
                     entry.getControllerId(), entry.getCard(),
                     new TriggeredAbility(Triggers.endOfCombat(),
                             new DestroyTargetPermanentThenEffect(EventStat.NONE,
-                                    new RegisterDelayedCountersOnTriggeringPermanentEffect(
+                                    RegisterDelayedStepTriggerEffect.aboutAtNext(Triggers.endStep(ActivePlayer.ANY),
+                                            Subjects.triggering(),
                                             new PutCounterOnTargetPermanentEffect(CounterType.PLUS_ONE_PLUS_ONE)),
                                     ThenEffectRecipient.CONTROLLER, null, destroyEffect.cannotBeRegenerated(),
                                     true)),

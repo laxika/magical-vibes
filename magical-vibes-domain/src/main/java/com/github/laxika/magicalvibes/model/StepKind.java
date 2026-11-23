@@ -57,6 +57,9 @@ package com.github.laxika.magicalvibes.model;
  *   <li>{@link #PUT_INTO_LIBRARY}: the number of cards put into libraries on top or on the bottom
  *       ({@code PutCardsIntoLibraryEffect}), those cards, their owners: a hidden zone, so no card subject names them
  *       there.</li>
+ *   <li>{@link #NOTE}: the number noted ({@code NoteAmountEffect}: "note its power", "note that excess damage"),
+ *       nothing, no player; a delayed ability the same resolution makes keeps it ("where X is the noted number",
+ *       {@code TemporaryGlobalTriggeredAbility.keepingNotedAmount}).</li>
  * </ul>
  *
  * <p>A later step may read a step only if that step finishes before the next one starts (CR 608.2c): its handler never
@@ -65,7 +68,7 @@ package com.github.laxika.magicalvibes.model;
  * ({@code ExileAllPermanentsEffect}), exile the source's or
  * the triggering card or target cards from a graveyard ({@code ExileGraveyardCardsEffect} except where its player
  * chooses at a prompt), exile the top card of a library, a hand or a spell ({@code ExileTargetPlayerHandEffect},
- * {@code ExileTargetSpellEffect}), seek cards to a hand, put exiled cards into a graveyard, destroy, copy, create a token (also attached to a permanent, {@code CreateTokenAttachedToTargetEffect}, whose choice among triggering creatures adds the token as it is answered), manifest, mill and exile the
+ * {@code ExileTargetSpellEffect}), seek cards to a hand, put exiled cards into a graveyard, note a number, destroy, copy, create a token (also attached to a permanent, {@code CreateTokenAttachedToTargetEffect}, whose choice among triggering creatures adds the token as it is answered), manifest, mill and exile the
  * source and return it transformed ({@code ExileSelfAndReturnTransformedEffect}), transform the source
  * ({@code TransformSelfEffect}) (never prompt, or
  * rerun before any change); the self sacrifice ({@code departAsStep}), discard and
@@ -114,5 +117,6 @@ public enum StepKind {
     REVEAL,
     PAY_MANA,
     SHUFFLE_INTO_LIBRARY,
-    PUT_INTO_LIBRARY
+    PUT_INTO_LIBRARY,
+    NOTE
 }

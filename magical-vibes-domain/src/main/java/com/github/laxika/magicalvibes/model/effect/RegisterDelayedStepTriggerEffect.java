@@ -33,7 +33,7 @@ import java.util.Objects;
  *                         played the card" (CR 603.4)
  * @param alsoIfNothingHappened whether it does more than act on those objects, so it is created even when that step
  *                         did nothing
- * @param permanent        the permanent it is about when it is about no step ({@link #aboutSourceAtNext}): its entry's
+ * @param permanent        the permanent it is about when it is about no step ({@link #aboutAtNext}): its entry's
  *                         non-targeting object and triggering permanent, which it doesn't affect once that permanent
  *                         has left the battlefield (CR 603.7c); not created when the subject names none; {@code null}
  *                         for none
@@ -107,12 +107,32 @@ public record RegisterDelayedStepTriggerEffect(StepKind about, StepTrigger step,
     }
 
     /**
+     * At the beginning of {@code player}'s next main phase ({@code ActivePlayer.YOU}: "your next main phase"),
+     * precombat or postcombat, whichever begins first, {@code effects}, about no earlier step. It has no stated duration,
+     * so it waits for that main phase however many turns pass (CR 603.7b).
+     */
+    public static RegisterDelayedStepTriggerEffect atNextMainPhase(ActivePlayer player, CardEffect... effects) {
+        return new RegisterDelayedStepTriggerEffect(null, Triggers.precombatMainPhase(player), List.of(effects), null,
+                false, false, true, null, Triggers.postcombatMainPhase(player), false, null);
+    }
+
+    /**
      * At the next {@code step}, {@code effects} about this permanent ("transform this creature at the beginning of the
      * next upkeep"), the source of the spell or ability: not created when it has none.
      */
     public static RegisterDelayedStepTriggerEffect aboutSourceAtNext(StepTrigger step, CardEffect... effects) {
+        return aboutAtNext(step, Subjects.source(), effects);
+    }
+
+    /**
+     * At the next {@code step}, {@code effects} about the permanent {@code permanent} names ("put two +1/+1 counters
+     * on it at the beginning of the next end step" of a creature that fought, {@code Subjects.triggering()}), as it
+     * names it as this resolves: not created when it names none.
+     */
+    public static RegisterDelayedStepTriggerEffect aboutAtNext(StepTrigger step, PermanentSubject permanent,
+                                                               CardEffect... effects) {
         return new RegisterDelayedStepTriggerEffect(null, step, List.of(effects), null, false, false, true,
-                Subjects.source(), null, false, null);
+                Objects.requireNonNull(permanent, "permanent"), null, false, null);
     }
 
     /**

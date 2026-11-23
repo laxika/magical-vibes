@@ -401,6 +401,20 @@ public record TemporaryGlobalTriggeredAbility(UUID controllerId, Card sourceCard
                 lastsWhile, uses);
     }
 
+    /**
+     * This ability, keeping the number the resolution that made it noted ({@code NoteAmountEffect}) as its
+     * {@link StepKind#NOTE} step result, which its entry reads as it resolves ("where X is the noted number"); unchanged
+     * when {@code made}, that resolution's results, noted none. The number is the one noted as the maker resolved
+     * (CR 603.7a, 608.2h).
+     */
+    public TemporaryGlobalTriggeredAbility keepingNotedAmount(ResolutionResults made) {
+        if (!made.outcomes().containsKey(StepKind.NOTE)) {
+            return this;
+        }
+        return withReferents(referents.withStepResults(
+                referents.stepResults().withOutcome(StepKind.NOTE, made.outcome(StepKind.NOTE))));
+    }
+
     /** Whether its trigger is the beginning of a step or phase, which it waits for whatever its objects do. */
     public boolean waitsForStep() {
         return ability.conditions().stream().anyMatch(condition -> condition.trigger() instanceof StepTrigger);

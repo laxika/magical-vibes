@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -23,6 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MoltenImpactTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Excess damage makes a one-time spell boon that deals the noted amount")
     void excessDamageCreatesOneShotSpellBoonWithTheNotedAmount() {
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent boonTarget = harness.addToBattlefieldAndReturn(player2, new HillGiant());
@@ -50,6 +52,7 @@ class MoltenImpactTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Exact damage does not create the boon")
     void exactDamageDoesNotCreateTheBoon() {
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         Permanent unaffectedTarget = harness.addToBattlefieldAndReturn(player2, new HillGiant());
@@ -68,6 +71,7 @@ class MoltenImpactTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Boon is consumed after one instant and does not trigger for opponent spells")
     void boonIsConsumedAfterOneInstantAndDoesNotTriggerForOpponentSpells() {
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent boonTarget = harness.addToBattlefieldAndReturn(player2, new AirElemental());
@@ -97,6 +101,7 @@ class MoltenImpactTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Initial spell can target own creature and boon triggers for sorcery")
     void initialSpellCanTargetOwnCreatureAndBoonTriggersForSorcery() {
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         Permanent secondTarget = harness.addToBattlefieldAndReturn(player2, new AirElemental());
@@ -120,6 +125,7 @@ class MoltenImpactTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Damage already marked is included when calculating excess")
     void damageAlreadyMarkedIsIncludedWhenCalculatingExcess() {
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new AirElemental());
         Permanent boonTarget = harness.addToBattlefieldAndReturn(player2, new AirElemental());
@@ -142,6 +148,7 @@ class MoltenImpactTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Excess damage to planeswalker creates boon that can damage another planeswalker")
     void excessDamageToPlaneswalkerCreatesBoonThatCanDamageAnotherPlaneswalker() {
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new TezzeretBetrayerOfFlesh());
         firstTarget.setCounterCount(CounterType.LOYALTY, 2);
@@ -164,6 +171,7 @@ class MoltenImpactTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Boon survives turn cleanup and the original card leaving the graveyard")
     void boonSurvivesTurnCleanupAndTheOriginalCardLeavingTheGraveyard() {
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent boonTarget = harness.addToBattlefieldAndReturn(player2, new HillGiant());
@@ -185,6 +193,7 @@ class MoltenImpactTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Illegal initial target does not create boon")
     void illegalInitialTargetDoesNotCreateBoon() {
         Permanent firstTarget = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         Permanent unaffectedTarget = harness.addToBattlefieldAndReturn(player2, new HillGiant());

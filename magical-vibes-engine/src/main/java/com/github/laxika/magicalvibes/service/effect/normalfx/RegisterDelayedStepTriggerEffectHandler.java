@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
  * Registers the delayed triggered ability with what the step it is about did, as that is now: each card bound to its
  * stay (CR 603.7c), so the ability's effects read that step as the steps of the resolution that made it do. One about
  * a permanent is registered about it, one about a card in a graveyard about that card in that stay, one about no step
- * and no permanent about nothing.
+ * and no permanent about nothing. Each keeps the number the resolution noted, if it noted one.
  */
 @Component
 @RequiredArgsConstructor
@@ -64,7 +64,7 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
             }
             UUID permanentId = about.getFirst();
             DelayedReferents referents = DelayedReferents.permanents(List.of(permanentId));
-            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+            register(gameData, entry, TemporaryGlobalTriggeredAbility.atNextStep(
                     entry.getControllerId(), entry.getCard(),
                     new TriggeredAbility(register.step(), TriggerOptions.DEFAULT,
                             register.effects().toArray(CardEffect[]::new)),
@@ -79,7 +79,7 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
             }
             TriggeredAbility ability = new TriggeredAbility(steps, TriggerOptions.DEFAULT,
                     register.effects().stream().map(EffectRegistration::new).toList());
-            gameData.temporaryGlobalTriggeredAbilities.add(register.thisTurn()
+            register(gameData, entry, register.thisTurn()
                     ? TemporaryGlobalTriggeredAbility.nextThisTurn(entry.getControllerId(), entry.getCard(), ability,
                     entry.getSourcePermanentId())
                     : TemporaryGlobalTriggeredAbility.atNextStep(entry.getControllerId(), entry.getCard(), ability,
@@ -87,7 +87,7 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
             return;
         }
         if (register.about() == null) {
-            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+            register(gameData, entry, TemporaryGlobalTriggeredAbility.atNextStep(
                     entry.getControllerId(), entry.getCard(),
                     new TriggeredAbility(register.step(), TriggerOptions.DEFAULT,
                             register.effects().toArray(CardEffect[]::new)),
@@ -128,7 +128,7 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
         if (register.afterThisTurn()) {
             referents = referents.afterTurn(gameData.turnNumber);
         }
-        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+        register(gameData, entry, TemporaryGlobalTriggeredAbility.atNextStep(
                 entry.getControllerId(), entry.getCard(),
                 new TriggeredAbility(register.step(), options, effects.toArray(CardEffect[]::new)),
                 entry.getSourcePermanentId(), permanentId, playerId, referents));
@@ -155,11 +155,16 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
             // "That card" of an entry with no triggering card in its graveyard stay names none.
             referents = DelayedReferents.NONE;
         }
-        gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+        register(gameData, entry, TemporaryGlobalTriggeredAbility.atNextStep(
                 entry.getControllerId(), entry.getCard(),
                 new TriggeredAbility(register.step(), TriggerOptions.DEFAULT,
                         register.effects().toArray(CardEffect[]::new)),
                 entry.getSourcePermanentId(), null, null, referents));
+    }
+
+    /** Creates {@code delayed}, keeping the number this resolution noted, if any ("where X is the noted number"). */
+    private static void register(GameData gameData, StackEntry entry, TemporaryGlobalTriggeredAbility delayed) {
+        gameData.temporaryGlobalTriggeredAbilities.add(delayed.keepingNotedAmount(entry.getResolutionResults()));
     }
 
     /** The permanents the step made that are still there; one that left is a new object (CR 400.7). */

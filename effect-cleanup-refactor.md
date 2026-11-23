@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 32: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent and May closed (May's 11 cost combinators listed for step 10); 1,839 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Register open (23 rare), Target started (45 rare)) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 33: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent and May closed (May's 11 cost combinators listed for step 10); 1,815 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Register open (2 rare: the linked "when the source leaves or untaps" pair), Target open (42 rare)) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -638,6 +638,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 30 | Conjure's rare battlefield records, Undersimplify's face-down defect, then Register | Conjure open, Register started (10 rows: 5 absorbed, 1 survivor, 4 unique; 5 records and 5 handlers deleted; 7 card files rewritten; `RegisterDelayedStepTriggerEffect.atNext`; Squadron Carrier's and Thendar's conjured cards have their printing; Perforator Crocodile's Stab Wounds enter attached, none for a creature they can't enchant; a face-down spell is Undersimplify's creature spell; 44 rare Conjure and 43 rare Register records left) |
 | 31 | Run 30's three small defects, Conjure's battlefield duplicates and its graveyard and exile duplicates, Register's "about the source" registrations, then the next-main-phase records | Conjure and Register open (11 rows: 7 absorbed, 1 survivor (new), 1 survivor gaining two options, 2 unique; 7 records and 7 handlers deleted, 1 of each added; 9 card files rewritten; `ConjureDuplicateOntoBattlefieldEffect`, `SubjectResolutionService.cardsToDuplicate`, `RegisterDelayedStepTriggerEffect.aboutSourceAtNext` / `.atNextMainPhaseThisTurn`; Dragonsoul Prodigy's haste is gained, Vvviza's planet is conjured, Smog Smasher's duplicate of a face-down creature is faceless; the gift opponent not a Whorl defect; 39 rare Conjure and 39 rare Register records left) |
 | 32 | Register's delayed returns from a graveyard, its next-draw replacements and one-shot boons, then Target | Register and Target open (21 rows: 7 absorbed, 1 split, 2 survivors (one gaining an option, one a subject), 2 unique, 9 blocked-other (the next-draw payloads); 8 records and 8 handlers deleted; 9 card files rewritten; `RegisterDelayedStepTriggerEffect.aboutCardAtNext`, `TargetPlayerLosesAllUnspentManaEffect(PlayerSubject)`; Loyal Cathar and Biolume Egg no longer return a card that left its graveyard and came back before the trigger resolved; the boons left for a noted-amount part; 23 rare Register and 45 rare Target records left) |
+| 33 | The noted amount and the boons, Ochre Jelly and Mana Sculpt on it, Register's rare records, then Target | Register nearly closed, Target open (25 rows: 5 absorbed, 3 split, 1 survivor (new), 15 unique, 1 blocked-other; 8 records and 8 handlers deleted, 1 of each added; 9 card files rewritten; `NoteAmountEffect` with `StepKind.NOTE` and `AmountThisWay.noted()`, kept by the delayed abilities (`keepingNotedAmount`), `TargetSpellManaSpent`, `RegisterDelayedStepTriggerEffect.atNextMainPhase` / `.aboutAtNext`, entering counters of the source token copy a `DynamicAmount`; Mana Sculpt's delayed mana is made for a spell cast for no mana; 2 rare Register and 42 rare Target records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -9424,6 +9425,119 @@ fuzz and stress tests, the frontend. Not verified: more than two players.
   Ri Berit, Coffin Queen; the block and combat registrations).
 - Target's 45 rare records: the player-choice records (`TargetPlayerChooses*`), the "must attack" records, the control-exchange records.
 - Still the owner's: the gift opponent (CR 702.174a), the hidden-zone conjure and perpetual logging, the perpetual "it" (CR 400.7).
+
+### Step 9, run 33 (2026-11-23, Register nearly closed, Target open)
+
+The "amount noted when the delayed ability is made" part run 32 designed, built as a step: the boons, Ochre Jelly and Mana Sculpt
+folded onto it; Register's other rare records audited (Foe-Razer Regent folded); Target's first three splits. Ratchet 4,090 / 3,344 →
+4,083 / 3,337 records / handlers (8 records and 8 handlers deleted, `NoteAmountEffect` and its handler added). 9 card files rewritten
+(Dragonborn Immolator, Mephit's Enthusiasm, Molten Impact, Ochre Jelly, Mana Sculpt, Foe-Razer Regent, Lumengrid Augur, Laquatus's
+Creativity, Urgoros, the Empty One) and one engine-built use (Infinite Authority's rider in `DestroyCombatOpponentAtEndOfCombatEffectHandler`).
+Oracle text checked with `get_card` for those 9 and for the 17 cards of the Register verdicts (All-Out Assault, Melee, Esoteric
+Duplicator, Feral Encounter, Quenchable Fire, Goblin Flotilla, Rainbow Vale, Rescue from the Underworld, Cyclopean Tomb, Mystic
+Reflection, both Chancellors, Giant Oyster, Ogre Geargrabber, Stolen Uniform, Season of the Bold, Nuka-Nuke Launcher); rulings with
+`get_rulings` for Mana Sculpt, Laquatus's Creativity (none) and Urgoros. CR 107.1b, 400.7, 603.7a, 603.7b, 603.7c, 603.7e, 608.2h and 707.10
+checked with `get_rule` (2026-11-23), and 103.6b, 603.10a and 702.174a for the ledger notes and the gift line.
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Register | 21 rare records | 5 | 0 | 0 | 1 (blocked-other: the duration family, step 10) | 15 | 2 rare, 12 in all |
+| Target | 3 rare records | 0 | 3 | 0 | 0 | 0 | 42 rare, 52 in all |
+| (new) | `NoteAmountEffect` | | | 1 | | | |
+
+All families: 1,815 rare records without a row (run 32: 1,839). Perpetually 30 rare and Conjure 39 rare, unchanged.
+
+- **The noted amount.** `NoteAmountEffect(DynamicAmount)` is a step ("note its power", "note that excess damage") that evaluates its amount
+  once as it resolves (CR 608.2h; a negative one as 0, CR 107.1b) and records it as the new `StepKind.NOTE` outcome; `AmountThisWay.noted()`
+  reads it. The two delayed registrars it serves (`RegisterDelayedStepTriggerEffect`, `RegisterDelayedControllerSpellCastTriggerEffect`)
+  keep the resolution's NOTE outcome on the ability they make (`TemporaryGlobalTriggeredAbility.keepingNotedAmount`, into
+  `DelayedReferents.stepResults`), which `EventAbilitySupport.DelayedRecord` already stamps onto the delayed entry; no new `StackEntry` or
+  `DelayedReferents` state. The number is the one noted as the maker resolved (CR 603.7a), not re-read when the delayed ability resolves;
+  each card's text says so ("the noted number"; Ochre Jelly's "half that many" and Mana Sculpt's "the amount of mana spent to cast that
+  spell" are last-known values of an object gone by then, the same number). The delayed abilities keep their old durations: the boons
+  trigger once (`boon`), Ochre Jelly's copy and Mana Sculpt's mana at the next step (CR 603.7b). The next-draw replacements were not moved.
+- **Dragonborn Immolator / Mephit's Enthusiasm**: `NoteAmountEffect(EventValue)` + `RegisterDelayedControllerSpellCastTriggerEffect.boon(creature,
+  PerpetuallyBoostTriggeringCardEffect(AmountThisWay.noted(), 0))`; Mephit's inside the old `ConditionalEffect(EventValueAtLeast(1))`, which
+  is still what makes the damage step record the excess. **Molten Impact**: the same with the damage boon and its opponent's-creature
+  target filter. The boon's source is now the maker's source (CR 603.7e): Dragonborn's boon names the dead Immolator's permanent id (it
+  named none); nothing reads that for a boon about no object.
+- **Ochre Jelly**: `NoteAmountEffect(half the counters)` + `RegisterDelayedStepTriggerEffect.atNext(endStep(ANY), CreateTokenCopyOfSourceEffect(false,
+  1, AmountThisWay.noted()))`. `CreateTokenCopyOfSourceEffect.initialPlusOnePlusOneCounters` became a `DynamicAmount` ("enters with", evaluated
+  as the copy is made; every int constructor kept), so the copy still enters with the counters rather than getting them after.
+- **Mana Sculpt**: `NoteAmountEffect(new TargetSpellManaSpent())` (new amount: the targeted spell's `manaSpentToCastThisSpell`, 0 once it
+  left the stack) before the counter, then `ConditionalEffect(Wizard, RegisterDelayedStepTriggerEffect.atNextMainPhase(YOU, AwardManaEffect(C,
+  noted)))` (new factory: the next main phase, precombat or postcombat, no stated duration, as `DelayedManaSupport` registered it). The
+  3-card mana-value record and Drain Power keep `DelayedManaSupport` (three cards: not collapsed).
+- **Foe-Razer Regent** and Infinite Authority's rider: `RegisterDelayedStepTriggerEffect.aboutAtNext(endStep(ANY), Subjects.triggering(), counters)`
+  (new factory; `aboutSourceAtNext` is now `aboutAtNext(step, source(), …)`). None is made for a creature that left before the trigger
+  resolved; the old one was made and did nothing (CR 603.7c), so no visible difference. Its log line "will put counters on the creature
+  at the beginning of the next end step." is gone (the survivor's wins; no test asserted it).
+- **Register's unique rows** (one card each unless said): All-Out Assault's "when you next attack this turn", Melee's "this combat", Esoteric
+  Duplicator's copy of the sacrificed artifact's last-known card, Feral Encounter's two delayed target groups, Quenchable Fire's
+  pay-before-the-step special action, Goblin Flotilla's two combat abilities, Rainbow Vale's (made inside a mana ability; the step record
+  has no mana-ability handler), Rescue from the Underworld's two bound cards, Cyclopean Tomb, Mystic Reflection, the two Chancellors'
+  opening-hand reveals, Giant Oyster's two, and Ogre Geargrabber / Stolen Uniform's control-loss unattach (two cards share it).
+  `RegisterGlobalTriggeredAbilityUntilEndOfNextTurnEffect` (2 cards) is blocked-other: its siblings UntilEndOfTurn (52) and UntilNextTurn (4)
+  would take one `Duration` together, which needs the owner's sign-off.
+- **Target splits.** Lumengrid Augur: `DrawCardEffect(1, targetPlayer())` + `DiscardEffect(1, targetPlayer())` + `ConditionalEffect(HappenedThisWay.toACard(DISCARD,
+  artifact), UntapPermanentsEffect(source()))`, one player target shared; `GameData.pendingUntapOnDiscardType` and its record and checks
+  in `CardChoiceHandlerService` deleted (no other writer). Laquatus's Creativity: `NoteAmountEffect(CardsInHand(TARGET_PLAYER))` + draw
+  that many + discard that many ("that many" is the number in the instruction, however many were drawn). Urgoros: random `DiscardEffect`
+  + `ConditionalEffect(NotCondition(HappenedThisWay.discarded()), DrawCardEffect(1))`: "if the player can't" is an empty hand or a prevented
+  discard, both recorded as a DISCARD of nothing (its ruling: one card is still discarded at random). Its handler test
+  (`TargetPlayerRandomDiscardOrControllerDrawsEffectHandlerTest`, 2 cases) was deleted with the handler; `UrgorosTheEmptyOneTest` covers
+  both cases and the Tamiyo prevention.
+- **Gift** (the owner's question, not changed): no record this run touched handles a gift.
+- **AI.** It reads none of the deleted records. The boons' damage and boost are now `AmountThisWay.noted()`, which the AI evaluates as 0
+  outside the delayed entry (it read a literal before): its estimate of Molten Impact's boon damage when choosing the boon's target is lower.
+  `TargetPolarityGuardTest` passes.
+
+**Behaviour changes.**
+
+1. Mana Sculpt countering a spell cast for no mana still makes its delayed ability, which adds no mana (CR 603.7a: the text makes it
+   whenever you control a Wizard; the old handler made none): `ManaSculptTest.spellCastForNoManaStillMakesTheDelayedAbility` (new; not run on
+   HEAD, the old handler returned before registering for 0).
+2. Dragonborn Immolator's boon has the Immolator as its source (CR 603.7e); nothing observable reads it.
+3. Logs: Foe-Razer's registration line gone; Urgoros logs the discard step's and draw step's lines instead of its own combined line;
+   Lumengrid Augur's untap logs through `UntapPermanentsEffect`.
+4. The other rewritten cards: none intended.
+
+**What a player sees.** The log lines above. No prompt or zone view changes; nothing names a hidden card (the noted amount is a number).
+
+**Seen, not changed.**
+
+- War Barge / Merieke Ri Berit (`RegisterDelayedDestroyTargetWhenSourceLeavesEffect`, 2 cards) and Coffin Queen
+  (`RegisterDelayedExileLinkedPermanentWhenSourceLeavesEffect`) are one shape: "when the source leaves [this turn] / becomes untapped / you lose
+  control of it, [destroy | exile] that creature", "that creature" the target or the permanent the RETURN step put onto the battlefield.
+  Three cards: build it (an event registration about the source with those events and a permanent subject for "that creature", the
+  delayed ability about that permanent too), not ledgered blocked. Left unaudited.
+- `RegisterDelayedSelfReturnFromGraveyardEffect` (7 cards) carries a counter amount the noted amount could replace; three or more cards,
+  so the owner's sign-off.
+- Laquatus's Creativity with an empty hand now runs a draw and a discard of 0 (the old handler returned); its tests pass, but what
+  those two steps log for 0 was not checked.
+
+**Tests edited.** The new Mana Sculpt case. Display names on every method of `DragonbornImmolatorTest`, `ManaSculptTest`,
+`MephitsEnthusiasmTest`, `MoltenImpactTest`, `FoeRazerRegentTest` (none had them). `TargetPlayerRandomDiscardOrControllerDrawsEffectHandlerTest`
+deleted with its handler. `EffectCountRatchetTest`'s baselines.
+
+**Tests run.** Four Gradle runs, one `--tests` list per task, counted from each run's XML by timestamp, 0 failures, 0 skipped in all; the
+last on the final sources: 54 XML files, 459 cases (the 14 classes referencing a changed card, Mana Drain, Plasm Capture, Scattering
+Stroke, Karn Liberated, the `--tests-for` sample (10 per class) of `RegisterDelayedStepTriggerEffect`,
+`RegisterDelayedControllerSpellCastTriggerEffect` and `CreateTokenCopyOfSourceEffect`, `EffectCountRatchetTest` at 4,083 / 3,337,
+`CardEffectTargetingConsistencyTest`, the AI's `GameDataDeepCopyTest` and `TargetPolarityGuardTest`). Compiled: domain, engine, AI,
+websocket, webservice, every card module, the application and AI test sources and the card-test sources of the letters run. No deleted
+record or type is named by any test, AI or other card source (grepped). No deleted handler is marked `AsksDeathReplacementsFirst` or calls
+`LifeSupport.askBefore*`. Not run: the full suites, the AI fuzz and stress tests, the frontend. Not verified: more than two players.
+
+**For the next run (run 34: the linked pair, then Target's rare records).**
+
+- Register's last two rare records: the "when the source leaves / untaps / you lose control of it" registration about "that creature"
+  (War Barge, Merieke Ri Berit, Coffin Queen; design above).
+- Target's 42 rare records: the player-choice records (`TargetPlayerChooses*`), the "must attack" records, the control-exchange records,
+  `TargetPlayersDiscardHandsThenOpponentsDrawEffect` (a per-player count), `TargetPlayerMayExileCardFromGraveyardEffect` (Gravestorm's
+  inserted "may … or may draw"), `TargetSpellControllerLooksAtHandEffect` (Lay Bare), `TargetOpponentLosesLifeEqualToPowerToughnessDifferenceEffect`.
+- Still the owner's: the gift opponent (CR 702.174a), the hidden-zone conjure and perpetual logging, the perpetual "it" (CR 400.7), one
+  `Duration` for the three `RegisterGlobalTriggeredAbility…` records.
 
 ## Prompt
 

@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class FoeRazerRegentTest extends BaseCardTest {
 
     @Test
+    @DisplayName("It may fight as it enters, then gets two counters at the next end step")
     void entersAndMayFightThenPutsCountersOnItAtNextEndStep() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castRegent();
@@ -39,6 +41,7 @@ class FoeRazerRegentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining the enter fight schedules no counters")
     void decliningEtbFightDoesNotScheduleCounters() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castRegent();
@@ -54,6 +57,7 @@ class FoeRazerRegentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Another creature you control that fights gets the counters")
     void allyCreatureFightAlsoPutsCountersOnTheFightingCreature() {
         Permanent ally = harness.addToBattlefieldAndReturn(player1, new HillGiant());
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -70,6 +74,7 @@ class FoeRazerRegentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Fight triggers go on the stack before creating delayed abilities")
     void fightTriggersGoOnTheStackBeforeCreatingDelayedAbilities() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FoeRazerRegent());
         castRegent();
@@ -87,6 +92,7 @@ class FoeRazerRegentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Two fighting Regents each get two counters, at one end step only")
     void bothPlayersRegentsGetCountersForFightingAndOnlyAtOneEndStep() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FoeRazerRegent());
         castRegent();
@@ -116,6 +122,7 @@ class FoeRazerRegentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No fight or counters if the Regent leaves before its enter ability resolves")
     void noFightOrCountersIfRegentLeavesBeforeItsEntryAbilityResolves() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FoeRazerRegent());
         castRegent();
@@ -140,6 +147,7 @@ class FoeRazerRegentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("No fight or counters if the entry target leaves before resolution")
     void noFightOrCountersIfTheEntryTargetLeavesBeforeResolution() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FoeRazerRegent());
         castRegent();
@@ -158,6 +166,7 @@ class FoeRazerRegentTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Declining fight leaves both creatures without counters at the end step")
     void decliningFightLeavesBothCreaturesWithoutCountersAtTheEndStep() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new FoeRazerRegent());
         castRegent();

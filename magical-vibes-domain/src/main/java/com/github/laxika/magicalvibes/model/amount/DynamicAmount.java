@@ -245,6 +245,7 @@ public sealed interface DynamicAmount permits
         TargetCardsManaValueSum,
         TargetGroupCount,
         TargetSpellManaValue,
+        TargetSpellManaSpent,
         TargetSpellPower,
         TargetToughness,
         TargetPower,

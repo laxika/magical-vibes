@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -19,6 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class DragonbornImmolatorTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Its power at death becomes the next creature spell's perpetual boost")
     void deathPowerBecomesTheNextCreatureSpellsPerpetualBoost() {
         Permanent immolator = addCreatureReady(player1, new DragonbornImmolator());
         killWithDoomBlade(immolator);
@@ -38,6 +40,7 @@ class DragonbornImmolatorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Zero power does not create the boon")
     void zeroPowerDoesNotCreateTheBoon() {
         Permanent immolator = addCreatureReady(player1, new DragonbornImmolator());
         immolator.setCounterCount(CounterType.MINUS_ONE_MINUS_ONE, 2);
@@ -53,6 +56,7 @@ class DragonbornImmolatorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Activated ability boosts until end of turn")
     void activatedAbilityBoostsUntilEndOfTurn() {
         Permanent immolator = addCreatureReady(player1, new DragonbornImmolator());
         harness.addMana(player1, ManaColor.RED, 1);
@@ -79,6 +83,7 @@ class DragonbornImmolatorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The noted power is its last-known power, static bonuses included")
     void positiveLastKnownPowerIncludesControllerDependentStaticBonuses() {
         harness.addToBattlefield(player1, new GloriousAnthem());
         Permanent immolator = addCreatureReady(player1, new DragonbornImmolator());
@@ -96,6 +101,7 @@ class DragonbornImmolatorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Death notes power after repeated activations")
     void deathNotesPowerAfterRepeatedActivations() {
         Permanent immolator = addCreatureReady(player1, new DragonbornImmolator());
         harness.addMana(player1, ManaColor.RED, 6);
@@ -132,6 +138,7 @@ class DragonbornImmolatorTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple boons apply to the same next creature spell")
     void multipleBoonsApplyToTheSameNextCreatureSpell() {
         Permanent first = addCreatureReady(player1, new DragonbornImmolator());
         Permanent second = addCreatureReady(player1, new DragonbornImmolator());

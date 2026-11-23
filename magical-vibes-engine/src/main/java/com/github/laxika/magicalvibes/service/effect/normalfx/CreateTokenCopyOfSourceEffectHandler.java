@@ -72,8 +72,10 @@ public class CreateTokenCopyOfSourceEffectHandler implements NormalEffectHandler
             return;
         }
 
-        Map<CounterType, Integer> entersWithCounters = e.initialPlusOnePlusOneCounters() > 0
-                ? Map.of(CounterType.PLUS_ONE_PLUS_ONE, e.initialPlusOnePlusOneCounters()) : Map.of();
+        int entersWithPlusOneCounters = amountEvaluationService.evaluate(gameData, e.initialPlusOnePlusOneCounters(),
+                amountContext);
+        Map<CounterType, Integer> entersWithCounters = entersWithPlusOneCounters > 0
+                ? Map.of(CounterType.PLUS_ONE_PLUS_ONE, entersWithPlusOneCounters) : Map.of();
         // "Except it has haste" is part of the copy (CR 707.9b), so it is an added keyword rather than a grant.
         CreateTokenCopyOfTargetPermanentEffect copyEffect = new CreateTokenCopyOfTargetPermanentEffect(
                 e.addedSubtype() == null ? List.of() : List.of(e.addedSubtype()),

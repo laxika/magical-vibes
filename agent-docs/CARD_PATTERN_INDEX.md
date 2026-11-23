@@ -95,7 +95,7 @@
 | once-per-turn optional spell-cast trigger that bottoms the triggering spell, then reveals until a nonland card for a free cast | `n/NeeraWildMage.java` + `PutTriggeringSpellOnBottomThenRevealEffect` |
 | d20 after revealing up to two basic lands from the library | `DruidOfTheEmeraldGrove.java` + `SearchLibraryForUpToTwoBasicLandsThenRollD20Effect` |
 | basic-land library search that perpetually turns the chosen card into a Clue artifact with a sacrifice-to-draw ability | `w/WoodlandInvestigation.java` + `SearchLibraryAndConditionalEffect` + `PerpetuallyGrantChosenCardCharacteristicsEffect` |
-| death-time last-known power captured into a source-independent one-time creature-spell perpetual boost boon | `d/DragonbornImmolator.java` + `TriggerOptions.DEFAULT.withInterveningIf(SourcePowerAtLeast(1))` + `RegisterOneShotCreatureSpellPerpetualPowerBoostEffect` + `PerpetuallyBoostTriggeringCardEffect` |
+| death-time last-known power noted into a one-time creature-spell perpetual boost boon | `d/DragonbornImmolator.java` + `TriggerOptions.DEFAULT.withInterveningIf(SourcePowerAtLeast(1))` + `NoteAmountEffect(EventValue)` + `RegisterDelayedControllerSpellCastTriggerEffect.boon` + `PerpetuallyBoostTriggeringCardEffect(AmountThisWay.noted(), 0)` |
 | one-time boon that perpetually boosts the next creature spell by its power | `r/RothgaBondedEngulfer.java` + `RegisterDelayedControllerSpellCastTriggerEffect.boon` + `PerpetuallyBoostTriggeringCardByPowerEffect` |
 | look at four cards, choose one name, take all matching looked-at cards and lose life per card, random-bottom the rest | `s/StrokeOfLuck.java` + `LookAtTopCardsChooseSameNameToHandEffect` |
 | target opponent creature perpetually gets -2/-2 and gains an upkeep trigger that perpetually gives it -1/-1 | `s/SewerPlague.java` + `PerpetuallyBoostTargetCreatureEffect` + `PerpetuallyGrantTriggeredAbilityToTargetCreatureEffect` |
@@ -282,7 +282,7 @@
 | once-per-turn non-flying creature cast duplicate with perpetual flying | `a/AceFlockbringer.java` + `ConjureDuplicateOfTriggeringCreatureToHandEffect` |
 | one-time boon that makes the next non-flying creature spell perpetually gain flying | `l/LuluForgetfulHollyphant.java` + `RegisterDelayedControllerSpellCastTriggerEffect.boon` + `PerpetuallyGrantKeywordsToTriggeringCardEffect` |
 | one-time end-step boon with a death-count condition plus a boon-presence end-step rider | `u/UnderbridgeWarlock.java` + `CreateBoonEffect.usedAsItResolves` + `ConsumeBoonEffect` + `ControllerHasBoon` |
-| excess-damage note that becomes a one-time instant/sorcery damage boon | `m/MoltenImpact.java` + `ConditionalEffect(EventValueAtLeast(1), RegisterOneShotInstantSorcerySpellDamageBoonEffect)` |
+| excess-damage note that becomes a one-time instant/sorcery damage boon | `m/MoltenImpact.java` + `ConditionalEffect(EventValueAtLeast(1), SequenceEffect.of(NoteAmountEffect(EventValue), RegisterDelayedControllerSpellCastTriggerEffect.boon(...).withTargetFilter(...)))`, the boon's damage `AmountThisWay.noted()` |
 | Gift a named card onto an opponent's battlefield | `a/ArchivalWhorl.java` + `ConjureCardToOpponentBattlefieldEffect` |
 | ETB forage conjures a named card onto your battlefield; batched Squirrel combat damage may sacrifice a token to add acorn counters | `e/EuruAcornScrounger.java` + `ConjureCardToBattlefieldEffect` |
 | ETB conjures a named Aura onto the battlefield attached to each opposing creature | `p/PerforatorCrocodile.java` + `ConjureCardsAttachedToOpposingCreaturesEffect` |

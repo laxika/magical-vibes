@@ -255,7 +255,6 @@ public class KarnRestartGameEffectHandler implements NormalEffectHandlerBean {
         gameData.clearPendingInteractions(PendingKnowledgePoolCast.class);
         gameData.pendingReturnToHandOnDiscardType = null;
         gameData.pendingTransformOnCreatureDiscard = null;
-        gameData.pendingUntapOnDiscardType = null;
         gameData.combatDamageExemptPredicate = null;
         gameData.pendingAttackingCopyOpponents.clear();
         gameData.pendingAttackingCopyChoices.clear();

@@ -35,7 +35,7 @@ import java.util.Set;
  * @param tappedAndAttacking if true, the token enters tapped and attacking the same target as the source
  * @param additionalTypes card types added to the copy
  * @param startingLoyaltyOverride starting loyalty for a planeswalker token, if non-null
- * @param initialPlusOnePlusOneCounters +1/+1 counters with which each token enters
+ * @param initialPlusOnePlusOneCounters +1/+1 counters with which each token enters, evaluated as the effect resolves
  * @param tapped             if true, the token enters tapped without entering attacking
  * @param excludedEffectType an effect type omitted from the token copy's copied effects
  * @param additionalExcludedEffectTypes additional effect types omitted from the token copy
@@ -51,7 +51,7 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
                                             boolean tappedAndAttacking,
                                             Set<CardType> additionalTypes,
                                             Integer startingLoyaltyOverride,
-                                            boolean tapped, int initialPlusOnePlusOneCounters,
+                                            boolean tapped, DynamicAmount initialPlusOnePlusOneCounters,
                                             Class<? extends CardEffect> excludedEffectType,
                                             Set<Class<? extends CardEffect>> additionalExcludedEffectTypes,
                                             Set<Keyword> excludedKeywords,
@@ -71,7 +71,7 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
             this(removeLegendary, amount, colorOverride, addedSubtype, removeManaCost,
                     powerOverride, toughnessOverride, grantHaste, exileAtEndStep, initialCounters,
                     tappedAndAttacking, additionalTypes, startingLoyaltyOverride, tapped,
-                    initialPlusOnePlusOneCounters, null, Set.of(), Set.of(), false);
+                    new Fixed(initialPlusOnePlusOneCounters), null, Set.of(), Set.of(), false);
         }
 
         /** Backward-compatible constructor for a source copy omitting one effect type. */
@@ -89,7 +89,7 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
             this(removeLegendary, amount, colorOverride, addedSubtype, removeManaCost,
                     powerOverride, toughnessOverride, grantHaste, exileAtEndStep, initialCounters,
                     tappedAndAttacking, additionalTypes, startingLoyaltyOverride, tapped,
-                    initialPlusOnePlusOneCounters, excludedEffectType, Set.of(), Set.of(), false);
+                    new Fixed(initialPlusOnePlusOneCounters), excludedEffectType, Set.of(), Set.of(), false);
         }
 
         public CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmount amount,
@@ -118,6 +118,17 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
     public CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount, int initialPlusOnePlusOneCounters) {
         this(removeLegendary, new Fixed(amount), null, null, false, null, null, false, false,
                 Map.of(), false, Set.of(), null, false, initialPlusOnePlusOneCounters);
+    }
+
+    /**
+     * Source copies that enter with {@code initialPlusOnePlusOneCounters} +1/+1 counters, evaluated as the effect
+     * resolves: "the token enters with half that many +1/+1 counters on it" of a delayed ability, the number noted as
+     * it was made ({@code AmountThisWay.noted()}).
+     */
+    public CreateTokenCopyOfSourceEffect(boolean removeLegendary, int amount,
+                                         DynamicAmount initialPlusOnePlusOneCounters) {
+        this(removeLegendary, new Fixed(amount), null, null, false, null, null, false, false,
+                Map.of(), false, Set.of(), null, false, initialPlusOnePlusOneCounters, null, Set.of(), Set.of(), false);
     }
 
     public CreateTokenCopyOfSourceEffect() {
@@ -210,7 +221,7 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
             Class<? extends CardEffect> excludedEffectType) {
         return new CreateTokenCopyOfSourceEffect(
                 false, new Fixed(1), null, null, false, null, null, false, false,
-                Map.of(), false, Set.of(), null, false, 0, excludedEffectType,
+                Map.of(), false, Set.of(), null, false, new Fixed(0), excludedEffectType,
                 Set.of(), Set.of(), false);
     }
 
@@ -222,7 +233,7 @@ public record CreateTokenCopyOfSourceEffect(boolean removeLegendary, DynamicAmou
             boolean exileAtEndOfCombat) {
         return new CreateTokenCopyOfSourceEffect(
                 false, new Fixed(1), null, null, false, null, null, grantHaste, false,
-                Map.of(), false, Set.of(), null, false, 0, null,
+                Map.of(), false, Set.of(), null, false, new Fixed(0), null,
                 excludedEffectTypes, excludedKeywords, exileAtEndOfCombat);
     }
 }

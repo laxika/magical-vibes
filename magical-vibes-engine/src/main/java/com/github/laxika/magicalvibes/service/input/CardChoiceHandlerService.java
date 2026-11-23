@@ -23,7 +23,6 @@ import com.github.laxika.magicalvibes.model.PendingInteraction;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.PendingReturnToHandOnDiscardType;
 import com.github.laxika.magicalvibes.model.PendingTransformOnCreatureDiscard;
-import com.github.laxika.magicalvibes.model.PendingUntapOnDiscardType;
 import com.github.laxika.magicalvibes.model.PendingValkiHandExileChoice;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
@@ -933,9 +932,6 @@ public class CardChoiceHandlerService {
         // Check if a creature discard should untap + transform the source (e.g. Civilized Scholar)
         checkPendingTransformOnCreatureDiscard(gameData, card);
 
-        // Check if a card type discard should untap the source (e.g. Lumengrid Augur)
-        checkPendingUntapOnDiscardType(gameData, card);
-
         // Check if the discarded card should pump the source by its mana value (e.g. Spellbound Dragon)
         checkPendingBoostSourceByDiscardedManaValue(gameData, card);
 
@@ -1346,7 +1342,6 @@ public class CardChoiceHandlerService {
             }
             checkPendingReturnToHandOnDiscard(gameData, card);
             checkPendingTransformOnCreatureDiscard(gameData, card);
-            checkPendingUntapOnDiscardType(gameData, card);
             checkPendingBoostSourceByDiscardedManaValue(gameData, card);
             checkPendingConniveOnDiscard(gameData, card);
             discardedCounts.merge(selection.playerId(), 1, Integer::sum);
@@ -2993,25 +2988,6 @@ public class CardChoiceHandlerService {
                         FaceDownVisibility.publicName(gameData, source) + " transforms", List.of(transform), null, source.getId());
                 effectHandlerRegistry.getHandler(transform).resolve(gameData, transformEntry, transform);
             }
-        }
-    }
-
-    private void checkPendingUntapOnDiscardType(GameData gameData, Card discardedCard) {
-        PendingUntapOnDiscardType pending = gameData.pendingUntapOnDiscardType;
-        if (pending == null) {
-            return;
-        }
-        gameData.pendingUntapOnDiscardType = null;
-        if (!discardedCard.hasType(pending.requiredType())) {
-            return;
-        }
-        Permanent source = gameQueryService.findPermanentById(gameData, pending.sourcePermanentId());
-        if (source == null) {
-            return;
-        }
-        if (tapUntapSupport.untapPermanent(gameData, source)) {
-            gameLogService.append(gameData, GameLog.cardThen(source.getCard(), " untaps."));
-            log.info("Game {} - {} untaps (matching card type discarded)", gameData.id, source.getCard().getName());
         }
     }
 

@@ -284,6 +284,15 @@ public record AmountThisWay(StepKind kind, Stat stat, PermanentPredicate filter,
         return new AmountThisWay(StepKind.SHUFFLE_INTO_LIBRARY).controlledByYou();
     }
 
+    /**
+     * "Where X is the noted number": the number the most recent note step noted ({@code NoteAmountEffect}), in the
+     * resolution that noted it or in a delayed ability that resolution made (CR 603.7a), which keeps the number as it
+     * was noted (CR 608.2h).
+     */
+    public static AmountThisWay noted() {
+        return new AmountThisWay(StepKind.NOTE);
+    }
+
     /** "The exiled creature card's power" after an exile step. */
     public static AmountThisWay exiledPower() {
         return new AmountThisWay(StepKind.EXILE, Stat.POWER);

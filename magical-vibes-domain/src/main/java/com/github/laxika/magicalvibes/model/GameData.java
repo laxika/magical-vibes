@@ -1442,7 +1442,6 @@ public class GameData {
     public PendingTransformOnCreatureDiscard pendingTransformOnCreatureDiscard;
     public PendingBoostSourceByDiscardedManaValue pendingBoostSourceByDiscardedManaValue;
     public PendingConnive pendingConnive;
-    public PendingUntapOnDiscardType pendingUntapOnDiscardType;
     public final Deque<UUID> extraTurns = new ArrayDeque<>();
     /**
      * Parallel to {@link #extraTurns}: whether the correspondingly-positioned extra turn skips its
@@ -11262,7 +11261,6 @@ public class GameData {
         copy.pendingTransformOnCreatureDiscard = this.pendingTransformOnCreatureDiscard;
         copy.pendingBoostSourceByDiscardedManaValue = this.pendingBoostSourceByDiscardedManaValue;
         copy.pendingConnive = this.pendingConnive;
-        copy.pendingUntapOnDiscardType = this.pendingUntapOnDiscardType;
         copy.pendingSearchContext = this.pendingSearchContext;
 
         // --- Game-creation config ---

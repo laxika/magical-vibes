@@ -10,6 +10,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MephitsEnthusiasmTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Deals four damage to target creature without excess damage boon")
     void dealsFourDamageToTargetCreatureWithoutExcessDamageBoon() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
         castAt(target);
@@ -37,6 +39,7 @@ class MephitsEnthusiasmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Excess damage gives the next creature spell the noted perpetual power boost only")
     void excessDamageGivesTheNextCreatureSpellTheNotedPerpetualPowerBoostOnly() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         castAt(target);
@@ -60,6 +63,7 @@ class MephitsEnthusiasmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Deals four damage to target planeswalker")
     void dealsFourDamageToTargetPlaneswalker() {
         Permanent planeswalker = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         planeswalker.setCounterCount(CounterType.LOYALTY, 6);
@@ -76,6 +80,7 @@ class MephitsEnthusiasmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Damage already marked increases the noted excess")
     void damageAlreadyMarkedIncreasesTheNotedExcess() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new SerraAngel());
         target.setMarkedDamage(3);
@@ -90,6 +95,7 @@ class MephitsEnthusiasmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Excess damage to planeswalker creates boon using its previous loyalty")
     void excessDamageToPlaneswalkerCreatesBoonUsingItsPreviousLoyalty() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new ChandraNalaar());
         target.setCounterCount(CounterType.LOYALTY, 1);
@@ -102,6 +108,7 @@ class MephitsEnthusiasmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Multiple boons boost the same next creature spell")
     void multipleBoonsBoostTheSameNextCreatureSpell() {
         castAt(harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()));
         castAt(harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()));
@@ -113,6 +120,7 @@ class MephitsEnthusiasmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Perpetual boost survives returning to hand and recasting")
     void perpetualBoostSurvivesReturningToHandAndRecasting() {
         castAt(harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()));
         castBears();
@@ -135,6 +143,7 @@ class MephitsEnthusiasmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Losing the target before resolution does not create boon")
     void losingTheTargetBeforeResolutionDoesNotCreateBoon() {
         Permanent target = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
         harness.setHand(player1, List.of(new MephitsEnthusiasm()));
@@ -154,6 +163,7 @@ class MephitsEnthusiasmTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The boon survives turn changes and ignores opponents' creature spells")
     void boonSurvivesTurnChangesAndIgnoresOpponentsCreatureSpells() {
         castAt(harness.addToBattlefieldAndReturn(player2, new GrizzlyBears()));
         harness.passUntilWithNoAttackers(player2, TurnStep.PRECOMBAT_MAIN);

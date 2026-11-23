@@ -828,8 +828,11 @@ card's. Delayed graveyard returns use `CardIdSetPredicate` with entry versions.
   is `nextThisTurn` from the effect's `delayedAbility()` (its mana-ability handler for a mana ability), triggering only
   the next time (CR 603.7b); a cast-and-activation one (Repeated Reverberation, Magus Lucea Kane) is used up by the
   first. Registrations (`RegisterDelayedControllerSpellCastTriggerEffect`, `RegisterDelayedTargetPlayerSpellCastTriggerEffect`,
-  Molten Impact's, Gift of Tiamat's, The Ruinous Powers' and Medomai's Prophecy's handlers) make one from
+  The Ruinous Powers' and Medomai's Prophecy's handlers) make one from
   `delayedAbility()` for their `Duration` (`thisTurn`, `nextThisTurn`, `untilYourNextTurn`, `boon`).
+- **A noted number** ("note its power", then a boon "where X is the noted number") is a `NoteAmountEffect` step before the
+  registration; `RegisterDelayedStepTriggerEffect` and `RegisterDelayedControllerSpellCastTriggerEffect` keep it on the
+  delayed ability (`TemporaryGlobalTriggeredAbility.keepingNotedAmount`), whose effects read `AmountThisWay.noted()`.
 - **Boons** are delayed abilities with no stated duration (`boon`, `CreateBoonEffect`), counted by `ControllerHasBoon`;
   an N-time boon has `uses`, and the door uses one as it triggers (`GameData.useDelayedAbility`). `boonUsedAsItResolves`
   (Underbridge Warlock) instead triggers at each of its steps whose "if" holds until its `ConsumeBoonEffect` resolves.
