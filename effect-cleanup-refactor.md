@@ -501,7 +501,8 @@ records (run 38).
 - **Run 21's brief**: go-ahead for the static prevention record (built as `PreventDamageToRecipientsEffect`).
 - **2026-11-23, 3+-card folds** (run 38): folding records used by three or more cards is approved where the shared record says the
   same thing for every card.
-- **2026-11-23, May's 11 cost combinators for step 10** (run 25): `MayPayLandDropEffect`, `MayPayTapAndSacrificePermanentEffect`,
+- **May's 11 cost combinators set aside for step 10** (run 25's verdict, not an owner's decision; on 2026-11-23 the owner approved step 10's
+  merges as long as they logically make sense, each verb's plan described as it starts): `MayPayLandDropEffect`, `MayPayTapAndSacrificePermanentEffect`,
   `MayPayLifeAndCreateTokenEqualToAmountEffect`, `MayPayLifeAndDrawEqualToAmountEffect`,
   `MayPayLifeAndPutCountersOnEnteringCreatureEqualToPowerEffect`, `MaySacrificePermanentForCounterOrTapSourceEffect`,
   `MaySacrificePermanentForCounterOrRemoveSourceCounterEffect`, `MayReturnPermanentToHandAndEnterWithCountersEffect`,
@@ -2074,6 +2075,90 @@ No record is dead. `ProtectionFromColorlessEffect` has no card, but `ChoiceHandl
 - `RedirectNextDamageFromChosenSourceToSelfEffect`
 - the two stale shuffle blocked-step-model rows
 - `ShuffleCardsFromHandIntoLibraryThenEffect`
+
+### Step 9, parallel triage chunk 06 (2026-11-23)
+
+Verdicts only: no repo file changed, and the ratchet did not move. There are 76 ledger rows (notes `triage P06: …`), read against `e3c5d02ca8`: Award 12, Exchange 12, Creatures 11, May 11, Damage 10, Ignore 10, Player 10.
+
+What was read:
+- Every record and every handler to its end, including the `manafx` handlers, and every card class that uses a record.
+- For records with no handler, their readers: `ActivatedAbilityExecutionService`'s mana branches and cost-land collectors, `AbilityActivationService`'s cost recorders, `AnyColorManaChoiceSupport`, `AttackLegalityService`, `CombatAttackService`'s attack-together validator, `CombatBlockService`'s must-block recompute, `CastingCostService.getAttackPaymentPerCreature`, `BattlefieldPlacementService`'s enter-tapped paths, `LegendRuleService`, `DamageSupport`'s damage-to-counters path, `CastingPermissionService` and the player-protection, life-floor, infect, hexproof-ignore and damage-colour readers in `GameQueryService`.
+- Oracle text with `get_card` for every `unique` and `blocked-*` card, and for Twins of Discord, Nils, Festival, Energy Vortex, Loxodon Peacekeeper, Archfiend of Depravity, Archfiend of Spite, Detection Tower, Spider-Verse, Council of Reeds, Cadric, The Master Multiplied, Sliver Gravemother and Mirror Gallery.
+- The MB1 and MB2 playtest cards (Wizened Arbiter, Wrath of Sod, Boulder Jockey, Mothers Yamazaki) are not in Scryfall; their text was read from `card-data-cache`.
+- Rulings: Rhystic Cave.
+- CR checked with `get_rule`: 101.4, 118.12, 400.7, 404.3, 605.1a, 605.1b, 611.2c, 613.1f, 616.1, 701.12a, 704.5j, 708.2a.
+
+| Family | Triaged | `step-9` | `blocked-other` | `unique` |
+|---|---|---|---|---|
+| Award | 12 | 9 | 0 | 3 |
+| Exchange | 12 | 8 | 0 | 4 |
+| Creatures | 11 | 9 | 0 | 2 |
+| May | 11 | 0 | 11 | 0 |
+| Damage | 10 | 5 | 0 | 5 |
+| Ignore | 10 | 10 | 0 | 0 |
+| Player | 10 | 8 | 0 | 2 |
+| All | 76 | 49 | 11 | 16 |
+
+**Fold batches** (survivor or component → records, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| any-colour amount | `AwardAnyColorManaEffect`. Selvala uses `DistinctPowersAmongControlledCreatures`. Three Tree City uses `PermanentCount(creature + PermanentHasSourceChosenSubtypePredicate)`. Wrath of Sod uses `SOURCE_PERMANENT_COLORS`, Katilda's form. Corrupted Grafstone needs a new `GRAVEYARD_CARD_COLORS` colour-source value; it is a one-card value, so weigh it in the fold run. | 4 (4) |
+| cost-paid land | `AwardManaOfTypeLandsCouldProduceEffect` with a `ManaColorLandScope` for the land paid in the cost (the sacrificed snapshot, or the untapped land). | Squandered Resources, Benthic Explorers: 2 (2) |
+| player-recipient mana | `AwardManaToActivePlayerEffect` (5 cards, blocked row; re-triage it) with a recipient `PlayerSubject`. | Tangleroot (`triggeringPlayer()`), Jetfire (`targetPlayer()` + Powerstone restriction): 2 (2) |
+| mana rider | `AwardHasteGrantingManaEffect` (3, unaudited) with a rider kind. | Boseiju: 1 (1) |
+| set exchange | `ExchangeControlOfAllMatchingPermanentsWithTargetPlayerEffect`, as it stands. | Twist Allegiance (survivor), Reins of Power: 2 (2) |
+| shared-type exchange | Split: `ExchangeControlOfTargetPermanentsEffect` with a shared-types set replacing its two shared-type booleans and recording GAIN_CONTROL, then a conditional destroy over `attachmentsOf(thisWay(GAIN_CONTROL), Aura)`. | Gauntlets of Chaos: 1 (1) |
+| spell-and-permanent exchange | One record over a `PermanentSubject` and a spell subject, with a new-targets chooser and the CR 701.12a check. | Perplexing Chimera, Sudden Substitution: 2 (2) |
+| zone exchange | `ExchangeGraveyardAndLibraryEffect` with a zone pair and the CR 404.3 order prompt; its shuffle becomes `ShuffleLibraryEffect`. | Morality Shift, Harness Infinity, Mordenkainen: 3 (3) |
+| player-floated statics | `GrantStaticEffectToPlayerEffect`. Chronomantic Escape: `untilYourNextTurn(CreaturesCantAttackControllerUnlessPredicateEffect)`; P02's attack-ban batch should take this survivor too. Angel of Grace: `untilEndOfTurn(DamageLifeFloorEffect(1, LIFE_AT_LEAST_FLOOR))`. | 2 (2) |
+| global can't-attack | `CantAttackThisTurnEffect(controlledBy(eachPlayer(), creature))`. | Festival + Orim's Chant: 1 (2) |
+| set can't-block | `CantBlockThisTurnEffect(controlledBy(eachPlayer(), …))`; Twins needs `lastingRule` to bind `PermanentHasChosenParityPredicate`. | Twins of Discord, Immobilizer Eldrazi: 2 (2) |
+| chosen-type must attack | `ChooseCreatureTypeAtResolutionEffect` + `MatchingCreaturesMustAttackThisTurnEffect`, with the chosen type bound when the rule floats. | Walking Desecration: 1 (1) |
+| parity enters tapped | `EnterPermanentsOfTypesTappedEffect.matching` + a source's-chosen-parity predicate. | Ashling's Prerogative: 1 (1); `GrantKeywordToCreaturesOfChosenParityEffect` joins |
+| attack together | `CreaturesWithCounterAttackTogetherEffect` with an attacking filter and a bound filter. | Magnetic Web: 1 (1); joined by Ekundu Cyclops (unaudited) and War's Toll (P02 unique row; re-triage) |
+| per-attacker tax | `RequirePaymentToAttackEffect` with an amount read against the attacker (cost-shape). | Nils: 1 (1) |
+| power-gated attack | `CreaturesCantAttackUnlessPredicateEffect` + `PermanentPowerGreaterThanSourceControllerHandSizePredicate`; the reader must pass the source context. | Ensnaring Bridge: 1 (1) |
+| unless discard | Split: `MayEffect(discard, …, damage + ConditionalEffect(HappenedThisWay(DEAL_DAMAGE), tap source()))` (cost-shape). | Mishra's War Machine: 1 (1) |
+| sacrifice N or lose life | `EachPlayerSacrificesPermanentOrLosesLifeEffect` + a `PlayerSubject` + a count (cost-shape). | Archfiend of Spite: 1 (1) |
+| single-payer damage unless pays | `EachPlayerTakesDamageUnlessPaysEffect` + a `PlayerSubject` + a per-counter cost (cost-shape). | Energy Vortex, Soul Barrier: 2 (2) |
+| legend-rule exemption | `IgnoreLegendRuleEffect` + a static `PermanentSubject`. | Mirror Gallery, Council of Reeds, Mirror Box + Sakashima, Spider-Verse + Sliver Gravemother, Cadric + The Master: 5 (8) |
+| exactly two | `IgnoreLegendRuleWhenExactlyTwoSameNameEffect` + a count scope. | Brothers Yamazaki, Mothers Yamazaki + Syr Joshua and Syr Saxon: 2 (3) |
+| hexproof ignore | `IgnoreOpponentHexproofEffect` + a breadth, floated by `GrantStaticEffectToPlayerEffect`. | Detection Tower: 1 (1); the two 5m unique rows join |
+| ignore source | `IgnoreSourceAuraEffectsUntilEndOfTurnEffect`. | Lost in Thought + Volrath's Curse, Damping Engine: 2 (3) |
+| Choose Your Champion | Split: `ChoosePlayerEffect` + `PlayerRestrictionEffect` + `CantAttackThisTurnEffect(controlledBy(except(...)), UNTIL_YOUR_NEXT_TURN)`; re-triage run 39's blocked row. | `PlayerCantCastSpellsAndAttackWithCreaturesEffect`: 1 (engine-built, then dead) |
+| choose, sacrifice the rest | Split: `ChoosePermanentsEffect.chosenBy` + `SacrificeSelfEffect(except(…, thisWay(CHOOSE)))`. | Archfiend of Depravity: 1 (1) |
+| player protection | One player-protection static with a quality, floated by `GrantStaticEffectToPlayerEffect`. | Runed Halo, Absolute Virtue: 2 (2); joined by run 18's two blocked rows, Serra's Emissary's player half and the unaudited colour (13) and everything (4) grants |
+| leader gains control | `GainControlOfTargetEffect.gainedBy(matching(eachPlayer(), unique-leader predicate))`; Loxodon Peacekeeper picks among tied players through `ChoosePlayerEffect`. | Loxodon Peacekeeper, Sokenzan Renegade, Thoughtbound Primoc + Wild Mammoth, Ghazb'n Ogre + Wild Dogs: 4 (6) |
+
+**Blocked (11):** all of May's 11 cost combinators. They wait for step 10's cost-combinator merge, by the owner's decision of 2026-11-23. The three pay-life-equal records point at `MayPayLifeEqualToAmountEffect`.
+
+**Unique (16):**
+- Award: Rhystic Cave, Sunbird Effigy, Open the Omenpaths.
+- Exchange: Wizened Arbiter, Serene Master, Darkpact, Deadpool.
+- Creatures: Arboria, Magnetic Web's must-block rule.
+- Damage: Phyrexian Unlife, Archon of Coronation, Ghostly Flame, Delaying Shield + Force Bubble (already one record), Whippoorwill.
+- Player: Melira, Celestial Convergence.
+
+**Seen, not changed** (confirmed by reading, not run):
+- Sokenzan Renegade's handler finds its source by card id, while its three siblings use the entry's permanent id, so a Renegade that left and returned is moved by the old trigger (CR 400.7). Fairly sure.
+- The Master, Multiplied: the legend rule should not apply to creature tokens only, but the record exempts every token you control (CR 704.5j). Sure; low impact.
+- `LegendRuleService.hasControlledTokensExemption`, Magnetic Web's `getAttackTogetherCounterTypes`, Ghostly Flame's `isDamageSourceColorNullified` and `damageToControllerCounterReplacementSources` read printed static effects with no lost-abilities or face-down check (CR 613.1f, 708.2a). Sure of the code; low impact.
+- With Delaying Shield and Force Bubble both out, damage goes to the first source found; the player should choose (CR 616.1). Sure; rare.
+- `CastingCostService.getAttackPaymentPerCreature` takes the defender as `getOpponentId` (Nils and the other taxes), so it is right with two players only. Sure.
+- Harness Infinity puts the hand into the graveyard with no order prompt (CR 404.3); Morality Shift asks. Sure; low impact.
+- The set exchanges (Reins of Power, Twist Allegiance) and Perplexing Chimera don't check `cantBeControlledByOtherPlayers`. CR 701.12a's all-or-nothing rule for a set exchange wasn't settled. Unverified.
+- Chunk 02 ruled War's Toll `unique` as the only attack requirement that depends on the declared attackers; Magnetic Web and Ekundu Cyclops have the same shape. Re-triage that row.
+
+**Anything left.** Nothing in this chunk. The batches reach records outside it:
+- Rows to re-triage: `AwardManaToActivePlayerEffect` (blocked), `TargetOpponentChoosesPlayerForRestrictionEffect` (blocked), `OpponentCreaturesAttackTogetherEffect` (P02 unique), and the 5m hexproof-ignore and run-18 player-protection rows.
+- Unaudited records to fold with the batches: `AwardHasteGrantingManaEffect`, `MustAttackIfAnotherCreatureAttacksEffect`, `GrantKeywordToCreaturesOfChosenParityEffect`, `OtherCreaturesCantAttackThisTurnEffect`, and the colour and everything protection grants.
+
+Suggested fold order:
+1. The by-parameter rows: Wrath of Sod, Reins of Power, Festival and Orim's Chant, Immobilizer Eldrazi, Chronomantic Escape, Angel of Grace, Damping Engine.
+2. The legend-rule exemption batch.
+3. The leader-gains-control batch.
+4. The any-colour amount batch.
 
 ## Prompt
 
