@@ -24,7 +24,7 @@ bottom.
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,767 rare records have no ledger row. From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; run 41 named Destroy (37 rare) as the next family with no owner's question. |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. 1,687 rare records have no ledger row. Triage run 1 gave Pay and Reduce (80 rare) and 32 stale step-4/5 blocked rows their verdicts (95 `step-9` rows wait for fold runs). From 2026-11-23 the step runs as **triage runs** (about 80 records each, verdicts only) followed by **fold runs** (see step 9). Open: Perpetually (30 rare) and Conjure's hand and library conjures (Conjure 39 rare) wait for the owner's decisions; run 41 named Destroy (37 rare) as the next family with no owner's question. |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -279,6 +279,7 @@ Each run ends with its family row in Findings: audited, absorbed, split, blocked
 | Conjure | 29–31 | **open**: 39 rare; the hand and library conjures wait for the logging decision; the graveyard-ability store (the unearth duplicate) and the random-spellbook battlefield records left |
 | Register | 30–34 | closed; the delayed step and event registrations, `NoteAmountEffect` |
 | Target | 32–41 | closed; `PlayerRestrictionEffect`, the gain-control and choose-permanents choosers, one cast check |
+| Pay, Reduce (+ 32 stale step-4/5 rows) | T1 | triaged, no code changed: 112 rows (`step-9` 88, `blocked-other` 7, `unique` 17); fold batches in T1's Findings |
 
 Cross-cutting results of those runs, now conventions or shared pieces (Standing knowledge): the face-down hiding rules; stay checks
 (CR 400.7, 603.7c) on every return and delayed return; what a put step moves enters through the entry batch (as-enters and Aura host
@@ -820,6 +821,102 @@ any source (grepped). Not run: the full suites, the AI fuzz and stress tests, th
   whole-card check.
 - Still the owner's: the gift opponent (CR 702.174a, missing-features entry 80), the hidden-zone conjure and perpetual logging, the perpetual
   "it" (CR 400.7).
+
+### Step 9, triage run 1 (2026-11-23)
+
+Verdicts only: no Java, test or agent-docs file changed; the ratchet did not move (4,046 / 3,300). 112 ledger rows appended (step 9,
+notes `triage 1: …`): the 32 stale step-4/5 `blocked-other` rows, then the whole of Pay (40 rare) and Reduce (40 rare). Every record and
+`normalfx` handler was read (log lines skipped), with the card classes that use it; of the static cost reducers, the `costmod` handlers of the
+chosen-subtype, graveyard, legacy-word, commander, imprint, first-matching, dash and buyback records and the matching-spells survivor were
+read, the interface-read ones through their records' methods, and the other `costmod` handlers were not read (a fold run reads them). Oracle
+text checked with `get_card` for Fateful Tempest, The Serpent Society, Arthur, Marigold Knight, Super State, Hawkeye's Bow, Ydwen Efreet,
+Ripples of Potential, Angel's Trumpet, Unexpected Request, Yotia Declares War, Behemoth of Vault 0, Localized Destruction, Vault 112:
+Sadistic Simulation, Tolarian Kraken, Momo, Friendly Flier, Eluge, the Shoreless Sea, Kaza, Roil Chaser, Strong Back, Myth Unbound and Diary
+of Dreams; the other cards were judged from their card classes and the records' Javadoc, not checked with `get_card`. Rulings with `get_rulings` for Yotia Declares War (its
+handler queues the reflexive ability with zero tapped: the ruling agrees). CR 118.12, 118.3, 107.14, 119.4, 608.2h, 613.1f, 702.37c and
+708.2a checked with `get_rule` (2026-11-23).
+
+| Family | Triaged | `step-9` | `blocked-other` | `unique` | Left unaudited |
+|---|---|---|---|---|---|
+| stale step-4/5 `blocked-other` rows | 32 | 28 | 4 | 0 | n/a (re-triaged rows) |
+| Pay | 40 rare | 30 (1 of them `dead: delete`) | 3 | 7 | 0 rare, 11 in all |
+| Reduce | 40 rare | 30 | 0 | 10 | 0 rare, 16 in all |
+
+All families: 1,687 rare records without a row (before: 1,767). `step-9` rows waiting for fold runs: 95 (7 older + 88).
+
+**The stale rows.** Steps 6 to 8 are done, so the 32 rows whose note named them got new verdicts. Four stay blocked, by a new cause:
+The Serpent Society's poison ward (`CounterUnlessGetsPoisonCountersEffect`: "counter unless", step 10's option C), Cosmic Horror's
+`DestroySourceAndDamageControllerIfDestroyedEffect` (a `ForcedCostOrElseEffect` fallback on the per-class list, step 10), Feint (no
+creatures-blocking subject and no prevent-combat-damage-dealt-by-subject record) and the Rune pair (`BoostEquippedCreatureOfEnchantedEquipmentEffect`:
+the Equipment *has* the granted static ability, so it needs a static grant of a static ability; its only kin is
+`GrantKeywordToEquippedCreatureOfEnchantedEquipmentEffect`, 5 Runes, unaudited). Not re-triaged: `BoostAllCreaturesEffect` and
+`EnchantedCreatureCantActivateAbilitiesEffect` (their blocker is step 10). Three blocked-step-model 4f rows name step 7/8 too and are stale:
+`MillControllerAndDrawByManaValueEffect`, `MillControllerAndTargetPlayerLosesLifeByMilledManaValueEffect`,
+`MillControllerAndDealDamageByHighestManaValueEffect` (they would split like Fateful Tempest's record).
+
+**Fold batches** (survivor or shared component → records, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| TAP | `ChoosePermanentsEffect.anyNumber` + `TapPermanentsEffect(thisWay(CHOOSE))` recording a new `StepKind.TAP`, payloads over `AmountThisWay(TAP)` / `thisWay(TAP)` | `TapCreaturesGainLifePerCreatureEffect` (3), `TapAnyNumberOfPermanentsThenDrawPerTappedEffect` (2), `TapCreaturesBoostSelfEffect` (2), `TapPlayersPermanentsAndDamageEqualToCountEffect` (2, no choice), `TapAnyNumberOfCreaturesThenReflexiveAbilityEffect` (1), `TapAnyNumberOfPermanentsThenReflexiveAbilityEffect` (1), `TapCreaturesCreateTokensPerCreatureEffect` (1), `TapPermanentsAndPutCountersEffect` (1): 8 (13) |
+| counters on a subject | `PutCounterOnTargetPermanentEffect` with `returnedThisResolution()`, `createdThisResolution()`, a chosen-permanent subject, its predicate mode | `PutCounterOnReturnedPermanentsEffect` (3), `PutCountersOnCreatedPermanentsEffect` (23), `PutCountersOnChosenPermanentEffect` (5), `PutCounterOnChosenOwnPermanentEffect` (22): 4 (53) |
+| dealers | `TargetCreatureDealsDamageToControllerEffect` with non-target dealer subjects (last-known host) and player subjects | `EnchantedCreatureDealsPowerDamageToControllerEffect` (1), `EnchantedCreatureDealsDamageToEachOpponentEffect` (3), `EquippedCreatureDealsDamageToDefendingPlayerEffect` (2), `EachCreatureDealsDamageToItsControllerEffect` (1), `EnchantedCreatureDealsDamageToItsOwnerEffect` (1): 5 (8) |
+| choose and attach | `ChoosePermanentsEffect.exactly(1, Equipment you control)` + `AttachSourceEquipmentToTargetCreatureEffect(thisWay(CHOOSE), host)` | `AttachOneOfControlledEquipmentToTargetCreatureEffect` (3), `…ToSourceEffect` (2): 2 (5) |
+| static goad | `GoadEquippedCreatureEffect` gains a `PermanentSubject` (static entry point) | `GoadEquippedCreatureEffect` (12, survivor), `GoadSourceCreatureEffect` (1), and the unaudited `GoadSourceCreatureWhileControllerControlsItEffect`: 2 (13) |
+| singles | existing records | Fateful Tempest's mill split (engine-built), Werewolf Ransacker's split, Arthur onto `ReturnTargetPermanentToHandAtEndOfCombatEffect(searched())`, the Wurms onto `FlipCoinWinEffect(null, ReturnToHandEffect(source()))`, Elemental Appeal onto `BoostTargetCreatureEffect(createdThisResolution())`, Ydwen Efreet's split, Ripples of Potential's split (proliferate records PUT_COUNTERS): 7 (8) |
+| pay any amount | `EachPlayerPaysAnyManaEffect` with a payer subject (`you()`) and a resource (mana, mana of one colour, life, energy), recording its pay step; "you may pay {X}" is a `MayEffect` around it (CR 118.12: paying {0} is paying); payloads read the paid amount | `PayXManaEffect` (2), `PayXLifeEffect` (1), the seven `PayAnyAmountOfEnergy…` records (8), `PayEnergyToGainControlOfTargetEffect` (1), `PayEnergyThenDestroyTargetPermanentEffect` (1), `PayAnyAmountOfColorManaToDealDamageToAnyTargetEffect` (1), `PayAnyAmountOfLifeRevealAndExileEffect` (1), eleven `PayXMana…` records (11): 24 (26) |
+| may pay a fixed cost | `MayPayManaEffect` | `PayManaAndSearchLibraryForCardNamedToBattlefieldEffect` (1), `PayManaThenMayTapOrUntapTargetCreatureEffect` (1): 2 (2) |
+| dynamic cost amount | `PayLifeCost` / `PayEnergyCost` with a `DynamicAmount` amount | `PayXEnergyCost` (2), `PayLifeForEachCardInHandCost` (1), `PayLifeForEachCommanderColorCost` (1), the unaudited `PayXLifeCost` (8); `PayLifeEqualToCommanderColorIdentityCost` dead: 3 + 1 dead (4) |
+| matching-spell predicates | `ReduceCastCostForMatchingSpellsEffect` with existing predicates or source zones | `ReduceCastCostForChosenSubtypeSpellsEffect` (2), `ReduceGraveyardSpellCastCostEffect` (2), `ReduceCastCostForChosenNameSpellsEffect` (1), `ReduceCommanderCastCostEffect` (1), `ReduceOwnCastCostForSharedCardTypeWithImprintEffect` (1): 5 (7) |
+| spell-relative amount | the same survivor with an amount evaluated against the spell being cast | `ReduceCastCostForEachChosenColorEffect`, `ReduceCastCostForSameNameCardsInGraveyardEffect`, `ReduceOwnCastCostForEachSharedCardTypeWithExiledCardsEffect`: 3 (3) |
+| spells that target X | one targets-[X] reduction (X: your permanent, the source, its attachment, the enchanted player, anything) | `ReduceOpponentCostForTargetingControlledPermanentEffect` (2), `ReduceOwnCastCostIfTargetingEnchantedPlayerEffect` (1), `ReduceAuraCastCostForTargetingAttachedPermanentEffect` (1), `ReduceTargetedCostEffect` (1): 4 (5) |
+| mana unit × amount | a `ManaCost` reduction unit times a `DynamicAmount` | `ReduceOwnCastCostByManaCostEffect` (2), `ReduceColoredCastCostForMatchingSpellsByAmountEffect` (1), `ReduceActivationCostByManaCostEffect` (1), the unaudited `ReduceOwnColoredCastCostEffect` (4): 3 (4) |
+| keyword costs | one keyword-cost reduction (buyback, dash, cycling, ninjutsu, Room unlock), each kind's reader kept | `ReduceBuybackCostEffect`, `ReduceDashCostEffect`, `ReduceCyclingCostEffect`, `ReduceNinjutsuCostEffect`, `ReduceRoomUnlockCostEffect`: 5 (5) |
+| ability kind | `ReduceActivatedAbilityCostEffect` with an ability-kind filter replacing `powerUpOnly` | `ReduceBoastActivationCostEffect`, `ReduceExhaustAbilityCostEffect`, `ReduceNonManaActivatedAbilityCostEffect`: 3 (3) |
+| per target | one per-target cost change (sign, whose spells, target filter) | `ReduceOwnCastCostForEachTargetEffect`, `ReduceOwnCastCostPerTargetEffect`, and `IncreaseOpponentCastCostPerTargetEffect`: 2 (2) |
+| reducer singles | existing heads | `ReduceCastCostForNextSpellOfTypesThisTurnEffect` (2) onto `ReduceCastCostForNextMatchingSpellEffect`, `ReduceActivationCostPerCounterEffect` onto `ReduceActivationCostEffect(CountersOnSource)`, `ReduceFirstMatchingSpellCastCostEffect` onto `ReduceCastCostForFirstMatchingSpellEachTurnEffect` (a turn condition, not a flag), `ReduceEquipCostForTargetingAttachedPermanentEffect` onto `ReduceActivatedAbilityCostForTargetingSourceEffect`, `ReduceOwnCastCostIfTargetingGraveyardCardEffect` onto `ReduceOwnCastCostIfTargetingPermanentEffect`: 5 (6) |
+
+Fold-run cautions written in the rows: `PutCountersOnCreatedPermanentsEffect` evaluated its amount against the source, the survivor evaluates a
+non-target amount against the named permanent; Teferi's −3, Halo Forager and Isareth's reflexive target filters read X, so the reflexive
+must carry the step's amount as X; `ReduceCastCostForNextMatchingSpellEffect`'s handler locks only `XValue` and `EventValue` at resolution,
+Kaza's X is "as this ability resolves" (CR 608.2h); the TAP payloads count what was tapped, not what was chosen.
+
+Unique (17): the engine-built `PayBlockCostsEffect`, `PayEchoCost`, `PayRansomEffect`, `ReduceTurnFaceUpCostForPermanentEffect`; one-card
+mechanics `PayLifeEqualToSpellManaValueCost` (an alternative spell cost kind), `PayLifeInsteadOfCommanderTaxEffect`, `PayBlackManaWithLifeEffect`,
+`PayMulticoloredSourceManaCost` ({Z}), `ReduceCastCostForChosenLegacyWordSpellsEffect`, `ReduceEnchantedHandCardCastCostEffect`,
+`ReduceFirstActivatedAbilityCostForControlledCreatureEffect`, `ReduceFirstForetellCostEachTurnEffect`,
+`ReduceColoredCastCostForFirstSpellTargetingCreatureEachTurnEffect`, `ReduceMinusOneMinusOneCountersEffect`; the two damage-minus-N
+replacements `ReduceSpellDamageEffect` and `ReduceDamageToControlledCreaturesEffect` (two users of the shape); `ReduceGraveyardCardActivatedAbilityCostEffect`
+(already the one record of its two cards). Blocked (Pay): `PayLifeOrPayManaCost` and `PayLifeOrSacrificePermanentCost` (A-or-B costs, step 10's
+cost combinators) and `PayXManaConjureRandomCreatureWithManaValueAndCloakEffect` (Roalesk: its conjure-and-cloak half waits for Conjure).
+
+**Seen, not changed** (confirmed by reading, not run):
+
+- `PayEnergyThenDestroyTargetPermanentEffectHandler` (Behemoth of Vault 0) pays with `playerEnergyCounters.put`, skipping
+  `GameData.setPlayerEnergyCounters`' record in `energyCountersPaidOrLostThisTurn`, so "energy paid this turn" readers miss it. Sure.
+- `PayAnyAmountOfLifeRevealAndExileEffectHandler` (Vizkopa Confessor) pays life without `AsksDeathReplacementsFirst`, unlike
+  `PayXLifeEffectHandler`; paying life is losing it (CR 119.4), so a Lich's Mastery-style choice isn't asked first. Fairly sure (read only).
+- The pay-{X} handlers treat X = 0 as declining (Relentless Dead, Squealing Devil, Vigil for the Lost, Azor, Roalesk, Hollow Specter, Depala),
+  while Isareth and Fire Lord Sozin queue their reflexive ability at 0; the prompt has no separate decline, and paying {0} is paying (CR 118.12).
+  Low impact. Sure of the code, unsure of any visible case.
+- `ReduceCastCostForChosenSubtypeSpellsEffectHandler` (Herald's Horn, Urza's Incubator) judges the card's printed types and subtypes for a spell
+  cast face down; a face-down spell has no subtypes (CR 702.37c, 708.2a), and the matching-spells handler builds the face-down copy. Sure.
+- Lashknife Barrier's `ReduceDamageToControlledCreaturesEffect` is read from `source.getCard().getStaticEffects()` in
+  `DamagePreventionService.applyControlledCreaturesDamageReduction`: a face-down Barrier or one that lost its abilities still reduces (CR 613.1f,
+  708.2a). Fairly sure (did not check whether another path filters).
+- `PayAnyAmountOfEnergyToBoostTargetCreatureEffect` (Die Young) declares a benign target for a -X/-X (the AI's polarity). Sure, low impact.
+- Rakdos Charm's third mode deals each creature's damage one at a time, not as one event (kin of the bite's open defect). Sure.
+- `EnchantedCreatureDealsDamageToItsOwnerEffectHandler` (Enslave) takes the owner from `stolenCreatures`, else the controller, not from the card's
+  owner. Unverified whether a case differs.
+- `ReduceCastCostForChosenNameSpellsEffect`'s Javadoc says the card predicate path carries no source; `CardHasSourceChosenNamePredicate` finds it.
+  Stale doc.
+
+**For the next run.**
+
+- Triage run 2: Search (40 rare), then Cant (39) and Sacrifice (38); Look (37) and Destroy (37) next. Conjure (39) and Perpetually (30) still wait
+  for the owner. Re-triage the three stale Mill blocked-step-model rows above with the Mill split.
+- Fold runs can start with the singles and the counters-on-a-subject batch (no new component); the TAP step and the pay-any-amount step are
+  the two new components with the most records (8 and 24).
 
 ## Prompt
 
