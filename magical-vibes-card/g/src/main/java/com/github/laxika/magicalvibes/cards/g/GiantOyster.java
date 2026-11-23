@@ -8,7 +8,7 @@ import com.github.laxika.magicalvibes.model.effect.DoesntUntapEffect;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDrawStepTriggerWhileSourceTappedEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedSourceUntapsOrLeavesTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEventTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.RemoveAllCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.TapPermanentsEffect;
@@ -37,9 +37,9 @@ public class GiantOyster extends Card {
                         DoesntUntapEffect.targetWhileSourceTapped(),
                         new RegisterDelayedDrawStepTriggerWhileSourceTappedEffect(
                                 new PutCounterOnTargetPermanentEffect(CounterType.MINUS_ONE_MINUS_ONE, 1)),
-                        new RegisterDelayedSourceUntapsOrLeavesTriggerEffect(
+                        RegisterDelayedEventTriggerEffect.aboutWhenSourceLeavesOrUntaps(Subjects.target(),
                                 new RemoveAllCountersEffect(CounterType.MINUS_ONE_MINUS_ONE,
-                                        Subjects.target()))
+                                        Subjects.triggering()))
                 ),
                 "{T}: For as long as Giant Oyster remains tapped, target tapped creature doesn't untap during its controller's untap step, and at the beginning of each of your draw steps, put a -1/-1 counter on that creature. When Giant Oyster leaves the battlefield or becomes untapped, remove all -1/-1 counters from the creature.",
                 new PermanentPredicateTargetFilter(

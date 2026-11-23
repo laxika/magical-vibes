@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 33: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent and May closed (May's 11 cost combinators listed for step 10); 1,815 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Register open (2 rare: the linked "when the source leaves or untaps" pair), Target open (42 rare)) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 34: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May and Register closed (May's 11 cost combinators listed for step 10; Register's three `RegisterGlobalTriggeredAbility…` duration records wait for the owner); 1,806 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Target open (36 rare)) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -639,6 +639,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 31 | Run 30's three small defects, Conjure's battlefield duplicates and its graveyard and exile duplicates, Register's "about the source" registrations, then the next-main-phase records | Conjure and Register open (11 rows: 7 absorbed, 1 survivor (new), 1 survivor gaining two options, 2 unique; 7 records and 7 handlers deleted, 1 of each added; 9 card files rewritten; `ConjureDuplicateOntoBattlefieldEffect`, `SubjectResolutionService.cardsToDuplicate`, `RegisterDelayedStepTriggerEffect.aboutSourceAtNext` / `.atNextMainPhaseThisTurn`; Dragonsoul Prodigy's haste is gained, Vvviza's planet is conjured, Smog Smasher's duplicate of a face-down creature is faceless; the gift opponent not a Whorl defect; 39 rare Conjure and 39 rare Register records left) |
 | 32 | Register's delayed returns from a graveyard, its next-draw replacements and one-shot boons, then Target | Register and Target open (21 rows: 7 absorbed, 1 split, 2 survivors (one gaining an option, one a subject), 2 unique, 9 blocked-other (the next-draw payloads); 8 records and 8 handlers deleted; 9 card files rewritten; `RegisterDelayedStepTriggerEffect.aboutCardAtNext`, `TargetPlayerLosesAllUnspentManaEffect(PlayerSubject)`; Loyal Cathar and Biolume Egg no longer return a card that left its graveyard and came back before the trigger resolved; the boons left for a noted-amount part; 23 rare Register and 45 rare Target records left) |
 | 33 | The noted amount and the boons, Ochre Jelly and Mana Sculpt on it, Register's rare records, then Target | Register nearly closed, Target open (25 rows: 5 absorbed, 3 split, 1 survivor (new), 15 unique, 1 blocked-other; 8 records and 8 handlers deleted, 1 of each added; 9 card files rewritten; `NoteAmountEffect` with `StepKind.NOTE` and `AmountThisWay.noted()`, kept by the delayed abilities (`keepingNotedAmount`), `TargetSpellManaSpent`, `RegisterDelayedStepTriggerEffect.atNextMainPhase` / `.aboutAtNext`, entering counters of the source token copy a `DynamicAmount`; Mana Sculpt's delayed mana is made for a spell cast for no mana; 2 rare Register and 42 rare Target records left) |
+| 34 | Register's linked pair (the source leaves / untaps / control is lost, "that creature"), then Target's rare records | Register closed, Target open (13 rows: 8 absorbed (two of them re-ledgered rows, one a corrected unique verdict), 2 survivors gaining a subject or options, 3 unique; 8 records and 8 handlers deleted; 9 card files rewritten; `RegisterDelayedEventTriggerEffect.aboutWhenSourceLeavesThisTurn` / `.aboutWhenSourceLeavesOrUntaps` / `.aboutWhenSourceUntapsOrControlLost`, `LookAtHandEffect(PlayerSubject)`, Gravestorm's empty graveyard in `MayEffectHandler`; 0 rare Register and 36 rare Target records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -9538,6 +9539,118 @@ record or type is named by any test, AI or other card source (grepped). No delet
   inserted "may … or may draw"), `TargetSpellControllerLooksAtHandEffect` (Lay Bare), `TargetOpponentLosesLifeEqualToPowerToughnessDifferenceEffect`.
 - Still the owner's: the gift opponent (CR 702.174a), the hidden-zone conjure and perpetual logging, the perpetual "it" (CR 400.7), one
   `Duration` for the three `RegisterGlobalTriggeredAbility…` records.
+
+### Step 9, run 34 (2026-11-23, Register closed, Target open)
+
+Register's last two rare records, the linked "when the source leaves / untaps / you lose control of it, [do something to] that
+creature" pair, built onto the event registrar as run 33 designed, with the two other records of the same shape the ledger had
+(Phantasmal Mount's blocked row, Giant Oyster's unique row); then six of Target's rare records. Ratchet 4,083 / 3,337 → 4,075 /
+3,329 records / handlers (8 records and 8 handlers deleted, none added). 9 card files rewritten (War Barge, Merieke Ri Berit, Coffin
+Queen, Phantasmal Mount, Giant Oyster, Gravestorm, Lay Bare, Swan Song, An Offer You Can't Refuse); Oracle text checked with
+`get_card` for those 9 and for Jaws of Defeat, Choice of Damnations and Your Plans Mean Nothing; rulings with `get_rulings` for War
+Barge (none), Merieke Ri Berit, Coffin Queen, Phantasmal Mount, Giant Oyster and Gravestorm (none). CR 400.7, 603.6c, 603.7a, 603.7b,
+603.7c, 603.7e, 603.10a, 608.2b, 608.2d and 701.21a checked with `get_rule` (2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Register | 2 rare records, 2 re-ledgered rows, 1 engine-built payload, the survivor | 5 (2 of them earlier rows) | 0 | 1 (`RegisterDelayedEventTriggerEffect`, a subject and options) | 0 | 0 | 0 rare, 10 in all (three or more cards each) |
+| Target | 6 rare records and a survivor | 3 | 0 | 1 (`LookAtHandEffect`, a subject) | 0 | 3 | 36 rare, 46 in all |
+
+All families: 1,806 rare records without a row (run 33: 1,815). Perpetually 30 rare and Conjure 39 rare, unchanged.
+
+- **"That creature" of a delayed ability about the source.** `RegisterDelayedEventTriggerEffect` gained a `PermanentSubject permanent`
+  ("that creature", resolved as the maker resolves) and `thisTurn`, and the events `SOURCE_LEAVES_OR_UNTAPS` and
+  `SOURCE_UNTAPS_OR_CONTROL_LOST` (the latter with the leaving condition too, as the old Coffin Queen handler had: leaving the battlefield
+  loses you control of it). Factories `aboutWhenSourceLeavesThisTurn`, `aboutWhenSourceLeavesOrUntaps`,
+  `aboutWhenSourceUntapsOrControlLost`. The ability is about the source (`TemporaryGlobalTriggeredAbility.about`, until it triggers or
+  for this turn, CR 603.7b); the creature goes in `DelayedReferents.triggeringPermanentId`, which `EventAbilitySupport.DelayedRecord`
+  now stamps on the delayed entry as its triggering permanent (its event-time controller cleared, so "its controller" is read as it
+  resolves), so the effects name it `Subjects.triggering()`: a creature that left, even one that came back, is not affected (CR 603.7c,
+  400.7). None is made once the source has left before the maker resolved (CR 603.7a, Coffin Queen's ruling), nor when the subject
+  names nothing; one made while the source is untapped waits for its next untap (CR 603.7a's example). The record declares no target:
+  `Subjects.target()` reads the target another effect of the ability declares (each card has one), `Subjects.returned()` the permanent
+  the return put onto the battlefield. Cards: War Barge (this turn, `DestroyTargetPermanentEffect(triggering(), true)`), Merieke Ri
+  Berit (leaves or untaps, same), Coffin Queen (untaps or control lost, `ExileTargetPermanentEffect.ofTriggeringPermanent()`; its
+  `linkToSource` dropped), Phantasmal Mount's first ability (this turn, `SacrificeSelfEffect.ofTriggeringPermanent()`, only while you
+  control it, CR 701.21a), Giant Oyster (leaves or untaps, `RemoveAllCountersEffect(-1/-1, triggering())`). Deleted:
+  `RegisterDelayedDestroyTargetWhenSourceLeavesEffect`, `RegisterDelayedExileLinkedPermanentWhenSourceLeavesEffect`,
+  `RegisterDelayedSacrificeTargetWhenSourceLeavesEffect` (was blocked-other in 5m for exactly this), `RegisterDelayedSourceUntapsOrLeavesTriggerEffect`
+  (run 33's unique verdict corrected), `DestroyLinkedPermanentEffect` (their engine-built payload; `AsksDeathReplacementsFirst`, so
+  the Mastery tests were run), `RemoveAllCountersEffect.aimedAt`, and `RemoveLinkedPermanentEffect`'s `linkedPermanentId` component (no
+  writer left). The registrars' slf4j lines are gone; no game-log line changed.
+- **Gravestorm**: `MayEffect(TargetPlayerExilesCardFromGraveyardEffect(0), "Exile a card from your graveyard?", MayEffect(DrawCardEffect,
+  "Draw a card?"), TARGET_PLAYER)`. Its handler's one rule, "an empty graveyard offers the draw at once", is now a `MayEffectHandler`
+  branch beside the other can't-choose checks: the target player can't choose to exile from an empty graveyard (CR 608.2d), so the
+  else branch runs. Same prompts, same order.
+- **Lay Bare**: `LookAtHandEffect(controllerOf(targetSpell()))` beside the counter; `LookAtHandEffect` takes a `PlayerSubject`
+  (`targetPlayer()` by default, its 13 cards unchanged). The spell's controller is read from the stack, else as it was countered, as
+  the old handler read the stack. **Swan Song / An Offer You Can't Refuse**: `CreateTokenEffect.forController(controllerOf(targetSpell()))`,
+  the same lookup the old handler made (stack, then countered controller); the effect order of each card is kept. The AI values only
+  `you()` tokens, so it scores neither (it read neither old record).
+- **Unique**: Jaws of Defeat (the power-toughness difference amount), Choice of Damnations (the target opponent's unbounded number into
+  the event value; `ChooseNumberAtResolutionEffect` is the controller's into X), Your Plans Mean Nothing (each opponent's own discarded
+  count minus one). Each part would have its card only.
+- **Gift** (the owner's question, not changed): no record this run touched handles a gift.
+- **AI.** None of the deleted records was read by the AI or implemented a capability interface. The three registrars that declared a
+  benign creature target no longer declare one; each card's other effect declares it (GrantKeyword, GainControl, Boost, Tap), and the
+  card's polarity is the highest of its effects', so War Barge, Merieke and Phantasmal Mount classify as before. `TargetPolarityGuardTest`
+  passes.
+
+**Behaviour changes.**
+
+1. A War Barge, Merieke Ri Berit or Phantasmal Mount that left the battlefield before its ability resolved makes no delayed ability (CR
+   603.7a); the old one was made about the gone permanent and could never trigger, so nothing observable changes
+   (`WarBargeTest.activationResolvesAfterSourceLeavesWithoutWatchingNewSourceObject`, `PhantasmalMountTest.sourceLeavingBeforeResolutionDoesNotSacrificeTarget`).
+2. A delayed event ability's entry names "that creature" as its triggering permanent instead of the source that left / untapped; no
+   view or log reads it.
+3. `LookAtHandEffect` with no player resolved does nothing (it called the reveal with a null player).
+4. The other rewritten cards: none intended.
+
+**What a player sees.** No prompt, log line or zone view changes; Gravestorm's prompts are the same; nothing names a hidden card.
+
+**Seen, not changed.**
+
+- `RegisterDelayedSacrificeSourceWhenTargetLeavesEffect` (6 cards: Phantasmal Mount's second ability, Kjeldoran Guard and Elite Guard,
+  Heart Wolf, Acidic Dagger, Runesword) is the mirror shape, an ability about the target with the source as "that creature"; three or
+  more cards, so the owner's sign-off.
+- The player-choice records (`TargetPlayerChoosesCreatureDestroyEffect` 2 cards, `TargetPlayerChoosesPermanentExileEffect`,
+  `TargetPlayerChoosesCreatureRestCantBlockEffect` 2, `TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosenPermanentEffect`,
+  `TargetPlayerExilesGreatestManaValueCreatureOrPlaneswalkerEffect`, `TargetPlayerChoosesCreaturesToAttackNextTurnEffect`) share one
+  missing part: a chooser on `ChoosePermanentsEffect` ("target opponent chooses a creature they control"), its candidates
+  `controlledBy(targetPlayer(), filter)` (the constructor now refuses a target-declaring subject; the player target must be declared by
+  the record), the prompt and the log line to the chooser, and `ChosenPermanentsAiChoice` choosing as the losing player (its own
+  least valuable). Then `DestroyTargetPermanentEffect` / `ExileTargetPermanentEffect` / the rest over `thisWay(CHOOSE)`. Left unaudited.
+- The control-gift records (`TargetPlayerGainsControlOfTargetPermanentsUntilEndOfTurnEffect`, `…ThenEffect`, `…AndDrawPerPermanentEffect`,
+  `…AllOtherPermanentsYouControlEffect`, and Shuriken's `TargetPermanentControllerGainsControlOfGrantingEquipmentEffect`) share a "player
+  gains control of [permanents] [duration]" step recording a GAIN_CONTROL outcome ("if control changes", "for each permanent that
+  changed control this way"); `TargetPlayerGainsControlOfTargetPermanentEffect` (6 cards, blocked-other for that step since step 8)
+  would take it too. Left unaudited.
+
+**Tests edited.** `WarBargeTest`: a `@DisplayName` on each of its 9 methods (it had none). `LookAtHandEffectHandlerTest` gained the
+two cases of the deleted `TargetSpellControllerLooksAtHandEffectHandlerTest` on `LookAtHandEffect(controllerOf(targetSpell()))` (the
+second now says the hand isn't looked at when the spell is gone and wasn't countered) and lost its duplicate imports.
+`EffectCountRatchetTest`'s baselines.
+
+**Tests run.** Two Gradle runs, one `--tests` list per task, counted from each run's XML by timestamp, 0 failures, 0 errors, 0 skipped:
+63 XML files, 801 cases (the 31 classes referencing a changed Register card or a card of the event registrar, `RemoveLinkedPermanentEffect`
+and the linked-token handlers, Infinite Authority and Foe-Razer Regent among them, the 28 `Mastery` classes, `TriggeredAbilityStackServiceTest`,
+the AI's `TargetPolarityGuardTest` and `GameDataDeepCopyTest`, `EffectCountRatchetTest` at 4,078 / 3,332); 122 XML files, 1,039 cases (the
+classes referencing Lay Bare, Swan Song, An Offer You Can't Refuse, Gravestorm and every `LookAtHandEffect` or
+`TargetPlayerExilesCardFromGraveyardEffect` card, `MayEffectHandlerTest`, `AcceptedOptionResolutionTest`, `LookAtHandEffectHandlerTest`,
+`CardEffectTargetingConsistencyTest`, `TargetPolarityGuardTest`, `EffectCountRatchetTest` at 4,075 / 3,329). Compiled: domain, engine, AI,
+websocket, webservice, every card module, the application and AI test sources and the card-test sources of the letters a, c, g, l, m, p,
+s, w. No deleted type is named by any source (grepped). Not run: the full suites, the AI fuzz and stress tests, the frontend. Not
+verified: more than two players.
+
+**For the next run (run 35: Target's rare records).**
+
+- The chooser on `ChoosePermanentsEffect` (design above) and the six player-choice records; then the GAIN_CONTROL step and the five
+  control-gift records, if the run has room.
+- Target's other rare records: the "must attack" records (`TargetCreatureMustAttack…`, `TargetPlayersCreaturesMustAttack…`), the
+  power-damage records (`TargetCreatureDealsPowerDamageTo…`, `TargetCreaturesDeal…`), `TargetPermanentControllerSacrificeThenEffect`,
+  `TargetPermanentControllerMaySacrificeOrDamageEffect`, `TargetPlayerPutsCounterOnCreatureEffect`.
+- Still the owner's: the gift opponent (CR 702.174a), the hidden-zone conjure and perpetual logging, the perpetual "it" (CR 400.7), one
+  `Duration` for the three `RegisterGlobalTriggeredAbility…` records, `RegisterDelayedSacrificeSourceWhenTargetLeavesEffect` (6 cards).
 
 ## Prompt
 

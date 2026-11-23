@@ -395,7 +395,8 @@ class EventAbilitySupport {
 
     /**
      * {@code record} of an event of {@code delayed}'s ability, with what the delayed ability itself records: it was
-     * made by a resolution, its maker's source's linked exiled card (CR 603.7c), and the
+     * made by a resolution, its maker's source's linked exiled card (CR 603.7c), the permanent it is about when that
+     * isn't its event's ({@code DelayedReferents.triggeringPermanentId}) as its triggering permanent, and the
      * registration's target filter, which restricts the targets the door chooses (CR 603.3d). The door reads
      * {@link DelayedRecord#delayed} to end an ability that triggers only once (CR 603.7b).
      */
@@ -413,6 +414,13 @@ class EventAbilitySupport {
             if (!delayed.referents().stepResults().outcomes().isEmpty()) {
                 // One made after a step reads that step, whatever its trigger event is (CR 603.7c).
                 entry.readStepResults(delayed.referents().stepResults());
+            }
+            UUID aboutId = delayed.referents().triggeringPermanentId();
+            if (aboutId != null && !aboutId.equals(entry.getTriggeringPermanentId())) {
+                // "That creature" of one made about another permanent than its event's ("when this leaves the
+                // battlefield, destroy that creature"), whose controller is read as it resolves.
+                entry.setTriggeringPermanentId(aboutId);
+                entry.setTriggeringPermanentControllerId(null);
             }
             if (delayed.linkedExiledCardId() != null) {
                 entry.setLinkedExiledCardId(delayed.linkedExiledCardId());

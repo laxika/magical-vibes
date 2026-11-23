@@ -7,8 +7,10 @@ import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.GraveyardSearchScope;
 import com.github.laxika.magicalvibes.model.effect.MayNotUntapDuringUntapStepEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedExileLinkedPermanentWhenSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.ExileTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEventTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 
 import java.util.List;
@@ -23,9 +25,9 @@ public class CoffinQueen extends Card {
         addStaticEffect(new MayNotUntapDuringUntapStepEffect());
 
         // "{2}{B}, {T}: Put target creature card from a graveyard onto the battlefield under your
-        // control." The reanimated creature is linked to Coffin Queen so the delayed exile trigger
-        // ("When this creature becomes untapped or you lose control of this creature, exile that
-        // creature") registered by the same resolution can refer to "that creature".
+        // control. When this creature becomes untapped or you lose control of this creature, exile that
+        // creature." Each resolution makes its own delayed ability about the creature it put onto the
+        // battlefield (CR 603.7a).
         addActivatedAbility(new ActivatedAbility(
                 true, "{2}{B}",
                 List.of(ReturnCardFromGraveyardEffect.builder()
@@ -33,9 +35,9 @@ public class CoffinQueen extends Card {
                         .source(GraveyardSearchScope.ALL_GRAVEYARDS)
                         .filter(new CardTypePredicate(CardType.CREATURE))
                         .targetGraveyard(true)
-                        .linkToSource(true)
                         .build(),
-                        new RegisterDelayedExileLinkedPermanentWhenSourceLeavesEffect()),
+                        RegisterDelayedEventTriggerEffect.aboutWhenSourceUntapsOrControlLost(Subjects.returned(),
+                                ExileTargetPermanentEffect.ofTriggeringPermanent())),
                 "{2}{B}, {T}: Put target creature card from a graveyard onto the battlefield under your control."
         ));
     }

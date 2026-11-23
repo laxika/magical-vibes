@@ -256,7 +256,7 @@ import lombok.Builder;
  * @param enterWithCounters     counter types to put on the returned permanent as it enters; one
  *                             counter of each type is placed
  * @param linkToSource         {@code true} to record the reanimated permanent on the source permanent's
- *                             {@code chosenPermanentId} (Coffin Queen), so a later
+ *                             {@code chosenPermanentId} (Diabolic Servitude), so a later
  *                             {@link RemoveLinkedPermanentEffect} trigger can still name "that creature"
  *                             after the ability that put it there has finished; only meaningful on the
  *                             pre-targeted {@code BATTLEFIELD} path

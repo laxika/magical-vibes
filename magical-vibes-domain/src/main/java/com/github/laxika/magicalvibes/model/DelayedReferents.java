@@ -29,8 +29,9 @@ import java.util.UUID;
  *                         while it is still there
  * @param triggeringPermanentId the permanent its entry records as its triggering permanent when that isn't the
  *                         permanent it is about ("destroy the other creature at end of combat. ... put a +1/+1 counter
- *                         on the first creature", Infinite Authority); {@code null} when it is the permanent it is
- *                         about
+ *                         on the first creature", Infinite Authority), or than the one its event is about ("when this
+ *                         artifact leaves the battlefield this turn, destroy that creature", War Barge); {@code null}
+ *                         when it is the permanent it is about
  * @param combatPhase      the combat phase of the turn it is about ("at the beginning of that combat" after "there
  *                         is an additional combat phase", CR 500.8), counted as {@code GameData.combatPhasesThisTurn}
  *                         is as that phase begins: it can trigger only at that one; {@code -1} for none

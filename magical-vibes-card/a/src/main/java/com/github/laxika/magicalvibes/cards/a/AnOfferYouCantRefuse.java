@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetSpellControllerCreatesTokensEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.StackEntryNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.StackEntryPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.StackEntryTypeInPredicate;
@@ -30,6 +30,7 @@ public class AnOfferYouCantRefuse extends Card {
                 "Target must be a noncreature spell."
         ))
                 .addSpellEffect(new CounterSpellEffect())
-                .addSpellEffect(new TargetSpellControllerCreatesTokensEffect(CreateTokenEffect.ofTreasureToken(2)));
+                .addSpellEffect(CreateTokenEffect.ofTreasureToken(2)
+                        .forController(Subjects.controllerOf(Subjects.targetSpell())));
     }
 }

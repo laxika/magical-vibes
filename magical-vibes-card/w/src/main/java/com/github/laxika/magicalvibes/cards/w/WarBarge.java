@@ -5,7 +5,8 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedDestroyTargetWhenSourceLeavesEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedEventTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -21,7 +22,8 @@ public class WarBarge extends Card {
                 "{3}",
                 List.of(
                         new GrantKeywordEffect(Keyword.ISLANDWALK, Subjects.target()),
-                        new RegisterDelayedDestroyTargetWhenSourceLeavesEffect()),
+                        RegisterDelayedEventTriggerEffect.aboutWhenSourceLeavesThisTurn(Subjects.target(),
+                                new DestroyTargetPermanentEffect(Subjects.triggering(), true))),
                 "{3}: Target creature gains islandwalk until end of turn. When this artifact leaves the "
                         + "battlefield this turn, destroy that creature. A creature destroyed this way "
                         + "can't be regenerated.",

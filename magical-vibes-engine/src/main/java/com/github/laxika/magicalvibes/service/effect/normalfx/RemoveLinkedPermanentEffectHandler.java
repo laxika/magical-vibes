@@ -41,17 +41,13 @@ public class RemoveLinkedPermanentEffectHandler implements NormalEffectHandlerBe
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         var e = (RemoveLinkedPermanentEffect) effect;
 
-        // An engine-built delayed trigger names the linked permanent; a card's own ability reads the link from its
-        // source: the still-present source (becomes untapped), else the source as it last existed (leaves the
+        // The link is read from the source: the still-present source, else the source as it last existed (leaves the
         // battlefield).
-        UUID linkedId = e.linkedPermanentId();
         Permanent source = entry.getSourcePermanentId() == null ? null
                 : gameQueryService.findPermanentById(gameData, entry.getSourcePermanentId());
-        if (linkedId == null) {
-            linkedId = source != null ? source.getChosenPermanentId()
-                    : entry.getSourcePermanentSnapshot() == null ? null
-                    : entry.getSourcePermanentSnapshot().getChosenPermanentId();
-        }
+        UUID linkedId = source != null ? source.getChosenPermanentId()
+                : entry.getSourcePermanentSnapshot() == null ? null
+                : entry.getSourcePermanentSnapshot().getChosenPermanentId();
         if (source != null && linkedId != null && linkedId.equals(source.getChosenPermanentId())) {
             source.setChosenPermanentId(null);
         }

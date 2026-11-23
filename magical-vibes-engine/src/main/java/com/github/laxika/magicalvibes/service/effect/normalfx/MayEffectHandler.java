@@ -23,6 +23,7 @@ import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsOfTargetLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealCardsFromHandEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
@@ -276,6 +277,15 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
         }
         CardEffect optionalAction = e.wrapped() instanceof SequenceEffect sequence
                 && !sequence.steps().isEmpty() ? sequence.steps().getFirst() : e.wrapped();
+        if (optionalAction instanceof TargetPlayerExilesCardFromGraveyardEffect graveyardExile
+                && graveyardExile.filter() == null && choicePlayerId.equals(targetId)
+                && gameData.playerGraveyards.getOrDefault(targetId, List.of()).isEmpty()) {
+            // "Target opponent may exile a card from their graveyard. If that player doesn't, ...": with no card in
+            // that graveyard the player can't choose to exile one (CR 608.2d), so "if that player doesn't" applies.
+            gameData.resolvingMayEffectFromStack = false;
+            insertElseEffect(entry, e);
+            return;
+        }
         UUID discarderId = optionalAction instanceof DiscardEffect discard
                 ? discard.player() instanceof PlayerSubject.You ? entry.getControllerId()
                 : discard.player().declaresTarget() && !discard.random() && !entry.isNonTargeting() ? targetId : null

@@ -1,7 +1,5 @@
 package com.github.laxika.magicalvibes.model.effect;
 
-import java.util.UUID;
-
 import com.github.laxika.magicalvibes.model.CounterType;
 
 /**
@@ -13,8 +11,8 @@ import com.github.laxika.magicalvibes.model.CounterType;
  *
  * <p>{@link Subjects#source()} is non-targeting and is the shape that fires as an
  * {@code Triggers.dealsCombatDamageToPlayer()} ability (Ammit Eternal), acting on the entry's source.
- * {@link Subjects#target()} targets a creature (Hapatra's Mark). {@link Subjects#named(UUID)} acts on a permanent
- * a resolving effect bound without targeting it (Giant Oyster's delayed ability, through {@link #aimedAt}).</p>
+ * {@link Subjects#target()} targets a creature (Hapatra's Mark). {@link Subjects#triggering()} acts on "the creature"
+ * a delayed ability is about (Giant Oyster's).</p>
  */
 public record RemoveAllCountersEffect(CounterType counterType, PermanentSubject subject) implements CardEffect {
 
@@ -27,11 +25,6 @@ public record RemoveAllCountersEffect(CounterType counterType, PermanentSubject 
     /** "Remove all {counter} counters from this permanent" — the non-targeting source form. */
     public RemoveAllCountersEffect(CounterType counterType) {
         this(counterType, Subjects.source());
-    }
-
-    /** This effect on the permanent {@code namedPermanentId}, which it doesn't target. */
-    public RemoveAllCountersEffect aimedAt(UUID namedPermanentId) {
-        return new RemoveAllCountersEffect(counterType, Subjects.named(namedPermanentId));
     }
 
     @Override

@@ -8,6 +8,7 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -17,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class WarBargeTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Target creature gains islandwalk until end of turn")
     void grantsIslandwalkUntilEndOfTurn() {
         Permanent barge = addBarge();
         Permanent troll = addDrowned(player2);
@@ -34,6 +36,7 @@ class WarBargeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Each activation destroys its own creature when War Barge leaves the battlefield, regeneration or not")
     void destroysEachTargetWhenSourceLeaves() {
         Permanent barge = addBarge();
         Permanent firstDrowned = addDrowned(player2);
@@ -58,6 +61,7 @@ class WarBargeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("War Barge being destroyed destroys that creature")
     void destroysTargetWhenSourceIsDestroyed() {
         Permanent barge = addBarge();
         Permanent drowned = addDrowned(player2);
@@ -77,6 +81,7 @@ class WarBargeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A creature that left the battlefield is not destroyed, nor its new object")
     void doesNotDestroyNewPermanentAfterTargetLeaves() {
         Permanent barge = addBarge();
         Permanent originalDrowned = addDrowned(player2);
@@ -99,6 +104,7 @@ class WarBargeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A War Barge that left before the ability resolved makes no delayed ability, nor one for its new object")
     void activationResolvesAfterSourceLeavesWithoutWatchingNewSourceObject() {
         Permanent originalBarge = addBarge();
         Permanent drowned = addDrowned(player2);
@@ -122,6 +128,7 @@ class WarBargeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The delayed destruction lasts only this turn")
     void delayedDestructionExpiresAtEndOfTurn() {
         Permanent barge = addBarge();
         Permanent troll = addDrowned(player2);
@@ -139,6 +146,7 @@ class WarBargeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target only a creature")
     void cannotTargetNoncreaturePermanent() {
         Permanent barge = addBarge();
         Permanent otherBarge = harness.addToBattlefieldAndReturn(player2, new WarBarge());
@@ -150,6 +158,7 @@ class WarBargeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Can target your own creature, and destroys it when War Barge leaves")
     void canTargetOwnCreatureWhileBargeIsTapped() {
         Permanent barge = addBarge();
         barge.tap();
@@ -171,6 +180,7 @@ class WarBargeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A target that left before resolution makes the ability affect nothing")
     void doesNotAffectReplacementWhenTargetLeavesBeforeResolution() {
         Permanent barge = addBarge();
         Permanent originalDrowned = addDrowned(player2);

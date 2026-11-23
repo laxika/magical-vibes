@@ -657,7 +657,8 @@ Rain of Daggers and Overwhelming Forces — is a separate AI bug, not this merge
   handlers lacked. It cannot change an outcome, only skip a lookup.
 
 **Kept separate**: `DestroyLinkedPermanentEffect` (War Barge and Merieke Ri Berit delayed triggers) as the
-plan says — it carries a baked `UUID`.
+plan says — it carries a baked `UUID`. (Deleted since: those delayed abilities name the creature as their triggering
+permanent, `RegisterDelayedEventTriggerEffect.aboutWhenSource…`.)
 `DestroyCreatureAttachedToEnchantedEquipmentEffect` (Artificer's Hex) is a two-hop
 Aura→Equipment→creature walk, not a `PermanentReference`.
 `DestroyOtherPermanentsWithEnteringNameEffect` reads the triggering permanent but destroys everything

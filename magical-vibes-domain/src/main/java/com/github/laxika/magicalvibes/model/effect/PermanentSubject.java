@@ -278,10 +278,10 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
     }
 
     /**
-     * "That creature" in a delayed triggered ability a resolving ability created about another permanent than its own
-     * trigger event ("when this leaves the battlefield or becomes untapped, remove all -1/-1 counters from that
-     * creature", Giant Oyster): the permanent {@code permanentId} the creating effect bound as it resolved. A permanent
-     * that left the battlefield and came back is a new object with a new id, so it is not named (CR 603.7c).
+     * "That creature" an engine-built effect bound to one permanent as it resolved (the attacker a delayed "phase it out
+     * at end of combat" names, the creature an Aura returned with is attached to): the permanent {@code permanentId}.
+     * A permanent that left the battlefield and came back is a new object with a new id, so it is not named
+     * (CR 603.7c).
      */
     record Named(UUID permanentId) implements PermanentSubject {
 
