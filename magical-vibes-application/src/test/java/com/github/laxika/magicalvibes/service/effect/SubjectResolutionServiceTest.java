@@ -1573,4 +1573,43 @@ class SubjectResolutionServiceTest extends BaseCardTest {
                     .isInstanceOf(IllegalArgumentException.class);
         }
     }
+
+    @Nested
+    @DisplayName("cardsToDuplicate()")
+    class CardsToDuplicate {
+
+        @Test
+        @DisplayName("A permanent's card, else the card the entry last knew, and never a token")
+        void permanentsCardElseLastKnown() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            Permanent giant = addCreatureReady(player1, new HillGiant());
+            Card tokenCard = new Forest();
+            tokenCard.setToken(true);
+            Permanent token = harness.addToBattlefieldAndReturn(player1, tokenCard);
+            StackEntry entry = entry(player1, null, null);
+            entry.setTriggeringPermanentIds(List.of(bears.getId(), giant.getId(), token.getId()));
+            entry.rememberLastKnownPermanentCard(giant.getId(), giant.getCard());
+            gd.playerBattlefields.get(player1.getId()).remove(giant);
+
+            assertThat(subjects.cardsToDuplicate(gd, entry, EFFECT, triggeringAll()))
+                    .containsExactly(bears.getCard(), giant.getCard());
+        }
+
+        @Test
+        @DisplayName("A face-down permanent's card has only its face-down values")
+        void faceDownPermanentHasItsFaceDownValues() {
+            Permanent bears = addCreatureReady(player1, new GrizzlyBears());
+            bears.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+            StackEntry entry = entry(player1, null, null);
+            entry.setTriggeringPermanentIds(List.of(bears.getId()));
+
+            assertThat(subjects.cardsToDuplicate(gd, entry, EFFECT, triggeringAll())).singleElement()
+                    .satisfies(card -> {
+                        assertThat(card.getName()).isEmpty();
+                        assertThat(card.getPower()).isEqualTo(2);
+                        assertThat(card.getToughness()).isEqualTo(2);
+                        assertThat(card).isNotSameAs(bears.getCard());
+                    });
+        }
+    }
 }

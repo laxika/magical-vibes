@@ -4,8 +4,9 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
-import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTriggeringPermanentOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SetPowerToughnessToAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
@@ -31,6 +32,6 @@ public class MythweaverPoq extends Card {
                                         new PermanentNotPredicate(new PermanentIsTokenPredicate()))),
                                 ObjectRelation.YOU_CONTROL)),
                 TriggerOptions.ONE_OR_MORE.withLimit(TriggerLimit.ONCE_EACH_TURN),
-                new ConjureDuplicateOfTriggeringPermanentOntoBattlefieldEffect());
+                ConjureDuplicateOntoBattlefieldEffect.of(Subjects.triggeringAll()));
     }
 }

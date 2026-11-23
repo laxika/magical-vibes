@@ -62,6 +62,7 @@ class ViviensStampedeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Creatures entering after it resolves get no keywords")
     void doesNotGrantKeywordsToCreaturesEnteringAfterResolution() {
         harness.castFromHand(player1, new ViviensStampede(), "{4}{G}{G}");
         harness.passBothPriorities();
@@ -74,6 +75,7 @@ class ViviensStampedeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Several creatures damaging the same player draw one card")
     void drawsOnceForMultipleCreaturesDamagingTheSamePlayer() {
         addCreatureReady(player1, new GrizzlyBears());
         addCreatureReady(player1, new GrizzlyBears());
@@ -90,6 +92,7 @@ class ViviensStampedeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The delayed ability triggers even when no player was dealt combat damage")
     void delayedAbilityTriggersEvenWhenNoPlayerWasDealtCombatDamage() {
         harness.castFromHand(player1, new ViviensStampede(), "{4}{G}{G}");
         harness.passBothPriorities();
@@ -103,6 +106,7 @@ class ViviensStampedeTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Cast on an opponent's turn, it draws at that turn's next main phase")
     void drawsAtOpponentsNextMainPhaseWhenCastWithFlashPermission() {
         harness.addToBattlefield(player1, new VedalkenOrrery());
         addCreatureReady(player2, new GrizzlyBears());

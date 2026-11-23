@@ -215,7 +215,8 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
     /**
      * "That spell or ability", read inside {@code controllerOf}: the spell or ability a trigger event was about (it
      * became the target of it, it was cast), as it is on the stack, else as it last existed there (CR 608.2h). It is
-     * no permanent, so it names no permanent on the battlefield.
+     * no permanent, so it names no permanent on the battlefield. A duplicate of it ("conjure a duplicate of that card")
+     * is of the spell's card.
      */
     record TriggeringSpell() implements PermanentSubject {
 
@@ -497,7 +498,9 @@ public sealed interface PermanentSubject permits PermanentSubject.Source, Perman
 
     /**
      * "It", "that land", "those lands" after "search your library for ..., put it onto the battlefield": the
-     * permanents the entry recorded the search as having put onto the battlefield, those still there.
+     * permanents the entry recorded the search as having put onto the battlefield, those still there. Also the card a
+     * look at the top of a library put onto the battlefield ("you may put a creature card from among them onto the
+     * battlefield, then ... that card"), which the entry records as its chosen permanent.
      */
     record Searched() implements PermanentSubject {
 

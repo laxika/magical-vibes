@@ -4,8 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaAtNextMainPhaseEffect;
+import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.TransformSelfEffect;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
@@ -20,7 +22,8 @@ public class ConduitOfStorms extends Card {
 
         // Whenever this creature attacks, add {R} at the beginning of your next main phase this turn.
         addTrigger(Triggers.attacks(),
-                new RegisterDelayedManaAtNextMainPhaseEffect(ManaColor.RED, 1));
+                RegisterDelayedStepTriggerEffect.atNextMainPhaseThisTurn(ActivePlayer.YOU,
+                        new AwardManaEffect(ManaColor.RED, 1)));
 
         // {3}{R}{R}: Transform this creature.
         addActivatedAbility(new ActivatedAbility(

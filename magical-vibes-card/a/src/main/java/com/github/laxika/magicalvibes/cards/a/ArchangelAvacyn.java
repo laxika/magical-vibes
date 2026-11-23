@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterTransformSourceAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -33,7 +35,8 @@ public class ArchangelAvacyn extends Card {
         addTrigger(Triggers.creatureDies(
                         new PermanentNotPredicate(new PermanentHasSubtypePredicate(CardSubtype.ANGEL)),
                         ObjectRelation.YOU_CONTROL),
-                new RegisterTransformSourceAtNextUpkeepEffect());
+                RegisterDelayedStepTriggerEffect.aboutSourceAtNext(Triggers.upkeep(ActivePlayer.ANY),
+                        new TransformToBackFaceEffect()));
     }
 
     @Override

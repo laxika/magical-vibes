@@ -29,6 +29,9 @@ public class ConjureCardOntoBattlefieldEffectHandler implements NormalEffectHand
         ConjureCardOntoBattlefieldEffect conjure = (ConjureCardOntoBattlefieldEffect) effect;
         Card card = conjure.cardFactory().get();
         card.setOwnerId(entry.getControllerId());
+        if (conjure.conjure()) {
+            card.setConjured(true);
+        }
         Permanent permanent = new Permanent(card);
         if (conjure.entryCounterType() != null && conjure.entryCounterCount() > 0) {
             permanent.setCounterCount(conjure.entryCounterType(), conjure.entryCounterCount());

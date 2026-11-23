@@ -53,7 +53,7 @@ public class RegisterDelayedManaEqualToTargetSpellManaValueEffectHandler impleme
         if (manaValue <= 0) return;
 
         UUID controllerId = entry.getControllerId();
-        gameData.temporaryGlobalTriggeredAbilities.add(RegisterDelayedManaAtNextMainPhaseEffectHandler.delayedMana(
+        gameData.temporaryGlobalTriggeredAbilities.add(DelayedManaSupport.delayedMana(
                 controllerId, entry.getCard(), entry.getSourcePermanentId(), e.color(), manaValue,
                 e.optional(), false, e.anyColorCombination(), e.firstMainOnly()));
 

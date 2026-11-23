@@ -18,6 +18,7 @@ import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -33,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class VvvizaOrbitalOverseerTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Entering offers every planet of the spellbook")
     void enteringOffersEveryPlanetFromTheSpellbook() {
         harness.enterBattlefieldAndReturn(player1, new VvvizaOrbitalOverseer());
         harness.passBothPriorities();
@@ -44,6 +46,7 @@ class VvvizaOrbitalOverseerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Attacking creates a 2/1 flying Lander artifact creature")
     void attackingCreatesAFlyingLanderCreature() {
         addCreatureReady(player1, new VvvizaOrbitalOverseer());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
@@ -62,6 +65,7 @@ class VvvizaOrbitalOverseerTest extends BaseCardTest {
     @ParameterizedTest
     @ValueSource(strings = {"Evendo, Waking Haven", "Kavaron, Memorial World",
             "Susur Secundi, Void Altar", "Uthros, Titanic Godcore"})
+    @DisplayName("Each other planet can be conjured, tapped")
     void canConjureEachOtherPlanet(String name) {
         harness.enterBattlefieldAndReturn(player1, new VvvizaOrbitalOverseer());
         resolveAllTriggers();
@@ -74,6 +78,7 @@ class VvvizaOrbitalOverseerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Several attackers create only one Lander")
     void multipleAttackersCreateOnlyOneLander() {
         Permanent overseer = addCreatureReady(player1, new VvvizaOrbitalOverseer());
         Permanent ally = addCreatureReady(player1, new GrizzlyBears());
@@ -87,6 +92,7 @@ class VvvizaOrbitalOverseerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's attack creates no Lander")
     void opposingAttackDoesNotCreateALander() {
         addCreatureReady(player1, new VvvizaOrbitalOverseer());
         Permanent enemy = addCreatureReady(player2, new GrizzlyBears());
@@ -98,6 +104,7 @@ class VvvizaOrbitalOverseerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A newly created Lander creature cannot pay a tap cost")
     void newlyCreatedCreatureLanderCannotPayATapCost() {
         Permanent lander = createLander();
         harness.addMana(player1, ManaColor.COLORLESS, 2);
@@ -109,6 +116,7 @@ class VvvizaOrbitalOverseerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Lander sacrifices itself to find a basic land tapped")
     void landerSacrificesToFindABasicLandTappedAndShuffle() {
         Permanent lander = createLander();
         lander.setSummoningSick(false);
@@ -131,6 +139,7 @@ class VvvizaOrbitalOverseerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A copy of the Lander copies neither its animation nor its flying")
     void copyingLanderDoesNotCopyItsAnimationOrGrantedFlying() {
         Permanent lander = createLander();
         harness.forceStep(TurnStep.PRECOMBAT_MAIN);
@@ -149,6 +158,7 @@ class VvvizaOrbitalOverseerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The Lander enters as a noncreature before it becomes a creature")
     void landerEntersAsANoncreatureBeforeItBecomesACreature() {
         addCreatureReady(player1, new VvvizaOrbitalOverseer());
         Permanent attacker = addCreatureReady(player1, new GrizzlyBears());
@@ -171,6 +181,7 @@ class VvvizaOrbitalOverseerTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Conjuring a planet triggers conjure abilities")
     void conjuringAPlanetTriggersConjureAbilities() {
         Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
         harness.enterBattlefieldAndReturn(player1, new VvvizaOrbitalOverseer());
@@ -180,5 +191,15 @@ class VvvizaOrbitalOverseerTest extends BaseCardTest {
 
         assertThat(findPermanent(player1, "Adagia, Windswept Bastion")).isNotNull();
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The planet conjured from the spellbook is a conjured card")
+    void conjuredPlanetIsMarkedConjured() {
+        harness.enterBattlefieldAndReturn(player1, new VvvizaOrbitalOverseer());
+        harness.passBothPriorities();
+        harness.handleListChoice(player1, "Adagia, Windswept Bastion");
+
+        assertThat(findPermanent(player1, "Adagia, Windswept Bastion").getCard().isConjured()).isTrue();
     }
 }

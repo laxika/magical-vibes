@@ -11,7 +11,7 @@ import java.util.function.Supplier;
 /**
  * Puts a fresh card onto the battlefield under the ability's controller. {@code conjure} is false
  * when the card was drafted from a spellbook rather than conjured, so "whenever you conjure"
- * abilities don't trigger. When {@code entryCounterType} is set, the permanent enters with
+ * abilities don't trigger; a conjured card is marked conjured. When {@code entryCounterType} is set, the permanent enters with
  * {@code entryCounterCount} counters of that type.
  */
 public record ConjureCardOntoBattlefieldEffect(

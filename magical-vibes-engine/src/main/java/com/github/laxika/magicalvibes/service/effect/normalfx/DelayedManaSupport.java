@@ -1,36 +1,31 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
+import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.DelayedReferents;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
+import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.TemporaryGlobalTriggeredAbility;
-import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
-import com.github.laxika.magicalvibes.model.trigger.Triggers;
+import com.github.laxika.magicalvibes.model.TriggeredAbility;
 import com.github.laxika.magicalvibes.model.effect.AwardManaEffect;
 import com.github.laxika.magicalvibes.model.effect.AwardManaOfColorsEffect;
+import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
-import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.ManaColor;
-import com.github.laxika.magicalvibes.model.TriggeredAbility;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
-import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
+
 import java.util.List;
 import java.util.UUID;
-import com.github.laxika.magicalvibes.model.GameData;
-import com.github.laxika.magicalvibes.model.StackEntry;
-import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterDelayedManaAtNextMainPhaseEffect;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 /**
- * Resolves {@link RegisterDelayedManaAtNextMainPhaseEffect}: adds a mandatory, this-turn-only
- * delayed triggered ability for the controller (see {@link #delayedMana}).
+ * The delayed "add mana at the beginning of your next main phase" ability whose amount a resolving spell or ability
+ * fixes as it resolves (that spell's mana value, the mana spent to cast it, the mana a drained land would have made).
  */
-@Slf4j
-@Component
-@RequiredArgsConstructor
-public class RegisterDelayedManaAtNextMainPhaseEffectHandler implements NormalEffectHandlerBean {
+final class DelayedManaSupport {
+
+    private DelayedManaSupport() {
+    }
 
     /**
      * The delayed triggered ability "at the beginning of your next main phase, add {@code amount} mana" a resolving
@@ -59,24 +54,5 @@ public class RegisterDelayedManaAtNextMainPhaseEffectHandler implements NormalEf
                 ? TemporaryGlobalTriggeredAbility.nextThisTurn(controllerId, card, ability, sourcePermanentId)
                 : TemporaryGlobalTriggeredAbility.atNextStep(controllerId, card, ability, sourcePermanentId, null,
                 null, DelayedReferents.NONE);
-    }
-
-    @Override
-    public Class<? extends CardEffect> handledEffect() {
-        return RegisterDelayedManaAtNextMainPhaseEffect.class;
-    }
-
-    @Override
-    public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
-        var e = (RegisterDelayedManaAtNextMainPhaseEffect) effect;
-        if (e.amount() <= 0) {
-            return;
-        }
-
-        gameData.temporaryGlobalTriggeredAbilities.add(delayedMana(entry.getControllerId(), entry.getCard(),
-                entry.getSourcePermanentId(), e.color(), e.amount(), false, true, false, false));
-
-        log.info("Game {} - {} schedules {} {} at their next main phase this turn",
-                gameData.id, gameData.playerIdToName.get(entry.getControllerId()), e.amount(), e.color());
     }
 }

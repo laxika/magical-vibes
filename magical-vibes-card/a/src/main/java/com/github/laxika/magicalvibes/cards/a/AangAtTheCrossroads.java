@@ -5,10 +5,12 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
-import com.github.laxika.magicalvibes.model.effect.RegisterTransformSourceAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.TransformToBackFaceEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
@@ -28,7 +30,8 @@ public class AangAtTheCrossroads extends Card {
         addTrigger(Triggers.enters(ObjectRelation.THIS), creatureWithManaValueAtMostFour);
 
         addTrigger(Triggers.leavesBattlefield(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new RegisterTransformSourceAtNextUpkeepEffect());
+                RegisterDelayedStepTriggerEffect.aboutSourceAtNext(Triggers.upkeep(ActivePlayer.ANY),
+                        new TransformToBackFaceEffect()));
     }
 
     @Override

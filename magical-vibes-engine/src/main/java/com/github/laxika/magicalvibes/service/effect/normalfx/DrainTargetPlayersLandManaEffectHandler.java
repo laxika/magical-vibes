@@ -122,7 +122,7 @@ public class DrainTargetPlayersLandManaEffectHandler implements NormalEffectHand
         defendingPool.clearPersistentMana();
         if (manaLost > 0) {
             gameData.temporaryGlobalTriggeredAbilities.add(
-                    RegisterDelayedManaAtNextMainPhaseEffectHandler.delayedMana(entry.getControllerId(),
+                    DelayedManaSupport.delayedMana(entry.getControllerId(),
                             entry.getCard(), entry.getSourcePermanentId(), ManaColor.COLORLESS, manaLost,
                             false, true, false, false));
         }

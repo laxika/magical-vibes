@@ -3,7 +3,11 @@ package com.github.laxika.magicalvibes.cards.g;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.RegisterChosenLandwalkAtNextUpkeepEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantChosenLandwalkEffect;
+import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
+import com.github.laxika.magicalvibes.model.trigger.Triggers;
 
 import java.util.List;
 
@@ -15,7 +19,8 @@ public class GiantSlug extends Card {
         addActivatedAbility(new ActivatedAbility(
                 false,
                 "{5}",
-                List.of(new RegisterChosenLandwalkAtNextUpkeepEffect()),
+                List.of(RegisterDelayedStepTriggerEffect.aboutSourceAtNext(Triggers.upkeep(ActivePlayer.YOU),
+                        new GrantChosenLandwalkEffect(Subjects.source()))),
                 "{5}: At the beginning of your next upkeep, choose a basic land type. This creature "
                         + "gains landwalk of the chosen type until the end of that turn."
         ));

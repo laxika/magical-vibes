@@ -8,7 +8,9 @@ import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfTargetCreatureIntoExileEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenCopyOfTargetPermanentEffect;
+import com.github.laxika.magicalvibes.service.FaceDownVisibility;
 import com.github.laxika.magicalvibes.service.GameLogService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.RequiredArgsConstructor;
@@ -49,15 +51,19 @@ public class ConjureDuplicateOfTargetCreatureIntoExileEffectHandler implements N
             return;
         }
 
+        // A duplicate of a face-down creature has its face-down values, not its hidden card (CR 707.2, 708.2a).
         Card duplicate = CreateTokenCopyOfTargetPermanentEffectHandler.buildTokenCopyCard(
-                target.getCard(), new CreateTokenCopyOfTargetPermanentEffect());
+                PermanentCopierService.cardToCopy(target), new CreateTokenCopyOfTargetPermanentEffect());
         duplicate.setToken(false);
         duplicate.setConjured(true);
         duplicate.setOwnerId(entry.getControllerId());
         duplicate.freeze();
         gameData.addToExile(entry.getControllerId(), duplicate, entry.getSourcePermanentId());
-        gameLogService.append(gameData, GameLog.textCardText(
-                entry.getCard().getName() + " conjures a duplicate of ", target.getCard(), " into exile."));
+        gameLogService.append(gameData, target.isFaceDown()
+                ? GameLog.text(FaceDownVisibility.sourceName(gameData, entry) + " conjures a duplicate of "
+                + FaceDownVisibility.publicName(target) + " into exile.")
+                : GameLog.textCardText(FaceDownVisibility.sourceName(gameData, entry) + " conjures a duplicate of ",
+                target.getCard(), " into exile."));
         ActionEvents.conjured(gameData, entry.getControllerId(), 1);
     }
 }

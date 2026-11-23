@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 30: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent and May closed (May's 11 cost combinators listed for step 10); 1,867 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (44 rare), Register started (43 rare)) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 31: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent and May closed (May's 11 cost combinators listed for step 10); 1,858 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Register open (39 rare)) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -636,6 +636,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 28 | Run 27's two perpetual stores, Perpetually's rare records outside a hand or library, the Spawnsire cost check | Perpetually open (8 rows: 5 absorbed, 1 survivor (Forgeborn's record renamed), 2 unique; 6 records and 6 handlers deleted, 1 of each added; 5 card files rewritten; `GameData.perpetualAbilityGrants` holds every perpetual ability kind, `perpetualActivatedAbilities` and `perpetualTriggeredAbilities` gone, `PerpetuallyGrantAbilityToTriggeringCardEffect`; Spawnsire's free casts pay cost increases; 47 rare Perpetually records left, Conjure not started) |
 | 29 | Perpetually's rare records outside a hand or library, Brittle Blast's face-down defect, then Conjure | Perpetually open, Conjure started (18 rows: 2 absorbed, 2 blocked-other (the human's "it" decision), 14 unique; 2 records and 2 handlers deleted; 3 card files rewritten; a face-down permanent no longer has Brittle Blast's perpetual replacement; Song of Point Prime's and Voidcalled Devotee's conjured card has its printing and a log line; 30 rare Perpetually records left (hand, library, graveyard-ability store), 48 rare Conjure) |
 | 30 | Conjure's rare battlefield records, Undersimplify's face-down defect, then Register | Conjure open, Register started (10 rows: 5 absorbed, 1 survivor, 4 unique; 5 records and 5 handlers deleted; 7 card files rewritten; `RegisterDelayedStepTriggerEffect.atNext`; Squadron Carrier's and Thendar's conjured cards have their printing; Perforator Crocodile's Stab Wounds enter attached, none for a creature they can't enchant; a face-down spell is Undersimplify's creature spell; 44 rare Conjure and 43 rare Register records left) |
+| 31 | Run 30's three small defects, Conjure's battlefield duplicates and its graveyard and exile duplicates, Register's "about the source" registrations, then the next-main-phase records | Conjure and Register open (11 rows: 7 absorbed, 1 survivor (new), 1 survivor gaining two options, 2 unique; 7 records and 7 handlers deleted, 1 of each added; 9 card files rewritten; `ConjureDuplicateOntoBattlefieldEffect`, `SubjectResolutionService.cardsToDuplicate`, `RegisterDelayedStepTriggerEffect.aboutSourceAtNext` / `.atNextMainPhaseThisTurn`; Dragonsoul Prodigy's haste is gained, Vvviza's planet is conjured, Smog Smasher's duplicate of a face-down creature is faceless; the gift opponent not a Whorl defect; 39 rare Conjure and 39 rare Register records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -9217,6 +9218,113 @@ Not verified: more than two players.
   onto the battlefield" step; then the graveyard and exile duplicates and the random-spellbook battlefield records.
 - Register's next shared part: the "about the source" registrations (Giant Slug, Archangel Avacyn, Aang: `atNextStep` with the source as
   the permanent, skipped when there is none); then the mana-at-next-phase, next-draw replacement and return-from-graveyard records.
+
+### Step 9, run 31 (2026-11-23, Conjure open, Register open)
+
+Run 30's three small defects, Conjure's battlefield duplicates onto one step, its graveyard and exile duplicates, Register's "about the
+source" registrations, then its two next-main-phase records. Ratchet 4,104 / 3,358 → 4,098 / 3,352 records / handlers (7 records and 7
+handlers deleted, 1 of each added; `DelayedManaSupport` is no handler). 9 card files rewritten (Dragonsoul Prodigy, Mythweaver Poq, Three
+Tree Battalion, Giant Slug, Archangel Avacyn, Aang, at the Crossroads, Conduit of Storms, Conduit of Emrakul, Vivien's Stampede); Oracle
+text checked with `get_card` for those 9 and Archival Whorl, Chitinous Crawler and Smog Smasher. CR 111.1, 400.7, 603.3, 603.7a, 603.7b,
+603.7c, 608.2h, 611.2c, 613.1f, 702.174a, 702.174b, 702.174c, 707.2, 707.10, 708.2 and 708.2a checked with `get_rule` (2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Conjure | 5 rare records and the new survivor | 3 | 0 | 1 (`ConjureDuplicateOntoBattlefieldEffect`, new) | 0 | 2 | 39 rare, 50 in all |
+| Register | 4 rare records and the survivor | 4 | 0 | 1 (`RegisterDelayedStepTriggerEffect`, two options) | 0 | 0 | 39 rare, 49 in all |
+
+All families: 1,858 rare records without a row (run 30: 1,867). Perpetually: 30 rare left, unchanged. Target: not started (48 rare).
+
+- **One battlefield duplicate step.** `ConjureDuplicateOntoBattlefieldEffect(PermanentSubject of, basePower, baseToughness)` absorbs the
+  three battlefield duplicates: Dragonsoul Prodigy (`of(triggeringSpell())`), Mythweaver Poq (`of(triggeringAll())`), Three Tree Battalion
+  (`of(searched()).withBasePowerToughness(1, 1)`; the look-at-top put records its one card as the entry's chosen permanent, which
+  `searched()` reads). Its handler is Poq's: every duplicate enters in one event, then the enter handling, each a conjure of one card,
+  each logged "<source> conjures a duplicate of <name> onto the battlefield." and recorded as created this resolution. The originals come
+  from the new `SubjectResolutionService.cardsToDuplicate`: a permanent's card as a copy reads it (`PermanentCopierService.cardToCopy`, face-
+  down values while face down), else the entry's last-known card (`lastKnownCardToCopy`, CR 608.2h); the triggering spell's whole card
+  (`getPhysicalCard`, so an Omen cast is the creature card, as the old `findCardById` read), as effects see it when cast face down
+  (`spellAsEffectsSeeIt`, CR 708.2); no token and no copy of a spell (CR 111.1, 707.10). Poq's graveyard fallback was dead (an enter trigger
+  records every triggering permanent's last-known card). No user can duplicate a face-down object today.
+- **Dragonsoul Prodigy** is the duplicate step + `GrantKeywordEffect(HASTE, createdThisResolution(), PERMANENT)` + `aboutCreated(endStep(ANY),
+  ShuffleReferencedPermanentIntoLibraryEffect(createdThisResolution()))`. The haste is a gained ability, not a copiable value (CR 707.2,
+  613.1f); the old handler wrote it into the duplicate's printed keywords. The delayed shuffle names the duplicate as created this
+  resolution, non-targeting (the old one carried it as a filled target), and affects nothing once it left (CR 603.7c).
+- **Chitinous Crawler and Smog Smasher** (unique): a targeted graveyard card into a graveyard, a targeted permanent into exile linked to
+  the source; a destination and target component on the duplicate step would have one card each. Smog Smasher's handler copied a face-down
+  target's hidden card into exile, face up; it now takes `PermanentCopierService.cardToCopy` (a nameless 2/2, CR 707.2, 708.2a) and logs
+  "<source> conjures a duplicate of a face-down permanent into exile."
+- **`RegisterDelayedStepTriggerEffect.aboutSourceAtNext(step, effects)`** (component `permanent`): the ability about the source permanent,
+  as `atNextStep(step, …, source, source, effect)` registered it: its entry's non-targeting object and triggering permanent, not made
+  without a source, nothing done once it left (CR 603.7c). It absorbs Giant Slug's and Archangel Avacyn's / Aang's registrars, whose
+  handlers did only that.
+- **`RegisterDelayedStepTriggerEffect.atNextMainPhaseThisTurn(player, effects)`** (components `orStep`, `thisTurn`): "at the beginning of
+  your / the next main phase this turn", precombat or postcombat, ending with the turn (CR 603.7b), registered as `nextThisTurn` with both
+  main-phase conditions, as the old handlers did. It absorbs Conduit of Storms / Emrakul's mana (`AwardManaEffect`) and Vivien's Stampede's
+  draw. The `delayedMana` helper the 3-card mana-value record, Mana Sculpt and Drain Power still use moved to `DelayedManaSupport`.
+- **Run 30's defects.** Dragonsoul's haste: fixed (above). The spellbook draft's battlefield card: `ConjureCardOntoBattlefieldEffectHandler`
+  now marks it conjured when the draft is a conjure (Vvviza); nothing in main code reads the mark yet. Archival Whorl: not a Whorl defect.
+  The engine records no gift opponent at all (a gift is a boolean on the entry); every gift handler (`TargetOpponentCreatesTokenEffect`,
+  `ConjureCardToOpponentBattlefieldEffect`, `EachOtherPlayerDrawsCardEffect`) gives it to `getOpponentId`, right with two players and
+  undefined with more (CR 702.174a); fixing it is a gift-cost choice for every gift card. The gift-given event fires inside the resolution
+  rather than as the spell finishes resolving (CR 702.174c), but a triggered ability waits for the next time a player would receive
+  priority either way (CR 603.3), so no trigger differs; listed, not changed.
+- **AI.** It reads none of the deleted records; `RegisterDelayedStepTriggerEffect` and the duplicate step implement no capability interface
+  (the deleted ones didn't either).
+
+**Behaviour changes.** "Failed before" means the new test failed with the old behaviour put back.
+
+1. A copy of Dragonsoul Prodigy's duplicate has no haste (CR 707.2): `DragonsoulProdigyTest.copyOfTheDuplicateDoesNotCopyHaste` (failed
+   before with the haste written into the printed keywords: the Clone had haste).
+2. Vvviza's conjured planet is a conjured card: `VvvizaOrbitalOverseerTest.conjuredPlanetIsMarkedConjured` (failed before).
+3. Smog Smasher's duplicate of a face-down creature is a nameless 2/2 and the log names no card:
+   `SmogSmasherTest.duplicateOfAFaceDownCreatureIsNameless` (new; not run on HEAD, the old handler copied the hidden card).
+4. Dragonsoul's haste is gained after the duplicate entered, not printed on it: its enter abilities see no haste (the text's order).
+5. The Register cards and Poq, Three Tree: none intended. New log assertions: `DragonsoulProdigyTest.conjureIsLogged`,
+   `MythweaverPoqTest.conjureIsLogged`.
+
+**What a player sees.** Smog Smasher's line for a face-down target names no card. No prompt or zone view changes.
+
+**Seen, not changed.**
+
+- No gift opponent is recorded (above): every gift card in a game of three or more players gives the gift to `getOpponentId`
+  (CR 702.174a). The gift-given event is fired by each gift handler, not by the resolving spell (CR 702.174c).
+- The spellbook's hand drafts (`SpellbookCardChoiceInteractionHandler`, `SpellbookDraftChoiceInteractionHandler`) and the `Supplier`
+  conjures still create cards with no printing identity, and the hand paths don't mark a conjured card conjured (the hand logging decision).
+- Mythweaver Poq's simultaneous duplicates are one conjure each (one `Conjured` event per card), as before; whether "for each of them,
+  conjure" is one conjure event of N cards is not settled by the Oracle text or rulings.
+- Chitinous Crawler's log reads "A duplicate of X is conjured into your graveyard." (second person in a shared log).
+- Vivien's Stampede grants its keywords through `otherCreaturesYouControl()` on a sorcery (no source, so every creature you control).
+- Mana Sculpt's amount is fixed as the registration resolves (the target spell's mana spent), so it can't be the main-phase step's
+  `DynamicAmount` read at the delayed resolution; it and the 3-card mana-value record keep `DelayedManaSupport`.
+
+**Tests edited.** The new cases above, `SubjectResolutionServiceTest.CardsToDuplicate` (two cases). Display names on every method of
+`DragonsoulProdigyTest`, `MythweaverPoqTest`, `SmogSmasherTest`, `VvvizaOrbitalOverseerTest`, and on the methods that had none in
+`ArchangelAvacynTest`, `AangAtTheCrossroadsTest`, `GiantSlugTest` and `ViviensStampedeTest`. `EffectCountRatchetTest`'s baselines.
+
+**Tests run.** One Gradle run on the final sources, one `--tests` list per task, counted from that run's XML by timestamp: 80 XML
+files, 486 cases, 0 failures, 0 skipped: the 18 classes referencing a changed card (Dragonsoul Prodigy, Mythweaver Poq, Three Tree Battalion,
+Giant Slug, Archangel Avacyn, Aang, at the Crossroads, Conduit of Storms / Emrakul, Vivien's Stampede, and the handler-changed Smog
+Smasher, Chitinous Crawler, Vvviza; with `GlimmerHoarderTest`, `AvoidFateTest`, `RemoveSoulTest`), the users of the moved mana helper
+(Mana Drain, Mana Sculpt, Plasm Capture, Scattering Stroke, Drain Power), the run-30 `atNext` cards, Waylay, Stone Idol Trap, Razor Demon,
+Thoughtsteal Sprites, Cantor of the Refrain, the `--tests-for` sample (12 per class) of `RegisterDelayedStepTriggerEffect` and
+`DraftFromSpellbookEffect`, `SubjectResolutionServiceTest`, `EffectCountRatchetTest` (at 4,098 / 3,352) and the AI's
+`TargetPolarityGuardTest`. Failing first: with the old haste and the missing conjured mark put back for one run, `DragonsoulProdigyTest`
+and `VvvizaOrbitalOverseerTest` ran 19 cases, 2 failed (the new ones). Compiled: domain, engine, AI test sources, the application test
+sources, the changed card modules and the test sources of card-test letters a, b, c, d, e, g, i, k, m, o, p, r, s, t, v, y. No deleted
+record is named by any test, AI or other card source (grepped). No deleted handler is marked `AsksDeathReplacementsFirst` or calls
+`LifeSupport.askBefore*`. Not run: the full suites, the AI fuzz and stress tests, the frontend. Not verified: more than two players.
+
+**For the next run (run 32: Register's rare records, then Target's).**
+
+- The human's decisions still hold Perpetually's 30 rare records and Conjure's hand and library conjures: what a conjure or a perpetual
+  change to a hidden-zone card logs, and the perpetual "it" (CR 400.7).
+- Register's next shared parts: the delayed returns from a graveyard (`RegisterDelayedReturnCardFromGraveyardToBattlefieldEffect`,
+  `…LoseLifeAndReturnFromGraveyardToHandEffect`, `…ReturnCurseAttachedToPlayerEffect`, `…SelfReturnTransformedEffect`,
+  `…ReturnSourceTransformedEffect`: a delayed ability about a card in its graveyard stay), then the next-draw replacements (11 one-card
+  records read by the draw replacement code) and the one-shot boons.
+- Conjure's rest: the graveyard-ability store (the unearth duplicate), the random-spellbook battlefield records, the hand and library
+  conjures (waiting).
+- The gift opponent (above) is a gift-cost change for every gift card, outside a family sweep.
 
 ## Prompt
 

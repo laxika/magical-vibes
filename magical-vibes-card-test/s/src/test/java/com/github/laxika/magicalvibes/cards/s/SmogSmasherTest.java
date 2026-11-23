@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.s;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.h.ThayanEvokers;
+import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.ExiledCardEntry;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.PendingInteraction;
@@ -9,7 +10,10 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -17,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class SmogSmasherTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Combat damage conjures a nontoken duplicate of the target into exile with it")
     void combatDamageConjuresNontokenDuplicateIntoSourceTrackedExile() {
         Permanent smogSmasher = addCreatureReady(player1, new SmogSmasher());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
@@ -37,6 +42,7 @@ class SmogSmasherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("At max speed the duplicates enter with haste and are sacrificed at the next end step")
     void maxSpeedReturnsDuplicatesWithHasteAndSacrificesThemAtNextEndStep() {
         gd.playerSpeeds.put(player1.getId(), 4);
         Permanent smogSmasher = addCreatureReady(player1, new SmogSmasher());
@@ -71,6 +77,7 @@ class SmogSmasherTest extends BaseCardTest {
 
     @Test
     @CardUsed({SmogSmasher.class})
+    @DisplayName("Several damage dealers conjure one duplicate per Smog Smasher")
     void multipleDamageDealersConjureOnlyOneDuplicatePerSmogSmasher() {
         Permanent first = addCreatureReady(player1, new SmogSmasher());
         Permanent second = addCreatureReady(player1, new SmogSmasher());
@@ -89,6 +96,7 @@ class SmogSmasherTest extends BaseCardTest {
 
     @Test
     @CardUsed({SmogSmasher.class})
+    @DisplayName("An opponent's creature is duplicated and stays where it is")
     void canConjureAnOpponentsCreatureWithoutMovingTheOriginal() {
         Permanent source = addCreatureReady(player1, new SmogSmasher());
         Permanent target = addCreatureReady(player2, new SmogSmasher());
@@ -108,6 +116,7 @@ class SmogSmasherTest extends BaseCardTest {
 
     @Test
     @CardUsed({SmogSmasher.class})
+    @DisplayName("Below max speed the duplicates stay exiled")
     void duplicatesStayExiledWhenCombatBeginsBelowMaxSpeed() {
         Permanent source = addCreatureReady(player1, new SmogSmasher());
         source.setAttacking(true);
@@ -128,6 +137,7 @@ class SmogSmasherTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Conjuring the duplicate triggers conjure abilities")
     void conjuringTheDuplicateIntoExileTriggersConjureAbilities() {
         addCreatureReady(player1, new SmogSmasher());
         Permanent bears = addCreatureReady(player1, new GrizzlyBears());
@@ -139,5 +149,26 @@ class SmogSmasherTest extends BaseCardTest {
         resolveAllTriggers();
 
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("A duplicate of a face-down creature has only its face-down values")
+    void duplicateOfAFaceDownCreatureIsNameless() {
+        Permanent source = addCreatureReady(player1, new SmogSmasher());
+        Permanent faceDown = addCreatureReady(player2, new GrizzlyBears());
+        faceDown.setFaceDown(2, 2, Set.of(CardType.CREATURE));
+        source.setAttacking(true);
+
+        resolveCombat();
+        harness.handlePermanentChosen(player1, faceDown.getId());
+        resolveAllTriggers();
+
+        assertThat(gd.getCardsExiledByPermanent(source.getId())).singleElement().satisfies(duplicate -> {
+            assertThat(duplicate.getName()).isEmpty();
+            assertThat(duplicate.getPower()).isEqualTo(2);
+            assertThat(duplicate.getToughness()).isEqualTo(2);
+            assertThat(duplicate.isConjured()).isTrue();
+        });
+        assertThat(gameLogContains("conjures a duplicate of a face-down permanent into exile.")).isTrue();
     }
 }

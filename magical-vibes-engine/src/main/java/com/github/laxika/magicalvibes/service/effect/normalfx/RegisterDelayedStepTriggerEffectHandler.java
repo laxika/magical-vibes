@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.DelayedReferents;
+import com.github.laxika.magicalvibes.model.EffectRegistration;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.MovedCard;
 import com.github.laxika.magicalvibes.model.ResolutionResults;
@@ -14,6 +15,7 @@ import com.github.laxika.magicalvibes.model.condition.CardsStillInZone;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.RegisterDelayedStepTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.trigger.TriggerCondition;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.service.effect.SubjectResolutionService;
 import lombok.RequiredArgsConstructor;
@@ -28,7 +30,7 @@ import java.util.stream.Collectors;
 /**
  * Registers the delayed triggered ability with what the step it is about did, as that is now: each card bound to its
  * stay (CR 603.7c), so the ability's effects read that step as the steps of the resolution that made it do. One about
- * no step is registered about nothing.
+ * a permanent is registered about it, one about no step and no permanent about nothing.
  */
 @Component
 @RequiredArgsConstructor
@@ -47,6 +49,35 @@ public class RegisterDelayedStepTriggerEffectHandler implements NormalEffectHand
         UUID playerId = register.player() == null ? null
                 : subjectResolutionService.player(gameData, entry, effect, register.player());
         if (register.player() != null && playerId == null) {
+            return;
+        }
+        if (register.permanent() != null) {
+            List<UUID> about = subjectResolutionService.permanentIds(gameData, entry, effect, register.permanent());
+            if (about.isEmpty()) {
+                return;
+            }
+            UUID permanentId = about.getFirst();
+            DelayedReferents referents = DelayedReferents.permanents(List.of(permanentId));
+            gameData.temporaryGlobalTriggeredAbilities.add(TemporaryGlobalTriggeredAbility.atNextStep(
+                    entry.getControllerId(), entry.getCard(),
+                    new TriggeredAbility(register.step(), TriggerOptions.DEFAULT,
+                            register.effects().toArray(CardEffect[]::new)),
+                    entry.getSourcePermanentId(), permanentId, playerId,
+                    register.afterThisTurn() ? referents.afterTurn(gameData.turnNumber) : referents));
+            return;
+        }
+        if (register.orStep() != null || register.thisTurn()) {
+            List<TriggerCondition> steps = new ArrayList<>(List.of(new TriggerCondition(register.step())));
+            if (register.orStep() != null) {
+                steps.add(new TriggerCondition(register.orStep()));
+            }
+            TriggeredAbility ability = new TriggeredAbility(steps, TriggerOptions.DEFAULT,
+                    register.effects().stream().map(EffectRegistration::new).toList());
+            gameData.temporaryGlobalTriggeredAbilities.add(register.thisTurn()
+                    ? TemporaryGlobalTriggeredAbility.nextThisTurn(entry.getControllerId(), entry.getCard(), ability,
+                    entry.getSourcePermanentId())
+                    : TemporaryGlobalTriggeredAbility.atNextStep(entry.getControllerId(), entry.getCard(), ability,
+                    entry.getSourcePermanentId(), null, playerId, DelayedReferents.NONE));
             return;
         }
         if (register.about() == null) {

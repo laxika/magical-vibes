@@ -127,6 +127,7 @@ class AangAtTheCrossroadsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With a short library the unchosen cards stay")
     void etbWithShortLibraryKeepsUnchosenCards() {
         Card bears = new GrizzlyBears();
         Card forest = new Forest();
@@ -140,6 +141,7 @@ class AangAtTheCrossroadsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Looks at only five cards and puts the rest below the untouched cards")
     void etbOnlyLooksAtFiveAndPutsRemainderBelowUntouchedCards() {
         Card bears = new GrizzlyBears();
         Card forest = new Forest();
@@ -162,6 +164,7 @@ class AangAtTheCrossroadsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("With no eligible creature no choice is needed")
     void etbWithNoEligibleCreatureNeedsNoChoice() {
         Card forest = new Forest();
         Card angel = new SerraAngel();
@@ -175,6 +178,7 @@ class AangAtTheCrossroadsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opposing creature leaving does not transform Aang")
     void opposingCreatureLeavingDoesNotTransformAang() {
         Permanent aang = harness.addToBattlefieldAndReturn(player1, new AangAtTheCrossroads());
         Permanent bears = harness.addToBattlefieldAndReturn(player2, new GrizzlyBears());
@@ -187,6 +191,7 @@ class AangAtTheCrossroadsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Bouncing another creature transforms Aang at the opponent's upkeep")
     void bouncingAnotherCreatureTransformsAtOpponentsUpkeep() {
         Permanent aang = harness.addToBattlefieldAndReturn(player1, new AangAtTheCrossroads());
         Permanent bears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -199,6 +204,7 @@ class AangAtTheCrossroadsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Several delayed triggers transform Aang only once")
     void multipleDelayedTriggersTransformOnlyOnce() {
         Permanent aang = harness.addToBattlefieldAndReturn(player1, new AangAtTheCrossroads());
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -214,6 +220,7 @@ class AangAtTheCrossroadsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An earthbent land returns tapped after it dies")
     void earthbendedLandReturnsTappedAfterDeath() {
         Permanent land = earthbendForest();
         leaveBattlefield(land);
@@ -227,6 +234,7 @@ class AangAtTheCrossroadsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An earthbent land returns tapped after it is exiled")
     void earthbendedLandReturnsTappedAfterExile() {
         Permanent land = earthbendForest();
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToExile(gd, land));
@@ -239,6 +247,7 @@ class AangAtTheCrossroadsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The earthbend return works after the land loses its abilities")
     void earthbendReturnSurvivesLandLosingAbilities() {
         Permanent land = earthbendForest();
         harness.setHand(player1, List.of(new TurnToFrog()));
@@ -253,6 +262,7 @@ class AangAtTheCrossroadsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Earthbend does not trigger in an opponent's combat")
     void earthbendDoesNotTriggerDuringOpponentsCombat() {
         harness.addToBattlefield(player1, new AangDestinedSavior());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
@@ -267,6 +277,7 @@ class AangAtTheCrossroadsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Earthbend targets only your lands and vigilance goes only to land creatures")
     void earthbendCanOnlyTargetOwnLandsAndDoesNotGrantVigilanceToOtherCreatures() {
         harness.addToBattlefield(player1, new AangDestinedSavior());
         Permanent land = harness.addToBattlefieldAndReturn(player1, new Forest());
@@ -289,6 +300,7 @@ class AangAtTheCrossroadsTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An earthbent land that is bounced does not return")
     void earthbendedLandDoesNotReturnWhenBounced() {
         Permanent land = earthbendForest();
         harness.inMutationScope(() -> harness.getPermanentRemovalService().removePermanentToHand(gd, land));

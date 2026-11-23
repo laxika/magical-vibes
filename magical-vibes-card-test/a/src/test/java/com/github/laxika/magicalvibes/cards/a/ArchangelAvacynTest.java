@@ -108,6 +108,7 @@ class ArchangelAvacynTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Flash lets it be cast during an opponent's upkeep")
     void flashCanBeCastDuringOpponentsUpkeep() {
         harness.forceActivePlayer(player2);
         harness.forceStep(TurnStep.UPKEEP);
@@ -121,6 +122,7 @@ class ArchangelAvacynTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Indestructible protects only the creatures there as the ability resolves")
     void indestructibleProtectsOnlyCreaturesPresentWhenAbilityResolves() {
         Permanent protectedBears = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
         castAvacyn();
@@ -138,6 +140,7 @@ class ArchangelAvacynTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's creature dying schedules no transform")
     void opponentsCreatureDeathDoesNotScheduleTransform() {
         Permanent avacyn = harness.addToBattlefieldAndReturn(player1, new ArchangelAvacyn());
         harness.addToBattlefield(player2, new GrizzlyBears());
@@ -151,6 +154,7 @@ class ArchangelAvacynTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Several deaths transform it only once, at the opponent's upkeep")
     void multipleDeathsTransformOnlyOnceDuringOpponentsUpkeep() {
         Permanent avacyn = harness.addToBattlefieldAndReturn(player1, new ArchangelAvacyn());
         Permanent first = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
@@ -170,6 +174,7 @@ class ArchangelAvacynTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The delayed transform does nothing once Avacyn has died")
     void delayedTransformDoesNothingAfterAvacynDies() {
         Permanent avacyn = harness.addToBattlefieldAndReturn(player1, new ArchangelAvacyn());
         harness.addToBattlefield(player1, new GrizzlyBears());

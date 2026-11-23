@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
-import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOfSelectedPermanentOntoBattlefieldEffect;
+import com.github.laxika.magicalvibes.model.effect.ConjureDuplicateOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardMaxManaValuePredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
@@ -19,7 +20,7 @@ public class ThreeTreeBattalion extends Card {
     private static final LibrarySelectionFollowUp DUPLICATE_FOLLOW_UP = new LibrarySelectionFollowUp() {
         @Override
         public CardEffect effect() {
-            return new ConjureDuplicateOfSelectedPermanentOntoBattlefieldEffect(1, 1);
+            return ConjureDuplicateOntoBattlefieldEffect.of(Subjects.searched()).withBasePowerToughness(1, 1);
         }
 
         @Override

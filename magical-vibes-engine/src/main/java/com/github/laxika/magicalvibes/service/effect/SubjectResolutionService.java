@@ -42,6 +42,8 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPowerLessThanTargetP
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
+import com.github.laxika.magicalvibes.service.battlefield.PermanentCopierService;
+import com.github.laxika.magicalvibes.service.cast.CastingPermissionService;
 import com.github.laxika.magicalvibes.service.effect.normalfx.CopySupport;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.target.TargetLegalityService;
@@ -242,6 +244,37 @@ public class SubjectResolutionService {
             }
         }
         return names;
+    }
+
+    /**
+     * The card of each object {@code subject} names, as a copy of that object reads it, for "a duplicate of it": a
+     * permanent's as it is on the battlefield, else as the entry last knew it (CR 608.2h), with its face-down values
+     * while it is or last was face down (CR 708.2a); for {@code triggeringSpell()} the spell's whole card (its Omen,
+     * Adventure or split half cast is still that card), as it is on the stack, else as it last existed there, with
+     * only the characteristics a spell cast face down has (CR 708.2). A token or a copy of a spell has no
+     * card (CR 111.1, 707.10) and adds none.
+     */
+    public List<Card> cardsToDuplicate(GameData gameData, StackEntry entry, CardEffect effect,
+                                       PermanentSubject subject) {
+        List<Card> cards = new ArrayList<>();
+        if (subject instanceof PermanentSubject.TriggeringSpell) {
+            StackEntry spell = CopySupport.triggeringSpell(gameData, entry);
+            if (spell != null && !spell.isCopy() && spell.getPhysicalCard() != null) {
+                cards.add(spell.isCastFaceDown() ? CastingPermissionService.spellAsEffectsSeeIt(spell).getCard()
+                        : spell.getPhysicalCard());
+            }
+        } else {
+            for (UUID id : permanentIds(gameData, entry, effect, subject)) {
+                Permanent permanent = gameQueryService.findPermanentById(gameData, id);
+                Card card = permanent != null ? PermanentCopierService.cardToCopy(permanent)
+                        : PermanentCopierService.lastKnownCardToCopy(gameData, entry, id,
+                        entry.lastKnownPermanentCard(id));
+                if (card != null) {
+                    cards.add(card);
+                }
+            }
+        }
+        return cards.stream().filter(card -> !card.isToken()).toList();
     }
 
     /** A card a {@link CardSubject} names, in the zone it is in ({@link Zone#GRAVEYARD}, {@link Zone#EXILE},

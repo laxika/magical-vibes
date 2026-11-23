@@ -151,6 +151,7 @@ class GiantSlugTest extends BaseCardTest {
     }
     @org.junit.jupiter.params.ParameterizedTest
     @org.junit.jupiter.params.provider.ValueSource(strings = {"PLAINS", "ISLAND", "SWAMP", "MOUNTAIN", "FOREST"})
+    @DisplayName("Grants the landwalk of each basic land type")
     void grantsLandwalkOfEveryBasicLandType(String landType) {
         Permanent slug = activateSlugAndChoose(landType);
         assertThat(gqs.hasKeyword(gd, slug, Keyword.valueOf(landType + "WALK"))).isTrue();

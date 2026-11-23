@@ -12,6 +12,7 @@ import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -22,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MythweaverPoqTest extends BaseCardTest {
 
     @Test
+    @DisplayName("Power and toughness equal the number of lands you control")
     void powerAndToughnessEqualControlledLands() {
         Permanent poq = addCreatureReady(player1, new MythweaverPoq());
         harness.addToBattlefield(player1, new Forest());
@@ -32,6 +34,7 @@ class MythweaverPoqTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A nontoken land entering conjures a nontoken duplicate of it")
     void landfallConjuresNonTokenDuplicateOfEnteringLand() {
         addCreatureReady(player1, new MythweaverPoq());
         harness.addToBattlefield(player1, new Forest());
@@ -52,6 +55,7 @@ class MythweaverPoqTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Triggers only once each turn")
     void landfallTriggersOnlyOnceEachTurn() {
         addCreatureReady(player1, new MythweaverPoq());
         harness.addToBattlefield(player1, new Forest());
@@ -71,6 +75,7 @@ class MythweaverPoqTest extends BaseCardTest {
 
     @Test
     @CardUsed({MythweaverPoq.class, Forest.class, Plains.class, SplendidReclamation.class})
+    @DisplayName("Lands entering together each get a duplicate")
     void simultaneousLandsEachReceiveADuplicate() {
         harness.addToBattlefield(player1, new Forest());
         addCreatureReady(player1, new MythweaverPoq());
@@ -85,6 +90,7 @@ class MythweaverPoqTest extends BaseCardTest {
 
     @Test
     @CardUsed({MythweaverPoq.class, Forest.class, EvolvingWilds.class})
+    @DisplayName("A land that left before the trigger resolves is duplicated as it last existed")
     void conjuresDuplicateAfterEnteringLandIsSacrificed() {
         harness.addToBattlefield(player1, new Forest());
         addCreatureReady(player1, new MythweaverPoq());
@@ -100,6 +106,7 @@ class MythweaverPoqTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A token land doesn't use up the once-each-turn trigger")
     void tokenLandDoesNotConsumeOncePerTurnTrigger() {
         harness.addToBattlefield(player1, new Forest());
         addCreatureReady(player1, new MythweaverPoq());
@@ -117,6 +124,7 @@ class MythweaverPoqTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's land neither triggers it nor uses it up")
     void opponentsLandDoesNotTriggerOrConsumeAllowance() {
         harness.addToBattlefield(player1, new Forest());
         addCreatureReady(player1, new MythweaverPoq());
@@ -132,6 +140,7 @@ class MythweaverPoqTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The trigger is available again the next turn")
     void triggerResetsOnTheNextTurn() {
         harness.addToBattlefield(player1, new Forest());
         addCreatureReady(player1, new MythweaverPoq());
@@ -150,6 +159,7 @@ class MythweaverPoqTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Its power and toughness count only your lands, in any zone")
     void characteristicAbilityWorksInHandAndIgnoresOpponentsLands() {
         Card poq = new MythweaverPoq();
         harness.setHand(player1, List.of(poq));
@@ -162,6 +172,7 @@ class MythweaverPoqTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Conjuring the duplicate triggers conjure abilities")
     void conjuringTheLandDuplicateTriggersConjureAbilities() {
         addCreatureReady(player1, new MythweaverPoq());
         Permanent evokers = harness.addToBattlefieldAndReturn(player1, new ThayanEvokers());
@@ -172,5 +183,18 @@ class MythweaverPoqTest extends BaseCardTest {
 
         assertThat(findPermanents(player1, "Plains")).hasSize(2);
         assertThat(evokers.getPlusOnePlusOneCounters()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName("The conjure of the duplicate is logged")
+    void conjureIsLogged() {
+        harness.addToBattlefield(player1, new Forest());
+        addCreatureReady(player1, new MythweaverPoq());
+        harness.setHand(player1, List.of(new Plains()));
+
+        harness.playLand(player1, 0);
+        resolveAllTriggers();
+
+        assertThat(gameLogContains("conjures a duplicate of Plains onto the battlefield.")).isTrue();
     }
 }

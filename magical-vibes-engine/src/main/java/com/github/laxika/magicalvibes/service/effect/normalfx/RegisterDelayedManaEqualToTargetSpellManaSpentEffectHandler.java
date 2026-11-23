@@ -35,7 +35,7 @@ public class RegisterDelayedManaEqualToTargetSpellManaSpentEffectHandler impleme
         }
 
         var delayedMana = (RegisterDelayedManaEqualToTargetSpellManaSpentEffect) effect;
-        gameData.temporaryGlobalTriggeredAbilities.add(RegisterDelayedManaAtNextMainPhaseEffectHandler.delayedMana(
+        gameData.temporaryGlobalTriggeredAbilities.add(DelayedManaSupport.delayedMana(
                 entry.getControllerId(), entry.getCard(), entry.getSourcePermanentId(), delayedMana.color(),
                 targetEntry.getManaSpentToCast(), false, false, false, false));
 
