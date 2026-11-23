@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Resolves {@link SetCombatRequirementThisTurnEffect}: stamps the requested transient combat-requirement
@@ -61,27 +62,32 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
             recipients = recipients.subList(0, 1);
         }
         for (Permanent target : recipients) {
-            resolveForTarget(gameData, entry, e.requirement(), target);
+            resolveForTarget(gameData, entry, e, e.requirement(), target);
         }
     }
 
-    private void resolveForTarget(GameData gameData, StackEntry entry,
+    private void resolveForTarget(GameData gameData, StackEntry entry, SetCombatRequirementThisTurnEffect effect,
                                   CombatRequirement requirement, Permanent target) {
         switch (requirement) {
             case MUST_ATTACK -> {
-                stamp(gameData, entry, target, requirement);
-                gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " must attack this turn if able."));
-                log.info("Game {} - {} must attack this turn if able", gameData.id, target.getCard().getName());
-            }
-            case MUST_ATTACK_EFFECT_CONTROLLER -> {
-                // Force the creature to attack the ability's controller specifically, not their planeswalkers
-                // (Scryfall ruling: "it must attack you, not the planeswalker")
-                stamp(gameData, entry, target, requirement);
-
-                String controllerName = gameData.playerIdToName.get(entry.getControllerId());
-
-                gameLogService.append(gameData, GameLog.builder().card(target.getCard()).text(" must attack " + controllerName + " this turn if able.").build());
-                log.info("Game {} - {} must attack {} this turn if able", gameData.id, target.getCard().getName(), controllerName);
+                if (effect.attacked() == null) {
+                    stamp(gameData, entry, target, new MustAttackIfAbleEffect());
+                    gameLogService.append(gameData, GameLog.cardThen(target.getCard(), " must attack this turn if able."));
+                    log.info("Game {} - {} must attack this turn if able", gameData.id, target.getCard().getName());
+                    return;
+                }
+                // The creature must attack that player, not their planeswalkers (Alluring Siren's and Dulcet Sirens'
+                // rulings); with that player gone or an illegal target nothing is required.
+                UUID playerId = subjectResolutionService.player(gameData, entry, effect, effect.attacked());
+                if (playerId == null || !gameData.playerIds.contains(playerId)) {
+                    return;
+                }
+                stamp(gameData, entry, target, new MustAttackIfAbleEffect(playerId));
+                String playerName = gameData.playerIdToName.get(playerId);
+                gameLogService.append(gameData, GameLog.cardThen(target.getCard(),
+                        " must attack " + playerName + " this turn if able."));
+                log.info("Game {} - {} must attack {} this turn if able", gameData.id, target.getCard().getName(),
+                        playerName);
             }
             case MUST_BLOCK -> {
                 stamp(gameData, entry, target, requirement);
@@ -143,12 +149,16 @@ public class SetCombatRequirementThisTurnEffectHandler implements NormalEffectHa
     private void stamp(GameData gameData, StackEntry entry, Permanent permanent, CombatRequirement requirement) {
         CardEffect payload = switch (requirement) {
             case MUST_ATTACK -> new MustAttackIfAbleEffect();
-            case MUST_ATTACK_EFFECT_CONTROLLER -> new MustAttackIfAbleEffect(entry.getControllerId());
             case MUST_BLOCK -> new MustBlockEachCombatEffect();
             case MUST_BE_BLOCKED -> new MustBeBlockedIfAbleEffect();
             case MUST_BE_BLOCKED_BY_ALL -> new MustBeBlockedByAllCreaturesEffect();
             case MUST_ATTACK_OR_BLOCK -> throw new IllegalArgumentException("Resolve attack-or-block to one half first");
         };
+        stamp(gameData, entry, permanent, payload);
+    }
+
+    /** Puts the requirement {@code payload} on {@code permanent} until end of turn. */
+    private void stamp(GameData gameData, StackEntry entry, Permanent permanent, CardEffect payload) {
         gameData.addEffectOnPermanent(entry, payload, permanent.getId(), Duration.UNTIL_END_OF_TURN);
     }
 }

@@ -3,6 +3,7 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.Player;
@@ -16,7 +17,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({DulcetSirens.class, GrizzlyBears.class})
+@CardUsed({DulcetSirens.class, GrizzlyBears.class, LeylineOfSanctity.class})
 class DulcetSirensTest extends BaseCardTest {
 
     @Test
@@ -54,6 +55,39 @@ class DulcetSirensTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent who became an illegal target leaves the creature free to attack anyone or not at all")
+    void illegalOpponentTargetRequiresNothing() {
+        Permanent sirens = addCreatureReady(player1, new DulcetSirens());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(sirens), 0,
+                List.of(creature.getId(), player2.getId()));
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        harness.passBothPriorities();
+
+        assertThat(gd.hasFloatingEffectOnPermanent(creature.getId(), MustAttackIfAbleEffect.class)).isFalse();
+        declareAttackers(player1, List.of());
+        assertThat(creature.isAttackedThisTurn()).isFalse();
+    }
+
+    @Test
+    @DisplayName("The resolution logs which player the creature must attack")
+    void logsThePlayerToAttack() {
+        Permanent sirens = addCreatureReady(player1, new DulcetSirens());
+        Permanent creature = addCreatureReady(player1, new GrizzlyBears());
+        harness.addMana(player1, ManaColor.BLUE, 1);
+
+        harness.activateAbilityWithMultiTargets(player1, battlefieldIndex(sirens), 0,
+                List.of(creature.getId(), player2.getId()));
+        harness.passBothPriorities();
+
+        assertThat(gd.gameLog).anyMatch(line -> line.plainText().contains("Grizzly Bears must attack "
+                + gd.playerIdToName.get(player2.getId()) + " this turn if able."));
+    }
+
+    @Test
+    @DisplayName("A tapped creature is not required to attack")
     void tappedCreatureIsNotRequiredToAttack() {
         Permanent sirens = addCreatureReady(player1, new DulcetSirens());
         Permanent creature = addCreatureReady(player1, new DulcetSirens());
@@ -69,6 +103,7 @@ class DulcetSirensTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("An opponent's creature can't be made to attack its own controller")
     void creatureCannotBeRequiredToAttackItsOwnController() {
         Permanent sirens = addCreatureReady(player1, new DulcetSirens());
         Permanent creature = addCreatureReady(player2, new DulcetSirens());
@@ -83,6 +118,7 @@ class DulcetSirensTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A target creature that left doesn't pass the requirement to another creature")
     void creatureLeavingBeforeResolutionDoesNotAffectAnotherCreature() {
         Permanent sirens = addCreatureReady(player1, new DulcetSirens());
         Permanent creature = addCreatureReady(player1, new DulcetSirens());
@@ -100,6 +136,7 @@ class DulcetSirensTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("Turned face up for its morph cost, it can use its ability")
     void morphCanBeTurnedFaceUpForOneBlueAndUseItsAbility() {
         harness.setHand(player1, List.of(new DulcetSirens()));
         harness.addMana(player1, ManaColor.COLORLESS, 3);

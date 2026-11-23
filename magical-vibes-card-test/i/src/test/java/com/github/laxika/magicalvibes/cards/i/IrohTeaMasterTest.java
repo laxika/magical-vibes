@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.cards.i;
 
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
+import com.github.laxika.magicalvibes.cards.l.LeylineOfSanctity;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.Permanent;
@@ -16,7 +17,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({IrohTeaMaster.class, GrizzlyBears.class})
+@CardUsed({IrohTeaMaster.class, GrizzlyBears.class, LeylineOfSanctity.class})
 class IrohTeaMasterTest extends BaseCardTest {
 
     @Test
@@ -178,6 +179,44 @@ class IrohTeaMasterTest extends BaseCardTest {
         assertThat(findPermanents(player1, "Food")).isEmpty();
         assertThat(findPermanents(player2, "Food")).isEmpty();
         assertThat(findPermanents(player1, "Ally")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("An opponent who became an illegal target is offered no choice and gets nothing")
+    void illegalOpponentTargetOffersNoChoice() {
+        harness.addToBattlefield(player1, new IrohTeaMaster());
+        Permanent donated = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, donated.getId());
+        harness.addToBattlefield(player2, new LeylineOfSanctity());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(gd.playerBattlefields.get(player1.getId())).contains(donated);
+        assertThat(findPermanents(player1, "Ally")).isEmpty();
+        assertThat(gd.stack).isEmpty();
+    }
+
+    @Test
+    @DisplayName("A permanent to give away that left is offered no choice and makes no Ally")
+    void departedDonationOffersNoChoice() {
+        harness.addToBattlefield(player1, new IrohTeaMaster());
+        Permanent donated = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        harness.addToBattlefield(player1, new GrizzlyBears());
+
+        advanceToCombat(player1);
+        harness.handlePermanentChosen(player1, player2.getId());
+        harness.handlePermanentChosen(player1, donated.getId());
+        gd.playerBattlefields.get(player1.getId()).remove(donated);
+        gd.playerGraveyards.get(player1.getId()).add(donated.getCard());
+        harness.passBothPriorities();
+
+        assertThat(gd.interaction.isAwaitingInput()).isFalse();
+        assertThat(findPermanents(player1, "Ally")).isEmpty();
+        assertThat(findPermanents(player2, "Grizzly Bears")).isEmpty();
+        assertThat(gd.stack).isEmpty();
     }
 
     @Test

@@ -39,6 +39,7 @@ class ChainOfSilenceTest extends BaseCardTest {
     void offersSacrificeToTargetController() {
         Permanent target = addCreatureReady(player2, new ElvishWarrior());
         Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
+        Permanent otherLand = harness.addToBattlefieldAndReturn(player2, new Island());
         harness.setHand(player1, List.of(new ChainOfSilence()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
@@ -48,10 +49,11 @@ class ChainOfSilenceTest extends BaseCardTest {
                 .isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).playerId())
-                .isEqualTo(player2.getId());
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.PermanentChoice.class).validIds())
-                .containsExactly(land.getId());
+        PendingInteraction.MultiPermanentChoice choice =
+                gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.validIds()).containsExactlyInAnyOrder(land.getId(), otherLand.getId());
+        assertThat(choice.maxCount()).isEqualTo(1);
     }
 
     @Test
@@ -64,8 +66,8 @@ class ChainOfSilenceTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, land.getId());
 
+        // The lone land is sacrificed without a choice to make.
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
         harness.handleMayAbilityChosen(player2, true);
@@ -113,14 +115,13 @@ class ChainOfSilenceTest extends BaseCardTest {
     void copiedSpellMayBeRetargetedToAnotherController() {
         Permanent originalTarget = addCreatureReady(player2, new ElvishWarrior());
         Permanent newTarget = addCreatureReady(player1, new ElvishWarrior());
-        Permanent originalControllerLand = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.addToBattlefield(player2, new Island());
         Permanent newTargetControllerLand = harness.addToBattlefieldAndReturn(player1, new Island());
         harness.setHand(player1, List.of(new ChainOfSilence()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castAndResolveInstant(player1, 0, originalTarget.getId());
         harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, originalControllerLand.getId());
         harness.handleMayAbilityChosen(player2, true);
         harness.handleMayAbilityChosen(player2, true);
 
@@ -147,13 +148,12 @@ class ChainOfSilenceTest extends BaseCardTest {
     @DisplayName("A copy that is not retargeted keeps its original target")
     void decliningCopyRetargetKeepsOriginalTarget() {
         Permanent target = addCreatureReady(player2, new ElvishWarrior());
-        Permanent land = harness.addToBattlefieldAndReturn(player2, new Island());
+        harness.addToBattlefield(player2, new Island());
         harness.setHand(player1, List.of(new ChainOfSilence()));
         harness.addMana(player1, ManaColor.WHITE, 2);
 
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, land.getId());
         harness.handleMayAbilityChosen(player2, true);
         harness.handleMayAbilityChosen(player2, false);
 
@@ -211,7 +211,6 @@ class ChainOfSilenceTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, land.getId());
         harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, land.getId());
 
         harness.assertInGraveyard(player2, "Island");
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
@@ -237,7 +236,6 @@ class ChainOfSilenceTest extends BaseCardTest {
 
         harness.castAndResolveInstant(player1, 0, target.getId());
         harness.handleMayAbilityChosen(player2, true);
-        harness.handlePermanentChosen(player2, land.getId());
         harness.handleMayAbilityChosen(player2, false);
 
         harness.assertInGraveyard(player2, "Island");

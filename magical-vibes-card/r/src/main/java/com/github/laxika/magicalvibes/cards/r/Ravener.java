@@ -7,7 +7,8 @@ import com.github.laxika.magicalvibes.model.amount.XValue;
 import com.github.laxika.magicalvibes.model.condition.SpellXAtLeast;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackTargetPlayerThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -30,6 +31,6 @@ public class Ravener extends Card {
                         new PlayerRelationPredicate(PlayerRelation.OPPONENT),
                         "Target must be an opponent"), 0, 1)
                 .addTrigger(Triggers.enters(ObjectRelation.THIS),
-                        new TargetCreatureMustAttackTargetPlayerThisTurnEffect());
+                        SetCombatRequirementThisTurnEffect.mustAttack(Subjects.target(0), Subjects.targetPlayer(1)));
     }
 }

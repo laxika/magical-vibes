@@ -10,14 +10,12 @@ package com.github.laxika.magicalvibes.model.effect;
  */
 public enum CombatRequirement {
 
-    /** "Target creature attacks this turn if able" — any legal defender may be chosen (Incite). */
-    MUST_ATTACK,
-
     /**
-     * "Target creature attacks you this turn if able" (Alluring Siren) — the creature must attack the
-     * effect's controller specifically, not that player's planeswalkers.
+     * "Target creature attacks this turn if able" — any legal defender may be chosen (Incite); with
+     * {@link SetCombatRequirementThisTurnEffect#mustAttack} it must attack the named player, not that player's
+     * planeswalkers ("attacks you", Alluring Siren).
      */
-    MUST_ATTACK_EFFECT_CONTROLLER,
+    MUST_ATTACK,
 
     /**
      * "Target creature blocks this turn if able" (Nacatl Hunt-Pride) — the general requirement with no

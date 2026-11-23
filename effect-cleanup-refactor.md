@@ -21,7 +21,7 @@ their "Depends on" says otherwise. Steps marked *repeatable* are run many times,
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (`TapUntapScope` deleted in 6.2e, `GrantScope` in 6.3, rule-4 tests in 6.4) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; closing summary under Findings, step 8 run 29; "counter unless": option B taken by the orchestrator in run 28, pending the human; option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 35: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May and Register closed (May's 11 cost combinators listed for step 10; Register's three `RegisterGlobalTriggeredAbility…` duration records wait for the owner); 1,797 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Target open (27 rare)) |
+| 9 | Sweep the single-card tail (repeatable) | open (runs 1 to 36: Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May and Register closed (May's 11 cost combinators listed for step 10; Register's three `RegisterGlobalTriggeredAbility…` duration records wait for the owner); 1,792 rare records left, Perpetually open (30 rare, waiting for the human's logging and "it" decisions), Conjure open (39 rare), Target open (22 rare)) |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -641,6 +641,7 @@ left unaudited. The step is done when `--unaudited` lists no record used by fewe
 | 33 | The noted amount and the boons, Ochre Jelly and Mana Sculpt on it, Register's rare records, then Target | Register nearly closed, Target open (25 rows: 5 absorbed, 3 split, 1 survivor (new), 15 unique, 1 blocked-other; 8 records and 8 handlers deleted, 1 of each added; 9 card files rewritten; `NoteAmountEffect` with `StepKind.NOTE` and `AmountThisWay.noted()`, kept by the delayed abilities (`keepingNotedAmount`), `TargetSpellManaSpent`, `RegisterDelayedStepTriggerEffect.atNextMainPhase` / `.aboutAtNext`, entering counters of the source token copy a `DynamicAmount`; Mana Sculpt's delayed mana is made for a spell cast for no mana; 2 rare Register and 42 rare Target records left) |
 | 34 | Register's linked pair (the source leaves / untaps / control is lost, "that creature"), then Target's rare records | Register closed, Target open (13 rows: 8 absorbed (two of them re-ledgered rows, one a corrected unique verdict), 2 survivors gaining a subject or options, 3 unique; 8 records and 8 handlers deleted; 9 card files rewritten; `RegisterDelayedEventTriggerEffect.aboutWhenSourceLeavesThisTurn` / `.aboutWhenSourceLeavesOrUntaps` / `.aboutWhenSourceUntapsOrControlLost`, `LookAtHandEffect(PlayerSubject)`, Gravestorm's empty graveyard in `MayEffectHandler`; 0 rare Register and 36 rare Target records left) |
 | 35 | Target's player-choice records (a chooser on `ChoosePermanentsEffect`) and control-gift records (a gaining player and a GAIN_CONTROL step on `GainControlOfTargetEffect`) | Target open (12 rows: 7 absorbed, 3 survivors gaining an option, 2 unique; 7 records and 7 handlers deleted, 2 choice contexts with them; 9 card files rewritten; `ChoosePermanentsEffect.chosenBy`, `GainControlOfTargetEffect.gainedBy`, `StepKind.GAIN_CONTROL`, `CantBlockThisTurnEffect` over `except(controlledBy(…), …)`; End of the Hunt reads a face-down creature as mana value 0; the must-attack and power-damage records not reached; 27 rare Target records left) |
+| 36 | Iroh's "then" record on the gain step, Shuriken's record, the must-attack records, the sacrifice and counter records | Target open (6 rows: 3 absorbed, 2 survivors gaining an option, 1 unique; 3 records and 3 handlers deleted, one `CombatRequirement` constant with them; 5 card files rewritten; `SetCombatRequirementThisTurnEffect.mustAttack(subject, player)`, `MayEffectHandler` asks nothing for a control gift with a target gone; Iroh's gift with an illegal opponent or permanent offers no choice; the power-damage, sacrifice-or-damage and counter-by-player records read and left unaudited; 22 rare Target records left) |
 
 ### 10. Collapse the head: one record per verb (repeatable, needs sign-off)
 
@@ -9763,6 +9764,132 @@ the AI fuzz and stress tests, the frontend. Not verified: more than two players.
   `Duration` before folding. The power-damage records (`TargetCreaturesDealPowerDamageToTargetEffect`, `TargetCreatureDealsPowerDamageToEachTargetEffect`,
   the each-other-creature and perpetual ones), `TargetPermanentControllerSacrificeThenEffect`, `TargetPermanentControllerMaySacrificeOrDamageEffect`,
   `TargetPlayerPutsCounterOnCreatureEffect`.
+- Still the owner's: the gift opponent (CR 702.174a), the hidden-zone conjure and perpetual logging, the perpetual "it" (CR 400.7), one
+  `Duration` for the three `RegisterGlobalTriggeredAbility…` records, `RegisterDelayedSacrificeSourceWhenTargetLeavesEffect` (6 cards),
+  `TargetPlayerGainsControlOfTargetPermanentEffect` (6 cards) on the gain step.
+
+### Step 9, run 36 (2026-11-23, Target open)
+
+Run 35's next Target records: Iroh's "then" record on the gain step (its trigger's target binding established first), Shuriken's record,
+the must-attack record with two cards, and Chain of Silence's sacrifice record; the power-damage, sacrifice-or-damage and
+counter-by-player records were read and left (reasons below). Ratchet 4,068 / 3,322 → 4,065 / 3,319 records / handlers (3 records and 3
+handlers deleted, none added; `CombatRequirement.MUST_ATTACK_EFFECT_CONTROLLER` folded away). 5 card files rewritten (Iroh, Tea Master,
+Dulcet Sirens, Ravener, Alluring Siren, Chain of Silence); Oracle text checked with `get_card` for those 5 and for Shuriken, Sizzling Soloist
+and The Brothers' War; rulings with `get_rulings` for Iroh, Dulcet Sirens, Alluring Siren, Shuriken (none) and Chain of Silence (none). CR
+101.4, 400.7, 508.1d, 601.2c, 603.3d, 603.12, 608.2b, 608.2c, 702.16b and 702.174a checked with `get_rule` (2026-11-23).
+
+| Family | Audited | Absorbed | Split | Survivor | Blocked (cause) | Unique | Left unaudited |
+|---|---|---|---|---|---|---|---|
+| Target | 4 rare records | 3 | 0 | 0 | 0 | 1 | 22 rare (`TargetGroupMarkerEffect` now has 3 cards), 33 in all |
+| (other) | `SetCombatRequirementThisTurnEffect`, `MayEffect` | | | 2 (an option, a can't-choose check) | | | |
+
+All families: 1,792 rare records without a row (run 35: 1,797). Perpetually 30 rare and Conjure 39 rare, unchanged. Rare records touched
+this run: Target 4; no other family.
+
+- **Iroh's trigger binding.** A trigger's targets are asked only for groups its top-level effects are bound to: with the gain nested in a
+  `MayEffect` → `SequenceEffect` and only the inner gain bound, no target was asked at all; binding the `MayEffect` to the permanent group
+  binds everything inside it too (`Card.bindEffectToTargetGroup` recurses), so a reflexive ability inside it inherited the "permanent you
+  control" group and fizzled once the permanent had changed hands. The card is therefore `TargetGroupMarkerEffect` (opponent group 0),
+  `MayEffect(GainControlOfTargetEffect(PERMANENT).gainedBy(targetPlayer(0)))` bound to group 1, and a separate top-level
+  `ConditionalEffect(HappenedThisWay(GAIN_CONTROL), QueueReflexiveAbilityEffect(ally token))`: a declined may records no GAIN_CONTROL step,
+  a gift of a permanent the opponent already controls changes nothing and records none (the old handler's "controller changed" test), and
+  the reflexive ability is made only when control changed (CR 603.12). Counters are still counted as the reflexive ability resolves.
+- **The may of a control gift.** `MayEffectHandler`: a `GainControlOfTargetEffect` with a target-declaring gainer whose player resolves to
+  nobody or whose permanent target is gone offers no choice and runs its else branch (CR 608.2b; Iroh's ruling: "If either the opponent or
+  the permanent you control becomes an illegal target ... you cannot choose to have the opponent gain control"). The old record skipped the
+  prompt only when the opponent was illegal (its may was bound to the opponent group).
+- **Must attack a player.** `SetCombatRequirementThisTurnEffect` gained `PlayerSubject attacked` (`mustAttack(subject, player)`, only with
+  `MUST_ATTACK` on one creature): `MustAttackIfAbleEffect(playerId)` until end of turn, so the creature must attack that player and not
+  their planeswalkers (Alluring Siren's and Dulcet Sirens' rulings, CR 508.1d); a player found as nobody requires nothing (Dulcet Sirens'
+  ruling for an illegal target). Dulcet Sirens: `mustAttack(target(), targetPlayer(1))` (a target-declaring player makes the record declare
+  `benign(playerOrPermanent)`, the old record's spec); Ravener: `mustAttack(target(0), targetPlayer(1))` on its trigger bound to the
+  opponent group; Alluring Siren: `mustAttack(target(), you())` with its old `benign(creature)` spec, which retired
+  `MUST_ATTACK_EFFECT_CONTROLLER`. Log line "X must attack Player2 this turn if able." for all three, as before.
+- **Chain of Silence**: `MayEffect(SequenceEffect.of(SacrificePermanentsEffect(1, land, controllerOf(target())),
+  ConditionalEffect(HappenedThisWay.sacrificed(), MayEffect(copy, TARGET_PERMANENT_CONTROLLER))), TARGET_PERMANENT_CONTROLLER)`: the
+  target creature's current controller sacrifices (the old handler's lookup), "if the player does" reads the SACRIFICE step, the copy may
+  is the old one. The survivor's prompt is a multi-permanent choice of one, and a lone land is sacrificed unasked.
+- **Shuriken, unique**: "unless it was unattached from a Ninja" is judged as the unattach cost is paid, so the activation binds the result
+  (`ActivatedAbilityExecutionService.snapshotEffects`); `GainControlOfTargetEffect.of(granter(…), PERMANENT).gainedBy(controllerOf(target()))`
+  would express the rest, but no condition is judged at activation and only this card would set one.
+- **Gift** (the owner's question, not changed): no record this run touched handles a gift.
+- **AI.** The deleted records implemented no capability interface the AI reads except Iroh's `ControlStealingEffect` (with
+  `controlDuration() == PERMANENT`, so the spell readers in `SpellEvaluator` / `HardAiDecisionEngine` would have scored a gift as a steal; they
+  read spells only, so a trigger was never scored). `GainControlOfTargetEffect` keeps the marker with a `null` duration for another gainer
+  (run 35). Target polarity: Dulcet Sirens and Ravener stay BENEFICIAL (`TargetPolarityClassifier`: `MUST_ATTACK` with a target-declaring
+  attacked player; the name-table entry of the deleted record removed), Alluring Siren stays HARMFUL, Iroh's permanent group BENIGN as the
+  old record's. The may is still answered by the generic may logic. `TargetPolarityGuardTest` passes.
+
+**Behaviour changes.**
+
+1. Iroh, Tea Master: no "you may" prompt when the opponent or the permanent became an illegal target (Iroh's ruling, CR 608.2b):
+   `IrohTeaMasterTest.illegalOpponentTargetOffersNoChoice`, `.departedDonationOffersNoChoice` (new; the permanent case prompted on HEAD,
+   not run there), `MayEffectHandlerTest.skipsControlGiftWithoutItsPermanent` / `.asksForControlGiftWithBothTargets` (new).
+2. Chain of Silence: the land prompt is the sacrifice step's (a multi-permanent choice of one) and a lone land is sacrificed without a prompt;
+   with no land the controller is still asked and nothing happens (the can't-sacrifice check judges only `you()` or a target player).
+3. Dulcet Sirens: an opponent who became an illegal target (Leyline of Sanctity) leaves the creature unrequired, as before
+   (`DulcetSirensTest.illegalOpponentTargetRequiresNothing`, new).
+4. The other rewritten cards: none intended.
+
+**What a player sees.** Iroh's controller is no longer asked a question that can't do anything; Chain of Silence's land prompt is the
+survivor's; the must-attack log lines are unchanged; no prompt or log names a hidden card (the game log redacts face-down cards through
+`FaceDownVisibility.redact`).
+
+**Read, left unaudited (for the next run).**
+
+- The power-damage records (`TargetCreaturesDealPowerDamageToTargetEffect` 2 cards, `TargetCreatureDealsPowerDamageToEachTargetEffect`,
+  `TargetCreaturesDealToughnessDamageToEachOtherEffect` 2, the each-other-creature-and-opponent and perpetual ones) and the ledger's blocked
+  `EachTargetCreatureDealsPowerDamageToTargetCreatureEffect` (3 cards) share one blocker with `TargetDealsPowerDamageToTargetEffect`'s
+  two-group bite: its spec is `benign(playerOrPermanent)` and its AI polarity HARMFUL, theirs `harmful(creature)` (or creature-or-planeswalker)
+  and HARMFUL_DAMAGE. For spells the spec doesn't change protection at targeting (`TargetLegalityService.checkSpellPermanentTargetableReason`
+  checks it for every target); for activated abilities `ValidTargetService` and `TargetValidationService` check protection only for a
+  harmful spec, and the AI's target ranking differs. Settle the bite's spec and polarity (a harmful-creature two-group form), then fold the
+  three or more records at once. The survivor already deals each dealer's damage in turn, as `TargetCreaturesDealPowerDamageToTargetEffect`
+  did.
+- `TargetPermanentControllerMaySacrificeOrDamageEffect` (Star Athlete, Enchanter's Bane): a "sacrifice it or take damage" punisher with
+  the target as the damage source for one card, a can't-sacrifice branch that deals the damage unasked and a death-replacement rerun guard;
+  a `MayEffect(SacrificeSelfEffect on the target, …, elseEffect damage)` needs the can't-sacrifice check for a target permanent and a
+  damage step from the target to its controller for a noncreature.
+- `TargetPlayerPutsCounterOnCreatureEffect` (Hunted Nightmare, Mikey & Mona): `ChoosePermanentsEffect.chosenBy(targetPlayer())` +
+  `PutCounterOnTargetPermanentEffect` over `thisWay(CHOOSE)` would change who puts the counters (the old handler places them as the target
+  player: `placingPlayerId` feeds the counter events); it needs a placer on the counter record.
+- Not reached: the remaining one-card Target records (`TargetCreatureMustAttackSourcePermanentNextTurnEffect`,
+  `TargetCreatureMustAttackNextCombatEffect`, `TargetPlayersCreaturesMustAttackEachOtherUntilNextTurnEffect`: each pairs a different payload
+  (`CreaturesMustAttackTargetPlayerUntilNextTurnEffect`, `MatchingCreaturesMustAttackEffect`) with its own "during" duration, which
+  `AttackLegalityService`, `DurationClock` and `CreatureControlService` read differently from `MustAttackIfAbleEffect`, so a `Duration` on
+  `SetCombatRequirementThisTurnEffect` alone doesn't fold them).
+
+**Seen, not changed.**
+
+- Ravener declares its "target opponent" group as up to one (`0, 1`); the Oracle text requires exactly one target opponent, so with no
+  legal opponent the trigger should be removed (CR 601.2c, 603.3d) rather than make the creature target alone. Not changed.
+- Activated abilities check protection at targeting only for a harmful spec (`ValidTargetService.java:1712`,
+  `TargetValidationService.java:259`); CR 702.16b stops targeting by any ability from a source with the quality, benign or not. Wider than
+  this run.
+
+**Tests edited.** `ChainOfSilenceTest`: the land prompt asserted as the sacrifice step's multi-permanent choice (two lands, so it is
+offered), and the lone-land cases no longer answer a land prompt (the survivor's prompt wins). `DulcetSirensTest`: a `@DisplayName` on its
+four unnamed methods, two new cases (illegal opponent, log line). `IrohTeaMasterTest`, `MayEffectHandlerTest`: the new cases above.
+`CardEffectTargetingConsistencyTest`: the deleted record's exemption removed. `EffectCountRatchetTest`'s baselines.
+
+**Tests run.** Four Gradle runs, one `--tests` list per task; the last on the final sources: 24 classes, 30 XML files (all fresh by
+timestamp), 263 cases, 0 failures, 0 errors, 0 skipped (the 6 classes referencing a changed card: Alluring Siren, Autumn's Veil, Chain of
+Silence, Dulcet Sirens, Iroh, Ravener; Shuriken; a sample of `SetCombatRequirementThisTurnEffect` cards: Boiling Blood, Bullwhip,
+Chemister's Trick, Courtly Provocateur, Heckling Fiends, Imp's Taunt, Incite, Domineering Will, Norritt; the may and gain cards Ace,
+Fearless Rebel, Gravestorm, Coveted Falcon; `MayEffectHandlerTest`, `GainControlOfTargetEffectHandlerTest`,
+`CardEffectTargetingConsistencyTest`, `EffectCountRatchetTest` at 4,065 / 3,319, the AI's `TargetPolarityGuardTest`). No deleted handler
+was `AsksDeathReplacementsFirst` or called `LifeSupport.askBefore*`. Compiled: domain, engine (and its test fixtures), AI (and its tests),
+websocket, webservice, every card module, the application test sources and the card-test sources of the letters a, b, c, d, g, h, i, n,
+r, s. No deleted type or constant is named by any source (grepped). Not run: the full suites, the AI fuzz and stress tests, the frontend.
+Not verified: more than two players.
+
+**For the next run (run 37: Target's rare records).**
+
+- The bite's spec and polarity, then the power-damage records with the ledger's `EachTargetCreatureDealsPowerDamageToTargetCreatureEffect`
+  (three or more records share it).
+- A placer on `PutCounterOnTargetPermanentEffect` for `TargetPlayerPutsCounterOnCreatureEffect`, if a third user turns up; the
+  sacrifice-or-damage punisher; the "during next turn / next combat" must-attack records (each its own payload and duration).
+- Target's other one-card records (the player restrictions, the copy records, the villainous choice, the discard-then-draw).
 - Still the owner's: the gift opponent (CR 702.174a), the hidden-zone conjure and perpetual logging, the perpetual "it" (CR 400.7), one
   `Duration` for the three `RegisterGlobalTriggeredAbility…` records, `RegisterDelayedSacrificeSourceWhenTargetLeavesEffect` (6 cards),
   `TargetPlayerGainsControlOfTargetPermanentEffect` (6 cards) on the gain step.

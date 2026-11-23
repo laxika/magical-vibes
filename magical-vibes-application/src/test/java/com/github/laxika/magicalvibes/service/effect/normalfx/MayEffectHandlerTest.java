@@ -5,11 +5,15 @@ import com.github.laxika.magicalvibes.model.MayChoicePlayer;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.AttachSourceEquipmentToTargetCreatureEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnTargetCardsFromGraveyardToHandEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.Permanent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -106,6 +110,41 @@ class MayEffectHandlerTest extends AbstractPlayerInteractionHandlerTest {
 
         assertThat(gd.pendingMayAbilities).hasSize(1);
         assertThat(gd.pendingMayAbilities.getFirst().effects()).containsExactly(exile);
+    }
+
+    @Test
+    @DisplayName("Asks nothing for a control gift whose permanent target is gone")
+    void skipsControlGiftWithoutItsPermanent() {
+        GainControlOfTargetEffect gift = new GainControlOfTargetEffect(Duration.PERMANENT)
+                .gainedBy(Subjects.targetPlayer(0));
+        MayEffect mayEffect = new MayEffect(gift, "Give it away?");
+        StackEntry entry = createEntry(createCard("Iroh, Tea Master"), player1Id, List.of(mayEffect));
+        UUID permanentId = UUID.randomUUID();
+        entry.chooseTargetIds(List.of(player2Id, permanentId));
+
+        resolveEffect(gd, entry, mayEffect);
+
+        assertThat(gd.pendingMayAbilities).isEmpty();
+        assertThat(gd.resolvingMayEffectFromStack).isFalse();
+    }
+
+    @Test
+    @DisplayName("Asks for a control gift whose player and permanent targets are both there")
+    void asksForControlGiftWithBothTargets() {
+        GainControlOfTargetEffect gift = new GainControlOfTargetEffect(Duration.PERMANENT)
+                .gainedBy(Subjects.targetPlayer(0));
+        MayEffect mayEffect = new MayEffect(gift, "Give it away?");
+        StackEntry entry = createEntry(createCard("Iroh, Tea Master"), player1Id, List.of(mayEffect));
+        UUID permanentId = UUID.randomUUID();
+        entry.chooseTargetIds(List.of(player2Id, permanentId));
+        Permanent bear = new Permanent(createCard("Bear"));
+        when(gameQueryService.findPermanentById(eq(gd), any(UUID.class)))
+                .thenAnswer(invocation -> permanentId.equals(invocation.getArgument(1)) ? bear : null);
+
+        resolveEffect(gd, entry, mayEffect);
+
+        assertThat(gd.pendingMayAbilities).hasSize(1);
+        assertThat(gd.pendingMayAbilities.getFirst().effects()).containsExactly(gift);
     }
 
     @Test

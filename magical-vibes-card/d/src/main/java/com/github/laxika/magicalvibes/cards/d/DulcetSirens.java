@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.d;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.TargetCreatureMustAttackTargetPlayerThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.SetCombatRequirementThisTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -20,7 +21,7 @@ public class DulcetSirens extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{U}",
-                List.of(new TargetCreatureMustAttackTargetPlayerThisTurnEffect()),
+                List.of(SetCombatRequirementThisTurnEffect.mustAttack(Subjects.target(), Subjects.targetPlayer(1))),
                 "{U}, {T}: Target creature attacks target opponent this turn if able.",
                 List.of(
                         TargetFilters.creature(),

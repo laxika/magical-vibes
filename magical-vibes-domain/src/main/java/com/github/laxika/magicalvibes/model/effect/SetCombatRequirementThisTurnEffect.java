@@ -2,6 +2,8 @@ package com.github.laxika.magicalvibes.model.effect;
 
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 
+import java.util.Objects;
+
 /**
  * Stamps a one-shot combat requirement on a creature for the rest of the turn: a floating effect on the creature
  * until end of turn ({@link MustAttackIfAbleEffect}, {@link MustBlockEachCombatEffect},
@@ -22,13 +24,40 @@ import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
  *                    {@link Subjects#attachedCreature()} applies to the source Aura's attached
  *                    creature, and {@link Subjects#creaturesYouControl()} applies to every creature
  *                    the controller controls
+ * @param attacked      with {@link CombatRequirement#MUST_ATTACK}, the player the creature must attack, not that player's
+ *                    planeswalkers ({@link #mustAttack}: "attacks you", "attacks target opponent this turn if
+ *                    able"), found as the effect resolves (none: nothing is required); {@code null} for any player
+ *                    or planeswalker
  */
 public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, PermanentSubject subject,
-                                                  boolean allowPermanentTarget)
+                                                  boolean allowPermanentTarget, PlayerSubject attacked)
         implements CardEffect {
+
+    public SetCombatRequirementThisTurnEffect {
+        Objects.requireNonNull(requirement, "requirement");
+        Objects.requireNonNull(subject, "subject");
+        if (attacked != null && (requirement != CombatRequirement.MUST_ATTACK || subject.isSet())) {
+            throw new IllegalArgumentException("Only an attack requirement on one creature names the player attacked: "
+                    + requirement + " " + subject);
+        }
+    }
+
+    public SetCombatRequirementThisTurnEffect(CombatRequirement requirement, PermanentSubject subject,
+                                              boolean allowPermanentTarget) {
+        this(requirement, subject, allowPermanentTarget, null);
+    }
 
     public SetCombatRequirementThisTurnEffect(CombatRequirement requirement, PermanentSubject subject) {
         this(requirement, subject, false);
+    }
+
+    /**
+     * "Target creature attacks [player] this turn if able": {@code subject} must attack the player {@code player}
+     * names (Alluring Siren's {@code you()}, Dulcet Sirens' {@code targetPlayer(1)}).
+     */
+    public static SetCombatRequirementThisTurnEffect mustAttack(PermanentSubject subject, PlayerSubject player) {
+        return new SetCombatRequirementThisTurnEffect(CombatRequirement.MUST_ATTACK, subject, false,
+                Objects.requireNonNull(player, "player"));
     }
 
     /**
@@ -57,7 +86,8 @@ public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, 
      * Only creatures can carry any of these requirements. {@code MUST_BLOCK} additionally carries the
      * explicit predicate, which preserves the creature restriction on targeted-trigger candidates.
      * {@link Subjects#creaturesYouControl()} sweeps the controller's creatures without targeting
-     * (Joraga Invocation), so it declares no target at all.
+     * (Joraga Invocation), so it declares no target at all. A target creature that must attack a target player
+     * declares the creature and the player.
      */
     @Override
     public TargetSpec targetSpec() {
@@ -73,6 +103,9 @@ public record SetCombatRequirementThisTurnEffect(CombatRequirement requirement, 
 
         if (allowPermanentTarget) {
             return TargetSpec.benign(TargetPredicates.permanent());
+        }
+        if (attacked != null && attacked.declaresTarget()) {
+            return TargetSpec.benign(TargetPredicates.playerOrPermanent());
         }
 
         return requirement == CombatRequirement.MUST_BLOCK

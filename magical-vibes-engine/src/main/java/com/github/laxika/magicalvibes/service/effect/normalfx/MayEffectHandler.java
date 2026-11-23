@@ -26,6 +26,7 @@ import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetPlayerExilesCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.effect.TargetLibraryAction;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
+import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.MillControllerAndMayPutMilledLandsOntoBattlefieldEffect;
@@ -282,6 +283,17 @@ public class MayEffectHandler implements NormalEffectHandlerBean {
                 && gameData.playerGraveyards.getOrDefault(targetId, List.of()).isEmpty()) {
             // "Target opponent may exile a card from their graveyard. If that player doesn't, ...": with no card in
             // that graveyard the player can't choose to exile one (CR 608.2d), so "if that player doesn't" applies.
+            gameData.resolvingMayEffectFromStack = false;
+            insertElseEffect(entry, e);
+            return;
+        }
+        if (optionalAction instanceof GainControlOfTargetEffect gain && gain.gainer() != null
+                && gain.gainer().declaresTarget() && gain.subject() instanceof PermanentSubject.Target
+                && (subjectResolutionService.players(gameData, entry, gain, gain.gainer()).isEmpty()
+                        || entry.targetsForEffect(gain).stream()
+                                .noneMatch(id -> gameQueryService.findPermanentById(gameData, id) != null))) {
+            // "You may have target opponent gain control of target permanent you control": with either target illegal
+            // the control change can't happen (CR 608.2b), so there is no choice to offer (Iroh, Tea Master's ruling).
             gameData.resolvingMayEffectFromStack = false;
             insertElseEffect(entry, e);
             return;
