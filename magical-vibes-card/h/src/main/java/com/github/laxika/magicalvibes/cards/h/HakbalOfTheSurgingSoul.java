@@ -10,7 +10,7 @@ import com.github.laxika.magicalvibes.model.condition.NotCondition;
 import com.github.laxika.magicalvibes.model.effect.ChooseCardEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
-import com.github.laxika.magicalvibes.model.effect.ExploreEachControlledCreatureEffect;
+import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCardsOntoBattlefieldEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
@@ -31,10 +31,10 @@ import java.util.List;
 public class HakbalOfTheSurgingSoul extends Card {
 
     public HakbalOfTheSurgingSoul() {
-        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ExploreEachControlledCreatureEffect(
-                new PermanentAllOfPredicate(List.of(
+        addTrigger(Triggers.beginningOfCombat(ActivePlayer.YOU), new ExploreEffect(
+                Subjects.controlledBy(Subjects.you(), new PermanentAllOfPredicate(List.of(
                         new PermanentIsCreaturePredicate(),
-                        new PermanentHasSubtypePredicate(CardSubtype.MERFOLK)))));
+                        new PermanentHasSubtypePredicate(CardSubtype.MERFOLK))))));
 
         CardTypePredicate land = new CardTypePredicate(CardType.LAND);
         addTrigger(Triggers.attacks(), new MayEffect(

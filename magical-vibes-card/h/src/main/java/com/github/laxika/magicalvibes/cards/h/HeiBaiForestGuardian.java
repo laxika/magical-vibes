@@ -11,7 +11,8 @@ import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.condition.HappenedThisWay;
-import com.github.laxika.magicalvibes.model.effect.CanBlockAndBeBlockedOnlyByFilterEffect;
+import com.github.laxika.magicalvibes.model.effect.CanBeBlockedOnlyByFilterEffect;
+import com.github.laxika.magicalvibes.model.effect.CanBlockOnlyIfAttackerMatchesPredicateEffect;
 import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
@@ -51,7 +52,8 @@ public class HeiBaiForestGuardian extends Card {
                 new PermanentCount(legendaryEnchantments, CountScope.CONTROLLER),
                 "Spirit", 1, 1, null, null, List.of(CardSubtype.SPIRIT), Set.of(), Set.of(),
                 false, false,
-                List.of(StaticAbility.of(new CanBlockAndBeBlockedOnlyByFilterEffect(spirits, "Spirits"))),
+                List.of(StaticAbility.of(new CanBeBlockedOnlyByFilterEffect(spirits, "Spirits"),
+                        new CanBlockOnlyIfAttackerMatchesPredicateEffect(spirits, "Spirits"))),
                 List.of(), false, false, false, 0, Set.of());
 
         addActivatedAbility(new ActivatedAbility(

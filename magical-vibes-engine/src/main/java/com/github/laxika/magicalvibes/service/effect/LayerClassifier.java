@@ -84,7 +84,6 @@ import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeCreatureOutsideBattlefieldEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeEnchantmentUntilCreatureSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantActivatedAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAllCreatureTypesToOwnCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantCardTypeEffect;
@@ -377,8 +376,6 @@ public final class LayerClassifier {
                         }));
         map.put(SetCardTypesUntilEndOfTurnEffect.class, fixed(Layer.L4_TYPE));
         map.put(SetCardTypesUntilYourNextTurnEffect.class, fixed(Layer.L4_TYPE));
-        map.put(BecomeEnchantmentUntilCreatureSpellCastEffect.class,
-                fixed(Layer.L4_TYPE, Layer.L6_ABILITIES));
         map.put(NonbasicLandsBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(LandsOfSubtypeBecomeTypeEffect.class, fixed(Layer.L4_TYPE));
         map.put(ControlledLandsBecomeTypeEffect.class, fixed(Layer.L4_TYPE));

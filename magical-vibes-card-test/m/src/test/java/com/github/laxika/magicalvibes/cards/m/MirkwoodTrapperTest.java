@@ -7,6 +7,7 @@ import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.testutil.BaseCardTest;
 import com.github.laxika.magicalvibes.testutil.CardUsed;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -17,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class MirkwoodTrapperTest extends BaseCardTest {
 
     @Test
+    @DisplayName("When a player attacks you, the target attacking creature gets -2/-0")
     void controllerChoosesAnAttackingCreatureToDebuffWhenAttacked() {
         addCreatureReady(player1, new MirkwoodTrapper());
         Permanent firstAttacker = addCreatureReady(player2, new GrizzlyBears());
@@ -38,6 +40,7 @@ class MirkwoodTrapperTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A player attacking someone else chooses one of their attacking creatures to get +2/+0")
     void playerAttackingSomewhereElseChoosesAnAttackingCreatureToBoost() {
         addCreatureReady(player1, new MirkwoodTrapper());
         Permanent firstAttacker = addCreatureReady(player1, new GrizzlyBears());
@@ -51,7 +54,7 @@ class MirkwoodTrapperTest extends BaseCardTest {
         assertThat(choice).isNotNull();
         assertThat(choice.playerId()).isEqualTo(player1.getId());
         assertThat(gd.interaction.permanentChoiceContext())
-                .isInstanceOf(PermanentChoiceContext.AttackingPlayerChoosesCreatureToBoost.class);
+                .isInstanceOf(PermanentChoiceContext.RecordChosenPermanents.class);
         assertThat(choice.validIds()).containsExactlyInAnyOrder(firstAttacker.getId(), secondAttacker.getId());
 
         harness.handlePermanentChosen(player1, secondAttacker.getId());
@@ -61,6 +64,7 @@ class MirkwoodTrapperTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("A lone attacker is boosted without a choice, until end of turn")
     void singleAttackerBoostExpiresAtCleanup() {
         Permanent trapper = addCreatureReady(player1, new MirkwoodTrapper());
 
@@ -77,6 +81,7 @@ class MirkwoodTrapperTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The -2/-0 wears off at cleanup")
     void debuffExpiresAtCleanup() {
         addCreatureReady(player1, new MirkwoodTrapper());
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
@@ -95,6 +100,7 @@ class MirkwoodTrapperTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The -2/-0 does nothing once its target stops attacking")
     void debuffDoesNotResolveIfTargetStopsAttacking() {
         addCreatureReady(player1, new MirkwoodTrapper());
         Permanent attacker = addCreatureReady(player2, new GrizzlyBears());
@@ -110,6 +116,7 @@ class MirkwoodTrapperTest extends BaseCardTest {
     }
 
     @Test
+    @DisplayName("The +2/+0 goes only to a creature still attacking as it resolves")
     void boostChoosesOnlyCreaturesStillAttackingAtResolution() {
         Permanent trapper = addCreatureReady(player1, new MirkwoodTrapper());
         Permanent remainingAttacker = addCreatureReady(player1, new GrizzlyBears());

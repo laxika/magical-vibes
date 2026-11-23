@@ -30,7 +30,6 @@ import com.github.laxika.magicalvibes.model.effect.BasicLandsOfChosenTypesBecome
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeChosenColorsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.BecomeColorlessUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.BecomeEnchantmentUntilCreatureSpellCastEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CantHaveOrGainKeywordEffect;
@@ -1716,7 +1715,6 @@ public class LayerSystemService {
     private static int abilityRemovalRank(CardEffect effect) {
         if (effect instanceof LosesAllAbilitiesEffect
                 || effect instanceof LosesAllNonManaAbilitiesEffect
-                || effect instanceof BecomeEnchantmentUntilCreatureSpellCastEffect
                 || effect instanceof PrimevalCounterEffect) return 0;
         if (effect instanceof RemoveKeywordEffect) return 1;
         return 2;
@@ -2358,18 +2356,6 @@ public class LayerSystemService {
                 if (instance.floating() == null) return;
                 for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
                     states.get(target.permanent().getId()).overrideCardTypes(setTypes.cardTypes());
-                }
-            }
-            case BecomeEnchantmentUntilCreatureSpellCastEffect ignored -> {
-                if (instance.floating() == null) return;
-                for (PermanentSlot target : floatingTargets(gameData, instance, slots, slotsById, board)) {
-                    // "Becomes an enchantment" without "in addition": prior creature subtypes are not retained (CR 205.1b).
-                    CharacteristicState becomesEnchantment = states.get(target.permanent().getId());
-                    becomesEnchantment.overrideCardTypes(Set.of(CardType.ENCHANTMENT));
-                    becomesEnchantment.removeSubtypesIf(StaticEffectSupport::isCreatureSubtype);
-                    record(board, instance, target, new L4Contribution(
-                            List.of(), false, false, null, null, true,
-                            List.of(CardType.ENCHANTMENT)));
                 }
             }
             case GrantChosenSubtypeToOwnCreaturesEffect grant -> {
@@ -3516,12 +3502,6 @@ public class LayerSystemService {
                     }
                     case LosesAllNonManaAbilitiesEffect ignored -> {
                         state.loseAllNonManaAbilities(instance.timestamp());
-                        board.clearGrantedEffects(target.permanent().getId());
-                        board.recordProvenance(target.permanent().getId(),
-                                ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(), true));
-                    }
-                    case BecomeEnchantmentUntilCreatureSpellCastEffect ignored -> {
-                        state.loseAllAbilities(instance.timestamp());
                         board.clearGrantedEffects(target.permanent().getId());
                         board.recordProvenance(target.permanent().getId(),
                                 ModifierLine.abilities(provenanceSourceName(instance), Set.of(), Set.of(), true));

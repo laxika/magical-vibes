@@ -180,8 +180,6 @@ public class MultiPermanentChoiceHandlerService {
             returnAurasAttachedToDyingCreatureAndAttachEquipmentHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx
             .ChooseEquipmentToUnattachEffectHandler chooseEquipmentToUnattachEffectHandler;
-    private final com.github.laxika.magicalvibes.service.effect.normalfx
-            .DestroyUpToOneAttachedPermanentEffectHandler destroyUpToOneAttachedPermanentHandler;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PutMatchingPermanentsOnTopOfOwnersLibrariesEffectHandler putMatchingPermanentsOnTopOfOwnersLibrariesEffectHandler;
     private final LifeSupport lifeSupport;
     private final com.github.laxika.magicalvibes.service.effect.normalfx.PermanentControlSupport permanentControlSupport;
@@ -411,10 +409,6 @@ public class MultiPermanentChoiceHandlerService {
         if (context instanceof MultiPermanentChoiceContext.EquipoisePhaseOut
                 && permanentIds.size() != maxCount) {
             throw new IllegalStateException("Must choose exactly " + maxCount + " permanents to phase out");
-        }
-        if (context instanceof MultiPermanentChoiceContext.SacrificeAttackingCreatures
-                && permanentIds.size() != maxCount) {
-            throw new IllegalStateException("Must choose exactly " + maxCount + " attacking creatures to sacrifice");
         }
         boolean mandatoryCounterChoice = context instanceof MultiPermanentChoiceContext.OwnPermanentCounterPlacement own
                 && own.mandatory()
@@ -1504,17 +1498,6 @@ public class MultiPermanentChoiceHandlerService {
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
     }
 
-    private void handleSacrificeAttackingCreature(GameData gameData, List<UUID> permanentIds) {
-        List<Permanent> creatures = permanentIds.stream()
-                .map(permanentId -> gameQueryService.findPermanentById(gameData, permanentId))
-                .filter(Objects::nonNull)
-                .toList();
-        // Sacrificed at the same time, so every death replacement is chosen before any of them leaves (CR 616.1).
-        destructionSupport.sacrificeTogether(gameData, creatures, null);
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
     private void handleSacrificeAttackCost(GameData gameData, UUID playerId, List<UUID> permanentIds) {
         List<Permanent> sacrificed = new ArrayList<>();
         for (UUID permanentId : permanentIds) {
@@ -1876,9 +1859,7 @@ public class MultiPermanentChoiceHandlerService {
      * through {@link DestructionSupport#performSimultaneousSacrifice}, which asks every member first
      * ({@link MultiPermanentChoiceContext.TargetPlayerChoosesCreatureOrPlaneswalkerThenSacrificesChosen}
      * sacrifices one at a time, so only its first sacrifice can still ask). The "keep the chosen,
-     * sacrifice the rest" contexts only work out the rest before that sacrifice,
-     * and {@link MultiPermanentChoiceContext.SacrificeAttackingCreatures} asks about all its
-     * picks before it sacrifices them one by one.
+     * sacrifice the rest" contexts only work out the rest before that sacrifice.
      * {@link MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice} and
      * {@link MultiPermanentChoiceContext.EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnChoice}
      * also keep their picks in the immutable context; the latter queues its graveyard return only
@@ -1943,7 +1924,6 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.EachOpponentSacrificesArtifactAndNonartifactCreature
                 || context instanceof MultiPermanentChoiceContext.KeepForEachPlayerThenSacrificeRest
                 || context instanceof MultiPermanentChoiceContext.PlayerChoosesUpToPermanentsThenSacrificesRestChoice
-                || context instanceof MultiPermanentChoiceContext.SacrificeAttackingCreatures
                 || context instanceof MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerSacrificesCreatureOrPlaneswalkerThenMayReturnChoice
                 || context instanceof MultiPermanentChoiceContext.EachPlayerChoosesPartyThenSacrificesRestChoice
@@ -1962,7 +1942,6 @@ public class MultiPermanentChoiceHandlerService {
                 || context instanceof MultiPermanentChoiceContext.SacrificePermanentsOrElse
                 || context instanceof MultiPermanentChoiceContext.WormsOfTheEarthSacrificeLands
                 || context instanceof MultiPermanentChoiceContext.VoteForCreatureThenDestroyMostVotedChoice
-                || context instanceof MultiPermanentChoiceContext.DestroyUpToOneAttachedPermanent
                 || context instanceof MultiPermanentChoiceContext.ForcedDestroy
                 || context instanceof MultiPermanentChoiceContext.SacrificeLandsSearchLandsToBattlefieldTapped
                 || context instanceof MultiPermanentChoiceContext.SacrificeAnyNumberAndRecordCount
@@ -2057,10 +2036,6 @@ public class MultiPermanentChoiceHandlerService {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 return;
             }
-            case MultiPermanentChoiceContext.SacrificeAttackingCreatures ignored -> {
-                handleSacrificeAttackingCreature(gameData, permanentIds);
-                return;
-            }
             case MultiPermanentChoiceContext.EachPlayerSacrificeOneOfEachTypeChoice ctx -> {
                 eachPlayerSacrificesOneOfEachTypeHandler.completeChoice(gameData, permanentIds, ctx);
                 if (!gameData.interaction.isAwaitingInput()) {
@@ -2151,8 +2126,6 @@ public class MultiPermanentChoiceHandlerService {
                 inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
                 return;
             }
-            case MultiPermanentChoiceContext.DestroyUpToOneAttachedPermanent ctx ->
-                    destroyUpToOneAttachedPermanentHandler.completeChoice(gameData, permanentIds, ctx);
             case MultiPermanentChoiceContext.FreeCastTapCost ctx -> {
                 exileFreeCastQueueSupport.completeTapCost(gameData, permanentIds, ctx);
                 return;

@@ -2,8 +2,12 @@ package com.github.laxika.magicalvibes.cards.r;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesHaveRiotEffect;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.effect.ControllerCreatureSpellsCantBeCounteredEffect;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsTokenPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 
 @CardRegistration(set = "RNA", collectorNumber = "201")
 @CardRegistration(set = "SLD", collectorNumber = "1740")
@@ -15,6 +19,7 @@ public class RhythmOfTheWild extends Card {
 
     public RhythmOfTheWild() {
         addStaticEffect(new ControllerCreatureSpellsCantBeCounteredEffect());
-        addStaticEffect(new ControlledCreaturesHaveRiotEffect());
+        addStaticEffect(new GrantKeywordEffect(Keyword.RIOT, Subjects.creaturesYouControl(),
+                new PermanentNotPredicate(new PermanentIsTokenPredicate())));
     }
 }

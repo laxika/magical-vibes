@@ -230,6 +230,7 @@ import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.SetTargetPermanentSupertypeEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantLifelinkToControllerSpellsByColorEffect;
 import com.github.laxika.magicalvibes.model.effect.PermanentSubject;
+import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.PlayerSubject;
 import com.github.laxika.magicalvibes.model.effect.GrantSplitSecondToControllerSpellsUsingArtifactManaEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantStaticEffectToSourceEffect;
@@ -13459,6 +13460,21 @@ public class GameQueryService {
                 .map(effect -> staticEffectConditionResolver.resolve(gameData, source, controllerId, effect))
                 .filter(effect -> effect != null && !gameData.removesOwnStaticAbility(source.getId(), effect.getClass()))
                 .anyMatch(effect -> effectType.isInstance(effect) && matching.test(effectType.cast(effect)));
+    }
+
+    /**
+     * Whether another permanent's static "[these creatures] block each combat if able" names {@code blocker} (Grand
+     * Melee's "all creatures"): the ability is its source's, so the blocker losing its own abilities doesn't free it.
+     */
+    public boolean isNamedByStaticMustBlockSet(GameData gameData, Permanent blocker) {
+        UUID blockerControllerId = findPermanentController(gameData, blocker.getId());
+        if (blockerControllerId == null) {
+            return false;
+        }
+        return activeStaticEffects(gameData, MustBlockEachCombatEffect.class).stream()
+                .filter(active -> !(active.effect().subject() instanceof PermanentSubject.Source))
+                .anyMatch(active -> staticSubjectNames(gameData, active.source(), active.controllerId(),
+                        blockerControllerId, blocker, active.effect().subject()));
     }
 
     /** Returns whether a permanent carries the requested active static effect, including a grant. */

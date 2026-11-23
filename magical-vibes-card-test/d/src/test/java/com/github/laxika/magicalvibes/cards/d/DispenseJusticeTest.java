@@ -85,7 +85,7 @@ class DispenseJusticeTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction()).isInstanceOf(PendingInteraction.MultiPermanentChoice.class);
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MultiPermanentChoice.class).context())
-                .isInstanceOf(MultiPermanentChoiceContext.SacrificeAttackingCreatures.class);
+                .isInstanceOf(MultiPermanentChoiceContext.ForcedSacrifice.class);
     }
 
     @Test
@@ -252,7 +252,7 @@ class DispenseJusticeTest extends BaseCardTest {
 
         assertThat(gd.stack).isEmpty();
         harness.assertOnBattlefield(player2, "Grizzly Bears");
-        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no attacking creatures to sacrifice"));
+        assertThat(gd.gameLog.stream().map(GameLogEntry::plainText)).anyMatch(log -> log.contains("no matching permanents to sacrifice"));
     }
 
     @Test

@@ -390,7 +390,6 @@ public class PermanentChoiceBattlefieldHandlerService {
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.DefendingPlayerChoosesCreatureToBlockEffectHandler defendingPlayerChoosesCreatureToBlockEffectHandler;
 
-    private final com.github.laxika.magicalvibes.service.effect.normalfx.AttackingPlayerChoosesCreatureToBoostEffectHandler attackingPlayerChoosesCreatureToBoostEffectHandler;
 
     private final com.github.laxika.magicalvibes.service.effect.normalfx.MeldWithNamedCreatureEffectHandler meldWithNamedCreatureEffectHandler;
 
@@ -1052,12 +1051,6 @@ public class PermanentChoiceBattlefieldHandlerService {
     public void handleDefendingPlayerChoosesCreatureToBlock(GameData gameData, UUID permanentId,
                                                             PermanentChoiceContext.DefendingPlayerChoosesCreatureToBlock context) {
         defendingPlayerChoosesCreatureToBlockEffectHandler.completeChoice(gameData, permanentId, context);
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
-    }
-
-    public void handleAttackingPlayerChoosesCreatureToBoost(GameData gameData, UUID permanentId,
-                                                            PermanentChoiceContext.AttackingPlayerChoosesCreatureToBoost context) {
-        attackingPlayerChoosesCreatureToBoostEffectHandler.completeChoice(gameData, permanentId, context);
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPass(gameData);
     }
 

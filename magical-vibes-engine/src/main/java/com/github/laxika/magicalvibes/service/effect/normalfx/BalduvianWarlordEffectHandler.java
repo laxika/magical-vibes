@@ -1,6 +1,7 @@
 package com.github.laxika.magicalvibes.service.effect.normalfx;
 
 import com.github.laxika.magicalvibes.model.GameData;
+import com.github.laxika.magicalvibes.model.PendingMayAbility;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.StackEntry;
@@ -16,9 +17,14 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Resolves {@link BalduvianWarlordEffect}: the target leaves combat through {@link CombatRemovalSupport} (the attackers
+ * it blocked that had no other blocker this combat become unblocked), then, when it can block an attacker, it blocks
+ * the attacker the effect's controller chooses, a lone legal attacker chosen unasked
+ * (CR 608.2d). With {@link BalduvianWarlordEffect#mayReblock()} the controller is first asked whether it blocks.
+ */
 @Component
 @RequiredArgsConstructor
 public class BalduvianWarlordEffectHandler implements NormalEffectHandlerBean {
@@ -27,6 +33,7 @@ public class BalduvianWarlordEffectHandler implements NormalEffectHandlerBean {
     private final BlockLegalityService blockLegalityService;
     private final CombatBlockService combatBlockService;
     private final PlayerInputService playerInputService;
+    private final CombatRemovalSupport combatRemovalSupport;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -36,31 +43,45 @@ public class BalduvianWarlordEffectHandler implements NormalEffectHandlerBean {
     @Override
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
         BalduvianWarlordEffect warlordEffect = (BalduvianWarlordEffect) effect;
-        Permanent blocker = gameQueryService.findPermanentById(gameData, entry.getTargetId());
-        if (blocker == null || (!warlordEffect.reblockOnly() && !blocker.isBlocking())) {
+        Permanent creature = gameQueryService.findPermanentById(gameData, entry.getTargetId());
+        if (creature == null || (!warlordEffect.mayReblock() && !creature.isBlocking())) {
             return;
         }
 
-        if (!warlordEffect.reblockOnly()) {
-            removeFromCombatAndUpdateAttackers(gameData, blocker);
+        combatRemovalSupport.removeFromCombatAndUnblockSoleBlockers(gameData, entry, creature);
+        if (legalAttackerIds(gameData, creature).isEmpty()) {
+            return;
         }
+        if (warlordEffect.mayReblock()) {
+            gameData.pendingMayAbilities.addFirst(new PendingMayAbility(
+                    entry.getCard(),
+                    entry.getControllerId(),
+                    List.of(warlordEffect),
+                    "You may have it block an attacking creature of your choice?",
+                    creature.getId()));
+            return;
+        }
+        chooseAttackerToBlock(gameData, entry.getControllerId(), entry.getCard().getName(), creature);
+    }
 
+    /** "It blocks an attacking creature of your choice": the choice, unasked when only one attacker can be chosen. */
+    public void chooseAttackerToBlock(GameData gameData, UUID choosingPlayerId, String sourceCardName,
+                                      Permanent blocker) {
         List<UUID> legalAttackerIds = legalAttackerIds(gameData, blocker);
         if (legalAttackerIds.isEmpty()) {
             return;
         }
 
         PermanentChoiceContext.BalduvianWarlordChoosesAttacker context =
-                new PermanentChoiceContext.BalduvianWarlordChoosesAttacker(
-                        blocker.getId(), entry.getCard().getName());
+                new PermanentChoiceContext.BalduvianWarlordChoosesAttacker(blocker.getId(), sourceCardName);
         if (legalAttackerIds.size() == 1) {
             completeChoice(gameData, legalAttackerIds.getFirst(), context);
             return;
         }
 
         gameData.interaction.setPermanentChoiceContext(context);
-        playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), legalAttackerIds,
-                entry.getCard().getName() + " - choose an attacking creature for it to block.");
+        playerInputService.beginPermanentChoice(gameData, choosingPlayerId, legalAttackerIds,
+                sourceCardName + " - choose an attacking creature for it to block.");
     }
 
     public void completeChoice(GameData gameData, UUID chosenAttackerId,
@@ -90,31 +111,6 @@ public class BalduvianWarlordEffectHandler implements NormalEffectHandlerBean {
         boolean wasBlocked = attacker.isBlockedWithoutBlockers()
                 || gameQueryService.isBlockedByAnyCreature(gameData, attacker);
         combatBlockService.applyBlockFromEffect(gameData, blocker, attacker, wasBlocked, context.sourceCardName());
-    }
-
-    public boolean hasLegalAttacker(GameData gameData, Permanent blocker) {
-        return !legalAttackerIds(gameData, blocker).isEmpty();
-    }
-
-    private void removeFromCombatAndUpdateAttackers(GameData gameData, Permanent blocker) {
-        List<UUID> attackerIds = new ArrayList<>(blocker.getBlockingTargetIds());
-        for (UUID attackerId : attackerIds) {
-            Permanent attacker = gameQueryService.findPermanentById(gameData, attackerId);
-            if (attacker == null || !attacker.isAttacking()) {
-                continue;
-            }
-
-            Set<UUID> blockersThisCombat = gameData.combatBlockOpponentIdsThisCombat.get(attackerId);
-            boolean hadAnotherBlocker = blockersThisCombat != null
-                    ? blockersThisCombat.stream().anyMatch(id -> !id.equals(blocker.getId()))
-                    : hasCurrentOtherBlocker(gameData, attackerId, blocker.getId());
-            boolean hasCurrentOtherBlocker = hasCurrentOtherBlocker(gameData, attackerId, blocker.getId());
-            attacker.setBlockedWithoutBlockers(!hasCurrentOtherBlocker && hadAnotherBlocker);
-        }
-
-        blocker.setBlocking(false);
-        blocker.getBlockingTargets().clear();
-        blocker.getBlockingTargetIds().clear();
     }
 
     private List<UUID> legalAttackerIds(GameData gameData, Permanent blocker) {
@@ -152,17 +148,5 @@ public class BalduvianWarlordEffectHandler implements NormalEffectHandlerBean {
                 || (attackTarget != null
                 && !gameData.playerIds.contains(attackTarget)
                 && defenderId.equals(gameQueryService.findPermanentController(gameData, attackTarget)));
-    }
-
-    private boolean hasCurrentOtherBlocker(GameData gameData, UUID attackerId, UUID excludedBlockerId) {
-        final boolean[] found = {false};
-        gameData.forEachPermanent((ignored, permanent) -> {
-            if (!found[0] && permanent.isBlocking()
-                    && !permanent.getId().equals(excludedBlockerId)
-                    && permanent.getBlockingTargetIds().contains(attackerId)) {
-                found[0] = true;
-            }
-        });
-        return found[0];
     }
 }

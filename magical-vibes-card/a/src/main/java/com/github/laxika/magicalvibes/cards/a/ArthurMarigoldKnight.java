@@ -11,8 +11,9 @@ import com.github.laxika.magicalvibes.model.effect.LibrarySelectionFollowUp;
 import com.github.laxika.magicalvibes.model.effect.LookAtTopCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.LookDestination;
 import com.github.laxika.magicalvibes.model.effect.MakeChosenPermanentAttackingEffect;
-import com.github.laxika.magicalvibes.model.effect.ReturnSelectedPermanentToHandAtEndOfCombatEffect;
+import com.github.laxika.magicalvibes.model.effect.ReturnTargetPermanentToHandAtEndOfCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -27,7 +28,7 @@ public class ArthurMarigoldKnight extends Card {
                 public CardEffect effect() {
                     return SequenceEffect.of(
                             MakeChosenPermanentAttackingEffect.pickedPermanent(),
-                            new ReturnSelectedPermanentToHandAtEndOfCombatEffect());
+                            new ReturnTargetPermanentToHandAtEndOfCombatEffect(Subjects.searched()));
                 }
 
                 @Override

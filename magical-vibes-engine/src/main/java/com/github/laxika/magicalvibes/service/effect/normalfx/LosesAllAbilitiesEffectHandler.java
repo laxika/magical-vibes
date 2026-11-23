@@ -77,6 +77,7 @@ public class LosesAllAbilitiesEffectHandler implements NormalEffectHandlerBean {
             String durationText = Duration.STATIC.equals(duration) || Duration.PERMANENT.equals(duration)
                     ? "indefinitely"
                     : Duration.UNTIL_YOUR_NEXT_TURN.equals(duration) ? "until your next turn"
+                    : Duration.UNTIL_CREATURE_SPELL_CAST.equals(duration) ? "until a player casts a creature spell"
                     : duration != null && duration.asLongAs() != null
                     ? "for as long as its source remains on the battlefield"
                     : "until end of turn";

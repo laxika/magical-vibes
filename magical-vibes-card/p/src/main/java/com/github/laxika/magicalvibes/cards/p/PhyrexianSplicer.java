@@ -4,7 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.MoveKeywordFromTargetToTargetEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.RemoveKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -37,7 +40,8 @@ public class PhyrexianSplicer extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{2}",
-                List.of(new MoveKeywordFromTargetToTargetEffect(keyword)),
+                List.of(new RemoveKeywordEffect(keyword, Subjects.target(0)),
+                        new GrantKeywordEffect(keyword, Subjects.target(1), Duration.UNTIL_END_OF_TURN)),
                 "{2}, {T}: Until end of turn, target creature with " + label
                         + " loses it and another target creature gains it.",
                 List.of(

@@ -156,11 +156,6 @@ public sealed interface MultiPermanentChoiceContext {
         }
     }
 
-    record DestroyUpToOneAttachedPermanent(UUID targetCreatureId, PermanentPredicate attachedFilter,
-                                           UUID sourceCardId, UUID sourceControllerId,
-                                           String sourceCardName) implements MultiPermanentChoiceContext {
-    }
-
     /**
      * Untap the single chosen permanent (any battlefield), for a triggered ability with no cast-time
      * target — e.g. Initiate's Companion's "untap target creature or land". The choosable permanents
@@ -247,10 +242,6 @@ public sealed interface MultiPermanentChoiceContext {
     /** The controller may choose an Equipment attached to a creature they control to unattach. */
     record UnattachEquipmentFromControlledCreature(StackEntry resolvingEntry)
             implements MultiPermanentChoiceContext {
-    }
-
-    /** The defending player sacrifices the chosen attacking creatures. */
-    record SacrificeAttackingCreatures() implements MultiPermanentChoiceContext {
     }
 
     /** The attacking player chooses permanents to sacrifice as an additional attack cost. */

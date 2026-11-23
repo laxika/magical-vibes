@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold run 1 (2026-11-23): `dead`, `p-cost`, `p-lib`: 10 dead, 9 absorbed, 2 re-batched into `targets-x`, 7 `blocked-other`. Fold run 2 (2026-11-23): `p-dmg`: 14 absorbed, 9 split, 4 unique, 5 `blocked-other`. Next: fold run 3. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold run 1 (2026-11-23): `dead`, `p-cost`, `p-lib`: 10 dead, 9 absorbed, 2 re-batched into `targets-x`, 7 `blocked-other`. Fold run 2 (2026-11-23): `p-dmg`: 14 absorbed, 9 split, 4 unique, 5 `blocked-other`. Fold run 3 (2026-11-23): `p-perm`, `sac-singles`, `destroy-singles`: 10 absorbed, 9 split, 1 survivor, 6 `blocked-other`, 3 re-batched. Next: fold run 4. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 4,003 / 3,263 (fold run 2; 4,025 / 3,286 after fold run 1, 4,044 / 3,299 before) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,984 / 3,246 (fold run 3; 4,003 / 3,263 after fold run 2, 4,025 / 3,286 after fold run 1, 4,044 / 3,299 before) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,9 +64,9 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 4,995 rows over 4,404 classes, the consolidation's 102, defect run
-D10's 73, fold run 1's 28 and fold run 2's 32 included. Latest verdict per class: `step-9` 1,264, unique 1,165, absorbed 529, split 463,
-blocked-other 427, survivor 259, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,264 `step-9` rows for fold runs after fold run 2 (1,322 before fold run 1); 5 rows on the owner's open
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,024 rows over 4,404 classes, the consolidation's 102, defect run
+D10's 73 and fold runs 1, 2 and 3's 28, 32 and 29 included. Latest verdict per class: `step-9` 1,238, unique 1,165, absorbed 539, split 472,
+blocked-other 433, survivor 260, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,238 `step-9` rows for fold runs after fold run 3 (1,264 after fold run 2, 1,322 before fold run 1); 5 rows on the owner's open
 questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
@@ -451,6 +451,14 @@ Step and choice records:
   creature a `ChoosePermanentsEffect` chose); "choose a creature type, [verb] for each permanent of it you control" is
   `ChooseCreatureTypeAtResolutionEffect` + the verb over `PermanentCount(PermanentHasTypeChosenThisResolutionPredicate, CONTROLLER)`;
   `TargetPolarityClassifier` reads a negatively `Scaled` boost as a debuff.
+- Permanents and combat (fold run 3): `MustBlockEachCombatEffect(subject)` (`source()` default; a static set such as
+  `allCreatures()` is the source's own rule, read by `GameQueryService.isNamedByStaticMustBlockSet`);
+  `TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect(…, Duration)` (`PERMANENT` for "it becomes the creature type of your
+  choice"); `ExploreEffect(controlledBy(you(), filter))` (each explores in turn, the controller ordering them, CR 701.44d);
+  `BalduvianWarlordEffect.thenMayReblock()` ("you may have it block"); a "destroy all [filter] of the [chosen type / colour]" is the
+  chosen-value step + `DestroyAllPermanentsEffect` with `PermanentHasTypeChosenThisResolutionPredicate` /
+  `PermanentHasChosenSpellColorPredicate`; "tokens created with this" is `PermanentCreatedBySourcePredicate`; "up to one [filter]
+  attached to that creature" is `ChoosePermanentsEffect.upTo(1, attachmentsOf(target(), filter))` + the verb over `thisWay(CHOOSE)`.
 
 Permissions, restrictions and grants:
 
@@ -985,6 +993,63 @@ draw (group 4); `DealDamageToTargetCreatureOrPlayerEffect`'s targeted form is de
 
 **For the next run.** Fold run 3. Before a `p-…` note's fold, check every AI reader of the absorbed record's capability interfaces and
 what a dynamic amount evaluates to in the AI's estimation context: a count over a resolution choice is 0 there.
+
+### Step 9, fold run 3 (2026-11-23)
+
+Fold run 3 of the Fold queue: batches `p-perm`, `sac-singles`, `destroy-singles` (29 rows); no "Fold:" defect line named them.
+Ratchet 4,003 / 3,263 → 3,984 / 3,246 (19 records, 17 handlers; the `GlobalMustBlockEachCombatEffect` interface went too). Ledger: 29
+rows (absorbed 10, split 9, survivor 1, `blocked-other` 6, re-batched 3). 24 card files rewritten, Oracle text checked with `get_card`
+for all 37 cards of the batches; rulings for Turnabout. CR 101.4, 118.12a, 400.7, 608.2b, 608.2d, 608.2h, 611.2a, 613.1f, 701.44d
+checked with `get_rule`.
+
+| Batch | Result |
+|---|---|
+| `p-perm` (15) | 12 folded: Arthur (`searched()`), Soul Sculptor and Phyrexian Splicer (split onto the type, lose-all and keyword records), Proteus Machine, Hei Bai's Spirits (one static ability of the two restrictions), Rhythm of the Wild and Uncivil Unrest (`GrantKeywordEffect(RIOT, …, nontoken)`), Grand Melee and Invasion Plans, Mirkwood Trapper, Protean Hydra, Hakbal, False Orders, Inner-Flame Igniter. Left: Horizon Boughs (a plane's every-player untap set), Turnabout (both choices on resolution; `ChooseOneAtResolutionEffect` can't declare its player target), and `CanOnlyAttackAloneEffect` stays the self record that `attached-restr` (run 37) wraps for Errantry |
+| `sac-singles` (6) | 2 folded: Dispense Justice and Ends (`SacrificePermanentsEffect`, metalcraft as `FixedIfCondition`), Bringer of the Last Gift (sacrifice step, then the graveyards' creature cards except `cardsThisWay(SACRIFICE)`). Left: Vaevictis to `perm-shuffle`, Prototype X-8 to `conjure-dup`; the two return-or-sacrifice records (5 cards) `blocked-other` for step 10 |
+| `destroy-singles` (8) | 5 folded: Saproling Burst and Tombstone Stairwell (`PermanentCreatedBySourcePredicate`), Extinction and Kindred Dominance, Root Greevil (as Wash Out), Chain of Acid (as Chain of Smog, `TARGET_PERMANENT_CONTROLLER` for the last-known controller), Light of Judgment. Left: Broken Visage to `delayed-created`, Heliod's Punishment (a condition over the granter), Krenko's Buzzcrusher (`oneForEach` is exactly one) |
+
+**Where the triage was wrong.** The return-or-sacrifice note's `MayEffect(ReturnChosenPermanentsToHandEffect, prompt, SacrificeSelfEffect)`
+would keep the creature after an accepted payment with nothing left to return (CR 118.12a), so the payment stays (cost-shape) and step 10
+merges it. Turnabout's `ChooseOneEffect` is cast-time; its ruling puts both choices on resolution. Chain of Acid's
+`TARGET_PLAYER_OR_PERMANENT_CONTROLLER` finds no controller once the permanent is destroyed: `TARGET_PERMANENT_CONTROLLER` reads it last
+known (CR 608.2h). Broken Visage's "AmountThisWay destroyed-power" would make a 0/0 for an indestructible target; `TargetPower` /
+`TargetToughness` read it, but the end-step sacrifice of the created token is `delayed-created`'s piece. Master of Cruelties' subject
+fold is `attached-restr`'s (Errantry wraps the self record).
+
+**Shared pieces widened** (Standing knowledge, Shared pieces): `MustBlockEachCombatEffect(PermanentSubject)` with
+`GameQueryService.isNamedByStaticMustBlockSet`; `TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect`'s `Duration`; `ExploreEffect`
+over a set (the order choice moved into `ExploreEffectHandler`); `BalduvianWarlordEffect.thenMayReblock()` (one removal path,
+`CombatRemovalSupport`, for both cards); `LosesAllAbilitiesEffectHandler` logs "until a player casts a creature spell".
+
+**Behaviour changes.**
+- Master of Cruelties that lost its abilities (or is face down) may attack with other creatures: `CombatAttackService.canOnlyAttackAlone`
+  reads the active static effect (CR 613.1f). `MasterOfCrueltiesTest.attacksWithOthersAfterLosingAbilities` (fails on the old code by
+  reading: the old read was the card's printed static effects; not run on it).
+- Survivors' guards now apply: Phyrexian Splicer doesn't grant a keyword its recipient can't have; Dispense Justice and Ends skip
+  permanents that can't be sacrificed and sacrifice-protected players, and sacrifice the chosen attackers as one event (CR 101.4);
+  Soul Sculptor's enchantment also loses artifact and land subtypes (`SetCardTypesEffect`'s layer-4 branch); Grand Melee's requirement is
+  read through `activeStaticEffects` by the engine and the AI alike (the AI's scan ignored a Grand Melee that lost its abilities).
+- Prompts and logs (the survivors' lines): Mirkwood Trapper's choice is `RecordChosenPermanents` with a "chooses" line; Root Greevil's colour
+  prompt is the spell colour choice; Dispense Justice's "has no matching permanents to sacrifice"; Balduvian Warlord logs the removal;
+  Inner-Flame Igniter's and Proteus Machine's lines; Soul Sculptor now logs the loss of abilities.
+- AI only: Kindred Dominance is valued (and seen on the stack) as a wipe of every creature, Extinction of none, since a resolution-time
+  type choice has no value in the AI's estimate; before, neither record was a `DestroyAllPermanentsEffect`.
+
+**Tests changed.** `MirkwoodTrapperTest` (the choice context is `RecordChosenPermanents`; display names added), `DispenseJusticeTest`
+(the context is `ForcedSacrifice`; the survivor's "no matching permanents" log line), `TargetPolarityGuardTest` (False Orders' record).
+New: the Master of Cruelties case.
+
+**Tests run.** 146 classes (every test class naming a rewritten card or a survivor's card, `git grep -lwF 'X.class'`; four explore
+cards; the 28 `Mastery|DeathReplacement` classes; `CombatAttackServiceTest`, `CombatBlockServiceTest`, `BattlefieldPlacementServiceTest`,
+`GameQueryServiceTest`, `SubjectResolutionServiceTest`, `LayerClassifierTest`, the return-or-sacrifice handler test, the three AI
+decision-engine tests, `TargetPolarityGuardTest`, `EffectCountRatchetTest`): 248 XML files, 2,213 cases, 0 failures. A first run's card-test JVM for letter `m`
+died of a SIGSEGV in the garbage collector (hs_err in the module directory, removed); the rerun passed.
+
+**Seen, not changed** (Defect queue group 6): the return-or-sacrifice payments find "it" by card id, so a source that left and came
+back is sacrificed (CR 400.7).
+
+**For the next run.** Fold run 4. Several singles notes name a head whose option exists only for "exactly one" (`oneForEach`) or only
+at cast (`ChooseOneEffect`); read the head's constructor guards before taking the note's composition.
 
 ## Prompt
 

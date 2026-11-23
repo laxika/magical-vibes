@@ -10,8 +10,8 @@ package com.github.laxika.magicalvibes.model.effect;
  * @param token                     blueprint for the token every player creates
  * @param recordAsCreatedWithSource when true, every created token id is registered under the source
  *                                  permanent in {@code GameData.sourceCreatedTokens}, so a paired
- *                                  {@link DestroyTokensCreatedWithSourceEffect} can find them again
- *                                  ("tokens created with this enchantment"; Tombstone Stairwell)
+ *                                  {@code PermanentCreatedBySourcePredicate} can find them again
+ *                                  ("destroy all tokens created with this enchantment"; Tombstone Stairwell)
  * @param players                   who creates tokens; never a target
  */
 public record EachPlayerCreatesTokenEffect(CreateTokenEffect token, boolean recordAsCreatedWithSource,

@@ -549,12 +549,6 @@ public sealed interface PermanentChoiceContext extends PendingInteraction {
     record DefendingPlayerChoosesCreatureToBlock(UUID choosingPlayerId, UUID sourcePermanentId,
                                                  String sourceCardName) implements PermanentChoiceContext {}
 
-    /** The attacking player chooses one of their attacking creatures to receive a temporary boost. */
-    record AttackingPlayerChoosesCreatureToBoost(Card sourceCard, UUID sourcePermanentId,
-                                                 UUID controllerId, UUID attackingPlayerId,
-                                                 int powerBoost, int toughnessBoost)
-            implements PermanentChoiceContext {}
-
     /** The controller chooses which of several eligible partners a meld effect melds the source with. */
     record MeldPartnerChoice(UUID controllerId, UUID sourcePermanentId, MeldWithNamedCreatureEffect effect)
             implements PermanentChoiceContext {}

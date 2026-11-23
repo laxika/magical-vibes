@@ -2,6 +2,7 @@ package com.github.laxika.magicalvibes.cards.m;
 import com.github.laxika.magicalvibes.model.CounterType;
 
 import com.github.laxika.magicalvibes.cards.b.BorosMastiff;
+import com.github.laxika.magicalvibes.cards.f.Frogify;
 import com.github.laxika.magicalvibes.cards.r.RalZarek;
 import com.github.laxika.magicalvibes.cards.s.Skullcrack;
 import com.github.laxika.magicalvibes.model.ManaColor;
@@ -19,7 +20,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({MasterOfCruelties.class, BorosMastiff.class, RalZarek.class, Skullcrack.class})
+@CardUsed({MasterOfCruelties.class, BorosMastiff.class, RalZarek.class, Skullcrack.class, Frogify.class})
 class MasterOfCrueltiesTest extends BaseCardTest {
 
     @Test
@@ -70,6 +71,21 @@ class MasterOfCrueltiesTest extends BaseCardTest {
         assertThatThrownBy(() -> declareAttackers(List.of(0, 1)))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("can only attack alone");
+    }
+
+    @Test
+    @DisplayName("Having lost all its abilities, it can attack alongside another creature")
+    void attacksWithOthersAfterLosingAbilities() {
+        Permanent master = addCreatureReady(player1, new MasterOfCruelties());
+        addCreatureReady(player1, new BorosMastiff());
+        harness.setHand(player1, List.of(new Frogify()));
+        harness.addMana(player1, ManaColor.BLUE, 2);
+        harness.castEnchantment(player1, 0, master.getId());
+        harness.passBothPriorities();
+
+        harness.withAutoStop(TurnStep.DECLARE_ATTACKERS, () -> declareAttackers(List.of(0, 1)));
+
+        assertThat(master.isAttacking()).isTrue();
     }
 
     @Test

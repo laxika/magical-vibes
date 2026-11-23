@@ -58,7 +58,7 @@ public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler imple
             gameLogService.append(gameData, GameLog.builder()
                     .card(entry.getCard())
                     .text(" makes " + affectedCount + " creature(s) into "
-                            + chosenSubtype.getDisplayName() + "s until end of turn.")
+                            + chosenSubtype.getDisplayName() + "s" + durationLabel(chosenEffect) + ".")
                     .build());
             return;
         }
@@ -71,7 +71,7 @@ public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler imple
         addCreatureType(gameData, entry, chosenEffect, target, chosenSubtype);
         gameLogService.append(gameData, GameLog.builder()
                 .card(target.getCard())
-                .text(" becomes a " + chosenSubtype.getDisplayName() + " until end of turn.")
+                .text(" becomes a " + chosenSubtype.getDisplayName() + durationLabel(chosenEffect) + ".")
                 .build());
     }
 
@@ -81,6 +81,10 @@ public class TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffectHandler imple
         gameData.addFloatingEffect(new FloatingContinuousEffect(
                 UUID.randomUUID(), FaceDownVisibility.sourceName(gameData, entry), entry.getSourcePermanentId(),
                 entry.getControllerId(), new GrantSubtypeEffect(chosenSubtype, Subjects.target(), !effect.retainOtherTypes()),
-                permanent.getId(), null, null, Duration.UNTIL_END_OF_TURN, 0));
+                permanent.getId(), null, null, effect.duration(), 0));
+    }
+
+    private static String durationLabel(TargetCreatureBecomesChosenSubtypeUntilEndOfTurnEffect effect) {
+        return Duration.UNTIL_END_OF_TURN.equals(effect.duration()) ? " until end of turn" : "";
     }
 }

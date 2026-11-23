@@ -195,7 +195,7 @@ on what the mana may pay for.
 | Targeted destroy (total power and toughness filter) | `c/CutDown.java` | DestroyTargetPermanentEffect + PermanentPowerToughnessTotalAtMostPredicate(5) creature filter |
 | Multi-effect removal | `c/Condemn.java` | PutTargetOnBottomOfLibrary + GainLifeEqualToTargetToughness |
 | Put on top of library | `b/BanishmentDecree.java` | PutTargetOnTopOfLibraryEffect + PermanentAnyOfPredicate filter (artifact/creature/enchantment) |
-| Metalcraft sacrifice instant | `d/DispenseJustice.java` | SacrificeAttackingCreaturesEffect(1, 2) + PlayerPredicateTargetFilter(ANY) — metalcraft checked at resolution |
+| Metalcraft sacrifice instant | `d/DispenseJustice.java` | SacrificePermanentsEffect(FixedIfCondition(Metalcraft, 2, 1), AllOf(IsCreature, IsAttacking), targetPlayer()) + PlayerPredicateTargetFilter(ANY) — metalcraft checked at resolution |
 | Destroy + cantrip | `s/Smash.java` | DestroyTargetPermanentEffect + DrawCardEffect |
 | Conditional artifact/enchantment destroy + cantrip | `r/RendingVines.java` | Artifact/enchantment target filter + `ConditionalEffect(new TargetPermanentMatches(new PermanentManaValueAtMostSourceControllerHandSizePredicate()), new DestroyTargetPermanentEffect())` + DrawCardEffect; the hand-size restriction is checked only on resolution |
 | Destroy + life gain by mana value | `d/DivineOffering.java` | `DestroyTargetPermanentEffect()` then `GainLifeEffect(new TargetManaValue())` (last-known mana value) + artifact filter |

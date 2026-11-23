@@ -268,11 +268,12 @@ public class CombatAttackService {
 
     /**
      * Whether this creature may be declared only as the sole attacker, either from its own
-     * static ability or from an attached Aura.
+     * static ability, while it has it (a face-down creature, or one that lost its abilities, has
+     * not), or from an attached Aura.
      */
     public boolean canOnlyAttackAlone(GameData gameData, Permanent creature) {
-        boolean selfRestricted = creature.getCard().getStaticEffects().stream()
-                .anyMatch(CanOnlyAttackAloneEffect.class::isInstance);
+        boolean selfRestricted = gameQueryService.hasActiveStaticEffectIncludingGranted(gameData, creature,
+                CanOnlyAttackAloneEffect.class);
         return selfRestricted || gameQueryService.hasAuraWithEffect(gameData, creature,
                 EnchantedCreatureCanOnlyAttackAloneEffect.class);
     }

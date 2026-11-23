@@ -10,9 +10,10 @@ import com.github.laxika.magicalvibes.model.amount.CardsInGraveyard;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
 import com.github.laxika.magicalvibes.model.effect.CumulativeUpkeepEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyTokensCreatedWithSourceEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.EachPlayerCreatesTokenEffect;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentCreatedBySourcePredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -35,7 +36,7 @@ public class TombstoneStairwell extends Card {
                         Set.of(Keyword.HASTE), Set.of()),
                 true));
 
-        addTrigger(Triggers.endStep(ActivePlayer.ANY), new DestroyTokensCreatedWithSourceEffect(true));
-        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new DestroyTokensCreatedWithSourceEffect(true));
+        addTrigger(Triggers.endStep(ActivePlayer.ANY), new DestroyAllPermanentsEffect(new PermanentCreatedBySourcePredicate(), true));
+        addTrigger(Triggers.leavesBattlefield(ObjectRelation.THIS), new DestroyAllPermanentsEffect(new PermanentCreatedBySourcePredicate(), true));
     }
 }

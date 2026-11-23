@@ -34,7 +34,7 @@ import com.github.laxika.magicalvibes.service.effect.normalfx.EachOpponentExiles
 import com.github.laxika.magicalvibes.service.effect.normalfx.RiskyMoveEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.MemoriesReturningEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.BoostEquippedCreatureUntilEndOfTurnEffectHandler;
-import com.github.laxika.magicalvibes.service.effect.normalfx.ExploreEachControlledCreatureEffectHandler;
+import com.github.laxika.magicalvibes.service.effect.normalfx.ExploreEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.ChangeTargetOfTargetSpellToSourceEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.RemoveCounterFromControlledCreatureThenDrawEffectHandler;
 import com.github.laxika.magicalvibes.service.effect.normalfx.TurnOwnCreatureFaceUpEffectHandler;
@@ -122,7 +122,7 @@ public class PermanentChoiceHandlerService {
     private final RemoveCounterFromControlledCreatureThenDrawEffectHandler
             removeCounterFromControlledCreatureThenDrawEffectHandler;
     private final ChangeTargetOfTargetSpellToSourceEffectHandler changeTargetOfTargetSpellToSourceEffectHandler;
-    private final ExploreEachControlledCreatureEffectHandler exploreEachControlledCreatureEffectHandler;
+    private final ExploreEffectHandler exploreEffectHandler;
     private final BoostEquippedCreatureUntilEndOfTurnEffectHandler boostEquippedCreatureUntilEndOfTurnEffectHandler;
     private final InputCompletionService inputCompletionService;
     private final EarthbendTargetLandThenFightEffectHandler earthbendThenFightHandler;
@@ -731,8 +731,6 @@ public class PermanentChoiceHandlerService {
             battlefieldHandler.handleExileCombatOpponent(gameData, permanentId, exileCombatOpponent);
         } else if (context instanceof PermanentChoiceContext.DefendingPlayerChoosesCreatureToBlock chooseBlocker) {
             battlefieldHandler.handleDefendingPlayerChoosesCreatureToBlock(gameData, permanentId, chooseBlocker);
-        } else if (context instanceof PermanentChoiceContext.AttackingPlayerChoosesCreatureToBoost chooseBoost) {
-            battlefieldHandler.handleAttackingPlayerChoosesCreatureToBoost(gameData, permanentId, chooseBoost);
         } else if (context instanceof PermanentChoiceContext.MeldPartnerChoice meldChoice) {
             battlefieldHandler.handleMeldPartnerChoice(gameData, permanentId, meldChoice);
         } else if (context instanceof PermanentChoiceContext.BalduvianWarlordChoosesAttacker chooseAttacker) {
@@ -821,7 +819,7 @@ public class PermanentChoiceHandlerService {
         } else if (context instanceof PermanentChoiceContext.ChosenPermanentCopyChoice copyChoice) {
             battlefieldHandler.handleChosenPermanentCopyChoice(gameData, permanentId, copyChoice);
         } else if (context instanceof PermanentChoiceContext.ExploreOrderChoice exploreOrder) {
-            exploreEachControlledCreatureEffectHandler.completeChoice(gameData, permanentId, exploreOrder);
+            exploreEffectHandler.completeOrderChoice(gameData, permanentId, exploreOrder);
             inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
         } else if (context instanceof PermanentChoiceContext.ChangeSpellTargetToSource changeTarget) {
             changeTargetOfTargetSpellToSourceEffectHandler.completeChoice(gameData, permanentId, changeTarget);

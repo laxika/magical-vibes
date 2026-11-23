@@ -839,20 +839,6 @@ public class PlayerInputService {
         log.info("Game {} - Awaiting {} to choose a color (discard all cards of that color)", gameData.id, playerName);
     }
 
-    public void beginDestroyAllPermanentsOfChosenColorChoice(GameData gameData, UUID controllerId,
-            PermanentPredicate filter) {
-        ChoiceContext.DestroyAllPermanentsOfChosenColorChoice ctx =
-                new ChoiceContext.DestroyAllPermanentsOfChosenColorChoice(controllerId, filter);
-
-        List<String> colors = List.of("WHITE", "BLUE", "BLACK", "RED", "GREEN");
-        interactionHandlerRegistry.begin(gameData, new PendingInteraction.ColorChoice(
-                controllerId, null, null, ctx, colors, "Choose a color."));
-
-        String playerName = gameData.playerIdToName.get(controllerId);
-        log.info("Game {} - Awaiting {} to choose a color (destroy all permanents of that color)",
-                gameData.id, playerName);
-    }
-
     public void beginExileTopCardsChosenColorTokensChoice(GameData gameData, UUID controllerId, UUID targetPlayerId,
             int count, com.github.laxika.magicalvibes.model.effect.CreateTokenEffect tokenTemplate, String sourceSetCode) {
         ChoiceContext.ExileTopCardsChosenColorTokensChoice ctx =

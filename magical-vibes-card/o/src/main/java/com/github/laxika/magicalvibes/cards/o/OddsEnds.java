@@ -7,7 +7,11 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CopySpellEffect;
 import com.github.laxika.magicalvibes.model.effect.CounterSpellEffect;
 import com.github.laxika.magicalvibes.model.effect.FlipCoinWinEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeAttackingCreaturesEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
 import com.github.laxika.magicalvibes.model.filter.PlayerPredicateTargetFilter;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelation;
 import com.github.laxika.magicalvibes.model.filter.PlayerRelationPredicate;
@@ -39,7 +43,9 @@ public class OddsEnds extends Card {
                 ).withManaCost("{U}{R}"),
                 new ChooseOneEffect.ChooseOneOption(
                         "Ends - Target player sacrifices two attacking creatures of their choice.",
-                        new SacrificeAttackingCreaturesEffect(2, 2),
+                        new SacrificePermanentsEffect(2, new PermanentAllOfPredicate(List.of(
+                                new PermanentIsCreaturePredicate(), new PermanentIsAttackingPredicate())),
+                                Subjects.targetPlayer()),
                         anyPlayer
                 ).withManaCost("{3}{R}{W}")
         )));

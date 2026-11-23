@@ -9,6 +9,7 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
+import com.github.laxika.magicalvibes.model.PermanentChoiceContext;
 import com.github.laxika.magicalvibes.model.Permanent;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
@@ -16,6 +17,10 @@ import com.github.laxika.magicalvibes.model.effect.DoubleExploreReplacementEffec
 import com.github.laxika.magicalvibes.model.effect.ExploreEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryBeforeExploreReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.ScryEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAnyOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsSpecificPermanentPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
+import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.GameLogService;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
 import com.github.laxika.magicalvibes.service.effect.AmountContext;
@@ -26,6 +31,10 @@ import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+/**
+ * Resolves {@link ExploreEffect}. A set subject ("each Merfolk creature you control explores") makes each permanent it
+ * names as the effect resolves explore one at a time, its controller choosing which explores next (CR 701.44d).
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -36,6 +45,7 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
     private final GameLogService gameLogService;
     private final PermanentCounterSupport permanentCounterSupport;
     private final AmountEvaluationService amountEvaluationService;
+    private final PlayerInputService playerInputService;
 
     @Override
     public Class<? extends CardEffect> handledEffect() {
@@ -46,6 +56,11 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
     public void resolve(GameData gameData, StackEntry entry, CardEffect effect) {
 
         ExploreEffect exploreEffect = (ExploreEffect) effect;
+        if (exploreEffect.subject() != null && exploreEffect.subject().isSet()) {
+            exploreEachInTurn(gameData, entry, subjectResolutionService.permanentIds(
+                    gameData, entry, exploreEffect, exploreEffect.subject()));
+            return;
+        }
         UUID exploringPermanentId = findExploringPermanentId(gameData, entry, exploreEffect);
         if (exploreEffect.permanentId() != null
                 && gameQueryService.findPermanentById(gameData, exploreEffect.permanentId()) == null) {
@@ -185,6 +200,38 @@ public class ExploreEffectHandler implements NormalEffectHandlerBean {
     }
 
     private record ExploreReplacementCounts(int scryCount, int doubleExploreCount) {
+    }
+
+    /** One of several permanents told to explore at once explores, the controller choosing which when there is a choice. */
+    private void exploreEachInTurn(GameData gameData, StackEntry entry, List<UUID> exploringIds) {
+        if (exploringIds.size() == 1) {
+            entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1,
+                    List.of(ExploreEffect.forPermanent(exploringIds.getFirst())));
+        } else if (exploringIds.size() > 1) {
+            gameData.interaction.setPermanentChoiceContext(
+                    new PermanentChoiceContext.ExploreOrderChoice(entry, List.copyOf(exploringIds)));
+            playerInputService.beginPermanentChoice(gameData, entry.getControllerId(), exploringIds,
+                    "Choose which creature explores next.");
+        }
+    }
+
+    /** Explores the chosen permanent first, then repeats the choice for the rest. */
+    public void completeOrderChoice(GameData gameData, UUID chosenId, PermanentChoiceContext.ExploreOrderChoice choice) {
+        if (!choice.candidateIds().contains(chosenId)) {
+            throw new IllegalStateException("Invalid creature to explore");
+        }
+        StackEntry entry = choice.resolvingEntry();
+        List<UUID> rest = choice.candidateIds().stream().filter(id -> !id.equals(chosenId)).toList();
+        List<CardEffect> steps = new ArrayList<>();
+        steps.add(ExploreEffect.forPermanent(chosenId));
+        if (!rest.isEmpty()) {
+            PermanentPredicate remaining = rest.size() == 1
+                    ? new PermanentIsSpecificPermanentPredicate(rest.getFirst())
+                    : new PermanentAnyOfPredicate(rest.stream()
+                    .<PermanentPredicate>map(PermanentIsSpecificPermanentPredicate::new).toList());
+            steps.add(new ExploreEffect(Subjects.controlledBy(Subjects.you(), remaining)));
+        }
+        entry.insertEffectsToResolve(entry.getResolvingEffectIndex() + 1, steps);
     }
 
     private void insertEffectsAfter(StackEntry entry, CardEffect effect, List<CardEffect> effects) {

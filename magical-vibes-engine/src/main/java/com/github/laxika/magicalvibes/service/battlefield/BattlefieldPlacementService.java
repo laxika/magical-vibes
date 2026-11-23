@@ -74,7 +74,6 @@ import com.github.laxika.magicalvibes.model.effect.PermanentsEnterTappedThisTurn
 import com.github.laxika.magicalvibes.model.effect.RegisterMysticReflectionEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithAdditionalCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesHaveRiotEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledCreaturesEnterWithSourcePowerCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryCharacteristicsEffect;
 import com.github.laxika.magicalvibes.model.effect.ControlledPermanentEntryReplacementEffect;
@@ -1004,13 +1003,6 @@ public class BattlefieldPlacementService {
                 && !gameQueryService.hasLostPrintedAbilitiesAsEntering(gameData, controllerId, permanent)
                 ? (int) permanent.getCard().getStaticEffects().stream()
                 .filter(RiotEffect.class::isInstance).count() : 0;
-        int battlefieldRiot = creature && !permanent.getCard().isToken()
-                ? (int) gameQueryService.activeStaticEffects(gameData, controllerId,
-                        ControlledCreaturesHaveRiotEffect.class).stream()
-                .filter(active -> !active.source().getId().equals(permanent.getId()))
-                .filter(active -> simultaneouslyEntered.stream()
-                        .noneMatch(batchMember -> batchMember.getId().equals(active.source().getId())))
-                .count() : 0;
         int filteredBattlefieldRiot = creature
                 ? (int) gameQueryService.activeStaticEffects(gameData, controllerId, GrantKeywordEffect.class).stream()
                 .filter(active -> !active.source().getId().equals(permanent.getId()))
@@ -1028,7 +1020,7 @@ public class BattlefieldPlacementService {
                 .filter(grant -> (grant.filter() == null
                         || predicateEvaluationService.matchesPermanentPredicate(
                                 gameData, permanent, grant.filter()))).count() : 0;
-        int choices = ownRiot + (grantedRiot ? 1 : 0) + battlefieldRiot + filteredBattlefieldRiot;
+        int choices = ownRiot + (grantedRiot ? 1 : 0) + filteredBattlefieldRiot;
         if (choices == 0) {
             return false;
         }

@@ -3,7 +3,7 @@ package com.github.laxika.magicalvibes.cards.f;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.SpellCastTimingRestriction;
-import com.github.laxika.magicalvibes.model.effect.FalseOrdersEffect;
+import com.github.laxika.magicalvibes.model.effect.BalduvianWarlordEffect;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledByDefendingPlayerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
@@ -25,6 +25,6 @@ public class FalseOrders extends Card {
                         new PermanentControlledByDefendingPlayerPredicate()
                 )),
                 "Target must be a creature defending player controls"))
-                .addSpellEffect(new FalseOrdersEffect());
+                .addSpellEffect(BalduvianWarlordEffect.thenMayReblock());
     }
 }

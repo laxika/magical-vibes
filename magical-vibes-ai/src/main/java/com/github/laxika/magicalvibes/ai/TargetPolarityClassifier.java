@@ -748,7 +748,7 @@ public class TargetPolarityClassifier {
             entry("AttachAllAurasToAnotherPermanentEffect", TargetPolarity.NEUTRAL),
             entry("AttachTargetAuraToAnotherPermanentOfSameTypeEffect", TargetPolarity.NEUTRAL),
             entry("AttachTargetAuraToTargetCreatureEffect", TargetPolarity.NEUTRAL),
-            entry("FalseOrdersEffect", TargetPolarity.NEUTRAL),
+            entry("BalduvianWarlordEffect", TargetPolarity.NEUTRAL),
             entry("ReselectAttackingCreatureEffect", TargetPolarity.NEUTRAL),
             entry("ReselectAttackingCreatureAttackTargetEffect", TargetPolarity.NEUTRAL),
             entry("TargetLandBecomesBasicLandTypeUntilSourceLeavesEffect", TargetPolarity.NEUTRAL),

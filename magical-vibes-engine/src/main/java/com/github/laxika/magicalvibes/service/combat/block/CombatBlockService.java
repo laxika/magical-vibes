@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.model.effect.CantAttackOrBlockUnlessGreate
 import com.github.laxika.magicalvibes.model.effect.CantBeBlockedByFewerThanNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
-import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockPerEquipmentEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBeBlockedByMatchingCreatureIfAbleEffect;
@@ -2212,7 +2211,8 @@ public class CombatBlockService {
     /**
      * A creature carries a "blocks if able" requirement either from a one-shot effect this turn (a floating
      * {@link MustBlockEachCombatEffect} on it, or Predatory Rampage's on its opponent) or from a permanent static
-     * {@link MustBlockEachCombatEffect} on itself or on an Aura attached to it.
+     * {@link MustBlockEachCombatEffect} on itself or on an Aura attached to it, or from another permanent's static
+     * one over a set that names it (Grand Melee).
      */
     private boolean mustBlockIfAble(GameData gameData, Permanent blocker) {
         UUID blockerController = gameQueryService.findPermanentController(gameData, blocker.getId());
@@ -2223,15 +2223,7 @@ public class CombatBlockService {
                 || gameQueryService.hasActiveStaticEffectIncludingGranted(gameData, blocker,
                         MustBlockEachCombatEffect.class)
                 || gameQueryService.hasAuraWithEffect(gameData, blocker, MustBlockEachCombatEffect.class)
-                || hasGlobalMustBlockEachCombat(gameData);
-    }
-
-    private boolean hasGlobalMustBlockEachCombat(GameData gameData) {
-        return gameData.playerBattlefields.values().stream()
-                .flatMap(Collection::stream)
-                .filter(permanent -> !gameQueryService.hasLostAllAbilities(gameData, permanent))
-                .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
-                .anyMatch(GlobalMustBlockEachCombatEffect.class::isInstance);
+                || gameQueryService.isNamedByStaticMustBlockSet(gameData, blocker);
     }
 
     private void validateCantBlockAlone(GameData gameData, List<Permanent> defenderBattlefield,

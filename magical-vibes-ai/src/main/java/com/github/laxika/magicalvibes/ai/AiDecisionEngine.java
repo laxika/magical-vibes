@@ -36,7 +36,6 @@ import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.CollectEvidenceCost;
 import com.github.laxika.magicalvibes.model.effect.CombatTapCostEffect;
 import com.github.laxika.magicalvibes.model.ExileCardsFromHandCastingCost;
-import com.github.laxika.magicalvibes.model.effect.GlobalMustBlockEachCombatEffect;
 import com.github.laxika.magicalvibes.model.effect.EachControlledCreatureCanBeBlockedByAtMostNCreaturesEffect;
 import com.github.laxika.magicalvibes.model.effect.MatchingAttackerRestrictionEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockEachCombatEffect;
@@ -2253,14 +2252,7 @@ public abstract class AiDecisionEngine {
                 || gameQueryService.hasAuraWithEffect(gameData, blocker, MustBlockEachCombatEffect.class)) {
             return true;
         }
-        for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
-            if (battlefield.stream()
-                    .flatMap(permanent -> permanent.getCard().getStaticEffects().stream())
-                    .anyMatch(GlobalMustBlockEachCombatEffect.class::isInstance)) {
-                return true;
-            }
-        }
-        return false;
+        return gameQueryService.isNamedByStaticMustBlockSet(gameData, blocker);
     }
 
     private void addRequiredBlock(

@@ -1076,10 +1076,6 @@ public class ChoiceHandlerService {
             handleDiscardChosenColorChoice(gameData, colorName, ctx);
             return;
         }
-        if (colorChoice.context() instanceof ChoiceContext.DestroyAllPermanentsOfChosenColorChoice ctx) {
-            handleDestroyAllPermanentsOfChosenColorChoice(gameData, colorName, ctx);
-            return;
-        }
         if (colorChoice.context() instanceof ChoiceContext.ExileTopCardsChosenColorTokensChoice ctx) {
             handleExileTopCardsChosenColorTokensChoice(gameData, colorName, ctx);
             return;
@@ -4986,26 +4982,6 @@ public class ChoiceHandlerService {
         } else if (nothingMatched) {
             gameLogService.append(gameData, GameLog.text(targetName + " has no " + colorLabel.toLowerCase()
                     + " cards to discard."));
-        }
-
-        inputCompletionService.processMayAbilitiesThenAutoPass(gameData);
-    }
-
-    private void handleDestroyAllPermanentsOfChosenColorChoice(GameData gameData, String chosenValue,
-            ChoiceContext.DestroyAllPermanentsOfChosenColorChoice ctx) {
-        CardColor color = CardColor.valueOf(chosenValue);
-
-        gameData.interaction.clearAwaitingInput();
-
-        if (gameData.pendingEffectResolutionEntry != null) {
-            PermanentPredicate colorFilter = new PermanentColorInPredicate(Set.of(color));
-            PermanentPredicate filter = ctx.filter() == null
-                    ? colorFilter
-                    : new PermanentAllOfPredicate(List.of(ctx.filter(), colorFilter));
-            // The destruction is the step the parked resolution resumes with, so its death replacements
-            // are asked before anything is destroyed (CR 616.1).
-            gameData.pendingEffectResolutionEntry.insertEffectsToResolve(gameData.pendingEffectResolutionIndex,
-                    List.of(new DestroyAllPermanentsEffect(filter)));
         }
 
         inputCompletionService.processMayAbilitiesThenAutoPass(gameData);

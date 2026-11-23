@@ -2,7 +2,14 @@ package com.github.laxika.magicalvibes.cards.k;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesOfChosenTypeEffect;
+import com.github.laxika.magicalvibes.model.effect.ChooseCreatureTypeAtResolutionEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyAllPermanentsEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasTypeChosenThisResolutionPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentIsCreaturePredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
+
+import java.util.List;
 
 @CardRegistration(set = "MSC", collectorNumber = "156")
 @CardRegistration(set = "MSC", collectorNumber = "351")
@@ -14,6 +21,9 @@ import com.github.laxika.magicalvibes.model.effect.DestroyAllCreaturesOfChosenTy
 public class KindredDominance extends Card {
 
     public KindredDominance() {
-        addSpellEffect(new DestroyAllCreaturesOfChosenTypeEffect(true));
+        addSpellEffect(new ChooseCreatureTypeAtResolutionEffect());
+        addSpellEffect(new DestroyAllPermanentsEffect(new PermanentAllOfPredicate(List.of(
+                new PermanentIsCreaturePredicate(),
+                new PermanentNotPredicate(new PermanentHasTypeChosenThisResolutionPredicate())))));
     }
 }

@@ -1978,10 +1978,6 @@ public sealed interface ChoiceContext {
      */
     record DiscardChosenColorChoice(UUID controllerId, UUID targetPlayerId) implements ChoiceContext {}
 
-    /** The controller chooses a color at resolution, then destroys every matching permanent. */
-    record DestroyAllPermanentsOfChosenColorChoice(UUID controllerId, PermanentPredicate filter)
-            implements ChoiceContext {}
-
     /**
      * The controller chooses a color at resolution; {@code targetPlayerId} then exiles the top
      * {@code count} cards of their library and, for each exiled card of the chosen color, the
