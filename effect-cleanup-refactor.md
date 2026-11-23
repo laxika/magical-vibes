@@ -1680,6 +1680,157 @@ Runecarved Obelisk (the highest-mana-value pick).
   (3), `CopySpellForEachOtherPermanentOrPlayerEffect` (3), `SetTargetPermanentSupertypeEffect` (5), `SetCardTypesUntilEndOfTurnEffect`
   (5).
 
+### Step 9, parallel triage chunk 02 (2026-11-23)
+
+Verdicts only: no Java, test, agent-docs or repo file changed; the ratchet did not move. 79 ledger rows (notes `triage P02: …`), read against `db7a565bf1`: the rare Boost (23), Opponent (19), Specialize (19) and Attach (18) records of the chunk. Every record was read with its handler to the end and the card classes that use it. For the records with no handler, their readers were read: `GameQueryService`'s damage-bonus, discard, life-gain and entering-trigger reads; `DrawService`'s Notion Thief / Hullbreacher / Alms Collector scans; `TurnProgressionService`'s extra-turn skip; `LibrarySearchSupport`'s Mindcensor read; `CombatAttackService`; `CumulativeUpkeepEffectHandler`; `ForcedCostOrElseEffectHandler`; `MayPenaltyChoiceHandlerService`'s Distant Memories branch; `LibraryChoiceHandlerService`'s opponent-exile follow-up. Also read: Coin of Fate's interaction handler, the static boost support and Self handlers, `AmountEvaluationService`'s colour-count amounts, `CreatureControlService` and `AuraAttachmentService`'s reconcile.
+
+Oracle text was checked with `get_card` for every `unique` and `blocked-*` card: Archangel of Strife, Crown of Convergence, Inferno of the Star Mounts, War's Toll, Alms Collector, Tamiyo, Collector of Tales, Tainted Remedy, Plague Drone, Aven Mindcensor, Dark Salvation, Varchild's War-Riders and Wall of Shards. Chatzuk's MB2 playtest printing is in no feed, so its card class's registered Oracle was used. Oracle was also checked for Jurin, Phyresis Outbreak, Haunted One, Crippling Fear, Takeno, Champions of Minas Tirith, Gilgamesh, Armored Skyhunter, Thorin and Grip of Phyresis. Rulings read: Inferno of the Star Mounts, Infernal Denizen. CR 101.4, 115.3, 301.5c, 301.6, 303.4f, 303.4g, 400.7, 603.12, 608.2d, 613.7e, 701.3a, 701.3b, 702.24a and 708.2a were checked with `get_rule` (2026-11-23).
+
+| Family | Triaged | `step-9` | `blocked-other` | `unique` |
+|---|---|---|---|---|
+| Boost | 23 rare | 18 | 2 | 3 |
+| Opponent | 19 rare | 12 | 2 | 5 |
+| Specialize | 19 rare | 19 | 0 | 0 |
+| Attach | 18 rare | 18 | 0 | 0 |
+| All | 79 | 67 | 4 | 8 |
+
+**Fold batches** (survivor or shared component → records, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| per-permanent static boost | `DynamicStaticBoostEffect` with `amountsFromTarget` and an amount of the boosted permanent (its attacks, bushido, creature types capped by `Min`, colour count, own chroma; Heroes' Podium's is the existing `PermanentCount(…, excludeSource)`); the Self handlers and the legendary support class go | `BoostByAttackCountEffect` (2), `BoostByBushidoEffect`, `BoostLegendaryCreaturesByOtherLegendaryCreaturesEffect` (2), `BoostNonHumanCreaturesByCreatureTypeCountEffect`, `BoostOtherMulticoloredCreaturesByColorCountEffect`, `BoostOwnCreaturesByManaSymbolEffect`: 6 (8). Bushido's, chroma's and creature-type's amounts are one card each: weigh them in the fold run |
+| attached colour count | `AttachedBoostEffect(AttachedPermanentColorCount(), …, attachedCreature())`, Civic Saber's form, as it is | Blessing of the Nephilim: 1 (1) |
+| chosen type at resolution | `ChooseCreatureTypeAtResolutionEffect` + `PermanentHasTypeChosenThisResolutionPredicate` in `BoostAllCreaturesEffect`'s filter / `PermanentCount` (Raise the Palisade, Pact of the Serpent) | Crippling Fear (keep `BoardWipeEffect.sweepsBoard` for the AI), Pack's Disdain: 2 (2); the other `…PerChosenTypeCount…` records can follow |
+| set boost | `BoostTargetCreatureEffect` taking a non-targeting set subject, amounts optionally read against each boosted creature (step 10's boost hand-off names the same property), keywords by `GrantKeywordEffect` over the same subject | Haunted One, Phyresis Outbreak, Jurin: 3 (3) |
+| floated damage bonus | `BoostControllerDamageThisTurnEffect` + a source filter (colour), a noncombat-only option and an amount locked at resolution; one floating read in `GameQueryService` | the survivor, `BoostColorSourceDamageThisTurnEffect`, `BoostControllerNoncombatDamageThisTurnEffect`: 3 (3); kin of triage 6's floated doublers |
+| if-instead counter | `ConditionalEffect(cond, PutCountersOnSourceEffect)` + `ConditionalEffect(NotCondition(cond), BoostSelfEffect)` | Jetmir's Fixer (`TreasureManaSpentToActivate`, as it is), Paragon of Modernity (needs a colours-spent-to-activate read): 2 (2) |
+| target groups | three groups with `BoostTargetCreatureEffect.forTargetGroup`, plus a distinct-across-groups constraint for "other" (CR 115.3 allows the same object once per "target") | Arm the Cathars: 1 (1) |
+| attack ban between players | `CreaturesCantAttackControllerUntilNextTurnEffect` with attacker and protected `PlayerSubject`s, planeswalker breadth and a `Duration` | Champions of Minas Tirith (cost-shape): 1 (1); joins the unique rows `ControllerCantAttackTargetPlayerThisTurnEffect` (Call for Aid) and `OpponentCantAttackSourceControllerThisTurnEffect` (Sandswirl Wanderglyph), and the unaudited survivor (Chronomantic Escape) |
+| opponent-chosen card | `ChoosePlayerEffect` (an opponent) + `ChooseCardEffect` with chooser `playersThisWay(CHOOSE)` / `defendingPlayer()` / `targetPlayerDeclaredElsewhere()` + the card movers; `topOfGraveyard` needs a count | Tasigur + O-Kagachi (one record), Phyrexian Grimoire, Coin of Fate: 3 (4) |
+| opponent-chosen permanent | `ChoosePlayerEffect` + `ChoosePermanentsEffect.chosenBy(playersThisWay(CHOOSE))` + the verb over `thisWay(CHOOSE)` (exile tracked with source, sacrifice, `GainControlOfTargetEffect.gainedBy`) | Wormfang Crab, Demonic Hordes (cost-shape), Infernal Denizen (cost-shape): 3 (3); the two `ForcedCostOrElseEffect` fallbacks need `DestructionSupport`'s per-class list to run the composition |
+| extra-draw replacement | `OpponentExtraDrawsRedirectedEffect` + a payload (draw a card / create a Treasure) | Notion Thief, Hullbreacher: 2 (2); shares `markFirstDrawStepDraw` with triage 6's draw doublers |
+| extra-turn skip | `SkipAllExtraTurnsReplacementEffect` (Gerrard's Hourglass Pendant) + a `PlayerSubject` | Stranglehold + Trouble in Pairs (one record): 1 (2) |
+| entering triggers | `CreatureEnteringDontCauseTriggersEffect` (4, unaudited) + an entering filter + a whose-abilities `PlayerSubject` | Elesh Norn: 1 (1); `ArtifactOrCreatureEnteringDontCauseTriggersEffect` joins |
+| with its maker | `DistantMemoriesEffect` (unaudited): its exile step + an any-opponent choice + put into hand / else draw three | `OpponentMayReturnExiledCardOrDrawEffect`: 1 (engine-built), then dead |
+| specialize | one `SpecializeEffect(color)` and one handler. All 19 handlers share one skeleton: name check, runtime copy, `clearRulesTextAndAbilities`, face characteristics, `exchangeCard`, the face's "when this specializes" ability through the stack door. Each card class supplies its face (characteristics, abilities, target group, trigger) through a card-side hook; the face builders now in the Vhal, Karlach, Alora, … handlers move to the cards. Karlach's graveyard return stays a made ability of its card, not a parameter | all 19 `Specialize…Effect`: 19 (19); `UnspecializeLukaminaEffect` joins |
+| attach verb, Equipment | `AttachSourceEquipmentToTargetCreatureEffect` with its subject guard (`isNamedOne`) taking set and step-result subjects (`returnedThisResolution()`, `createdThisResolution()`, the put permanent) | Balan + Vulshok Battlemaster (one record), The Invincible Iron Man, Pre-War Formalwear, Grip of Phyresis, Thorin: 5 (6) |
+| attach verb, Auras and player hosts | the same verb generalised to any attachment (Aura legality by `AuraAttachmentService.canEnchant[Player]`, Fortification by CR 301.6), player hosts, `thisWay(CHOOSE)` hosts, with the control recompute | Glamer Spinners, Heavenly Blademaster, Lynde, Kudzu + Steam Vines, Maddening Hex, C.A.M.P. + Darksteel Garrison, Codsworth + Halvar, Simic Guildmage: 8 (11). The blocked rows `AttachSourceAuraToTargetCreatureEffect`, `AttachTargetAuraToTargetCreatureEffect` and `AttachSourceAuraToTargetPlayerEffect` wait for it (three or more: build it); `AttachTargetAuraToAnotherPermanentOfSameTypeEffect` is Simic's sibling |
+| put then attach | the library put's step result + `MayEffect(ChoosePermanentsEffect` + the attach verb`)`; Gilgamesh's as a reflexive ability (`QueueReflexiveAbilityEffect`) | Armored Skyhunter, Palico (same text), Gilgamesh: 3 (3) |
+| Aura host as it enters | the put step's entry batch (CR 303.4f, 303.4g) | `AttachSelectedAurasToLegalTargetsEffect` + `…FollowUp` (Knickknack Ouphe): 2 (1), both then dead |
+
+Blocked (4):
+- Chatzuk: counting a subject's permanents needs subjects inside `DynamicAmount`, which is outside this plan.
+- Dark Salvation: an amount read against another target group, the same missing part as Orim's Thunder's row (2 classes).
+- `OpponentCreatesTokensCost` and `OpponentGainsLifeCost`: cumulative-upkeep cost heads for Varchild's War-Riders and Wall of Shards. Step 10, as `DrawCardsCost`.
+
+Unique (8):
+- Boost: Archangel of Strife and Two Streams Facility (players' mode choices), Crown of Convergence, Inferno of the Star Mounts.
+- Opponent: War's Toll, Alms Collector, Tamiyo's discard prohibition (a discard component would be hers alone beside the 3-card sacrifice record), Tainted Remedy + Plague Drone, Aven Mindcensor.
+
+**Seen, not changed** (confirmed by reading, not run):
+
+- Notion Thief, Hullbreacher and Alms Collector (`DrawService`) and Elesh Norn (`areOpponentPermanentETBTriggersSuppressed`) look at one opponent's battlefield (`getOpponentId`). Distant Memories asks only the first opponent by seat for "any opponent may" and finds its controller as "the other player". Infernal Denizen offers the first opponent by seat. All are right with two players only. Sure of the code.
+- Knickknack Ouphe's Auras are attached after they enter, by a follow-up, and one with nothing to enchant enters and is left unattached for the state-based check. It should be attached as it enters or stay in the library (CR 303.4f, 303.4g). Sure of the follow-up handler; the put step itself wasn't read.
+- Gilgamesh's "When you put one or more Equipment onto the battlefield this way" is a reflexive ability (CR 603.12). The engine asks it inline as a library follow-up, with no stack object. Fairly sure.
+- Moving a control-changing Aura with Halvar / Codsworth, Heavenly Blademaster or Kudzu / Steam Vines doesn't recompute control. Simic Guildmage's handler does; Glamer Spinners' completion does so only for the new host. Sure of the code; whether a later reconcile repairs it wasn't traced.
+- `AttachSourceFortificationToTargetLandEffectHandler` gives a new timestamp and a log line to a Fortification already attached to the target (CR 701.3b: the effect does nothing). Sure, low impact.
+- Karlach's specialize-from-graveyard return enters through `putPermanentOntoBattlefield`, not the entry batch. Its "perpetually can't block" is a static effect on a runtime copy, not the perpetual store. Sure of the code; low impact.
+- `AttachTargetEquipmentToCreatedPermanentEffect.useSourceEquipment` has no maker. Dead component.
+
+**Left.** Nothing in the chunk. Suggested fold-run order:
+1. The by-parameter rows: Blessing, Heroes' Podium, Crippling Fear, Pack's Disdain, Jetmir's Fixer, Pre-War Formalwear, Grip, Thorin.
+2. The specialize batch (one card-side hook).
+3. The attach verb (three blocked rows wait for it).
+4. The opponent-choice batches.
+
+### Step 9, parallel triage chunk 04 (2026-11-23)
+
+Verdicts only: no repo file changed. 81 ledger rows (notes `triage P04: …`) for chunk 04's Replace (17 rare), Additional (16),
+AnyOpponent (7), AnyPlayer (9), Counter (16) and Flip (16) records.
+
+Every record was read with its handler to the end, and every card class that uses it was read too. For the records with no handler,
+their readers were read: `StaticLandManaReplacements`, `TurnScopedLandManaReplacements`, `ManaProductionSupport` and `TapTriggers`;
+`CombatDamageService`'s mill replacement; `CounterSupport` and `GameQueryService.controlsCounterExileReplacement`; the five
+`LossReplacer`s and `GameOutcomeService.resolveLoss`; `TokenKindReplacements` and `TokenCreationReplacementSupport`;
+`GameQueryService`'s damage-replacement and damage-bonus readers, and `DamagePreventionService`'s creature-damage pool steps;
+`MillReplacements`, `VentureIntoDungeonEffectHandler`, `SurveilEffectHandler` and `CastingCostService`'s mana-symbol tax;
+`DrawService` and `MayMiscHandlerService`; the mayfx halves of the punisher records and `WhirlwindDenialSupport`;
+`CumulativeUpkeepEffectHandler` and `ForcedCostOrElseEffectHandler`; `FlipUntilLoseOrStopSupport` and `CoinFlipService.CoinFlipResult`.
+
+Oracle text was checked with `get_card` for every `unique` and `blocked-*` card, and also for Breeches, Impulsive Maneuvers, Mutalith
+Vortex Beast, Gitrog, Research // Development, Barbarian Bully, Innocent Traveler, Kadena's Silencer, Mirrored Depths, Rakdos and Pokey,
+the Scallywagg. The other cards were judged from their card classes. Rulings read: Desecration Demon, Dash Hopes, Brain Gorgers,
+Phantasmagorian, Reservoir Kraken. CR 101.4, 603.12, 613.1f, 616.1, 705.1, 705.2, 705.3 and 708.2a were checked with `get_rule`.
+
+| Family | Triaged | `step-9` | `blocked-other` | `unique` |
+|---|---|---|---|---|
+| Replace | 17 | 9 | 0 | 8 |
+| Additional | 16 | 11 | 0 | 5 |
+| AnyOpponent | 7 | 7 | 0 | 0 |
+| AnyPlayer | 9 | 9 | 0 | 0 |
+| Counter | 16 | 4 | 8 | 4 |
+| Flip | 16 | 10 | 1 | 5 |
+| All | 81 | 50 | 9 | 22 |
+
+**Fold batches** (survivor or shared component → records of this chunk, cards):
+
+| Batch | Survivor / component | Records (cards) |
+|---|---|---|
+| punisher (cost-shape) | `MayPayManaEffect`'s any-player payer loop (`MayPayPayer.ANY_PLAYER` / `ANY_OPPONENT`, with its `elseEffect` for "if no one does"), taking a payment other than mana: sacrifice N matching (nontoken; collected or at once), discard N, pay life (a `DynamicAmount`), tap an untapped creature, be dealt N damage by the source, or "have you draw". The reward happens once if anyone paid, or at once on the first payer. The PLC counter cycle's ruling: "as soon as any player performs the action, the spell is countered, but the remaining players still get the option". | All 7 AnyOpponent records (Development, Innocent Traveler, Desecration Demon, Clackbridge Troll, Gitrog, Vexing Devil + Longhorn Firebeast, Reservoir Kraken) and all 9 AnyPlayer records (Phantasmagorian, Dash Hopes + Temporal Extortion, Brain Gorgers, Prowling Pangolin, Argothian Wurm + Shivan Wumpus, Barbarian Bully, Breaking Point, Book Burning, Browbeat): 16 (19). The five private `apnapPlayers` copies and `apnapOpponents` go. Weigh against step 10's cost-combinator merge. |
+| additional damage | `AdditionalControllerDamageToOpponentsAndTheirPermanentsEffect` (5 cards) gains a source filter judged on permanents and spells (colour, red-or-artifact, noncreature, subtypes, spell, "another"), a source-controller scope (you / any), a recipient filter (any, players, opponents, opponents and their permanents, creature-battle-or-opponent, players and battles) and a `Duration` for the floated form; one `DamageBonus` reader. | Embermaw Hellion + Jaya; Spiked Corridor (already expressible by parameters); Sulfuric Vapors; Disciples of the Inferno (Invasion of Regatha's back face); Rem Karolus; Mechanized Warfare; Rankle and Torbran (two records: the floater and the engine-built static); Valley Flamecaller: 9 (9). Re-triage with this batch: `AdditionalControllerDamageEffect` (3 cards, unaudited), the 5m unique rows of Torbran's and Tok-Tok's records, and 8.29's unique row for the survivor. Same design as triage 6's source doublers. |
+| land mana | `ReplaceLandManaWithColorEffect` (3 cards) gains a land `PermanentPredicate` judged against the source controller, a from-colour set, a to-spec (a fixed colour, or "a colour of your choice") and, in the floated form, a subject and a `Duration`. | Pulse of Llanowar, Quarum Trench Gnomes: 2 (2). The unaudited floated land-mana records join (Hall of Gemstone, Harvest Mage, Chaos Moon, Pale Moon, Deep Water). |
+| loss replacement | `ReplaceControllerLossWithExileAndLifeTotalEffect` gains a starting-life amount; one replacer keeps Exquisite Archangel's CR 616.1 choice among several sources. | The Golden Throne, Exquisite Archangel: 2 (2) |
+| token kind | `ReplaceTokenSubtypeCreationEffect`: its subtype becomes a token filter (creature token or subtype). | Fisher's Talent, Divine Visitation: 2 (2) |
+| damage threshold | `ReplaceDamageAboveThresholdEffect`, static or floated with a `Duration`. | Divine Presence, Equal Treatment: 2 (2) |
+| damage to counters | `PreventDamageAndAddPlusCountersEffect` (2 cards) gains a `CounterType` and a replacement-or-prevention kind. | Lichenthrope: 1 (1); with the unique-rowed `PreventDamageAndAddMinusCountersEffect` (Phyrexian Hydra) |
+| extra upkeep | `AdditionalUpkeepStepEffect` (2 cards) gains a count and a placement (after this step / after this phase); the two `GameData` counters become one store. | Paradox Haze + The Ninth Doctor, Obeka: 2 (3) |
+| counter each target | `CounterSpellEffect` counters every target of its group and records COUNTER_SPELL over all of them. | Double Negative + Katara's Reversal: 1 (2) |
+| counter a set | `CounterMatchingSpellsEffect` (3 cards) admits abilities through its filter; a following `CreateTokenEffect` reads the countered count. | Kadena's Silencer, Glen Elendra's Answer: 2 (2) |
+| poison-gated counter | `ConditionalEffect(TargetSpellMatches(a new "controller has at least N poison counters" stack-entry predicate), CounterSpellEffect)` | Corrupted Resolve + Bring the Ending: 1 (2) |
+| coin flip, by parameters | `FlipCoinWinEffect` (42 cards): `forTriggeringSpellController(null, CounterSpellEffect)`; reflexive branches (`QueueReflexiveAbilityEffect`, CR 603.12) that carry the triggering spell. | Mirrored Depths, Breeches: 2 (2) |
+| per-object flips | `FlipCoinWinEffect` gains a `forEach` subject (players or permanents) whose branches read "that player / that creature"; the per-index checkpoint resume is kept. Rakdos's tails set is recorded as a step result so one `DestroyAllPermanentsEffect` destroys them together. | Mutalith Vortex Beast, Fighting Chance, Rakdos: 3 (3) |
+| multi-flip | `FlipUntilLoseEffect` (3 cards) gains a count, a stop-at-loss flag, a per-loss effect, an all-wins effect and a record of its wins. | Squee's Revenge, Yusri, Crazed Firecat: 3 (3); with the unique-rowed `FlipCoinsPerHeadsEffect` |
+| next-damage shields | `PreventNextDamageByTargetCreatureEffect` (2 cards) gains a source `PermanentSubject`, a doubling mode and a combat-only flag, used under `FlipCoinWinEffect`. Desperate Gambit also needs a choose-a-damage-source step that records CHOOSE (permanents and stack objects you control); the chosen-source redirect and reflect records could share that step. | Impulsive Maneuvers, Desperate Gambit: 2 (2); with the unique-rowed `PreventNextDamageBySelfEffect` |
+
+**Blocked (9):** the seven counter-unless ransom records (Auntie Ool, Axebane Ferox, Perplex, Titania, Grip of Amnesia, Molten
+Influence, The Unagi of Kyoshi Island) and Whirlwind Denial's for-each ransom wait for step 10's option C, the owner's open
+counter-unless question. `FlipCoinsCost` (Karplusan Minotaur's cumulative upkeep, engine-built) is a forced cost of
+`ForcedCostOrElseEffect` and waits for step 10's cost-combinator merge.
+
+**Unique (22):** Replace: False Dawn (it covers every mana ability a player controls), Damping Sphere (its replacement depends on the
+amount of mana), Undead Alchemist + Szadek (already one record), Guile, Liliana's Other Contract, Lich's Mirror, Forethought Amulet, and
+the engine-built prompt carrier for "may replace this draw". Additional: Hama Pashar (dungeon rooms), The Water Crystal, Drought,
+Twinning Staff, Enhanced Surveillance. Counter: Rasputin's counter cap, Bazaar of Wonders, Grimoire Thief (turning the exiled cards face
+up), Ice Cave (its only own part is paying "that spell's mana cost"). Flip: Crooked Scales (the repeat loop), Molten Sentry, Two-Headed
+Giant, Fiery Gambit and its engine-built continuation.
+
+**Seen, not changed** (confirmed by reading, not run):
+- Loss replacements apply in `LossReplacer` bean order (`GameOutcomeService.resolveLoss`). When different ones apply together (The
+  Golden Throne, Exquisite Archangel, Lich's Mirror, Liliana's Other Contract), the losing player doesn't choose which (CR 616.1). Only
+  several Archangels get a choice. Sure of the code.
+- Coin-flip events (CR 705.2): Fiery Gambit (`FlipUntilLoseOrStopSupport.flip`) fires neither the won nor the lost event; Squee's
+  Revenge (`FlipCoinsUntilLoseEffect`) and `FlipUntilLoseEffect` (Mirror March, Okaun, Zndrsplt) fire no lost event for the losing flip,
+  so Karplusan Minotaur's "whenever you lose a coin flip" misses them. Sure of the code.
+- Mutalith Vortex Beast (`FlipCoinForEachOpponentEffect`) fires the won/lost events for a Pokey, the Scallywagg d20 result, although
+  Pokey's text says the roll "counts as rolling a die"; every other flip handler gates these events on `isActualCoinFlip`. Sure of the
+  code.
+- Breeches sends a Pokey d20 heads to its lose branch (the damage), where `FlipCoinWinEffect` treats heads as a win. Sure of the code;
+  which is right is unclear under CR 705.2, since no call is made.
+- Sulfuric Vapors (`getSpellDamageBonuses`) and Disciples of the Inferno (`getNoncreatureSourceDamageBonuses`) apply with no
+  lost-abilities or face-down check (CR 613.1f, 708.2a); Sulfuric Vapors also reads the spell's card colours, not
+  `spellAsEffectsSeeIt`. Enhanced Surveillance's reader has no lost-abilities check either. Sure of the code; low impact.
+- The "any opponent may sacrifice" handlers disagree on timing: Desecration Demon, Clackbridge Troll, Gitrog and Argothian Wurm
+  sacrifice each creature as it is chosen; Innocent Traveler and Brain Gorgers collect the creatures and sacrifice them together
+  (CR 101.4). The PLC cycle's ruling supports acting at once for the counter cards; for the combat punishers it isn't settled.
+- Molten Sentry and Rakdos log "wins / loses the coin flip" for heads-or-tails flips that nobody wins (CR 705.2). Log only.
+- Forethought Amulet replaces damage only from instant and sorcery spells, not from abilities of instant or sorcery sources (kin of
+  Pestilent Spirit's open defect). Low impact.
+
+**Anything left.** Nothing in this chunk. The batches reach records outside it that are unaudited or were ruled unique earlier: the
+floated land-mana records and `AdditionalControllerDamageEffect` (3 cards); the unique damage-bonus rows from 5m and 8.29;
+`PreventDamageAndAddMinusCountersEffect`, `PreventNextDamageBySelfEffect` and `FlipCoinsPerHeadsEffect` (unique rows); the chosen-source
+redirect records.
+
 ## Prompt
 
 Replace `<N>` with the step number. For step 9, add the run kind and its scope (`step 9, triage run: Destroy, Search`;
