@@ -1831,6 +1831,159 @@ floated land-mana records and `AdditionalControllerDamageEffect` (3 cards); the 
 `PreventDamageAndAddMinusCountersEffect`, `PreventNextDamageBySelfEffect` and `FlipCoinsPerHeadsEffect` (unique rows); the chosen-source
 redirect records.
 
+### Step 9, parallel triage chunk 01 (2026-11-23)
+
+Only verdicts this time. No repo file changed; the plan and ledger were read at `db7a565bf1`, and the ratchet did not move. The 75 ledger rows (notes `triage P01: …`) are in `/tmp/claude-1000/-mnt-ramdisk-magical-vibes/300dbf19-8a01-4cdb-8671-d50e7ccdb4f0/scratchpad/ptriage/out-01/ledger-rows.csv`.
+
+**What was read**
+- Every record, with its handler read to the end, and every card class that uses it.
+- For records with no handler, their readers:
+  - `CastingPermissionService`: the ice, croak, void, planar, library-top, pay-life and foretold branches
+  - `CastingCostService.findFreeCastSource`
+  - `GameQueryService`'s boast, exhaust, power-up and loyalty readers
+  - `AbilityActivationService`'s loyalty count
+  - `HandCastCardCharacteristicsService`
+  - `GameViewProjectionFactory`'s library-top look
+- For engine-built records, their builders and the may handlers they route to.
+- Oracle text: checked with `get_card` for every card. The Colossal Dreadmaw and Comet, Stellar Pup were checked from the text their classes register.
+- Rulings: Urianger Augurelt, Kayla's Music Box, Chitinous Crawler (it has none), Planetarium of Wan Shi Tong, Wicked Guardian.
+- Rules: CR 400.7, 608.2g, 608.2h, 611.2c, 702.16b, 702.62a, 708.2a and 709.3a, checked with `get_rule`.
+
+| Family | Triaged | step-9 | blocked-other | blocked-step-model | unique |
+|---|---|---|---|---|---|
+| Allow | 25 rare | 16 | 1 | 0 | 8 |
+| Cast | 25 rare | 18 | 0 | 1 | 6 |
+| Deal | 25 rare | 21 | 0 | 0 | 4 |
+
+Two `step-9` rows are dead (`AllowPlayAndCastCardsExiledWithVoidCountersEffect`, `DealDamageToControllerIfSacrificedCardMatchesEffect`). One is a survivor whose reader changes: `AllowExtraLoyaltyActivationEffect`.
+
+**Permissions are rules of the game (CR 611.2c).** A resolution's "you may play" changes no object's characteristics. So it also covers cards that join the set later in its duration:
+- Kayla's Music Box and Urianger: cards exiled with them later that turn.
+- Yawgmoth's Testament: face-up cards exiled later.
+- Singing Towers: cards foretold later.
+
+`AllowPlayCardsFromExileEffect` fixes its card set when it resolves. That is right for "those cards" and wrong for "cards exiled with this". The exiled-with-source fold therefore needs an option that keeps the set open, as `grantExilePlayUntilEndOfTurnBySource` does today.
+
+**Casting several spells during a resolution (CR 608.2g): the caster picks the order.** Two mechanisms exist:
+1. A fixed queue of one `PendingMayAbility` per card. A declined card is gone.
+2. `ImprovisationCapstoneCastChoice`: pick the cards, then cast them in the chosen order. About 15 handlers use it.
+
+The free-cast choice batch moves the "cast any number / up to N from among" records onto the second mechanism, over a `CardSubject`.
+
+**Fold batches** (records / cards)
+
+- **player-floated** — survivor: `GrantStaticEffectToPlayerEffect.untilEndOfTurn(static)`, with the reader asking for the player's floating copy. 4 records / 5 cards.
+  - Chandra, Flame's Catalyst: Omniscience's `AlternativeCostForSpellsEffect`, which is already read as a floating effect. By parameters.
+  - Urza Assembles the Titans: `AllowExtraLoyaltyActivationEffect`, which is the survivor row; Oath of Teferi and Urza, Planeswalker use it.
+  - Yawgmoth's Testament: the static exile permission over `exiledCards(you(), face up)`.
+
+- **library-top** — survivor: `AllowCastFromTopOfLibraryEffect` (44 cards) with `PlayLandsFromTopOfLibraryEffect`. They gain an alternative cost (life equal to mana value, `PayLifeEqualToSpellManaValueCost`), a library-owner `PlayerSubject`, and a face-up plane read as its controller's; the player-floated grant floats them. 3 records / 3 cards.
+  - Bolas's Citadel, Windriddle Palaces, The Belligerent.
+  - Gwenom's (run 25) and Xanathar's (run 18) unique rows join; re-triage them.
+
+- **exiled-counter permissions** — survivor: one static play-from-exile permission over `exiledCards` with a counter kind, reading triage 4's single counter store. 2 records / 2 cards, plus the dead void record.
+  - Draugr Necromancer (ice), Grolnok (croak).
+  - Run 25's blocked dream and hatching rows wait for the same subject.
+
+- **graveyard grants** — survivor: `AllowCastMatchingCardsFromGraveyardThisTurnEffect` (6 cards, unaudited) with a graveyard `PlayerSubject`. 3 records / 3 cards.
+  - The Great Work, Whispersteel Dagger, Shaman's Trance.
+  - Shaman's Trance merges `GraveyardPlayFilterPermission` into `GraveyardCastFilterPermission`. Only it sets the lands-too option.
+
+- **source-card graveyard permission** — survivor: `AllowCastTargetCardFromGraveyardThisTurnEffect.of(sourceCard(), …)` with a `Duration` and an as-Adventure option. 1 record / 2 cards.
+  - Hildibrand Manderville and Mosswood Dreadknight share one record.
+  - 5m's blocked `AllowCastSourceCardFromGraveyardThisTurnEffect` can join now.
+
+- **exiled with source** — survivor: `AllowPlayCardsFromExileEffect.thisTurn(exiledWithSource())` with an open-set option and a spell cost reduction. 1 record / 2 cards.
+  - Kayla's Music Box and Urianger Augurelt.
+  - The unaudited `AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect` (4 cards) is the same permission.
+
+- **exiled as cost** — 1 record / 2 cards.
+  - Primordial Mist: `AllowPlayCardsFromExileEffect.thisTurn(exiledAsCost())`.
+  - Chitinous Crawler: the play-now offer `MayCastExiledCardWithNormalCostEffect` over `exiledAsCost()`.
+
+- **free-cast choice** — survivor: one cast-now record over a `CardSubject`, through `ImprovisationCapstoneCastChoice` (max count, total mana-value cap). 5 records / 5 cards.
+  - Izzet Chemister and Forger's Foundry (one record), Ashiok, Rod of Absorption, Invoke Calamity and its engine-built `CastInvokeCalamityChosenSpellEffect`.
+  - Invoke Calamity keeps its split-card half rule (CR 709.3a).
+  - Run 4's blocked `ExileTopCardOfEachLibraryAndMayCastSpellsEffect` waits for this.
+
+- **hand free-cast count** — survivor: `MayCastAnySpellFromHandWithoutPayingManaCostEffect` (31 cards) with a count. 2 records / 3 cards.
+  - Aetherflux Conduit and The Great Synthesis (one record), Power Without Equal.
+  - Run 27's `MayCastAnyNumberOfSpellsFromHandWithoutPayingManaCostEffect` marker goes.
+
+- **graveyard-permission statics** — survivor: `CastSpellsFromGraveyardEffect` / `CastSpellFromGraveyardOncePerYourTurnEffect` with an alternative-cost component. 4 records / 4 cards.
+  - Abandoned Sarcophagus (as it is), Raul (a milled-this-turn predicate), Eye of Duskmantle (pay life), Ninja Teen (sneak).
+
+- **graveyard cast-now** — survivor: `CastCardFromGraveyardEffect` over a non-target `CardSubject`, with an any-number option. 3 records / 3 cards.
+  - Oskar, Thunderblade Charge (cost-shape), Chandra Ablaze.
+  - 5m's Sproutback Trudge row joins.
+
+- **targeted graveyard cast-now** — survivor: `CastCardFromGraveyardEffect` over `targetCard(filter, scope)`. 2 records / 2 cards.
+  - Conduit of Worlds: behind a no-spell-cast-this-turn condition, with a "can't cast spells this turn" restriction after a successful cast.
+  - Vadrok.
+  - 5m's Tinybones row joins.
+
+- **exile free-cast markers** — survivor: `MayPlayExiledCardWithoutPayingManaCostEffect` with suspend's haste and the sorcery-timing lock. 1 record / 0 cards: `CastExiledCardWithoutPayingManaCostEffect`, which is engine-built.
+
+- **look and cast** — survivor: triage 4's `LookAtTopCardsAndMayCastEffect` with a "card stays on top" destination. 1 record / 2 cards: Galvanoth and Planetarium of Wan Shi Tong.
+
+- **per-player damage** — survivor: `DealDamageToPlayersEffect`, with its amount evaluated per player for `eachOpponent()` too, and all amounts fixed before any damage (CR 608.2h). 3 records / 3 cards: Molten Psyche, Stormbreath Dragon, Heartless Hidetsugu.
+
+- **Deal, by parameters** — existing records. 6 records / 7 cards: Disorder, Burn the Impure, Flames of the Raze-Boar, Vial Smasher, Roar of the Crowd and Coordinated Barrage (one record), Wicked Guardian (choose, then damage, with the draw gated on the choice).
+
+- **Deal, with a new predicate** — 2 records / 2 cards.
+  - Outpace Oblivion: a below-max-speed player predicate.
+  - Searing Rays: triage 6's resolution-colour predicate.
+
+- **hand-reveal damage** — `RevealCardsFromHandEffect` plus `DealDamageToPlayersEffect` over a REVEAL count matching the chosen quality. 2 records / 3 cards.
+  - Blood Oath needs a card-type chooser at resolution.
+  - Darigaaz and Inquisition share one record; Darigaaz is cost-shape.
+
+- **least toughness** — `ChoosePermanentsEffect` with a least-toughness predicate, then damage over `thisWay(CHOOSE)`. 1 record / 1 card: Purging Scythe. The unaudited `SacrificeCreatureWithLeastToughnessEffect` joins.
+
+- **delayed about the target** — triage 3's `aboutAtNext` over the entry's target. 1 record / 2 cards: Dwarven Sea Clan and Sawtooth Ogre.
+
+- **random target** — `DealDamageToAnyTargetEffect` with a target chosen at random. 1 record / 1 card: Goblin Test Pilot. Run 9's blocked Knight Rampager row joins.
+
+- **haunted** — triage 5's "is haunted" predicate. 1 record / 1 card: Kaya's damage emblem, as `DealDamageToPlayersEffect(3, ownerOf(target()))`.
+
+- **single** — 3 records / 4 cards.
+  - Firesong and Sunspeaker and Comet (one record): onto `DealDamageToAnyTargetEffect` with a creature-or-player target.
+  - Tephraderm: split into its two Oracle abilities.
+  - Dwarven Catapult: `Divided` with a dynamic divisor. Only this card sets it, so the fold run should weigh it.
+
+- **dead** — delete. 2 records / 0 cards.
+
+**Blocked (2)**
+- The Matrix of Time: `blocked-other`. It plays cards linked to a face-up plane and waits with run 5's planar exile row.
+- `CastTopCardFromLibraryForManaEffect`: `blocked-step-model`. It goes with run 13's blocked reveal record.
+
+**Unique (18)**
+- Allow: Singing Towers, Chittering Illuminator and Pearl Lake Warden, Birgi, Elvish Refueler, Wonder Man, Wish and Frontier Explorer, Biomancer's Familiar, Autumn Willow.
+- Cast: Spawnsire, The Colossal Dreadmaw, Illusionary Mask, Panglacial Wurm, Muldrotha, Jetsam.
+- Deal: Cathedral Membrane, Spiteful Repossession, Sorcerer Class, Suffocation.
+
+**Seen, not changed**
+- **Face-down permanents still grant permissions.** `CastingPermissionService.hasIceCounterPermission` and `controlsStatic` check only `hasLostAllAbilities` before reading a permanent's card abilities. A face-down permanent doesn't set that flag, so a face-down Draugr Necromancer or Grolnok still grants its permission (CR 708.2a). `controlsStatic` has seven callers: croak, void, three "can't play / can't cast" effects and Ward of Bones. Sure of the code; the consequence is inferred.
+- **Wicked Guardian draws with no creature to damage.** With no other creature, accepting the may still draws, though its Oracle text says "If you do". Fairly sure of the code. `WickedGuardianTest`'s methods also lack `@DisplayName`.
+- **Fixed casting order.** The per-card free-cast queues fix the order and drop a declined card (CR 608.2g). Power Without Equal is only partly affected.
+- **No graveyard stay check.** Thunderblade Charge and the Adventure permission find the card by id with no stay check (CR 400.7). Low impact.
+- **Floating effect source, not traced.** `GrantStaticEffectToPlayerEffect` floats with no source permanent and timestamp 0, where the records it would absorb carry their source. The fold run should check that no reader needs that source.
+
+**Left**
+- Nothing in the chunk.
+- Rows to re-triage with their batches:
+  - Gwenom, and the dream and hatching rows (run 25)
+  - Xanathar (run 18)
+  - `AllowCastSourceCardFromGraveyardThisTurnEffect`, Sproutback Trudge and Tinybones (5m)
+  - The two markers from run 27
+  - `ExileTopCardOfEachLibraryAndMayCastSpellsEffect` (run 4)
+  - Knight Rampager (run 9)
+- Unaudited records these batches touch:
+  - `AllowCastMatchingCardsFromGraveyardThisTurnEffect` (6)
+  - `AllowCastAllCardsExiledWithSourceUntilEndOfTurnEffect` (4)
+  - `BoostTargetCreaturePerChosenTypeCountEffect` (1)
+  - `SacrificeCreatureWithLeastToughnessEffect` (1)
+
 ## Prompt
 
 Replace `<N>` with the step number. For step 9, add the run kind and its scope (`step 9, triage run: Destroy, Search`;
