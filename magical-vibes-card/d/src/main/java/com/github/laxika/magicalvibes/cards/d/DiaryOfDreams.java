@@ -5,9 +5,10 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostPerCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceActivationCostEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAnyOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardTypePredicate;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -29,7 +30,7 @@ public class DiaryOfDreams extends Card {
         addActivatedAbility(new ActivatedAbility(
                 true,
                 "{5}",
-                List.of(new ReduceActivationCostPerCounterEffect(CounterType.PAGE, 1), new DrawCardEffect(1)),
+                List.of(new ReduceActivationCostEffect(new CountersOnSource(CounterType.PAGE)), new DrawCardEffect(1)),
                 "{5}, {T}: Draw a card. This ability costs {1} less to activate for each page counter on Diary of Dreams."
         ));
     }

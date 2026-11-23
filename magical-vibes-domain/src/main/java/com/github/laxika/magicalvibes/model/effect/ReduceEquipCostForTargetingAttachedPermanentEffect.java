@@ -9,7 +9,10 @@ import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import java.util.List;
 import java.util.UUID;
 
-/** Reduces Equip abilities targeting the permanent attached to the source Aura or Equipment. */
+/**
+ * Reduces equip abilities targeting the permanent the source Aura or Equipment is attached to. Reconfigure is not an
+ * equip ability (CR 702.151a, Strong Back's ruling), so it is not reduced.
+ */
 public record ReduceEquipCostForTargetingAttachedPermanentEffect(int amount)
         implements AttachedPermanentActivatedAbilityCostReducingEffect {
 
@@ -36,7 +39,8 @@ public record ReduceEquipCostForTargetingAttachedPermanentEffect(int amount)
                              UUID targetId, List<UUID> targetIds) {
         if (ability == null || reducingPermanent == null
                 || reducingPermanent.getAttachedTo() == null
-                || ability.getEffects().stream().noneMatch(EquipEffect.class::isInstance)) {
+                || ability.getEffects().stream().noneMatch(effect ->
+                        effect instanceof EquipEffect equip && !equip.permitsCreatureEquipment())) {
             return false;
         }
         UUID attachedId = reducingPermanent.getAttachedTo();

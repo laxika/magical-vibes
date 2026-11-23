@@ -7,10 +7,11 @@ import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorForSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseColorOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseActivationCostPerCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.PreventDamageToRecipientsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.PutCountersOnSelfEffect;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
 
@@ -29,7 +30,7 @@ public class ChromaticArmor extends Card {
         // counters on this Aura." X is not chosen by the player — the printed cost is {0} and the
         // per-counter increase supplies the generic mana, read at activation time.
         addActivatedAbility(new ActivatedAbility(false, "{0}",
-                List.of(new IncreaseActivationCostPerCounterEffect(CounterType.SLEIGHT, 1),
+                List.of(new IncreaseActivationCostEffect(new CountersOnSource(CounterType.SLEIGHT)),
                         new PutCountersOnSelfEffect(CounterType.SLEIGHT),
                         new ChooseColorForSourceEffect()),
                 "{X}: Put a sleight counter on this Aura and choose a color. X is the number of sleight counters on this Aura."));

@@ -174,11 +174,6 @@ public sealed interface MultiPermanentChoiceContext {
             implements MultiPermanentChoiceContext {
     }
 
-    /** Goad the chosen creature controlled by the damaged player until the controller's next turn. */
-    record GoadDamagedPlayerControls(String sourceName, UUID controllerId)
-            implements MultiPermanentChoiceContext {
-    }
-
     /**
      * "You may sacrifice [source]. If you do, destroy target creature that player controls."
      * {@code sourceSacrificed} is set for the completion's second departure, the destroy, once the source has been

@@ -188,31 +188,6 @@ public class MayCopyHandlerService {
                 .contains(graveyardCard.getId());
     }
 
-    public void handleMimeoplasmCopyOnEnterChoice(GameData gameData, Player player, boolean accepted,
-                                                  PendingMayAbility ability) {
-        if (accepted) {
-            List<Card> creatureCards = gameData.playerGraveyards.values().stream()
-                    .flatMap(List::stream)
-                    .filter(card -> card.hasType(CardType.CREATURE))
-                    .toList();
-            if (creatureCards.size() >= 2) {
-                playerInputService.beginMultiGraveyardChoice(
-                        gameData, ability.controllerId(), creatureCards, 2, 2,
-                        "Choose two creature cards from graveyards to exile.");
-                gameLogService.append(gameData, GameLog.text(
-                        player.getUsername() + " accepts — choosing two creature cards from graveyards to exile."));
-                return;
-            }
-        }
-
-        String message = accepted
-                ? player.getUsername() + " has fewer than two creature cards in graveyards; it enters without copying."
-                : player.getUsername() + " declines to exile creature cards for The Mimeoplasm. ";
-        gameLogService.append(gameData, GameLog.textCardText(message, ability.sourceCard(),
-                " It enters without copying."));
-        finishCloneEntryWithoutFurtherChoice(gameData);
-    }
-
     public void handleCopyCreatureCardFromGraveyardChoice(GameData gameData, Player player, boolean accepted,
                                                            PendingMayAbility ability,
                                                            CopyCreatureCardFromGraveyardOnEnterEffect copyEffect) {

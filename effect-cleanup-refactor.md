@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Next: fold run 1 of the Fold queue. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold run 1 (2026-11-23): `dead`, `p-cost`, `p-lib`: 10 dead, 9 absorbed, 2 re-batched into `targets-x`, 7 `blocked-other`. Next: fold run 2 (`p-dmg`). Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 4,044 / 3,299 |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 4,025 / 3,286 (fold run 1; 4,044 / 3,299 before) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -64,9 +64,9 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | awk 'NR>1 && $3<=2 && $2=="record"' | wc -l`.
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
-`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 4,935 rows over 4,404 classes, the consolidation's 102 and defect run
-D10's 73 included. Latest verdict per class: `step-9` 1,322, unique 1,161, absorbed 506, split 454, blocked-other 415, survivor 259,
-blocked-step-model 140, blocked-player-loop 97, dead 50. Waiting: 1,322 `step-9` rows for fold runs; 5 rows on the owner's open
+`scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 4,963 rows over 4,404 classes, the consolidation's 102, defect run
+D10's 73 and fold run 1's 28 included. Latest verdict per class: `step-9` 1,296, unique 1,161, absorbed 515, split 454, blocked-other 422,
+survivor 259, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,296 `step-9` rows for fold runs after fold run 1 (1,322 before); 5 rows on the owner's open
 questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
@@ -440,7 +440,12 @@ Step and choice records:
   `SacrificePermanentsEffect.anyNumber` / `.upTo`, `DiscardEffect.matching`, `DestroyAllPermanentsEffect.sparing`,
   `BecomeCopyOfSubjectEffect`, `MayCastAnySpellFromHandWithoutPayingManaCostEffect.orElse`, `SetCombatRequirementThisTurnEffect.mustAttack`,
   `MatchingCreaturesMustAttackThisTurnEffect.controlledBy`.
-- `NoteAmountEffect` (StepKind NOTE, `AmountThisWay.noted()`); `QueueReflexiveAbilityEffect` for "when you do".
+- `NoteAmountEffect` (StepKind NOTE, `AmountThisWay.noted()`); `QueueReflexiveAbilityEffect` for "when you do" (also inside
+  `ForageEffect`, fold run 1).
+- Costs (fold run 1): `ReduceCastCostForNextMatchingSpellEffect` fixes an `XValue`, `EventValue` or `DeterminedOnce` amount as it
+  resolves ("X ... as this ability resolves"), any other amount at cast (affinity); `ReduceActivationCostEffect` /
+  `IncreaseActivationCostEffect` take any `DynamicAmount` (`CountersOnSource` for "for each counter"); a turn-limited static
+  cost change is `ConditionalEffect(ControllerTurn(), …)`; `IntensifySourceCardEffect` takes a `DynamicAmount`.
 
 Permissions, restrictions and grants:
 
@@ -881,6 +886,50 @@ tails" (they read the old flip line); `TirelessAnglerTest` expectation set befor
 was loosened.
 
 **For the next run.** Fold run 1 of the Fold queue; fold runs 12a and 12b take the rows this run unblocked, after run 12's CONJURE step.
+
+### Step 9, fold run 1 (2026-11-23)
+
+Fold run 1 of the Fold queue: batches `dead`, `p-cost`, `p-lib` (28 rows). No "Fold:" defect line named these batches. Ratchet
+4,044 / 3,299 → 4,025 / 3,286 (19 records; 13 normal, may and static handlers, plus two cost-modification handlers). Ledger: 28 rows
+appended. 15 card files changed (4 only lost an unused import); Oracle text checked with `get_card` for all 11 rewritten cards but
+Memory Bank (no Scryfall entry: its reminder text from a retailer listing, through a web search), and for Don & Raph and Strong Back;
+rulings for Strong Back and Guided Passage. CR 118.9d, 601.2f, 602.2b, 608.2d, 608.2h, 614.1c, 614.12, 701.29a, 702.41a, 702.151a,
+708.4 checked with `get_rule`.
+
+| Batch | Result |
+|---|---|
+| `dead` (10) | all deleted: `git grep -w` found only imports; with them the Mimeoplasm choice chain (`CloneService`, `MayCopyHandlerService`, `GraveyardChoiceHandlerService`, three `CloneOperationState` fields), the void-counter permission branch, `WheelOfMisfortuneState`, `MultiPermanentChoiceContext.GoadDamagedPlayerControls` |
+| `p-cost` (7) | 5 absorbed (Kaza, Maelstrom Muse; Diary of Dreams; Chromatic Armor, Skeleton Scavengers; Momo; Damping Sphere); 2 re-batched into `targets-x` (the equip-targeting and graveyard-target reductions need a target kind and an attached subject, not parameters) |
+| `p-lib` (11) | 4 absorbed (Braids, Curious Forager, Memory Bank, Quickbeast Amulet); 7 `blocked-other`: Mana Echoes (the count's filter has no triggering permanent), Oath of Druids (the player-target declaration, as Oath of Ghouls), Ajani (look vs reveal), Counterlash (the target spell's types after it left), Fateseal (the decision maker of an untargeted library), Guided Passage (one prompt over three categories with a land creature), Phyrexian Portal (look, both piles face down) |
+
+**Read at the same moment (p-cost).** The activation modifiers are read only through `ActivationCostModifierEffect.amount()` /
+`reducesGenericCost()` at activation (CR 602.2b), so the counter forms say the same as `CountersOnSource`. Momo's reduction stays a
+battlefield cost modifier (CR 601.2f), gated by `ControllerTurn` as Geyser Drake's is. Kaza and Maelstrom Muse read their X as the
+ability resolves (CR 608.2h): the survivor's handler now fixes a `DeterminedOnce` amount, as it fixed `XValue` and `EventValue`. The
+triage note said to lock every amount; that would have broken Saheeli, the Gifted and Don & Raph, whose affinity counts at cast
+(CR 702.41a).
+
+**Behaviour changes.**
+- Damping Sphere's tax now applies to an alternative cost (CR 118.9d; `IncreaseSpellCostEffectHandler.modifyAlternateCost`):
+  `DampingSphereTest.taxAppliesToAlternativeCost` (Ragavan's dash). Not run on the old code (the old handler had no alternate-cost
+  hook, so `getAlternateHandCastCostModifier` added nothing).
+- Strong Back no longer reduces reconfigure (CR 702.151a; its ruling): `StrongBackTest.doesNotReduceReconfigureCost`, failed first.
+- Momo judges a face-down cast by its face-down characteristics (CR 708.4; the survivor's), no test (no flying morph at hand).
+- Braids: the card choice prompt (the hand only to its chooser) instead of the hand-card prompt; a lone eligible card is put unasked
+  (CR 608.2d); the put goes through the entry batch. Curious Forager's "when you do" carries the resolution's results and reads
+  "'s reflexive ability". Memory Bank logs "Memory Bank is exiled."
+
+**Tests changed.** `BraidsConjurerAdeptTest` answers the card choice (five cases; one also checks the other player is sent no hand card
+id); `CastingCostServiceTest`'s two Damping Sphere cases build the survivor; `CostModificationTestRegistry` and
+`CostEffectClassificationTest` lose the deleted classes. New: the Damping Sphere and Strong Back cases.
+
+**Shared pieces.** None new; `ReduceCastCostForNextMatchingSpellEffect`'s `DeterminedOnce` lock and `IntensifySourceCardEffect`'s
+`DynamicAmount` are under Standing knowledge.
+
+**Seen, not changed.** Oath of Druids skips the entry batch (Defect queue group 9). Fateseal's `getOpponentId` was already in group 2.
+
+**For the next run.** Fold run 2 (`p-dmg`). Several `p-…` notes name a head that needs a component or a reader change; check each
+against the survivor's readers first, as this run's seven `blocked-other` rows show.
 
 ## Prompt
 

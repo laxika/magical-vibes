@@ -3,7 +3,6 @@ package com.github.laxika.magicalvibes.cards.w;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.effect.GoblinGameEffect;
-import com.github.laxika.magicalvibes.model.effect.WheelOfMisfortuneEffect;
 
 @CardRegistration(set = "SLD", collectorNumber = "1300")
 @CardRegistration(set = "SLD", collectorNumber = "1959")

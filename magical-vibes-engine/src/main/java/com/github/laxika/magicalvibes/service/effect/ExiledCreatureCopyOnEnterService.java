@@ -73,9 +73,6 @@ public class ExiledCreatureCopyOnEnterService {
         operation.copyCardFilter = null;
         operation.graveyardCopyChoicePending = false;
         operation.exileCopiedGraveyardCardAfterEntry = false;
-        operation.mimeoplasmGraveyardChoicePending = false;
-        operation.mimeoplasmCopyChoicePending = false;
-        operation.mimeoplasmSelectedCardIds = List.of();
         operation.exileTwoAndAddOtherPowerCounters = false;
         operation.selectedGraveyardCopyCardIds = List.of();
 

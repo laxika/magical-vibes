@@ -74,9 +74,6 @@ public class CloneOperationState {
     public boolean exileCopiedGraveyardCardAfterEntry;
     /** The copied graveyard card whose exile is still owed while the copy's own copy replacement is being answered. */
     public com.github.laxika.magicalvibes.model.Card graveyardCardToExileAfterEntry;
-    public boolean mimeoplasmGraveyardChoicePending;
-    public boolean mimeoplasmCopyChoicePending;
-    public List<UUID> mimeoplasmSelectedCardIds = List.of();
     public boolean exileTwoAndAddOtherPowerCounters;
     public List<UUID> selectedGraveyardCopyCardIds = List.of();
 }

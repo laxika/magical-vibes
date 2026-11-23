@@ -6,6 +6,7 @@ import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.i.Island;
 import com.github.laxika.magicalvibes.cards.m.ManaReflection;
 import com.github.laxika.magicalvibes.cards.p.PalladiumMyr;
+import com.github.laxika.magicalvibes.cards.r.RagavanNimblePilferer;
 import com.github.laxika.magicalvibes.cards.r.ResonatingLute;
 import com.github.laxika.magicalvibes.cards.s.Swamp;
 import com.github.laxika.magicalvibes.model.GameData;
@@ -23,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @CardUsed({DampingSphere.class, CabalStronghold.class, Forest.class, GrizzlyBears.class,
-        Island.class, ResonatingLute.class, Swamp.class, PalladiumMyr.class})
+        Island.class, ResonatingLute.class, Swamp.class, PalladiumMyr.class, RagavanNimblePilferer.class})
 class DampingSphereTest extends BaseCardTest {
 
     // ===== Casting and resolving =====
@@ -79,6 +80,28 @@ class DampingSphereTest extends BaseCardTest {
         assertThat(gd.stack).hasSize(1);
         assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Grizzly Bears");
         assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isEqualTo(0);
+    }
+
+    @Test
+    @DisplayName("The tax also applies to a spell cast for an alternative cost")
+    void taxAppliesToAlternativeCost() {
+        harness.addToBattlefield(player1, new DampingSphere());
+        harness.setHand(player1, List.of(new GrizzlyBears(), new RagavanNimblePilferer()));
+        harness.addMana(player1, ManaColor.GREEN, 2);
+        harness.castCreature(player1, 0);
+        harness.passBothPriorities();
+
+        harness.addMana(player1, ManaColor.RED, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        assertThatThrownBy(() -> harness.castWithAlternateCost(player1, 0, List.of()))
+                .isInstanceOf(IllegalStateException.class);
+
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+        harness.castWithAlternateCost(player1, 0, List.of());
+
+        assertThat(gd.stack).hasSize(1);
+        assertThat(gd.stack.getFirst().getCard().getName()).isEqualTo("Ragavan, Nimble Pilferer");
+        assertThat(gd.playerManaPools.get(player1.getId()).getTotal()).isZero();
     }
 
     @Test

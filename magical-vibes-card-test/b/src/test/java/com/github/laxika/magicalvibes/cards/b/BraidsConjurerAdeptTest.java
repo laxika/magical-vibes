@@ -34,11 +34,14 @@ class BraidsConjurerAdeptTest extends BaseCardTest {
 
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player2.getId());
+        harness.clearMessages();
         harness.handleMayAbilityChosen(player2, true);
 
-        assertThat(gd.interaction.activeInteraction(PendingInteraction.HandCardChoice.class).validIndices())
-                .containsExactly(0, 1, 2);
-        harness.handleCardChosen(player2, 1);
+        var choice = gd.interaction.activeInteraction(PendingInteraction.MultiGraveyardChoice.class);
+        assertThat(choice.playerId()).isEqualTo(player2.getId());
+        assertThat(choice.validCardIds()).containsExactlyInAnyOrder(artifact.getId(), creature.getId(), land.getId());
+        assertThat(harness.getConn1().getMessagesContaining(artifact.getId().toString())).isEmpty();
+        harness.handleMultipleCardsChosen(player2, List.of(creature.getId()));
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(artifact, land, instant);
         assertThat(findPermanent(player2, "Gossamer Phantasm").getCard()).isSameAs(creature);
@@ -74,7 +77,6 @@ class BraidsConjurerAdeptTest extends BaseCardTest {
         assertThat(gd.interaction.activeInteraction(PendingInteraction.MayAbilityChoice.class).playerId())
                 .isEqualTo(player1.getId());
         harness.handleMayAbilityChosen(player1, true);
-        harness.handleCardChosen(player1, 0);
 
         assertThat(gd.playerHands.get(player1.getId())).isEmpty();
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(opponentCreature);
@@ -95,7 +97,7 @@ class BraidsConjurerAdeptTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
-        harness.handleCardChosen(player2, 0);
+        harness.handleMultipleCardsChosen(player2, List.of(artifact.getId()));
 
         assertThat(gd.playerHands.get(player2.getId())).containsExactly(creature);
         harness.assertOnBattlefield(player2, "Fountain of Youth");
@@ -114,7 +116,6 @@ class BraidsConjurerAdeptTest extends BaseCardTest {
         advanceToUpkeep(player2);
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
-        harness.handleCardChosen(player2, 0);
 
         assertThat(gd.playerHands.get(player2.getId())).isEmpty();
         harness.assertOnBattlefield(player2, "Urborg, Tomb of Yawgmoth");
@@ -155,7 +156,6 @@ class BraidsConjurerAdeptTest extends BaseCardTest {
         harness.setGraveyard(player1, List.of(braids));
         harness.passBothPriorities();
         harness.handleMayAbilityChosen(player2, true);
-        harness.handleCardChosen(player2, 0);
 
         harness.assertOnBattlefield(player2, "Gossamer Phantasm");
         harness.assertInGraveyard(player1, "Braids, Conjurer Adept");

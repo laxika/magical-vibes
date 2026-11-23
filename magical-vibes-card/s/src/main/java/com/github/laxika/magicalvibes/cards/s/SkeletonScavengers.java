@@ -4,9 +4,10 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CounterType;
+import com.github.laxika.magicalvibes.model.amount.CountersOnSource;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.effect.EnterWithCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseActivationCostPerCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.IncreaseActivationCostEffect;
 import com.github.laxika.magicalvibes.model.effect.RegenerateEffect;
 
 import java.util.List;
@@ -23,7 +24,7 @@ public class SkeletonScavengers extends Card {
                 false,
                 "{0}",
                 List.of(
-                        new IncreaseActivationCostPerCounterEffect(CounterType.PLUS_ONE_PLUS_ONE, 1),
+                        new IncreaseActivationCostEffect(new CountersOnSource(CounterType.PLUS_ONE_PLUS_ONE)),
                         RegenerateEffect.withPlusOnePlusOneCounterOnRegenerate()),
                 "Pay {1} for each +1/+1 counter on this creature: Regenerate this creature. When it regenerates this way, put a +1/+1 counter on it."
         ));

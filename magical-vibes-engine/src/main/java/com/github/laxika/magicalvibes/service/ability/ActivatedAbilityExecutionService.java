@@ -78,7 +78,6 @@ import com.github.laxika.magicalvibes.model.effect.ManaSpendRestriction;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToCommanderColorIdentityCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.effect.PayXEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayXLifeCost;
@@ -396,17 +395,15 @@ public class ActivatedAbilityExecutionService {
         // The completion pays its first "pay life" cost, then a per-card-in-hand, a commander identity and an X life
         // cost, each one a separate payment; count the positive ones.
         int payments = 0;
-        CardEffect firstLifeCost = abilityEffects.stream()
-                .filter(effect -> effect instanceof PayLifeCost
-                        || effect instanceof PayLifeEqualToCommanderColorIdentityCost)
+        PayLifeCost payLifeCost = abilityEffects.stream()
+                .filter(PayLifeCost.class::isInstance)
+                .map(PayLifeCost.class::cast)
                 .findFirst().orElse(null);
-        if (firstLifeCost instanceof PayLifeCost payLifeCost) {
+        if (payLifeCost != null) {
             int sourceCounterCount = payLifeCost.perSourceCounter() == null
                     ? 0
                     : permanent.getCounterCount(payLifeCost.perSourceCounter());
             payments += payLifeCost.effectiveAmount(gameData.getLife(playerId), sourceCounterCount) > 0 ? 1 : 0;
-        } else if (firstLifeCost != null) {
-            payments += ManaProductionSupport.commanderColorIdentity(gameData, playerId).isEmpty() ? 0 : 1;
         }
         if (abilityEffects.stream().anyMatch(PayLifeForEachCardInHandCost.class::isInstance)
                 && !gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty()) {
@@ -770,20 +767,15 @@ public class ActivatedAbilityExecutionService {
         // loss trigger must be deferred until the activated ability is on the stack, so it resolves
         // above the ability rather than below it.
         abilityEffects.stream()
-                .filter(effect -> effect instanceof PayLifeCost
-                        || effect instanceof PayLifeEqualToCommanderColorIdentityCost)
+                .filter(PayLifeCost.class::isInstance)
+                .map(PayLifeCost.class::cast)
                 .findFirst()
-                .ifPresent(cost -> {
+                .ifPresent(payLifeCost -> {
                     int currentLife = gameData.getLife(playerId);
-                    int amount;
-                    if (cost instanceof PayLifeCost payLifeCost) {
-                        int sourceCounterCount = payLifeCost.perSourceCounter() == null
-                                ? 0
-                                : permanent.getCounterCount(payLifeCost.perSourceCounter());
-                        amount = payLifeCost.effectiveAmount(currentLife, sourceCounterCount);
-                    } else {
-                        amount = ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
-                    }
+                    int sourceCounterCount = payLifeCost.perSourceCounter() == null
+                            ? 0
+                            : permanent.getCounterCount(payLifeCost.perSourceCounter());
+                    int amount = payLifeCost.effectiveAmount(currentLife, sourceCounterCount);
                     if (amount > 0) {
                         lifeSupport.applyLifePayment(gameData, playerId, amount, FaceDownVisibility.publicName(gameData, permanent));
                     }

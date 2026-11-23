@@ -4,6 +4,7 @@ import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.GraveyardChoiceDestination;
 import com.github.laxika.magicalvibes.model.effect.ForageEffect;
+import com.github.laxika.magicalvibes.model.effect.QueueReflexiveAbilityEffect;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.ReturnCardFromGraveyardEffect;
 import com.github.laxika.magicalvibes.model.filter.CardIsPermanentPredicate;
@@ -15,11 +16,11 @@ public class CuriousForager extends Card {
 
     public CuriousForager() {
         addTrigger(Triggers.enters(ObjectRelation.THIS), new MayEffect(
-                new ForageEffect(ReturnCardFromGraveyardEffect.builder()
+                new ForageEffect(new QueueReflexiveAbilityEffect(ReturnCardFromGraveyardEffect.builder()
                         .destination(GraveyardChoiceDestination.HAND)
                         .filter(new CardIsPermanentPredicate())
                         .targetGraveyard(true)
-                        .build()),
+                        .build())),
                 "Forage and return a target permanent card from your graveyard to your hand?"));
     }
 }

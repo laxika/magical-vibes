@@ -27,7 +27,6 @@ import com.github.laxika.magicalvibes.model.Player;
 import com.github.laxika.magicalvibes.model.StackEntry;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.GainControlOfTargetEffect;
-import com.github.laxika.magicalvibes.model.effect.GoadChosenCreatureDamagedPlayerControlsEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.filter.FilterContext;
 import com.github.laxika.magicalvibes.model.filter.TargetFilters;
@@ -897,8 +896,6 @@ public class MultiPermanentChoiceHandlerService {
             handleUntapChosenPermanent(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.RedirectDamageToChosenPermanent ctx) {
             handleRedirectDamageToChosenPermanent(gameData, permanentIds, ctx);
-        } else if (context instanceof MultiPermanentChoiceContext.GoadDamagedPlayerControls ctx) {
-            handleGoadDamagedPlayerControls(gameData, permanentIds, ctx);
         } else if (context instanceof MultiPermanentChoiceContext.TapAnyNumberPermanents) {
             handleTapAnyNumberPermanents(gameData, permanentIds);
         } else if (context instanceof MultiPermanentChoiceContext.SacrificeSelfToDestroy) {
@@ -1502,24 +1499,6 @@ public class MultiPermanentChoiceHandlerService {
             gameData.addShield(
                     com.github.laxika.magicalvibes.model.TurnDamageRedirectToCreatureShield
                             .forCreatureOrPlaneswalker(context.protectedPlayerId(), target.getId()));
-        }
-
-        inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);
-    }
-
-    private void handleGoadDamagedPlayerControls(GameData gameData, List<UUID> permanentIds,
-                                                 MultiPermanentChoiceContext.GoadDamagedPlayerControls context) {
-        if (!permanentIds.isEmpty()) {
-            Permanent target = gameQueryService.findPermanentById(gameData, permanentIds.getFirst());
-            if (target != null && gameQueryService.isCreature(gameData, target)) {
-                gameData.addFloatingEffect(new FloatingContinuousEffect(
-                        UUID.randomUUID(), context.sourceName(), null,
-                        context.controllerId(), new GoadChosenCreatureDamagedPlayerControlsEffect(),
-                        target.getId(), null, null, Duration.UNTIL_YOUR_NEXT_TURN, 0));
-                gameLogService.append(gameData,
-                        GameLog.builder().text(context.sourceName() + " goads ").card(target.getCard()).text(".").build());
-                log.info("Game {} - {} goads {}", gameData.id, context.sourceName(), target.getCard().getName());
-            }
         }
 
         inputCompletionService.sbaProcessMayAbilitiesThenAutoPassPreservingPriority(gameData);

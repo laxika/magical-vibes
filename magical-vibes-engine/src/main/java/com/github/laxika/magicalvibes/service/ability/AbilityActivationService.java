@@ -102,7 +102,6 @@ import com.github.laxika.magicalvibes.model.effect.MillEffect;
 import com.github.laxika.magicalvibes.model.effect.NinjutsuEffect;
 import com.github.laxika.magicalvibes.model.effect.PayEnergyCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeCost;
-import com.github.laxika.magicalvibes.model.effect.PayLifeEqualToCommanderColorIdentityCost;
 import com.github.laxika.magicalvibes.model.effect.PayLifeForEachCardInHandCost;
 import com.github.laxika.magicalvibes.model.effect.PayMulticoloredSourceManaCost;
 import com.github.laxika.magicalvibes.model.effect.PayXEnergyCost;
@@ -2431,17 +2430,6 @@ public class AbilityActivationService {
             }
             int life = gameData.getLife(playerId);
             int needed = payLifeCost.effectiveAmount(life);
-            if (life < needed) {
-                throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
-            }
-        }
-        if (abilityEffects.stream().anyMatch(PayLifeEqualToCommanderColorIdentityCost.class::isInstance)) {
-            if (!gameQueryService.canPayLifeForCosts(gameData, isManaAbility(ability, abilityEffects))
-                    || !gameQueryService.canPlayerLifeChange(gameData, playerId)) {
-                throw new IllegalStateException("Players can't pay life to activate abilities");
-            }
-            int life = gameData.getLife(playerId);
-            int needed = ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
             if (life < needed) {
                 throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
             }
@@ -7193,8 +7181,7 @@ public class AbilityActivationService {
         if (!gameQueryService.canPayLifeForCosts(gameData, manaAbility)
                 || !gameQueryService.canSacrificeCreaturesForCosts(gameData)) {
             for (CardEffect effect : abilityEffects) {
-                boolean paysPositiveLife = ((effect instanceof PayLifeCost
-                        || effect instanceof PayLifeEqualToCommanderColorIdentityCost)
+                boolean paysPositiveLife = (effect instanceof PayLifeCost
                         ? lifePaymentAmount(gameData, playerId, permanent, effect) > 0
                         : effect instanceof PayLifeForEachCardInHandCost
                         ? !gameData.playerHands.getOrDefault(playerId, List.of()).isEmpty()
@@ -7348,8 +7335,7 @@ public class AbilityActivationService {
 
         // Pay-life cost
         Optional<CardEffect> payLifeCost = abilityEffects.stream()
-                .filter(effect -> effect instanceof PayLifeCost
-                        || effect instanceof PayLifeEqualToCommanderColorIdentityCost)
+                .filter(PayLifeCost.class::isInstance)
                 .findFirst();
         if (payLifeCost.isPresent()) {
             int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
@@ -7358,14 +7344,6 @@ public class AbilityActivationService {
                 throw new IllegalStateException("Players can't pay life to activate abilities");
             }
             if (needed > 0 && life < needed) {
-                throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
-            }
-        }
-
-        if (abilityEffects.stream().anyMatch(PayLifeEqualToCommanderColorIdentityCost.class::isInstance)) {
-            int life = gameData.playerLifeTotals.getOrDefault(playerId, 0);
-            int needed = ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
-            if (life < needed) {
                 throw new IllegalStateException("Not enough life to pay (need " + needed + ", have " + life + ")");
             }
         }
@@ -9160,9 +9138,6 @@ public class AbilityActivationService {
         if (cost instanceof PayLifeCost payLifeCost) {
             return payLifeCost.effectiveAmount(
                     gameData.getLife(playerId), sourceCounterCount(permanent, payLifeCost));
-        }
-        if (cost instanceof PayLifeEqualToCommanderColorIdentityCost) {
-            return ManaProductionSupport.commanderColorIdentity(gameData, playerId).size();
         }
         throw new IllegalArgumentException("Unsupported life-payment cost: " + cost.getClass().getSimpleName());
     }

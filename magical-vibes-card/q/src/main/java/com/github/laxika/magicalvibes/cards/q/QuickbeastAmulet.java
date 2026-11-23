@@ -6,7 +6,7 @@ import com.github.laxika.magicalvibes.model.EquipActivatedAbility;
 import com.github.laxika.magicalvibes.model.amount.SourceIntensity;
 import com.github.laxika.magicalvibes.model.amount.TriggeringPermanentPower;
 import com.github.laxika.magicalvibes.model.effect.AttachedBoostEffect;
-import com.github.laxika.magicalvibes.model.effect.IntensifySourceCardByAmountEffect;
+import com.github.laxika.magicalvibes.model.effect.IntensifySourceCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.trigger.ObjectRelation;
 import com.github.laxika.magicalvibes.model.trigger.Triggers;
@@ -18,7 +18,7 @@ public class QuickbeastAmulet extends Card {
         addStaticEffect(new AttachedBoostEffect(
                 new SourceIntensity(), new SourceIntensity(), Subjects.attachedCreature()));
         addTrigger(Triggers.enters(Triggers.CREATURE, ObjectRelation.ANOTHER_YOU_CONTROL),
-                new IntensifySourceCardByAmountEffect(new TriggeringPermanentPower()));
+                new IntensifySourceCardEffect(new TriggeringPermanentPower()));
         addActivatedAbility(new EquipActivatedAbility("{2}"));
     }
 }

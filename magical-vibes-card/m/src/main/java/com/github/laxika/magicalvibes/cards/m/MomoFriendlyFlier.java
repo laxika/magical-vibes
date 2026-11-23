@@ -5,8 +5,10 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.condition.ControllerTurn;
 import com.github.laxika.magicalvibes.model.effect.BoostSelfEffect;
-import com.github.laxika.magicalvibes.model.effect.ReduceFirstMatchingSpellCastCostEffect;
+import com.github.laxika.magicalvibes.model.effect.ConditionalEffect;
+import com.github.laxika.magicalvibes.model.effect.ReduceCastCostForFirstMatchingSpellEachTurnEffect;
 import com.github.laxika.magicalvibes.model.filter.CardAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.CardNotPredicate;
@@ -23,13 +25,14 @@ import java.util.List;
 public class MomoFriendlyFlier extends Card {
 
     public MomoFriendlyFlier() {
-        addStaticEffect(new ReduceFirstMatchingSpellCastCostEffect(
-                new CardAllOfPredicate(List.of(
-                        new CardNotPredicate(new CardSubtypePredicate(CardSubtype.LEMUR)),
-                        new CardTypePredicate(CardType.CREATURE),
-                        new CardKeywordPredicate(Keyword.FLYING)
-                )),
-                1));
+        addStaticEffect(new ConditionalEffect(new ControllerTurn(),
+                new ReduceCastCostForFirstMatchingSpellEachTurnEffect(
+                        new CardAllOfPredicate(List.of(
+                                new CardNotPredicate(new CardSubtypePredicate(CardSubtype.LEMUR)),
+                                new CardTypePredicate(CardType.CREATURE),
+                                new CardKeywordPredicate(Keyword.FLYING)
+                        )),
+                        1)));
 
         addTrigger(Triggers.enters(
                         new PermanentAllOfPredicate(List.of(

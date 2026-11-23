@@ -1,5 +1,6 @@
 package com.github.laxika.magicalvibes.cards.s;
 
+import com.github.laxika.magicalvibes.cards.a.ArmguardFamiliar;
 import com.github.laxika.magicalvibes.cards.c.Cagemail;
 import com.github.laxika.magicalvibes.cards.g.GrizzlyBears;
 import com.github.laxika.magicalvibes.cards.l.LeoninScimitar;
@@ -15,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-@CardUsed({StrongBack.class, GrizzlyBears.class, LeoninScimitar.class, Cagemail.class})
+@CardUsed({StrongBack.class, GrizzlyBears.class, LeoninScimitar.class, Cagemail.class, ArmguardFamiliar.class})
 class StrongBackTest extends BaseCardTest {
 
     @Test
@@ -48,6 +49,21 @@ class StrongBackTest extends BaseCardTest {
         harness.passBothPriorities();
 
         assertThat(scimitar.getAttachedTo()).isEqualTo(creature.getId());
+    }
+
+    @Test
+    @DisplayName("Reconfigure is not an equip ability, so its cost is not reduced")
+    void doesNotReduceReconfigureCost() {
+        Permanent creature = harness.addToBattlefieldAndReturn(player1, new GrizzlyBears());
+        Permanent strongBack = harness.addToBattlefieldAndReturn(player1, new StrongBack());
+        strongBack.setAttachedTo(creature.getId());
+        Permanent familiar = harness.addToBattlefieldAndReturn(player1, new ArmguardFamiliar());
+        harness.addMana(player1, ManaColor.COLORLESS, 1);
+
+        assertThatThrownBy(() -> harness.activateAbility(
+                player1, gd.playerBattlefields.get(player1.getId()).indexOf(familiar), 0,
+                null, creature.getId())).isInstanceOf(IllegalStateException.class);
+        assertThat(familiar.getAttachedTo()).isNull();
     }
 
     @Test

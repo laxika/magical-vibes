@@ -7,13 +7,11 @@ import com.github.laxika.magicalvibes.model.effect.CardEffect;
 import com.github.laxika.magicalvibes.model.effect.ChooseOneEffect;
 import com.github.laxika.magicalvibes.model.effect.ExileGraveyardCardsEffect;
 import com.github.laxika.magicalvibes.model.effect.ForageEffect;
-import com.github.laxika.magicalvibes.model.effect.ForageFollowUpEffect;
 import com.github.laxika.magicalvibes.model.effect.ForageTriggerEffect;
 import com.github.laxika.magicalvibes.model.effect.GraveyardExileScope;
 import com.github.laxika.magicalvibes.model.effect.MayEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentThenEffect;
 import com.github.laxika.magicalvibes.model.effect.SequenceEffect;
-import com.github.laxika.magicalvibes.model.effect.TargetPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasSubtypePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicate;
 import com.github.laxika.magicalvibes.service.battlefield.GameQueryService;
@@ -55,9 +53,6 @@ public class ForageEffectHandler implements NormalEffectHandlerBean {
         }
 
         CardEffect followUp = forage.thenEffect();
-        if (followUp != null && followUp.targetSpec().admits(TargetPredicate.Kind.GRAVEYARD_CARD)) {
-            followUp = new ForageFollowUpEffect(followUp);
-        }
         CardEffect forageTrigger = followUp == null
                 ? new ForageTriggerEffect()
                 : SequenceEffect.of(new ForageTriggerEffect(), followUp);

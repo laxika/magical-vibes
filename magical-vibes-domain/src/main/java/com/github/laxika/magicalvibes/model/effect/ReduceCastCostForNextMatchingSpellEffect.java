@@ -11,6 +11,11 @@ import com.github.laxika.magicalvibes.model.filter.CardPredicate;
  * cleanup step if no matching spell was cast this turn ("the next ... spell you cast this turn",
  * Invasion of the Giants); {@code false} keeps it until the next matching spell is cast, across
  * turns ("the next ... spell you cast", Draconic Debut).</p>
+ *
+ * <p>An {@code XValue}, {@code EventValue} or {@code DeterminedOnce} amount is fixed as the effect resolves
+ * ("where X is the number of Wizards you control as this ability resolves", Kaza, Roil Chaser); any other
+ * amount is counted when the next spell's cost is determined ("has affinity for artifacts", Saheeli, the
+ * Gifted).</p>
  */
 public record ReduceCastCostForNextMatchingSpellEffect(CardPredicate predicate, DynamicAmount amount,
                                                        boolean faceDownOnly, boolean expiresAtCleanup)

@@ -19,6 +19,7 @@ import com.github.laxika.magicalvibes.model.StackEntryType;
 import com.github.laxika.magicalvibes.model.TurnStep;
 import com.github.laxika.magicalvibes.model.Zone;
 import com.github.laxika.magicalvibes.model.amount.CountScope;
+import com.github.laxika.magicalvibes.model.amount.SpellsCastThisTurn;
 import com.github.laxika.magicalvibes.model.amount.Fixed;
 import com.github.laxika.magicalvibes.model.amount.PermanentCount;
 import com.github.laxika.magicalvibes.model.amount.SourcePower;
@@ -32,7 +33,6 @@ import com.github.laxika.magicalvibes.model.effect.CostModificationScope;
 import com.github.laxika.magicalvibes.model.effect.DelveCost;
 import com.github.laxika.magicalvibes.model.effect.DiscardCardOrPayLifeCost;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCostOfSpellsTargetingThisSpellEffect;
-import com.github.laxika.magicalvibes.model.effect.IncreaseEachPlayerCastCostPerSpellThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseCastCostForChosenNameSpellsEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOpponentCostForTargetingControlledPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.IncreaseOwnCastCostEffect;
@@ -322,8 +322,12 @@ class CastingCostServiceTest {
             Card taxCard = new Card();
             taxCard.setName("Damping Sphere");
             taxCard.setType(CardType.ARTIFACT);
-            taxCard.addStaticEffect(new IncreaseEachPlayerCastCostPerSpellThisTurnEffect(1));
+            taxCard.addStaticEffect(new IncreaseSpellCostEffect(
+                    new CardTruePredicate(), new SpellsCastThisTurn(CountScope.CONTROLLER), CostModificationScope.ALL));
             gd.playerBattlefields.get(player1Id).add(new Permanent(taxCard));
+            when(predicateEvaluationService.matchesCardPredicate(
+                    any(), any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(true);
             Card dummySpell = new Card();
             dummySpell.setName("Dummy");
             dummySpell.setType(CardType.INSTANT);
@@ -345,8 +349,12 @@ class CastingCostServiceTest {
             Card taxCard = new Card();
             taxCard.setName("Damping Sphere");
             taxCard.setType(CardType.ARTIFACT);
-            taxCard.addStaticEffect(new IncreaseEachPlayerCastCostPerSpellThisTurnEffect(1));
+            taxCard.addStaticEffect(new IncreaseSpellCostEffect(
+                    new CardTruePredicate(), new SpellsCastThisTurn(CountScope.CONTROLLER), CostModificationScope.ALL));
             gd.playerBattlefields.get(player2Id).add(new Permanent(taxCard));
+            when(predicateEvaluationService.matchesCardPredicate(
+                    any(), any(), any(), any(), any(), any(), any(), any()))
+                    .thenReturn(true);
 
             Card instant = new Card();
             instant.setName("Lightning Bolt");

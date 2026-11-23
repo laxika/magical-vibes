@@ -45,7 +45,6 @@ import com.github.laxika.magicalvibes.model.effect.AllowCastFromCardsExiledWithS
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryByPayingLifeEqualToManaValueEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowCastFromTopOfLibraryEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayAndCastCardsExiledWithCroakCountersEffect;
-import com.github.laxika.magicalvibes.model.effect.AllowPlayAndCastCardsExiledWithVoidCountersEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayCardsExiledWithPlanarSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayFromAnyLibraryTopEffect;
 import com.github.laxika.magicalvibes.model.effect.AnyManaTypeCastEffect;
@@ -2990,11 +2989,6 @@ public class CastingPermissionService {
             }
         }
         for (ExiledCardEntry entry : gameData.exiledCards) {
-            if (hasVoidCounterPermission(gameData, playerId, entry.card().getId())) {
-                castableIds.add(entry.card().getId());
-            }
-        }
-        for (ExiledCardEntry entry : gameData.exiledCards) {
             if (gameData.stashCounterCardIds.contains(entry.card().getId())
                     && hasStashCounterPermission(gameData, playerId, entry.card().getId(), false)) {
                 castableIds.add(entry.card().getId());
@@ -3135,7 +3129,6 @@ public class CastingPermissionService {
         if (hasStashCounterPermission(gameData, playerId, cardId, false)) return true;
         if (hasIceCounterPermission(gameData, playerId, cardId, false)) return true;
         if (hasCroakCounterPermission(gameData, playerId, cardId)) return true;
-        if (hasVoidCounterPermission(gameData, playerId, cardId)) return true;
         if (hasCollectionCounterPermission(gameData, playerId, cardId, false)) return true;
         if (hasFetchCounterPermission(gameData, playerId, cardId, false)) return true;
         for (UUID sourceControllerId : gameData.orderedPlayerIds) {
@@ -3727,11 +3720,5 @@ public class CastingPermissionService {
         return battlefield != null && battlefield.stream().anyMatch(permanent ->
                 permanent.getCard().hasType(CardType.PLANESWALKER)
                         && permanent.getCard().getName().startsWith("Lukka,"));
-    }
-    private boolean hasVoidCounterPermission(GameData gameData, UUID playerId, UUID cardId) {
-        if (!gameData.exiledCardsWithVoidCounters.contains(cardId)) return false;
-        ExiledCardEntry entry = gameData.findExiledCard(cardId);
-        if (entry == null || playerId.equals(entry.ownerId())) return false;
-        return controlsStatic(gameData, playerId, AllowPlayAndCastCardsExiledWithVoidCountersEffect.class);
     }
 }

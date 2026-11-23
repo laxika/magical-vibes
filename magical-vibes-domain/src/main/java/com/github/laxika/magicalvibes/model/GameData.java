@@ -1334,8 +1334,6 @@ public class GameData {
     public final EachPlayerPayManaState eachPlayerPayMana = new EachPlayerPayManaState();
     /** Progress state for Goblin Game's hidden item-count choices. */
     public final GoblinGameState goblinGame = new GoblinGameState();
-    /** Progress state for Wheel of Misfortune's hidden number choices. */
-    public final WheelOfMisfortuneState wheelOfMisfortune = new WheelOfMisfortuneState();
     /** Progress state for Truth or Consequences' hidden votes. */
     public final TruthOrConsequencesState truthOrConsequences = new TruthOrConsequencesState();
     /** Progress state for Expert-Level Safe's two-player hidden-number choice. */
@@ -9982,11 +9980,6 @@ public class GameData {
         copy.expertLevelSafe.currentPlayerId = this.expertLevelSafe.currentPlayerId;
         copy.expertLevelSafe.controllerChoice = this.expertLevelSafe.controllerChoice;
         copy.expertLevelSafe.opponentChoice = this.expertLevelSafe.opponentChoice;
-        copy.wheelOfMisfortune.active = this.wheelOfMisfortune.active;
-        copy.wheelOfMisfortune.order.addAll(this.wheelOfMisfortune.order);
-        copy.wheelOfMisfortune.index = this.wheelOfMisfortune.index;
-        copy.wheelOfMisfortune.chosenNumbers.putAll(this.wheelOfMisfortune.chosenNumbers);
-        copy.wheelOfMisfortune.currentPlayerId = this.wheelOfMisfortune.currentPlayerId;
         copy.illicitAuction.active = this.illicitAuction.active;
         copy.illicitAuction.order.addAll(this.illicitAuction.order);
         copy.illicitAuction.index = this.illicitAuction.index;
