@@ -2,7 +2,10 @@ package com.github.laxika.magicalvibes.cards.w;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
-import com.github.laxika.magicalvibes.model.effect.DestroyOneOfTargetsAtRandomEffect;
+import com.github.laxika.magicalvibes.model.StepKind;
+import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
+import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentPredicateTargetFilter;
@@ -15,6 +18,7 @@ public class WildSwing extends Card {
         target(new PermanentPredicateTargetFilter(
                 new PermanentNotPredicate(new PermanentIsEnchantmentPredicate()),
                 "Target must be a nonenchantment permanent"
-        ), 3, 3).addSpellEffect(new DestroyOneOfTargetsAtRandomEffect());
+        ), 3, 3).addSpellEffect(ChoosePermanentsEffect.atRandom(1, Subjects.allTargets(), "one of them"))
+                .addSpellEffect(new DestroyTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE)));
     }
 }

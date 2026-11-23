@@ -3,7 +3,8 @@ package com.github.laxika.magicalvibes.cards.r;
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.Keyword;
-import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfAllCreaturesWithTargetPlayerEffect;
+import com.github.laxika.magicalvibes.model.effect.Duration;
+import com.github.laxika.magicalvibes.model.effect.ExchangeControlOfAllMatchingPermanentsWithTargetPlayerEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.effect.UntapPermanentsEffect;
@@ -30,6 +31,7 @@ public class ReinsOfPower extends Card {
                                 new PermanentIsCreaturePredicate())))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.otherCreaturesYouControl()))
                 .addSpellEffect(new GrantKeywordEffect(Keyword.HASTE, Subjects.creaturesTargetPlayerControls()))
-                .addSpellEffect(new ExchangeControlOfAllCreaturesWithTargetPlayerEffect());
+                .addSpellEffect(new ExchangeControlOfAllMatchingPermanentsWithTargetPlayerEffect(
+                        new PermanentIsCreaturePredicate(), Duration.UNTIL_END_OF_TURN));
     }
 }

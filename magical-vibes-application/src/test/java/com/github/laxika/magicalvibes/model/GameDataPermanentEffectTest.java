@@ -6,10 +6,10 @@ import com.github.laxika.magicalvibes.model.effect.CanBlockAnyNumberOfCreaturesU
 import com.github.laxika.magicalvibes.model.effect.CantBlockEffect;
 import com.github.laxika.magicalvibes.model.effect.CantBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.effect.CardEffect;
+import com.github.laxika.magicalvibes.model.effect.DampingEngineEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.GrantAdditionalBlockToTargetUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.MustAttackIfAbleEffect;
 import com.github.laxika.magicalvibes.model.effect.MustBlockSourceEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
@@ -111,7 +111,7 @@ class GameDataPermanentEffectTest {
         assertThat(gd.ignoresEffectOf(creatureId, IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class, payer)).isTrue();
         assertThat(gd.ignoresEffectOf(creatureId, IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class,
                 UUID.randomUUID())).isFalse();
-        assertThat(gd.ignoresEffectOf(creatureId, IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect.class, payer))
+        assertThat(gd.ignoresEffectOf(creatureId, DampingEngineEffect.class, payer))
                 .isFalse();
     }
 

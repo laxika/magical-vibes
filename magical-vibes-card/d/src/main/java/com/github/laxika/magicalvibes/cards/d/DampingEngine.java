@@ -5,7 +5,7 @@ import com.github.laxika.magicalvibes.model.ActivatedAbility;
 import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.condition.ControllerControlsMorePermanentsThanEachOtherPlayer;
 import com.github.laxika.magicalvibes.model.effect.DampingEngineEffect;
-import com.github.laxika.magicalvibes.model.effect.IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.SacrificePermanentCost;
 import com.github.laxika.magicalvibes.model.filter.PermanentTruePredicate;
 
@@ -18,7 +18,7 @@ public class DampingEngine extends Card {
         addStaticEffect(new DampingEngineEffect());
         addActivatedAbility(new ActivatedAbility(false, null,
                         List.of(new SacrificePermanentCost(new PermanentTruePredicate(), "a permanent", false),
-                                new IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect()),
+                                new IgnoreSourceAuraEffectsUntilEndOfTurnEffect()),
                         "Sacrifice a permanent: Ignore this effect until end of turn.")
                 .withActivationCondition(new ControllerControlsMorePermanentsThanEachOtherPlayer(true),
                         "Activate only if you control more permanents than each other player.")

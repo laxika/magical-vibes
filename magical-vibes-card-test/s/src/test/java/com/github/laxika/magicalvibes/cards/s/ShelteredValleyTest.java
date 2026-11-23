@@ -9,12 +9,13 @@ import com.github.laxika.magicalvibes.testutil.CardUsed;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@CardUsed({ShelteredValley.class, SchoolOfTheUnseen.class, BloodSun.class})
+@CardUsed({ShelteredValley.class, SchoolOfTheUnseen.class, BloodSun.class, SplendidReclamation.class})
 class ShelteredValleyTest extends BaseCardTest {
 
     @Test
@@ -29,6 +30,23 @@ class ShelteredValleyTest extends BaseCardTest {
         assertThat(gd.playerBattlefields.get(player1.getId())).hasSize(1);
         assertThat(gd.playerGraveyards.get(player1.getId())).hasSize(2);
         harness.assertOnBattlefield(player1, "Sheltered Valley");
+    }
+
+    @Test
+    @DisplayName("Two Sheltered Valleys entering at the same time sacrifice neither, as neither is on the battlefield yet")
+    void copiesEnteringTogetherSurvive() {
+        harness.setGraveyard(player1, new ArrayList<>(List.of(new ShelteredValley(), new ShelteredValley())));
+        harness.setHand(player1, List.of(new SplendidReclamation()));
+        harness.addMana(player1, ManaColor.GREEN, 1);
+        harness.addMana(player1, ManaColor.COLORLESS, 3);
+
+        harness.castAndResolveSorcery(player1, 0, 0);
+
+        assertThat(gd.playerBattlefields.get(player1.getId()))
+                .filteredOn(permanent -> permanent.getCard().getName().equals("Sheltered Valley"))
+                .hasSize(2);
+        assertThat(gd.playerGraveyards.get(player1.getId()))
+                .noneMatch(card -> card.getName().equals("Sheltered Valley"));
     }
 
     @Test

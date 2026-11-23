@@ -7,7 +7,7 @@ import com.github.laxika.magicalvibes.model.effect.ExilePlayPermissionEffect;
 import com.github.laxika.magicalvibes.model.layer.FloatingContinuousEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayFaceUpCardsFromExileThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.AllowPlayFromTopOfLibraryUntilEndOfTurnEffect;
-import com.github.laxika.magicalvibes.model.effect.IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect;
+import com.github.laxika.magicalvibes.model.effect.IgnoreSourceAuraEffectsUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantControllerLibraryTopPermissionForTargetPlayerUntilEndOfTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToCardTypeThisTurnEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantFlashToSpellsThisTurnEffect;
@@ -518,7 +518,7 @@ public class CastingPermissionService {
         for (List<Permanent> battlefield : gameData.playerBattlefields.values()) {
             if (battlefield == null) continue;
             for (Permanent permanent : battlefield) {
-                if (gameData.ignoresEffectOf(permanent.getId(), IgnoreSourceDampingEngineEffectUntilEndOfTurnEffect.class, playerId)) continue;
+                if (gameData.ignoresEffectOf(permanent.getId(), IgnoreSourceAuraEffectsUntilEndOfTurnEffect.class, playerId)) continue;
                 if (permanent.isFaceDown() || gameQueryService.hasLostAllAbilities(gameData, permanent)) continue;
                 if (permanent.getCard().getStaticEffects().stream()
                         .anyMatch(DampingEngineEffect.class::isInstance)) {

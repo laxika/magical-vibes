@@ -7,9 +7,10 @@ import com.github.laxika.magicalvibes.model.CardColor;
 import com.github.laxika.magicalvibes.model.CardSubtype;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.Keyword;
+import com.github.laxika.magicalvibes.model.action.DelayedPermanentActionKind;
 import com.github.laxika.magicalvibes.model.effect.CreateTokenEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyCreatedPermanentsAtEndStepEffect;
 import com.github.laxika.magicalvibes.model.effect.GrantKeywordEffect;
+import com.github.laxika.magicalvibes.model.effect.ScheduleCreatedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsAttackingPredicate;
@@ -46,7 +47,7 @@ public class OldHobAlleycatBlues extends Card {
                 false,
                 0,
                 Set.of(Keyword.HASTE)),
-                new DestroyCreatedPermanentsAtEndStepEffect());
+                new ScheduleCreatedPermanentsEffect(DelayedPermanentActionKind.DESTROY_AT_END_STEP));
 
         addActivatedAbility(new ActivatedAbility(
                 false,

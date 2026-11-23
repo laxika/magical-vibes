@@ -29,8 +29,6 @@ import com.github.laxika.magicalvibes.model.ExiledCardsControlLossWatch;
 import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.AbilityEffects;
-import com.github.laxika.magicalvibes.model.DepartureBatch;
-import com.github.laxika.magicalvibes.model.DepartureIntent;
 import com.github.laxika.magicalvibes.model.GameData;
 import com.github.laxika.magicalvibes.model.GameLog;
 import com.github.laxika.magicalvibes.model.ManaValueParity;
@@ -88,7 +86,6 @@ import com.github.laxika.magicalvibes.model.CardSupertype;
 import com.github.laxika.magicalvibes.model.effect.MayPayLifeOrEntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.EntryCostReplacementEffect;
 import com.github.laxika.magicalvibes.model.effect.NumberChoiceEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentsWithSameNameOnEnterEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersTappedEffect;
 import com.github.laxika.magicalvibes.model.effect.RevealSubtypeOrEntersWithCountersEffect;
 import com.github.laxika.magicalvibes.model.PendingMayAbility;
@@ -120,7 +117,6 @@ import com.github.laxika.magicalvibes.model.amount.Sum;
 import com.github.laxika.magicalvibes.service.filter.PredicateEvaluationService;
 import com.github.laxika.magicalvibes.service.input.PlayerInputService;
 import com.github.laxika.magicalvibes.service.library.LibraryShuffleHelper;
-import com.github.laxika.magicalvibes.service.trigger.pipeline.ActionEvents;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -163,9 +159,6 @@ public class BattlefieldPlacementService {
 
     @Autowired @Lazy
     private DurationClock durationClock;
-
-    @Autowired @Lazy
-    private DepartureService departureService;
 
     @Autowired @Lazy
     private AsEntersDiscardSupport asEntersDiscardSupport;
@@ -348,7 +341,6 @@ public class BattlefieldPlacementService {
         }
         ZoneChangeCounterSupport.restore(gameData, permanent);
         Map<CounterType, Integer> countersBeforeEntry = new EnumMap<>(permanent.getCounters());
-        applySacrificeOtherPermanentsWithSameName(gameData, controllerId, permanent);
         Map<UUID, List<Permanent>> hidden = hideSimultaneouslyEntered(gameData, simultaneouslyEntered);
         LandEquilibriumSupport.ReplacementPlan landEquilibriumPlan = null;
         RevealSubtypeOrEntersTappedEffect conditionalRevealEffect = null;
@@ -356,7 +348,8 @@ public class BattlefieldPlacementService {
         boolean instructedToEnterTapped = permanent.isTapped();
         permanent.enterUntapped();
         try {
-            if (sacrificeAllPermanentsAsEntersEffectHandler != null) {
+            if (sacrificeAllPermanentsAsEntersEffectHandler != null
+                    && !losesNonManaAbilitiesAsLandEnters(gameData, controllerId, permanent)) {
                 sacrificeAllPermanentsAsEntersEffectHandler.applyIfPresent(gameData, controllerId, permanent);
             }
             carrySpellTextReplacements(gameData, permanent, controllerId);
@@ -1735,44 +1728,6 @@ public class BattlefieldPlacementService {
                 enteringPermanent.tap();
             }
         }
-    }
-
-    /**
-     * "If this land would enter, instead sacrifice each other permanent named [this] you control,
-     * then put this land onto the battlefield." (Sheltered Valley.)
-     *
-     * <p>Runs before the entering permanent is placed, so it can never sacrifice itself. The
-     * entering permanent always enters; only the older copies leave. They are sacrificed together, as one
-     * departure batch. Their controller can't be stopped in the middle of an entry, so their CR 616.1 questions
-     * are asked only when the entry runs inside a window that can be run again; these lands are noncreatures,
-     * which have none today.
-     */
-    private void applySacrificeOtherPermanentsWithSameName(GameData gameData, UUID controllerId, Permanent permanent) {
-        if (losesNonManaAbilitiesAsLandEnters(gameData, controllerId, permanent)) {
-            return;
-        }
-        boolean present = permanent.getCard().getStaticEffects().stream()
-                .anyMatch(SacrificeOtherPermanentsWithSameNameOnEnterEffect.class::isInstance);
-        if (!present) {
-            return;
-        }
-        // CR 201.2a, 708.2a: a face-down permanent has no name, so it is never named Sheltered Valley.
-        String name = permanent.getCard().getName();
-        List<Permanent> doomed = gameData.playerBattlefields.getOrDefault(controllerId, List.of()).stream()
-                .filter(p -> gameQueryService.permanentHasName(gameData, p, name))
-                .toList();
-        if (doomed.isEmpty()) {
-            return;
-        }
-        departureService.departNow(gameData,
-                DepartureBatch.of(doomed.stream().map(Permanent::getId).map(DepartureIntent::sacrifice).toList()),
-                DepartureService.Hooks.afterEach((intent, other, snapshot, removed) -> {
-                    if (removed) {
-                        ActionEvents.sacrificed(gameData, controllerId, other.getCard());
-                        gameLogService.append(gameData, GameLog.cardThen(other.getCard(), " is sacrificed."));
-                    }
-                }));
-        permanentRemovalService.removeOrphanedAuras(gameData);
     }
 
     private boolean losesNonManaAbilitiesAsLandEnters(GameData gameData, UUID controllerId, Permanent permanent) {

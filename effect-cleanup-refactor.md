@@ -26,7 +26,7 @@ reference tables: read their introductions and the rows of your run, not every r
 | 6 | `GrantScope` becomes a `PermanentSubject`, static abilities included | done (6.1–6.4; `GrantScope` and `TapUntapScope` deleted) |
 | 7 | Step results: one way for a step to tell the next what happened | done |
 | 8 | Split the fused effects (repeatable) | done (runs 1 to 29; "counter unless": option B now, option C for step 10) |
-| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold run 1 (2026-11-23): `dead`, `p-cost`, `p-lib`: 10 dead, 9 absorbed, 2 re-batched into `targets-x`, 7 `blocked-other`. Fold run 2 (2026-11-23): `p-dmg`: 14 absorbed, 9 split, 4 unique, 5 `blocked-other`. Fold run 3 (2026-11-23): `p-perm`, `sac-singles`, `destroy-singles`: 10 absorbed, 9 split, 1 survivor, 6 `blocked-other`, 3 re-batched. Fold run 4 (2026-11-23): `gc-singles`, `search-singles`, `cant-singles`, `shuffle-params`, `copy-params`, `base-pt`, `seek-params`: 17 absorbed, 3 split, 8 `blocked-other`. Fold run 5 (2026-11-23): `player-floated`, `life-lock`, `may-draw`, `random-player`, `exile-cast`, `lukka`, `look-top-n`: 9 absorbed, 6 split, 3 survivor, 7 `blocked-other`, 2 re-batched into `same-quality`. Next: fold run 6. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
+| 9 | Sweep the single-card tail (repeatable) | open. Runs 1 to 41 closed Exile, Each, Return, Put, Reveal, Choose, Grant, Create, Prevent, May, Register and Target. From 2026-11-23 the step runs as triage runs, then fold runs (see step 9). Triage runs 1 to 7 and parallel chunks 01 to 16 gave every rare record a ledger verdict (none is left unaudited); defect runs 1 and 2 fixed most of the defects triage runs 1 to 5 saw. Their results are merged under Standing knowledge: the **Fold queue** (1,322 `step-9` rows in 299 batches, 51 proposed fold runs), the **Defect queue** (220 lines, 12 proposed defect runs) and **Re-triage and stale rows**. Defect run D10 applied the owner's hidden-zone logging decision and re-verdicted its 73 rows (71 `step-9` in fold runs 12, 12a, 12b and 20). Fold run 1 (2026-11-23): `dead`, `p-cost`, `p-lib`: 10 dead, 9 absorbed, 2 re-batched into `targets-x`, 7 `blocked-other`. Fold run 2 (2026-11-23): `p-dmg`: 14 absorbed, 9 split, 4 unique, 5 `blocked-other`. Fold run 3 (2026-11-23): `p-perm`, `sac-singles`, `destroy-singles`: 10 absorbed, 9 split, 1 survivor, 6 `blocked-other`, 3 re-batched. Fold run 4 (2026-11-23): `gc-singles`, `search-singles`, `cant-singles`, `shuffle-params`, `copy-params`, `base-pt`, `seek-params`: 17 absorbed, 3 split, 8 `blocked-other`. Fold run 5 (2026-11-23): `player-floated`, `life-lock`, `may-draw`, `random-player`, `exile-cast`, `lukka`, `look-top-n`: 9 absorbed, 6 split, 3 survivor, 7 `blocked-other`, 2 re-batched into `same-quality`. Fold run 6 (2026-11-23): `delayed-created`, `asenters-sac-all`, `random-pick`, `returned-animation`, `set-exchange`, `ignore-source`, part of `coin-params`: 6 absorbed, 5 split, 3 survivor, 2 `blocked-other`, Mondo Gecko re-noted as a C batch; `chosen-animation`, `any-colour`, `prot-perm`, `colour-grants` and two `coin-params` rows not taken (14 rows, queue notes). Next: the rest of fold run 6's rows, then fold run 7. Waiting on the owner: 5 rows (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows (option C, step 10). |
 | 10 | Collapse the head: one record per verb (repeatable, needs sign-off) | open |
 | 11 | Close: docs, leftovers, final ratchet | open |
 
@@ -49,7 +49,7 @@ Re-measure with `python3 -I scripts/effect-inventory.py` (no arguments: the summ
 
 | What | Count |
 |---|---|
-| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,951 / 3,211 (fold run 5; 3,964 / 3,227 after fold run 4; 3,984 / 3,246 after fold run 3; 4,003 / 3,263 after fold run 2, 4,025 / 3,286 after fold run 1, 4,044 / 3,299 before) |
+| `EffectCountRatchetTest` baselines (records / handler classes in `normalfx`, `mayfx`, `staticfx`) | 3,940 / 3,201 (fold run 6; 3,951 / 3,211 after fold run 5; 3,964 / 3,227 after fold run 4; 3,984 / 3,246 after fold run 3; 4,003 / 3,263 after fold run 2, 4,025 / 3,286 after fold run 1, 4,044 / 3,299 before) |
 | Types in `model/effect/` | 4,338 (4,044 records, 43 enums, 248 interfaces, 3 classes) |
 | Handler files in `service/effect/normalfx` | 3,012 files, 264,494 lines |
 | Records used by exactly one card / two cards | 2,353 / 404 |
@@ -65,8 +65,8 @@ Count the rare ones with `python3 -I scripts/effect-inventory.py --unaudited | a
 No rare record is left; the triage gave each a row, and the `step-9` rows wait in the Fold queue.
 
 `scripts/effect-audit-ledger.csv` (header `class,verdict,step,note`): 5,052 rows over 4,404 classes, the consolidation's 102, defect run
-D10's 73 and fold runs 1 to 5's 28, 32, 29, 28 and 27 included (5,079 rows). Latest verdict per class: `step-9` 1,185, unique 1,165, absorbed 565, split 481,
-blocked-other 448, survivor 263, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,185 `step-9` rows for fold runs after fold run 5 (1,210 after fold run 4, 1,238 after fold run 3, 1,264 after fold run 2, 1,322 before fold run 1); 5 rows on the owner's open
+D10's 73 and fold runs 1 to 6's 28, 32, 29, 28, 27 and 17 included (5,096 rows). Latest verdict per class: `step-9` 1,169, unique 1,165, absorbed 571, split 486,
+blocked-other 450, survivor 266, blocked-step-model 140, blocked-player-loop 97, dead 60. Waiting: 1,169 `step-9` rows for fold runs after fold run 6 (1,185 after fold run 5, 1,210 after fold run 4, 1,238 after fold run 3, 1,264 after fold run 2, 1,322 before fold run 1); 5 rows on the owner's open
 questions (perpetual "it" 3, gift opponent 2) and about 20 "counter unless" rows on step 10's option C.
 
 ## Design
@@ -475,6 +475,16 @@ Step and choice records:
   exiles a card from their graveyard" is `ChooseCardEffect.oneOf(cardsInGraveyards(playersThisWay(CHOOSE), f)).by(playersThisWay(CHOOSE))`
   + `ExileGraveyardCardsEffect.cards(cardsThisWay(CHOOSE))`; `ExileTopCardsAndMayCastSpellsEffect` casts an Adventure-only-fits card as
   its Adventure (CR 716.3a).
+
+- Random picks, created tokens, as-enters sacrifices, returned permanents (fold run 6): "choose N target permanents, destroy one of them at
+  random" is `ChoosePermanentsEffect.atRandom(1, Subjects.allTargets(), label)` (the spell's own declared targets; `getTargetIds` leaves
+  out those marked illegal, CR 608.2b) + the verb over `thisWay(CHOOSE)`; "create a token ... destroy it at the beginning of the next end
+  step" is `ScheduleCreatedPermanentsEffect(DESTROY_AT_END_STEP)`, "sacrifice the token at the beginning of the next end step"
+  `SacrificeCreatedPermanentsAtEndStepEffect()`; `SacrificeAllPermanentsAsEntersEffect(PermanentHasSameNameAsSourcePredicate)` is
+  Sheltered Valley (the filter's source is the entering permanent; batch-mates and a land losing its abilities as it enters are left alone);
+  `ReturnCardFromGraveyardEffect` records what it puts onto the battlefield as `returnedThisResolution()` too, so "it becomes ..." after a
+  return is the verb over `returnedThisResolution()` (with `HappenedThisWay.toA(RETURN, filter)` for "if it's a [subtype]");
+  `IgnoreSourceAuraEffectsUntilEndOfTurnEffect` is any "ignore this effect until end of turn" (Damping Engine too).
 
 Permissions, restrictions and grants:
 
@@ -1198,6 +1208,66 @@ Soldevi Heretic still targets no opponent (its line). Step-10 hand-off: `GrantPl
 
 **For the next run.** Fold run 6. A `step-9` note that names a predicate or option "from another batch" may name one not built yet
 (run 41's same-quality, the exiled-counter subject): check it exists before folding, and re-batch rather than build it for one card.
+
+### Step 9, fold run 6 (2026-11-23)
+
+Fold run 6 of the Fold queue: batches `delayed-created`, `asenters-sac-all`, `random-pick`, `colour-grants`, `returned-animation`,
+`chosen-animation`, `set-exchange`, `ignore-source`, `any-colour`, `prot-perm`, `coin-params` (31 rows) and the one "Fold:" defect line
+(returned-animation). 17 rows taken, 14 left for the next run. Ratchet 3,951 / 3,211 → 3,940 / 3,201 (11 records, 10 handlers; Sheltered
+Valley's record had none). Ledger: 17 rows (absorbed 6, split 5, survivor 3, `blocked-other` 2, Mondo Gecko's note corrected and left
+`step-9`). 13 card files rewritten, Oracle text checked with `get_card` for all 13 and the 5 left cards read (Kav Landseeker, Brilliance
+Unleashed, Cosmium Confluence, Turbocharged Escape, Mondo Gecko by its record); rulings for Kav Landseeker, Capricious Efreet, Haphazard
+Bombardment, Tune Up, The War in Heaven, Brilliance Unleashed, Sheltered Valley (none). CR 608.2b, 608.2d, 608.2h, 701.21a checked
+with `get_rule`.
+
+| Batch | Result |
+|---|---|
+| `delayed-created` (3) | Old Hob onto `ScheduleCreatedPermanentsEffect(DESTROY_AT_END_STEP)` (Hornet Cannon's record, the same scheduling code), Broken Visage split (destroy, a Spirit with `TargetPower(true)` / `TargetToughness`, `SacrificeCreatedPermanentsAtEndStepEffect`). Left: Kav Landseeker (`blocked-other`: "the end step on your next turn" for every created token, its ruling; no sacrifice of a token set waits for a later turn) |
+| `asenters-sac-all` (2) | Sheltered Valley onto `SacrificeAllPermanentsAsEntersEffect(PermanentHasSameNameAsSourcePredicate)`; the handler judges the filter with the entering permanent as the source, its land-loses-abilities guard moved onto the survivor's call |
+| `random-pick` (3) | Capricious Efreet, Wild Swing, Metzali, Haphazard Bombardment: `ChoosePermanentsEffect.atRandom` + `DestroyTargetPermanentEffect(thisWay(CHOOSE))`; `atRandom` now accepts `allTargets()` |
+| `returned-animation` (3) | Tune Up (`HappenedThisWay.toA(RETURN, Vehicle)`), The War in Heaven: `AnimatePermanentsEffect` over `returnedThisResolution()`. Left: Brilliance Unleashed (`blocked-other`: "if it's an artifact creature card" judges the card; every permanent reader judges the permanent) |
+| `set-exchange`, `ignore-source` (2 + 2) | Reins of Power onto Twist Allegiance's record; Damping Engine onto `IgnoreSourceAuraEffectsUntilEndOfTurnEffect` (its two readers ask for that class) |
+| `coin-params` (3) | Scoria Wurm, Wild Wurm onto `FlipCoinWinEffect(null, ReturnToHandEffect.self())`. Breeches and Mirrored Depths not taken |
+| not taken (14) | `colour-grants` (needs C, not P: a chosen-this-resolution colour on the colour and hexproof grants, with 8.29's targeted twin), `chosen-animation`, `any-colour`, `prot-perm`; the queue rows say what each needs checked |
+
+**Where the triage was wrong.** `thisWay(RETURN)` is not a subject (it points to `returnedThisResolution()`), and the targeted
+`ReturnCardFromGraveyardEffect` didn't fill that set: it now does, beside its RETURN step. Old Hob's existing head
+(`ScheduleCreatedPermanentsEffect`) fits exactly; the `aboutCreated` form names one triggering permanent only for a lone token, which is
+also why Kav stays. Capricious Efreet's "the pick must leave out illegal targets" was already true: `StackEntry.getTargetIds` leaves out the
+targets the stack marked illegal (CR 608.2b), for the old handler and the survivor alike. Brilliance Unleashed's card-type check and Mondo
+Gecko's colour step are not parameters.
+
+**Shared pieces widened** (Standing knowledge): `ChoosePermanentsEffect.atRandom` over `allTargets()`; `SacrificeAllPermanentsAsEntersEffect`
+with a source-relative filter; `ReturnCardFromGraveyardEffect` remembers its returned permanents; `IgnoreSourceAuraEffectsUntilEndOfTurnEffect`
+for any "ignore this effect".
+
+**Behaviour changes.**
+- Sheltered Valley: a Valley entering together with another (Splendid Reclamation) no longer sacrifices it (neither is on the battlefield as
+  the replacement applies): the survivor runs after the batch-mates are hidden. New `ShelteredValleyTest.copiesEnteringTogetherSurvive`
+  (not run on the old code; by reading, the old call ran before the batch-mates were hidden). Its sacrifice now skips a permanent that can't
+  be sacrificed, is one leave batch, and logs the survivor's "X sacrifices Y" line.
+- Random picks: the survivor's "Chosen at random: ..." log line, a "can't be chosen" permanent left out (CR 608.2d), and the source keeps the
+  pick as its chosen permanent (no reader on these cards). AI only: the four cards now carry `DestroyTargetPermanentEffect`.
+- Broken Visage keeps a negative last-known power on the Spirit (the old handler did too; `TargetPower(true)`); the survivors' logs.
+- Back for More, It Doesn't Add Up, Jailbreak, Pre-War Formalwear, Too Greedily, Too Deep and the other `ReturnCardFromGraveyardEffect` cards
+  with a returned-permanent reader now see the permanent the return made (their tests pass unchanged).
+
+**Tests changed.** `GameDataPermanentEffectTest` (its other-class check names `DampingEngineEffect`), `DampingEngineTest` (the survivor's class),
+`ReturnSelfToHandOnCoinFlipLossEffectHandlerTest` deleted with its handler (Scoria Wurm's and Wild Wurm's tests cover the card),
+`EffectCountRatchetTest` (baselines). New: the Sheltered Valley case.
+
+**Tests run.** 116 classes in two runs: every test class naming a rewritten or survivor card (`git grep -lwF 'X.class'`, 34 + 49 for the
+returned-permanent readers), the 28 `Mastery|DeathReplacement` classes (Broken Visage's handler asked death replacements first), and
+`TargetPolarityGuardTest`, `EffectCountRatchetTest`, `GameDataPermanentEffectTest`, `BattlefieldPlacementServiceTest`,
+`CastingPermissionServiceTest`, `SubjectResolutionServiceTest`, `LayerClassifierTest`: 118 XML files, 949 cases, 0 failures after the
+`ReturnCardFromGraveyardEffect` fix (the first run's `TuneUpTest` case failed on the empty returned set).
+
+**Seen, not changed.** The returned-animation defect line stays open (no ruling settles "return it ... and it's a [type]" as an as-enters
+change; the fold keeps the timing).
+
+**For the next run.** Finish fold run 6's 14 rows before fold run 7: Cosmium Confluence is ready (its test answers a multi-permanent prompt
+today, the survivor asks a single choice); for `any-colour` and `prot-perm` read every reader of the absorbed records' interface methods
+first (the queue rows list them).
 
 ## Prompt
 

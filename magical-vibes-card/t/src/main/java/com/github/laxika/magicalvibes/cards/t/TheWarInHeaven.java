@@ -5,7 +5,6 @@ import com.github.laxika.magicalvibes.model.Card;
 import com.github.laxika.magicalvibes.model.CardType;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.effect.AnimatePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.AnimateReturnedPermanentsEffect;
 import com.github.laxika.magicalvibes.model.effect.DrawCardEffect;
 import com.github.laxika.magicalvibes.model.effect.Duration;
 import com.github.laxika.magicalvibes.model.effect.LoseLifeEffect;
@@ -30,8 +29,7 @@ public class TheWarInHeaven extends Card {
                 new ReturnTargetCardsFromGraveyardToBattlefieldEffect(
                         new CardTypePredicate(CardType.CREATURE), 3, false, false, null, 8,
                         null, null, CounterType.NECRODERMIS, 1),
-                new AnimateReturnedPermanentsEffect(
-                        new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
-                                Set.of(CardType.ARTIFACT), Subjects.target(), Duration.PERMANENT, null)));
+                new AnimatePermanentsEffect(null, null, List.of(), Set.of(), null,
+                        Set.of(CardType.ARTIFACT), Subjects.returnedThisResolution(), Duration.PERMANENT, null));
     }
 }

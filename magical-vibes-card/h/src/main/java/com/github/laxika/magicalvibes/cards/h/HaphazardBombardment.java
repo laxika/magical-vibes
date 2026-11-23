@@ -2,16 +2,18 @@ package com.github.laxika.magicalvibes.cards.h;
 
 import com.github.laxika.magicalvibes.cards.CardRegistration;
 import com.github.laxika.magicalvibes.model.Card;
+import com.github.laxika.magicalvibes.model.Keyword;
 import com.github.laxika.magicalvibes.model.CounterType;
 import com.github.laxika.magicalvibes.model.StepKind;
 import com.github.laxika.magicalvibes.model.condition.AnyPlayerControlsPermanentCount;
 import com.github.laxika.magicalvibes.model.effect.ChoosePermanentsEffect;
-import com.github.laxika.magicalvibes.model.effect.DestroyRandomOpponentPermanentWithCounterEffect;
+import com.github.laxika.magicalvibes.model.effect.DestroyTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.PutCounterOnTargetPermanentEffect;
 import com.github.laxika.magicalvibes.model.effect.Subjects;
 import com.github.laxika.magicalvibes.model.filter.PermanentAllOfPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentControlledBySourceControllerPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentHasCountersPredicate;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasKeywordPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsEnchantmentPredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentNotPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
@@ -41,6 +43,11 @@ public class HaphazardBombardment extends Card {
                         new PermanentAllOfPredicate(List.of(
                                 new PermanentHasCountersPredicate(CounterType.AIM),
                                 new PermanentNotPredicate(new PermanentControlledBySourceControllerPredicate()))))),
-                new DestroyRandomOpponentPermanentWithCounterEffect(CounterType.AIM, 2));
+                // Among those without indestructible (its ruling, 2018-04-27).
+                ChoosePermanentsEffect.atRandom(1, Subjects.controlledBy(Subjects.eachOpponent(),
+                                new PermanentAllOfPredicate(List.of(new PermanentHasCountersPredicate(CounterType.AIM),
+                                        new PermanentNotPredicate(new PermanentHasKeywordPredicate(Keyword.INDESTRUCTIBLE))))),
+                        "one of those permanents"),
+                new DestroyTargetPermanentEffect(Subjects.thisWay(StepKind.CHOOSE)));
     }
 }

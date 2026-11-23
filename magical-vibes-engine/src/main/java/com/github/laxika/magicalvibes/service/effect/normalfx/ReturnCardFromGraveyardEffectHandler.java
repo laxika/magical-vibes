@@ -51,7 +51,8 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
 
     /**
      * The step's result: the cards that were in a graveyard before it and are now in a hand (the card) or on the
-     * battlefield (the permanent it became), and their owners. A return that waits for its player's choice records
+     * battlefield (the permanent it became, also one of the entry's permanents returned this resolution, read by
+     * {@code Subjects.returnedThisResolution()}), and their owners. A return that waits for its player's choice records
      * none: the choice's completion returns the card, so this handler is not an earlier step that may be read.
      */
     private void recordReturned(GameData gameData, StackEntry entry, Map<UUID, UUID> before) {
@@ -75,6 +76,8 @@ public class ReturnCardFromGraveyardEffectHandler implements NormalEffectHandler
                 owners.add(ownerId);
                 if (inHands.contains(cardId)) {
                     moved.add(new MovedCard(cardId, cardId, Zone.HAND, ownerId));
+                } else {
+                    entry.rememberReturnedPermanent(returnedId);
                 }
             }
         });

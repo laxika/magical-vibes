@@ -6,7 +6,8 @@ import com.github.laxika.magicalvibes.model.ManaAbilities;
 import com.github.laxika.magicalvibes.model.ManaColor;
 import com.github.laxika.magicalvibes.model.condition.ControlsPermanentCountAtMost;
 import com.github.laxika.magicalvibes.model.effect.GainLifeEffect;
-import com.github.laxika.magicalvibes.model.effect.SacrificeOtherPermanentsWithSameNameOnEnterEffect;
+import com.github.laxika.magicalvibes.model.effect.SacrificeAllPermanentsAsEntersEffect;
+import com.github.laxika.magicalvibes.model.filter.PermanentHasSameNameAsSourcePredicate;
 import com.github.laxika.magicalvibes.model.filter.PermanentIsLandPredicate;
 import com.github.laxika.magicalvibes.model.trigger.ActivePlayer;
 import com.github.laxika.magicalvibes.model.trigger.TriggerOptions;
@@ -18,7 +19,7 @@ public class ShelteredValley extends Card {
     public ShelteredValley() {
         // If this land would enter, instead sacrifice each other permanent named Sheltered Valley
         // you control, then put this land onto the battlefield.
-        addStaticEffect(new SacrificeOtherPermanentsWithSameNameOnEnterEffect());
+        addStaticEffect(new SacrificeAllPermanentsAsEntersEffect(new PermanentHasSameNameAsSourcePredicate()));
 
         // At the beginning of your upkeep, if you control three or fewer lands, you gain 1 life.
         addTrigger(Triggers.upkeep(ActivePlayer.YOU),
